@@ -162,7 +162,7 @@ function ElementForm({
       <div className="flex gap-2 pt-2">
         <Button variant="outline" className="flex-1" onClick={onCancel}>Annuler</Button>
         <Button className="flex-1" disabled={saving} onClick={onSubmit}>
-          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+          {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
           {submitLabel}
         </Button>
       </div>
@@ -338,7 +338,7 @@ export default function SectionElements({
         <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) addForm.reset(); }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="w-full border-dashed hover:border-solid hover:bg-primary/5">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 me-2" />
               {cfg.labelAdd}
             </Button>
           </DialogTrigger>

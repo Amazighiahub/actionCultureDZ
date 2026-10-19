@@ -78,7 +78,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                 
                 {oeuvre.TypeOeuvre && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                    <BookOpen className="h-3 w-3 mr-1" />
+                    <BookOpen className="h-3 w-3 me-1" />
                     {oeuvre.TypeOeuvre.nom_type}
                   </Badge>
                 )}
@@ -91,7 +91,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                 
                 {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
                   <Badge className="bg-yellow-500 text-black">
-                    <Star className="h-3 w-3 mr-1 fill-current" />
+                    <Star className="h-3 w-3 me-1 fill-current" />
                     {oeuvre.note_moyenne.toFixed(1)}
                   </Badge>
                 )}
@@ -147,7 +147,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                     : "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                   }
                 >
-                  <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                  <Heart className={`h-5 w-5 me-2 ${isFavorite ? 'fill-current' : ''}`} />
                   {isFavorite 
                     ? t('oeuvre.removeFromFavorites', 'Retirer des favoris')
                     : t('oeuvre.addToFavorites', 'Ajouter aux favoris')
@@ -161,7 +161,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                   onClick={handleShare}
                   className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                 >
-                  <Share2 className="h-5 w-5 mr-2" />
+                  <Share2 className="h-5 w-5 me-2" />
                   {t('common.share', 'Partager')}
                 </Button>
 
@@ -174,7 +174,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                     className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                   >
                     <a href={safeExternalUrl(oeuvre.lien_externe)} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-5 w-5 mr-2" />
+                      <ExternalLink className="h-5 w-5 me-2" />
                       {t('oeuvre.externalLink', 'Voir plus')}
                     </a>
                   </Button>

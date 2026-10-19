@@ -450,7 +450,9 @@
     "sortBy": "Trier par",
     "photo": "photo",
     "backToHome": "Retour à l'accueil",
-    "loadMore": "Voir plus"
+    "loadMore": "Voir plus",
+    "yes": "Oui",
+    "no": "Non"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -2863,7 +2865,19 @@
       "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler votre inscription à cet événement ? Cette action est irréversible.",
       "confirmCancel": "Confirmer l'annulation",
       "contactByEmail": "Contacter l'organisateur par e-mail",
-      "contactByPhone": "Appeler l'organisateur"
+      "contactByPhone": "Appeler l'organisateur",
+      "refused": "Non retenue",
+      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
+      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
+      "sentTitle": "Demande d'inscription envoyée",
+      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "form": {
+        "required": "Réponse obligatoire",
+        "mustAccept": "Veuillez cocher cette case",
+        "invalid": "Réponse invalide",
+        "between": "Entre {{min}} et {{max}}",
+        "incomplete": "Certaines réponses sont manquantes ou invalides."
+      }
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -3116,7 +3130,9 @@
       "workDetails": "Détails de l'œuvre",
       "author": "Auteur / Artiste",
       "presentationDesc": "Note pour cet événement",
-      "viewFullPage": "Voir page complète"
+      "viewFullPage": "Voir page complète",
+      "answers": "Réponses au formulaire d'inscription",
+      "exportExcel": "Télécharger en Excel"
     }
   },
   "programmePages": {
@@ -3406,7 +3422,49 @@
     "addYourService": "Proposez vos services ici",
     "backToList": "Retour à la liste",
     "notFound": "Site non trouvé",
-    "playVideo": "Lire la vidéo : {{title}}"
+    "playVideo": "Lire la vidéo : {{title}}",
+    "points": {
+      "title": "Points à visiter",
+      "intro": "Suivez la visite dans cet ordre, ou choisissez un point.",
+      "empty": "Aucun point de visite pour l'instant.",
+      "emptyHint": "Ajoutez les lieux à voir dans ce site : un monument, une salle, un grenier… chacun avec sa position, sa description et ses photos.",
+      "add": "Ajouter un point",
+      "showMap": "Voir la carte",
+      "hideMap": "Masquer la carte",
+      "number": "Point {{n}} :",
+      "moveUp": "Monter « {{nom}} »",
+      "moveDown": "Descendre « {{nom}} »",
+      "reorderError": "L'ordre n'a pas pu être enregistré",
+      "breadcrumb": "Emplacement dans le site",
+      "partOf": "Fait partie de :",
+      "position": "point {{n}} sur {{total}}",
+      "next": "Point suivant :",
+      "createTitle": "Ajouter un point de visite",
+      "parentNotFound": "Le site auquel rattacher ce point est introuvable.",
+      "positionLabel": "Position du point",
+      "outdoor": "Sa propre position GPS",
+      "outdoorHint": "Un monument, une porte, un grenier…",
+      "indoor": "À l'intérieur du site",
+      "indoorHint": "Une salle, une pièce, une vitrine…",
+      "repere": "Repère dans le site",
+      "reperePlaceholder": "Ex : 1er étage, salle 3",
+      "moveMarker": "La carte est centrée sur le site : déplacez le repère sur l'emplacement exact du point."
+    },
+    "audio": {
+      "title": "Écouter",
+      "chooseLanguage": "Langue de l'écoute",
+      "otherLanguage": "Autre",
+      "recording": "Enregistrement {{n}} ({{langue}})",
+      "empty": "Aucun enregistrement pour l'instant. Les voix des anciens, les contes et la prononciation des noms de lieux sont précieux : ajoutez-les.",
+      "languageOfRecording": "Langue de l'enregistrement",
+      "add": "Ajouter un enregistrement",
+      "uploading": "Envoi…",
+      "formats": "MP3, M4A (téléphone), WAV, OGG — 50 Mo maximum. Demandez l'accord des personnes enregistrées.",
+      "tooLarge": "Fichier trop lourd (50 Mo maximum)",
+      "notAudio": "Ce fichier n'a pas été reconnu comme un enregistrement audio",
+      "added": "Enregistrement ajouté",
+      "uploadError": "L'enregistrement n'a pas pu être envoyé"
+    }
   },
   "toasts": {
     "error": "Erreur",

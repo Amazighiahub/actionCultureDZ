@@ -32,7 +32,7 @@ const VerificationEmailEnvoyee = () => {
           )}
 
           {state?.isProfessional && (
-            <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-left text-sm text-blue-800">
+            <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-start text-sm text-blue-800">
               <CheckCircle className="h-5 w-5 mt-0.5 shrink-0" />
               <p>{t('auth.professionalValidationNote', 'Après vérification de votre email, votre compte sera soumis à validation par un administrateur.')}</p>
             </div>

@@ -347,7 +347,7 @@ const AjouterArtisanat: React.FC = () => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate('/dashboard-pro')}>
-            <ArrowLeft className="h-5 w-5 me-2" />
+            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
           <div>

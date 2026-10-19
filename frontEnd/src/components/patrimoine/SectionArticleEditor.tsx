@@ -471,9 +471,9 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
             </Button>
             <Button type="button" onClick={handleAdd} disabled={saving}>
               {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
               ) : (
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 me-2" />
               )}
               {t('patrimoine.editor.add', 'Ajouter le bloc')}
             </Button>

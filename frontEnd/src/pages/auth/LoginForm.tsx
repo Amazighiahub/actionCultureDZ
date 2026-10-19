@@ -228,12 +228,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <Button type="submit" size="lg" className="w-full" disabled={loginLoading}>
             {loginLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
                 {t('auth.login.loading', 'Connexion...')}
               </>
             ) : (
               <>
-                <LogIn className="h-4 w-4 mr-2" />
+                <LogIn className="h-4 w-4 me-2" />
                 {t('auth.login.submit', 'Se connecter')}
               </>
             )}

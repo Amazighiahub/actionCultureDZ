@@ -121,12 +121,12 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
             {isAuthenticated && (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">
-                  <Pencil className="h-4 w-4 mr-1" />
+                  <Pencil className="h-4 w-4 me-1" />
                   {t('common.edit', 'Modifier')}
                 </Button>
                 {patrimoineSection && (
                   <Button variant="ghost" size="sm" onClick={openArticleEditor} className="text-muted-foreground hover:text-primary">
-                    <FileText className="h-4 w-4 mr-1" />
+                    <FileText className="h-4 w-4 me-1" />
                     {t('patrimoine.contribute.addArticle', 'Article')}
                   </Button>
                 )}
@@ -159,7 +159,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                   {t('common.save', 'Enregistrer')}
                 </Button>
               </div>
@@ -198,12 +198,12 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button variant="outline" onClick={openEditor}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 me-2" />
               {t('patrimoine.contribute.addQuick', 'Texte rapide')}
             </Button>
             {patrimoineSection && (
               <Button variant="default" onClick={openArticleEditor}>
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 me-2" />
                 {t('patrimoine.contribute.writeArticle', 'Écrire un article')}
               </Button>
             )}
@@ -232,7 +232,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                 {t('common.save', 'Enregistrer')}
               </Button>
             </div>

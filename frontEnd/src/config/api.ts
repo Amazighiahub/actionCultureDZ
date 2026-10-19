@@ -571,6 +571,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     retirerFavoris: (id: number) => `/patrimoine/${id}/favoris`,
     uploadMedias: (id: number) => `/patrimoine/${id}/medias`,
     deleteMedia: (id: number, mediaId: number) => `/patrimoine/${id}/medias/${mediaId}`,
+    reordonnerPoints: (id: number) => `/patrimoine/${id}/points/ordre`,
     updateHoraires: (id: number) => `/patrimoine/${id}/horaires`,
     
     // Mobile

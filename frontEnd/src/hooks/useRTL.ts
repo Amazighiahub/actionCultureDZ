@@ -70,8 +70,10 @@ export const useRTL = (languageParam?: string) => {
     },
     
     // Flex
-    flexRow: isRtl ? 'flex-row-reverse' : 'flex-row',
-    flexRowReverse: isRtl ? 'flex-row' : 'flex-row-reverse',
+    // dir="rtl" (posé sur <html>) inverse déjà les rangées flex : ajouter flex-row-reverse
+    // en arabe les remettait dans l'ordre du français
+    flexRow: 'flex-row',
+    flexRowReverse: 'flex-row-reverse',
     
     // Position
     start: (value: number | string) => {

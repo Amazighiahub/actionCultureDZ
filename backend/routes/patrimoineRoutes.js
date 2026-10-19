@@ -7,6 +7,7 @@ const express = require('express');
 const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
+const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
 const { param, body } = require('express-validator');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
@@ -77,7 +78,14 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
   router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
+    [body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage('Langue invalide')],
+    handleValidationErrors,
     patrimoineController.wrap('uploadMedias'));
+  // Ordre de visite des points d'un site (créateur du site ou modération, vérifié par le service)
+  router.put('/:id/points/ordre', authenticate, validateId(),
+    [body('ordre').isArray({ min: 1, max: 200 }).withMessage('ordre doit être la liste des points')],
+    handleValidationErrors,
+    patrimoineController.wrap('reordonnerPoints'));
   router.delete('/:id/medias/:mediaId', authenticate, requireModeration, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
@@ -164,7 +172,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/monuments', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']).withMessage('Type de monument invalide'),
+      body('type').isIn(MONUMENT_TYPES).withMessage('Type de monument invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -224,7 +232,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.patch('/:id/monuments/:monumentId', authenticate, validateId(),
     [
       body('nom').optional().isObject(),
-      body('type').optional().isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']),
+      body('type').optional().isIn(MONUMENT_TYPES),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -261,7 +269,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/vestiges', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']).withMessage('Type de vestige invalide'),
+      body('type').isIn(VESTIGE_TYPES).withMessage('Type de vestige invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -321,7 +329,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.patch('/:id/vestiges/:vestigeId', authenticate, validateId(),
     [
       body('nom').optional().isObject(),
-      body('type').optional().isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']),
+      body('type').optional().isIn(VESTIGE_TYPES),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -467,6 +475,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       body('communeId').optional().isInt({ min: 1 }).withMessage('Commune invalide'),
       body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
       body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
+      body('id_lieu_parent').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('Site parent invalide'),
+      body('ordre_visite').optional({ values: 'null' }).isInt({ min: 0, max: 10000 }).withMessage('Ordre de visite invalide'),
+      body('repere').optional({ values: 'null' }).isObject().withMessage('repere doit être un objet multilingue'),
     ],
     handleValidationErrors,
     patrimoineController.wrap('create'));

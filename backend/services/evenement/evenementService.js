@@ -6,6 +6,7 @@
 const BaseService = require('../core/baseService');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
+const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {
@@ -349,7 +350,7 @@ class EvenementService extends BaseService {
   /**
    * Inscrire un participant
    */
-  async registerParticipant(evenementId, userId) {
+  async registerParticipant(evenementId, userId, data = {}) {
     const registration = await this.withTransaction(async (transaction) => {
       const evenement = await this.repository.findById(evenementId, {
         transaction,
@@ -373,11 +374,40 @@ class EvenementService extends BaseService {
         }
       }
 
-      return this.repository.registerParticipant(evenementId, userId, { transaction });
+      const reponses_inscription = await this._reponsesInscription(evenement, data, transaction);
+      return this.repository.registerParticipant(evenementId, userId, { transaction, reponses_inscription });
     });
 
     this.logger.info(`Participant inscrit: user ${userId} → événement ${evenementId}`);
     return registration;
+  }
+
+  /**
+   * Formulaire du type d'événement s'il en a un, sinon formulaire de base
+   * (nombre de personnes + commentaire).
+   */
+  async _reponsesInscription(evenement, data, transaction) {
+    const config = await this._configInscription(evenement.id_type_evenement, transaction);
+    if (!config) return reponsesFormulaireBase(data);
+
+    const { reponses, erreurs } = verifierReponses(config, data.reponses);
+    if (erreurs.length) {
+      throw this._validationError(
+        `Formulaire d'inscription incomplet : ${erreurs.map(e => e.label).join(', ')}`,
+        erreurs
+      );
+    }
+    return reponses;
+  }
+
+  async _configInscription(idTypeEvenement, transaction) {
+    if (!idTypeEvenement || !this.models?.TypeEvenement) return null;
+    const type = await this.models.TypeEvenement.findByPk(idTypeEvenement, {
+      attributes: ['config_inscription'],
+      transaction
+    });
+    const config = type?.config_inscription;
+    return config && Array.isArray(config.sections) && config.sections.length ? config : null;
   }
 
   /**
@@ -486,7 +516,11 @@ class EvenementService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    return { profil: user, participation };
+    // Questions du formulaire, pour afficher les réponses avec leur intitulé
+    const evenement = await this.repository.findById(evenementId, { attributes: ['id_type_evenement'] });
+    const formulaire = evenement ? await this._configInscription(evenement.id_type_evenement) : null;
+
+    return { profil: user, participation, formulaire };
   }
 
   /**

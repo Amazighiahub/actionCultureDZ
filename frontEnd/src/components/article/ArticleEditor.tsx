@@ -54,10 +54,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 rtl:space-x-reverse">
               {onBack && (
                 <Button variant="outline" size="sm" onClick={onBack}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />{t("article_articleeditor.retour")}
+                  <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("article_articleeditor.retour")}
                 </Button>
               )}
               <div>
@@ -69,14 +69,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 </p>
               </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 rtl:space-x-reverse">
               <Button variant="outline" onClick={() => editor.setActiveTab(editor.activeTab === 'preview' ? 'content' : 'preview')}>
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="h-4 w-4 me-2" />
                 {editor.activeTab === 'preview' ? 'Éditer' : 'Aperçu'}
               </Button>
               <Button onClick={editor.handleSave} disabled={editor.saving}>
-                {editor.saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                <Save className="h-4 w-4 mr-2" />{t("article_articleeditor.sauvegarder")}
+                {editor.saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+                <Save className="h-4 w-4 me-2" />{t("article_articleeditor.sauvegarder")}
               </Button>
             </div>
           </div>
@@ -212,7 +212,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                         const Icon = BLOCK_ICONS[template.icon];
                         return (
                           <Button key={template.id} variant="outline" size="sm" onClick={() => editor.addBlock(template.type_block)}>
-                            {Icon && <Icon className="h-4 w-4 mr-2" />}
+                            {Icon && <Icon className="h-4 w-4 me-2" />}
                             {template.name}
                           </Button>
                         );

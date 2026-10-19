@@ -62,7 +62,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
           onClick={() => navigate(-1)}
           aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
         </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -103,7 +103,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
                     <div className="absolute inset-0 bg-black/20 rounded-lg transform translate-x-4 translate-y-4 -z-10 transition-transform duration-300 group-hover:translate-x-6 group-hover:translate-y-6" style={{ filter: 'blur(8px)' }} />
 
-                    <div className="relative w-full h-full rounded-r-lg overflow-hidden shadow-2xl border-l-4 border-amber-700/30 dark:border-amber-500/30">
+                    <div className="relative w-full h-full rounded-e-lg overflow-hidden shadow-2xl border-s-4 border-amber-700/30 dark:border-amber-500/30">
                       {mainImage ? (
                         <img src={optimizeImageUrl(mainImage, 900)} alt={titre} fetchPriority="high" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
@@ -125,13 +125,13 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                       {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                         <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                           <Badge className="bg-yellow-500 text-black shadow-lg">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
+                            <Star className="h-3 w-3 me-1 fill-current" />
                             {(oeuvre as any).note_moyenne.toFixed(1)}
                           </Badge>
                         </div>
                       )}
 
-                      <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button onClick={(e) => { e.stopPropagation(); setShowZoom(true); }} className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors" title={t('works.zoom', 'Agrandir')} aria-label={t('works.zoom', 'Agrandir')}>
                           <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
                         </button>
@@ -231,7 +231,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                 {oeuvre.Livre?.Genre && <Badge variant="secondary">{gt(oeuvre.Livre.Genre.nom)}</Badge>}
                 {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                    <Star className="h-3 w-3 mr-1 fill-current" />{(oeuvre as any).note_moyenne.toFixed(1)}
+                    <Star className="h-3 w-3 me-1 fill-current" />{(oeuvre as any).note_moyenne.toFixed(1)}
                   </Badge>
                 )}
               </div>
@@ -283,7 +283,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
             <Dialog open={showZoom} onOpenChange={setShowZoom}>
               <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
                 <DialogTitle className="sr-only">{titre}</DialogTitle>
-                <button onClick={() => setShowZoom(false)} className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors" aria-label={t('common.close', 'Fermer')}>
+                <button onClick={() => setShowZoom(false)} className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors" aria-label={t('common.close', 'Fermer')}>
                   <X className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
                 <div className="flex items-center justify-center min-h-[60vh] p-4">
@@ -293,7 +293,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                     <div className="flex flex-col items-center justify-center text-white/60"><BookOpen className="h-24 w-24 mb-4" /><p>{t('works.noCoverBook', 'Aucune couverture disponible')}</p></div>
                   )}
                 </div>
-                <div className="absolute bottom-4 left-0 right-0 text-center">
+                <div className="absolute bottom-4 start-0 end-0 text-center">
                   <p className="text-white/80 font-medium text-lg">{titre}</p>
                   {mainContributors.length > 0 && <p className="text-white/60 text-sm">{gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}</p>}
                 </div>

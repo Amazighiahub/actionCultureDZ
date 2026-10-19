@@ -168,7 +168,7 @@ const ArtisanatDynamique: React.FC = () => {
                     </span>
                   )}
                   {artisanat.note_moyenne !== undefined && (
-                    <div className={`flex items-center space-x-1 ${rtlClasses.flexRow}`}>
+                    <div className={`flex items-center space-x-1 rtl:space-x-reverse ${rtlClasses.flexRow}`}>
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                       <span>{formatNumber(artisanat.note_moyenne, { maximumFractionDigits: 1 })}</span>
                     </div>
@@ -182,7 +182,7 @@ const ArtisanatDynamique: React.FC = () => {
                     aria-label={`${t('sections.crafts.seeDetails', 'Voir les détails')} : ${artisanat.nom}`}
                   >
                     {t('sections.crafts.seeDetails')}
-                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} aria-hidden="true" />
                   </Link>
                 </Button>
               </CardContent>

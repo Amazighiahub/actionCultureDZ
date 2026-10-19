@@ -39,6 +39,17 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import type { Evenement } from '@/types/models/evenement.types';
+import type { InscriptionPayload } from '@/services/evenement.service';
+import FormulaireInscription from '@/components/event/FormulaireInscription';
+import {
+  configInscriptionValide,
+  listerChamps,
+  reponsesAEnvoyer,
+  verifierReponses,
+  type ErreurChamp,
+  type Reponses,
+  type ValeurReponse
+} from '@/utils/formulaireInscription';
 
 interface ConfigSoumission {
   type_oeuvre: string[];
@@ -70,10 +81,11 @@ interface OeuvreSimple {
 
 interface EventRegistrationProps {
   event: Evenement;
-  onRegister: (data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }) => Promise<boolean>;
+  onRegister: (data?: InscriptionPayload) => Promise<boolean>;
   onUnregister?: () => Promise<boolean>;
   isRegistered?: boolean;
-  registrationStatus?: 'pending' | 'confirmed' | 'cancelled' | 'waiting_list';
+  /** statut_participation renvoyé par l'API (inscrit, confirme, present, absent, annule) */
+  registrationStatus?: string;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -88,7 +100,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   onToggleFavorite
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, isProfessional } = useAuth();
+  const { isAuthenticated, isProfessional, user } = useAuth();
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
@@ -108,12 +120,41 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
+  // Formulaire propre au type d'événement (ex. Chantier-école) — sinon formulaire de base
+  const configType = event.TypeEvenement?.config_inscription;
+  const formulaire = configInscriptionValide(configType) ? configType : null;
+  const formulaireRemplaceBase = !!formulaire?.remplace_formulaire_base;
+  const [reponses, setReponses] = useState<Reponses>({});
+  const [erreursFormulaire, setErreursFormulaire] = useState<Record<string, ErreurChamp>>({});
+
+  const changerReponse = (cle: string, valeur: ValeurReponse) => {
+    setReponses(prev => ({ ...prev, [cle]: valeur }));
+    setErreursFormulaire(prev => {
+      if (!prev[cle]) return prev;
+      const { [cle]: _corrigee, ...reste } = prev;
+      return reste;
+    });
+  };
+
   // Charger la configuration d'inscription quand le dialog s'ouvre
   useEffect(() => {
     if (isDialogOpen && isAuthenticated) {
       loadInscriptionConfig();
     }
   }, [isDialogOpen, isAuthenticated]);
+
+  // Pré-remplir les réponses connues du compte (téléphone)
+  useEffect(() => {
+    if (!isDialogOpen || !formulaire) return;
+    const telephone = (user as { telephone?: string } | null)?.telephone;
+    if (!telephone) return;
+    const champs = listerChamps(formulaire).filter(c => c.prerempli === 'telephone');
+    setReponses(prev => {
+      const complete = { ...prev };
+      for (const champ of champs) if (!complete[champ.cle]) complete[champ.cle] = telephone;
+      return complete;
+    });
+  }, [isDialogOpen, formulaire, user]);
 
   const loadInscriptionConfig = async () => {
     try {
@@ -242,14 +283,27 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       return;
     }
 
+    if (formulaire) {
+      const erreurs = verifierReponses(formulaire, reponses);
+      setErreursFormulaire(erreurs);
+      const premiere = Object.keys(erreurs)[0];
+      if (premiere) {
+        setSubmitError(t('event.registration.form.incomplete', 'Certaines réponses sont manquantes ou invalides.'));
+        document.getElementById(`inscription-${premiere}`)?.focus();
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
     try {
       const success = await onRegister({
-        nombre_personnes: nombrePersonnes,
-        commentaire: commentaire.trim() || undefined,
+        ...(formulaireRemplaceBase ? {} : {
+          nombre_personnes: nombrePersonnes,
+          commentaire: commentaire.trim() || undefined
+        }),
         oeuvres: selectedOeuvres.length > 0 ? selectedOeuvres : undefined,
-        notes: commentaire.trim() || undefined
+        reponses: formulaire ? reponsesAEnvoyer(formulaire, reponses) : undefined
       });
 
       if (success) {
@@ -257,6 +311,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         setNombrePersonnes(1);
         setCommentaire('');
         setSelectedOeuvres([]);
+        setReponses({});
+        setErreursFormulaire({});
       }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : t('event.registration.error', 'Une erreur est survenue lors de l\'inscription'));
@@ -264,6 +320,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // statut_participation de l'API → statut affiché
+  const statutAffiche: 'pending' | 'confirmed' | 'refused' =
+    registrationStatus === 'annule' ? 'refused'
+      : registrationStatus && ['confirme', 'present', 'absent'].includes(registrationStatus) ? 'confirmed'
+        : 'pending';
 
   // Badge de statut d'inscription
   const getStatusBadge = () => {
@@ -280,19 +342,14 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         icon: CheckCircle,
         label: t('event.registration.confirmed', 'Confirmée')
       },
-      cancelled: {
+      refused: {
         color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
         icon: XCircle,
-        label: t('event.registration.cancelled', 'Annulée')
-      },
-      waiting_list: {
-        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-        icon: Users,
-        label: t('event.registration.waitingList', 'Liste d\'attente')
+        label: t('event.registration.refused', 'Non retenue')
       }
     };
 
-    const status = statusConfig[registrationStatus || 'pending'];
+    const status = statusConfig[statutAffiche];
     const Icon = status.icon;
 
     return (
@@ -465,14 +522,30 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               </Link>
             </Button>
           </>
+        ) : isRegistered && statutAffiche === 'refused' ? (
+          <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
+            <XCircle className="h-5 w-5 text-red-600 mx-auto mb-1" aria-hidden="true" />
+            <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+              {t('event.registration.refusedDesc', 'Votre inscription n\'a pas été retenue par l\'organisateur')}
+            </p>
+          </div>
         ) : isRegistered ? (
           <>
-            <div className="w-full p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
-              <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                {t('event.registration.alreadyRegistered', 'Vous êtes inscrit(e)')}
-              </p>
-            </div>
+            {statutAffiche === 'pending' ? (
+              <div className="w-full p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
+                <Clock className="h-5 w-5 text-yellow-600 mx-auto mb-1" aria-hidden="true" />
+                <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">
+                  {t('event.registration.pendingDesc', 'Demande envoyée : en attente de validation par l\'organisateur')}
+                </p>
+              </div>
+            ) : (
+              <div className="w-full p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+                <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  {t('event.registration.alreadyRegistered', 'Vous êtes inscrit(e)')}
+                </p>
+              </div>
+            )}
             <Button
               variant="destructive"
               className="w-full"
@@ -490,7 +563,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 {t('event.registration.register', 'S\'inscrire')}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className={cn(formulaire && 'sm:max-w-2xl max-h-[90vh] overflow-y-auto')}>
               <DialogHeader>
                 <DialogTitle>
                   {t('event.registration.dialogTitle', 'Inscription à l\'événement')}
@@ -501,6 +574,17 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               </DialogHeader>
 
               <div className="space-y-4 py-4">
+                {/* Questions du type d'événement */}
+                {formulaire && (
+                  <FormulaireInscription
+                    config={formulaire}
+                    reponses={reponses}
+                    erreurs={erreursFormulaire}
+                    onChange={changerReponse}
+                  />
+                )}
+
+                {!formulaireRemplaceBase && (<>
                 {/* Nombre de personnes */}
                 <div className="space-y-2">
                   <Label htmlFor="nombre">
@@ -533,6 +617,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     onChange={(e) => setCommentaire(e.target.value)}
                   />
                 </div>
+                </>)}
 
                 {/* Section soumission d'œuvres selon le type d'événement */}
                 {configLoading ? (
@@ -686,10 +771,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     <span>{t('event.registration.date', 'Date')}</span>
                     <span>{event.date_debut ? formatDate(event.date_debut, { dateStyle: 'medium' }) : '-'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{t('event.registration.people', 'Personnes')}</span>
-                    <span>{nombrePersonnes}</span>
-                  </div>
+                  {!formulaireRemplaceBase && (
+                    <div className="flex justify-between">
+                      <span>{t('event.registration.people', 'Personnes')}</span>
+                      <span>{nombrePersonnes}</span>
+                    </div>
+                  )}
                   {selectedOeuvres.length > 0 && (
                     <div className="flex justify-between">
                       <span>{t('event.registration.worksSubmitted', 'Œuvres soumises')}</span>
@@ -702,7 +789,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     <span className="text-primary">
                       {event.tarif === 0 
                         ? t('events.free', 'Gratuit')
-                        : formatPrice(event.tarif * nombrePersonnes)
+                        : formatPrice(event.tarif * (formulaireRemplaceBase ? 1 : nombrePersonnes))
                       }
                     </span>
                   </div>

@@ -250,7 +250,20 @@ describe('Evenement Routes Integration', () => {
       const res = await request(app).post('/api/evenements/9/register').send({}).expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(mockEvenementService.registerParticipant).toHaveBeenCalledWith(9, 1);
+      expect(mockEvenementService.registerParticipant).toHaveBeenCalledWith(9, 1, {
+        nombre_personnes: undefined, commentaire: undefined, reponses: undefined
+      });
+    });
+
+    it('transmet les réponses au formulaire d\'inscription du type d\'événement', async () => {
+      mockEvenementService.registerParticipant.mockResolvedValue({ success: true });
+      const reponses = { tel: '0555 00 00 00', ville: 'Batna', frais: true };
+
+      await request(app).post('/api/evenements/9/register').send({ nombre_personnes: 1, reponses }).expect(200);
+
+      expect(mockEvenementService.registerParticipant).toHaveBeenCalledWith(9, 1, {
+        nombre_personnes: 1, commentaire: undefined, reponses
+      });
     });
   });
 

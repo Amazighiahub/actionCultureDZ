@@ -131,7 +131,7 @@ const AjouterOeuvre: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <Button type="button" variant="outline" size="sm" className="hover-lift"
                     onClick={() => window.history.back()}>
-                    <ArrowLeft className="h-4 w-4 me-2" />{t("ajouteroeuvre.retour")}
+                    <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("ajouteroeuvre.retour")}
                   </Button>
                   <div>
                     <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">{t("ajouteroeuvre.ajouter_une_uvre")}</h1>
@@ -169,7 +169,7 @@ const AjouterOeuvre: React.FC = () => {
                 {/* Type d'œuvre */}
                 <Card className="shadow-cultural">
                   <CardHeader>
-                    <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.type_duvre")}<span className="text-destructive ml-1">*</span></CardTitle>
+                    <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.type_duvre")}<span className="text-destructive ms-1">*</span></CardTitle>
                     <p className="text-sm text-muted-foreground mt-2">
                       {t("ajouteroeuvre.type_hint", "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).")}
                     </p>
@@ -293,7 +293,7 @@ const AjouterOeuvre: React.FC = () => {
                           </Label>
                         </div>
                         {formData.is_traduction && (
-                          <div className="space-y-2 pl-7">
+                          <div className="space-y-2 ps-7">
                             <Label>{t('ajouteroeuvre.oeuvreOriginale', 'Œuvre originale')}</Label>
                             <Input placeholder={t('ajouteroeuvre.rechercherOeuvre', 'Rechercher l\'œuvre originale par titre...')}
                               value={formData.oeuvre_originale_titre || ''}
@@ -312,7 +312,7 @@ const AjouterOeuvre: React.FC = () => {
                             {searchOeuvreResults.length > 0 && !formData.id_oeuvre_originale && (
                               <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
                                 {searchOeuvreResults.map((o: any) => (
-                                  <button key={o.id_oeuvre} type="button" className="w-full text-left p-2 hover:bg-muted text-sm"
+                                  <button key={o.id_oeuvre} type="button" className="w-full text-start p-2 hover:bg-muted text-sm"
                                     onClick={() => {
                                       handleInputChange('id_oeuvre_originale', o.id_oeuvre);
                                       const titre = typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre;
@@ -320,7 +320,7 @@ const AjouterOeuvre: React.FC = () => {
                                       setSearchOeuvreResults([]);
                                     }}>
                                     {typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre}
-                                    {o.Langue && <span className="text-muted-foreground ml-2">({getLocalizedText(o.Langue.nom)})</span>}
+                                    {o.Langue && <span className="text-muted-foreground ms-2">({getLocalizedText(o.Langue.nom)})</span>}
                                   </button>
                                 ))}
                               </div>
@@ -353,7 +353,7 @@ const AjouterOeuvre: React.FC = () => {
                     {/* Qui est l'auteur ? */}
                     <Card className="shadow-cultural">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-serif">{t('ajouteroeuvre.quiEstAuteur', 'Qui est l\'auteur ?')}<span className="text-destructive ml-1">*</span></CardTitle>
+                        <CardTitle className="text-2xl font-serif">{t('ajouteroeuvre.quiEstAuteur', 'Qui est l\'auteur ?')}<span className="text-destructive ms-1">*</span></CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-3">

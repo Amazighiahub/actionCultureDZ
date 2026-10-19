@@ -6,6 +6,7 @@
 const { Op } = require('sequelize');
 const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
+const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -84,23 +85,63 @@ class PatrimoineService extends BaseService {
   // ============================================================================
 
   /** Types Monument/Vestige autorisés (alignés avec la base) */
-  static MONUMENT_TYPES = ['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée'];
-  static VESTIGE_TYPES = ['Ruines', 'Murailles', 'Site archéologique'];
+  static MONUMENT_TYPES = MONUMENT_TYPES;
+  static VESTIGE_TYPES = VESTIGE_TYPES;
 
   /**
-   * Normalise le type monument (mappe "Autre" vers un type valide)
+   * Normalise le type monument (type inconnu → « Autre »)
    */
   _normalizeMonumentType(type) {
-    const valid = PatrimoineService.MONUMENT_TYPES;
-    return valid.includes(type) ? type : 'Palais';
+    return MONUMENT_TYPES.includes(type) ? type : 'Autre';
   }
 
   /**
-   * Normalise le type vestige
+   * Normalise le type vestige (type inconnu → « Autre »)
    */
   _normalizeVestigeType(type) {
-    const valid = PatrimoineService.VESTIGE_TYPES;
-    return valid.includes(type) ? type : 'Ruines';
+    return VESTIGE_TYPES.includes(type) ? type : 'Autre';
+  }
+
+  /**
+   * Site auquel rattacher un point de visite, ou null pour un lieu principal.
+   * Refuse un site inexistant, un arbre trop profond, et (en modification) une boucle
+   * où un lieu deviendrait le point de l'un de ses propres points.
+   * @param {number|string|null} idParent
+   * @param {Object} [options]
+   * @param {number} [options.idLieu] - lieu modifié (contrôle de boucle)
+   */
+  async _resolveParent(idParent, { idLieu } = {}) {
+    if (idParent === undefined || idParent === null || idParent === '') return null;
+    const id = parseInt(idParent, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      throw this._validationError('Site parent invalide');
+    }
+    if (idLieu && id === idLieu) {
+      throw this._validationError('Un lieu ne peut pas être un point de lui-même');
+    }
+    const parent = await this.models.Lieu.findByPk(id);
+    if (!parent) {
+      throw this._validationError('Le site parent n\'existe pas');
+    }
+    const ancetres = await this.repository.findAncetres(parent.id_lieu_parent);
+    if (idLieu && ancetres.some(a => a.id_lieu === idLieu)) {
+      throw this._validationError('Ce rattachement créerait une boucle entre les lieux');
+    }
+    // ancêtres + site parent + le point lui-même
+    if (ancetres.length + 2 > MAX_NIVEAUX_LIEU) {
+      throw this._validationError(`Un site ne peut pas dépasser ${MAX_NIVEAUX_LIEU} niveaux (site › point › sous-point…)`);
+    }
+    return parent;
+  }
+
+  /**
+   * Ordre d'un nouveau point : celui demandé, sinon à la suite des points du site
+   */
+  async _ordreVisite(ordre, idParent, transaction) {
+    const demande = parseInt(ordre, 10);
+    if (Number.isInteger(demande) && demande >= 0) return demande;
+    const max = await this.models.Lieu.max('ordre_visite', { where: { id_lieu_parent: idParent }, transaction });
+    return (Number(max) || 0) + 1;
   }
 
   /**
@@ -118,6 +159,19 @@ class PatrimoineService extends BaseService {
     }
     if (!data.nom) {
       throw this._validationError('Le nom du site est requis');
+    }
+    // Point de visite : sans position propre (salle d'un musée…), il reprend celle du site,
+    // et il est toujours dans la commune du site
+    const parent = await this._resolveParent(data.id_lieu_parent);
+    if (parent) {
+      const sansPosition = !data.latitude && !data.longitude;
+      data = {
+        ...data,
+        latitude: sansPosition ? parent.latitude : data.latitude,
+        longitude: sansPosition ? parent.longitude : data.longitude,
+        communeId: data.communeId || parent.communeId,
+        localiteId: data.localiteId !== undefined ? data.localiteId : parent.localiteId
+      };
     }
     if (!data.latitude || !data.longitude) {
       throw this._validationError('Les coordonnées GPS sont requises');
@@ -166,9 +220,12 @@ class PatrimoineService extends BaseService {
         const nomSearch = typeof data.nom === 'object' ? (data.nom.fr || data.nom.ar || '') : data.nom;
         if (nomSearch && data.communeId) {
           const { Sequelize } = require('sequelize');
+          // Un point n'est comparé qu'aux autres points du même site (« Salle 1 » existe
+          // dans plusieurs musées d'une même commune) ; un site, qu'aux autres sites
           const existingByName = await Lieu.findOne({
             where: {
               communeId: data.communeId,
+              id_lieu_parent: parent ? parent.id_lieu : null,
               [Op.or]: [
                 Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.fr'")), nomSearch),
                 Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.ar'")), nomSearch),
@@ -186,12 +243,13 @@ class PatrimoineService extends BaseService {
           }
         }
 
-        // Vérifier aussi par coordonnées proches
+        // Vérifier aussi par coordonnées proches — sauf pour un point de visite :
+        // l'Arc de Trajan est à moins de 100 m de Timgad, ce n'est pas un doublon
         const tolerance = 0.001; // ~100 mètres
         const lat = Number(data.latitude);
         const lon = Number(data.longitude);
         let existingByCoords = null;
-        if (Number.isFinite(lat) && Number.isFinite(lon) && lat !== 0 && lon !== 0) {
+        if (!parent && Number.isFinite(lat) && Number.isFinite(lon) && lat !== 0 && lon !== 0) {
           existingByCoords = await Lieu.findOne({
             where: {
               latitude: { [Op.between]: [lat - tolerance, lat + tolerance] },
@@ -218,7 +276,10 @@ class PatrimoineService extends BaseService {
             communeId: data.communeId,
             localiteId: data.localiteId || null,
             id_createur: data.id_createur || null,
-            statut: (isModerator && data.statut) || 'publie'
+            statut: (isModerator && data.statut) || 'publie',
+            id_lieu_parent: parent ? parent.id_lieu : null,
+            ordre_visite: parent ? await this._ordreVisite(data.ordre_visite, parent.id_lieu, transaction) : null,
+            repere: parent && !isEmptyMultilang(data.repere) ? data.repere : null
           };
           const site = await Lieu.create(entityData, { transaction });
           lieuId = site.id_lieu;
@@ -367,6 +428,15 @@ class PatrimoineService extends BaseService {
       if (data.typePatrimoine) updateData.typePatrimoine = data.typePatrimoine;
       if (data.communeId) updateData.communeId = data.communeId;
       if (data.localiteId !== undefined) updateData.localiteId = data.localiteId;
+      if (data.id_lieu_parent !== undefined) {
+        const parent = await this._resolveParent(data.id_lieu_parent, { idLieu: lieuId });
+        updateData.id_lieu_parent = parent ? parent.id_lieu : null;
+      }
+      if (data.ordre_visite !== undefined) {
+        const ordre = parseInt(data.ordre_visite, 10);
+        updateData.ordre_visite = Number.isInteger(ordre) && ordre >= 0 ? ordre : null;
+      }
+      if (data.repere !== undefined) updateData.repere = isEmptyMultilang(data.repere) ? null : data.repere;
 
       if (Object.keys(updateData).length > 0) {
         await existing.update(updateData, { transaction });
@@ -567,8 +637,12 @@ class PatrimoineService extends BaseService {
 
   /**
    * Upload de médias pour un site
+   * @param {number} siteId
+   * @param {Array} files
+   * @param {Object} [options]
+   * @param {string} [options.langue] - langue des enregistrements audio envoyés
    */
-  async uploadMedias(siteId, files) {
+  async uploadMedias(siteId, files, { langue } = {}) {
     const { Lieu, LieuMedia } = this.models || {};
     if (!Lieu || !LieuMedia) throw this._validationError('Modèles non disponibles');
 
@@ -579,22 +653,59 @@ class PatrimoineService extends BaseService {
     if (!files || files.length === 0) {
       throw this._validationError('Aucun fichier fourni');
     }
+    if (langue && !LANGUES_AUDIO.includes(langue)) {
+      throw this._validationError('Langue de l\'enregistrement invalide');
+    }
     const medias = await Promise.all(files.map(async (file) => {
       // multer-storage-cloudinary expose file.path = URL Cloudinary securisee
       // file.filename = public_id Cloudinary (pour suppression future)
       const url = file.path || file.secure_url || file.url;
       if (!url) throw new Error(`Upload Cloudinary échoué pour ${file.originalname}`);
+      // Un .m4a de téléphone Android a l'en-tête d'un MP4 vidéo : l'extension d'origine tranche
+      const nomAudio = /\.(m4a|mp3|wav|ogg|aac)$/i.test(file.originalname || '');
       const type = file.mimetype?.startsWith('image') ? 'image'
+                 : file.mimetype?.startsWith('audio') || (nomAudio && file.mimetype === 'video/mp4') ? 'audio'
                  : file.mimetype?.startsWith('video') ? 'video'
                  : 'document';
       return LieuMedia.create({
         id_lieu: siteId,
         type,
         url,
+        // La langue ne concerne que l'audio (guide, conte, prononciation)
+        langue: type === 'audio' ? (langue || null) : null,
         description: {}
       });
     }));
     return medias;
+  }
+
+  /**
+   * Réordonne les points de visite d'un site. Réservé à la modération et au créateur du site.
+   * @param {number} siteId
+   * @param {number[]} ids - tous les points du site, dans le nouvel ordre
+   */
+  async reordonnerPoints(siteId, ids, { userId, isModerator = false } = {}) {
+    const { Lieu } = this.models || {};
+    const site = await Lieu.findByPk(siteId, { attributes: ['id_lieu', 'id_createur'] });
+    if (!site) throw this._notFoundError(siteId);
+    if (!isModerator && site.id_createur !== userId) {
+      throw this._forbiddenError('Seuls le créateur du site et la modération peuvent changer l\'ordre de visite');
+    }
+    const ordre = Array.isArray(ids) ? ids.map(id => parseInt(id, 10)) : [];
+    if (ordre.length === 0 || ordre.some(id => !Number.isInteger(id)) || new Set(ordre).size !== ordre.length) {
+      throw this._validationError('Liste de points invalide');
+    }
+    const points = await Lieu.findAll({ where: { id_lieu_parent: siteId }, attributes: ['id_lieu'] });
+    const attendus = new Set(points.map(p => p.id_lieu));
+    if (ordre.length !== attendus.size || ordre.some(id => !attendus.has(id))) {
+      throw this._validationError('La liste doit contenir exactement les points de ce site');
+    }
+    await this.repository.withTransaction(async (transaction) => {
+      for (const [index, id] of ordre.entries()) {
+        await Lieu.update({ ordre_visite: index + 1 }, { where: { id_lieu: id, id_lieu_parent: siteId }, transaction });
+      }
+    });
+    return this.repository.findPointsDuSite(siteId);
   }
 
   /**

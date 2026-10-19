@@ -74,7 +74,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === 1}
           aria-label={t('common.firstPage', 'Première page')}
         >
-          <ChevronsLeft className={iconSize} />
+          <ChevronsLeft className={`${iconSize} rtl:-scale-x-100`} />
         </Button>
       )}
 
@@ -87,7 +87,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         disabled={currentPage === 1}
         aria-label={t('common.previousPage', 'Page précédente')}
       >
-        <ChevronLeft className={iconSize} />
+        <ChevronLeft className={`${iconSize} rtl:-scale-x-100`} />
       </Button>
 
       {/* Ellipse début */}
@@ -147,7 +147,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         disabled={currentPage === totalPages}
         aria-label={t('common.nextPage', 'Page suivante')}
       >
-        <ChevronRight className={iconSize} />
+        <ChevronRight className={`${iconSize} rtl:-scale-x-100`} />
       </Button>
 
       {/* Dernier */}
@@ -160,7 +160,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === totalPages}
           aria-label={t('common.lastPage', 'Dernière page')}
         >
-          <ChevronsRight className={iconSize} />
+          <ChevronsRight className={`${iconSize} rtl:-scale-x-100`} />
         </Button>
       )}
     </nav>

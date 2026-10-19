@@ -210,22 +210,22 @@ const Patrimoine = () => {
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 aria-label={t('sections.heritage.search', 'Rechercher un site...')}
                 placeholder={t('sections.heritage.search', 'Rechercher un site...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
             <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 me-2 ${loading ? 'animate-spin' : ''}`} />
               {t('common.refresh', 'Actualiser')}
             </Button>
             <Button asChild>
               <Link to={isAuthenticated ? '/ajouter-patrimoine' : '/auth'}>
-                <MapPin className="h-4 w-4 mr-2" aria-hidden="true" />
+                <MapPin className="h-4 w-4 me-2" aria-hidden="true" />
                 {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
               </Link>
             </Button>
@@ -239,7 +239,7 @@ const Patrimoine = () => {
               size="sm"
               onClick={() => setFilterType(null)}
             >
-              <Compass className="h-4 w-4 mr-2" />
+              <Compass className="h-4 w-4 me-2" />
               {t('patrimoine.filters.all', 'Tous')}
             </Button>
 
@@ -253,10 +253,10 @@ const Patrimoine = () => {
                   size="sm"
                   onClick={() => setFilterType(typeOption.value)}
                 >
-                  <Icon className="h-4 w-4 mr-2" />
+                  <Icon className="h-4 w-4 me-2" />
                   {typeOption.label}
                   {typeOption.count > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ms-2 text-xs">
                       {typeOption.count}
                     </Badge>
                   )}
@@ -275,7 +275,7 @@ const Patrimoine = () => {
                 <p className="font-semibold">{t('common.error', 'Erreur')}</p>
                 <p className="text-muted-foreground">{error}</p>
               </div>
-              <Button variant="outline" onClick={() => refetch()} className="ml-auto">
+              <Button variant="outline" onClick={() => refetch()} className="ms-auto">
                 {t('common.retry', 'Réessayer')}
               </Button>
             </CardContent>
@@ -339,14 +339,14 @@ const Patrimoine = () => {
                       loading="lazy"
                     />
                     {site.DetailLieu?.noteMoyenne && (
-                      <Badge className="absolute top-2 right-2 bg-yellow-500/90">
-                        <Star className="h-3 w-3 mr-1 fill-current" />
+                      <Badge className="absolute top-2 end-2 bg-yellow-500/90">
+                        <Star className="h-3 w-3 me-1 fill-current" />
                         {Number(site.DetailLieu.noteMoyenne).toFixed(1)}
                       </Badge>
                     )}
                     {site.qrcodes && site.qrcodes.length > 0 && (
-                      <Badge variant="secondary" className="absolute top-2 left-2">
-                        <QrCode className="h-3 w-3 mr-1" />
+                      <Badge variant="secondary" className="absolute top-2 start-2">
+                        <QrCode className="h-3 w-3 me-1" />
                         QR
                       </Badge>
                     )}
@@ -379,13 +379,13 @@ const Patrimoine = () => {
                     <div className="flex flex-wrap gap-2 text-xs">
                       {site.monuments && site.monuments.length > 0 && (
                         <Badge variant="secondary">
-                          <Landmark className="h-3 w-3 mr-1" />
+                          <Landmark className="h-3 w-3 me-1" />
                           {site.monuments.length} monuments
                         </Badge>
                       )}
                       {site.vestiges && site.vestiges.length > 0 && (
                         <Badge variant="secondary">
-                          <Building2 className="h-3 w-3 mr-1" />
+                          <Building2 className="h-3 w-3 me-1" />
                           {site.vestiges.length} vestiges
                         </Badge>
                       )}
@@ -410,7 +410,7 @@ const Patrimoine = () => {
                           to={`/patrimoine/${site.id_lieu}`}
                           aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${translate(site.nom, lang)}`}
                         >
-                          <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
+                          <Eye className="h-4 w-4 me-2" aria-hidden="true" />
                           {t('sections.heritage.discover', 'Découvrir')}
                         </Link>
                       </Button>

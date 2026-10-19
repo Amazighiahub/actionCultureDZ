@@ -78,13 +78,13 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
         />
         
         {/* Badge statut */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 start-3">
           <StatusBadge status={event.statut} />
         </div>
 
         {/* Date badge */}
         {event.date_debut && (
-          <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+          <div className="absolute bottom-3 end-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
             <div className="text-center">
               <div className="text-xl font-bold leading-none">
                 {new Date(event.date_debut).getDate()}
@@ -162,7 +162,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
               aria-label={`${t('common.viewDetails', 'Voir les détails')} : ${eventTitle}`}
             >
               {t('common.viewDetails', 'Voir')}
-              <ArrowRight className="h-4 w-4 ml-1" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4 ms-1 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </div>
@@ -243,13 +243,13 @@ const Evenements: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   aria-label={t('events.searchPlaceholder', 'Rechercher un événement...')}
                   placeholder={t('events.searchPlaceholder', 'Rechercher un événement...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                 />
               </div>
 

@@ -162,7 +162,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                 <Icon className={`h-4 w-4 ${config.color} flex-shrink-0`} />
                 <span className="truncate">{translate(service.nom, lang)}</span>
                 {service.disponible === false && (
-                  <Badge variant="outline" className="text-xs ml-auto">Fermé</Badge>
+                  <Badge variant="outline" className="text-xs ms-auto">Fermé</Badge>
                 )}
               </div>
             );

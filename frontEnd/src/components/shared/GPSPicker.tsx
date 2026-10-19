@@ -136,16 +136,16 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
       {/* Recherche d'adresse */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(); } }}
             placeholder={t('patrimoine.gps.searchPlaceholder', 'Rechercher une adresse, un lieu...')}
-            className="pl-9"
+            className="ps-9"
           />
           {searchQuery && (
-            <button type="button" onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <button type="button" onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -162,7 +162,7 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
       {searchResults.length > 0 && (
         <div className="border rounded-lg divide-y max-h-40 overflow-y-auto bg-background">
           {searchResults.map((r, i) => (
-            <button key={i} type="button" className="w-full text-left p-2 hover:bg-muted text-sm flex items-start gap-2" onClick={() => selectResult(r)}>
+            <button key={i} type="button" className="w-full text-start p-2 hover:bg-muted text-sm flex items-start gap-2" onClick={() => selectResult(r)}>
               <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
               <span className="line-clamp-2">{r.display_name}</span>
             </button>

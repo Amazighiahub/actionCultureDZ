@@ -604,7 +604,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   <Label className="text-base font-medium">{t('programme.form.participants.label')}</Label>
                   {!isReadOnly && (
                     <Button type="button" variant="outline" size="sm" onClick={addIntervenant}>
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 me-2" />
                       {t('programme.form.participants.addIntervenant')}
                     </Button>
                   )}
@@ -727,7 +727,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               <div className="space-y-3">
                 <Label className="text-base font-medium">{t('programme.form.options.optionsLabel')}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="traduction"
                       checked={formData.traduction_disponible}
@@ -737,7 +737,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     <Label htmlFor="traduction">{t('programme.form.options.translationAvailable')}</Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="enregistrement"
                       checked={formData.enregistrement_autorise}
@@ -747,7 +747,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     <Label htmlFor="enregistrement">{t('programme.form.options.recordingAllowed')}</Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="diffusion"
                       checked={formData.diffusion_live}
@@ -757,7 +757,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     <Label htmlFor="diffusion">{t('programme.form.options.liveBroadcast')}</Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="support"
                       checked={formData.support_numerique}
@@ -819,7 +819,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       <div className="flex justify-end gap-3 pt-6 border-t">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
             {t('programme.form.actions.cancel')}
           </Button>
         )}
@@ -827,12 +827,12 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
           <Button type="submit" disabled={loading || success}>
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
                 {t('programme.form.actions.saving')}
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 me-2" />
                 {mode === 'create' ? t('programme.form.actions.create') : t('programme.form.actions.update')}
               </>
             )}

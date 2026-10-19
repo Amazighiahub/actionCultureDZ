@@ -141,7 +141,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                       aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${site.nom}`}
                     >
                       {t('sections.heritage.discover')}
-                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)}`} aria-hidden="true" />
+                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} rtl:-scale-x-100`} aria-hidden="true" />
                     </Link>
                   </Button>
                 </div>
@@ -155,14 +155,14 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                     </Link>
                   </CardTitle>
                   {site.note_moyenne && (
-                    <div className={`flex items-center space-x-1 text-sm ${rtlClasses.flexRow}`}>
+                    <div className={`flex items-center space-x-1 rtl:space-x-reverse text-sm ${rtlClasses.flexRow}`}>
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-medium">{formatNumber(site.note_moyenne, { maximumFractionDigits: 1 })}</span>
                     </div>
                   )}
                 </div>
                 {getWilayaName(site, wilayasCache, i18n.language) && (
-                  <div className={`flex items-center space-x-2 text-sm text-muted-foreground ${rtlClasses.flexRow}`}>
+                  <div className={`flex items-center space-x-2 rtl:space-x-reverse text-sm text-muted-foreground ${rtlClasses.flexRow}`}>
                     <MapPin className="h-4 w-4" />
                     <span>{getWilayaName(site, wilayasCache, i18n.language)}</span>
                   </div>
@@ -175,7 +175,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                 </p>
 
                 <div className="flex items-center justify-between">
-                  <div className={`flex items-center space-x-1 text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
+                  <div className={`flex items-center space-x-1 rtl:space-x-reverse text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
                     <Eye className="h-3 w-3" />
                     <span>{formatNumber(site.nombre_avis || 0)} {t('sections.heritage.reviews')}</span>
                   </div>
@@ -190,7 +190,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
         <Button asChild size="lg" variant="outline" className="group">
           <Link to="/patrimoine">
             {t('sections.heritage.seeAll')}
-            <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+            <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} aria-hidden="true" />
           </Link>
         </Button>
       </div>

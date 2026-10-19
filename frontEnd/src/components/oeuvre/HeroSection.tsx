@@ -59,7 +59,7 @@ const ShareButton = ({
   <Popover open={shareOpen} onOpenChange={setShareOpen}>
     <PopoverTrigger asChild>
       <Button size={iconOnly ? "icon" : size} variant={variant} className={className}>
-        <Share2 className={cn("h-5 w-5", !iconOnly && "mr-2")} />
+        <Share2 className={cn("h-5 w-5", !iconOnly && "me-2")} />
         {!iconOnly && t('common.share', 'Partager')}
       </Button>
     </PopoverTrigger>

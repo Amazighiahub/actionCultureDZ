@@ -95,7 +95,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
       <Card className="shadow-cultural">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="ml-2">{t("common_categoriesection.chargement_des_catgories")}</span>
+          <span className="ms-2">{t("common_categoriesection.chargement_des_catgories")}</span>
         </CardContent>
       </Card>);
 
@@ -153,7 +153,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                 <h3 className="font-semibold text-lg">
                   {genre.nom}
                   {selectedCount > 0 &&
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ms-2">
                       {selectedCount}/{genre.categories.length}
                     </Badge>
                   }

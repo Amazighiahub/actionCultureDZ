@@ -88,7 +88,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
           onClick={() => navigate(-1)}
           aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
         </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -153,7 +153,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                       {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                         <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                           <Badge className="bg-yellow-500 text-black shadow-lg">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
+                            <Star className="h-3 w-3 me-1 fill-current" />
                             {(oeuvre as any).note_moyenne.toFixed(1)}
                           </Badge>
                         </div>
@@ -163,14 +163,14 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                       {oeuvre.Film?.duree_minutes && (
                         <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
                           <Badge className="bg-purple-600 text-white border-0 shadow-lg">
-                            <Clock className="h-3 w-3 mr-1" />
+                            <Clock className="h-3 w-3 me-1" />
                             {oeuvre.Film.duree_minutes} min
                           </Badge>
                         </div>
                       )}
 
                       {/* Infos en bas d'affiche */}
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
                         <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg">
                           {titre}
                         </h2>
@@ -182,7 +182,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                       </div>
 
                       {/* Boutons hover */}
-                      <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -227,12 +227,12 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                     )}>
                       {/* Motif pellicule en fond */}
                       <div className="absolute inset-0 opacity-5">
-                        <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
+                        <div className="absolute start-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
                           {[...Array(15)].map((_, i) => (
                             <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
                           ))}
                         </div>
-                        <div className="absolute right-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
+                        <div className="absolute end-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
                           {[...Array(15)].map((_, i) => (
                             <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
                           ))}
@@ -324,7 +324,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 variant="favorite" data-active={isFavorite}
                 aria-label={isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
               >
-                <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
+                <Heart className={cn("h-5 w-5 me-2", isFavorite && "fill-current")} aria-hidden="true" />
                 {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Favoris')}
               </Button>
               {shareButton}
@@ -349,13 +349,13 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 )}
                 {oeuvre.Film?.duree_minutes && (
                   <Badge variant="outline">
-                    <Clock className="h-3 w-3 mr-1" />
+                    <Clock className="h-3 w-3 me-1" />
                     {oeuvre.Film.duree_minutes} min
                   </Badge>
                 )}
                 {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                    <Star className="h-3 w-3 mr-1 fill-current" />
+                    <Star className="h-3 w-3 me-1 fill-current" />
                     {(oeuvre as any).note_moyenne.toFixed(1)}
                   </Badge>
                 )}
@@ -404,7 +404,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 <DialogTitle className="sr-only">{titre}</DialogTitle>
                 <button
                   onClick={() => setShowZoom(false)}
-                  className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                   aria-label={t('common.close', 'Fermer')}
                 >
                   <X className="h-6 w-6 text-white" aria-hidden="true" />
@@ -431,7 +431,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
               <DialogContent className="max-w-3xl p-0 bg-black/95 border-0">
                 <button
                   onClick={() => setShowPlayer(false)}
-                  className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                   aria-label={t('common.close', 'Fermer')}
                 >
                   <X className="h-6 w-6 text-white" aria-hidden="true" />

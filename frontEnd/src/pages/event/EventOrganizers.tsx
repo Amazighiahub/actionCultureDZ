@@ -210,7 +210,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
               {organizer.email && (
                 <Button variant="ghost" size="sm" asChild className="h-8 px-2">
                   <a href={`mailto:${organizer.email}`}>
-                    <Mail className="h-4 w-4 mr-1" />
+                    <Mail className="h-4 w-4 me-1" />
                     {t('common.email', 'Email')}
                   </a>
                 </Button>
@@ -219,7 +219,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
               {organizer.telephone && (
                 <Button variant="ghost" size="sm" asChild className="h-8 px-2">
                   <a href={`tel:${organizer.telephone}`}>
-                    <Phone className="h-4 w-4 mr-1" />
+                    <Phone className="h-4 w-4 me-1" />
                     {t('common.call', 'Appeler')}
                   </a>
                 </Button>
@@ -228,7 +228,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
               {organizer.site_web && (
                 <Button variant="ghost" size="sm" asChild className="h-8 px-2">
                   <a href={safeExternalUrl(organizer.site_web)} target="_blank" rel="noopener noreferrer">
-                    <Globe className="h-4 w-4 mr-1" />
+                    <Globe className="h-4 w-4 me-1" />
                     {t('common.website', 'Site web')}
                   </a>
                 </Button>

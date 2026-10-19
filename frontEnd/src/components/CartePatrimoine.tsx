@@ -270,7 +270,7 @@ const CartePatrimoine: React.FC = () => {
             <Dialog open={carteOuverte} onOpenChange={setCarteOuverte}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="group">
-                  <Maximize2 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                  <Maximize2 className="h-4 w-4 me-2 group-hover:scale-110 transition-transform" />
                   {t("common_cartepatrimoine.ouvrir_grand")}
                 </Button>
               </DialogTrigger>
@@ -356,7 +356,7 @@ const CartePatrimoine: React.FC = () => {
           </div>
 
           {parcoursActif !== null && (
-            <div className="mt-6 p-4 bg-muted/30 rounded-lg border-l-4 border-primary">
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg border-s-4 border-primary">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">

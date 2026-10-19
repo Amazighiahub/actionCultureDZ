@@ -145,7 +145,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
-              <div className="text-center md:border-r md:pr-6">
+              <div className="text-center md:border-e md:pe-6">
                 <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
                 <StarRating value={Math.round(averageRating)} readonly size="lg" />
                 <p className="text-sm text-muted-foreground mt-1">
@@ -195,7 +195,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
                 aria-invalid={!!error}
                 aria-describedby={error ? 'oeuvre-comment-error' : undefined}
               />
-              <p className="text-xs text-muted-foreground text-right mt-1">
+              <p className="text-xs text-muted-foreground text-end mt-1">
                 {newComment.length}/2000
               </p>
               {error && (
@@ -206,7 +206,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
               )}
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSubmitting}>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send className="h-4 w-4 me-2" />
                   {t('comments.submit', 'Publier')}
                 </Button>
               </div>

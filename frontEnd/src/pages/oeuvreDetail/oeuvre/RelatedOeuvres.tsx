@@ -52,7 +52,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
         
           {/* Badge type */}
           {oeuvre.TypeOeuvre && (
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-2 start-2">
               <Badge variant="secondary" className="bg-black/50 text-white border-0 text-xs">
                 {getTranslation(oeuvre.TypeOeuvre.nom_type, lang)}
               </Badge>
@@ -61,9 +61,9 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
 
           {/* Note */}
           {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne && (oeuvre as Oeuvre & Record<string, unknown>).note_moyenne > 0 && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 end-2">
               <Badge className="bg-yellow-500 text-black text-xs">
-                <Star className="h-3 w-3 mr-0.5 fill-current" />
+                <Star className="h-3 w-3 me-0.5 fill-current" />
                 {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne.toFixed(1)}
               </Badge>
             </div>
@@ -152,7 +152,7 @@ const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
           <Button asChild variant="outline">
             <Link to="/oeuvres">
               {t('oeuvre.browseAllOeuvres', 'Parcourir toutes les œuvres')}
-              <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+              <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </Card>
@@ -171,7 +171,7 @@ const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
         <Button asChild variant="ghost">
           <Link to="/oeuvres">
             {t('common.viewAll', 'Voir tout')}
-            <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" aria-hidden="true" />
           </Link>
         </Button>
       </div>
@@ -192,7 +192,7 @@ const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
           <Button asChild variant="outline">
             <Link to="/oeuvres">
               {t('oeuvre.moreOeuvres', 'Découvrir plus d\'œuvres')}
-              <ArrowRight className="h-4 w-4 ml-2" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </div>

@@ -181,7 +181,7 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
       <div className="flex items-center gap-4">
         {onCancel && (
           <Button variant="ghost" onClick={onCancel}>
-            <ArrowLeft className="h-5 w-5 me-2" />
+            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
         )}
@@ -196,10 +196,10 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
       {/* Mode indicator */}
       <div>
         <Badge variant={mode === 'verify' ? 'default' : 'secondary'} className="px-3 py-1">
-          {mode === 'create' && <Hammer className="h-3 w-3 mr-1" />}
-          {mode === 'edit' && <Edit className="h-3 w-3 mr-1" />}
-          {mode === 'view' && <Eye className="h-3 w-3 mr-1" />}
-          {mode === 'verify' && <Shield className="h-3 w-3 mr-1" />}
+          {mode === 'create' && <Hammer className="h-3 w-3 me-1" />}
+          {mode === 'edit' && <Edit className="h-3 w-3 me-1" />}
+          {mode === 'view' && <Eye className="h-3 w-3 me-1" />}
+          {mode === 'verify' && <Shield className="h-3 w-3 me-1" />}
           {mode === 'create' && t('artisanForm.mode.create', 'Création')}
           {mode === 'edit' && t('artisanForm.mode.edit', 'Modification')}
           {mode === 'view' && t('artisanForm.mode.view', 'Consultation')}
@@ -367,7 +367,7 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Checkbox
                     id="sur_commande"
                     checked={formData.sur_commande}
@@ -508,7 +508,7 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
                           <button
                             type="button"
                             onClick={() => onMediaRemove(index)}
-                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                            className="absolute -top-2 -end-2 bg-destructive text-white rounded-full p-1"
                           >
                             <X className="h-3 w-3" />
                           </button>

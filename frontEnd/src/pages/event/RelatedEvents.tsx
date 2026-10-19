@@ -58,7 +58,7 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
             />
             {/* Date badge */}
             {event.date_debut && (
-              <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-1.5 py-0.5 text-xs font-medium">
+              <div className="absolute bottom-1 start-1 bg-background/90 backdrop-blur-sm rounded px-1.5 py-0.5 text-xs font-medium">
                 {new Date(event.date_debut).getDate()}/{new Date(event.date_debut).getMonth() + 1}
               </div>
             )}
@@ -89,7 +89,7 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
                   </span>
                 )}
               
-                <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+                <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity rtl:-scale-x-100" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -131,13 +131,13 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         
           {/* Badge statut */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 start-3">
             <StatusBadge status={event.statut} />
           </div>
 
           {/* Date */}
           {event.date_debut && (
-            <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+            <div className="absolute bottom-3 end-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <div className="text-center">
                 <div className="text-lg font-bold leading-none">
                   {new Date(event.date_debut).getDate()}
@@ -150,7 +150,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
           )}
 
           {/* Titre superposé */}
-          <div className="absolute bottom-3 left-3 right-16">
+          <div className="absolute bottom-3 start-3 end-16">
             <h3 className="text-white font-semibold text-lg line-clamp-2">
               {td(event.nom_evenement)}
             </h3>
@@ -205,7 +205,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
             <Button asChild variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
               <span aria-hidden="true">
                 {t('common.viewDetails', 'Voir')}
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" />
               </span>
             </Button>
           </div>
@@ -282,7 +282,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
           <Button asChild variant="outline">
             <Link to="/evenements">
               {t('event.browseAllEvents', 'Parcourir tous les événements')}
-              <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+              <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </Card>
@@ -304,7 +304,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
         <Button asChild variant="ghost">
           <Link to="/evenements">
             {t('common.viewAll', 'Voir tout')}
-            <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" aria-hidden="true" />
           </Link>
         </Button>
       </div>
@@ -335,7 +335,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
           <Button asChild variant="outline">
             <Link to="/evenements">
               {t('event.moreEvents', 'Découvrir plus d\'événements')}
-              <ArrowRight className="h-4 w-4 ml-2" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </div>

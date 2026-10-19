@@ -390,12 +390,12 @@ const OeuvreDetailPage: React.FC = () => {
         <div className="container pt-4">
           {fromPath ? (
             <a href={fromPath} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-accent transition-colors">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
               {t('common.back', 'Retour')}
             </a>
           ) : (
             <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
               {t('common.back', 'Retour')}
             </Button>
           )}
@@ -655,7 +655,7 @@ const OeuvreDetailPage: React.FC = () => {
                 <CardContent>
                   {auteurInfo ? (
                     <div className="space-y-6">
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-start space-x-4 rtl:space-x-reverse">
                         <Avatar className="h-20 w-20">
                           <AvatarImage src={auteurInfo.photo_url} alt={`${auteurInfo.prenom} ${auteurInfo.nom}`} />
                           <AvatarFallback className="text-lg">
@@ -697,7 +697,7 @@ const OeuvreDetailPage: React.FC = () => {
                           to={`/oeuvres/${oeuvreAuteur.id_oeuvre}`}
                           className="group"
                         >
-                          <div className="flex items-start space-x-4 p-4 rounded-lg border hover:bg-muted transition-all duration-200">
+                          <div className="flex items-start space-x-4 rtl:space-x-reverse p-4 rounded-lg border hover:bg-muted transition-all duration-200">
                             <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                               {oeuvreAuteur.Media && oeuvreAuteur.Media.length > 0 ? (
                                 <img loading="lazy" decoding="async"
@@ -860,7 +860,7 @@ const OeuvreDetailPage: React.FC = () => {
                 onChange={(e) => setCommentContent(e.target.value)}
                 disabled={commentLoading}
               />
-              <p className="text-xs text-muted-foreground text-right">
+              <p className="text-xs text-muted-foreground text-end">
                 {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
             </div>

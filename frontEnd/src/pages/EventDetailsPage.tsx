@@ -138,7 +138,7 @@ const EventDetailsPage: React.FC = () => {
         {/* Bouton retour */}
         <div className="container pt-4">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-            <ChevronLeft className="h-4 w-4 mr-2" />
+            <ChevronLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
         </div>

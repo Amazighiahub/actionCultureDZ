@@ -48,7 +48,7 @@ const EventCard: React.FC<{ event: Evenement }> = ({ event }) => {
             />
             {/* Badge date */}
             {event.date_debut && (
-              <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-2 py-1">
+              <div className="absolute bottom-1 start-1 bg-background/90 backdrop-blur-sm rounded px-2 py-1">
                 <div className="text-center">
                   <div className="text-sm font-bold leading-none">
                     {new Date(event.date_debut).getDate()}
@@ -119,7 +119,7 @@ const EventCard: React.FC<{ event: Evenement }> = ({ event }) => {
               <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
                 <span aria-hidden="true">
                   {t('common.viewDetails', 'Voir')}
-                  <ArrowRight className="h-3 w-3 ml-1" />
+                  <ArrowRight className="h-3 w-3 ms-1 rtl:-scale-x-100" />
                 </span>
               </Button>
             </div>

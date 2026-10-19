@@ -340,16 +340,16 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         <div className="flex items-center justify-between mb-2">
           <TabsList>
             <TabsTrigger value="programmes">
-              <Calendar className="h-4 w-4 mr-2" />
+              <Calendar className="h-4 w-4 me-2" />
               {t('gestion.programmes', 'Programmes')}
             </TabsTrigger>
             <TabsTrigger value="participants">
-              <UserCheck className="h-4 w-4 mr-2" />
+              <UserCheck className="h-4 w-4 me-2" />
               {t('gestion.participants', 'Participants')}
             </TabsTrigger>
             {showOeuvresSection && (
               <TabsTrigger value="oeuvres">
-                <BookOpen className="h-4 w-4 mr-2" />
+                <BookOpen className="h-4 w-4 me-2" />
                 {t('gestion.oeuvres', 'Œuvres')}
               </TabsTrigger>
             )}
@@ -379,7 +379,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             <Dialog open={showProgrammeDialog} onOpenChange={setShowProgrammeDialog}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingProgramme(null)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t('programme.add', 'Ajouter une activité')}
                 </Button>
               </DialogTrigger>
@@ -524,7 +524,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             <Dialog open={showOeuvreDialog} onOpenChange={setShowOeuvreDialog}>
               <DialogTrigger asChild>
                 <Button disabled={!oeuvresData?.oeuvres_disponibles?.length}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t('oeuvres.addToEvent', 'Ajouter une œuvre')}
                 </Button>
               </DialogTrigger>
@@ -588,8 +588,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                   </Button>
                   <Button onClick={handleAddOeuvre} disabled={!selectedOeuvre || addingOeuvre}>
                     {addingOeuvre
-                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      : <Plus className="h-4 w-4 mr-2" />}
+                      ? <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                      : <Plus className="h-4 w-4 me-2" />}
                     {t('common.add', 'Ajouter')}
                   </Button>
                 </DialogFooter>

@@ -9,9 +9,13 @@
  *
  * L'enrichissement (histoire, gastronomie, traditions...) se fait
  * ensuite sur la page détail du site.
+ *
+ * Avec ?parent=<id> : ajout d'un point de visite à un site (Timgad › Arc de Trajan).
+ * La localisation vient du site ; le point a sa propre position GPS (extérieur)
+ * ou reprend celle du site avec un repère (intérieur : « 1er étage, salle 3 »).
  */
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -21,7 +25,7 @@ import { RequiredLabel } from '@/components/ui/required-label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   ArrowLeft, ArrowRight, MapPin, Building2, Camera,
-  Loader2, AlertCircle, CheckCircle2, Upload, X
+  Loader2, AlertCircle, CheckCircle2, Upload, X, Footprints, DoorOpen
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import MultiLangInput from '@/components/MultiLangInput';
@@ -48,6 +52,14 @@ interface FormData {
   communeId: number | null;
   latitude: number;
   longitude: number;
+  repere: { fr: string; ar: string; en: string; [key: string]: string };
+}
+
+interface SiteParent {
+  id_lieu: number;
+  nom: string;
+  latitude: number;
+  longitude: number;
 }
 
 const INITIAL_FORM: FormData = {
@@ -59,6 +71,7 @@ const INITIAL_FORM: FormData = {
   communeId: null,
   latitude: 0,
   longitude: 0,
+  repere: { fr: '', ar: '', en: '' },
 };
 
 const AjouterPatrimoineRapide: React.FC = () => {
@@ -67,8 +80,14 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const { direction } = useRTL();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const parentId = parseInt(searchParams.get('parent') || '', 10) || null;
 
-  const [step, setStep] = useState(1);
+  // Point de visite : la localisation (étape 1) vient du site parent
+  const [step, setStep] = useState(parentId ? 2 : 1);
+  const [parent, setParent] = useState<SiteParent | null>(null);
+  const [parentError, setParentError] = useState(false);
+  const [interieur, setInterieur] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [medias, setMedias] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
@@ -76,6 +95,24 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicates, setDuplicates] = useState<Array<{ id_lieu: number; nom: any; typePatrimoine: string }>>([]);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
+  useEffect(() => {
+    if (!parentId) return;
+    let actif = true;
+    patrimoineService.getSiteDetail(parentId)
+      .then((res) => {
+        const d = res.data as unknown as { id_lieu: number; nom: unknown; latitude: number | string; longitude: number | string } | undefined;
+        if (!actif) return;
+        if (!res.success || !d) { setParentError(true); return; }
+        const nom = typeof d.nom === 'string' ? d.nom : ((d.nom as Record<string, string>)?.fr || (d.nom as Record<string, string>)?.ar || '');
+        const site = { id_lieu: d.id_lieu, nom, latitude: Number(d.latitude), longitude: Number(d.longitude) };
+        setParent(site);
+        // La carte s'ouvre sur le site : il reste à déplacer le repère sur le point
+        setFormData(prev => (prev.latitude === 0 && prev.longitude === 0 ? { ...prev, latitude: site.latitude, longitude: site.longitude } : prev));
+      })
+      .catch(() => { if (actif) setParentError(true); });
+    return () => { actif = false; };
+  }, [parentId]);
 
   // Validation par étape
   const validateStep = (currentStep: number): boolean => {
@@ -93,7 +130,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
       if (!formData.typePatrimoine) {
         newErrors.type = t('patrimoine.errors.typeRequired', 'Le type de patrimoine est requis');
       }
-      if (formData.latitude === 0 && formData.longitude === 0) {
+      if (!interieur && formData.latitude === 0 && formData.longitude === 0) {
         newErrors.gps = t('patrimoine.errors.gpsRequired', 'Positionnez le site sur la carte (cliquez, cherchez une adresse ou utilisez la géolocalisation)');
       }
     }
@@ -111,8 +148,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const nextStep = async () => {
     if (!validateStep(step)) return;
 
-    // Vérification doublons à l'étape 2
-    if (step === 2 && formData.communeId) {
+    // Vérification doublons à l'étape 2 (un point est contrôlé par le serveur parmi les points du site)
+    if (step === 2 && formData.communeId && !parentId) {
       const nom = formData.nom.fr?.trim() || formData.nom.ar?.trim() || '';
       if (nom) {
         setCheckingDuplicate(true);
@@ -175,6 +212,13 @@ const AjouterPatrimoineRapide: React.FC = () => {
         adresse: formData.adresse,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        // Point de visite : commune du site ; point intérieur : position du site + repère.
+        // undefined (et non null) : le champ est omis, le serveur reprend la valeur du site
+        ...(parentId ? {
+          id_lieu_parent: parentId,
+          communeId: undefined,
+          ...(interieur ? { latitude: undefined, longitude: undefined, repere: formData.repere } : {}),
+        } : {}),
       };
 
       const response = await patrimoineService.create(createData as any);
@@ -262,13 +306,25 @@ const AjouterPatrimoineRapide: React.FC = () => {
       <main className="container py-8 max-w-2xl mx-auto">
         {/* Retour */}
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-1" />
+          <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
           {t('common.back', 'Retour')}
         </Button>
 
         <h1 className="text-3xl font-bold font-serif text-center mb-2">
-          {t('patrimoine.create.title', 'Ajouter un site patrimonial')}
+          {parentId ? t('patrimoine.points.createTitle', 'Ajouter un point de visite') : t('patrimoine.create.title', 'Ajouter un site patrimonial')}
         </h1>
+        {parentId && (
+          <Alert className={`mb-4 ${parentError ? 'border-destructive' : 'border-teal-300 bg-teal-50 dark:bg-teal-950/20'}`}>
+            <Footprints className="h-4 w-4" />
+            <AlertDescription>
+              {parentError
+                ? t('patrimoine.points.parentNotFound', 'Le site auquel rattacher ce point est introuvable.')
+                : parent
+                  ? <>{t('patrimoine.points.partOf', 'Fait partie de :')} <strong>{parent.nom}</strong></>
+                  : <Loader2 className="h-4 w-4 animate-spin" />}
+            </AlertDescription>
+          </Alert>
+        )}
         <p className="text-center text-muted-foreground mb-2">
           {t('patrimoine.create.subtitle', 'Créez rapidement, enrichissez ensuite')}
         </p>
@@ -306,7 +362,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <div className="flex justify-end mt-6">
                 <Button onClick={nextStep} size="lg">
                   {t('common.next', 'Suivant')}
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                 </Button>
               </div>
             </CardContent>
@@ -382,18 +438,59 @@ const AjouterPatrimoineRapide: React.FC = () => {
                 />
               </div>
 
-              {/* GPS via carte */}
-              <React.Suspense fallback={<div className="h-[250px] bg-muted rounded-lg animate-pulse" />}>
-                <GPSPicker
-                  latitude={formData.latitude}
-                  longitude={formData.longitude}
-                  onPositionChange={(lat, lng) => {
-                    setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
-                    setErrors(prev => { const { gps: _, ...rest } = prev; return rest; });
-                  }}
+              {/* Point de visite : position propre (extérieur) ou celle du site (intérieur) */}
+              {parentId && (
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium mb-2">{t('patrimoine.points.positionLabel', 'Position du point')}</legend>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {[
+                      { value: false, icon: MapPin, label: t('patrimoine.points.outdoor', 'Sa propre position GPS'), hint: t('patrimoine.points.outdoorHint', 'Un monument, une porte, un grenier…') },
+                      { value: true, icon: DoorOpen, label: t('patrimoine.points.indoor', 'À l\'intérieur du site'), hint: t('patrimoine.points.indoorHint', 'Une salle, une pièce, une vitrine…') },
+                    ].map(({ value, icon: Icon, label, hint }) => (
+                      <button
+                        key={String(value)}
+                        type="button"
+                        aria-pressed={interieur === value}
+                        onClick={() => { setInterieur(value); setErrors(prev => { const { gps: _, ...rest } = prev; return rest; }); }}
+                        className={`p-3 rounded-lg border text-start transition-colors ${interieur === value ? 'border-primary bg-primary/10' : 'border-input hover:border-primary/50 hover:bg-muted'}`}
+                      >
+                        <span className="flex items-center gap-2 text-sm font-medium"><Icon className="h-4 w-4" />{label}</span>
+                        <span className="block text-xs text-muted-foreground mt-1">{hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+
+              {parentId && interieur ? (
+                <MultiLangInput
+                  name="repere"
+                  label={t('patrimoine.points.repere', 'Repère dans le site')}
+                  value={formData.repere}
+                  onChange={(value: any) => setFormData(prev => ({ ...prev, repere: value }))}
+                  requiredLanguages={[]}
+                  placeholder={t('patrimoine.points.reperePlaceholder', 'Ex : 1er étage, salle 3')}
+                  maxLength={150}
                 />
-              </React.Suspense>
-              {errors.gps && <p role="alert" className="text-sm text-destructive mt-2">{errors.gps}</p>}
+              ) : (
+                <>
+                  {/* GPS via carte */}
+                  {parentId && (
+                    <p className="text-sm text-muted-foreground">{t('patrimoine.points.moveMarker', 'La carte est centrée sur le site : déplacez le repère sur l\'emplacement exact du point.')}</p>
+                  )}
+                  <React.Suspense fallback={<div className="h-[250px] bg-muted rounded-lg animate-pulse" />}>
+                    <GPSPicker
+                      latitude={formData.latitude}
+                      longitude={formData.longitude}
+                      onPositionChange={(lat, lng) => {
+                        setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                        setErrors(prev => { const { gps: _, ...rest } = prev; return rest; });
+                      }}
+                    />
+                  </React.Suspense>
+                  {errors.gps && <p role="alert" className="text-sm text-destructive mt-2">{errors.gps}</p>}
+                </>
+              )}
 
               {/* Alerte doublons */}
               {duplicates.length > 0 && (
@@ -424,14 +521,16 @@ const AjouterPatrimoineRapide: React.FC = () => {
               )}
 
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t('common.previous', 'Précédent')}
-                </Button>
-                <Button onClick={nextStep} size="lg" disabled={checkingDuplicate}>
-                  {checkingDuplicate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {parentId ? <span /> : (
+                  <Button variant="outline" onClick={prevStep}>
+                    <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
+                    {t('common.previous', 'Précédent')}
+                  </Button>
+                )}
+                <Button onClick={nextStep} size="lg" disabled={checkingDuplicate || (!!parentId && !parent)}>
+                  {checkingDuplicate ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                   {checkingDuplicate ? t('patrimoine.checking', 'Vérification...') : t('common.next', 'Suivant')}
-                  {!checkingDuplicate && <ArrowRight className="h-4 w-4 ml-2" />}
+                  {!checkingDuplicate && <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />}
                 </Button>
               </div>
             </CardContent>
@@ -445,7 +544,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-primary" />
                 {t('patrimoine.create.step3', 'Ajoutez des photos')}
-                <span className="text-destructive ml-1">*</span>
+                <span className="text-destructive ms-1">*</span>
               </CardTitle>
               <CardDescription>
                 {t('patrimoine.create.step3Desc', 'Au moins une photo pour illustrer le site')}
@@ -488,7 +587,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleMediaRemove(index)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 end-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -509,7 +608,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     <div className="text-muted-foreground">{t('patrimoine.fields.adresse', 'Adresse')}</div>
                     <div className="font-medium">{formData.adresse.fr || formData.adresse.ar || '—'}</div>
                     <div className="text-muted-foreground">{t('patrimoine.fields.position', 'GPS')}</div>
-                    <div className="font-medium">{formData.latitude !== 0 ? `${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}` : t('patrimoine.create.noGPS', 'Non défini (centre Algérie)')}</div>
+                    <div className="font-medium">{parentId && interieur
+                      ? `${t('patrimoine.points.indoor', 'À l\'intérieur du site')}${formData.repere.fr || formData.repere.ar ? ` — ${formData.repere.fr || formData.repere.ar}` : ''}`
+                      : formData.latitude !== 0 ? `${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}` : t('patrimoine.create.noGPS', 'Non défini (centre Algérie)')}</div>
                     <div className="text-muted-foreground">{t('patrimoine.create.photos', 'Photos')}</div>
                     <div className="font-medium">{medias.length}</div>
                   </div>
@@ -518,18 +619,18 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                   {t('common.previous', 'Précédent')}
                 </Button>
                 <Button onClick={handleSubmit} size="lg" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                       {t('patrimoine.create.publishing', 'Publication en cours...')}
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <CheckCircle2 className="h-4 w-4 me-2" />
                       {t('patrimoine.create.publish', 'Publier le site')}
                     </>
                   )}

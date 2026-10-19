@@ -109,7 +109,7 @@ const APropos = () => {
               <h2 className="text-2xl font-semibold font-serif">{t("apropos.nos_valeurs")}</h2>
               {valeurs.map((valeur) =>
               <Card key={valeur.title} className="p-6 hover-lift">
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-4 rtl:space-x-reverse">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-current/10 ${valeur.color}`}>
                       <valeur.icon className="h-5 w-5" />
                     </div>
@@ -126,7 +126,7 @@ const APropos = () => {
           {/* Contact */}
           <div className="space-y-6">
             <Card className="p-8">
-              <div className="flex items-center space-x-3 mb-6">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse mb-6">
                 <Mail className="h-6 w-6 text-primary" />
                 <h2 className="text-2xl font-semibold font-serif">{t("apropos.nous_contacter")}</h2>
               </div>
@@ -166,7 +166,7 @@ const APropos = () => {
                 </div>
 
                 <Button type="submit" className="w-full btn-hover" disabled={sending}>
-                  {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  {sending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Send className="h-4 w-4 me-2" />}
                   {t("apropos.envoyer_message")}
                 </Button>
               </form>
@@ -227,7 +227,7 @@ const APropos = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.donnees", "2. Données collectées")}</h3>
                 <p className="mb-2">{t("apropos.privacy.donneesIntro", "Nous collectons uniquement les données nécessaires au fonctionnement de la Plateforme :")}</p>
-                <ul className="list-disc list-inside space-y-1 ml-2">
+                <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.donneesIdentite", "Données d'identité : nom, prénom, adresse email (obligatoires à l'inscription)")}</li>
                   <li>{t("apropos.privacy.donneesOptionnelles", "Données optionnelles : date de naissance, sexe, téléphone, adresse, photo de profil, biographie")}</li>
                   <li>{t("apropos.privacy.donneesPro", "Données professionnelles (si applicable) : entreprise, spécialités, certifications, site web")}</li>
@@ -238,7 +238,7 @@ const APropos = () => {
 
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.finalites", "3. Finalités et base légale")}</h3>
-                <ul className="list-disc list-inside space-y-1 ml-2">
+                <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.finaliteCompte", "Gestion de votre compte et authentification — base légale : exécution du contrat (CGU)")}</li>
                   <li>{t("apropos.privacy.finaliteContenu", "Publication et affichage de vos contenus culturels — base légale : exécution du contrat")}</li>
                   <li>{t("apropos.privacy.finaliteStats", "Statistiques anonymisées de fréquentation — base légale : intérêt légitime")}</li>
@@ -249,7 +249,7 @@ const APropos = () => {
 
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.conservation", "4. Durée de conservation")}</h3>
-                <ul className="list-disc list-inside space-y-1 ml-2">
+                <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.conservationCompte", "Données de compte : conservées tant que votre compte est actif")}</li>
                   <li>{t("apropos.privacy.conservationNotifs", "Notifications : supprimées automatiquement après 90 jours")}</li>
                   <li>{t("apropos.privacy.conservationLogs", "Journaux de connexion : 90 jours maximum")}</li>
@@ -261,7 +261,7 @@ const APropos = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.droits", "5. Vos droits")}</h3>
                 <p className="mb-2">{t("apropos.privacy.droitsIntro", "Conformément à la législation en vigueur et au RGPD, vous disposez des droits suivants :")}</p>
-                <ul className="list-disc list-inside space-y-1 ml-2">
+                <ul className="list-disc list-inside space-y-1 ms-2">
                   <li><strong>{t("apropos.privacy.droitAcces", "Droit d'accès")}</strong> {t("apropos.privacy.droitAccesDesc", "— consulter et exporter toutes vos données depuis votre profil")}</li>
                   <li><strong>{t("apropos.privacy.droitRectification", "Droit de rectification")}</strong> {t("apropos.privacy.droitRectificationDesc", "— modifier vos informations personnelles à tout moment")}</li>
                   <li><strong>{t("apropos.privacy.droitSuppression", "Droit à l'effacement")}</strong> {t("apropos.privacy.droitSuppressionDesc", "— supprimer votre compte et toutes vos données personnelles")}</li>
@@ -274,7 +274,7 @@ const APropos = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.soustraitants", "6. Sous-traitants")}</h3>
                 <p className="mb-2">{t("apropos.privacy.soustraitantsIntro", "Pour assurer le fonctionnement de la Plateforme, nous faisons appel aux services suivants :")}</p>
-                <ul className="list-disc list-inside space-y-1 ml-2">
+                <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.soustraitantCloudinary", "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)")}</li>
                   <li>{t("apropos.privacy.soustraitantEmail", "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)")}</li>
                   <li>{t("apropos.privacy.soustraitantOSM", "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche")}</li>

@@ -210,7 +210,7 @@ const ViewProgrammePage: React.FC = () => {
               onClick={handleBack}
               className="flex items-center gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
               {t('programmePages.actions.backToEvent')}
             </Button>
             <h1 className="text-3xl font-bold">{t('programmePages.view.title')}</h1>
@@ -433,7 +433,7 @@ const ViewProgrammePage: React.FC = () => {
           {t('programmePages.view.quickActions.addAnotherProgram')}
         </Button>
         <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 me-2" />
+          <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
           {t('programmePages.actions.backToEvent')}
         </Button>
       </div>

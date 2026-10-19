@@ -850,7 +850,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                                 <button
                                   type="button"
                                   onClick={removePhoto}
-                                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors shadow-sm"
+                                  className="absolute -top-2 -end-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors shadow-sm"
                                   aria-label={t('auth.register.removePhoto')}
                                 >
                                   <X className="h-3 w-3" />
@@ -960,7 +960,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         </Label>
                       </div>
                       {registerErrors.accepte_conditions && (
-                        <p id="auth-conditions-error" role="alert" className="text-sm text-destructive ml-6">{registerErrors.accepte_conditions}</p>
+                        <p id="auth-conditions-error" role="alert" className="text-sm text-destructive ms-6">{registerErrors.accepte_conditions}</p>
                       )}
                       
                       <div className="flex items-start gap-2">

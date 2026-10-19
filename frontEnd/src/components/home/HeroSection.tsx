@@ -186,15 +186,13 @@ const HeroSection: React.FC = () => {
       <div className="relative z-10 h-full flex items-center">
         {/* ✅ Container avec padding responsive */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 2xl:px-24">
-          {/* ✅ Contenu centré sur mobile, décalé vers la droite sur desktop */}
-          <div className={`
+          {/* Contenu centré sur mobile, décalé du bord de début de ligne sur ordinateur
+              (ms/me et text-start suivent dir="rtl" : pas de cas particulier pour l'arabe) */}
+          <div className="
             w-full max-w-4xl
-            text-center sm:text-left
-            ${isRtl
-              ? 'sm:mr-0 sm:ml-auto sm:text-right'
-              : 'sm:ml-8 md:ml-16 lg:ml-24 xl:ml-32 2xl:ml-40 sm:mr-auto'
-            }
-          `}>
+            text-center sm:text-start
+            sm:ms-8 md:ms-16 lg:ms-24 xl:ms-32 2xl:ms-40 sm:me-auto
+          ">
             
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/20 backdrop-blur-sm mb-4 sm:mb-6">
@@ -343,7 +341,7 @@ const HeroSection: React.FC = () => {
             onClick={() => setPaused((p) => !p)}
             aria-label={paused ? t('home.hero.play', 'Reprendre le défilement') : t('home.hero.pause', 'Mettre en pause le défilement')}
             aria-pressed={paused}
-            className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/30 text-white hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="ms-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/30 text-white hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             {paused ? <Play className="h-3 w-3" aria-hidden="true" /> : <Pause className="h-3 w-3" aria-hidden="true" />}
           </button>
@@ -351,7 +349,7 @@ const HeroSection: React.FC = () => {
       </div>
 
       {/* ===== GRADIENT BAS ===== */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 start-0 end-0 h-24 sm:h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
     </section>
   );
 };

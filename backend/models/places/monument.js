@@ -1,5 +1,6 @@
 // models/Monument.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
+const { MONUMENT_TYPES } = require('../../constants/patrimoineTypes');
 
 module.exports = (sequelize) => {
   const Monument = sequelize.define('Monument', {
@@ -31,7 +32,7 @@ module.exports = (sequelize) => {
       comment: 'Description en plusieurs langues'
     },
     type: {
-      type: DataTypes.ENUM('Mosquée', 'Palais', 'Statue', 'Tour', 'Musée'),
+      type: DataTypes.ENUM(...MONUMENT_TYPES),
       allowNull: false,
       index: true
     }

@@ -44,7 +44,7 @@ const EventParticipants: React.FC<EventParticipantsProps> = ({ participants, tot
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             {t('event.participants.title', 'Participants')}
-            <Badge variant="secondary" className="ml-auto">
+            <Badge variant="secondary" className="ms-auto">
               {total} {t('event.participants.confirmed', 'confirmé(s)')}
             </Badge>
           </CardTitle>

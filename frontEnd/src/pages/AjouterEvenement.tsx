@@ -542,7 +542,7 @@ const AjouterEvenement = () => {
           {/* En-tête */}
           <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
             <Button variant="outline" size="sm" asChild><Link to="/dashboard-pro">
-                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)} rtl:-scale-x-100`} />
                 {t('common.backToDashboard')}
               </Link></Button>
             <div>
@@ -607,7 +607,7 @@ const AjouterEvenement = () => {
                   <button
                     type="button"
                     onClick={() => setIsVirtual(false)}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    className={`p-4 rounded-lg border-2 transition-all text-start ${
                       !isVirtual
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
@@ -623,7 +623,7 @@ const AjouterEvenement = () => {
                   <button
                     type="button"
                     onClick={() => setIsVirtual(true)}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    className={`p-4 rounded-lg border-2 transition-all text-start ${
                       isVirtual
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
@@ -970,7 +970,7 @@ const AjouterEvenement = () => {
                           type="button"
                           variant="destructive"
                           size="sm"
-                          className="absolute top-2 right-2"
+                          className="absolute top-2 end-2"
                           onClick={() => {
                             setAffiche(null);
                             setAffichePreview(null);

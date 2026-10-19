@@ -139,7 +139,7 @@ const ForgotPassword = () => {
 
                 <div className="text-center pt-4">
                   <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>
                 </div>
@@ -211,7 +211,7 @@ const ForgotPassword = () => {
 
                 <div className="text-center pt-4">
                   <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>
                 </div>

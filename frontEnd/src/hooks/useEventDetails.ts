@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoriCheck } from '@/hooks/useFavoris';
-import { evenementService } from '@/services/evenement.service';
+import { evenementService, type InscriptionPayload } from '@/services/evenement.service';
 import { programmeService } from '@/services/programme.service';
 import { commentaireService } from '@/services/commentaire.service';
 import type { Evenement } from '@/types/models/evenement.types';
@@ -189,20 +189,18 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
   // Inscription à l'événement
   const registerMutation = useMutation({
-    mutationFn: async (data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }) => {
+    mutationFn: async (data?: InscriptionPayload) => {
       const response = await evenementService.inscription(eventId, data);
       if (!response.success) {
         throw new Error(response.error || 'Erreur lors de l\'inscription');
       }
       return response;
     },
-    onSuccess: (response) => {
-      const oeuvresCount = response.data?.oeuvres_soumises || 0;
+    onSuccess: () => {
+      // L'inscription reste en attente jusqu'à la validation de l'organisateur
       toast({
-        title: t('event.registration.success', 'Inscription confirmée'),
-        description: oeuvresCount > 0
-          ? t('event.registration.successWithWorks', 'Vous êtes inscrit avec {{count}} œuvre(s) soumise(s)', { count: oeuvresCount })
-          : t('event.registration.successDesc', 'Vous êtes inscrit à cet événement'),
+        title: t('event.registration.sentTitle', 'Demande d\'inscription envoyée'),
+        description: t('event.registration.sentDesc', 'L\'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.'),
       });
       queryClient.invalidateQueries({ queryKey: eventKey });
       queryClient.invalidateQueries({ queryKey: registrationKey });
@@ -324,7 +322,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   // ACTIONS WRAPPER
   // ============================================
 
-  const registerToEvent = async (data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }) => {
+  const registerToEvent = async (data?: InscriptionPayload) => {
     if (!isAuthenticated) {
       toast({
         title: t('auth.required', 'Connexion requise'),
@@ -400,7 +398,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
     // Inscription
     isRegistered: registrationQuery.data?.isRegistered || false,
-    registrationStatus: registrationQuery.data?.status as 'pending' | 'confirmed' | 'cancelled' | 'waiting_list' | undefined,
+    registrationStatus: registrationQuery.data?.status ?? undefined,
 
     // Actions
     registerToEvent,

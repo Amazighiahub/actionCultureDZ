@@ -5,6 +5,7 @@
 
 const BaseRepository = require('./baseRepository');
 const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
+const { MAX_NIVEAUX_LIEU } = require('../constants/patrimoineTypes');
 
 class PatrimoineRepository extends BaseRepository {
   constructor(models) {
@@ -140,7 +141,8 @@ class PatrimoineRepository extends BaseRepository {
   async findPopular(options = {}) {
     const { limit = 6, typePatrimoine } = options;
     // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
-    const where = { statut: 'publie' };
+    // Les points de visite d'un site s'affichent sur sa fiche, pas dans les listes
+    const where = { statut: 'publie', id_lieu_parent: null };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     const sites = await this.model.findAll({
@@ -162,7 +164,7 @@ class PatrimoineRepository extends BaseRepository {
     const p = parseInt(page);
     const l = parseInt(limit);
     // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
-    const where = { statut: 'publie' };
+    const where = { statut: 'publie', id_lieu_parent: null };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     let include = this._defaultIncludes();
@@ -226,10 +228,73 @@ class PatrimoineRepository extends BaseRepository {
       includes.push({ model: this.models.Programme, required: false });
     }
 
+    // Points de visite publiés, dans l'ordre de la visite, avec leurs images
+    includes.push({
+      model: this.model,
+      as: 'SousLieux',
+      required: false,
+      separate: true,
+      where: { statut: 'publie' },
+      attributes: ['id_lieu', 'nom', 'typePatrimoine', 'latitude', 'longitude', 'ordre_visite', 'repere', 'id_lieu_parent'],
+      order: [['ordre_visite', 'ASC'], ['id_lieu', 'ASC']],
+      include: [
+        ...(this.models.LieuMedia ? [{
+          model: this.models.LieuMedia,
+          required: false,
+          separate: true,
+          where: { type: 'image' },
+          // pas de limit : avec separate, elle porterait sur l'ensemble des points
+          attributes: ['id', 'url', 'type', 'id_lieu'],
+          order: [['id', 'ASC']]
+        }] : []),
+        ...(this.models.DetailLieu ? [{
+          model: this.models.DetailLieu,
+          required: false,
+          attributes: ['id_detailLieu', 'description']
+        }] : [])
+      ]
+    });
+
     const site = await this.model.findByPk(id, { include: includes });
     if (!site) return null;
 
-    return this._formatLocation(site.get({ plain: true }));
+    const data = this._formatLocation(site.get({ plain: true }));
+    data.Ancetres = await this.findAncetres(data.id_lieu_parent);
+    data.Voisins = data.id_lieu_parent ? await this.findPointsDuSite(data.id_lieu_parent) : [];
+    return data;
+  }
+
+  /**
+   * Chemin vers le site principal, du plus haut au plus proche : [Timgad, Musée de Timgad].
+   * Une requête par niveau, bornée par MAX_NIVEAUX_LIEU (protège aussi d'un cycle en base).
+   */
+  async findAncetres(idParent) {
+    const ancetres = [];
+    const vus = new Set();
+    let courant = idParent;
+    while (courant && !vus.has(courant) && ancetres.length < MAX_NIVEAUX_LIEU) {
+      vus.add(courant);
+      const parent = await this.model.findByPk(courant, {
+        attributes: ['id_lieu', 'nom', 'typePatrimoine', 'latitude', 'longitude', 'communeId', 'localiteId', 'id_lieu_parent', 'statut', 'id_createur']
+      });
+      if (!parent) break;
+      ancetres.unshift(parent.get({ plain: true }));
+      courant = parent.id_lieu_parent;
+    }
+    return ancetres;
+  }
+
+  /**
+   * Points publiés d'un site, dans l'ordre de visite (navigation point précédent / suivant)
+   */
+  async findPointsDuSite(idSite) {
+    const points = await this.model.findAll({
+      where: { id_lieu_parent: idSite, statut: 'publie' },
+      attributes: ['id_lieu', 'nom', 'ordre_visite'],
+      order: [['ordre_visite', 'ASC'], ['id_lieu', 'ASC']],
+      limit: 200
+    });
+    return points.map(p => p.get({ plain: true }));
   }
 
   /**
@@ -245,6 +310,8 @@ class PatrimoineRepository extends BaseRepository {
         seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
         seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
         seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.en'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.\"tz-ltn\"'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.\"tz-tfng\"'")), { [Op.like]: pattern }),
         seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.fr'")), { [Op.like]: pattern }),
         seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.ar'")), { [Op.like]: pattern })
       ]
@@ -254,7 +321,11 @@ class PatrimoineRepository extends BaseRepository {
       page,
       limit,
       where,
-      include: this._defaultIncludes(),
+      // Les points de visite sont trouvés aussi : le site auquel ils appartiennent est joint
+      include: [
+        ...this._defaultIncludes(),
+        { model: this.model, as: 'Parent', required: false, attributes: ['id_lieu', 'nom'] }
+      ],
       order: [['id_lieu', 'DESC']]
     });
   }
@@ -265,7 +336,7 @@ class PatrimoineRepository extends BaseRepository {
   async findForMap(options = {}) {
     const { typePatrimoine, wilayaId } = options;
     // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
-    const where = { statut: 'publie' };
+    const where = { statut: 'publie', id_lieu_parent: null };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     const include = [];

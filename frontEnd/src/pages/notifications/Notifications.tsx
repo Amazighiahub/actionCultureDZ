@@ -60,10 +60,10 @@ const NotificationItem: React.FC<{
 
   const getPriorityStyles = (priority?: string): string => {
     switch (priority) {
-      case 'urgente':return 'border-l-4 border-red-500';
-      case 'haute':return 'border-l-4 border-orange-500';
-      case 'normale':return 'border-l-4 border-blue-500';
-      default:return 'border-l-4 border-border';
+      case 'urgente':return 'border-s-4 border-red-500';
+      case 'haute':return 'border-s-4 border-orange-500';
+      case 'normale':return 'border-s-4 border-blue-500';
+      default:return 'border-s-4 border-border';
     }
   };
 

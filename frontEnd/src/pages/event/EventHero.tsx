@@ -129,20 +129,20 @@ const EventHero: React.FC<EventHeroProps> = ({
                 size="lg"
                 onClick={onToggleFavorite}
               >
-                <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                <Heart className={`h-5 w-5 me-2 ${isFavorite ? 'fill-current' : ''}`} />
                 {isFavorite
                   ? t('events.removeFromFavorites', 'Retirer des favoris')
                   : t('events.addToFavorites', 'Ajouter aux favoris')
                 }
               </Button>
               <Button variant="outline" size="lg" onClick={handleShare}>
-                <Share2 className="h-5 w-5 mr-2" />
+                <Share2 className="h-5 w-5 me-2" />
                 {t('common.share', 'Partager')}
               </Button>
               {event.contact_email && (
                 <Button variant="outline" size="lg" asChild>
                   <a href={`mailto:${event.contact_email}`}>
-                    <ExternalLink className="h-5 w-5 mr-2" />
+                    <ExternalLink className="h-5 w-5 me-2" />
                     {t('events.contact', 'Contact')}
                   </a>
                 </Button>
@@ -256,7 +256,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                   onClick={onToggleFavorite}
                   className={!isFavorite ? "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30" : undefined}
                 >
-                  <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                  <Heart className={`h-5 w-5 me-2 ${isFavorite ? 'fill-current' : ''}`} />
                   {isFavorite
                     ? t('events.removeFromFavorites', 'Retirer des favoris')
                     : t('events.addToFavorites', 'Ajouter aux favoris')
@@ -269,7 +269,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                   onClick={handleShare}
                   className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                 >
-                  <Share2 className="h-5 w-5 mr-2" />
+                  <Share2 className="h-5 w-5 me-2" />
                   {t('common.share', 'Partager')}
                 </Button>
 
@@ -281,7 +281,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                     className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                   >
                     <a href={`mailto:${event.contact_email}`}>
-                      <ExternalLink className="h-5 w-5 mr-2" />
+                      <ExternalLink className="h-5 w-5 me-2" />
                       {t('events.contact', 'Contact')}
                     </a>
                   </Button>

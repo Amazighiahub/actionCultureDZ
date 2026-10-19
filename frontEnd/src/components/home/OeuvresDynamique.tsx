@@ -144,7 +144,7 @@ const OeuvresDynamique: React.FC = () => {
                     aria-label={`${t('sections.works.details', 'Détails')} : ${getTranslation(oeuvre.titre, lang)}`}
                   >
                     {t('sections.works.details')}
-                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} aria-hidden="true" />
                   </Link>
                 </Button>
               </CardContent>

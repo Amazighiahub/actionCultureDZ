@@ -163,7 +163,7 @@ const AdminOverview: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -259,7 +259,7 @@ const AdminOverview: React.FC = () => {
                 {pendingUsers.items.length > 5 && (
                   <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=users')}>
                     {t('admin.pending.viewAll', { count: pendingUsers.items.length })}
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                   </Button>
                 )}
               </div>
@@ -307,7 +307,7 @@ const AdminOverview: React.FC = () => {
                 {pendingOeuvres.items.length > 5 && (
                   <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=oeuvres')}>
                     {t('admin.pending.viewAllWorks', { count: pendingOeuvres.items.length })}
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                   </Button>
                 )}
               </div>

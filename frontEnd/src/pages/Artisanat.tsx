@@ -116,7 +116,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
 
         {/* Badge matériau */}
         {materiau && (
-          <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1">
+          <div className="absolute top-3 start-3 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1">
             <span className="text-xs font-medium flex items-center gap-1">
               <Palette className="h-3 w-3" aria-hidden="true" />
               {materiau}
@@ -132,13 +132,13 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
           aria-label={isFavorite
             ? t('artisanat.removeFromFavorites', 'Retirer des favoris')
             : t('artisanat.addToFavorites', 'Ajouter aux favoris')}
-          className="absolute top-3 right-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
+          className="absolute top-3 end-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
         >
           <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Actions au survol */}
-        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 start-3 end-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 text-white text-sm">
             {artisanat.statistiques?.nombre_vues !== undefined && (
               <span className="flex items-center gap-1">
@@ -160,7 +160,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
               aria-label={`${t('common.view', 'Voir')} : ${titre}`}
             >
               {t('common.view', 'Voir')}
-              <ArrowRight className="h-3 w-3 ml-1" aria-hidden="true" />
+              <ArrowRight className="h-3 w-3 ms-1 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </div>
@@ -184,7 +184,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
         <div className="flex items-center gap-2 flex-wrap">
           {technique && (
             <Badge variant="secondary" className="text-xs">
-              <Hammer className="h-3 w-3 mr-1" aria-hidden="true" />
+              <Hammer className="h-3 w-3 me-1" aria-hidden="true" />
               {technique}
             </Badge>
           )}
@@ -341,13 +341,13 @@ const Artisanat: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   aria-label={t('artisanat.searchPlaceholder', 'Rechercher un produit artisanal...')}
                   placeholder={t('artisanat.searchPlaceholder', 'Rechercher un produit artisanal...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQueryLocal(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                 />
               </div>
 

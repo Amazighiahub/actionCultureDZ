@@ -240,7 +240,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 pe-4">
           {/* Étape Configuration */}
           {step === 'config' && (
             <div className="space-y-6 py-4">
@@ -287,21 +287,21 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                   onValueChange={(v) => setTransport(v as typeof transport)}
                   className="flex gap-4"
                 >
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <RadioGroupItem value="marche" id="marche" />
                     <Label htmlFor="marche" className="flex items-center gap-1 cursor-pointer">
                       <Footprints className="h-4 w-4" />
                       {t('visit.transport.walk', 'À pied')}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <RadioGroupItem value="velo" id="velo" />
                     <Label htmlFor="velo" className="flex items-center gap-1 cursor-pointer">
                       <Bike className="h-4 w-4" />
                       {t('visit.transport.bike', 'Vélo')}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <RadioGroupItem value="voiture" id="voiture" />
                     <Label htmlFor="voiture" className="flex items-center gap-1 cursor-pointer">
                       <Car className="h-4 w-4" />
@@ -369,7 +369,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
               <div className="space-y-3">
                 <Label>{t('visit.options', 'Options')}</Label>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="restaurants"
                       checked={includeRestaurants}
@@ -380,7 +380,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                       {t('visit.includeRestaurants', 'Inclure des restaurants')}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="hotels"
                       checked={includeHotels}
@@ -391,7 +391,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                       {t('visit.includeHotels', 'Inclure des hébergements')}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="accessibility"
                       checked={accessibility}
@@ -401,7 +401,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                       {t('visit.accessibility', 'Accessibilité PMR')}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox
                       id="family"
                       checked={familyFriendly}
@@ -650,7 +650,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                 {t('common.cancel', 'Annuler')}
               </Button>
               <Button onClick={generateParcours} disabled={interests.length === 0}>
-                <Route className="h-4 w-4 mr-2" />
+                <Route className="h-4 w-4 me-2" />
                 {t('visit.generate', 'Générer le parcours')}
               </Button>
             </>
@@ -662,11 +662,11 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                 {t('visit.modify', 'Modifier')}
               </Button>
               <Button variant="outline" onClick={openInMaps}>
-                <Navigation className="h-4 w-4 mr-2" />
+                <Navigation className="h-4 w-4 me-2" />
                 {t('visit.openMaps', 'Ouvrir dans Maps')}
               </Button>
               <Button onClick={handleClose}>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
+                <CheckCircle2 className="h-4 w-4 me-2" />
                 {t('common.done', 'Terminé')}
               </Button>
             </>

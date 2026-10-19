@@ -20,7 +20,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onRetry }) => {
   return (
     <Card className="border-destructive/20 bg-destructive/5">
       <CardContent className="p-6">
-        <div className={`flex items-center space-x-2 text-destructive mb-2 ${rtlClasses.flexRow}`}>
+        <div className={`flex items-center space-x-2 rtl:space-x-reverse text-destructive mb-2 ${rtlClasses.flexRow}`}>
           <AlertCircle className="h-5 w-5" />
           <p className="font-semibold">{t('errors.loadingError')}</p>
         </div>

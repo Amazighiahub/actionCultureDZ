@@ -342,7 +342,7 @@ const DashboardPro = () => {
             {getItemInfo()}
           </div>
           
-          <div className="flex gap-2 ml-4">
+          <div className="flex gap-2 ms-4">
             <Button
               variant="ghost"
               size="sm"
@@ -439,7 +439,7 @@ const DashboardPro = () => {
                   <Button variant="outline" size="icon" className="relative">
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                      <span className="absolute -top-1 -end-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -469,7 +469,7 @@ const DashboardPro = () => {
                         >
                           <div className="flex items-start gap-2">
                             {!notif.lu && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                            <div className={!notif.lu ? '' : 'ml-4'}>
+                            <div className={!notif.lu ? '' : 'ms-4'}>
                               <p className="text-sm font-medium leading-tight">{notif.titre}</p>
                               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
                             </div>
@@ -485,30 +485,30 @@ const DashboardPro = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 me-2" />
                     {t("dashboardpro.ajouter", "Ajouter")}
-                    <ChevronDown className="h-4 w-4 ml-2" />
+                    <ChevronDown className="h-4 w-4 ms-2" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate('/ajouter-oeuvre')}>
-                    <BookOpen className="h-4 w-4 mr-2" />
+                    <BookOpen className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouvelle_uvre", "Nouvelle œuvre")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/ajouter-evenement')}>
-                    <Calendar className="h-4 w-4 mr-2" />
+                    <Calendar className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouvel_vnement", "Nouvel événement")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/ajouter-patrimoine')}>
-                    <MapPin className="h-4 w-4 mr-2" />
+                    <MapPin className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouveau_patrimoine", "Nouveau patrimoine")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/ajouter-service')}>
-                    <Briefcase className="h-4 w-4 mr-2" />
+                    <Briefcase className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouveau_service", "Nouveau service")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/ajouter-artisanat')}>
-                    <Hammer className="h-4 w-4 mr-2" />
+                    <Hammer className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouvel_artisanat", "Nouvel artisanat")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -518,7 +518,7 @@ const DashboardPro = () => {
                 variant="outline"
                 onClick={() => refreshAll?.()}
                 disabled={loadingStats || loadingOeuvres || loadingEvenements}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${loadingStats || loadingOeuvres || loadingEvenements ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 me-2 ${loadingStats || loadingOeuvres || loadingEvenements ? 'animate-spin' : ''}`} />
                 {t("dashboardpro.actualiser")}
               </Button>
             </div>
@@ -597,21 +597,21 @@ const DashboardPro = () => {
               <div className="border-b">
                 <TabsList className="w-full justify-start h-auto p-0 bg-transparent">
                   <TabsTrigger value="oeuvres" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                    <BookOpen className="h-4 w-4 mr-2" />{t("dashboardpro.uvres_1")}
+                    <BookOpen className="h-4 w-4 me-2" />{t("dashboardpro.uvres_1")}
 
                   </TabsTrigger>
                   <TabsTrigger value="evenements" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                    <Calendar className="h-4 w-4 mr-2" />{t("dashboardpro.vnements_1")}
+                    <Calendar className="h-4 w-4 me-2" />{t("dashboardpro.vnements_1")}
 
                   </TabsTrigger>
                   <TabsTrigger value="services" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                    <Briefcase className="h-4 w-4 mr-2" />{t("dashboardpro.services_1")}
+                    <Briefcase className="h-4 w-4 me-2" />{t("dashboardpro.services_1")}
                   </TabsTrigger>
                   <TabsTrigger value="artisanat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                    <Hammer className="h-4 w-4 mr-2" />{t("dashboardpro.artisanat", "Artisanat")}
+                    <Hammer className="h-4 w-4 me-2" />{t("dashboardpro.artisanat", "Artisanat")}
                   </TabsTrigger>
                   <TabsTrigger value="patrimoine" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                    <MapPin className="h-4 w-4 mr-2" />{t("dashboardpro.patrimoine")}
+                    <MapPin className="h-4 w-4 me-2" />{t("dashboardpro.patrimoine")}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -619,12 +619,12 @@ const DashboardPro = () => {
               {/* Barre de recherche */}
               <div className="p-4 border-b bg-muted/30">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t("dashboardpro.placeholder_rechercher")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10" />
+                    className="ps-10" />
 
                 </div>
               </div>
@@ -634,7 +634,7 @@ const DashboardPro = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_uvres")} ({filterBySearch(mesOeuvres?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-oeuvre">
-                      <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvelle_uvre")}
+                      <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvelle_uvre")}
 
                     </Link></Button>
                 </div>
@@ -651,7 +651,7 @@ const DashboardPro = () => {
                       <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                       <p className="text-destructive mb-4">{t('dashboardpro.loadOeuvresFailed', 'Erreur lors du chargement des œuvres')}</p>
                       <Button onClick={refreshAll} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                        <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                       </Button>
                     </div> :
                   mesOeuvres?.items && mesOeuvres.items.length > 0 ?
@@ -670,7 +670,7 @@ const DashboardPro = () => {
                       <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucune_uvre_cre")}</p>
                       <Button className="mt-4" size="sm" asChild><Link to="/ajouter-oeuvre">
-                          <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_premire_uvre")}
+                          <Plus className="h-4 w-4 me-2" />{t("dashboardpro.crer_premire_uvre")}
 
                       </Link></Button>
                     </div>
@@ -683,7 +683,7 @@ const DashboardPro = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_vnements")} ({filterBySearch(mesEvenements?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-evenement">
-                      <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvel_vnement")}
+                      <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvel_vnement")}
 
                     </Link></Button>
                 </div>
@@ -700,7 +700,7 @@ const DashboardPro = () => {
                       <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                       <p className="text-destructive mb-4">{t('dashboardpro.loadEventsFailed', 'Erreur lors du chargement des événements')}</p>
                       <Button onClick={refreshAll} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                        <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                       </Button>
                     </div> :
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
@@ -730,7 +730,7 @@ const DashboardPro = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 ms-4">
                         <Button
                           variant="outline"
                           size="sm"
@@ -740,7 +740,7 @@ const DashboardPro = () => {
                           })}
                           title={t("dashboardpro.manage_event", "Gérer programmes et œuvres")}
                         >
-                          <Settings className="h-4 w-4 mr-1" />
+                          <Settings className="h-4 w-4 me-1" />
                           {t("dashboardpro.manage", "Gérer")}
                         </Button>
                         <Button
@@ -790,7 +790,7 @@ const DashboardPro = () => {
                       <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_vnement")}</p>
                       <Button className="mt-4" size="sm" asChild><Link to="/ajouter-evenement">
-                          <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_mon_premier")}
+                          <Plus className="h-4 w-4 me-2" />{t("dashboardpro.crer_mon_premier")}
 
                       </Link></Button>
                     </div>
@@ -802,7 +802,7 @@ const DashboardPro = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")} ({filterBySearch(mesServices?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-service">
-                      <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouveau_service")}
+                      <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouveau_service")}
                     </Link></Button>
                 </div>
 
@@ -818,7 +818,7 @@ const DashboardPro = () => {
                       <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                       <p className="text-destructive mb-4">{t('dashboardpro.loadServicesFailed', 'Erreur lors du chargement des services')}</p>
                       <Button onClick={refreshAll} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                        <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                       </Button>
                     </div>
                   ) : mesServices?.items && mesServices.items.length > 0 ? (
@@ -837,7 +837,7 @@ const DashboardPro = () => {
                       <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_service")}</p>
                       <Button className="mt-4" size="sm" asChild><Link to="/ajouter-service">
-                          <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_mon_premier_1")}
+                          <Plus className="h-4 w-4 me-2" />{t("dashboardpro.crer_mon_premier_1")}
                         </Link></Button>
                     </div>
                   )}
@@ -848,7 +848,7 @@ const DashboardPro = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_artisanats", "Mes artisanats")} ({filterBySearch(mesArtisanats?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-artisanat">
-                      <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvel_artisanat", "Nouvel artisanat")}
+                      <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvel_artisanat", "Nouvel artisanat")}
                     </Link></Button>
                 </div>
 
@@ -864,7 +864,7 @@ const DashboardPro = () => {
                       <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                       <p className="text-destructive mb-4">{t('dashboardpro.loadArtisanatsFailed', 'Erreur lors du chargement des artisanats')}</p>
                       <Button onClick={refreshAll} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                        <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                       </Button>
                     </div> :
                   mesArtisanats?.items && mesArtisanats.items.length > 0 ?
@@ -889,7 +889,7 @@ const DashboardPro = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 ms-4">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -918,7 +918,7 @@ const DashboardPro = () => {
                       <Hammer className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_artisanat", "Aucun artisanat créé")}</p>
                       <Button className="mt-4" size="sm" asChild><Link to="/ajouter-artisanat">
-                          <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.creer_premier_artisanat", "Créer mon premier artisanat")}
+                          <Plus className="h-4 w-4 me-2" />{t("dashboardpro.creer_premier_artisanat", "Créer mon premier artisanat")}
                       </Link></Button>
                     </div>
                   }
@@ -929,7 +929,7 @@ const DashboardPro = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mon_patrimoine")} ({filterBySearch(mesPatrimoines?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-patrimoine">
-                      <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouveau_site")}
+                      <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouveau_site")}
                     </Link></Button>
                 </div>
 
@@ -945,7 +945,7 @@ const DashboardPro = () => {
                       <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                       <p className="text-destructive mb-4">{t('dashboardpro.loadPatrimoinesFailed', 'Erreur lors du chargement des sites patrimoine')}</p>
                       <Button onClick={refreshAll} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                        <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                       </Button>
                     </div> :
                   mesPatrimoines?.items && mesPatrimoines.items.length > 0 ?
@@ -964,7 +964,7 @@ const DashboardPro = () => {
                       <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_site_patrimoine")}</p>
                       <Button className="mt-4" size="sm" asChild><Link to="/ajouter-patrimoine">
-                          <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.ajouter_mon_premier")}
+                          <Plus className="h-4 w-4 me-2" />{t("dashboardpro.ajouter_mon_premier")}
 
                       </Link></Button>
                     </div>

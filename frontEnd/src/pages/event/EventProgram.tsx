@@ -97,7 +97,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
       {/* En-tête cliquable */}
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-start gap-4 text-left hover:bg-muted/50 transition-colors"
+        className="w-full p-4 flex items-start gap-4 text-start hover:bg-muted/50 transition-colors"
       >
         {/* Horaire */}
         <div className="flex-shrink-0 text-center min-w-[80px]">
@@ -138,7 +138,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
             {/* Badge statut */}
             <Badge className={cn("flex-shrink-0", statusColors[statut])}>
               {getStatusIcon(statut)}
-              <span className="ml-1">
+              <span className="ms-1">
                 {t(`programme.status.${statut}`, statut)}
               </span>
             </Badge>
@@ -371,7 +371,7 @@ const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
             {days.map((day) => (
               <TabsTrigger key={day} value={day} className="min-w-fit">
                 {day}
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary" className="ms-2">
                   {programsByDay[day].length}
                 </Badge>
               </TabsTrigger>

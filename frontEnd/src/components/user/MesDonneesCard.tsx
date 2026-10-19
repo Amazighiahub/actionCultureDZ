@@ -107,7 +107,7 @@ export default function MesDonneesCard() {
             {t('myData.exportHint', 'Fichier JSON contenant votre profil, vos contenus, inscriptions, favoris et notifications.')}
           </p>
           <Button variant="outline" onClick={handleExport} disabled={exporting} className="shrink-0">
-            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            {exporting ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Download className="h-4 w-4 me-2" />}
             {t('myData.export', 'Exporter mes données')}
           </Button>
         </div>
@@ -118,7 +118,7 @@ export default function MesDonneesCard() {
             {t('myData.deleteHint', 'La suppression est définitive : vos données personnelles sont effacées et vos contributions publiques deviennent anonymes.')}
           </p>
           <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="h-4 w-4 me-2" />
             {t('myData.delete', 'Supprimer mon compte')}
           </Button>
         </div>
@@ -148,7 +148,7 @@ export default function MesDonneesCard() {
               {t('common.cancel', 'Annuler')}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={!password || deleting}>
-              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {deleting && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
               {t('myData.confirmDelete', 'Supprimer définitivement')}
             </Button>
           </DialogFooter>

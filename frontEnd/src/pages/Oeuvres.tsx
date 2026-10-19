@@ -117,7 +117,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" aria-hidden="true" />
         
         {/* Badge type */}
-        <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm rounded-full p-2">
+        <div className="absolute top-3 start-3 bg-background/90 backdrop-blur-sm rounded-full p-2">
           <TypeIcon className="h-4 w-4" aria-hidden="true" />
         </div>
 
@@ -129,13 +129,13 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
           aria-label={isFavorite
             ? t('works.removeFromFavorites', 'Retirer des favoris')
             : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
-          className="absolute top-3 right-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
+          className="absolute top-3 end-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
         >
           <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Actions au survol */}
-        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 start-3 end-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 text-white text-sm">
             {oeuvre.vues !== undefined && (
               <span className="flex items-center gap-1">
@@ -157,7 +157,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
               aria-label={`${t('common.view', 'Voir')} : ${oeuvre.titre}`}
             >
               {t('common.view', 'Voir')}
-              <ArrowRight className="h-3 w-3 ml-1" aria-hidden="true" />
+              <ArrowRight className="h-3 w-3 ms-1 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           </Button>
         </div>
@@ -336,13 +336,13 @@ const Oeuvres: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   aria-label={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
                   placeholder={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                 />
               </div>
 

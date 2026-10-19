@@ -156,7 +156,7 @@ class ErrorBoundary extends Component<Props, State> {
           </p>
 
           {IS_DEV && this.state.errorInfo && (
-            <pre className="text-left bg-gray-900 text-red-400 p-4 rounded-lg text-xs overflow-auto max-h-48 mb-4">
+            <pre className="text-start bg-gray-900 text-red-400 p-4 rounded-lg text-xs overflow-auto max-h-48 mb-4">
               {this.state.error?.message}
               {'\n\n'}
               {this.state.errorInfo.componentStack}
@@ -165,7 +165,7 @@ class ErrorBoundary extends Component<Props, State> {
 
           <div className="flex gap-3 justify-center">
             <Button onClick={this.handleRetry} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 me-2" />
               {t('shared.errorBoundary.retry', 'Réessayer')}
             </Button>
             <Button onClick={this.handleReload} variant="destructive">
