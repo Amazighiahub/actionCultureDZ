@@ -127,7 +127,7 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
             const nom = texte(point.nom, lang);
             return (
               <li key={point.id_lieu} className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/40 transition-colors">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-teal-700 text-white text-xs font-semibold shrink-0" aria-hidden="true">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold shrink-0" aria-hidden="true">
                   {index + 1}
                 </span>
                 {image ? (

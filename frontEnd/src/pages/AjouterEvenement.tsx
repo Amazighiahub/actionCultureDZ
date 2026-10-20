@@ -12,10 +12,9 @@ import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Save, ArrowLeft, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
+import { Upload, Save, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 
@@ -33,6 +32,7 @@ import { API_ENDPOINTS } from '@/config/api';
 // Import des types
 import { Wilaya } from '@/types';
 import { Lieu } from '@/types/models/lieu.types';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -539,21 +539,12 @@ const AjouterEvenement = () => {
       
       <main className="container py-12">
         <div className="max-w-4xl mx-auto">
-          {/* En-tête */}
-          <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
-            <Button variant="outline" size="sm" asChild><Link to="/dashboard-pro">
-                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)} rtl:-scale-x-100`} />
-                {t('common.backToDashboard')}
-              </Link></Button>
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">
-                {t('events.create.title')}
-              </h1>
-              <p className="text-lg text-muted-foreground mt-2">
-                {t('events.create.subtitle')}
-              </p>
-            </div>
-          </div>
+          <FormPageHeader
+            backTo="/dashboard-pro"
+            backLabel={t('common.backToDashboard')}
+            title={t('events.create.title')}
+            subtitle={t('events.create.subtitle')}
+          />
 
           <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)}>
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
@@ -607,7 +598,7 @@ const AjouterEvenement = () => {
                   <button
                     type="button"
                     onClick={() => setIsVirtual(false)}
-                    className={`p-4 rounded-lg border-2 transition-all text-start ${
+                    className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all text-start ${
                       !isVirtual
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
@@ -623,7 +614,7 @@ const AjouterEvenement = () => {
                   <button
                     type="button"
                     onClick={() => setIsVirtual(true)}
-                    className={`p-4 rounded-lg border-2 transition-all text-start ${
+                    className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all text-start ${
                       isVirtual
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'

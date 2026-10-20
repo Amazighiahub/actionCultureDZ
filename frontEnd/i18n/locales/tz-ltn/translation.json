@@ -1242,15 +1242,15 @@
     "services_1": "Tazmert",
     "patrimoine": "Tadelsa",
     "placeholder_rechercher": "Rechercher...",
-    "mes_uvres": "Imesli-iw (",
+    "mes_uvres": "Tiwuriwin-iw",
     "nouvelle_uvre": "Amasl amaynut",
     "aucune_uvre_cre": "Ulac imesli yesbad",
     "crer_premire_uvre": "Sbad amasl-iw amezwaru",
-    "mes_vnements": "Tedyanin-iw (",
+    "mes_vnements": "Tedyanin-iw",
     "nouvel_vnement": "Tadyant tamaynut",
     "aucun_vnement": "Ulac tedyanin yesbad",
     "crer_mon_premier": "Sbad tadyant-iw tamezwarut",
-    "mes_services": "Tazmert-iw (",
+    "mes_services": "Imeẓla-iw",
     "nouveau_service": "Tazmert tamaynut",
     "aucun_service": "Ulac tazmert tesbad",
     "crer_mon_premier_1": "Sbad tazmert-iw tamezwarut",
@@ -2076,7 +2076,7 @@
     "citation_apa": "Taneqqiḍt n APA:",
     "contributeurs": "Yimudawen",
     "principal": "Amezwaru",
-    "commentaires": "Tineqqisin (",
+    "commentaires": "Iwenniten",
     "commenter": "Neqqes",
     "rpondre": "Err-d",
     "aucun_commentaire_pour": "Ulac tineqqisin syin. Ili d amezwaru ad tneqqseḍ!",
@@ -3460,7 +3460,10 @@
       "indoorHint": "Taxxamt, tazeqqa…",
       "repere": "Anida yella deg wadeg",
       "reperePlaceholder": "Amedya: taxxamt 3",
-      "moveMarker": "Takarḍa tebda seg wadeg: smutti tacreḍt ɣer wadig n tidet n wadeg."
+      "moveMarker": "Takarḍa tebda seg wadeg: smutti tacreḍt ɣer wadig n tidet n wadeg.",
+      "step2": "D acu-t wadeg-a?",
+      "nom": "Isem n wadeg",
+      "nomPlaceholder": "Amedya: Taggurt n Trajan…"
     },
     "audio": {
       "title": "Sel",
@@ -3476,7 +3479,9 @@
       "notAudio": "Afaylu-a ur yettwassen ara d asekles n imesli",
       "added": "Asekles yettwarna",
       "uploadError": "Asekles ur yettwazen ara"
-    }
+    },
+    "sectionEmpty": "ad yettwakemmel",
+    "directions": "Abrid"
   },
   "toasts": {
     "error": "Tuccḍa",

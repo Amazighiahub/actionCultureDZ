@@ -228,7 +228,16 @@ class ArtisanatRepository extends BaseRepository {
       });
     }
 
-    return { total, byMateriau, byTechnique };
+    // Artisans distincts : auteurs des produits publiés (l'auteur est porté par l'œuvre liée)
+    const [artisans] = await this.model.sequelize.query(
+      `SELECT COUNT(DISTINCT o.saisi_par) AS n
+         FROM artisanat a JOIN oeuvre o ON o.id_oeuvre = a.id_oeuvre
+        WHERE o.statut = 'publie' AND o.saisi_par IS NOT NULL`,
+      { type: this.model.sequelize.QueryTypes.SELECT }
+    );
+    const total_artisans = Number(artisans?.n) || 0;
+
+    return { total, total_artisans, byMateriau, byTechnique };
   }
 }
 

@@ -25,7 +25,7 @@ interface PointsVisiteCarteProps {
 // Marqueur numéroté : le visiteur retrouve l'ordre de la liste sur la carte
 const iconeNumero = (numero: number) => L.divIcon({
   className: '',
-  html: `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:#0f766e;color:#fff;font:600 13px system-ui,sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${numero}</span>`,
+  html: `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));font:600 13px system-ui,sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${numero}</span>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14],
   popupAnchor: [0, -14]

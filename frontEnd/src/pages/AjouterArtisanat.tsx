@@ -13,8 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
-  ArrowLeft, Save, Upload, X, Plus, Loader2, AlertCircle,
-  Hammer, Tag, DollarSign, Clock, Package
+  Save, Upload, X, Plus, Loader2, AlertCircle,
+  Tag, DollarSign, Clock, Package
 } from 'lucide-react';
 import { artisanatService, CreateArtisanatData } from '@/services/artisanat.service';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { metadataService } from '@/services/metadata.service';
 import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 type MultiLangText = {
   fr: string;
@@ -344,20 +345,12 @@ const AjouterArtisanat: React.FC = () => {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate('/dashboard-pro')}>
-            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
-            {t('common.back', 'Retour')}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Hammer className="h-6 w-6 text-amber-600" />
-              {t('ajouterArtisanat.title', 'Ajouter un artisanat')}
-            </h1>
-            <p className="text-muted-foreground">{t('ajouterArtisanat.subtitle', 'Partagez votre savoir-faire artisanal')}</p>
-          </div>
-        </div>
+        <FormPageHeader
+          backTo="/dashboard-pro"
+          backLabel={t('common.back', 'Retour')}
+          title={t('ajouterArtisanat.title', 'Ajouter un artisanat')}
+          subtitle={t('ajouterArtisanat.subtitle', 'Partagez votre savoir-faire artisanal')}
+        />
 
         {/* Success message */}
         {success && (

@@ -121,8 +121,10 @@ interface SearchArtisanatParams extends FilterParams {
   artisan_id?: number;
 }
 
+// Réponse de GET /artisanat/statistics : total, total_artisans, byMateriau, byTechnique
 interface ArtisanatStatistics {
-  total_produits: number;
+  total?: number;
+  total_produits?: number;
   total_artisans: number;
   produits_par_materiau: Record<string, number>;
   produits_par_technique: Record<string, number>;

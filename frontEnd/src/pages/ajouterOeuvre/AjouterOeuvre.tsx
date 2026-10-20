@@ -1,4 +1,6 @@
 import React from 'react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +9,7 @@ import { RequiredLabel } from '@/components/ui/required-label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Upload, Save, ArrowLeft, X, Plus, AlertCircle,
+  Upload, Save, X, Plus, AlertCircle,
   Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star,
 } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
@@ -20,6 +22,7 @@ import EditorModeSelector from './EditorModeSelector';
 import OeuvreSpecificFields from './OeuvreSpecificFields';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -77,6 +80,7 @@ const AjouterOeuvre: React.FC = () => {
   if (!loadingMetadata && (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0)) {
     return (
       <div className="min-h-screen bg-background pattern-geometric">
+        <Header />
         <div className="container py-12">
           <div className="max-w-4xl mx-auto">
             <Alert variant="destructive" role="alert">
@@ -99,6 +103,8 @@ const AjouterOeuvre: React.FC = () => {
   // ============================================================================
   return (
     <div dir={direction} className="min-h-screen bg-background pattern-geometric">
+      {/* En-tête du site, comme sur les autres formulaires d'ajout (il manquait ici) */}
+      <Header />
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           {/* Si l'éditeur d'article est activé ET qu'un type article est sélectionné */}
@@ -126,27 +132,20 @@ const AjouterOeuvre: React.FC = () => {
             onSave={handleArticleEditorSave} /> :
 
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }}>
-              {/* En-tête */}
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <Button type="button" variant="outline" size="sm" className="hover-lift"
-                    onClick={() => window.history.back()}>
-                    <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("ajouteroeuvre.retour")}
-                  </Button>
-                  <div>
-                    <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">{t("ajouteroeuvre.ajouter_une_uvre")}</h1>
-                    <p className="text-lg text-muted-foreground mt-2">{t("ajouteroeuvre.partagez_votre_cration")}</p>
-                  </div>
-                </div>
-                {isAuthenticated && user &&
-                <div className="text-end text-sm text-muted-foreground">
+              <FormPageHeader
+                onBack={() => window.history.back()}
+                backLabel={t("ajouteroeuvre.retour")}
+                title={t("ajouteroeuvre.ajouter_une_uvre")}
+                subtitle={t("ajouteroeuvre.partagez_votre_cration")}
+                aside={isAuthenticated && user &&
+                  <div className="text-end text-sm text-muted-foreground">
                     <p>{t("ajouteroeuvre.connect_tant_que")}</p>
                     <p className="font-medium text-foreground">
                       {user.prenom || ''} {user.nom || user.email || 'Utilisateur'}
                     </p>
                   </div>
                 }
-              </div>
+              />
 
               {!isAuthenticated &&
               <Alert className="mb-6">
@@ -312,7 +311,7 @@ const AjouterOeuvre: React.FC = () => {
                             {searchOeuvreResults.length > 0 && !formData.id_oeuvre_originale && (
                               <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
                                 {searchOeuvreResults.map((o: any) => (
-                                  <button key={o.id_oeuvre} type="button" className="w-full text-start p-2 hover:bg-muted text-sm"
+                                  <button key={o.id_oeuvre} type="button" className="flex w-full justify-start text-start p-2 hover:bg-muted text-sm"
                                     onClick={() => {
                                       handleInputChange('id_oeuvre_originale', o.id_oeuvre);
                                       const titre = typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre;
@@ -436,7 +435,7 @@ const AjouterOeuvre: React.FC = () => {
                                 })
                                 .slice(0, 5)
                                 .map((tag: TagMotCle) =>
-                                <button key={tag.id_tag} type="button" className="w-full text-start px-3 py-2 hover:bg-secondary transition-colors"
+                                <button key={tag.id_tag} type="button" className="flex w-full justify-start text-start px-3 py-2 hover:bg-secondary transition-colors"
                                   onClick={() => handleTagAdd(getTagName(tag.nom))}>
                                   {getTagName(tag.nom)}
                                 </button>
@@ -555,6 +554,7 @@ const AjouterOeuvre: React.FC = () => {
           }
         </div>
       </div>
+      <Footer />
     </div>);
 };
 

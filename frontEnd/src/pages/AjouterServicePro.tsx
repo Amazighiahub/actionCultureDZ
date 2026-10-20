@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2,
+  Save, Loader2, AlertCircle, CheckCircle2,
   MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
   Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus, X
 } from 'lucide-react';
@@ -31,6 +31,7 @@ import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
@@ -532,22 +533,12 @@ const AjouterServicePro: React.FC = () => {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
-            {t('common.back', 'Retour')}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-emerald-600" />
-              {id ? t('service.editTitle', 'Modifier mon service') : t('service.addTitle', 'Ajouter mon service')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('service.addSubtitle', 'Proposez vos services aux visiteurs des sites patrimoniaux')}
-            </p>
-          </div>
-        </div>
+        <FormPageHeader
+          onBack={() => navigate(-1)}
+          backLabel={t('common.back', 'Retour')}
+          title={id ? t('service.editTitle', 'Modifier mon service') : t('service.addTitle', 'Ajouter mon service')}
+          subtitle={t('service.addSubtitle', 'Proposez vos services aux visiteurs des sites patrimoniaux')}
+        />
 
         {/* Error */}
         {error && (

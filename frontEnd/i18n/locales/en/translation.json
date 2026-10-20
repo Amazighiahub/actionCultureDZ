@@ -1225,15 +1225,15 @@
     "services_1": "Services",
     "patrimoine": "Heritage",
     "placeholder_rechercher": "Search...",
-    "mes_uvres": "My works (",
+    "mes_uvres": "My works",
     "nouvelle_uvre": "New work",
     "aucune_uvre_cre": "No works created",
     "crer_premire_uvre": "Create my first work",
-    "mes_vnements": "My events (",
+    "mes_vnements": "My events",
     "nouvel_vnement": "New event",
     "aucun_vnement": "No events created",
     "crer_mon_premier": "Create my first event",
-    "mes_services": "My services (",
+    "mes_services": "My services",
     "nouveau_service": "New service",
     "aucun_service": "No services created",
     "crer_mon_premier_1": "Create my first service",
@@ -2059,7 +2059,7 @@
     "citation_apa": "APA Citation:",
     "contributeurs": "Contributors",
     "principal": "Principal",
-    "commentaires": "Comments (",
+    "commentaires": "Comments",
     "commenter": "Comment",
     "rpondre": "Reply",
     "aucun_commentaire_pour": "No comments yet. Be the first to comment!",
@@ -3443,7 +3443,10 @@
       "indoorHint": "A hall, a room, a display case…",
       "repere": "Where it is within the site",
       "reperePlaceholder": "E.g. 1st floor, room 3",
-      "moveMarker": "The map is centred on the site: move the marker to the exact location of the point."
+      "moveMarker": "The map is centred on the site: move the marker to the exact location of the point.",
+      "step2": "What is this point?",
+      "nom": "Name of the point",
+      "nomPlaceholder": "E.g. Arch of Trajan, mosaic hall…"
     },
     "audio": {
       "title": "Listen",
@@ -3459,7 +3462,9 @@
       "notAudio": "This file was not recognised as an audio recording",
       "added": "Recording added",
       "uploadError": "The recording could not be uploaded"
-    }
+    },
+    "sectionEmpty": "to be completed",
+    "directions": "Directions"
   },
   "toasts": {
     "error": "Error",

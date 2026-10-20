@@ -254,7 +254,7 @@ const Patrimoine = () => {
                   onClick={() => setFilterType(typeOption.value)}
                 >
                   <Icon className="h-4 w-4 me-2" />
-                  {typeOption.label}
+                  {t(`patrimoine.types.${typeOption.value}`, typeOption.label)}
                   {typeOption.count > 0 && (
                     <Badge variant="secondary" className="ms-2 text-xs">
                       {typeOption.count}
@@ -366,7 +366,7 @@ const Patrimoine = () => {
                       </div>
                       {/* ⚡ Badge du type de patrimoine */}
                       <Badge variant="outline">
-                        {typesPatrimoine.find(t => t.value === site.typePatrimoine)?.label || site.typeLieu || 'Site'}
+                        {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, site.typePatrimoine || 'Site')}
                       </Badge>
                     </div>
                   </CardHeader>

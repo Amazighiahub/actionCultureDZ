@@ -49,6 +49,22 @@ interface RefreshResult {
   error?: string;
 }
 
+/**
+ * Jeton CSRF pour le renouvellement : celui du cookie, sinon demandé au serveur.
+ * Sans lui, /refresh-token répondait 403 : la session n'était jamais renouvelée et
+ * l'utilisateur était déconnecté à l'expiration du jeton d'accès (60 min).
+ */
+async function csrfPourRenouvellement(): Promise<string | undefined> {
+  const cookie = document.cookie.split('; ').find(c => c.startsWith('csrf_token='))?.split('=')[1];
+  if (cookie) return cookie;
+  try {
+    const res = await axios.get(`${API_BASE_URL}/languages`, { withCredentials: true, timeout: 10000 });
+    return res.headers['x-csrf-token'] || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function doRefreshToken(): Promise<RefreshResult> {
   if (refreshInFlight) return refreshInFlight;
 
@@ -57,10 +73,11 @@ export async function doRefreshToken(): Promise<RefreshResult> {
       // Appel direct via axios (et non this.axiosInstance) pour contourner
       // l'intercepteur 401 et eviter une boucle infinie si /refresh-token
       // renvoie lui-meme 401 avec un message contenant "token".
+      const csrf = await csrfPourRenouvellement();
       const response = await axios.post(
         `${API_BASE_URL}/users/refresh-token`,
         {},
-        { withCredentials: true }
+        { withCredentials: true, headers: csrf ? { 'X-CSRF-Token': csrf } : {} }
       );
 
       const body = response.data as { success?: boolean; data?: { expiresIn?: number; user?: Record<string, unknown> }; error?: string };
@@ -100,6 +117,9 @@ interface QueuedRequest<T = unknown> {
 // Extension de AxiosRequestConfig pour le retry
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
+  _csrfRetry?: boolean;
+  /** Vérification de session au démarrage : un 401 ne déclenche ni message ni redirection */
+  _silentAuth?: boolean;
   _retryCount?: number;
 }
 
@@ -256,6 +276,7 @@ class HttpClient {
   private requestQueue: ImprovedRequestQueue;
   private retryDelays = new Map<string, number>();
   private csrfToken: string | null = null;
+  private csrfPromise: Promise<void> | null = null;
 
   constructor() {
     this.requestQueue = new ImprovedRequestQueue();
@@ -272,6 +293,30 @@ class HttpClient {
     this.setupInterceptors();
   }
 
+  /** Jeton CSRF mémorisé, sinon celui du cookie posé par le serveur */
+  private currentCsrf(): string | null {
+    return this.csrfToken || document.cookie.split('; ').find(c => c.startsWith('csrf_token='))?.split('=')[1] || null;
+  }
+
+  /**
+   * Obtient un jeton CSRF avant la première écriture. Sans lui, un visiteur arrivé directement
+   * sur /auth (favori, lien d'un e-mail) voyait sa connexion refusée (403 CSRF_MISSING).
+   * Toute réponse de l'API porte le jeton ; /languages est la route la plus légère.
+   */
+  private ensureCsrf(force = false): Promise<void> {
+    if (!force && this.currentCsrf()) return Promise.resolve();
+    if (!this.csrfPromise) {
+      this.csrfPromise = axios.get(`${API_BASE_URL}/languages`, { withCredentials: true, timeout: 10000 })
+        .then((res) => {
+          const token = res.headers['x-csrf-token'];
+          if (token) this.csrfToken = token;
+        })
+        .catch(() => { /* la requête d'écriture échouera avec un message clair */ })
+        .finally(() => { this.csrfPromise = null; });
+    }
+    return this.csrfPromise;
+  }
+
   private setupInterceptors() {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
@@ -283,8 +328,12 @@ class HttpClient {
         // ✅ SÉCURITÉ: Le token est envoyé via cookie httpOnly (withCredentials: true)
         // Pas besoin d'ajouter le header Authorization manuellement
 
-        // Ajouter le token CSRF (header mémorisé ou cookie fallback)
-        const csrf = this.csrfToken || document.cookie.split('; ').find(c => c.startsWith('csrf_token='))?.split('=')[1];
+        // Ajouter le token CSRF (header mémorisé ou cookie fallback) ; écriture sans jeton : on le demande d'abord
+        const method = (config.method || 'get').toLowerCase();
+        if (!['get', 'head', 'options'].includes(method)) {
+          await this.ensureCsrf();
+        }
+        const csrf = this.currentCsrf();
         if (csrf) {
           config.headers['X-CSRF-Token'] = csrf;
         }
@@ -393,35 +442,34 @@ class HttpClient {
           return this.axiosInstance(originalRequest);
         }
         
-        // Gestion du 401 (non autorisé) — exclure l'endpoint refresh lui-même pour éviter la boucle infinie
-        const isRefreshEndpoint = originalRequest.url?.includes('/users/refresh-token');
-        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshEndpoint) {
-          originalRequest._retry = true;
-          
-          // Vérifier si c'est une erreur de token expiré
-          let errorMessage = '';
-          if (error.response.data && typeof error.response.data === 'object') {
-            const data = error.response.data as Record<string, unknown>;
-            errorMessage = typeof data.message === 'string' ? data.message : '';
-          }
+        // Jeton CSRF absent ou expiré (cookie de 24 h) : on le renouvelle et on rejoue une seule fois
+        const csrfCode = (error.response?.data as Record<string, unknown> | undefined)?.code;
+        if (error.response?.status === 403 && (csrfCode === 'CSRF_MISSING' || csrfCode === 'CSRF_MISMATCH') && !originalRequest._csrfRetry) {
+          originalRequest._csrfRetry = true;
+          this.csrfToken = null;
+          await this.ensureCsrf(true);
+          return this.axiosInstance(originalRequest);
+        }
 
-          const errorLower = errorMessage.toLowerCase();
-          if (errorLower.includes('token') || errorLower.includes('expired') || errorLower.includes('authentification')) {
-            try {
-              // Utilise le helper partage (deduplication avec authService.refreshToken)
-              const result = await doRefreshToken();
-              if (!result.success) {
-                throw new Error(result.error || 'Token refresh failed');
-              }
-              return this.axiosInstance(originalRequest);
-            } catch (refreshError) {
-              // Token refresh a échoué, rediriger vers login
-              this.handleAuthError();
-              return Promise.reject(refreshError);
+        // Gestion du 401 (non autorisé).
+        // Routes d'authentification : un 401 y signifie « identifiants incorrects » — pas de renouvellement,
+        // pas de « session expirée » (et pas de boucle sur l'endpoint refresh lui-même).
+        // Ailleurs : on tente un renouvellement pour tout 401. Le choix ne dépend plus du texte du message,
+        // traduit (en arabe ou en tifinagh, aucun mot-clé ne correspondait : déconnexion au lieu de renouvellement).
+        const isAuthEndpoint = /\/users\/(login|register|refresh-token|logout)|\/email-verification\//.test(originalRequest.url || '');
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+          originalRequest._retry = true;
+          try {
+            // Utilise le helper partage (deduplication avec authService.refreshToken)
+            const result = await doRefreshToken();
+            if (!result.success) {
+              throw new Error(result.error || 'Token refresh failed');
             }
-          } else {
-            // Autre erreur 401, rediriger vers login
-            this.handleAuthError();
+            return this.axiosInstance(originalRequest);
+          } catch (refreshError) {
+            // Token refresh a échoué, rediriger vers login (sauf vérification silencieuse)
+            if (!originalRequest._silentAuth) this.handleAuthError();
+            return Promise.reject(refreshError);
           }
         }
         
@@ -570,9 +618,10 @@ class HttpClient {
   }
 
   // Méthodes HTTP avec queue améliorée
-  async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
+  async get<T>(url: string, params?: any, options?: { silentAuth?: boolean }): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
-      const response = await this.axiosInstance.get<ApiResponse<T>>(url, { params });
+      const config: ExtendedAxiosRequestConfig = { params, _silentAuth: options?.silentAuth };
+      const response = await this.axiosInstance.get<ApiResponse<T>>(url, config);
       return response.data;
     }, url, 'GET'); // Passer url et method
   }

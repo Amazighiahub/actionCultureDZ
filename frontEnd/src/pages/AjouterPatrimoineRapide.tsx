@@ -34,6 +34,7 @@ import { useAuth } from '@/hooks/useAuth';
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -304,17 +305,15 @@ const AjouterPatrimoineRapide: React.FC = () => {
       <Header />
 
       <main className="container py-8 max-w-2xl mx-auto">
-        {/* Retour */}
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
-          {t('common.back', 'Retour')}
-        </Button>
-
-        <h1 className="text-3xl font-bold font-serif text-center mb-2">
-          {parentId ? t('patrimoine.points.createTitle', 'Ajouter un point de visite') : t('patrimoine.create.title', 'Ajouter un site patrimonial')}
-        </h1>
+        <FormPageHeader
+          onBack={() => navigate(-1)}
+          backLabel={t('common.back', 'Retour')}
+          title={parentId ? t('patrimoine.points.createTitle', 'Ajouter un point de visite') : t('patrimoine.create.title', 'Ajouter un site patrimonial')}
+          subtitle={t('patrimoine.create.subtitle', 'Créez rapidement, enrichissez ensuite')}
+          className="mb-4"
+        />
         {parentId && (
-          <Alert className={`mb-4 ${parentError ? 'border-destructive' : 'border-teal-300 bg-teal-50 dark:bg-teal-950/20'}`}>
+          <Alert className={`mb-4 ${parentError ? 'border-destructive' : 'border-primary/30 bg-primary/5'}`}>
             <Footprints className="h-4 w-4" />
             <AlertDescription>
               {parentError
@@ -325,10 +324,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
             </AlertDescription>
           </Alert>
         )}
-        <p className="text-center text-muted-foreground mb-2">
-          {t('patrimoine.create.subtitle', 'Créez rapidement, enrichissez ensuite')}
-        </p>
-        <p className="text-center text-xs text-muted-foreground mb-8">
+        <p className="text-xs text-muted-foreground mb-8">
           {t('common.requiredFieldsLegend')}
         </p>
 
@@ -375,7 +371,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                {t('patrimoine.create.step2', 'Quel est ce site ?')}
+                {parentId ? t('patrimoine.points.step2', 'Quel est ce point ?') : t('patrimoine.create.step2', 'Quel est ce site ?')}
               </CardTitle>
               <CardDescription>
                 {t('patrimoine.create.step2Desc', 'Donnez un nom et choisissez le type')}
@@ -386,7 +382,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <div>
                 <MultiLangInput
                   name="nom"
-                  label={t('patrimoine.fields.nom', 'Nom du site')}
+                  label={parentId ? t('patrimoine.points.nom', 'Nom du point') : t('patrimoine.fields.nom', 'Nom du site')}
                   value={formData.nom}
                   onChange={(value: any) => {
                     setFormData(prev => ({ ...prev, nom: value }));
@@ -394,7 +390,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   }}
                   required
                   requiredLanguages={['fr']}
-                  placeholder={t('patrimoine.placeholders.nom', 'Ex: Casbah d\'Alger, Djemila...')}
+                  placeholder={parentId ? t('patrimoine.points.nomPlaceholder', 'Ex : Arc de Trajan, salle des mosaïques…') : t('patrimoine.placeholders.nom', 'Ex: Casbah d\'Alger, Djemila...')}
                   maxLength={200}
                   showCharCount
                   errors={errors.nom ? { fr: errors.nom } : {}}
@@ -433,6 +429,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   label={t('patrimoine.fields.adresse', 'Adresse / Localisation précise')}
                   value={formData.adresse}
                   onChange={(value: any) => setFormData(prev => ({ ...prev, adresse: value }))}
+                  requiredLanguages={[]}
                   placeholder={t('patrimoine.placeholders.adresse', 'Ex: Centre-ville, Route de...')}
                   maxLength={300}
                 />
@@ -452,10 +449,10 @@ const AjouterPatrimoineRapide: React.FC = () => {
                         type="button"
                         aria-pressed={interieur === value}
                         onClick={() => { setInterieur(value); setErrors(prev => { const { gps: _, ...rest } = prev; return rest; }); }}
-                        className={`p-3 rounded-lg border text-start transition-colors ${interieur === value ? 'border-primary bg-primary/10' : 'border-input hover:border-primary/50 hover:bg-muted'}`}
+                        className={`flex flex-col items-start gap-1 p-3 rounded-lg border text-start transition-colors ${interieur === value ? 'border-primary bg-primary/10' : 'border-input hover:border-primary/50 hover:bg-muted'}`}
                       >
                         <span className="flex items-center gap-2 text-sm font-medium"><Icon className="h-4 w-4" />{label}</span>
-                        <span className="block text-xs text-muted-foreground mt-1">{hint}</span>
+                        <span className="block text-xs font-normal text-muted-foreground">{hint}</span>
                       </button>
                     ))}
                   </div>
@@ -482,6 +479,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     <GPSPicker
                       latitude={formData.latitude}
                       longitude={formData.longitude}
+                      zoom={parentId ? 17 : 13}
                       onPositionChange={(lat, lng) => {
                         setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
                         setErrors(prev => { const { gps: _, ...rest } = prev; return rest; });

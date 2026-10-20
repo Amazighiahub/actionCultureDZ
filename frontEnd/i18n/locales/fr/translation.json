@@ -1252,15 +1252,15 @@
     "patrimoine": "Patrimoine",
     "artisanat": "Artisanat",
     "placeholder_rechercher": "Rechercher...",
-    "mes_uvres": "Mes œuvres (",
+    "mes_uvres": "Mes œuvres",
     "nouvelle_uvre": "Nouvelle œuvre",
     "aucune_uvre_cre": "Aucune œuvre créée",
     "crer_premire_uvre": "Créer ma première œuvre",
-    "mes_vnements": "Mes événements (",
+    "mes_vnements": "Mes événements",
     "nouvel_vnement": "Nouvel événement",
     "aucun_vnement": "Aucun événement créé",
     "crer_mon_premier": "Créer mon premier événement",
-    "mes_services": "Mes services (",
+    "mes_services": "Mes services",
     "nouveau_service": "Nouveau service",
     "aucun_service": "Aucun service créé",
     "crer_mon_premier_1": "Créer mon premier service",
@@ -2084,7 +2084,7 @@
     "citation_apa": "Citation APA :",
     "contributeurs": "Contributeurs",
     "principal": "Principal",
-    "commentaires": "Commentaires (",
+    "commentaires": "Commentaires",
     "commenter": "Commenter",
     "rpondre": "Répondre",
     "aucun_commentaire_pour": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
@@ -3448,7 +3448,10 @@
       "indoorHint": "Une salle, une pièce, une vitrine…",
       "repere": "Repère dans le site",
       "reperePlaceholder": "Ex : 1er étage, salle 3",
-      "moveMarker": "La carte est centrée sur le site : déplacez le repère sur l'emplacement exact du point."
+      "moveMarker": "La carte est centrée sur le site : déplacez le repère sur l'emplacement exact du point.",
+      "step2": "Quel est ce point ?",
+      "nom": "Nom du point",
+      "nomPlaceholder": "Ex : Arc de Trajan, salle des mosaïques…"
     },
     "audio": {
       "title": "Écouter",
@@ -3464,7 +3467,9 @@
       "notAudio": "Ce fichier n'a pas été reconnu comme un enregistrement audio",
       "added": "Enregistrement ajouté",
       "uploadError": "L'enregistrement n'a pas pu être envoyé"
-    }
+    },
+    "sectionEmpty": "à compléter",
+    "directions": "Itinéraire"
   },
   "toasts": {
     "error": "Erreur",
