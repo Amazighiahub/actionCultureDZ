@@ -393,6 +393,8 @@ class SocketService {
   
   // État public
   public isConnected = false;
+  /** Une connexion a abouti au moins une fois (sans serveur temps réel, rien à signaler) */
+  public hasEverConnected = false;
   public connectionError: Error | null = null;
   
   // Callbacks
@@ -462,6 +464,7 @@ class SocketService {
 
     this.socket.on('connect', () => {
       this.isConnected = true;
+      this.hasEverConnected = true;
       this.isConnecting = false;
       this.connectionError = null;
       this.flushMessageQueue();

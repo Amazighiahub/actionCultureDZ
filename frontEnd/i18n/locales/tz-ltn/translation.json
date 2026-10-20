@@ -1093,8 +1093,8 @@
     "partager_desc": "Bḍu axeddim-a ɣef yizeḍwan-ik"
   },
   "notfound": {
-    "oops_page_not": "Aya! Asebter ur yettwafen ara",
-    "return_home": "Uɣal ɣer tazwara",
+    "oops_page_not": "Asebter ulac-it",
+    "return_home": "Uɣal ɣer usebter agejdan",
     "description": "Asebter i d-tettnadiḍ ulac-it neɣ yettwasiweḍ ɣer wadeg-nniḍen."
   },
   "eventdetailspage": {
@@ -1620,7 +1620,9 @@
     "similarCreations": "Timeskar yemcabin",
     "removeFromFavorites": "Kkes seg yismenyifen",
     "addToFavorites": "Rnu ɣer yismenyifen",
-    "resultsHeading": "Tabdart n yifarisen n tẓuri"
+    "resultsHeading": "Tabdart n yifarisen n tẓuri",
+    "delai": "Aseggem: {{jours}} n wussan",
+    "enStock": "Yella: {{n}}"
   },
   "apropos": {
     "title_transmission": "Tawilt",
@@ -2588,7 +2590,11 @@
       "confirmDelete": "Ad tekkseḍ ameẓlu-a?"
     },
     "emailVerified": "Imayl yettwasenqed akken iwata",
-    "emailVerifyFailed": "D awezɣi asenqed n yimayl"
+    "emailVerifyFailed": "D awezɣi asenqed n yimayl",
+    "realtime": {
+      "connected": "Tuqqna tusridt teddu",
+      "reconnect": "Tuqqna tusridt tegzem: ales tuqqna"
+    }
   },
   "wilayas": {
     "alger": "Lezzayer",
@@ -3641,7 +3647,8 @@
       "createFailed": "Tuccḍa deg usnulfu",
       "loadFailed": "Ur yezmir ara ad d-yali umẓun asnufri",
       "loadMetadataFailed": "Tuccḍa deg usali n tɣawsiwin d tiqniyin",
-      "prixMinMax": "Ssuma tadday ur tezmir ara ad tili tugar ssuma tafellay"
+      "prixMinMax": "Ssuma tadday ur tezmir ara ad tili tugar ssuma tafellay",
+      "descriptionRequired": "Aglam yettwasra (ɣas s tefransist neɣ s taɛrabt)"
     },
     "addTag": "Rnu tabzimt",
     "removeTag": "Kkes tabzimt {{tag}}",

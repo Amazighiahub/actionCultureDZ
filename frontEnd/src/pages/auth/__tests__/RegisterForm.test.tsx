@@ -186,20 +186,21 @@ vi.mock('@/components/ui/checkbox', () => ({
 }));
 
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, ...props }: any) => (
+  Select: ({ children, value, onValueChange }: any) => (
     <div data-testid="select-root" data-value={value}>
       {React.Children.map(children, (child: any) =>
         child ? React.cloneElement(child, { _onValueChange: onValueChange, _value: value }) : null
       )}
     </div>
   ),
-  SelectTrigger: React.forwardRef(({ children, _onValueChange, _value, ...props }: any, ref: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- props internes du mock retirées du DOM
+  SelectTrigger: React.forwardRef(({ children, _onValueChange: _ignore, _value: _ignoreValue, ...props }: any, ref: any) => (
     <button ref={ref} type="button" role="combobox" data-testid="select-trigger" {...props}>
       {children}
     </button>
   )),
   SelectValue: ({ placeholder, _value }: any) => <span>{_value || placeholder || ''}</span>,
-  SelectContent: ({ children, _onValueChange, _value }: any) => (
+  SelectContent: ({ children, _onValueChange }: any) => (
     <div role="listbox">{React.Children.map(children, (child: any) =>
       child ? React.cloneElement(child, { _onValueChange }) : null
     )}</div>
@@ -238,9 +239,6 @@ function getPasswordInput() {
   return screen.getByLabelText(/auth\.register\.password/i) as HTMLInputElement;
 }
 
-function getConfirmInput() {
-  return screen.getByLabelText(/auth\.register\.confirmPassword/i) as HTMLInputElement;
-}
 
 function getSubmitButton() {
   return screen.getByRole('button', { name: /auth\.register\.createAccount/i });

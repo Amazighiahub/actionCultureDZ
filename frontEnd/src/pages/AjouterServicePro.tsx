@@ -138,7 +138,8 @@ const AjouterServicePro: React.FC = () => {
   const loadExistingService = async () => {
     if (!editId) return;
     try {
-      const result = await httpClient.get<Record<string, unknown>>(`/services/${editId}`);
+      // Toutes les langues : la fiche traduite écrasait les autres traductions à l'enregistrement
+      const result = await httpClient.get<Record<string, unknown>>(`/services/${editId}`, { i18n: 'all' });
       if (result.success && result.data) {
         const svc = result.data;
         const toML = (v: unknown): MultiLangText => {

@@ -462,7 +462,7 @@ const PatrimoineDetail = () => {
         {/* Contenu principal */}
         <div className="grid md:grid-cols-3 gap-8">
           {/* Colonne principale */}
-          <div className="md:col-span-2 space-y-8">
+          <div className="md:col-span-2 space-y-8 min-w-0">
             {/* Description */}
             <Card>
               <CardHeader>

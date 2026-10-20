@@ -151,6 +151,8 @@ class BaseDTO {
    */
   static translateRaw(data, lang = 'fr', _depth = 0) {
     if (data === null || data === undefined) return data;
+    // ?i18n=all : toutes les langues, sans traduction (formulaires de modification)
+    if (lang === 'all') return data;
     if (data instanceof Date) return data;
     if (typeof data !== 'object') return data;
 

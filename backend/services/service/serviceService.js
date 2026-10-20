@@ -5,6 +5,7 @@
 
 const BaseService = require('../core/baseService');
 const ServiceDTO = require('../../dto/service/serviceDTO');
+const { mergeTranslations } = require('../../helpers/i18n');
 
 class ServiceService extends BaseService {
   constructor(serviceRepository, options = {}) {
@@ -154,14 +155,15 @@ class ServiceService extends BaseService {
     }
 
     const updateData = {};
-    if (data.nom) updateData.nom = data.nom;
-    if (data.description !== undefined) updateData.description = data.description;
+    // Fusion des langues : une langue laissée vide ne remplace pas la traduction existante
+    if (data.nom) updateData.nom = mergeTranslations(existing.nom, data.nom);
+    if (data.description !== undefined) updateData.description = mergeTranslations(existing.description, data.description);
     if (data.type_service || data.typeService) updateData.type_service = data.type_service || data.typeService;
     if (data.disponible !== undefined) updateData.disponible = data.disponible;
     if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
     if (data.latitude !== undefined) updateData.latitude = data.latitude;
     if (data.longitude !== undefined) updateData.longitude = data.longitude;
-    if (data.adresse) updateData.adresse = data.adresse;
+    if (data.adresse) updateData.adresse = mergeTranslations(existing.adresse, data.adresse);
     if (data.telephone !== undefined) updateData.telephone = data.telephone;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.site_web !== undefined || data.siteWeb !== undefined) updateData.site_web = data.site_web || data.siteWeb;

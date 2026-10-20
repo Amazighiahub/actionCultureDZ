@@ -37,7 +37,29 @@ module.exports = (sequelize) => {
     },
     prix: {
       type: DataTypes.DECIMAL(10, 2),
+      validate: { min: 0 },
+      comment: 'Prix (minimum si prix_max est renseigné)'
+    },
+    prix_max: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
       validate: { min: 0 }
+    },
+    delai_fabrication: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: { min: 0 },
+      comment: 'Délai de fabrication, en jours'
+    },
+    en_stock: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: { min: 0 }
+    },
+    sur_commande: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     },
     date_creation: {
       type: DataTypes.DATE,

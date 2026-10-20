@@ -58,6 +58,11 @@ const translate = (field, lang = DEFAULT_LANGUAGE, fallbackLang = DEFAULT_LANGUA
  */
 const translateDeep = (data, lang = DEFAULT_LANGUAGE, fieldsToTranslate = null) => {
   if (!data) return data;
+  // ?i18n=all : toutes les langues, sans traduction (formulaires de modification)
+  if (lang === 'all') {
+    if (Array.isArray(data)) return data.map(d => (d && typeof d.toJSON === 'function' ? d.toJSON() : d));
+    return data.toJSON && typeof data.toJSON === 'function' ? data.toJSON() : data;
+  }
   
   // Si c'est un tableau, traiter chaque élément
   if (Array.isArray(data)) {

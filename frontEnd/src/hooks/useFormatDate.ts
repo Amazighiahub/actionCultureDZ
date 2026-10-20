@@ -58,7 +58,9 @@ export function useFormatDate() {
   const locale = getDateLocale(i18n.language);
 
   const formatDate = useCallback(
-    (date: string | Date, options?: Intl.DateTimeFormatOptions) => {
+    (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions) => {
+      // Date absente : rien à afficher (et non le texte « undefined »)
+      if (date === null || date === undefined || date === '') return '';
       try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return String(date);
@@ -71,7 +73,9 @@ export function useFormatDate() {
   );
 
   const formatTime = useCallback(
-    (date: string | Date, options?: Intl.DateTimeFormatOptions) => {
+    (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions) => {
+      // Date absente : rien à afficher (et non le texte « undefined »)
+      if (date === null || date === undefined || date === '') return '';
       try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return String(date);
@@ -84,7 +88,9 @@ export function useFormatDate() {
   );
 
   const formatDateTime = useCallback(
-    (date: string | Date, options?: Intl.DateTimeFormatOptions) => {
+    (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions) => {
+      // Date absente : rien à afficher (et non le texte « undefined »)
+      if (date === null || date === undefined || date === '') return '';
       try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return String(date);

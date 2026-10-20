@@ -1271,7 +1271,11 @@
       "confirmDelete": "حذف هذه الخدمة؟"
     },
     "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
-    "emailVerifyFailed": "تعذّر التحقق من البريد الإلكتروني"
+    "emailVerifyFailed": "تعذّر التحقق من البريد الإلكتروني",
+    "realtime": {
+      "connected": "الاتصال المباشر نشط",
+      "reconnect": "انقطع الاتصال المباشر: إعادة الاتصال"
+    }
   },
   "works": {
     "actions": {
@@ -1440,7 +1444,7 @@
     "partager_desc": "شارك هذا العمل على شبكاتك"
   },
   "notfound": {
-    "oops_page_not": "عذراً! الصفحة غير موجودة",
+    "oops_page_not": "الصفحة غير موجودة",
     "return_home": "العودة إلى الصفحة الرئيسية",
     "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
   },
@@ -1969,7 +1973,9 @@
     "similarCreations": "إبداعات مشابهة",
     "removeFromFavorites": "إزالة من المفضلة",
     "addToFavorites": "إضافة إلى المفضلة",
-    "resultsHeading": "قائمة المنتجات الحرفية"
+    "resultsHeading": "قائمة المنتجات الحرفية",
+    "delai": "مدة الصنع: {{jours}} يوم",
+    "enStock": "متوفر: {{n}}"
   },
   "apropos": {
     "title_transmission": "النقل",
@@ -3726,7 +3732,8 @@
       "createFailed": "خطأ أثناء الإنشاء",
       "loadFailed": "تعذر تحميل المنتج الحرفي",
       "loadMetadataFailed": "خطأ أثناء تحميل المواد والتقنيات",
-      "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى"
+      "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى",
+      "descriptionRequired": "الوصف مطلوب (بالفرنسية أو بالعربية على الأقل)"
     },
     "addTag": "إضافة الوسم",
     "removeTag": "حذف الوسم {{tag}}",

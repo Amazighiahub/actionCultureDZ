@@ -277,7 +277,7 @@
    3. COMPOSANTS UI - BOUTONS CONFORTABLES
    ========================================================================== */
 @layer components {
-  /* Taille tactile minimum pour tous les boutons */
+  /* Tous les boutons : taille tactile minimum, typographie et curseur */
   button,
   [role="button"],
   .btn {
@@ -288,6 +288,15 @@
     border-radius: var(--radius);
     cursor: pointer;
     transition: all var(--transition-base);
+  }
+
+  /* Mise en page et effets seulement pour les boutons sans classe (et .btn).
+     Appliqués à tous les <button>, ils écrasaient la mise en page des boutons stylés :
+     icône réduite à 2 px dans les boutons carrés, contenu centré dans les listes de
+     résultats, cartes de choix mises en ligne, carte qui « saute » au survol. */
+  :where(button:not([class])),
+  :where([role="button"]:not([class])),
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -295,16 +304,13 @@
     padding: 0.75rem 1.25rem;
   }
 
-  /* Boutons sur desktop — pas de surcharge de taille */
-
-  /* Hover et focus states */
-  button:hover:not(:disabled),
+  :where(button:not([class])):hover:not(:disabled),
   .btn:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
   }
 
-  button:active:not(:disabled),
+  :where(button:not([class])):active:not(:disabled),
   .btn:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: var(--shadow-sm);
@@ -317,7 +323,6 @@
   }
 
   /* Bouton icon */
-  button[class*="icon"],
   .btn-icon {
     padding: 0.625rem;
   }

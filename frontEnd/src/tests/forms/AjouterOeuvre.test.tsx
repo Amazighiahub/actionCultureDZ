@@ -140,6 +140,7 @@ vi.mock('@/services/oeuvre.service', () => ({
     updateOeuvre: (...args: any[]) => mockUpdate(...args),
     getById: (...args: any[]) => mockGetById(...args),
     getOeuvreById: (...args: any[]) => mockGetById(...args),
+    getForEdit: (...args: any[]) => mockGetById(...args),
     checkRecentOeuvre: (...args: any[]) => mockCheckRecentOeuvre(...args),
   },
 }));

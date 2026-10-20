@@ -136,7 +136,7 @@ export function useAjouterOeuvre() {
     if (!editId) return;
     try {
       setLoadingEdit(true);
-      const response = await oeuvreService.getById(editId);
+      const response = await oeuvreService.getForEdit(editId);
       if (response.success && response.data) {
         const oeuvre = response.data as Oeuvre & Record<string, unknown>;
         const titre = oeuvre.titre;

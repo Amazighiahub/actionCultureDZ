@@ -88,6 +88,8 @@ vi.mock('@/services/artisanat.service', () => ({
     create: (...args: any[]) => mockCreate(...args),
     update: (...args: any[]) => mockUpdate(...args),
     getById: (...args: any[]) => mockGetById(...args),
+    // Le formulaire charge la fiche dans toutes les langues pour la modifier
+    getForEdit: (...args: any[]) => mockGetById(...args),
     uploadMedias: (...args: any[]) => mockUploadMedias(...args),
   },
 }));
@@ -233,6 +235,11 @@ async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
   const nomInput = screen.getByTestId('input-nom-fr');
   await user.clear(nomInput);
   await user.type(nomInput, 'Tapis berbere');
+
+  // Description FR (obligatoire : le serveur refuse une œuvre sans description)
+  const descInput = screen.getByTestId('input-description-fr');
+  await user.clear(descInput);
+  await user.type(descInput, 'Tapis tissé main');
 
   // Materiau
   await selectMateriau(user);
@@ -618,6 +625,18 @@ describe('AjouterArtisanat', () => {
       expect(nom.fr).toBe('Tapis berbere');
       expect(data.id_materiau).toBe(1);
       expect(data.id_technique).toBe(1);
+    });
+
+    test('sans description : envoi bloqué avec un message', async () => {
+      render(<AjouterArtisanat />);
+      await waitForDataLoad();
+
+      await fillMinimalForm(user);
+      await user.clear(screen.getByTestId('input-description-fr'));
+      submitForm();
+
+      expect(await screen.findAllByText(/description est requise/i)).not.toHaveLength(0);
+      expect(mockCreate).not.toHaveBeenCalled();
     });
 
     test('bouton disabled pendant le loading', async () => {

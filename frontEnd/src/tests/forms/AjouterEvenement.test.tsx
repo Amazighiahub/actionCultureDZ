@@ -113,6 +113,8 @@ vi.mock('@/services/evenement.service', () => ({
     create: (...args: any[]) => mockCreate(...args),
     update: (...args: any[]) => mockUpdate(...args),
     getById: (...args: any[]) => mockGetById(...args),
+    // Le formulaire charge l'événement dans toutes les langues pour le modifier
+    getForEdit: (...args: any[]) => mockGetById(...args),
   },
 }));
 

@@ -496,6 +496,15 @@ class OeuvreService {
   /**
    * Récupérer une œuvre par ID
    */
+  /** Œuvre pour le formulaire de modification : toutes les langues (voir BaseService.getForEdit) */
+  async getForEdit(id: number): Promise<ApiResponse<Oeuvre>> {
+    try {
+      return await httpClient.get<Oeuvre>(`/oeuvres/${id}`, { i18n: 'all' });
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Erreur lors de la récupération') };
+    }
+  }
+
   async getOeuvreById(id: number): Promise<ApiResponse<Oeuvre>> {
     try {
       return await httpClient.get<Oeuvre>(`/oeuvres/${id}`);

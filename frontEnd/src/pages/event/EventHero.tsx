@@ -16,6 +16,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
+import { statutAffiche } from '@/utils/statutEvenement';
 
 interface EventHeroProps {
   event: Evenement;
@@ -56,7 +57,7 @@ const EventHero: React.FC<EventHeroProps> = ({
           <div className="max-w-4xl space-y-4">
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={event.statut} />
+              <StatusBadge status={statutAffiche(event.statut, event.date_debut, event.date_fin)} />
               {event.TypeEvenement && (
                 <Badge variant="secondary">
                   {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
@@ -176,7 +177,7 @@ const EventHero: React.FC<EventHeroProps> = ({
             <div className="max-w-4xl space-y-4">
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={event.statut} />
+                <StatusBadge status={statutAffiche(event.statut, event.date_debut, event.date_fin)} />
 
                 {event.TypeEvenement && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">

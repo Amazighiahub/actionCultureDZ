@@ -158,7 +158,7 @@ const EventDetailsPage: React.FC = () => {
         <div className="container py-8">
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Colonne principale */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-8 min-w-0">
               {/* Onglets simples sans Radix */}
               <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 flex-nowrap">

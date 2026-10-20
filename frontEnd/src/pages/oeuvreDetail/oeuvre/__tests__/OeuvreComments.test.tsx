@@ -13,7 +13,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import type { ComponentProps } from 'react';
 
 // ---------------------------------------------------------------------------
 // vi.hoisted
@@ -71,7 +71,7 @@ vi.mock('@/components/shared', () => ({
 }));
 
 vi.mock('@/components/shared/StarRating', () => ({
-  default: ({ value, onChange, readonly, size }: any) => (
+  default: ({ value, onChange, readonly }: any) => (
     <div data-testid="star-rating" data-value={value} data-readonly={readonly}>
       {!readonly && onChange && (
         <button type="button" onClick={() => onChange(5)}>★</button>
@@ -147,7 +147,7 @@ const SAMPLE_COMMENT = {
 // ---------------------------------------------------------------------------
 
 function renderComments({
-  comments = [],
+  comments = [] as ComponentProps<typeof OeuvreComments>['comments'],
   onAddComment = vi.fn().mockResolvedValue(true),
   oeuvreId = 1,
 } = {}) {

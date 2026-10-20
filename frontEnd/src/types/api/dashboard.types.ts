@@ -133,8 +133,18 @@ export interface CacheStatus {
 // ADMIN — réponses API brutes
 // ============================================
 
+/** Format actuel de GET /dashboard/overview (statsService.generateOverviewStats) */
+export interface OverviewApiResponse {
+  users?: { total?: number; newToday?: number; professionnelsEnAttente?: number };
+  content?: { oeuvres?: number; evenements?: number; artisanats?: number; enAttente?: number };
+  moderation?: { signalementsEnAttente?: number };
+  patrimoine?: { sites?: number };
+  engagement?: { vuesAujourdhui?: number };
+}
+
+/** Ancien format de GET /dashboard/overview, encore lu en secours */
 export interface OverviewApiRawResponse {
-  stats: {
+  stats?: {
     totalUsers: number;
     newUsersToday: number;
     totalOeuvres: number;
@@ -143,7 +153,7 @@ export interface OverviewApiRawResponse {
     totalArtisanats: number;
     vuesAujourdhui: number;
   };
-  pending: {
+  pending?: {
     professionnelsEnAttente: number;
     oeuvresEnAttente: number;
     signalementsEnAttente: number;

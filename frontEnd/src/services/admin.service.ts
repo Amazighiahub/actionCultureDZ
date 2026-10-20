@@ -4,7 +4,7 @@ import { httpClient } from './httpClient';
 import type { CurrentUser } from './auth.service';
 import { Oeuvre, Evenement, Lieu } from '@/types';
 import { Service } from '@/types/models/lieux-details.types';
-import type { OverviewApiRawResponse, BulkUserActionResponse } from '@/types/api/dashboard.types';
+import type { OverviewApiRawResponse, OverviewApiResponse, BulkUserActionResponse } from '@/types/api/dashboard.types';
 
 // Types pour les statistiques
 interface OverviewStats {
@@ -153,28 +153,31 @@ class AdminService {
   // ========================================
 
   async getOverview(): Promise<ApiResponse<OverviewStats>> {
-    const response = await httpClient.get<OverviewApiRawResponse>(API_ENDPOINTS.dashboard.overview);
+    const response = await httpClient.get<OverviewApiRawResponse & OverviewApiResponse>(API_ENDPOINTS.dashboard.overview);
 
     if (response.success && response.data) {
-      const apiData = response.data;
+      // Format actuel de /dashboard/overview : { users, content, moderation, patrimoine, engagement }.
+      // L'ancien format { stats, pending } reste lu en secours. Lire seulement l'ancien format
+      // affichait 0 partout (utilisateurs, œuvres, événements, sites).
+      const apiData = response.data as OverviewApiRawResponse & OverviewApiResponse;
       const transformedData: OverviewStats = {
         users: {
-          total: apiData.stats?.totalUsers || 0,
-          nouveaux_mois: apiData.stats?.newUsersToday || 0,
-          actifs_jour: apiData.stats?.newUsersToday || 0,
-          en_attente_validation: apiData.pending?.professionnelsEnAttente || 0
+          total: apiData.users?.total ?? apiData.stats?.totalUsers ?? 0,
+          nouveaux_mois: apiData.users?.newToday ?? apiData.stats?.newUsersToday ?? 0,
+          actifs_jour: apiData.users?.newToday ?? apiData.stats?.newUsersToday ?? 0,
+          en_attente_validation: apiData.users?.professionnelsEnAttente ?? apiData.pending?.professionnelsEnAttente ?? 0
         },
         content: {
-          oeuvres_total: apiData.stats?.totalOeuvres || 0,
-          oeuvres_en_attente: apiData.pending?.oeuvresEnAttente || 0,
-          evenements_total: apiData.stats?.totalEvenements || 0,
+          oeuvres_total: apiData.content?.oeuvres ?? apiData.stats?.totalOeuvres ?? 0,
+          oeuvres_en_attente: apiData.content?.enAttente ?? apiData.pending?.oeuvresEnAttente ?? 0,
+          evenements_total: apiData.content?.evenements ?? apiData.stats?.totalEvenements ?? 0,
           evenements_actifs: 0,
-          sites_patrimoine: apiData.stats?.sitesPatrimoniaux || 0,
-          artisanats_total: apiData.stats?.totalArtisanats || 0
+          sites_patrimoine: apiData.patrimoine?.sites ?? apiData.stats?.sitesPatrimoniaux ?? 0,
+          artisanats_total: apiData.content?.artisanats ?? apiData.stats?.totalArtisanats ?? 0
         },
         activity: {
-          actions_jour: apiData.stats?.vuesAujourdhui || 0,
-          signalements_ouverts: apiData.pending?.signalementsEnAttente || 0,
+          actions_jour: apiData.engagement?.vuesAujourdhui ?? apiData.stats?.vuesAujourdhui ?? 0,
+          signalements_ouverts: apiData.moderation?.signalementsEnAttente ?? apiData.pending?.signalementsEnAttente ?? 0,
           commentaires_moderer: 0
         },
         growth: {

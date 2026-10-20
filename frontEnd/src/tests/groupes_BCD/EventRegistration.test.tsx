@@ -190,11 +190,13 @@ vi.mock('@/components/ui/scroll-area', () => ({
 // ---------------------------------------------------------------------------
 
 import EventRegistration from '@/pages/event/EventRegistration';
+import type { Evenement } from '@/types/models/evenement.types';
 
 // ---------------------------------------------------------------------------
 // Fixture événement minimal
 // ---------------------------------------------------------------------------
 
+// Événement de test partiel : seuls les champs utiles au composant sont renseignés
 const makeEvent = (overrides = {}) => ({
   id_evenement: 1,
   nom_evenement: 'Festival Test',
@@ -213,7 +215,7 @@ const makeEvent = (overrides = {}) => ({
   contact_email: null,
   contact_telephone: null,
   ...overrides,
-});
+}) as unknown as Evenement;
 
 // ---------------------------------------------------------------------------
 // Tests

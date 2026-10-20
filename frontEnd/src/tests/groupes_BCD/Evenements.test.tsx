@@ -75,7 +75,7 @@ vi.mock('@/components/shared', () => ({
       )}
     </div>
   ),
-  Pagination: ({ currentPage, totalPages, onPageChange }: any) => (
+  Pagination: ({ currentPage, onPageChange }: any) => (
     <div data-testid="pagination">
       <button onClick={() => onPageChange(currentPage + 1)}>Next</button>
     </div>

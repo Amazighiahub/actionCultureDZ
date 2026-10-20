@@ -21,12 +21,13 @@ import ErrorBoundary from '@/components/shared/ErrorBoundary';
 // Icônes
 import {
   Users, BookOpen, Calendar, Shield, Activity,
-  MapPin, Package, Bell, Settings, Wifi, WifiOff
+  MapPin, Package, Bell, Wifi, WifiOff
 } from 'lucide-react';
 
 // Hooks
 import { useAdminAuth } from '@/hooks/useAdmin';
 import { useSocket } from '@/hooks/useSocket';
+import { socketService } from '@/services/socketService';
 
 // ✅ LAZY LOADING - CHEMIN CORRIGÉ: ./admin/
 const AdminOverview = React.lazy(() => import('./admin/AdminOverview'));
@@ -125,38 +126,39 @@ const DashboardAdmin: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Indicateur de connexion WebSocket */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={reconnect}
-              title={isConnected ? 'Connecté' : 'Déconnecté - Cliquez pour reconnecter'}
-            >
-              {isConnected ? (
-                <Wifi className="h-5 w-5 text-green-500" />
-              ) : (
-                <WifiOff className="h-5 w-5 text-red-500" />
-              )}
-            </Button>
+            {/* Indicateur temps réel : affiché seulement si une connexion a déjà abouti
+                (le serveur temps réel n'est pas encore en service : l'alerte était permanente) */}
+            {socketService.hasEverConnected && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={reconnect}
+                aria-label={isConnected ? t('admin.realtime.connected', 'Temps réel connecté') : t('admin.realtime.reconnect', 'Temps réel déconnecté : reconnecter')}
+                title={isConnected ? t('admin.realtime.connected', 'Temps réel connecté') : t('admin.realtime.reconnect', 'Temps réel déconnecté : reconnecter')}
+              >
+                {isConnected ? (
+                  <Wifi className="h-5 w-5 text-green-500" />
+                ) : (
+                  <WifiOff className="h-5 w-5 text-red-500" />
+                )}
+              </Button>
+            )}
 
             {/* Bouton notifications */}
             <Button
               variant="outline"
               size="icon"
               onClick={() => setNotificationModalOpen(true)}
+              aria-label={t('admin.notifications.modal.title', 'Envoyer une notification')}
+              title={t('admin.notifications.modal.title', 'Envoyer une notification')}
             >
               <Bell className="h-5 w-5" />
-            </Button>
-
-            {/* Bouton paramètres */}
-            <Button variant="outline" size="icon" onClick={() => navigate('/admin/dashboard?tab=overview')}>
-              <Settings className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Alerte si WebSocket déconnecté */}
-        {!isConnected && (
+        {/* Alerte si la connexion temps réel, déjà établie, est perdue */}
+        {socketService.hasEverConnected && !isConnected && (
           <Alert className="mb-6 border-yellow-200 bg-yellow-50">
             <WifiOff className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800">

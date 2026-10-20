@@ -40,6 +40,7 @@ import SEOHead from '@/components/SEOHead';
 import { useEvenements } from '@/hooks/useEvenements';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { statutAffiche } from '@/utils/statutEvenement';
 
 // Types d'événements — labels resolved via t() in JSX
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
@@ -79,7 +80,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
         
         {/* Badge statut */}
         <div className="absolute top-3 start-3">
-          <StatusBadge status={event.statut} />
+          <StatusBadge status={statutAffiche(event.statut as string | undefined, event.date_debut as string | undefined, event.date_fin as string | undefined)} />
         </div>
 
         {/* Date badge */}

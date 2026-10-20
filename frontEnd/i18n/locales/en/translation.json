@@ -1076,8 +1076,8 @@
     "partager_desc": "Share this work on your social networks"
   },
   "notfound": {
-    "oops_page_not": "Oops! Page not found",
-    "return_home": "Return to Home",
+    "oops_page_not": "Page not found",
+    "return_home": "Back to home",
     "description": "The page you are looking for does not exist or has been moved."
   },
   "eventdetailspage": {
@@ -1603,7 +1603,9 @@
     "similarCreations": "Similar creations",
     "removeFromFavorites": "Remove from favourites",
     "addToFavorites": "Add to favourites",
-    "resultsHeading": "Crafts list"
+    "resultsHeading": "Crafts list",
+    "delai": "Made in {{jours}} days",
+    "enStock": "In stock: {{n}}"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -2571,7 +2573,11 @@
       "confirmDelete": "Delete this service?"
     },
     "emailVerified": "Email verified successfully",
-    "emailVerifyFailed": "Unable to verify the email"
+    "emailVerifyFailed": "Unable to verify the email",
+    "realtime": {
+      "connected": "Real-time connected",
+      "reconnect": "Real-time disconnected: reconnect"
+    }
   },
   "wilayas": {
     "alger": "Algiers",
@@ -3624,7 +3630,8 @@
       "createFailed": "Error during creation",
       "loadFailed": "Unable to load the craft product",
       "loadMetadataFailed": "Error loading materials and techniques",
-      "prixMinMax": "The minimum price cannot be higher than the maximum price"
+      "prixMinMax": "The minimum price cannot be higher than the maximum price",
+      "descriptionRequired": "A description is required (at least in French or Arabic)"
     },
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",

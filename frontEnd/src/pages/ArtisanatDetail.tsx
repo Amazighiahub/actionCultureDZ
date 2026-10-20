@@ -99,7 +99,7 @@ interface ArtisanatData {
 }
 
 const ArtisanatDetail: React.FC = () => {
-  const { formatPrice, formatPriceRange } = useLocalizedNumber();
+  const { formatPrice, formatPriceRange, formatNumber } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -414,14 +414,32 @@ const ArtisanatDetail: React.FC = () => {
                 <h1 className="text-3xl font-bold">{td(Oeuvre?.titre || '')}</h1>
               </div>
 
-              {/* Prix */}
-              {artisanat.prix_min && artisanat.prix_max ? (
-                <div className="text-2xl font-bold text-primary">
-                  {formatPriceRange(artisanat.prix_min, artisanat.prix_max)}
-                </div>
-              ) : artisanat.prix && (
-                <div className="text-2xl font-bold text-primary">
-                  {formatPrice(Number(artisanat.prix), undefined, false)}
+              {/* Prix : le minimum est la colonne « prix » (prix_min n'existe qu'au formulaire) */}
+              {(() => {
+                const min = Number(artisanat.prix_min ?? artisanat.prix) || 0;
+                const max = Number(artisanat.prix_max) || 0;
+                if (min && max && max > min) {
+                  return <div className="text-2xl font-bold text-primary">{formatPriceRange(min, max)}</div>;
+                }
+                return min ? <div className="text-2xl font-bold text-primary">{formatPrice(min, undefined, false)}</div> : null;
+              })()}
+
+              {/* Disponibilité */}
+              {(artisanat.sur_commande || artisanat.delai_fabrication || (artisanat.en_stock ?? 0) > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {artisanat.sur_commande && (
+                    <Badge variant="secondary">{t('ajouterArtisanat.surCommande', 'Disponible sur commande')}</Badge>
+                  )}
+                  {!!artisanat.delai_fabrication && (
+                    <Badge variant="outline">
+                      {t('artisanat.delai', 'Fabrication : {{jours}} jours', { jours: artisanat.delai_fabrication })}
+                    </Badge>
+                  )}
+                  {(artisanat.en_stock ?? 0) > 0 && (
+                    <Badge variant="outline">
+                      {t('artisanat.enStock', 'En stock : {{n}}', { n: artisanat.en_stock })}
+                    </Badge>
+                  )}
                 </div>
               )}
 
@@ -443,7 +461,8 @@ const ArtisanatDetail: React.FC = () => {
                     <Ruler className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">{t('artisanat.dimensions', 'Dimensions')}</p>
-                      <p className="font-medium">{artisanat.dimensions}</p>
+                      {/* Unité du formulaire (cm) ajoutée quand la saisie n'en porte pas */}
+                      <p className="font-medium">{/[a-z]/i.test(artisanat.dimensions) ? artisanat.dimensions : `${artisanat.dimensions} cm`}</p>
                     </div>
                   </div>
                 )}
@@ -452,7 +471,8 @@ const ArtisanatDetail: React.FC = () => {
                     <Scale className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">{t('artisanat.weight', 'Poids')}</p>
-                      <p className="font-medium">{artisanat.poids}</p>
+                      {/* Poids saisi en kg : « 3.500 » → « 3,5 kg » */}
+                      <p className="font-medium">{Number.isFinite(Number(artisanat.poids)) ? `${formatNumber(Number(artisanat.poids))} kg` : artisanat.poids}</p>
                     </div>
                   </div>
                 )}

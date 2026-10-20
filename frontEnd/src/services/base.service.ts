@@ -32,6 +32,14 @@ export abstract class BaseService<T, CreateDTO = unknown, UpdateDTO = unknown> {
     return httpClient.get<T>(`${this.baseEndpoint}/${id}`);
   }
 
+  /**
+   * Fiche pour un formulaire de modification : champs multilingues dans toutes les langues.
+   * Traduits (getById), ils étaient réenregistrés dans une seule langue et écrasaient les autres.
+   */
+  async getForEdit(id: number): Promise<ApiResponse<T>> {
+    return httpClient.get<T>(`${this.baseEndpoint}/${id}`, { i18n: 'all' });
+  }
+
   async create(data: CreateDTO): Promise<ApiResponse<T>> {
     return httpClient.post<T>(this.baseEndpoint, data);
   }

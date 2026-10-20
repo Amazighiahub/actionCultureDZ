@@ -69,6 +69,10 @@ const languageMiddleware = (req, res, next) => {
   // Normaliser et attacher à la requête
   req.language = normalizeLanguage(detectedLang);
   req.lang = req.language; // Alias
+  // ?i18n=all : champs multilingues renvoyés bruts (toutes les langues) pour les formulaires
+  // de modification. Traduits, ils étaient renvoyés puis réenregistrés dans une seule langue,
+  // ce qui écrasait les autres. Les messages (req.t) restent dans la langue détectée.
+  if (req.query.i18n === 'all') req.lang = 'all';
   
   // Ajouter au header de réponse pour debug
   res.setHeader('X-Content-Language', req.language);
