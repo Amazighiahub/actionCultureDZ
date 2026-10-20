@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Search, MoreVertical, Edit, Trash2, Eye, RefreshCw,
-  MapPin, Award, X, Landmark, AlertCircle
+  MapPin, Award, X, Landmark, AlertCircle, FileSpreadsheet
 } from 'lucide-react';
 
 import {
@@ -36,6 +36,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { adminService } from '@/services/admin.service';
 import { useToast } from '@/components/ui/use-toast';
+import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
 
 // Helper pour extraire le texte multilingue
 
@@ -54,6 +55,7 @@ const AdminPatrimoineTab: React.FC = () => {
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedItemName, setSelectedItemName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -140,10 +142,16 @@ const AdminPatrimoineTab: React.FC = () => {
             {t('admin.patrimoine.count', '{{count}} site(s)', { count: filteredPatrimoines.length })}
           </p>
         </div>
-        <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 me-2" />
-          {t('common.refresh', 'Actualiser')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setImportOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 me-2" />
+            {t('admin.patrimoine.import.title', 'Importer un relevé Excel')}
+          </Button>
+          <Button variant="outline" onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 me-2" />
+            {t('common.refresh', 'Actualiser')}
+          </Button>
+        </div>
       </div>
 
       {/* Filtres */}
@@ -278,6 +286,8 @@ const AdminPatrimoineTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <ImportReleveDialog open={importOpen} onOpenChange={setImportOpen} onImported={refreshAll} />
 
       {/* Dialog suppression */}
       <ConfirmDialog

@@ -423,6 +423,19 @@ class PatrimoineController extends BaseController {
     res.json({ success: true, data: points });
   }
 
+  // Relevé Excel de points de visite (modèle Taladz), réservé à la modération
+  async apercuReleve(req, res) {
+    const parentId = req.body?.parentId ? parseInt(req.body.parentId, 10) : null;
+    const apercu = await this.patrimoineService.apercuReleve(req.file.buffer, { parentId });
+    res.json({ success: true, data: apercu });
+  }
+
+  async importerReleve(req, res) {
+    const parentId = req.body?.parentId ? parseInt(req.body.parentId, 10) : null;
+    const bilan = await this.patrimoineService.importerReleve(req.file.buffer, { parentId, userId: req.user.id_user });
+    res.json({ success: true, data: bilan });
+  }
+
   async deleteMedia(req, res) {
     const { id, mediaId } = req.params;
     await this.patrimoineService.deleteMedia(id, mediaId);
