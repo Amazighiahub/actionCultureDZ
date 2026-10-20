@@ -127,6 +127,43 @@ interface OfflineData {
   version: string;
 }
 
+/** Aperçu d'un relevé Excel (backend services/patrimoine/importReleve.js, resumerPlan) */
+interface ApercuReleve {
+  lieu: { id: number | null; nom: string; existe: boolean; commune?: string } | null;
+  erreurs: string[];
+  bilan: { creer: number; maj: number; inchanges: number; ignorees: number };
+  points: Array<{
+    id: number;
+    action: 'creer' | 'maj' | 'inchange';
+    nom: string;
+    nomAr: string | null;
+    type: string;
+    statut: 'publie' | 'brouillon';
+    interieur: boolean;
+    repere: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    champs: string[];
+  }>;
+  ignorees: Array<{ id: number; nom: string; raison: string }>;
+}
+
+interface BilanReleve {
+  idLieu: number;
+  lieuCree: boolean;
+  crees: number;
+  maj: number;
+  inchanges: number;
+  erreurs: Array<{ id: number; nom: string; erreur: string }>;
+}
+
+const formulaireReleve = (fichier: File, parentId?: number | null): FormData => {
+  const formData = new FormData();
+  formData.append('fichier', fichier);
+  if (parentId) formData.append('parentId', String(parentId));
+  return formData;
+};
+
 class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, UpdateSiteData> {
   constructor() {
     super(API_ENDPOINTS.patrimoine.sites);
@@ -282,14 +319,17 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
   }
 
   // Administration
- /* async importSites(file: File): Promise<ApiResponse<{
-    imported: number;
-    errors: Array<{ line: number; error: string }>;
-  }>> {
-    return httpClient.upload<any>(API_ENDPOINTS.patrimoine.import, file, {
-      fieldName: 'file'
-    });
-  }*/
+  /**
+   * Relevé Excel de points de visite (modèle Taladz) — aperçu sans écriture.
+   * parentId : lieu choisi ; sinon celui de la feuille « Site » (retrouvé ou créé).
+   */
+  async apercuReleve(fichier: File, parentId?: number | null): Promise<ApiResponse<ApercuReleve>> {
+    return httpClient.upload<ApercuReleve>(API_ENDPOINTS.patrimoine.importReleveApercu, formulaireReleve(fichier, parentId));
+  }
+
+  async importerReleve(fichier: File, parentId?: number | null): Promise<ApiResponse<BilanReleve>> {
+    return httpClient.upload<BilanReleve>(API_ENDPOINTS.patrimoine.importReleve, formulaireReleve(fichier, parentId));
+  }
 
   async exportSites(format: 'excel' | 'csv' | 'json' = 'excel'): Promise<ApiResponse<Blob>> {
     return httpClient.download(
@@ -309,5 +349,5 @@ export const patrimoineService = new PatrimoineService();
 export type { 
   SitePatrimoine, CreateSiteData, UpdateSiteData, HoraireSite, 
   TarifSite, MediaSite, Parcours, CreateParcoursData, CarteVisite, 
-  SearchPatrimoineParams, OfflineData 
+  SearchPatrimoineParams, OfflineData, ApercuReleve, BilanReleve
 };

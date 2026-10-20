@@ -584,7 +584,9 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     sectionArticles: (id: number) => `/patrimoine/${id}/articles`,
     sectionArticleDelete: (id: number, blockId: number) => `/patrimoine/${id}/articles/${blockId}`,
 
-    // Admin (planifié)
+    // Administration : relevé Excel de points de visite (modèle Taladz)
+    importReleveApercu: '/patrimoine/import-releve/apercu',
+    importReleve: '/patrimoine/import-releve',
   },
 
   // ================================================

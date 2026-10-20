@@ -28,7 +28,10 @@ const CP1252_MAP = {
 const CONT = '[\u0080-\u00BF' + Object.keys(CP1252_MAP).join('') + ']';
 // Ã+cont : lettres accentuées (é, É = Ã‰, À = Ã€...) ; Å+cont : Œ œ Š Ÿ ; Â+cont : « » ° espace insécable ;
 // â€+cont : ponctuation typographique (’ = â€™, … = â€¦, – = â€“)
-const MOJIBAKE_RE = new RegExp('Ã' + CONT + '|Å' + CONT + '|Â' + CONT + '|â€' + CONT);
+// Arabe (U+0600–U+06FF, octets de tête D8–DB) : Ø Ù Ú Û + cont ; tifinagh (U+2D30–U+2D7F) : â´ âµ + cont.
+// Sans ces deux motifs, les noms arabes des wilayas, daïras et communes n'étaient pas détectés.
+const MOJIBAKE_RE = new RegExp('Ã' + CONT + '|Å' + CONT + '|Â' + CONT + '|â€' + CONT
+  + '|[ØÙÚÛ]' + CONT + '|â[´µ]' + CONT);
 
 /**
  * Détecte si une string ressemble à du mojibake UTF-8 → latin1/cp1252

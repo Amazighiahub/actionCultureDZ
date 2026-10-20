@@ -931,9 +931,13 @@ html, body, #root {
   width: 100%;
 }
 
-[role="dialog"] {
-  max-width: calc(100vw - 2rem);
-  max-height: calc(100dvh - 4rem);
+/* Garde-fou petits écrans ; dans @layer base pour que la largeur choisie par chaque fenêtre
+   (max-w-lg, max-w-3xl…) s'applique — hors couche, cette règle les annulait toutes */
+@layer base {
+  [role="dialog"] {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 4rem);
+  }
 }
 
 [role="listbox"],

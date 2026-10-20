@@ -7,6 +7,7 @@ const { Op } = require('sequelize');
 const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
+const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -709,6 +710,45 @@ class PatrimoineService extends BaseService {
       }
     });
     return this.repository.findPointsDuSite(siteId);
+  }
+
+  /**
+   * Relevé Excel de points de visite (modèle Taladz) : aperçu, rien n'est écrit.
+   * @param {Buffer} fichier - classeur .xlsx
+   * @param {object} [opts]
+   * @param {number} [opts.parentId] - lieu choisi ; sinon celui de la feuille « Site »
+   */
+  async apercuReleve(fichier, { parentId } = {}) {
+    const { plan } = await this._planReleve(fichier, parentId);
+    return resumerPlan(plan);
+  }
+
+  /**
+   * Importe un relevé Excel (création du lieu de la feuille « Site » si besoin).
+   * @param {Buffer} fichier - classeur .xlsx
+   * @param {object} [opts]
+   * @param {number} [opts.parentId]
+   * @param {number} [opts.userId] - auteur d'un lieu créé depuis la feuille « Site »
+   */
+  async importerReleve(fichier, { parentId, userId } = {}) {
+    const { importeur, plan } = await this._planReleve(fichier, parentId);
+    if (plan.erreurs.length) throw this._validationError(plan.erreurs.join(' ; '));
+    const bilan = await importeur.executer(plan, { createurId: userId || null });
+    this.logger.info(`Relevé Excel importé sur le lieu ${bilan.idLieu} : ${bilan.crees} créés, ${bilan.maj} mis à jour`);
+    return bilan;
+  }
+
+  async _planReleve(fichier, parentId) {
+    let releve;
+    try {
+      releve = await lireReleve(fichier);
+    } catch (error) {
+      // Classeur illisible ou colonne obligatoire absente : message pour l'utilisateur
+      throw this._validationError(/introuvable|vide/.test(error.message) ? error.message : 'Fichier Excel illisible');
+    }
+    const importeur = new ImportReleve(this.models, this);
+    const plan = await importeur.planifier(releve, { parentId });
+    return { importeur, plan };
   }
 
   /**
