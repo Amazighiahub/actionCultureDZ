@@ -373,7 +373,7 @@ const AjouterArtisanat: React.FC = () => {
           <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 min-w-0">
               {/* Basic info */}
               <Card>
                 <CardHeader>

@@ -130,7 +130,8 @@ class DashboardStatsService {
         where: { id_type_user: { [Op.ne]: 1 }, statut: 'en_attente_validation' }
       }),
       this.models.Signalement?.count({ where: { statut: 'en_attente' } }) || 0,
-      this.models.Lieu?.count() || 0,
+      // Sites principaux (les points de visite d'un site ne sont pas des sites)
+      this.models.Lieu?.count({ where: { id_lieu_parent: null } }) || 0,
       this.models.Vue?.count({
         where: { date_vue: { [Op.gte]: startOfDay(new Date()) } }
       }) || 0

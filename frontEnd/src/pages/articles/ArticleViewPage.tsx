@@ -67,6 +67,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'article';data: Article;} |
 {type: 'article_scientifique';data: ArticleScientifique;} |
 {type: 'none';data: null;};
+import Header from '@/components/Header';
 
 function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
@@ -473,7 +474,7 @@ const ArticleViewPage: React.FC = () => {
 
       case 'text':
         return (
-          <p key={block.id_block || index} className="text-lg leading-relaxed mb-6 text-justify">
+          <p key={block.id_block || index} className="text-lg leading-relaxed mb-6 md:text-justify md:hyphens-auto">
             {block.contenu}
           </p>);
 
@@ -634,9 +635,12 @@ const ArticleViewPage: React.FC = () => {
         />
       )}
       <ReadingProgress />
+      {/* En-tête du site (navigation) ; la barre de lecture se colle juste en dessous */}
+      <Header />
 
-      {/* Header fixe */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b">
+      {/* Barre de lecture, sous l'en-tête. Pas de « sticky » : avec overflow-x: hidden sur le body,
+          elle ne restait pas collée et chevauchait le titre ; la barre de progression suit la lecture. */}
+      <div className="bg-background border-b">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
@@ -679,7 +683,7 @@ const ArticleViewPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Contenu principal */}
       <main className="container max-w-4xl mx-auto px-4 py-8">

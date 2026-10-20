@@ -250,7 +250,7 @@ const AdminOverview: React.FC = () => {
                     key={user.id_user}
                     title={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
                     subtitle={getLocalizedText(user.type_user) || user.email}
-                    date={formatDate(user.date_inscription)}
+                    date={formatDate(user.date_creation || user.date_inscription)}
                     imageUrl={user.photo_url}
                     onApprove={() => validateUser({ userId: user.id_user, validated: true })}
                     onReject={() => validateUser({ userId: user.id_user, validated: false })}

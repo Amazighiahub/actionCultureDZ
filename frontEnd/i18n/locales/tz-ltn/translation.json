@@ -1093,8 +1093,8 @@
     "partager_desc": "Bḍu axeddim-a ɣef yizeḍwan-ik"
   },
   "notfound": {
-    "oops_page_not": "Aya! Asebter ur yettwafen ara",
-    "return_home": "Uɣal ɣer tazwara",
+    "oops_page_not": "Asebter ulac-it",
+    "return_home": "Uɣal ɣer usebter agejdan",
     "description": "Asebter i d-tettnadiḍ ulac-it neɣ yettwasiweḍ ɣer wadeg-nniḍen."
   },
   "eventdetailspage": {
@@ -2588,7 +2588,11 @@
       "confirmDelete": "Ad tekkseḍ ameẓlu-a?"
     },
     "emailVerified": "Imayl yettwasenqed akken iwata",
-    "emailVerifyFailed": "D awezɣi asenqed n yimayl"
+    "emailVerifyFailed": "D awezɣi asenqed n yimayl",
+    "realtime": {
+      "connected": "Tuqqna tusridt teddu",
+      "reconnect": "Tuqqna tusridt tegzem: ales tuqqna"
+    }
   },
   "wilayas": {
     "alger": "Lezzayer",

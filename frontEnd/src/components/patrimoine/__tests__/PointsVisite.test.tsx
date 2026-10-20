@@ -43,7 +43,7 @@ vi.mock('@/components/ui/select', () => ({
   SelectTrigger: () => null,
   SelectValue: () => null,
   SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => <option value={value}>{value}</option>,
+  SelectItem: ({ value }: any) => <option value={value}>{value}</option>,
 }));
 
 import PointsVisite, { type PointVisite } from '../PointsVisite';

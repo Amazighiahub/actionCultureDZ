@@ -1076,8 +1076,8 @@
     "partager_desc": "Share this work on your social networks"
   },
   "notfound": {
-    "oops_page_not": "Oops! Page not found",
-    "return_home": "Return to Home",
+    "oops_page_not": "Page not found",
+    "return_home": "Back to home",
     "description": "The page you are looking for does not exist or has been moved."
   },
   "eventdetailspage": {
@@ -2571,7 +2571,11 @@
       "confirmDelete": "Delete this service?"
     },
     "emailVerified": "Email verified successfully",
-    "emailVerifyFailed": "Unable to verify the email"
+    "emailVerifyFailed": "Unable to verify the email",
+    "realtime": {
+      "connected": "Real-time connected",
+      "reconnect": "Real-time disconnected: reconnect"
+    }
   },
   "wilayas": {
     "alger": "Algiers",

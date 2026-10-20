@@ -73,7 +73,12 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     queryFn: async () => {
       const response = await evenementService.getDetail(eventId);
       if (response.success && response.data) {
-        return response.data;
+        // Le tarif arrive en texte (DECIMAL MySQL : « 0.00 ») : sans conversion, « tarif === 0 »
+        // était toujours faux et un événement gratuit affichait « 0 DZD par personne »
+        const tarif = (response.data as { tarif?: unknown }).tarif;
+        return tarif === null || tarif === undefined || tarif === ''
+          ? response.data
+          : { ...response.data, tarif: Number(tarif) };
       }
       throw new Error(response.error || 'Événement non trouvé');
     },

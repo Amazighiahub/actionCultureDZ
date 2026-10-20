@@ -254,7 +254,8 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
 
             {/* Mini carte ou bouton pour ouvrir Maps */}
             {event.Lieu.latitude && event.Lieu.longitude && (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                {/* Empilés sur mobile : côte à côte, le libellé débordait du bouton */}
                 <Button onClick={openInMaps} variant="outline" className="flex-1">
                   <Navigation className="h-4 w-4 me-2" />
                   {t('event.getDirections', 'Itinéraire')}

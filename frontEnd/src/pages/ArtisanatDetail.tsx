@@ -99,7 +99,7 @@ interface ArtisanatData {
 }
 
 const ArtisanatDetail: React.FC = () => {
-  const { formatPrice, formatPriceRange } = useLocalizedNumber();
+  const { formatPrice, formatPriceRange, formatNumber } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -443,7 +443,8 @@ const ArtisanatDetail: React.FC = () => {
                     <Ruler className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">{t('artisanat.dimensions', 'Dimensions')}</p>
-                      <p className="font-medium">{artisanat.dimensions}</p>
+                      {/* Unité du formulaire (cm) ajoutée quand la saisie n'en porte pas */}
+                      <p className="font-medium">{/[a-z]/i.test(artisanat.dimensions) ? artisanat.dimensions : `${artisanat.dimensions} cm`}</p>
                     </div>
                   </div>
                 )}
@@ -452,7 +453,8 @@ const ArtisanatDetail: React.FC = () => {
                     <Scale className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">{t('artisanat.weight', 'Poids')}</p>
-                      <p className="font-medium">{artisanat.poids}</p>
+                      {/* Poids saisi en kg : « 3.500 » → « 3,5 kg » */}
+                      <p className="font-medium">{Number.isFinite(Number(artisanat.poids)) ? `${formatNumber(Number(artisanat.poids))} kg` : artisanat.poids}</p>
                     </div>
                   </div>
                 )}

@@ -1101,8 +1101,8 @@
     "partager_desc": "Partagez cette œuvre sur vos réseaux"
   },
   "notfound": {
-    "oops_page_not": "Oops! Page not found",
-    "return_home": "Return to Home",
+    "oops_page_not": "Page introuvable",
+    "return_home": "Retour à l'accueil",
     "description": "La page que vous recherchez n'existe pas ou a été déplacée."
   },
   "eventdetailspage": {
@@ -2596,7 +2596,11 @@
       "validate": "Valider"
     },
     "emailVerified": "Email vérifié avec succès",
-    "emailVerifyFailed": "Impossible de vérifier l'email"
+    "emailVerifyFailed": "Impossible de vérifier l'email",
+    "realtime": {
+      "connected": "Temps réel connecté",
+      "reconnect": "Temps réel déconnecté : reconnecter"
+    }
   },
   "wilayas": {
     "alger": "Alger",
