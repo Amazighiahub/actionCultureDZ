@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Building2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Building2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
+import FormPageHeader from '@/components/shared/FormPageHeader';
 
 interface TypeOrganisation {
   id_type_organisation: number;
@@ -26,7 +26,7 @@ interface TypeOrganisation {
 const AjouterOrganisation = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { rtlClasses, direction } = useRTL();
+  const { direction } = useRTL();
   const { toast } = useToast();
 
   const [types, setTypes] = useState<TypeOrganisation[]>([]);
@@ -147,20 +147,12 @@ const AjouterOrganisation = () => {
 
       <main className="container py-12">
         <div className="max-w-2xl mx-auto">
-          <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
-            <Button variant="outline" size="sm" asChild><Link to="/ajouter-evenement">
-                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)} rtl:-scale-x-100`} />
-                {t('common.back', 'Retour')}
-              </Link></Button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight font-serif text-gradient">
-                {t('organisations.create.title', 'Créer une organisation')}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {t('organisations.create.subtitle', 'Créez votre structure pour organiser des événements')}
-              </p>
-            </div>
-          </div>
+          <FormPageHeader
+            backTo="/ajouter-evenement"
+            backLabel={t('common.back', 'Retour')}
+            title={t('organisations.create.title', 'Créer une organisation')}
+            subtitle={t('organisations.create.subtitle', 'Créez votre structure pour organiser des événements')}
+          />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>

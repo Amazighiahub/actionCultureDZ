@@ -1591,15 +1591,15 @@
     "services_1": "الخدمات",
     "patrimoine": "التراث",
     "placeholder_rechercher": "البحث...",
-    "mes_uvres": "أعمالي (",
+    "mes_uvres": "أعمالي",
     "nouvelle_uvre": "عمل جديد",
     "aucune_uvre_cre": "لم يتم إنشاء أي عمل",
     "crer_premire_uvre": "إنشاء عملي الأول",
-    "mes_vnements": "فعالياتي (",
+    "mes_vnements": "فعالياتي",
     "nouvel_vnement": "فعالية جديدة",
     "aucun_vnement": "لم يتم إنشاء أي فعالية",
     "crer_mon_premier": "إنشاء فعاليتي الأولى",
-    "mes_services": "خدماتي (",
+    "mes_services": "خدماتي",
     "nouveau_service": "خدمة جديدة",
     "aucun_service": "لم يتم إنشاء أي خدمة",
     "crer_mon_premier_1": "إنشاء خدمتي الأولى",
@@ -2425,7 +2425,7 @@
     "citation_apa": "الاقتباس APA:",
     "contributeurs": "المساهمون",
     "principal": "رئيسي",
-    "commentaires": "التعليقات (",
+    "commentaires": "التعليقات",
     "commenter": "تعليق",
     "rpondre": "رد",
     "aucun_commentaire_pour": "لا توجد تعليقات حتى الآن. كن أول من يعلق!",
@@ -3545,7 +3545,10 @@
       "indoorHint": "قاعة، غرفة، واجهة عرض…",
       "repere": "مكانه داخل الموقع",
       "reperePlaceholder": "مثال: الطابق الأول، القاعة 3",
-      "moveMarker": "الخريطة متمركزة على الموقع: حرّكوا العلامة إلى المكان الدقيق للنقطة."
+      "moveMarker": "الخريطة متمركزة على الموقع: حرّكوا العلامة إلى المكان الدقيق للنقطة.",
+      "step2": "ما هذه النقطة؟",
+      "nom": "اسم النقطة",
+      "nomPlaceholder": "مثال: قوس تراجان، قاعة الفسيفساء…"
     },
     "audio": {
       "title": "استمع",
@@ -3561,7 +3564,9 @@
       "notAudio": "لم يُتعرَّف على هذا الملف كتسجيل صوتي",
       "added": "تمت إضافة التسجيل",
       "uploadError": "تعذّر إرسال التسجيل"
-    }
+    },
+    "sectionEmpty": "للإكمال",
+    "directions": "الاتجاهات"
   },
   "toasts": {
     "error": "خطأ",

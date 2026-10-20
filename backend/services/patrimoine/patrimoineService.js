@@ -552,18 +552,21 @@ class PatrimoineService extends BaseService {
   // ============================================================================
 
   /**
-   * Liste des types de patrimoine avec compteurs
+   * Types de patrimoine des sites publics (filtres de la page Patrimoine), avec compteurs.
+   * Regroupe par typePatrimoine (musée, site archéologique…), pas par division administrative,
+   * et ne compte que les lieux principaux publiés : les points de visite restent sur la fiche du site.
    */
   async getTypes() {
     const { fn, col } = require('sequelize');
     const { Lieu } = this.models || {};
     if (!Lieu) return [];
     const types = await Lieu.findAll({
-      attributes: ['typeLieu', [fn('COUNT', col('id_lieu')), 'count']],
-      group: ['typeLieu'],
+      attributes: ['typePatrimoine', [fn('COUNT', col('id_lieu')), 'count']],
+      where: { statut: 'publie', id_lieu_parent: null },
+      group: ['typePatrimoine'],
       raw: true
     });
-    return types.map(t => ({ value: t.typeLieu, label: t.typeLieu, count: parseInt(t.count) }));
+    return types.map(t => ({ value: t.typePatrimoine, label: t.typePatrimoine, count: parseInt(t.count, 10) }));
   }
 
   /**

@@ -1242,15 +1242,15 @@
     "services_1": "ⵜⴰⵏⴰⴼⵓⵜⵉⵏ",
     "patrimoine": "ⵜⴰⴳⵎⵎⵉ",
     "placeholder_rechercher": "ⵔⵣⵓ...",
-    "mes_uvres": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵉⵏⵓ (",
+    "mes_uvres": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵉⵏⵓ",
     "nouvelle_uvre": "ⵜⴰⵡⵓⵔⵉ ⵜⴰⵎⴰⵢⵏⵓⵜ",
     "aucune_uvre_cre": "ⵓⵔ ⵜⵜⵓⵙⵏⵓⵍⴼⴰ ⵜⵡⵓⵔⵉ",
     "crer_premire_uvre": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⵡⵓⵔⵉ ⵉⵏⵓ ⵜⴰⵎⵣⵡⴰⵔⵓⵜ",
-    "mes_vnements": "ⵉⵏⵎⵓⴳⴳⴰⵔⵏ ⵉⵏⵓ (",
+    "mes_vnements": "ⵉⵏⵎⵓⴳⴳⴰⵔⵏ ⵉⵏⵓ",
     "nouvel_vnement": "ⴰⵏⵎⵓⴳⴳⴰⵔ ⴰⵎⴰⵢⵏⵓ",
     "aucun_vnement": "ⵓⵔ ⵜⵜⵓⵙⵏⵓⵍⴼⴰ ⵓⵏⵎⵓⴳⴳⴰⵔ",
     "crer_mon_premier": "ⵙⵏⵓⵍⴼⵓ ⴰⵏⵎⵓⴳⴳⴰⵔ ⵉⵏⵓ ⴰⵎⵣⵡⴰⵔⵓ",
-    "mes_services": "ⵜⴰⵏⴰⴼⵓⵜⵉⵏ ⵉⵏⵓ (",
+    "mes_services": "ⵜⴰⵏⴰⴼⵓⵜⵉⵏ ⵉⵏⵓ",
     "nouveau_service": "ⵜⴰⵏⴰⴼⵓⵜ ⵜⴰⵎⴰⵢⵏⵓⵜ",
     "aucun_service": "ⵓⵔ ⵜⵜⵓⵙⵏⵓⵍⴼⴰ ⵜⴰⵏⴰⴼⵓⵜ",
     "crer_mon_premier_1": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⵏⴰⴼⵓⵜ ⵉⵏⵓ ⵜⴰⵎⵣⵡⴰⵔⵓⵜ",
@@ -2076,7 +2076,7 @@
     "citation_apa": "ⴰⴱⴷⴰⵔ APA:",
     "contributeurs": "ⵉⵎⴰⵡⵙⵏ",
     "principal": "ⴰⴳⵊⴷⴰⵏ",
-    "commentaires": "ⵉⵡⵏⵏⵉⵜⵏ (",
+    "commentaires": "ⵉⵡⵏⵏⵉⵜⵏ",
     "commenter": "ⴰⵡⵏⵏⵉⵜ",
     "rpondre": "ⵔⴰⵔ",
     "aucun_commentaire_pour": "ⵓⵔ ⵍⵍⵉⵏ ⵉⵡⵏⵏⵉⵜⵏ ⴰⵔ ⴰⵙⵙⴰ. ⴳ ⴰⵎⵣⵡⴰⵔⵓ ⴰⴷ ⵜⴰⵡⵏⵏⵉⵜⴹ!",
@@ -3460,7 +3460,10 @@
       "indoorHint": "ⵜⴰⵅⵅⴰⵎⵜ, ⵜⴰⵣⴻⵇⵇⴰ…",
       "repere": "ⴰⵏⵉⴷⴰ ⵢⴻⵍⵍⴰ ⴷⴻⴳ ⵡⴰⴷⴻⴳ",
       "reperePlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵜⴰⵅⵅⴰⵎⵜ 3",
-      "moveMarker": "ⵜⴰⴽⴰⵔⴹⴰ ⵜⴻⴱⴷⴰ ⵙⴻⴳ ⵡⴰⴷⴻⴳ: ⵙⵎⵓⵜⵜⵉ ⵜⴰⵛⵔⴻⴹⵜ ⵖⴻⵔ ⵡⴰⴷⵉⴳ ⵏ ⵜⵉⴷⴻⵜ ⵏ ⵡⴰⴷⴻⴳ."
+      "moveMarker": "ⵜⴰⴽⴰⵔⴹⴰ ⵜⴻⴱⴷⴰ ⵙⴻⴳ ⵡⴰⴷⴻⴳ: ⵙⵎⵓⵜⵜⵉ ⵜⴰⵛⵔⴻⴹⵜ ⵖⴻⵔ ⵡⴰⴷⵉⴳ ⵏ ⵜⵉⴷⴻⵜ ⵏ ⵡⴰⴷⴻⴳ.",
+      "step2": "ⴷ ⴰⵛⵓ-ⵜ ⵡⴰⴷⴻⴳ-ⴰ?",
+      "nom": "ⵉⵙⴻⵎ ⵏ ⵡⴰⴷⴻⴳ",
+      "nomPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵜⴰⴳⴳⵓⵔⵜ ⵏ Trajan…"
     },
     "audio": {
       "title": "ⵙⴻⵍ",
@@ -3476,7 +3479,9 @@
       "notAudio": "ⴰⴼⴰⵢⵍⵓ-ⴰ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵙⴻⵏ ⴰⵔⴰ ⴷ ⴰⵙⴻⴽⵍⴻⵙ ⵏ ⵉⵎⴻⵙⵍⵉ",
       "added": "ⴰⵙⴻⴽⵍⴻⵙ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ",
       "uploadError": "ⴰⵙⴻⴽⵍⴻⵙ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ"
-    }
+    },
+    "sectionEmpty": "ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴻⵎⵎⴻⵍ",
+    "directions": "ⴰⴱⵔⵉⴷ"
   },
   "toasts": {
     "error": "ⵜⵓⵛⵛⴹⴰ",

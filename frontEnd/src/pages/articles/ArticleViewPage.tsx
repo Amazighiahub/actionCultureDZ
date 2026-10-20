@@ -881,8 +881,7 @@ const ArticleViewPage: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />{t("articles_articleviewpage.commentaires")}
-                {commentaires.length})
+                <MessageCircle className="h-5 w-5" />{t("articles_articleviewpage.commentaires")} ({commentaires.length})
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Button

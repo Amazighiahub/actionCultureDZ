@@ -81,7 +81,8 @@ class DashboardStatsService {
    */
   async getPublicStats() {
     const [sitesPatrimoniaux, evenementsActifs, oeuvres, artisanats, membres] = await Promise.all([
-      this.models.Lieu ? this.models.Lieu.count() : 0,
+      // Sites publics seulement : ni brouillons, ni points de visite d'un site (Timgad compte pour 1)
+      this.models.Lieu ? this.models.Lieu.count({ where: { statut: 'publie', id_lieu_parent: null } }) : 0,
       this.models.Evenement ? this.models.Evenement.count({ where: { statut: { [Op.in]: ['planifie', 'en_cours'] } } }) : 0,
       this.models.Oeuvre ? this.models.Oeuvre.count() : 0,
       this.models.Artisanat ? this.models.Artisanat.count() : 0,

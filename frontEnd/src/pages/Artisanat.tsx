@@ -304,12 +304,12 @@ const Artisanat: React.FC = () => {
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
           <Card className="p-4 text-center">
             <div className="flex justify-center mb-2">
               <Package className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-2xl font-bold text-primary">{stats?.total_produits || displayedArtisanats.length}</p>
+            <p className="text-2xl font-bold text-primary">{stats?.total ?? stats?.total_produits ?? displayedArtisanats.length}</p>
             <p className="text-sm text-muted-foreground">{t('artisanat.stats.products', 'Produits')}</p>
           </Card>
           <Card className="p-4 text-center">
@@ -326,13 +326,15 @@ const Artisanat: React.FC = () => {
             <p className="text-2xl font-bold text-primary">{techniques.length}</p>
             <p className="text-sm text-muted-foreground">{t('artisanat.stats.techniques', 'Techniques')}</p>
           </Card>
-          <Card className="p-4 text-center">
-            <div className="flex justify-center mb-2">
-              <ShoppingBag className="h-6 w-6 text-primary" />
-            </div>
-            <p className="text-2xl font-bold text-primary">{stats?.total_artisans || 0}</p>
-            <p className="text-sm text-muted-foreground">{t('artisanat.stats.artisans', 'Artisans')}</p>
-          </Card>
+          {(stats?.total_artisans || 0) > 0 && (
+            <Card className="p-4 text-center">
+              <div className="flex justify-center mb-2">
+                <ShoppingBag className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-2xl font-bold text-primary">{stats?.total_artisans}</p>
+              <p className="text-sm text-muted-foreground">{t('artisanat.stats.artisans', 'Artisans')}</p>
+            </Card>
+          )}
         </div>
 
         {/* Filtres */}

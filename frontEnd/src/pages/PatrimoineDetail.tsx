@@ -170,7 +170,7 @@ const PatrimoineDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const lang = i18n.language || 'fr';
-  const { isAdmin, isValidatedProfessional, hasRole, isOwner } = usePermissions();
+  const { isAuthenticated, isAdmin, isValidatedProfessional, hasRole, isOwner } = usePermissions();
 
   const [site, setSite] = useState<SitePatrimoineDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -234,14 +234,9 @@ const PatrimoineDetail = () => {
     toast({ title: t('qrcode.success', 'QR Code téléchargé'), description: t('qrcode.checkDownloads', 'Vérifiez vos téléchargements') });
   };
 
-  // Obtenir l'image principale
-  const getMainImage = (): string => {
-    if (site?.medias && site.medias.length > 0) {
-      const imageMedia = site.medias.find(m => m.type === 'image');
-      if (imageMedia?.url) return imageMedia.url;
-    }
-    return '/images/placeholder-patrimoine.svg';
-  };
+  // Image principale (null sans photo : bandeau compact plutôt qu'une image de remplacement)
+  const mainImage = site?.medias?.find(m => m.type === 'image' && m.url)?.url || null;
+  const getMainImage = (): string => mainImage || '/images/placeholder-patrimoine.svg';
 
   if (loading) {
     return (
@@ -292,6 +287,14 @@ const PatrimoineDetail = () => {
   const pointPrecedent = indexVoisin > 0 ? voisins[indexVoisin - 1] : null;
   const pointSuivant = indexVoisin >= 0 && indexVoisin < voisins.length - 1 ? voisins[indexVoisin + 1] : null;
   const repere = translate(site.repere, lang);
+  const nomGeo = (o?: { nom?: string; commune_name_ascii?: string; daira_name_ascii?: string; wilaya_name_ascii?: string }) =>
+    (lang === 'ar' && o?.nom) || o?.commune_name_ascii || o?.daira_name_ascii || o?.wilaya_name_ascii || o?.nom || '';
+  const lieuLisible = [...new Set([nomGeo(site.commune), nomGeo(site.daira), nomGeo(site.wilaya)].filter(Boolean))].join(', ')
+    || translate(site.adresse, lang);
+  const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
+  // Sections « Culture & Patrimoine vivant » : masquées pour un visiteur quand elles sont toutes vides
+  const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
+    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '');
   const canAddContent = isAdmin || isValidatedProfessional();
   const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
 
@@ -357,35 +360,41 @@ const PatrimoineDetail = () => {
         </div>
 
         {/* Image principale et galerie */}
-        <div className="relative mb-8 rounded-xl overflow-hidden">
-          <img fetchPriority="high"
-            src={getMainImage()}
-            alt={translate(site.nom, lang)}
-            className="w-full h-[400px] object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className={`relative mb-8 rounded-xl overflow-hidden ${mainImage ? '' : 'h-56 md:h-64 bg-gradient-to-br from-stone-700 via-stone-800 to-stone-900'}`}>
+          {mainImage ? (
+            <>
+              <img fetchPriority="high"
+                src={getAssetUrl(mainImage)}
+                alt={translate(site.nom, lang)}
+                className="w-full h-[280px] sm:h-[360px] md:h-[420px] object-cover"
+              />
+              {/* Dégradé assez sombre pour que le titre reste lisible sur toute photo */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            </>
+          ) : (
+            <Landmark className="absolute end-6 top-6 h-24 w-24 text-white/10" aria-hidden="true" />
+          )}
 
           {/* Overlay info */}
-          <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">
+          <div className="absolute bottom-0 start-0 end-0 p-5 md:p-6 text-white">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                {/* text-white explicite : la règle globale des h1 (index.css) impose la couleur du texte */}
+                <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2 text-white drop-shadow-sm break-words">
                   {translate(site.nom, lang)}
                 </h1>
-                <div className="flex items-center gap-2 text-white/90 mb-4">
-                  <MapPin className="h-4 w-4" />
-                  <span>
-                    {site.wilaya?.wilaya_name_ascii || site.commune?.commune_name_ascii || translate(site.adresse, lang)}
-                  </span>
+                <div className="flex items-center gap-2 text-white/90 mb-1">
+                  <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{lieuLisible}</span>
                 </div>
                 {repere && (
-                  <div className="flex items-center gap-2 text-white/90 -mt-2 mb-4">
+                  <div className="flex items-center gap-2 text-white/90 mb-1">
                     <DoorOpen className="h-4 w-4" aria-hidden="true" />
                     <span>{repere}</span>
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2 items-end">
+              <div className="flex flex-col gap-2 items-end shrink-0">
                 {site.stats?.noteMoyenne && (
                   <Badge className="bg-yellow-500/90 text-white">
                     <Star className="h-4 w-4 me-1 fill-current" />
@@ -393,16 +402,11 @@ const PatrimoineDetail = () => {
                   </Badge>
                 )}
                 {/* ⚡ Afficher le type de patrimoine traduit avec icône */}
-                <Badge variant="secondary" className={
-                  site.typePatrimoine === 'ville_village' ? 'bg-emerald-500/90 text-white' :
-                  site.typePatrimoine === 'site_naturel' ? 'bg-green-500/90 text-white' :
-                  site.typePatrimoine === 'site_archeologique' ? 'bg-amber-500/90 text-white' :
-                  ''
-                }>
-                  {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 me-1" />}
-                  {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 me-1" />}
-                  {site.typePatrimoine === 'monument' && <Landmark className="h-3 w-3 me-1" />}
-                  {TYPE_LABELS[(site.typePatrimoine || 'autre') as TypePatrimoine]?.[lang as 'fr' | 'ar' | 'en'] || site.typeLieu || 'Site'}
+                <Badge variant="secondary" className="bg-white/90 text-stone-900 hover:bg-white/90">
+                  {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 me-1" aria-hidden="true" />}
+                  {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 me-1" aria-hidden="true" />}
+                  {(site.typePatrimoine === 'monument' || site.typePatrimoine === 'site_archeologique') && <Landmark className="h-3 w-3 me-1" aria-hidden="true" />}
+                  {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, TYPE_LABELS[(site.typePatrimoine || 'autre') as TypePatrimoine]?.fr || 'Site')}
                 </Badge>
               </div>
             </div>
@@ -569,7 +573,7 @@ const PatrimoineDetail = () => {
                 programmes:  site.programmes?.length || 0,
                 parcours:    site.parcours?.length || 0,
                 galerie:     visuels.length,
-                histoire:    site.DetailLieu?.histoire ? 1 : 0,
+                histoire:    translate(site.DetailLieu?.histoire, lang) || translate(site.DetailLieu?.referencesHistoriques, lang) ? 1 : 0,
                 musees:      0,
                 collections: 0,
                 faune_flore: 0,
@@ -589,12 +593,15 @@ const PatrimoineDetail = () => {
                 faune_flore: { label: t('patrimoine.wildlife', 'Faune & Flore'), icon: Info },
               };
 
-              const defaultOpen = availableSections.filter(s => (counts[s] || 0) > 0);
-              const openValues = defaultOpen.length > 0 ? defaultOpen : [availableSections[0]];
+              // Visiteur : seulement les sections qui ont du contenu ; contributeur : toutes, pour les compléter
+              const sections = isAuthenticated ? availableSections : availableSections.filter(s => (counts[s] || 0) > 0);
+              if (sections.length === 0) return null;
+              const defaultOpen = sections.filter(s => (counts[s] || 0) > 0);
+              const openValues = defaultOpen.length > 0 ? defaultOpen : [sections[0]];
 
               return (
                 <Accordion type="multiple" defaultValue={openValues} className="w-full border rounded-xl overflow-hidden divide-y bg-card">
-                  {availableSections.map((sectionKey) => {
+                  {sections.map((sectionKey) => {
                     const meta = SECTION_META[sectionKey];
                     if (!meta) return null;
                     const count = counts[sectionKey] || 0;
@@ -611,7 +618,7 @@ const PatrimoineDetail = () => {
                             <span className="ms-auto me-2 shrink-0">
                               {count > 0
                                 ? <Badge variant="secondary" className="text-xs font-normal">{count}</Badge>
-                                : <span className="text-xs text-muted-foreground/50 italic font-normal">vide</span>}
+                                : <span className="text-xs text-muted-foreground italic font-normal">{t('patrimoine.sectionEmpty', 'à compléter')}</span>}
                             </span>
                           </div>
                         </AccordionTrigger>
@@ -791,7 +798,7 @@ const PatrimoineDetail = () => {
             {/* ════════════════════════════════════════════════════════════ */}
             {/* CULTURE & PATRIMOINE VIVANT                                 */}
             {/* ════════════════════════════════════════════════════════════ */}
-            <div className="space-y-6 mt-8">
+            {(isAuthenticated || cultureRemplie) && <div className="space-y-6 mt-8">
               <div className="flex items-center gap-3 pb-3 border-b">
                 <span className="text-2xl">🌿</span>
                 <div>
@@ -805,7 +812,7 @@ const PatrimoineDetail = () => {
               <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
               <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
               <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
-            </div>
+            </div>}
           </div>
 
           {/* Sidebar */}
@@ -844,16 +851,17 @@ const PatrimoineDetail = () => {
                       </p>
                     )}
                     {site.commune && (
-                      <p className="text-sm text-muted-foreground">
-                        {site.commune.commune_name_ascii || site.commune.nom}, {site.daira?.daira_name_ascii || site.daira?.nom}, {site.wilaya?.wilaya_name_ascii || site.wilaya?.nom}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{lieuLisible}</p>
                     )}
                   </div>
                 </div>
 
                 {/* Coordonnées GPS */}
-                <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  GPS: {Number(site.latitude).toFixed(6)}, {Number(site.longitude).toFixed(6)}
+                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                  <span dir="ltr">GPS : {Number(site.latitude).toFixed(6)}, {Number(site.longitude).toFixed(6)}</span>
+                  <a href={itineraireUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline whitespace-nowrap">
+                    {t('patrimoine.directions', 'Itinéraire')}
+                  </a>
                 </div>
               </CardContent>
             </Card>
@@ -924,20 +932,20 @@ const PatrimoineDetail = () => {
             )}
 
             {/* Actions */}
-            <Card className="border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+            <Card className="border-primary/20 bg-primary/5">
               <CardContent className="p-4 space-y-3">
                 <div className="text-center">
-                  <Route className="h-8 w-8 mx-auto text-emerald-600 dark:text-emerald-400 mb-2" />
-                  <h3 className="font-semibold text-emerald-800 dark:text-emerald-200">
+                  <Route className="h-8 w-8 mx-auto text-primary mb-2" aria-hidden="true" />
+                  <h3 className="font-semibold text-foreground">
                     {t('patrimoine.discoverArea', 'Découvrez les environs')}
                   </h3>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  <p className="text-sm text-muted-foreground">
                     {t('patrimoine.planVisitDesc', 'Créez un parcours personnalisé avec les sites à proximité')}
                   </p>
                 </div>
                 <Button 
                   size="lg"
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
+                  className="w-full"
                   onClick={() => setShowVisitePlanner(true)}
                 >
                   <Route className="h-5 w-5 me-2" />
@@ -947,15 +955,15 @@ const PatrimoineDetail = () => {
             </Card>
             
             {/* Lien pour les professionnels */}
-            <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+            <Card>
               <CardContent className="p-3 text-center">
-                <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   {t('patrimoine.proService', 'Vous êtes professionnel ?')}
                 </p>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300"
+                  className="w-full"
                   onClick={() => navigate(`/ajouter-mon-service?lieu=${site.id_lieu}`)}
                 >
                   {t('patrimoine.addYourService', 'Proposez vos services ici')}

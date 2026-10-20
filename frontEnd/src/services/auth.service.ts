@@ -156,8 +156,30 @@ class AuthService {
     }
   }
 
-  async getCurrentUser(): Promise<ApiResponse<CurrentUser>> {
-    return httpClient.get<CurrentUser>(API_ENDPOINTS.auth.me);
+  /** @param options.silentAuth vérification au démarrage : session expirée = visiteur, sans redirection */
+  async getCurrentUser(options?: { silentAuth?: boolean }): Promise<ApiResponse<CurrentUser>> {
+    const response = await httpClient.get<CurrentUser>(API_ENDPOINTS.auth.me, undefined, options);
+    // Après un rechargement de page, c'est ce premier appel qui reconstitue l'utilisateur en mémoire
+    if (response.success && response.data) {
+      this.userCache = response.data;
+    }
+    return response;
+  }
+
+  /**
+   * Une session a été ouverte sur ce navigateur (date d'expiration posée à la connexion).
+   * L'utilisateur, lui, n'est gardé qu'en mémoire : après un rechargement de page, ce repère
+   * permet de redemander au serveur qui est connecté (le cookie httpOnly fait foi, et
+   * l'intercepteur 401 le renouvelle s'il a expiré) au lieu de conclure à une déconnexion.
+   */
+  hasSessionHint(): boolean {
+    return !!localStorage.getItem(AUTH_CONFIG.tokenExpiryKey);
+  }
+
+  /** Session refusée par le serveur : oublier l'utilisateur et le repère de session */
+  clearSession(): void {
+    this.userCache = null;
+    this.clearLocalAuthData();
   }
 
   async verifyToken(): Promise<ApiResponse<{ valid: boolean }>> {

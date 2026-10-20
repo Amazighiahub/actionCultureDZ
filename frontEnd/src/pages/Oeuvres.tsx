@@ -310,23 +310,28 @@ const Oeuvres: React.FC = () => {
 
         {/* Stats rapides */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
             <Card className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">{stats.total || 0}</p>
               <p className="text-sm text-muted-foreground">{t('works.stats.total', 'Œuvres')}</p>
             </Card>
-            <Card className="p-4 text-center">
-              <p className="text-2xl font-bold text-primary">{stats.nouveautes || 0}</p>
-              <p className="text-sm text-muted-foreground">{t('works.stats.new', 'Nouveautés')}</p>
-            </Card>
+            {/* Tuile masquée à zéro : « 0 nouveauté » en vitrine dessert le site */}
+            {(stats.nouveautes || 0) > 0 && (
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-bold text-primary">{stats.nouveautes}</p>
+                <p className="text-sm text-muted-foreground">{t('works.stats.new', 'Nouveautés')}</p>
+              </Card>
+            )}
             <Card className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">{typesOeuvres?.length || 0}</p>
               <p className="text-sm text-muted-foreground">{t('works.stats.types', 'Types')}</p>
             </Card>
-            <Card className="p-4 text-center">
-              <p className="text-2xl font-bold text-primary">{stats.classiques || 0}</p>
-              <p className="text-sm text-muted-foreground">{t('works.stats.classics', 'Classiques')}</p>
-            </Card>
+            {(stats.classiques || 0) > 0 && (
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-bold text-primary">{stats.classiques}</p>
+                <p className="text-sm text-muted-foreground">{t('works.stats.classics', 'Classiques')}</p>
+              </Card>
+            )}
           </div>
         )}
 

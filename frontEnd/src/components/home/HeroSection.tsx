@@ -113,25 +113,25 @@ const HeroSection: React.FC = () => {
   const stats = [
     { 
       icon: MapPin, 
-      value: publicStats?.sites_patrimoniaux_formatted || '...', 
+      value: publicStats?.sites_patrimoniaux_formatted || '...', raw: publicStats?.sites_patrimoniaux, 
       label: t('home.stats.heritage', 'sites patrimoniaux') 
     },
     { 
       icon: Calendar, 
-      value: publicStats?.evenements_formatted || '...', 
+      value: publicStats?.evenements_formatted || '...', raw: publicStats?.evenements, 
       label: t('home.stats.events', 'événements') 
     },
     { 
       icon: Palette, 
-      value: publicStats?.oeuvres_formatted || '...', 
+      value: publicStats?.oeuvres_formatted || '...', raw: publicStats?.oeuvres, 
       label: t('home.stats.works', 'œuvres') 
     },
     { 
       icon: Users, 
-      value: publicStats?.membres_formatted || '...', 
+      value: publicStats?.membres_formatted || '...', raw: publicStats?.membres, 
       label: t('home.stats.members', 'membres') 
     }
-  ];
+  ].filter(stat => stat.raw !== 0); // « 0 événements » en vitrine dessert le site : la tuile est masquée
 
   return (
     <section
@@ -274,7 +274,7 @@ const HeroSection: React.FC = () => {
 
             {/* ✅ Stats - Grid responsive 2x2 sur mobile, 4 colonnes sur tablet+ */}
             <div className="
-              grid grid-cols-2 sm:grid-cols-4 
+              grid grid-cols-2 sm:grid-flow-col sm:auto-cols-fr 
               gap-4 sm:gap-6 md:gap-8
               max-w-xl sm:max-w-none
               mx-auto sm:mx-0

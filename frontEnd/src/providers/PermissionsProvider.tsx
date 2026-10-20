@@ -42,15 +42,17 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       setLoading(true);
       setError(null);
       
-      if (authService.isAuthenticated()) {
-        const response = await authService.getCurrentUser();
+      // Rechargement de page : l'utilisateur en mémoire est perdu, mais le repère de session
+      // permet de redemander au serveur (sinon F5 ou un lien ouvert dans un onglet déconnectait)
+      if (authService.isAuthenticated() || authService.hasSessionHint()) {
+        const response = await authService.getCurrentUser({ silentAuth: true });
         if (response.success && response.data) {
           setUser(response.data);
           // Initialiser le service de permissions avec l'utilisateur
           permissionsService.setCurrentUser(response.data);
         } else {
-          // Session invalide côté serveur — nettoyer le cache local
-          authService.clearUserCache();
+          // Session invalide côté serveur — nettoyer le cache local et le repère de session
+          authService.clearSession();
           setUser(null);
           permissionsService.setCurrentUser(null);
         }
@@ -62,7 +64,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       setError(err as Error);
       console.error('Failed to load user:', err);
       // Nettoyer le cache local pour éviter une boucle de redirection
-      authService.clearUserCache();
+      authService.clearSession();
       setUser(null);
       permissionsService.setCurrentUser(null);
     } finally {

@@ -27,6 +27,8 @@ interface GPSPickerProps {
   longitude: number;
   onPositionChange: (lat: number, lng: number) => void;
   error?: string;
+  /** Zoom à l'ouverture quand une position existe (13 : une ville ; 17 : un monument dans un site) */
+  zoom?: number;
 }
 
 const MapClickHandler: React.FC<{ onPositionChange: (lat: number, lng: number) => void }> = ({ onPositionChange }) => {
@@ -34,11 +36,12 @@ const MapClickHandler: React.FC<{ onPositionChange: (lat: number, lng: number) =
   return null;
 };
 
-const RecenterMap: React.FC<{ lat: number; lng: number }> = ({ lat, lng }) => {
+// Recentre sur la position sans dézoomer : l'utilisateur qui a zoomé pour viser garde son zoom
+const RecenterMap: React.FC<{ lat: number; lng: number; zoom: number }> = ({ lat, lng, zoom }) => {
   const map = useMap();
   useEffect(() => {
-    if (lat !== 0 && lng !== 0) map.setView([lat, lng], 13);
-  }, [lat, lng, map]);
+    if (lat !== 0 && lng !== 0) map.setView([lat, lng], Math.max(map.getZoom(), zoom));
+  }, [lat, lng, map, zoom]);
   return null;
 };
 
@@ -48,7 +51,7 @@ interface SearchResult {
   lon: string;
 }
 
-const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionChange, error }) => {
+const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionChange, error, zoom = 13 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [locating, setLocating] = useState(false);
@@ -162,7 +165,7 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
       {searchResults.length > 0 && (
         <div className="border rounded-lg divide-y max-h-40 overflow-y-auto bg-background">
           {searchResults.map((r, i) => (
-            <button key={i} type="button" className="w-full text-start p-2 hover:bg-muted text-sm flex items-start gap-2" onClick={() => selectResult(r)}>
+            <button key={i} type="button" className="w-full text-start p-2 hover:bg-muted text-sm flex items-start justify-start gap-2" onClick={() => selectResult(r)}>
               <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
               <span className="line-clamp-2">{r.display_name}</span>
             </button>
@@ -172,10 +175,10 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
 
       {/* Carte */}
       <div className="rounded-lg overflow-hidden border" style={{ height: 250 }}>
-        <MapContainer center={center} zoom={hasPosition ? 13 : 6} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+        <MapContainer center={center} zoom={hasPosition ? zoom : 6} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
           <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <MapClickHandler onPositionChange={onPositionChange} />
-          <RecenterMap lat={latitude} lng={longitude} />
+          <RecenterMap lat={latitude} lng={longitude} zoom={zoom} />
           {hasPosition && <Marker position={[latitude, longitude]} />}
         </MapContainer>
       </div>
