@@ -168,7 +168,7 @@ const AjouterEvenement = () => {
   const loadExistingEvent = async () => {
     if (!editId) return;
     try {
-      const response = await evenementService.getById(editId);
+      const response = await evenementService.getForEdit(editId);
       if (response.success && response.data) {
         const evt = response.data as Record<string, unknown>;
         setFormData({

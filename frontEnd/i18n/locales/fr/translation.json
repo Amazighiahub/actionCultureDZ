@@ -1628,7 +1628,9 @@
     "similarCreations": "Créations similaires",
     "removeFromFavorites": "Retirer des favoris",
     "addToFavorites": "Ajouter aux favoris",
-    "resultsHeading": "Liste des produits artisanaux"
+    "resultsHeading": "Liste des produits artisanaux",
+    "delai": "Fabrication : {{jours}} jours",
+    "enStock": "En stock : {{n}}"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -3862,7 +3864,8 @@
       "createFailed": "Erreur lors de la création",
       "loadFailed": "Impossible de charger l'artisanat",
       "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques",
-      "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum"
+      "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum",
+      "descriptionRequired": "La description est requise (au moins en français ou en arabe)"
     },
     "addTag": "Ajouter le tag",
     "removeTag": "Supprimer le tag {{tag}}",

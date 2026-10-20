@@ -7,6 +7,7 @@ const BaseService = require('../core/baseService');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
+const { mergeTranslations } = require('../../helpers/i18n');
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {
@@ -252,8 +253,9 @@ class EvenementService extends BaseService {
       }
 
       const updateData = {};
-      if (data.nom_evenement || data.nom) updateData.nom_evenement = data.nom_evenement || data.nom;
-      if (data.description !== undefined) updateData.description = data.description;
+      // Fusion des langues : une langue laissée vide ne remplace pas la traduction existante
+      if (data.nom_evenement || data.nom) updateData.nom_evenement = mergeTranslations(existing.nom_evenement, data.nom_evenement || data.nom);
+      if (data.description !== undefined) updateData.description = mergeTranslations(existing.description, data.description);
       if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
       if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;

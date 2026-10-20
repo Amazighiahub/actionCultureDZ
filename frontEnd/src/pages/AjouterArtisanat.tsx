@@ -102,7 +102,7 @@ const AjouterArtisanat: React.FC = () => {
   const loadExistingArtisanat = async () => {
     if (!editId) return;
     try {
-      const response = await artisanatService.getById(editId);
+      const response = await artisanatService.getForEdit(editId);
       if (response.success && response.data) {
         const art = response.data as Record<string, unknown>;
         const toObj = (v: unknown): MultiLangText => {
@@ -113,11 +113,12 @@ const AjouterArtisanat: React.FC = () => {
           return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
         };
         setFormData({
-          nom: toObj(art.nom),
-          description: toObj(art.description),
+          // Nom et description sont portés par l'œuvre parente
+          nom: toObj(art.nom ?? (art.Oeuvre as Record<string, unknown> | undefined)?.titre),
+          description: toObj(art.description ?? (art.Oeuvre as Record<string, unknown> | undefined)?.description),
           id_materiau: art.id_materiau || 0,
           id_technique: art.id_technique || 0,
-          prix_min: art.prix_min,
+          prix_min: (art.prix_min as number | undefined) ?? (art.prix != null ? Number(art.prix) : undefined),
           prix_max: art.prix_max,
           delai_fabrication: art.delai_fabrication,
           sur_commande: art.sur_commande || false,
@@ -233,6 +234,10 @@ const AjouterArtisanat: React.FC = () => {
     const errs: Record<string, string> = {};
     if (!Object.values(formData.nom).some(v => v?.trim())) {
       errs.nom = t('ajouterArtisanat.errors.nomRequired', 'Le nom est requis');
+    }
+    // Description obligatoire : le serveur la refuse vide (comme pour toute œuvre)
+    if (!formData.description?.fr?.trim() && !formData.description?.ar?.trim()) {
+      errs.description = t('ajouterArtisanat.errors.descriptionRequired', 'La description est requise (au moins en français ou en arabe)');
     }
     if (!formData.id_materiau) {
       errs.id_materiau = t('ajouterArtisanat.errors.materiauRequired', 'Le matériau est requis');
@@ -408,7 +413,9 @@ const AjouterArtisanat: React.FC = () => {
                     }}
                     type="textarea"
                     rows={4}
-                    requiredLanguages={[]}
+                    required
+                    requiredLanguages={['fr']}
+                    errors={fieldErrors.description ? { fr: fieldErrors.description } : undefined}
                     placeholder={t('ajouterArtisanat.descriptionPlaceholder', 'Décrivez votre produit, ses caractéristiques...')}
                   />
 

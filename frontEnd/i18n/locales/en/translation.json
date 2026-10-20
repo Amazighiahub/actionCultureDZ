@@ -1603,7 +1603,9 @@
     "similarCreations": "Similar creations",
     "removeFromFavorites": "Remove from favourites",
     "addToFavorites": "Add to favourites",
-    "resultsHeading": "Crafts list"
+    "resultsHeading": "Crafts list",
+    "delai": "Made in {{jours}} days",
+    "enStock": "In stock: {{n}}"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -3628,7 +3630,8 @@
       "createFailed": "Error during creation",
       "loadFailed": "Unable to load the craft product",
       "loadMetadataFailed": "Error loading materials and techniques",
-      "prixMinMax": "The minimum price cannot be higher than the maximum price"
+      "prixMinMax": "The minimum price cannot be higher than the maximum price",
+      "descriptionRequired": "A description is required (at least in French or Arabic)"
     },
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",

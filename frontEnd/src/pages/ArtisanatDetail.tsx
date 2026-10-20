@@ -414,14 +414,32 @@ const ArtisanatDetail: React.FC = () => {
                 <h1 className="text-3xl font-bold">{td(Oeuvre?.titre || '')}</h1>
               </div>
 
-              {/* Prix */}
-              {artisanat.prix_min && artisanat.prix_max ? (
-                <div className="text-2xl font-bold text-primary">
-                  {formatPriceRange(artisanat.prix_min, artisanat.prix_max)}
-                </div>
-              ) : artisanat.prix && (
-                <div className="text-2xl font-bold text-primary">
-                  {formatPrice(Number(artisanat.prix), undefined, false)}
+              {/* Prix : le minimum est la colonne « prix » (prix_min n'existe qu'au formulaire) */}
+              {(() => {
+                const min = Number(artisanat.prix_min ?? artisanat.prix) || 0;
+                const max = Number(artisanat.prix_max) || 0;
+                if (min && max && max > min) {
+                  return <div className="text-2xl font-bold text-primary">{formatPriceRange(min, max)}</div>;
+                }
+                return min ? <div className="text-2xl font-bold text-primary">{formatPrice(min, undefined, false)}</div> : null;
+              })()}
+
+              {/* Disponibilité */}
+              {(artisanat.sur_commande || artisanat.delai_fabrication || (artisanat.en_stock ?? 0) > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {artisanat.sur_commande && (
+                    <Badge variant="secondary">{t('ajouterArtisanat.surCommande', 'Disponible sur commande')}</Badge>
+                  )}
+                  {!!artisanat.delai_fabrication && (
+                    <Badge variant="outline">
+                      {t('artisanat.delai', 'Fabrication : {{jours}} jours', { jours: artisanat.delai_fabrication })}
+                    </Badge>
+                  )}
+                  {(artisanat.en_stock ?? 0) > 0 && (
+                    <Badge variant="outline">
+                      {t('artisanat.enStock', 'En stock : {{n}}', { n: artisanat.en_stock })}
+                    </Badge>
+                  )}
                 </div>
               )}
 
