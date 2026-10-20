@@ -2,9 +2,13 @@
 /**
  * import-points-visite.js — Importe les points de visite d'un site depuis un classeur Excel
  *
- * Classeur attendu (feuille 1, ligne 1 = en-têtes) :
- *   A ID · B Nom du point · C Catégorie · D Description · E Latitude · F Longitude
- *   G Source · H Remarque · … · N Type Taladz (monument, site_archeologique, musee…)
+ * Classeur : feuille « Points » (sinon la première), ligne 1 = en-têtes, lus par leur titre :
+ *   ID · Nom du point · Nom en arabe · Nom en tamazight · Type (ou Type Taladz) · Description
+ *   · Latitude · Longitude · Repère (point intérieur) · Source
+ * Accepte le modèle « Modele_points_GPS_Taladz.xlsx » comme l'ancien relevé de Timgad.
+ * Une ligne dont l'ID n'est pas un nombre (ex. la ligne « Exemple ») est ignorée.
+ * Point intérieur (salle d'un musée…) : latitude et longitude vides + repère ; il prend la
+ * position du site et il est retrouvé par son nom lors d'une relance.
  *
  * Relançable : chaque point est retrouvé parmi ceux du site par ses coordonnées GPS.
  *   - point absent  → créé (ordre de visite = ID du relevé)
@@ -54,35 +58,97 @@ const texte = (cell) => {
   return String(v).trim();
 };
 
+const sansAccent = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+// Colonnes reconnues par leur titre (variantes acceptées, sans accent ni casse)
+const COLONNES = {
+  id: ['id', 'n°', 'no', 'numero'],
+  nom: ['nom du point', 'nom du point (francais)', 'nom (francais)', 'nom'],
+  nomAr: ['nom en arabe', 'nom (arabe)'],
+  nomTz: ['nom en tamazight', 'nom (tamazight)'],
+  type: ['type taladz', 'type'],
+  description: ['description'],
+  latitude: ['latitude'],
+  longitude: ['longitude'],
+  repere: ['repere (point interieur)', 'repere'],
+  source: ['source']
+};
+
+// Libellés du modèle → types Taladz (les valeurs Taladz brutes sont aussi acceptées)
+const TYPES_LIBELLES = {
+  'monument': 'monument', 'site archeologique': 'site_archeologique', 'musee': 'musee',
+  'edifice religieux': 'edifice_religieux', 'palais / forteresse': 'palais_forteresse', 'palais/forteresse': 'palais_forteresse',
+  'site naturel': 'site_naturel', 'ville / village': 'ville_village', 'ville/village': 'ville_village', 'autre': 'autre'
+};
+const typeTaladz = (t) => {
+  const v = sansAccent(t || '');
+  if (TYPES.includes(v)) return v;
+  return TYPES_LIBELLES[v] || null;
+};
+
 async function lireClasseur(fichier) {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(fichier);
-  const ws = wb.worksheets[0];
+  const ws = wb.getWorksheet('Points') || wb.worksheets[0];
+
+  // Position de chaque colonne d'après la ligne d'en-têtes
+  const pos = {};
+  ws.getRow(1).eachCell((cell, col) => {
+    const titre = sansAccent(texte(cell));
+    for (const [cle, variantes] of Object.entries(COLONNES)) {
+      if (pos[cle] === undefined && variantes.includes(titre)) pos[cle] = col;
+    }
+  });
+  for (const requis of ['id', 'latitude', 'longitude']) {
+    if (pos[requis] === undefined) throw new Error(`Colonne « ${COLONNES[requis][0]} » introuvable dans la feuille « ${ws.name} »`);
+  }
+  const lire = (row, cle) => (pos[cle] ? texte(row.getCell(pos[cle])) : '');
+
   const lignes = [];
+  const ignorees = [];
   ws.eachRow((row, n) => {
     if (n === 1) return;
-    const id = parseInt(texte(row.getCell(1)), 10);
-    const latitude = parseFloat(texte(row.getCell(5)));
-    const longitude = parseFloat(texte(row.getCell(6)));
-    if (!Number.isInteger(id) || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    const id = parseInt(lire(row, 'id'), 10);
+    if (!Number.isInteger(id)) return;                       // ligne « Exemple », vide…
+    const lat = lire(row, 'latitude').replace(',', '.');
+    const lon = lire(row, 'longitude').replace(',', '.');
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+    const repere = lire(row, 'repere');
+    const nom = lire(row, 'nom'); const nomAr = lire(row, 'nomAr'); const nomTz = lire(row, 'nomTz');
+    const interieur = !lat && !lon && !!repere;
+    if (!interieur && (!Number.isFinite(latitude) || !Number.isFinite(longitude))) {
+      // Ligne de modèle encore vide : rien à signaler ; sinon on dit pourquoi elle est ignorée
+      if (nom || nomAr || lat || lon) ignorees.push(`#${id} ${nom || nomAr} : position GPS manquante ou illisible`);
+      return;
+    }
     lignes.push({
-      id, latitude, longitude,
-      nom: texte(row.getCell(2)),
-      description: texte(row.getCell(4)),
-      source: texte(row.getCell(7)),
-      type: texte(row.getCell(14))
+      id, interieur, repere,
+      latitude: interieur ? null : latitude,
+      longitude: interieur ? null : longitude,
+      nom, nomAr, nomTz,
+      description: lire(row, 'description'),
+      source: lire(row, 'source'),
+      type: lire(row, 'type')
     });
   });
+
   // Noms en double dans le classeur (plusieurs points sur le forum…) : le n° du relevé les distingue
+  const cleNom = (l) => l.nom || l.nomAr;
   const compte = {};
-  for (const l of lignes) if (l.nom) compte[l.nom] = (compte[l.nom] || 0) + 1;
+  for (const l of lignes) if (cleNom(l)) compte[cleNom(l)] = (compte[cleNom(l)] || 0) + 1;
   for (const l of lignes) {
-    if (!l.nom) l.nomFinal = `Point ${l.id} – à identifier`;
-    else l.nomFinal = compte[l.nom] > 1 ? `${l.nom} (point ${l.id})` : l.nom;
-    l.statut = l.nom ? 'publie' : 'brouillon';
-    l.typeFinal = TYPES.includes(l.type) ? l.type : 'site_archeologique';
+    const suffixe = compte[cleNom(l)] > 1 ? ` (point ${l.id})` : '';
+    l.nomObjet = {};
+    if (l.nom) l.nomObjet.fr = l.nom + suffixe;
+    if (l.nomAr) l.nomObjet.ar = l.nomAr + suffixe;
+    if (l.nomTz) l.nomObjet['tz-ltn'] = l.nomTz;
+    if (!l.nom && !l.nomAr) l.nomObjet.fr = `Point ${l.id} – à identifier`;
+    l.nomFinal = l.nomObjet.fr || l.nomObjet.ar;
+    l.statut = (l.nom || l.nomAr) ? 'publie' : 'brouillon';
+    l.typeFinal = typeTaladz(l.type) || 'site_archeologique';
   }
-  return lignes;
+  return { lignes, ignorees };
 }
 
 async function main() {
@@ -103,13 +169,17 @@ async function main() {
     console.log(`Nom du site : « ${site.nom?.fr || ''} » → « ${NOM_SITE} »`);
     if (EXECUTE) await site.update({ nom: { ...(site.nom || {}), fr: NOM_SITE } });
   }
-  const lignes = await lireClasseur(path.resolve(FICHIER));
+  const { lignes, ignorees } = await lireClasseur(path.resolve(FICHIER));
+  for (const raison of ignorees) console.log(`  ? ignorée    ${raison}`);
   const existants = await Lieu.findAll({ where: { id_lieu_parent: PARENT_ID } });
   // Un point en base ne correspond qu'à une seule ligne du classeur
   const utilises = new Set();
   const retrouver = (l) => {
-    const e = existants.find(x => !utilises.has(x.id_lieu)
-      && Math.abs(Number(x.latitude) - l.latitude) < TOLERANCE && Math.abs(Number(x.longitude) - l.longitude) < TOLERANCE);
+    // Point intérieur : même position que le site pour tous, on le retrouve par son nom
+    const e = l.interieur
+      ? existants.find(x => !utilises.has(x.id_lieu) && ((x.nom?.fr && x.nom.fr === l.nomObjet.fr) || (x.nom?.ar && x.nom.ar === l.nomObjet.ar)))
+      : existants.find(x => !utilises.has(x.id_lieu)
+        && Math.abs(Number(x.latitude) - l.latitude) < TOLERANCE && Math.abs(Number(x.longitude) - l.longitude) < TOLERANCE);
     if (e) utilises.add(e.id_lieu);
     return e;
   };
@@ -126,10 +196,12 @@ async function main() {
         console.log(`  + créer      ${etiquette}`);
         if (EXECUTE) {
           const cree = await svc.create({
-            nom: { fr: l.nomFinal },
+            nom: l.nomObjet,
             id_lieu_parent: PARENT_ID,
-            latitude: l.latitude,
-            longitude: l.longitude,
+            // Point intérieur : sans coordonnées, le service reprend celles du site
+            latitude: l.interieur ? undefined : l.latitude,
+            longitude: l.interieur ? undefined : l.longitude,
+            repere: l.repere ? { fr: l.repere } : undefined,
             typePatrimoine: l.typeFinal,
             ordre_visite: l.id,
             description: l.description ? { fr: l.description } : {},
@@ -147,9 +219,12 @@ async function main() {
 
       // Point déjà importé : ne compléter / remplacer qu'avec des cellules remplies
       const majLieu = {};
-      if (l.nom && point.nom?.fr !== l.nomFinal) majLieu.nom = { ...(point.nom || {}), fr: l.nomFinal };
+      // Noms : chaque langue remplie dans le classeur remplace la valeur en base, les autres sont gardées
+      const nomFusionne = { ...(point.nom || {}), ...(l.nom || l.nomAr ? l.nomObjet : {}) };
+      if (JSON.stringify(nomFusionne) !== JSON.stringify(point.nom || {})) majLieu.nom = nomFusionne;
+      if (l.repere && point.repere?.fr !== l.repere) majLieu.repere = { ...(point.repere || {}), fr: l.repere };
       if (l.type && point.typePatrimoine !== l.typeFinal) majLieu.typePatrimoine = l.typeFinal;
-      if (l.nom && point.statut === 'brouillon') majLieu.statut = 'publie';
+      if ((l.nom || l.nomAr) && point.statut === 'brouillon') majLieu.statut = 'publie';
       const detail = await DetailLieu.findOne({ where: { id_lieu: point.id_lieu } });
       const majDetail = {};
       if (l.description && detail?.description?.fr !== l.description) majDetail.description = { ...(detail?.description || {}), fr: l.description };
