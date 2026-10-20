@@ -6,6 +6,8 @@ Pour un village, une ville, un site archéologique ou un musée : une ligne par 
 (porte, maison, grenier, salle…), avec son nom (français, arabe, tamazight), son type, une
 description, sa position GPS ou, pour un point intérieur, un repère (« 1er étage, salle 3 »).
 La feuille « Mode d'emploi » explique comment relever un point avec un téléphone.
+La feuille « Types » aide à choisir le type du lieu et de chaque point (définition, nom en
+arabe, exemples) ; les listes déroulantes « Type » y renvoient.
 
 ### Import depuis l'administration
 
