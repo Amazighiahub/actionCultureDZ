@@ -190,7 +190,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          # MySQL 8 : pool InnoDB (256M) + performance_schema + tampons des connexions
+          # dépassent 512M lors d'un mysqldump (tué par le noyau le 2026-10-21, sauvegarde
+          # avant déploiement échouée) ; le VPS a 7,5 Go
+          memory: 1G
         reservations:
           memory: 256M
 
