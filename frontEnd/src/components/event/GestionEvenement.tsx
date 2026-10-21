@@ -45,6 +45,7 @@ import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeFo
 import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 
 interface GestionEvenementProps {
   evenementId: number;
@@ -196,6 +197,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         titre: data.titre,
         description: data.description,
         type_activite: data.type_activite, // Conforme
+        date_programme: data.date_programme, // jour de l'activité (événement sur plusieurs jours)
         heure_debut: `${data.date_programme}T${data.heure_debut}:00`, // Format ISO pour la base
         heure_fin: `${data.date_programme}T${data.heure_fin}:00`, // Format ISO pour la base
         id_lieu: data.id_lieu, // Conforme
@@ -402,9 +404,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     // langue seulement (le recopier dans toutes écrasait les vraies traductions)
                     titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.titre || '' },
                     description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.description || '' },
-                    date_programme: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[0] : '',
-                    heure_debut: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[1]?.substring(0, 5) : '',
-                    heure_fin: editingProgramme.heure_fin ? editingProgramme.heure_fin.split('T')[1]?.substring(0, 5) : '',
+                    // Le serveur renvoie le jour (date_programme) et des heures seules (« 10:00:00 »)
+                    date_programme: jourProgramme(editingProgramme),
+                    heure_debut: heureProgramme(editingProgramme.heure_debut),
+                    heure_fin: heureProgramme(editingProgramme.heure_fin),
                     type_activite: editingProgramme.type_activite as any,
                     statut: 'planifie',
                     ordre: 1,

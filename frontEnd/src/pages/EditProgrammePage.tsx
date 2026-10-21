@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { httpClient } from '@/services/httpClient';
@@ -92,9 +93,9 @@ const EditProgrammePage: React.FC = () => {
             description: typeof programme.description === 'object'
               ? programme.description
               : { fr: programme.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-            date_programme: programme.heure_debut ? programme.heure_debut.split('T')[0] : '',
-            heure_debut: programme.heure_debut ? programme.heure_debut.split('T')[1]?.substring(0, 5) : '',
-            heure_fin: programme.heure_fin ? programme.heure_fin.split('T')[1]?.substring(0, 5) : '',
+            date_programme: jourProgramme(programme),
+            heure_debut: heureProgramme(programme.heure_debut),
+            heure_fin: heureProgramme(programme.heure_fin),
             duree_estimee: programmeService.getDuration(programme),
             id_lieu: programme.id_lieu,
             lieu_specifique: programme.lieu_specifique ? {
@@ -155,6 +156,7 @@ const EditProgrammePage: React.FC = () => {
         titre: data.titre,
         description: data.description,
         type_activite: data.type_activite,
+        date_programme: data.date_programme,
         heure_debut: `${data.date_programme}T${data.heure_debut}:00`,
         heure_fin: `${data.date_programme}T${data.heure_fin}:00`,
         id_lieu: data.id_lieu,

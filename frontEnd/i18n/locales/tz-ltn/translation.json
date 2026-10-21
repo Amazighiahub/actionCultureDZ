@@ -3997,7 +3997,14 @@
     "digitalSupport": "Asebded umḍin",
     "noDate": "Azemz ur yettwasbadu ara",
     "notAvailable": "Ahil ulac-it",
-    "emptyDesc": "Ahil n tedyant-a ur d-yeffiɣ ara yakan"
+    "emptyDesc": "Ahil n tedyant-a ur d-yeffiɣ ara yakan",
+    "status": {
+      "planifie": "Yettwaheyyaq",
+      "en_cours": "Itteddu",
+      "termine": "Yekfa",
+      "annule": "Yettwasefsex",
+      "reporte": "Yettwasmenned"
+    }
   },
   "emailChange": {
     "noTokenProvided": "Ulac ajiṭun n usentem i d-yettunefken.",

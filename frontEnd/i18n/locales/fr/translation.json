@@ -3840,7 +3840,14 @@
     "digitalSupport": "Support numérique",
     "noDate": "Date non définie",
     "notAvailable": "Programme non disponible",
-    "emptyDesc": "Le programme de cet événement n'a pas encore été publié"
+    "emptyDesc": "Le programme de cet événement n'a pas encore été publié",
+    "status": {
+      "planifie": "Prévu",
+      "en_cours": "En cours",
+      "termine": "Terminé",
+      "annule": "Annulé",
+      "reporte": "Reporté"
+    }
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",

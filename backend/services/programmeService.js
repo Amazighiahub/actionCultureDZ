@@ -72,9 +72,12 @@ class ProgrammeService extends BaseService {
         id_lieu,
         ordre: rest.ordre || await this.repository.getNextOrdre(evenementId),
         statut: 'planifie',
-        ...this._pickFields(rest, ['heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
+        ...this._pickFields(rest, ['date_programme', 'heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
       };
 
+      // Jour de l'activité (événement sur plusieurs jours) : avant la conversion en TIME,
+      // qui ne garde que l'heure de « 2026-10-29T10:00:00 »
+      programmeData.date_programme = this._dateProgramme(programmeData.date_programme, programmeData.heure_debut);
       // Convert ISO datetime to TIME for MySQL TIME columns
       if (programmeData.heure_debut) programmeData.heure_debut = this._toTimeOnly(programmeData.heure_debut);
       if (programmeData.heure_fin) programmeData.heure_fin = this._toTimeOnly(programmeData.heure_fin);
@@ -107,10 +110,12 @@ class ProgrammeService extends BaseService {
   async updateProgramme(id, userId, lang, data) {
     const { titre, description, ...rest } = data;
 
-    const allowedFields = ['id_lieu', 'lieu_specifique', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
+    const allowedFields = ['id_lieu', 'lieu_specifique', 'date_programme', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
     const updates = {};
     allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 
+    const jour = this._dateProgramme(updates.date_programme, updates.heure_debut);
+    if (jour) updates.date_programme = jour;
     // Convert ISO datetime to TIME for MySQL TIME columns
     if (updates.heure_debut) updates.heure_debut = this._toTimeOnly(updates.heure_debut);
     if (updates.heure_fin) updates.heure_fin = this._toTimeOnly(updates.heure_fin);
@@ -498,6 +503,15 @@ class ProgrammeService extends BaseService {
    * Convertit une valeur ISO datetime ou datetime en format TIME (HH:MM:SS)
    * pour stockage dans une colonne TIME de MySQL.
    */
+  /**
+   * Jour d'une activité : date_programme fournie (AAAA-MM-JJ), sinon la date de heure_debut
+   * quand elle est envoyée en date et heure (formulaire de gestion de l'événement).
+   */
+  _dateProgramme(date, heureDebut) {
+    const valide = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
+    return valide(date) || valide(heureDebut) || null;
+  }
+
   _toTimeOnly(value) {
     if (!value) return value;
     const str = String(value);

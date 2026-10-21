@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy, User, Mic } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService, IntervenantUser } from '@/services/programme.service';
+import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '@/components/SEOHead';
 
@@ -59,9 +60,9 @@ const ViewProgrammePage: React.FC = () => {
               ar: '',
               en: ''
             },
-            date_programme: programme.heure_debut ? programme.heure_debut.split('T')[0] : '',
-            heure_debut: programme.heure_debut ? programme.heure_debut.split('T')[1]?.substring(0, 5) : '',
-            heure_fin: programme.heure_fin ? programme.heure_fin.split('T')[1]?.substring(0, 5) : '',
+            date_programme: jourProgramme(programme),
+            heure_debut: heureProgramme(programme.heure_debut),
+            heure_fin: heureProgramme(programme.heure_fin),
             duree_estimee: programmeService.getDuration(programme),
             id_lieu: programme.id_lieu,
             lieu_specifique: programme.lieu_specifique ? {

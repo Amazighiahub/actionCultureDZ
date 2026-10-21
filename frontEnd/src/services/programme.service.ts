@@ -1,4 +1,5 @@
 // services/programme.service.ts - Version adaptée pour User comme intervenant
+import { dureeMinutes } from '@/utils/programmeHoraire';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
 import { httpClient } from './httpClient';
@@ -222,10 +223,9 @@ class ProgrammeService {
     return `${debut} - ${fin}`;
   }
 
+  /** Durée en minutes (heures « 10:00:00 » renvoyées par le serveur, ou ISO) */
   getDuration(programme: Programme): number {
-    const debut = new Date(programme.heure_debut);
-    const fin = new Date(programme.heure_fin);
-    return Math.round((fin.getTime() - debut.getTime()) / (1000 * 60)); // en minutes
+    return dureeMinutes(programme.heure_debut, programme.heure_fin);
   }
 
   isProgrammeActive(programme: Programme): boolean {

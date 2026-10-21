@@ -4082,7 +4082,14 @@
     "digitalSupport": "دعامة رقمية",
     "noDate": "التاريخ غير محدد",
     "notAvailable": "البرنامج غير متوفر",
-    "emptyDesc": "لم يُنشر برنامج هذه الفعالية بعد"
+    "emptyDesc": "لم يُنشر برنامج هذه الفعالية بعد",
+    "status": {
+      "planifie": "مبرمج",
+      "en_cours": "جارٍ",
+      "termine": "انتهى",
+      "annule": "أُلغي",
+      "reporte": "مؤجَّل"
+    }
   },
   "emailChange": {
     "noTokenProvided": "لم يتم تقديم رمز التأكيد.",

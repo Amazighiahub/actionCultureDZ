@@ -3980,7 +3980,14 @@
     "digitalSupport": "Digital materials",
     "noDate": "Date not set",
     "notAvailable": "Programme not available",
-    "emptyDesc": "This event's programme has not been published yet"
+    "emptyDesc": "This event's programme has not been published yet",
+    "status": {
+      "planifie": "Planned",
+      "en_cours": "In progress",
+      "termine": "Finished",
+      "annule": "Cancelled",
+      "reporte": "Postponed"
+    }
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",
