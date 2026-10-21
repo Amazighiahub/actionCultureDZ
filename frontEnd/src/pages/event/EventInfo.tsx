@@ -17,6 +17,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
+import { heureEvenement } from '@/utils/dateHeureEvenement';
 
 interface EventInfoProps {
   event: Evenement;
@@ -89,6 +90,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
                   <p className="font-medium">{t('event.startDate', 'Date de début')}</p>
                   <p className="text-sm text-muted-foreground">
                     {formatDate(event.date_debut, { dateStyle: 'full' })}
+                    {heureEvenement(event.date_debut) && ` · ${heureEvenement(event.date_debut)}`}
                   </p>
                 </div>
               </div>
@@ -104,6 +106,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
                   <p className="font-medium">{t('event.endDate', 'Date de fin')}</p>
                   <p className="text-sm text-muted-foreground">
                     {formatDate(event.date_fin, { dateStyle: 'full' })}
+                    {heureEvenement(event.date_fin) && ` · ${heureEvenement(event.date_fin)}`}
                   </p>
                 </div>
               </div>

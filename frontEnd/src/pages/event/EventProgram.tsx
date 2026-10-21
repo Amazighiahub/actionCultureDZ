@@ -16,6 +16,7 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/Utils';
 import type { Programme, ProgrammeIntervenant } from '@/types/models/programme.types';
+import { heureProgramme } from '@/utils/programmeHoraire';
 
 interface EventProgramProps {
   programs: Programme[];
@@ -135,13 +136,15 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
               )}
             </div>
 
-            {/* Badge statut */}
-            <Badge className={cn("flex-shrink-0", statusColors[statut])}>
-              {getStatusIcon(statut)}
-              <span className="ms-1">
-                {t(`programme.status.${statut}`, statut)}
-              </span>
-            </Badge>
+            {/* Badge statut : seulement s'il apprend quelque chose (« planifié » est le cas normal) */}
+            {statut !== 'planifie' && (
+              <Badge className={cn("flex-shrink-0", statusColors[statut])}>
+                {getStatusIcon(statut)}
+                <span className="ms-1">
+                  {t(`programme.status.${statut}`, statut)}
+                </span>
+              </Badge>
+            )}
           </div>
 
           {/* Infos rapides */}
@@ -342,9 +345,10 @@ const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
   const sortPrograms = (progs: Programme[]) => {
     return [...progs].sort((a, b) => {
       if (a.ordre !== b.ordre) return a.ordre - b.ordre;
-      if (a.heure_debut && b.heure_debut) {
-        return new Date(a.heure_debut).getTime() - new Date(b.heure_debut).getTime();
-      }
+      // Heures « 10:00:00 » (colonne TIME) : comparées comme texte « HH:MM »
+      const ha = heureProgramme(a.heure_debut);
+      const hb = heureProgramme(b.heure_debut);
+      if (ha && hb) return ha.localeCompare(hb);
       return 0;
     });
   };
