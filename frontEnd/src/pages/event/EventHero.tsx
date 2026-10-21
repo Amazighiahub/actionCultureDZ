@@ -158,8 +158,9 @@ const EventHero: React.FC<EventHeroProps> = ({
   // Version avec image
   return (
     <section className="relative">
-      <div className="relative h-[50vh] min-h-[400px] max-h-[600px]">
+      <div className="relative h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden">
         <LazyImage
+          containerClassName="h-full"
           src={event.image_url || event.couverture_url || '/images/placeholder-event.svg'}
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover"

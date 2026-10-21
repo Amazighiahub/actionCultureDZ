@@ -71,6 +71,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
       {/* Image avec lazy loading */}
       <div className="relative h-48 overflow-hidden">
         <LazyImage
+          containerClassName="h-full"
           src={event.image_url || event.affiche_url || '/images/placeholder-event.svg'}
           maxWidth={640}
           alt={event.nom_evenement}

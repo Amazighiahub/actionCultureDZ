@@ -57,8 +57,9 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
   return (
     <section className="relative">
       {/* Image de fond avec overlay */}
-      <div className="relative h-[50vh] min-h-[400px] max-h-[600px]">
+      <div className="relative h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden">
         <LazyImage
+          containerClassName="h-full"
           src={imageUrl}
           alt={oeuvre.titre}
           className="w-full h-full object-cover"

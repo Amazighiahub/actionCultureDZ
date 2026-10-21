@@ -41,6 +41,7 @@ const EventCard: React.FC<{ event: Evenement }> = ({ event }) => {
           {/* Image */}
           <div className="relative w-32 h-32 flex-shrink-0">
             <LazyImage
+              containerClassName="h-full"
               src={event.image_url || '/images/placeholder-event.svg'}
               alt={event.nom_evenement}
               className="w-full h-full object-cover"
