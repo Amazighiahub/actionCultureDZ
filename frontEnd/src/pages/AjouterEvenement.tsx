@@ -32,6 +32,7 @@ import { API_ENDPOINTS } from '@/config/api';
 // Import des types
 import { Wilaya } from '@/types';
 import { Lieu } from '@/types/models/lieu.types';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
@@ -175,10 +176,10 @@ const AjouterEvenement = () => {
           nom: typeof evt.nom_evenement === 'object' ? evt.nom_evenement : { fr: evt.nom_evenement || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
           description: typeof evt.description === 'object' ? evt.description : { fr: evt.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
           idTypeEvenement: evt.id_type_evenement?.toString() || '',
-          dateDebut: evt.date_debut ? evt.date_debut.split('T')[0] : '',
-          dateFin: evt.date_fin ? evt.date_fin.split('T')[0] : '',
-          heureDebut: evt.heure_debut || '',
-          heureFin: evt.heure_fin || '',
+          dateDebut: partiesEvenement(evt.date_debut as string).date,
+          dateFin: partiesEvenement(evt.date_fin as string).date,
+          heureDebut: partiesEvenement(evt.date_debut as string).heure,
+          heureFin: partiesEvenement(evt.date_fin as string).heure,
           maxParticipants: evt.capacite_max?.toString() || '',
           tarif: evt.tarif?.toString() || '',
           urlVirtuel: evt.url_virtuel || '',

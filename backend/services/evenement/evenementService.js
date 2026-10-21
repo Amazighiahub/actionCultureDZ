@@ -181,8 +181,9 @@ class EvenementService extends BaseService {
     const entityData = {
       nom_evenement: data.nom_evenement || data.nom,
       description: data.description || {},
-      date_debut: data.date_debut || data.dateDebut,
-      date_fin: data.date_fin || data.dateFin,
+      // Le formulaire envoie le jour et l'heure séparément : les deux sont gardés
+      date_debut: this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut),
+      date_fin: this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin),
       id_lieu: data.id_lieu || data.lieuId,
       id_type_evenement: data.id_type_evenement || data.typeEvenementId,
       statut: 'brouillon', // Toujours brouillon à la création — publication via modération admin uniquement
@@ -225,6 +226,18 @@ class EvenementService extends BaseService {
    * Modifier un événement
    */
   /**
+   * Jour (« 2026-10-29 ») + heure (« 10:00 ») → instant à l'heure de l'Algérie (UTC+1,
+   * sans heure d'été). Une date déjà complète, ou sans heure, est gardée telle quelle.
+   */
+  _avecHeure(date, heure) {
+    if (!date || !heure) return date;
+    const jour = String(date);
+    const hm = String(heure).match(/^(\d{2}):(\d{2})/);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(jour) || !hm) return date;
+    return `${jour}T${hm[1]}:${hm[2]}:00+01:00`;
+  }
+
+  /**
    * L'utilisateur doit être membre actif de l'organisation qu'il associe à un événement
    * (sinon il pourrait publier au nom de n'importe quelle organisation).
    */
@@ -256,8 +269,8 @@ class EvenementService extends BaseService {
       // Fusion des langues : une langue laissée vide ne remplace pas la traduction existante
       if (data.nom_evenement || data.nom) updateData.nom_evenement = mergeTranslations(existing.nom_evenement, data.nom_evenement || data.nom);
       if (data.description !== undefined) updateData.description = mergeTranslations(existing.description, data.description);
-      if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
-      if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
+      if (data.date_debut || data.dateDebut) updateData.date_debut = this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut);
+      if (data.date_fin || data.dateFin) updateData.date_fin = this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin);
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
       if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
       // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
