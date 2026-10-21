@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#3A4224">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
+<script src="/guide/guide.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -161,8 +162,9 @@
   .telephone .ecran img { width: 100%; height: auto; }
   .telephone.recadre { border-radius: 26px; }
   .telephone.recadre .ecran { border-radius: 18px; }
-  .anneau { position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); border: 3px solid var(--terre); border-radius: 10px; opacity: 0; transform: scale(1.25); transition: opacity .4s, transform .5s cubic-bezier(.2,1.4,.4,1); }
-  .vu .anneau { opacity: 1; transform: none; animation: pulse 2.2s 1s infinite; }
+  .anneau { position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); border: 3px solid var(--terre); border-radius: 10px; }
+  .js .anneau { opacity: 0; transform: scale(1.25); transition: opacity .4s, transform .5s cubic-bezier(.2,1.4,.4,1); }
+  .js .vu .anneau { opacity: 1; transform: none; animation: pulse 2.2s 1s infinite; }
   .vu .anneau + .anneau { transition-delay: .35s; }
   figcaption { color: var(--gris); font-size: 14px; text-align: center; margin-top: 12px; }
 
@@ -183,8 +185,8 @@
   .tableau table { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 15px; }
   .tableau th { background: var(--olive); color: var(--blanc); text-align: left; padding: 10px; font-weight: 600; }
   .tableau td { background: #FFF2CC; padding: 10px; border: 1px solid #e5dcc0; }
-  .tableau tr { opacity: 0; transform: translateX(-14px); transition: all .5s; }
-  .tableau.vu tr, .vu .tableau tr { opacity: 1; transform: none; }
+  .js .tableau tr { opacity: 0; transform: translateX(-14px); transition: all .5s; }
+  .js .tableau.vu tr, .js .vu .tableau tr { opacity: 1; transform: none; }
   .tableau.vu tbody tr:nth-child(1) { transition-delay: .2s; } .tableau.vu tbody tr:nth-child(2) { transition-delay: .35s; } .tableau.vu tbody tr:nth-child(3) { transition-delay: .5s; }
   .tableau caption { caption-side: bottom; color: var(--gris); font-style: italic; font-size: 14px; padding-top: 10px; text-align: left; }
   .telechargements { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
@@ -194,8 +196,8 @@
   .fin .fond { position: absolute; inset: 0; background: url("/guide/img/boussaada.webp") center/cover; opacity: .28; }
   .fin .conteneur { position: relative; }
   .merci { display: flex; justify-content: center; gap: clamp(14px, 4vw, 40px); flex-wrap: wrap; font-family: var(--serif); font-size: clamp(38px, 7vw, 72px); font-weight: 700; }
-  .merci span { opacity: 0; transform: translateY(24px) scale(.95); transition: all .8s cubic-bezier(.2,.7,.2,1); }
-  .vu .merci span { opacity: 1; transform: none; }
+  .js .merci span { opacity: 0; transform: translateY(24px) scale(.95); transition: all .8s cubic-bezier(.2,.7,.2,1); }
+  .js .vu .merci span { opacity: 1; transform: none; }
   .vu .merci span:nth-child(2) { transition-delay: .2s; } .vu .merci span:nth-child(3) { transition-delay: .4s; }
   .fin p { font-size: 19px; max-width: 46ch; margin: 18px auto 30px; color: #eef0e4; }
   .fin .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
@@ -203,14 +205,14 @@
   footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; text-align: center; }
 
   /* ---------- Apparitions ---------- */
-  .apparait { opacity: 0; transform: translateY(34px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
-  .apparait.droite { transform: translateX(50px) rotate(2deg); }
-  .apparait.gauche { transform: translateX(-50px) rotate(-2deg); }
-  .apparait.vu { opacity: 1; transform: none; }
+  .js .apparait { opacity: 0; transform: translateY(34px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  .js .apparait.droite { transform: translateX(50px) rotate(2deg); }
+  .js .apparait.gauche { transform: translateX(-50px) rotate(-2deg); }
+  .js .apparait.vu { opacity: 1; transform: none; }
   .cartes > .apparait:nth-child(2), .grille-conseils > .apparait:nth-child(3n+2) { transition-delay: .12s; }
   .cartes > .apparait:nth-child(3), .grille-conseils > .apparait:nth-child(3n) { transition-delay: .24s; }
-  .frise a { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s, background .25s; }
-  .vu .frise a { opacity: 1; transform: none; }
+  .js .frise a { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s, background .25s; }
+  .js .vu .frise a { opacity: 1; transform: none; }
   .vu .frise a:nth-child(2) { transition-delay: .12s; } .vu .frise a:nth-child(3) { transition-delay: .24s; }
   .vu .frise a:nth-child(4) { transition-delay: .36s; } .vu .frise a:nth-child(5) { transition-delay: .48s; }
 
@@ -563,65 +565,6 @@
 </main>
 <footer>© Tala DZ — la source de la culture algérienne · <a href="/">taladz.com</a></footer>
 
-<script>
-(function () {
-  var reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Apparitions au défilement
-  var cibles = document.querySelectorAll('.apparait, .telephone, .tableau');
-  if ('IntersectionObserver' in window && !reduit) {
-    var io = new IntersectionObserver(function (entrees) {
-      entrees.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('vu'); if (e.target.id === 'arbre') tracerArbre(); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
-    cibles.forEach(function (c) { io.observe(c); });
-  } else {
-    cibles.forEach(function (c) { c.classList.add('vu'); });
-  }
-
-  // Barre du haut, progression et étape en cours
-  var barre = document.getElementById('barre');
-  var prog = document.getElementById('progression');
-  var liens = Array.prototype.slice.call(document.querySelectorAll('.etapes-nav a'));
-  var sections = liens.map(function (a) { return document.querySelector(a.getAttribute('href')); });
-  var attente = false;
-  function maj() {
-    attente = false;
-    var y = window.scrollY, h = document.documentElement.scrollHeight - window.innerHeight;
-    barre.classList.toggle('visible', y > window.innerHeight * 0.6);
-    prog.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, y / h) : 0) + ')';
-    var actif = -1;
-    sections.forEach(function (s, i) { if (s && s.getBoundingClientRect().top < 140) actif = i; });
-    liens.forEach(function (a, i) {
-      var etait = a.classList.contains('actif');
-      a.classList.toggle('actif', i === actif);
-      if (i === actif && !etait && a.scrollIntoView) a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: reduit ? 'auto' : 'smooth' });
-    });
-  }
-  window.addEventListener('scroll', function () { if (!attente) { attente = true; requestAnimationFrame(maj); } }, { passive: true });
-  window.addEventListener('resize', function () { maj(); tracerArbre(); });
-  maj();
-
-  // Liens de l'arbre lieu → points, dessinés entre les cases
-  function tracerArbre() {
-    var arbre = document.getElementById('arbre');
-    var svg = arbre.querySelector('svg.liens');
-    if (getComputedStyle(svg).display === 'none') return;
-    var base = arbre.getBoundingClientRect();
-    var d = '';
-    arbre.querySelectorAll('[data-parent]').forEach(function (n) {
-      var p = arbre.querySelector('[data-noeud="' + n.getAttribute('data-parent') + '"]').getBoundingClientRect();
-      var e = n.getBoundingClientRect();
-      var x1 = p.left + p.width / 2 - base.left, y1 = p.bottom - base.top;
-      var x2 = e.left + e.width / 2 - base.left, y2 = e.top - base.top;
-      var ym = (y1 + y2) / 2;
-      d += 'M' + x1 + ',' + y1 + ' V' + ym + ' H' + x2 + ' V' + y2 + ' ';
-    });
-    svg.innerHTML = '<path d="' + d + '" pathLength="400" style="--long:400"></path>';
-  }
-  tracerArbre();
-})();
-</script>
 </body>
 </html>
