@@ -447,7 +447,8 @@
     "backToHome": "Uɣal ɣer usebter agejdan",
     "loadMore": "Wali ugar",
     "yes": "Ih",
-    "no": "Ala"
+    "no": "Ala",
+    "contributorGuide": "Amnir n umttekki"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -710,7 +711,8 @@
       },
       "goToSlide": "Tugna {{index}} seg {{total}}: {{title}}",
       "play": "Kemmel askan",
-      "pause": "Seḥbes askan"
+      "pause": "Seḥbes askan",
+      "guide": "Amek ara tttekkiḍ? Ɣer amnir"
     }
   },
   "notifications": {

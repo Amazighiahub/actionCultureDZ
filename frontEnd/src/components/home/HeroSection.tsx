@@ -228,7 +228,7 @@ const HeroSection: React.FC = () => {
               flex flex-col xs:flex-row 
               gap-3 sm:gap-4 
               justify-center sm:justify-start
-              mb-8 sm:mb-10 md:mb-12
+              mb-4
             ">
               {/* Vrais liens (explorables par les moteurs, ouvrables dans un nouvel onglet) */}
               <Button
@@ -271,6 +271,17 @@ const HeroSection: React.FC = () => {
                 </Link>
               </Button>
             </div>
+
+            {/* Guide du contributeur (page statique public/guide) : lien classique */}
+            <p className="mb-8 sm:mb-10 md:mb-12 text-center sm:text-start">
+              <a
+                href="/guide"
+                className="inline-flex items-center gap-1.5 min-h-[44px] text-sm sm:text-base text-white/90 underline underline-offset-4 decoration-white/50 hover:decoration-white"
+              >
+                {t('home.hero.guide', 'Comment contribuer ? Lire le guide')}
+                <ChevronRight aria-hidden="true" className={`h-4 w-4 ${isRtl ? 'rotate-180' : ''}`} />
+              </a>
+            </p>
 
             {/* ✅ Stats - Grid responsive 2x2 sur mobile, 4 colonnes sur tablet+ */}
             <div className="

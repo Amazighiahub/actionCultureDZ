@@ -447,7 +447,8 @@
     "backToHome": "Back to home",
     "loadMore": "Load more",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "contributorGuide": "Contributor guide"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -667,7 +668,8 @@
       },
       "goToSlide": "Image {{index}} of {{total}}: {{title}}",
       "play": "Resume slideshow",
-      "pause": "Pause slideshow"
+      "pause": "Pause slideshow",
+      "guide": "How to contribute? Read the guide"
     },
     "explore": {
       "subtitle": "A digital platform dedicated to the preservation and promotion of Algerian culture in all its richness and diversity.",
