@@ -447,7 +447,8 @@
     "backToHome": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⴰⴳⴻⵊⴷⴰⵏ",
     "loadMore": "ⵡⴰⵍⵉ ⵓⴳⴰⵔ",
     "yes": "ⵉⵀ",
-    "no": "ⴰⵍⴰ"
+    "no": "ⴰⵍⴰ",
+    "contributorGuide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -710,7 +711,8 @@
       },
       "goToSlide": "ⵜⵓⴳⵏⴰ {{index}} ⵙⴻⴳ {{total}}: {{title}}",
       "play": "ⴽⴻⵎⵎⴻⵍ ⴰⵙⴽⴰⵏ",
-      "pause": "ⵙⴻⵃⴱⴻⵙ ⴰⵙⴽⴰⵏ"
+      "pause": "ⵙⴻⵃⴱⴻⵙ ⴰⵙⴽⴰⵏ",
+      "guide": "ⴰⵎⴻⴽ ⴰⵔⴰ ⵜⵜⵜⴻⴽⴽⵉⴹ? ⵖⴻⵔ ⴰⵎⵏⵉⵔ"
     }
   },
   "notifications": {

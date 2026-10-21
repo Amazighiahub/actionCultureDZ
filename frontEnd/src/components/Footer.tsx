@@ -11,7 +11,7 @@ const Footer = () => {
   const { isRtl, rtlClasses } = useRTL(i18n.language);
   const { formatNumber } = useLocalizedNumber();
 
-  const footerSections = [
+  const footerSections: Array<{ title: string; links: Array<{ label: string; href: string; statique?: boolean }> }> = [
     {
       title: t('footer.navigation'),
       links: [
@@ -25,6 +25,8 @@ const Footer = () => {
       title: t('footer.resources'),
       links: [
         { label: t('common.about'), href: '/a-propos' },
+        // Page statique (public/guide), hors de l'application : lien classique, pas <Link>
+        { label: t('common.contributorGuide', 'Guide du contributeur'), href: '/guide', statique: true },
       ]
     },
     {
@@ -120,13 +122,23 @@ const Footer = () => {
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-primary inline-flex items-center gap-1 group"
-                    >
-                      {link.label}
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
+                    {link.statique ? (
+                      <a
+                        href={link.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-primary inline-flex items-center gap-1 group"
+                      >
+                        {link.label}
+                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-primary inline-flex items-center gap-1 group"
+                      >
+                        {link.label}
+                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -452,7 +452,8 @@
     "backToHome": "Retour à l'accueil",
     "loadMore": "Voir plus",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "contributorGuide": "Guide du contributeur"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -692,7 +693,8 @@
       },
       "goToSlide": "Image {{index}} sur {{total}} : {{title}}",
       "play": "Reprendre le défilement",
-      "pause": "Mettre en pause le défilement"
+      "pause": "Mettre en pause le défilement",
+      "guide": "Comment contribuer ? Lire le guide"
     },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",

@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Clock, Star, QrCode, Compass, Building2, Landmark,
-  Trees, Search, RefreshCw, AlertCircle, Eye, Loader2
+  Trees, Search, RefreshCw, AlertCircle, Eye, Loader2, BookOpen
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
@@ -228,6 +228,13 @@ const Patrimoine = () => {
                 <MapPin className="h-4 w-4 me-2" aria-hidden="true" />
                 {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
               </Link>
+            </Button>
+            {/* Page statique (public/guide) : lien classique */}
+            <Button asChild variant="outline">
+              <a href="/guide">
+                <BookOpen className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('common.contributorGuide', 'Guide du contributeur')}
+              </a>
             </Button>
           </div>
 
