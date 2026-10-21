@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide du contributeur — Tala DZ</title>
+<meta name="description" content="Ajouter un lieu, ses points de visite, des photos et des voix sur Tala DZ : le guide pas à pas pour les associations du patrimoine.">
+<meta property="og:title" content="Guide du contributeur — Tala DZ">
+<meta property="og:description" content="Faire vivre le patrimoine de votre région : lieux, points de visite, photos et voix en tamazight, en arabe et en français.">
+<meta property="og:image" content="https://taladz.com/og-image.jpg">
+<meta property="og:url" content="https://taladz.com/guide">
+<meta name="theme-color" content="#3A4224">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>
+  :root {
+    color-scheme: light;
+    --olive: #5F6B3A; --olive-dark: #3A4224; --terre: #B5562F; --ocre: #C9A227;
+    --sable: #F3F1EA; --encre: #2B2A26; --gris: #6B6A63; --blanc: #FFFFFF;
+    --serif: Cambria, "Noto Serif", Georgia, "Times New Roman", serif;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", Arial, sans-serif;
+    --rayon: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+  body { margin: 0; font-family: var(--sans); color: var(--encre); background: var(--blanc); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0; }
+  .ar { font-family: "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif; }
+  .conteneur { width: min(1120px, 100% - 32px); margin-inline: auto; }
+
+  /* ---------- Barre du haut ---------- */
+  .barre { position: fixed; inset: 0 0 auto 0; z-index: 50; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid #e7e4da; transform: translateY(-100%); transition: transform .4s ease; }
+  .barre.visible { transform: none; }
+  .barre .conteneur { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; }
+  .marque { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
+  .marque img { width: 30px; height: 30px; }
+  .marque small { font-weight: 500; color: var(--gris); }
+  .progression { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: linear-gradient(90deg, var(--olive), var(--terre)); transform-origin: left; transform: scaleX(0); }
+  .etapes-nav { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; border-top: 1px solid #efece3; }
+  .etapes-nav::-webkit-scrollbar { display: none; }
+  .etapes-nav a { flex: none; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 999px; color: var(--gris); border: 1px solid #e3dfd3; transition: all .25s; white-space: nowrap; }
+  .etapes-nav a.actif { background: var(--olive); color: var(--blanc); border-color: var(--olive); }
+  @media (min-width: 900px) { .etapes-nav { justify-content: center; } }
+
+  .bouton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 16px; transition: transform .2s, box-shadow .2s, background .2s; }
+  .bouton:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.15); }
+  .bouton.plein { background: var(--olive); color: var(--blanc); }
+  .bouton.clair { background: var(--blanc); color: var(--olive-dark); }
+  .bouton.contour { border: 2px solid currentColor; }
+  .bouton.petit { min-height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
+  .bouton svg { width: 18px; height: 18px; }
+
+  /* ---------- Couverture ---------- */
+  .couverture { position: relative; min-height: 100svh; display: grid; align-items: end; color: var(--blanc); overflow: hidden; background: var(--olive-dark); }
+  .couverture .fond { position: absolute; inset: 0; background: url("/guide/img/boussaada.webp") center/cover; animation: zoom 22s ease-out both; }
+  .couverture::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(30,34,18,.25) 0%, rgba(30,34,18,.55) 45%, rgba(30,34,18,.94) 100%); }
+  .couverture .conteneur { position: relative; z-index: 1; padding: 120px 0 72px; }
+  .surtitre { font-size: 14px; letter-spacing: .18em; font-weight: 700; color: var(--ocre); text-transform: uppercase; }
+  .couverture h1 { font-size: clamp(38px, 7vw, 76px); max-width: 15ch; margin: 14px 0 18px; }
+  .couverture h1 span { display: inline-block; opacity: 0; transform: translateY(28px); animation: monte .8s cubic-bezier(.2,.7,.2,1) forwards; }
+  .couverture p.chapeau { font-size: clamp(17px, 2.2vw, 21px); max-width: 40ch; opacity: 0; animation: monte .8s .9s forwards; }
+  .couverture .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; opacity: 0; animation: monte .8s 1.1s forwards; }
+  .langues { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; opacity: 0; animation: monte .8s 1.3s forwards; }
+  .langues span { border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+  .defiler { position: absolute; z-index: 1; left: 50%; bottom: 18px; width: 26px; height: 42px; border: 2px solid rgba(255,255,255,.7); border-radius: 14px; transform: translateX(-50%); }
+  .defiler::after { content: ""; position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--blanc); animation: molette 1.8s infinite; }
+
+  /* ---------- Sections ---------- */
+  section { padding: 84px 0; }
+  section.sable { background: var(--sable); }
+  .entete { max-width: 760px; margin-bottom: 44px; }
+  .entete .surtitre { color: var(--terre); }
+  .entete h2 { font-size: clamp(30px, 4.4vw, 46px); margin-top: 10px; }
+  .entete p { font-size: 18px; color: var(--gris); margin: 14px 0 0; }
+
+  .cartes { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .carte { background: var(--blanc); border-radius: var(--rayon); padding: 28px; box-shadow: 0 1px 0 #e9e5da; }
+  section:not(.sable) .carte { background: var(--sable); box-shadow: none; }
+  .pastille-icone { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--blanc); color: var(--olive); margin-bottom: 18px; }
+  section:not(.sable) .pastille-icone { background: var(--blanc); }
+  .sable .pastille-icone { background: var(--sable); }
+  .pastille-icone svg { width: 28px; height: 28px; }
+  .carte h3 { font-size: 22px; margin-bottom: 8px; }
+  .carte p { margin: 0; color: #45443e; }
+  .accroche { font-family: var(--serif); font-style: italic; font-size: clamp(19px, 2.4vw, 24px); color: var(--olive); margin-top: 36px; }
+
+  /* Arbre lieu → points */
+  .arbre { position: relative; max-width: 980px; margin: 0 auto; }
+  .arbre svg.liens { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .arbre svg.liens path { fill: none; stroke: #a7b08a; stroke-width: 2.5; stroke-dasharray: var(--long, 400); stroke-dashoffset: var(--long, 400); transition: stroke-dashoffset 1.2s ease .3s; }
+  .arbre.vu svg.liens path { stroke-dashoffset: 0; }
+  .niveau { position: relative; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .niveau + .niveau { margin-top: 56px; }
+  .noeud { min-width: 200px; flex: 0 1 280px; border-radius: 16px; padding: 16px 18px; text-align: center; background: var(--sable); }
+  .noeud b { display: block; font-size: 18px; }
+  .noeud small { color: var(--gris); font-size: 14px; }
+  .noeud.racine { background: var(--olive); color: var(--blanc); }
+  .noeud.racine small { color: #e6ead8; }
+  .noeud.interieur { background: var(--blanc); border: 2px dashed #a7b08a; }
+  .niveau.bas { justify-content: flex-end; }
+  @media (max-width: 760px) {
+    .arbre svg.liens { display: none; }
+    .niveau { flex-direction: column; align-items: stretch; gap: 10px; padding-left: 22px; border-left: 3px solid #c5cbb0; }
+    .niveau:first-child { padding-left: 0; border: 0; }
+    .niveau + .niveau { margin-top: 10px; }
+    .noeud { flex: none; text-align: left; }
+    .niveau.bas { margin-left: 22px; }
+  }
+
+  /* Frise des étapes */
+  .frise { display: grid; gap: 14px; grid-template-columns: repeat(5, 1fr); counter-reset: e; }
+  .frise a { position: relative; text-decoration: none; text-align: center; padding: 8px 6px; border-radius: 16px; transition: background .25s; }
+  .frise a:hover { background: var(--sable); }
+  .frise .rond { width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--olive); color: var(--blanc); transition: transform .3s; }
+  .frise a:last-child .rond { background: var(--terre); }
+  .frise a:hover .rond { transform: scale(1.08) rotate(-4deg); }
+  .frise .rond svg { width: 36px; height: 36px; }
+  .frise a:not(:last-child)::after { content: ""; position: absolute; top: 50px; left: calc(50% + 52px); width: calc(100% - 104px + 14px); height: 2px; background: repeating-linear-gradient(90deg, #a7b08a 0 8px, transparent 8px 14px); }
+  .frise .num { color: var(--terre); font-weight: 700; }
+  .frise b { display: block; font-size: 18px; }
+  .frise small { color: var(--gris); }
+  @media (max-width: 760px) {
+    .frise { grid-template-columns: 1fr; gap: 6px; }
+    .frise a { display: grid; grid-template-columns: 64px 1fr; align-items: center; text-align: left; gap: 14px; }
+    .frise .rond { width: 60px; height: 60px; margin: 0; }
+    .frise .rond svg { width: 26px; height: 26px; }
+    .frise a:not(:last-child)::after { top: 70px; left: 37px; width: 2px; height: 20px; background: #a7b08a; }
+  }
+  .encart { margin-top: 32px; background: var(--sable); border-radius: 14px; padding: 18px 22px; font-size: 17px; }
+  section.sable .encart { background: var(--blanc); }
+  .encart b { color: var(--olive-dark); }
+
+  /* ---------- Étape : texte + téléphone ---------- */
+  .etape { display: grid; gap: 40px; align-items: center; grid-template-columns: 1fr; }
+  .etape + .etape { margin-top: 90px; }
+  @media (min-width: 900px) {
+    .etape { grid-template-columns: 1.15fr .85fr; gap: 64px; }
+    .etape.inverse > .texte { order: 2; }
+    .etape.deux { grid-template-columns: 1fr 1fr; }
+  }
+  .etape h3 { font-size: clamp(25px, 3.2vw, 34px); margin-bottom: 20px; }
+  .etape .mini { font-size: 13px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; color: var(--terre); margin-bottom: 8px; }
+  ol.pas { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; counter-reset: pas; }
+  ol.pas li { counter-increment: pas; position: relative; padding-left: 54px; min-height: 40px; font-size: 18px; padding-top: 6px; }
+  ol.pas li::before { content: counter(pas); position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: var(--blanc); display: grid; place-items: center; font-weight: 700; }
+  .conseil { margin-top: 24px; padding: 16px 18px 16px 52px; position: relative; border-radius: 14px; background: var(--sable); font-size: 16px; }
+  section.sable .conseil { background: var(--blanc); }
+  .conseil::before { content: ""; position: absolute; left: 18px; top: 17px; width: 22px; height: 22px; background: var(--ocre); -webkit-mask: var(--ampoule) center/contain no-repeat; mask: var(--ampoule) center/contain no-repeat; }
+  :root { --ampoule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E"); }
+  .exemple { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .exemple span { background: var(--blanc); border: 1px solid #ddd8ca; border-radius: 999px; padding: 6px 14px; font-size: 16px; }
+
+  /* Téléphone */
+  .telephones { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+  .telephone { position: relative; width: min(300px, 78vw); margin: 0; padding: 10px; border-radius: 36px; background: var(--encre); box-shadow: 0 30px 60px -20px rgba(43,42,38,.45), 0 10px 20px -10px rgba(43,42,38,.3); }
+  .telephones.duo .telephone { width: min(270px, 78vw); }
+  @media (min-width: 900px) { .telephones.duo { flex-wrap: nowrap; } .telephones.duo .telephone { width: min(240px, 45%); } }
+  .telephone .ecran { position: relative; border-radius: 27px; overflow: hidden; background: var(--blanc); }
+  .telephone .ecran img { width: 100%; height: auto; }
+  .telephone.recadre { border-radius: 26px; }
+  .telephone.recadre .ecran { border-radius: 18px; }
+  .anneau { position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); border: 3px solid var(--terre); border-radius: 10px; opacity: 0; transform: scale(1.25); transition: opacity .4s, transform .5s cubic-bezier(.2,1.4,.4,1); }
+  .vu .anneau { opacity: 1; transform: none; animation: pulse 2.2s 1s infinite; }
+  .vu .anneau + .anneau { transition-delay: .35s; }
+  figcaption { color: var(--gris); font-size: 14px; text-align: center; margin-top: 12px; }
+
+  /* Deux cas : plein air / intérieur */
+  .cas { display: grid; gap: 34px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .cas { grid-template-columns: 1fr 1fr; } }
+  .cas article { display: grid; gap: 22px; justify-items: center; text-align: center; }
+  .cas h3 { font-size: 26px; }
+  .cas p { margin: 8px 0 0; font-size: 17px; max-width: 34ch; }
+
+  /* Conseils */
+  .grille-conseils { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  /* Excel */
+  .excel { display: grid; gap: 40px; grid-template-columns: 1fr; align-items: center; }
+  @media (min-width: 900px) { .excel { grid-template-columns: 1fr 1fr; } }
+  .tableau { overflow-x: auto; border-radius: 14px; background: var(--blanc); padding: 18px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.3); }
+  .tableau table { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 15px; }
+  .tableau th { background: var(--olive); color: var(--blanc); text-align: left; padding: 10px; font-weight: 600; }
+  .tableau td { background: #FFF2CC; padding: 10px; border: 1px solid #e5dcc0; }
+  .tableau tr { opacity: 0; transform: translateX(-14px); transition: all .5s; }
+  .tableau.vu tr, .vu .tableau tr { opacity: 1; transform: none; }
+  .tableau.vu tbody tr:nth-child(1) { transition-delay: .2s; } .tableau.vu tbody tr:nth-child(2) { transition-delay: .35s; } .tableau.vu tbody tr:nth-child(3) { transition-delay: .5s; }
+  .tableau caption { caption-side: bottom; color: var(--gris); font-style: italic; font-size: 14px; padding-top: 10px; text-align: left; }
+  .telechargements { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+
+  /* Fin */
+  .fin { position: relative; color: var(--blanc); text-align: center; overflow: hidden; background: var(--olive-dark); }
+  .fin .fond { position: absolute; inset: 0; background: url("/guide/img/boussaada.webp") center/cover; opacity: .28; }
+  .fin .conteneur { position: relative; }
+  .merci { display: flex; justify-content: center; gap: clamp(14px, 4vw, 40px); flex-wrap: wrap; font-family: var(--serif); font-size: clamp(38px, 7vw, 72px); font-weight: 700; }
+  .merci span { opacity: 0; transform: translateY(24px) scale(.95); transition: all .8s cubic-bezier(.2,.7,.2,1); }
+  .vu .merci span { opacity: 1; transform: none; }
+  .vu .merci span:nth-child(2) { transition-delay: .2s; } .vu .merci span:nth-child(3) { transition-delay: .4s; }
+  .fin p { font-size: 19px; max-width: 46ch; margin: 18px auto 30px; color: #eef0e4; }
+  .fin .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .fin .contact { margin-top: 30px; color: var(--ocre); }
+  footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; text-align: center; }
+
+  /* ---------- Apparitions ---------- */
+  .apparait { opacity: 0; transform: translateY(34px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  .apparait.droite { transform: translateX(50px) rotate(2deg); }
+  .apparait.gauche { transform: translateX(-50px) rotate(-2deg); }
+  .apparait.vu { opacity: 1; transform: none; }
+  .cartes > .apparait:nth-child(2), .grille-conseils > .apparait:nth-child(3n+2) { transition-delay: .12s; }
+  .cartes > .apparait:nth-child(3), .grille-conseils > .apparait:nth-child(3n) { transition-delay: .24s; }
+  .frise a { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s, background .25s; }
+  .vu .frise a { opacity: 1; transform: none; }
+  .vu .frise a:nth-child(2) { transition-delay: .12s; } .vu .frise a:nth-child(3) { transition-delay: .24s; }
+  .vu .frise a:nth-child(4) { transition-delay: .36s; } .vu .frise a:nth-child(5) { transition-delay: .48s; }
+
+  @keyframes zoom { from { transform: scale(1.18); } to { transform: scale(1); } }
+  @keyframes monte { to { opacity: 1; transform: none; } }
+  @keyframes molette { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(181,86,47,.45); } 50% { box-shadow: 0 0 0 9px rgba(181,86,47,0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .apparait, .frise a, .tableau tr, .merci span, .couverture h1 span, .couverture p.chapeau, .couverture .actions, .langues { opacity: 1 !important; transform: none !important; }
+    .anneau { opacity: 1; transform: none; }
+    .arbre svg.liens path { stroke-dashoffset: 0; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Icônes (Lucide) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+    <symbol id="i-site" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  </defs>
+</svg>
+
+<header class="barre" id="barre">
+  <div class="conteneur">
+    <a class="marque" href="/"><img src="/favicon.svg" alt="" width="30" height="30">Tala DZ <small>· Guide du contributeur</small></a>
+    <a class="bouton plein petit" href="/auth">S’inscrire</a>
+  </div>
+  <nav class="etapes-nav" aria-label="Étapes du guide">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#compte">1 · Compte</a>
+    <a href="#lieu">2 · Lieu</a>
+    <a href="#points">3 · Points</a>
+    <a href="#voix">4 · Voix</a>
+    <a href="#conseils">Conseils</a>
+    <a href="#hors-ligne">Sans réseau</a>
+  </nav>
+  <div class="progression" id="progression"></div>
+</header>
+
+<main>
+  <!-- Couverture -->
+  <section class="couverture" aria-label="Couverture">
+    <div class="fond" role="img" aria-label="Bou Saâda et sa palmeraie"></div>
+    <div class="conteneur">
+      <div class="surtitre">Guide du contributeur · Tala DZ</div>
+      <h1><span>Faire</span> <span style="animation-delay:.1s">vivre</span> <span style="animation-delay:.2s">le</span> <span style="animation-delay:.3s">patrimoine</span> <span style="animation-delay:.4s">de</span> <span style="animation-delay:.5s">votre</span> <span style="animation-delay:.6s">région</span></h1>
+      <p class="chapeau">Ajoutez un lieu, ses points de visite, des photos et des voix — directement depuis votre téléphone.</p>
+      <div class="actions">
+        <a class="bouton clair" href="#pourquoi">Lire le guide <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="bouton contour" href="/guide/Guide_contributeur_Taladz.pdf" download><svg aria-hidden="true"><use href="#i-down"/></svg> Version PDF</a>
+      </div>
+      <div class="langues" aria-label="Langues disponibles"><span>Tamaziɣt</span><span>ⵜⴰⵎⴰⵣⵉⵖⵜ</span><span class="ar" lang="ar">العربية</span><span>Français</span><span>English</span></div>
+    </div>
+    <div class="defiler" aria-hidden="true"></div>
+  </section>
+
+  <!-- Pourquoi -->
+  <section id="pourquoi">
+    <div class="conteneur">
+      <div class="entete apparait">
+        <div class="surtitre">Pourquoi contribuer</div>
+        <h2>Un patrimoine presque absent du web, surtout en tamazight</h2>
+      </div>
+      <div class="cartes">
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-pin"/></svg></div><h3>Des lieux introuvables</h3><p>Villages, greniers, sources, sanctuaires : la plupart n’apparaissent sur aucune carte.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-lang"/></svg></div><h3>Le tamazight absent</h3><p>Les noms et les descriptions sont rarement écrits dans la langue de ceux qui y vivent.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-mic"/></svg></div><h3>Des voix qui se perdent</h3><p>Contes, savoir des anciens, prononciation des noms de lieux : rien n’est enregistré.</p></article>
+      </div>
+      <p class="accroche apparait">Avec Tala DZ, votre association les inscrit sur la carte, en 5 langues, avec photos et enregistrements.</p>
+    </div>
+  </section>
+
+  <!-- Principe -->
+  <section class="sable">
+    <div class="conteneur">
+      <div class="entete apparait">
+        <div class="surtitre">Le principe</div>
+        <h2>Un lieu, et les points à y visiter</h2>
+        <p>Un lieu (village, ville, site archéologique, musée…) contient plusieurs points, chacun avec sa position, sa description, ses photos et ses voix.</p>
+      </div>
+      <div class="arbre apparait" id="arbre">
+        <svg class="liens" aria-hidden="true"></svg>
+        <div class="niveau"><div class="noeud racine" data-noeud="racine"><b>Timgad</b><small>le lieu · site archéologique</small></div></div>
+        <div class="niveau">
+          <div class="noeud" data-parent="racine"><b>Arc de Trajan</b><small>point · monument</small></div>
+          <div class="noeud" data-parent="racine"><b>Marché de Sertius</b><small>point · monument</small></div>
+          <div class="noeud" data-parent="racine" data-noeud="musee"><b>Musée de Timgad</b><small>point · musée</small></div>
+        </div>
+        <div class="niveau bas"><div class="noeud interieur" data-parent="musee"><b>Salle des mosaïques</b><small>point intérieur · 1er étage</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Frise -->
+  <section>
+    <div class="conteneur apparait">
+      <div class="entete">
+        <div class="surtitre">En résumé</div>
+        <h2>Cinq étapes, depuis votre téléphone</h2>
+      </div>
+      <nav class="frise" aria-label="Les cinq étapes">
+        <a href="#compte"><span class="rond"><svg aria-hidden="true"><use href="#i-user"/></svg></span><span><span class="num">1</span><b>Créer un compte</b><small>professionnel</small></span></a>
+        <a href="#lieu"><span class="rond"><svg aria-hidden="true"><use href="#i-site"/></svg></span><span><span class="num">2</span><b>Ajouter le lieu</b><small>nom, type, position</small></span></a>
+        <a href="#points"><span class="rond"><svg aria-hidden="true"><use href="#i-pin"/></svg></span><span><span class="num">3</span><b>Ajouter les points</b><small>à visiter</small></span></a>
+        <a href="#voix"><span class="rond"><svg aria-hidden="true"><use href="#i-cam"/></svg></span><span><span class="num">4</span><b>Photos et voix</b><small>dans toutes les langues</small></span></a>
+        <a href="/patrimoine"><span class="rond"><svg aria-hidden="true"><use href="#i-map"/></svg></span><span><span class="num">5</span><b>Sur la carte</b><small>visible par tous</small></span></a>
+      </nav>
+      <div class="encart">Le site s’utilise dans le navigateur du téléphone : <b>rien à installer</b>. Sur place, le téléphone donne directement la position GPS.</div>
+    </div>
+  </section>
+
+  <!-- Étape 1 -->
+  <section class="sable" id="compte">
+    <div class="conteneur">
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Étape 1</div>
+          <h3>Créer un compte professionnel</h3>
+          <ol class="pas">
+            <li>Sur taladz.com, touchez « S’inscrire », puis l’onglet « Inscription ».</li>
+            <li>Type de profil : choisissez <b>« Professionnel »</b>.</li>
+            <li>Remplissez nom, e-mail et mot de passe, puis validez l’adresse e-mail.</li>
+            <li>L’équipe Tala DZ valide votre compte : vous pouvez alors ajouter des lieux.</li>
+          </ol>
+          <div class="conseil">Prévenez l’équipe Tala DZ après votre inscription : la validation sera plus rapide.</div>
+          <p style="margin-top:22px"><a class="bouton plein" href="/auth">Créer mon compte <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/01-inscription.webp" width="600" height="1298" alt="Formulaire d’inscription, profil Professionnel sélectionné" loading="lazy"><span class="anneau" style="--l:21%;--t:28.1%;--w:69.7%;--h:4.5%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Étape 2 -->
+  <section id="lieu">
+    <div class="conteneur">
+      <div class="entete apparait">
+        <div class="surtitre">Étape 2</div>
+        <h2>Ajouter le lieu</h2>
+        <p>Exemple suivi : le ksar de Beni Isguen, à Ghardaïa.</p>
+      </div>
+
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">2.1 · Où ?</div>
+          <h3>Où se trouve le lieu ?</h3>
+          <ol class="pas">
+            <li>Menu « Patrimoine », puis <b>« Ajouter un site »</b>.</li>
+            <li>Choisissez la wilaya, puis la daïra, puis la commune : chaque liste suit la précédente.</li>
+            <li>Touchez « Suivant ».</li>
+          </ol>
+        </div>
+        <div class="telephones duo apparait gauche">
+          <figure class="telephone recadre"><div class="ecran"><img src="/guide/img/00-entree.webp" width="600" height="569" alt="Page Patrimoine, bouton Ajouter un site" loading="lazy"><span class="anneau" style="--l:2.8%;--t:36.5%;--w:94.4%;--h:14.6%"></span></div></figure>
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/02-site-localisation.webp" width="600" height="1298" alt="Choix de la wilaya, de la daïra et de la commune" loading="lazy"></div></figure>
+        </div>
+      </div>
+
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">2.2 · Nom et type</div>
+          <h3>Son nom dans vos langues, et son type</h3>
+          <ol class="pas">
+            <li>Écrivez le nom en français, puis touchez l’onglet de l’arabe et celui du tamazight pour l’écrire dans chaque langue.</li>
+            <li>Le tamazight s’écrit en latin (Tamaziɣt) ou en tifinagh (ⵜⴰⵎⴰⵣⵉⵖⵜ) : utilisez le nom tel qu’on le dit sur place.</li>
+            <li>Choisissez le type : Ville / village, Monument, Site archéologique, Site naturel…</li>
+          </ol>
+          <div class="exemple" aria-label="Exemple"><span>Ksar de Beni Isguen</span><span>Aɣrem n At Isjen</span><span class="ar" lang="ar" dir="rtl">قصر بني يزقن</span></div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/03-site-noms-type.webp" width="600" height="1298" alt="Nom du site en plusieurs langues et choix du type" loading="lazy"><span class="anneau" style="--l:16.3%;--t:26.1%;--w:18.2%;--h:3.2%"></span><span class="anneau" style="--l:9.2%;--t:53.6%;--w:41%;--h:9%"></span></div></figure>
+        </div>
+      </div>
+
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">2.3 · Position</div>
+          <h3>Sa position : le plus simple, c’est sur place</h3>
+          <ol class="pas">
+            <li>Sur place, touchez le bouton <b>➤</b> : la position de votre téléphone est placée sur la carte.</li>
+            <li>Pas sur place ? Touchez la carte à l’endroit du lieu, ou cherchez une adresse.</li>
+            <li>Vérifiez que le repère bleu est au bon endroit, puis « Suivant ».</li>
+          </ol>
+          <div class="conseil">Activez la localisation du téléphone, et attendez quelques secondes en extérieur pour une position précise.</div>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/04-site-position.webp" width="600" height="1298" alt="Carte avec le bouton de géolocalisation" loading="lazy"><span class="anneau" style="--l:77.4%;--t:19.1%;--w:13.3%;--h:5.5%"></span></div></figure>
+        </div>
+      </div>
+
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">2.4 · Photo</div>
+          <h3>Une photo, puis publier</h3>
+          <ol class="pas">
+            <li>Ajoutez au moins une photo (prise de jour, le lieu bien visible).</li>
+            <li>Relisez le récapitulatif : nom, type, position.</li>
+            <li>Touchez <b>« Publier le site »</b>. Vous pourrez le compléter ensuite : histoire, traditions, références…</li>
+          </ol>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/05-site-photos.webp" width="600" height="1298" alt="Ajout d’une photo et bouton Publier le site" loading="lazy"><span class="anneau" style="--l:9.2%;--t:21%;--w:81.5%;--h:19.8%"></span><span class="anneau" style="--l:42.3%;--t:87.8%;--w:48.5%;--h:6.9%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Étape 3 -->
+  <section class="sable" id="points">
+    <div class="conteneur">
+      <div class="entete apparait">
+        <div class="surtitre">Étape 3</div>
+        <h2>Ajouter les points à visiter</h2>
+      </div>
+      <div class="etape deux">
+        <div class="texte apparait">
+          <ol class="pas">
+            <li>Ouvrez la page du lieu, section « Points à visiter », puis <b>« Ajouter un point »</b>.</li>
+            <li>Donnez-lui un nom dans vos langues et un type, comme pour le lieu.</li>
+            <li>Les points apparaissent numérotés sur la carte du lieu, dans l’ordre de visite.</li>
+          </ol>
+          <div class="conseil">Timgad sur Tala DZ : 33 points relevés, de l’arc de Trajan au marché de Sertius.</div>
+        </div>
+        <div class="telephones duo apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/07-site-points-carte.webp" width="600" height="1298" alt="Points à visiter de Timgad sur la carte, bouton Ajouter un point" loading="lazy"><span class="anneau" style="--l:54%;--t:20.9%;--w:43.3%;--h:5.5%"></span></div></figure>
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/09-point-nom.webp" width="600" height="1298" alt="Formulaire d’un point de visite" loading="lazy"></div></figure>
+        </div>
+      </div>
+
+      <div class="entete apparait" style="margin-top:90px">
+        <h2 style="font-size:clamp(25px,3.2vw,34px)">En plein air, ou à l’intérieur d’un bâtiment</h2>
+      </div>
+      <div class="cas">
+        <article class="apparait">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/10-point-position.webp" width="600" height="1298" alt="Option Sa propre position GPS" loading="lazy"><span class="anneau" style="--l:9.2%;--t:12%;--w:81.5%;--h:9%"></span><span class="anneau" style="--l:77.4%;--t:42.2%;--w:13.3%;--h:5.5%"></span></div></figure>
+          <div><h3>En plein air</h3><p>« Sa propre position GPS » : une porte, une maison, un grenier. Sur place, touchez ➤.</p></div>
+        </article>
+        <article class="apparait">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/11-point-interieur.webp" width="600" height="1298" alt="Option À l’intérieur du site avec un repère" loading="lazy"><span class="anneau" style="--l:9.2%;--t:20.7%;--w:81.5%;--h:9%"></span><span class="anneau" style="--l:9.2%;--t:43.6%;--w:81.5%;--h:6.4%"></span></div></figure>
+          <div><h3>À l’intérieur</h3><p>« À l’intérieur du site » : une salle, une pièce, une vitrine. Écrivez un repère, par exemple « 1er étage, salle 3 ».</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Étape 4 -->
+  <section id="voix">
+    <div class="conteneur">
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Étape 4</div>
+          <h3>Enregistrer des voix, en tamazight d’abord</h3>
+          <ol class="pas">
+            <li>Sur la page du lieu ou du point, section « Écouter ».</li>
+            <li>Choisissez la langue de l’enregistrement : tamazight, arabe, français…</li>
+            <li>Touchez <b>« Ajouter un enregistrement »</b> et choisissez le fichier du téléphone (MP3, M4A…).</li>
+            <li>Récit d’un ancien, conte, prononciation du nom : chaque voix compte.</li>
+          </ol>
+          <div class="conseil">Demandez toujours l’accord des personnes enregistrées, et dites-leur où leur voix sera écoutée.</div>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/12-point-audio.webp" width="600" height="1298" alt="Section Écouter, ajout d’un enregistrement" loading="lazy"><span class="anneau" style="--l:9.2%;--t:33.8%;--w:61.2%;--h:5.5%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conseils -->
+  <section class="sable" id="conseils">
+    <div class="conteneur">
+      <div class="entete apparait">
+        <div class="surtitre">Sur le terrain</div>
+        <h2>Six conseils pour un relevé de qualité</h2>
+      </div>
+      <div class="grille-conseils">
+        <article class="carte apparait"><div class="pastille-icone" style="color:var(--terre)"><svg aria-hidden="true"><use href="#i-nav"/></svg></div><h3>Relevez sur place</h3><p>La position du téléphone est plus précise qu’un point posé à distance sur la carte.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-sun"/></svg></div><h3>Photos de jour</h3><p>Le lieu bien visible ; pas de visage reconnaissable sans accord.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-lang"/></svg></div><h3>Les vrais noms</h3><p>Écrivez les noms tels que les habitants les disent, en tamazight d’abord.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-house"/></svg></div><h3>Lieux privés</h3><p>Demandez l’accord du propriétaire avant de publier une maison ou un grenier.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-book"/></svg></div><h3>Citez vos sources</h3><p>Qui raconte ? Quel livre ? Notez-le dans la description ou les références.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-wifi"/></svg></div><h3>Pas de réseau ?</h3><p>Notez les points dans le fichier Excel et envoyez-le à l’équipe (voir ci-dessous).</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Excel -->
+  <section id="hors-ligne">
+    <div class="conteneur excel">
+      <div class="apparait">
+        <div class="entete" style="margin-bottom:24px">
+          <div class="surtitre">Sans réseau</div>
+          <h2>Relevé hors ligne : le fichier Excel</h2>
+        </div>
+        <ol class="pas">
+          <li>Téléchargez le modèle (bouton ci-dessous).</li>
+          <li>Feuille « Site » : le lieu (nom, type, wilaya, daïra, commune). Feuille « Points » : une ligne par point.</li>
+          <li>La feuille « Types » aide à choisir le type ; « Mode d’emploi » explique comment relever le GPS.</li>
+          <li>Renvoyez le fichier à l’équipe Tala DZ : les points sont ajoutés au lieu et apparaissent sur sa carte.</li>
+        </ol>
+        <div class="telechargements">
+          <a class="bouton plein" href="/modeles/Modele_points_GPS_Taladz.xlsx" download><svg aria-hidden="true"><use href="#i-down"/></svg> Modèle Excel</a>
+          <a class="bouton contour" style="color:var(--olive)" href="/guide/Guide_contributeur_Taladz.pdf" download><svg aria-hidden="true"><use href="#i-down"/></svg> Guide en PDF</a>
+        </div>
+      </div>
+      <div class="tableau apparait droite">
+        <table>
+          <caption>Feuille « Points » du modèle (cases jaunes à remplir)</caption>
+          <thead><tr><th>ID</th><th>Nom du point</th><th>Type</th><th>Latitude</th><th>Longitude</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Porte nord</td><td>Monument</td><td>32.4781</td><td>3.6930</td></tr>
+            <tr><td>2</td><td>Puits collectif</td><td>Autre</td><td>32.4776</td><td>3.6925</td></tr>
+            <tr><td>3</td><td>Mosquée du ksar</td><td>Édifice religieux</td><td>32.4772</td><td>3.6921</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fin -->
+  <section class="fin">
+    <div class="fond" aria-hidden="true"></div>
+    <div class="conteneur apparait">
+      <div class="merci"><span>Tanemmirt</span><span class="ar" lang="ar" dir="rtl">شكرا</span><span>Merci</span></div>
+      <p>Chaque lieu ajouté, chaque nom écrit en tamazight, chaque voix enregistrée fait vivre notre patrimoine.</p>
+      <div class="actions">
+        <a class="bouton clair" href="/auth">Créer mon compte</a>
+        <a class="bouton contour" href="/patrimoine">Voir la carte du patrimoine</a>
+      </div>
+      <div class="contact">Une question ? <a href="mailto:contact@taladz.com">contact@taladz.com</a></div>
+    </div>
+  </section>
+</main>
+<footer>© Tala DZ — la source de la culture algérienne · <a href="/">taladz.com</a></footer>
+
+<script>
+(function () {
+  var reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Apparitions au défilement
+  var cibles = document.querySelectorAll('.apparait, .telephone, .tableau');
+  if ('IntersectionObserver' in window && !reduit) {
+    var io = new IntersectionObserver(function (entrees) {
+      entrees.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('vu'); if (e.target.id === 'arbre') tracerArbre(); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
+    cibles.forEach(function (c) { io.observe(c); });
+  } else {
+    cibles.forEach(function (c) { c.classList.add('vu'); });
+  }
+
+  // Barre du haut, progression et étape en cours
+  var barre = document.getElementById('barre');
+  var prog = document.getElementById('progression');
+  var liens = Array.prototype.slice.call(document.querySelectorAll('.etapes-nav a'));
+  var sections = liens.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  var attente = false;
+  function maj() {
+    attente = false;
+    var y = window.scrollY, h = document.documentElement.scrollHeight - window.innerHeight;
+    barre.classList.toggle('visible', y > window.innerHeight * 0.6);
+    prog.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, y / h) : 0) + ')';
+    var actif = -1;
+    sections.forEach(function (s, i) { if (s && s.getBoundingClientRect().top < 140) actif = i; });
+    liens.forEach(function (a, i) {
+      var etait = a.classList.contains('actif');
+      a.classList.toggle('actif', i === actif);
+      if (i === actif && !etait && a.scrollIntoView) a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: reduit ? 'auto' : 'smooth' });
+    });
+  }
+  window.addEventListener('scroll', function () { if (!attente) { attente = true; requestAnimationFrame(maj); } }, { passive: true });
+  window.addEventListener('resize', function () { maj(); tracerArbre(); });
+  maj();
+
+  // Liens de l'arbre lieu → points, dessinés entre les cases
+  function tracerArbre() {
+    var arbre = document.getElementById('arbre');
+    var svg = arbre.querySelector('svg.liens');
+    if (getComputedStyle(svg).display === 'none') return;
+    var base = arbre.getBoundingClientRect();
+    var d = '';
+    arbre.querySelectorAll('[data-parent]').forEach(function (n) {
+      var p = arbre.querySelector('[data-noeud="' + n.getAttribute('data-parent') + '"]').getBoundingClientRect();
+      var e = n.getBoundingClientRect();
+      var x1 = p.left + p.width / 2 - base.left, y1 = p.bottom - base.top;
+      var x2 = e.left + e.width / 2 - base.left, y2 = e.top - base.top;
+      var ym = (y1 + y2) / 2;
+      d += 'M' + x1 + ',' + y1 + ' V' + ym + ' H' + x2 + ' V' + y2 + ' ';
+    });
+    svg.innerHTML = '<path d="' + d + '" pathLength="400" style="--long:400"></path>';
+  }
+  tracerArbre();
+})();
+</script>
+</body>
+</html>
