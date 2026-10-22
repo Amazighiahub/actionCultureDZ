@@ -10,6 +10,7 @@ const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../cons
 // Programme vu publiquement : tout sauf les notes internes de l'organisateur
 const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
 const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
+const { attributsComptes, STATUTS_PLACE_PRISE } = require('../utils/comptesEvenement');
 
 class EvenementRepository extends BaseRepository {
   constructor(models) {
@@ -172,6 +173,7 @@ class EvenementRepository extends BaseRepository {
       this.model.count({ where }),
       this.model.findAll({
         where,
+        attributes: { include: attributsComptes() },
         include: this._defaultIncludes(),
         order: [['date_debut', 'ASC']],
         limit: l,
@@ -208,6 +210,7 @@ class EvenementRepository extends BaseRepository {
       this.model.count({ where }),
       this.model.findAll({
         where,
+        attributes: { include: attributsComptes() },
         include: this._defaultIncludes(),
         order: [['date_debut', 'ASC']],
         limit: l,
@@ -230,6 +233,11 @@ class EvenementRepository extends BaseRepository {
   /**
    * Trouve un événement avec tous ses détails
    */
+  /** Listes (admin, organisateur, wilaya, en attente) : avec les comptes d'inscriptions */
+  async findAll(options = {}) {
+    return super.findAll({ ...options, attributes: options.attributes || { include: attributsComptes() } });
+  }
+
   async findWithFullDetails(id) {
     // Use default includes (lightweight) + Programme, Media, Organisation
     const includes = this._defaultIncludes();
@@ -287,6 +295,7 @@ class EvenementRepository extends BaseRepository {
     }
 
     return this.model.findByPk(id, {
+      attributes: { include: attributsComptes() },
       include: includes,
       order: [
         [{ model: this.models.Programme, as: 'Programmes' }, 'date_programme', 'ASC'],
@@ -313,6 +322,7 @@ class EvenementRepository extends BaseRepository {
   async findByOeuvre(oeuvreId) {
     return this.model.findAll({
       where: { statut: { [Op.ne]: 'brouillon' } },
+      attributes: { include: attributsComptes() },
       include: [
         ...this._defaultIncludes(),
         {
@@ -428,7 +438,7 @@ class EvenementRepository extends BaseRepository {
     return this.models.EvenementUser.count({
       where: {
         id_evenement: evenementId,
-        statut_participation: { [Op.in]: ['confirme', 'present'] }
+        statut_participation: { [Op.in]: STATUTS_PLACE_PRISE }
       },
       ...options
     });

@@ -288,7 +288,7 @@ const DashboardPro = () => {
               }
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {typeof item.nombre_participants === 'number' ? item.nombre_participants : 0} {t("dashboardpro.participants")}
+                {Number(item.nombre_inscrits) || 0} {t('dashboardpro.registered', 'inscrit(s)')}
               </span>
               {(() => { const b = getEventStatusBadge(item.statut, t); return <Badge variant={b.variant}>{b.label}</Badge>; })()}
             </div>);
@@ -724,7 +724,8 @@ const DashboardPro = () => {
                           }
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {typeof evenement.nombre_participants === 'number' ? evenement.nombre_participants : 0} {t("dashboardpro.participants")}
+                            {/* Inscriptions non annulées (en attente comprises) : l'organisateur voit les nouvelles demandes */}
+                            {Number(evenement.nombre_inscrits) || 0} {t('dashboardpro.registered', 'inscrit(s)')}
                           </span>
                           {(() => { const b = getEventStatusBadge(evenement.statut, t); return <Badge variant={b.variant}>{b.label}</Badge>; })()}
                         </div>

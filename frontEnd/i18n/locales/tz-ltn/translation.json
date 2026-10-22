@@ -1282,7 +1282,8 @@
     "loadEventsFailed": "Tuccḍa deg usali n tedyanin",
     "loadServicesFailed": "Tuccḍa deg usali n yimeẓla",
     "loadArtisanatsFailed": "Tuccḍa deg usali n taẓuri tameɣradt",
-    "loadPatrimoinesFailed": "Tuccḍa deg usali n yismal n tdelsa"
+    "loadPatrimoinesFailed": "Tuccḍa deg usali n yismal n tdelsa",
+    "registered": "yettwajerden"
   },
   "dashboardadmin": {
     "label_validation": "Tasisna",
@@ -2618,7 +2619,8 @@
       "confirmCancelDesc": "Imttekkiyen ad ttwalɣun s usefsex.",
       "cancelEvent": "Sefsex tadyant",
       "confirmDelete": "Ad tekkseḍ tadyant-a?",
-      "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir."
+      "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir.",
+      "registered": "{{count}} yettwajerden"
     },
     "services": {
       "title": "Asefrek n tenefliwin",

@@ -1290,7 +1290,8 @@
     "loadEventsFailed": "Erreur lors du chargement des événements",
     "loadServicesFailed": "Erreur lors du chargement des services",
     "loadArtisanatsFailed": "Erreur lors du chargement des artisanats",
-    "loadPatrimoinesFailed": "Erreur lors du chargement des sites patrimoine"
+    "loadPatrimoinesFailed": "Erreur lors du chargement des sites patrimoine",
+    "registered": "inscrit(s)"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -2404,7 +2405,8 @@
       "confirmCancelDesc": "Les participants seront notifiés de l'annulation.",
       "cancelEvent": "Annuler l'événement",
       "confirmDelete": "Supprimer cet événement ?",
-      "confirmDeleteDesc": "Cette action est irréversible."
+      "confirmDeleteDesc": "Cette action est irréversible.",
+      "registered": "{{count}} inscrit(s)"
     },
     "services": {
       "title": "Gestion des services",

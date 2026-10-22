@@ -1265,7 +1265,8 @@
     "loadEventsFailed": "Error loading events",
     "loadServicesFailed": "Error loading services",
     "loadArtisanatsFailed": "Error loading crafts",
-    "loadPatrimoinesFailed": "Error loading heritage sites"
+    "loadPatrimoinesFailed": "Error loading heritage sites",
+    "registered": "registered"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -2601,7 +2602,8 @@
       "confirmCancelDesc": "Participants will be notified of the cancellation.",
       "cancelEvent": "Cancel event",
       "confirmDelete": "Delete this event?",
-      "confirmDeleteDesc": "This action cannot be undone."
+      "confirmDeleteDesc": "This action cannot be undone.",
+      "registered": "{{count}} registered"
     },
     "services": {
       "title": "Services Management",

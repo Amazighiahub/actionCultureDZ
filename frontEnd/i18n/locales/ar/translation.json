@@ -1299,7 +1299,8 @@
       "confirmCancelDesc": "سيتم إشعار المشاركين بالإلغاء.",
       "cancelEvent": "إلغاء الفعالية",
       "confirmDelete": "حذف هذه الفعالية؟",
-      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
+      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه.",
+      "registered": "{{count}} مسجَّل"
     },
     "services": {
       "title": "إدارة الخدمات",
@@ -1673,7 +1674,8 @@
     "loadEventsFailed": "حدث خطأ أثناء تحميل الفعاليات",
     "loadServicesFailed": "حدث خطأ أثناء تحميل الخدمات",
     "loadArtisanatsFailed": "حدث خطأ أثناء تحميل المنتجات الحرفية",
-    "loadPatrimoinesFailed": "حدث خطأ أثناء تحميل المواقع التراثية"
+    "loadPatrimoinesFailed": "حدث خطأ أثناء تحميل المواقع التراثية",
+    "registered": "مسجَّل"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",
