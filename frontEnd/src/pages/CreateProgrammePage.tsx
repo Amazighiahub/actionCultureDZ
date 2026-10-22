@@ -12,19 +12,13 @@ import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeFo
 import { programmeService } from '@/services/programme.service';
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
-import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
 import type { Lieu } from '@/types/models/lieu.types';
-import type { Intervenant } from '@/types/models/intervenant.types';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
   lieux?: Lieu[];
-}
-
-/** API response shape for intervenants search */
-interface IntervenantsResponseData {
-  intervenants?: Intervenant[];
 }
 
 const CreateProgrammePage: React.FC = () => {
@@ -37,7 +31,6 @@ const CreateProgrammePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [lieux, setLieux] = useState<Lieu[]>([]);
-  const [users, setUsers] = useState<Intervenant[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -45,22 +38,18 @@ const CreateProgrammePage: React.FC = () => {
     setLoadError(null);
     try {
         const lieuxPromise = lieuService.getAll({ limit: 100 });
-        const usersPromise = httpClient.get<IntervenantsResponseData>('/intervenants/search', { q: '', limit: 50 });
         const eventPromise = eventId ? evenementService.getDetail(parseInt(eventId)) : null;
 
-        const [lieuxRes, usersRes, eventRes] = await Promise.all([lieuxPromise, usersPromise, eventPromise]);
+        const [lieuxRes, eventRes] = await Promise.all([lieuxPromise, eventPromise]);
         if (lieuxRes.success && lieuxRes.data) {
           const items = (lieuxRes.data as LieuxResponseData).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
         }
-        if (usersRes.success && usersRes.data) {
-          const items = usersRes.data.intervenants || usersRes.data;
-          setUsers(Array.isArray(items) ? items as Intervenant[] : []);
-        }
         if (eventRes?.success && eventRes.data) {
           const evt = eventRes.data;
-          const dateDebut = evt.date_debut?.split('T')[0] || evt.date_debut;
-          const dateFin = evt.date_fin?.split('T')[0] || evt.date_fin || dateDebut;
+          // Jours à l'heure de l'Algérie (la date UTC peut être la veille)
+          const dateDebut = partiesEvenement(evt.date_debut as string).date || evt.date_debut;
+          const dateFin = partiesEvenement(evt.date_fin as string).date || dateDebut;
           if (dateDebut) {
             setEventDates({ dateDebut, dateFin });
           }
@@ -213,7 +202,6 @@ const CreateProgrammePage: React.FC = () => {
             error={error}
             success={success}
             lieux={lieux || []}
-            users={users || []}
             eventDates={eventDates}
           />
         </CardContent>

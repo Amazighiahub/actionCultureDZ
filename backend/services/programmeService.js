@@ -85,19 +85,7 @@ class ProgrammeService extends BaseService {
       const programme = await this.repository.create(programmeData, { transaction });
 
       // Résoudre chaque intervenant : cherche/crée dans table Intervenant
-      for (const interv of intervenants) {
-        const intervenantId = await this._resolveIntervenant(interv, transaction);
-
-        await this.models.ProgrammeIntervenant.create({
-          id_programme: programme.id_programme,
-          id_intervenant: intervenantId,
-          role_intervenant: interv.role || 'principal',
-          sujet_intervention: interv.sujet,
-          ordre_intervention: interv.ordre || 1,
-          duree_intervention: interv.duree,
-          statut_confirmation: 'en_attente'
-        }, { transaction });
-      }
+      await this._lierIntervenants(programme.id_programme, intervenants, transaction);
 
       await transaction.commit();
       return { programme: await this._getProgrammeComplet(programme.id_programme) };
@@ -108,7 +96,7 @@ class ProgrammeService extends BaseService {
   }
 
   async updateProgramme(id, userId, lang, data) {
-    const { titre, description, ...rest } = data;
+    const { titre, description, intervenants, ...rest } = data;
 
     const allowedFields = ['id_lieu', 'lieu_specifique', 'date_programme', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
     const updates = {};
@@ -155,6 +143,11 @@ class ProgrammeService extends BaseService {
       }
 
       await programme.update(updates, { transaction });
+      // Liste d'intervenants envoyée par le formulaire : elle remplace celle de l'activité
+      if (Array.isArray(intervenants)) {
+        await this.models.ProgrammeIntervenant.destroy({ where: { id_programme: id }, transaction });
+        await this._lierIntervenants(id, intervenants, transaction);
+      }
       await transaction.commit();
 
       return { programme: await this._getProgrammeComplet(id) };
@@ -420,6 +413,30 @@ class ProgrammeService extends BaseService {
    * @param {Transaction} transaction
    * @returns {number} id_intervenant
    */
+  /**
+   * Relie des intervenants à une activité. Accepte les noms de champs du formulaire
+   * (role_intervenant, sujet_intervention, ordre_intervention, duree_intervention) et les
+   * noms courts (role, sujet, ordre, duree). Un même intervenant n'est relié qu'une fois.
+   */
+  async _lierIntervenants(idProgramme, intervenants = [], transaction) {
+    const dejaLies = new Set();
+    for (const [index, interv] of (intervenants || []).entries()) {
+      const intervenantId = await this._resolveIntervenant(interv, transaction);
+      if (dejaLies.has(intervenantId)) continue;
+      dejaLies.add(intervenantId);
+      await this.models.ProgrammeIntervenant.create({
+        id_programme: idProgramme,
+        id_intervenant: intervenantId,
+        role_intervenant: interv.role_intervenant || interv.role || 'principal',
+        sujet_intervention: interv.sujet_intervention || interv.sujet || null,
+        ordre_intervention: interv.ordre_intervention || interv.ordre || index + 1,
+        duree_intervention: interv.duree_intervention || interv.duree || null,
+        biographie_courte: interv.biographie_courte || null,
+        statut_confirmation: interv.statut_confirmation || 'en_attente'
+      }, { transaction });
+    }
+  }
+
   async _resolveIntervenant(interv, transaction) {
     // Cas 1 : id_intervenant fourni directement
     if (interv.id_intervenant) {
@@ -436,7 +453,24 @@ class ProgrammeService extends BaseService {
       if (existing) return existing.id_intervenant;
     }
 
-    // Cas 3 : Créer un nouvel Intervenant
+    // Cas 3 : même prénom et même nom qu'un intervenant existant (sans e-mail) → le réutiliser
+    const texte = (v) => (typeof v === 'string' ? v : (v?.fr || Object.values(v || {}).find(Boolean) || '')).trim();
+    const nom = texte(interv.nom);
+    const prenom = texte(interv.prenom);
+    if (!nom && !prenom) {
+      throw this._validationError('Chaque intervenant doit avoir un nom (ou être choisi parmi les intervenants existants)');
+    }
+    const memes = await this.models.Intervenant.findAll({
+      where: this.sequelize.where(
+        this.sequelize.fn('LOWER', this.sequelize.fn('JSON_UNQUOTE', this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'))),
+        nom.toLowerCase()
+      ),
+      transaction
+    });
+    const meme = memes.find(i => texte(i.prenom).toLowerCase() === prenom.toLowerCase());
+    if (meme) return meme.id_intervenant;
+
+    // Cas 4 : Créer un nouvel Intervenant
     // Vérifier si un User existe avec cet email pour lier id_user
     let userId = interv.id_user || null;
     if (!userId && interv.email) {

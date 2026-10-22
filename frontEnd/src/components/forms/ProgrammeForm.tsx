@@ -23,6 +23,8 @@ import FormField from './FormField';
 import { cn } from '@/lib/Utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { programmeService, CreateProgrammeData, IntervenantData } from '@/services/programme.service';
+import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
+import { intervenantValide } from '@/utils/programmeIntervenants';
 
 export interface ProgrammeFormData {
   // Informations de base
@@ -73,7 +75,8 @@ interface ProgrammeFormProps {
   error?: string | null;
   success?: boolean;
   lieux?: any[];
-  users?: any[];
+  /** @deprecated plus utilisé : les intervenants se saisissent par nom */
+  users?: unknown[];
   eventDates?: { dateDebut: string; dateFin: string };
 }
 
@@ -161,7 +164,6 @@ const rolesIntervenantKeys = ['principal', 'co_intervenant', 'moderateur', 'anim
 
 // Constants to avoid creating new array references on every render
 const EMPTY_LIEUX_ARRAY: any[] = [];
-const EMPTY_USERS_ARRAY: any[] = [];
 
 const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   eventId,
@@ -173,7 +175,6 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   error = null,
   success = false,
   lieux = EMPTY_LIEUX_ARRAY,
-  users = EMPTY_USERS_ARRAY,
   eventDates
 }) => {
   // Générer les dates disponibles basées sur les dates de l'événement
@@ -274,7 +275,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
   const addIntervenant = () => {
     const newIntervenant: IntervenantData = {
-      id_user: 0,
+      prenom: '',
+      nom: '',
       role_intervenant: 'principal',
       sujet_intervention: '',
       biographie_courte: '',
@@ -323,12 +325,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       newErrors.heure_fin = t('programme.form.errors.endTimeAfterStart');
     }
 
-    // Validation des intervenants — chaque intervenant doit avoir un vrai user sélectionné
-    if (formData.intervenants.length > 0) {
-      const invalidIntervenant = formData.intervenants.some(i => !i.id_user || i.id_user <= 0);
-      if (invalidIntervenant) {
-        newErrors.intervenants = t('programme.form.errors.intervenantUserRequired', 'Chaque intervenant doit avoir un utilisateur sélectionné');
-      }
+    // Intervenants : choisis parmi les fiches existantes, ou avec au moins un nom
+    if (formData.intervenants.some(i => !intervenantValide(i))) {
+      newErrors.intervenants = t('programme.form.errors.intervenantNameRequired', 'Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)');
     }
 
     setErrors(newErrors);
@@ -610,6 +609,10 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   )}
                 </div>
 
+                {errors.intervenants && (
+                  <p role="alert" className="text-sm text-destructive">{errors.intervenants}</p>
+                )}
+
                 {formData.intervenants.map((intervenant, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-4">
@@ -627,26 +630,18 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField label={t('programme.form.participants.user')} required={true}>
-                          <Select
-                            value={intervenant.id_user?.toString()}
-                            onValueChange={(value) => updateIntervenant(index, 'id_user', parseInt(value))}
-                            disabled={isReadOnly}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('programme.form.participants.selectUser')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {users.map((user) => (
-                                <SelectItem key={user.id_user} value={user.id_user.toString()}>
-                                  {user.prenom} {user.nom}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormField>
+                      {/* Prénom / nom, avec suggestions des intervenants déjà connus (pas de compte requis) */}
+                      <IntervenantSaisie
+                        index={index}
+                        valeur={intervenant}
+                        disabled={isReadOnly}
+                        onChange={(maj) => setFormData(prev => ({
+                          ...prev,
+                          intervenants: prev.intervenants.map((it, i) => (i === index ? { ...it, ...maj } : it))
+                        }))}
+                      />
 
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField label={t('programme.form.participants.role')}>
                           <Select
                             value={intervenant.role_intervenant}

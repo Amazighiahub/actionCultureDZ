@@ -51,12 +51,8 @@ class ProgrammeRepository extends BaseRepository {
   async findByEvenement(evenementId, { date, type_activite } = {}) {
     const where = { id_evenement: evenementId };
 
-    if (date) {
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
-      where.heure_debut = { [Op.gte]: startDate, [Op.lt]: endDate };
-    }
+    // Le jour est dans date_programme (heure_debut ne contient que l'heure)
+    if (date && /^\d{4}-\d{2}-\d{2}/.test(String(date))) where.date_programme = String(date).slice(0, 10);
     if (type_activite) where.type_activite = type_activite;
 
     return this.model.findAll({

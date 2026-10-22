@@ -12,25 +12,20 @@ import { programmeService } from '@/services/programme.service';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
-import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
 import type { Lieu } from '@/types/models/lieu.types';
-import type { Intervenant } from '@/types/models/intervenant.types';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
   lieux?: Lieu[];
 }
 
-/** API response shape for intervenants search */
-interface IntervenantsResponseData {
-  intervenants?: Intervenant[];
-}
-
 const EditProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -38,29 +33,24 @@ const EditProgrammePage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
   const [lieux, setLieux] = useState<Lieu[]>([]);
-  const [users, setUsers] = useState<Intervenant[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
 
   React.useEffect(() => {
     const loadRefData = async () => {
       try {
         const lieuxPromise = lieuService.getAll({ limit: 100 });
-        const usersPromise = httpClient.get<IntervenantsResponseData>('/intervenants/search', { q: '', limit: 50 });
         const eventPromise = eventId ? evenementService.getDetail(parseInt(eventId)) : null;
 
-        const [lieuxRes, usersRes, eventRes] = await Promise.all([lieuxPromise, usersPromise, eventPromise]);
+        const [lieuxRes, eventRes] = await Promise.all([lieuxPromise, eventPromise]);
         if (lieuxRes.success && lieuxRes.data) {
           const items = (lieuxRes.data as LieuxResponseData).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
         }
-        if (usersRes.success && usersRes.data) {
-          const items = usersRes.data.intervenants || usersRes.data;
-          setUsers(Array.isArray(items) ? items as Intervenant[] : []);
-        }
         if (eventRes?.success && eventRes.data) {
           const evt = eventRes.data;
-          const dateDebut = evt.date_debut?.split('T')[0] || evt.date_debut;
-          const dateFin = evt.date_fin?.split('T')[0] || evt.date_fin || dateDebut;
+          // Jours à l'heure de l'Algérie (la date UTC peut être la veille)
+          const dateDebut = partiesEvenement(evt.date_debut as string).date || evt.date_debut;
+          const dateFin = partiesEvenement(evt.date_fin as string).date || dateDebut;
           if (dateDebut) {
             setEventDates({ dateDebut, dateFin });
           }
@@ -115,16 +105,7 @@ const EditProgrammePage: React.FC = () => {
             diffusion_live: false,
             support_numerique: false,
             notes_organisateur: '',
-            intervenants: programme.Intervenants?.map(intervenant => ({
-              id_user: intervenant.id_user,
-              role_intervenant: intervenant.ProgrammeIntervenant?.role_intervenant || 'principal',
-              sujet_intervention: intervenant.ProgrammeIntervenant?.sujet_intervention || '',
-              biographie_courte: intervenant.ProgrammeIntervenant?.biographie_courte || '',
-              ordre_intervention: intervenant.ProgrammeIntervenant?.ordre_intervention || 1,
-              duree_intervention: intervenant.ProgrammeIntervenant?.duree_intervention,
-              honoraires: intervenant.ProgrammeIntervenant?.honoraires,
-              frais_deplacement: intervenant.ProgrammeIntervenant?.frais_deplacement
-            })) || []
+            intervenants: intervenantsPourFormulaire(programme.Intervenants, i18n.language)
           };
 
           setProgrammeData(formData);
@@ -297,7 +278,6 @@ const EditProgrammePage: React.FC = () => {
             error={error}
             success={success}
             lieux={lieux}
-            users={users}
             eventDates={eventDates}
           />
         </CardContent>
