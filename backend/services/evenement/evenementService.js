@@ -274,12 +274,14 @@ class EvenementService extends BaseService {
       const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!existing) throw this._notFoundError(id);
 
-      if (parseInt(existing.id_user) !== parseInt(userId)) {
+      if (parseInt(existing.id_user) !== parseInt(userId) && !options.isAdmin) {
         throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
       }
 
-      if (existing.statut !== 'brouillon') {
-        throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
+      // L'organisateur complète son événement après publication (lieu exact, tarif, horaires…) ;
+      // un événement annulé ou terminé reste figé. Le statut ne change pas ici (routes /publish, /cancel).
+      if (['annule', 'termine'].includes(existing.statut)) {
+        throw this._validationError('Un événement annulé ou terminé ne peut plus être modifié');
       }
 
       const updateData = {};

@@ -579,7 +579,8 @@
       "tags": "Mots-clés",
       "tagsPlaceholder": "Ex. poterie, conte, Béjaïa (Entrée pour ajouter)",
       "addTag": "Ajouter le mot-clé",
-      "removeTag": "Retirer le mot-clé {{tag}}"
+      "removeTag": "Retirer le mot-clé {{tag}}",
+      "saveChanges": "Enregistrer les modifications"
     },
     "types": {
       "concert": "Concert",

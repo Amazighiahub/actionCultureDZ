@@ -554,7 +554,8 @@
       "tags": "Keywords",
       "tagsPlaceholder": "E.g. pottery, storytelling, Béjaïa (Enter to add)",
       "addTag": "Add keyword",
-      "removeTag": "Remove keyword {{tag}}"
+      "removeTag": "Remove keyword {{tag}}",
+      "saveChanges": "Save changes"
     },
     "types": {
       "concert": "Concert",
