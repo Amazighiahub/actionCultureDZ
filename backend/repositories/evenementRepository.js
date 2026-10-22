@@ -266,6 +266,16 @@ class EvenementRepository extends BaseRepository {
       });
     }
 
+    if (this.models.TagMotCle && this.models.EvenementTag) {
+      includes.push({
+        model: this.models.TagMotCle,
+        as: 'Tags',
+        attributes: ['id_tag', 'nom'],
+        through: { attributes: [] },
+        required: false
+      });
+    }
+
     if (this.models.Organisation) {
       includes.push({
         model: this.models.Organisation,

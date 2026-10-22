@@ -11,9 +11,9 @@ import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import MotsClesInput from '@/components/shared/MotsClesInput';
 import {
-  Save, Upload, X, Plus, Loader2, AlertCircle,
+  Save, Upload, X, Loader2, AlertCircle,
   Tag, DollarSign, Clock, Package
 } from 'lucide-react';
 import { artisanatService, CreateArtisanatData } from '@/services/artisanat.service';
@@ -78,7 +78,6 @@ const AjouterArtisanat: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
-  const [newTag, setNewTag] = useState('');
 
   useUnsavedChanges(isDirty);
 
@@ -189,25 +188,6 @@ const AjouterArtisanat: React.FC = () => {
     setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Handle tags
-  const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }));
-      setNewTag('');
-      setIsDirty(true);
-    }
-  };
-
-  const removeTag = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag)
-    }));
-    setIsDirty(true);
-  };
 
   const validateFieldOnBlur = (field: string) => {
     if (field === 'prix_min' || field === 'prix_max') {
@@ -616,39 +596,14 @@ const AjouterArtisanat: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-2 mb-4">
-                    <Input
-                      id="artisanat-new-tag"
-                      aria-label={t('ajouterArtisanat.tagPlaceholder', 'Ajouter un tag...')}
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder={t('ajouterArtisanat.tagPlaceholder', 'Ajouter un tag...')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                    />
-                    <Button type="button" onClick={addTag} variant="outline" aria-label={t('ajouterArtisanat.addTag', 'Ajouter le tag')}>
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="px-3 py-1">
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(tag)}
-                          className="ms-2 hover:text-destructive"
-                          aria-label={t('ajouterArtisanat.removeTag', 'Supprimer le tag {{tag}}', { tag })}
-                        >
-                          <X className="h-3 w-3" aria-hidden="true" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                  <MotsClesInput
+                    id="artisanat-new-tag"
+                    value={formData.tags}
+                    onChange={(tags) => { setFormData(prev => ({ ...prev, tags })); setIsDirty(true); }}
+                    placeholder={t('ajouterArtisanat.tagPlaceholder', 'Ajouter un tag...')}
+                    addLabel={t('ajouterArtisanat.addTag', 'Ajouter le tag')}
+                    removeLabel={(tag) => t('ajouterArtisanat.removeTag', 'Supprimer le tag {{tag}}', { tag })}
+                  />
                 </CardContent>
               </Card>
             </div>

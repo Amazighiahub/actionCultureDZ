@@ -555,7 +555,11 @@
       "organisationRequiredMessage": "يجب عليك أولًا إنشاء منظمة لنشر فعالية حضورية.",
       "errorEvent": "خطأ أثناء إنشاء الفعالية",
       "organisationRequiredShort": "المنظمة مطلوبة",
-      "createShort": "إنشاء"
+      "createShort": "إنشاء",
+      "tags": "كلمات مفتاحية",
+      "tagsPlaceholder": "مثال: فخار، حكاية، بجاية (اضغط Entrée للإضافة)",
+      "addTag": "إضافة كلمة مفتاحية",
+      "removeTag": "حذف الكلمة المفتاحية {{tag}}"
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -3078,7 +3082,8 @@
       "copied": "تم النسخ!",
       "copyLink": "نسخ الرابط",
       "share": "مشاركة"
-    }
+    },
+    "tags": "كلمات مفتاحية"
   },
   "places": {
     "address": "العنوان",

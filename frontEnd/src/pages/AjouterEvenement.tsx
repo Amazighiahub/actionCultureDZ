@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Save, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
+import { Upload, Save, Calendar, Building2, Globe, AlertCircle, Plus, Loader2, Tag } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -34,6 +34,7 @@ import { Wilaya } from '@/types';
 import { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import MotsClesInput from '@/components/shared/MotsClesInput';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -95,6 +96,7 @@ const AjouterEvenement = () => {
     maxParticipants: string;
     tarif: string;
     urlVirtuel: string;
+    tags: string[];
   }>({
     nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
@@ -105,7 +107,8 @@ const AjouterEvenement = () => {
     heureFin: '',
     maxParticipants: '',
     tarif: '',
-    urlVirtuel: ''
+    urlVirtuel: '',
+    tags: []
   });
 
   // État pour les fichiers
@@ -183,6 +186,10 @@ const AjouterEvenement = () => {
           maxParticipants: evt.capacite_max?.toString() || '',
           tarif: evt.tarif?.toString() || '',
           urlVirtuel: evt.url_virtuel || '',
+          // Mots-clés : nom dans la langue de l'interface, sinon le premier renseigné
+          tags: (Array.isArray(evt.Tags) ? evt.Tags as Array<{ nom?: Record<string, string> | string }> : [])
+            .map(tg => (typeof tg.nom === 'string' ? tg.nom : (tg.nom?.[i18n.language] || tg.nom?.fr || Object.values(tg.nom || {}).find(Boolean) || '')))
+            .filter(Boolean),
         });
         if (evt.image_url) {
           setAffichePreview(evt.image_url);
@@ -419,6 +426,7 @@ const AjouterEvenement = () => {
     if (formData.heureFin) fd.append('heure_fin', formData.heureFin);
     if (formData.maxParticipants) fd.append('capacite_max', formData.maxParticipants);
     fd.append('tarif', (!gratuit && formData.tarif) ? formData.tarif : '0');
+    fd.append('tags', JSON.stringify(formData.tags));
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
     if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
@@ -822,6 +830,27 @@ const AjouterEvenement = () => {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Mots-clés : retrouver l'événement (poterie, conte, Béjaïa…), relier aux œuvres du même thème */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5" aria-hidden="true" />
+                  {t('events.create.tags', 'Mots-clés')}
+                  <span className="text-sm font-normal text-muted-foreground">({t('common.optional', 'Optionnel')})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MotsClesInput
+                  id="evenement-mots-cles"
+                  value={formData.tags}
+                  onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+                  placeholder={t('events.create.tagsPlaceholder', 'Ex. poterie, conte, Béjaïa (Entrée pour ajouter)')}
+                  addLabel={t('events.create.addTag', 'Ajouter le mot-clé')}
+                  removeLabel={(tag) => t('events.create.removeTag', 'Retirer le mot-clé {{tag}}', { tag })}
+                />
               </CardContent>
             </Card>
 

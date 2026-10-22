@@ -551,7 +551,11 @@
       "organisationRequiredMessage": "ⵉⵍⴰⵇ ⴰⴷ ⵜⴻⵙⵏⵓⵍⴼⵓⴹ-ⴷ ⵜⵓⴷⴷⵙⴰ ⴷⵉ ⵜⴰⵣⵡⴰⵔⴰ ⴰⴽⴽⴻⵏ ⴰⴷ ⴷ-ⵜⴻⵙⵙⵓⴼⴼⵖⴻⴹ ⵜⴰⴷⵢⴰⵏⵜ ⵙ ⵜⵉⵍⵉⵏ.",
       "errorEvent": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⵏⵓⵍⴼⵓ ⵏ ⵜⴻⴷⵢⴰⵏⵜ",
       "organisationRequiredShort": "ⵜⵓⴷⴷⵙⴰ ⵜⴻⵜⵜⵡⴰⵙⵔⴰ",
-      "createShort": "ⵙⵏⵓⵍⴼⵓ-ⴷ"
+      "createShort": "ⵙⵏⵓⵍⴼⵓ-ⴷ",
+      "tags": "ⴰⵡⴰⵍⴻⵏ ⵉⴳⴻⵊⴷⴰⵏⴻⵏ",
+      "tagsPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⴰⴼⴻⵅⵅⴰⵔ, ⵜⴰⵎⴰⵛⴰⵀⵓⵜ, ⴱⴳⴰⵢⴻⵜ (Entrée)",
+      "addTag": "ⵔⵏⵓ ⴰⵡⴰⵍ ⴰⴳⴻⵊⴷⴰⵏ",
+      "removeTag": "ⴽⴽⴻⵙ ⴰⵡⴰⵍ ⴰⴳⴻⵊⴷⴰⵏ {{tag}}"
     },
     "types": {
       "concert": "ⴰⵎⴰⵔⴳ",
@@ -2993,7 +2997,8 @@
       "copied": "ⵢⴻⵜⵜⵡⴰⵏⵖⴻⵍ!",
       "copyLink": "ⵏⵖⴻⵍ ⴰⵙⴻⵖⵡⴻⵏ",
       "share": "ⴱⴹⵓ"
-    }
+    },
+    "tags": "ⴰⵡⴰⵍⴻⵏ ⵉⴳⴻⵊⴷⴰⵏⴻⵏ"
   },
   "places": {
     "address": "ⵜⴰⵏⵙⴰ",

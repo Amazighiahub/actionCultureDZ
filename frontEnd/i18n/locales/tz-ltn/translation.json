@@ -551,7 +551,11 @@
       "organisationRequiredMessage": "Ilaq ad tesnulfuḍ-d tuddsa di tazwara akken ad d-tessuffɣeḍ tadyant s tilin.",
       "errorEvent": "Tuccḍa deg usnulfu n tedyant",
       "organisationRequiredShort": "Tuddsa tettwasra",
-      "createShort": "Snulfu-d"
+      "createShort": "Snulfu-d",
+      "tags": "Awalen igejdanen",
+      "tagsPlaceholder": "Amedya: afexxar, tamacahut, Bgayet (Entrée i tmerna)",
+      "addTag": "Rnu awal agejdan",
+      "removeTag": "Kkes awal agejdan {{tag}}"
     },
     "types": {
       "concert": "Aḥebbi",
@@ -2993,7 +2997,8 @@
       "copied": "Yettwanɣel!",
       "copyLink": "Nɣel aseɣwen",
       "share": "Bḍu"
-    }
+    },
+    "tags": "Awalen igejdanen"
   },
   "places": {
     "address": "Tansa",

@@ -5,6 +5,7 @@
  */
 
 const BaseService = require('../core/baseService');
+const { resolveTagIds } = require('../../helpers/tags');
 const OeuvreDTO = require('../../dto/oeuvre/oeuvreDTO');
 const CreateOeuvreDTO = require('../../dto/oeuvre/createOeuvreDTO');
 const UpdateOeuvreDTO = require('../../dto/oeuvre/updateOeuvreDTO');
@@ -662,63 +663,7 @@ class OeuvreService extends BaseService {
    * @private
    */
   async _resolveTagIds(tags, transaction) {
-    if (tags == null) return null;
-    if (!Array.isArray(tags) || tags.length === 0 || !this.models?.TagMotCle) return [];
-
-    const resolvedIds = [];
-    const stringTags = [];
-
-    // Séparer IDs numériques et noms de tags
-    for (const tag of tags) {
-      const numericTagId = Number(tag);
-      if (Number.isInteger(numericTagId) && numericTagId > 0) {
-        resolvedIds.push(numericTagId);
-      } else if (typeof tag === 'string' && tag.trim()) {
-        stringTags.push(tag.trim());
-      }
-    }
-
-    if (stringTags.length === 0) return [...new Set(resolvedIds)];
-
-    const { Op } = require('sequelize');
-
-    // Chercher uniquement les tags demandés (pas un full scan)
-    const existing = await this.models.TagMotCle.findAll({
-      where: {
-        [Op.or]: stringTags.map(name => ({
-          nom: { [Op.like]: `%"${name.toLowerCase()}"%` }
-        }))
-      },
-      transaction
-    });
-
-    const existingNames = new Map();
-    for (const t of existing) {
-      const names = Object.values(t.nom || {})
-        .filter(v => typeof v === 'string')
-        .map(v => v.trim().toLowerCase());
-      for (const n of names) existingNames.set(n, t.id_tag);
-    }
-
-    const toCreate = stringTags.filter(n => !existingNames.has(n.toLowerCase()));
-
-    if (toCreate.length > 0) {
-      const created = await this.models.TagMotCle.bulkCreate(
-        toCreate.map(n => ({ nom: { fr: n } })),
-        { ignoreDuplicates: true, transaction, returning: true }
-      );
-      for (const t of created) {
-        const frName = t.nom?.fr?.trim()?.toLowerCase();
-        if (frName) existingNames.set(frName, t.id_tag);
-      }
-    }
-
-    for (const name of stringTags) {
-      const id = existingNames.get(name.toLowerCase());
-      if (id) resolvedIds.push(id);
-    }
-
-    return [...new Set(resolvedIds)];
+    return resolveTagIds(this.models, tags, transaction);
   }
 
   /**

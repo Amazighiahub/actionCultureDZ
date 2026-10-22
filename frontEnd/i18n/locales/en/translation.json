@@ -550,7 +550,11 @@
       "organisationRequiredMessage": "You must first create an organisation to publish an in-person event.",
       "errorEvent": "Error creating the event",
       "organisationRequiredShort": "Organisation required",
-      "createShort": "Create"
+      "createShort": "Create",
+      "tags": "Keywords",
+      "tagsPlaceholder": "E.g. pottery, storytelling, Béjaïa (Enter to add)",
+      "addTag": "Add keyword",
+      "removeTag": "Remove keyword {{tag}}"
     },
     "types": {
       "concert": "Concert",
@@ -2976,7 +2980,8 @@
       "copied": "Copied!",
       "copyLink": "Copy link",
       "share": "Share"
-    }
+    },
+    "tags": "Keywords"
   },
   "places": {
     "address": "Address",
