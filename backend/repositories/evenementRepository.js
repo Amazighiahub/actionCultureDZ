@@ -269,7 +269,8 @@ class EvenementRepository extends BaseRepository {
     if (this.models.Organisation) {
       includes.push({
         model: this.models.Organisation,
-        through: { attributes: [] },
+        // rôle de l'organisation (organisateur principal, partenaire, sponsor…) pour la page publique
+        through: { attributes: ['role'] },
         as: 'Organisations',
         required: false
       });

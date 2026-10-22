@@ -3987,6 +3987,19 @@
       "termine": "Finished",
       "annule": "Cancelled",
       "reporte": "Postponed"
+    },
+    "roles": {
+      "principal": "Speaker",
+      "co_intervenant": "Co-speaker",
+      "moderateur": "Moderator",
+      "invite": "Guest",
+      "animateur": "Facilitator"
+    },
+    "confirmation": {
+      "en_attente": "To be confirmed",
+      "confirme": "Confirmed",
+      "decline": "Declined",
+      "annule": "Cancelled"
     }
   },
   "emailChange": {

@@ -283,9 +283,17 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     if (!event) return [];
 
     const organizers: Organizer[] = [];
+    type OrgWithJunction = Organisation & {
+      logo_url?: string;
+      EvenementOrganisation?: { role?: string };
+    };
+    const orgs = (event.Organisations || []) as OrgWithJunction[];
+    // Une association organisatrice est présentée comme l'organisateur ; le compte qui a
+    // publié l'événement n'est alors pas affiché comme « organisateur principal »
+    const orgPrincipale = orgs.some(o => o.EvenementOrganisation?.role === 'organisateur_principal');
 
     // Organisateur principal (User)
-    if (event.Organisateur) {
+    if (event.Organisateur && !orgPrincipale) {
       organizers.push({
         id: event.Organisateur.id_user,
         type: 'user',
@@ -300,25 +308,22 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       });
     }
 
-    // Organisations partenaires
-    if (event.Organisations) {
-      type OrgWithJunction = Organisation & {
-        logo_url?: string;
-        EvenementOrganisation?: { role?: string };
-      };
-      (event.Organisations as OrgWithJunction[]).forEach((org) => {
-        organizers.push({
-          id: org.id_organisation,
-          type: 'organisation',
-          nom: org.nom,
-          logo_url: org.logo_url,
-          role: org.EvenementOrganisation?.role || 'partenaire',
-          description: org.description,
-          site_web: org.site_web,
-          type_organisation: org.TypeOrganisation?.nom,
-        });
+    // Organisations (organisatrice, partenaires, sponsors)
+    orgs.forEach((org) => {
+      const role = org.EvenementOrganisation?.role || 'partenaire';
+      organizers.push({
+        id: org.id_organisation,
+        type: 'organisation',
+        nom: org.nom,
+        logo_url: org.logo_url,
+        role,
+        description: org.description,
+        site_web: org.site_web,
+        type_organisation: org.TypeOrganisation?.nom,
+        // Contact public de l'événement sur l'organisation organisatrice
+        email: role === 'organisateur_principal' ? (event.contact_email || undefined) : undefined,
       });
-    }
+    });
 
     return organizers;
   };

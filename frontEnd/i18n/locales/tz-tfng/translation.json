@@ -4004,6 +4004,19 @@
       "termine": "ⵢⴻⴽⴼⴰ",
       "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
       "reporte": "ⵢⴻⵜⵜⵡⴰⵙⵎⴻⵏⵏⴻⴷ"
+    },
+    "roles": {
+      "principal": "ⴰⵎⵢⴰⴳⴻⵔ",
+      "co_intervenant": "ⴰⵎⵢⴰⴳⴻⵔ ⴰⵎⴰⴷⴷⵓⴷ",
+      "moderateur": "ⴰⵙⴻⵖⵣⴻⵏ",
+      "invite": "ⵉⵏⴻⴱⴳⵉ",
+      "animateur": "ⴰⵙⴻⴷⵎⴻⵔ"
+    },
+    "confirmation": {
+      "en_attente": "ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+      "confirme": "ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+      "decline": "ⵢⵓⴳⵉ",
+      "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ"
     }
   },
   "emailChange": {

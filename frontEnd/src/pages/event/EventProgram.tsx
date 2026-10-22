@@ -212,7 +212,8 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
                     const pi = user.ProgrammeIntervenant;
                     return (
                       <div
-                        key={user.id_user}
+                        // id_user est vide pour un intervenant sans compte (deux potières → même clé)
+                        key={user.id_intervenant ?? user.id_user}
                         className="flex items-start gap-3 bg-background rounded-lg p-3 border"
                       >
                         <LazyImage
