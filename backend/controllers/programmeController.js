@@ -172,7 +172,7 @@ class ProgrammeController extends BaseController {
   async deleteProgramme(req, res) {
     try {
       const result = await this.programmeService.deleteProgramme(
-        req.params.id, req.user.id_user
+        req.params.id, req.user.id_user, { ip: req.ip, userAgent: req.get?.('User-Agent') }
       );
 
       if (result.error === 'notFound') {

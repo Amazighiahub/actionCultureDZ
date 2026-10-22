@@ -4082,7 +4082,11 @@
       "hasAccount": "This speaker has their own Tala DZ account and manages their own profile.",
       "shared": "This speaker also appears in another organiser’s event: only the administration can edit their profile.",
       "shortBioHint": "You can still fill in the “short biography” of your activity."
-    }
+    },
+    "editActivity": "Edit activity",
+    "deleteActivity": "Delete activity",
+    "confirmDeleteTitle": "Delete “{{titre}}”?",
+    "confirmDeleteDesc": "The activity and its list of speakers will be removed from the programme. This cannot be undone."
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",

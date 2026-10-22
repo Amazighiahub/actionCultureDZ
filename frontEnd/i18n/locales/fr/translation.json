@@ -3942,7 +3942,11 @@
       "hasAccount": "Cet intervenant a son propre compte sur Tala DZ : il gère lui-même son profil.",
       "shared": "Cet intervenant figure aussi dans l’événement d’un autre organisateur : seule l’administration peut modifier sa fiche.",
       "shortBioHint": "Vous pouvez toujours renseigner la « biographie courte » de votre activité."
-    }
+    },
+    "editActivity": "Modifier l’activité",
+    "deleteActivity": "Supprimer l’activité",
+    "confirmDeleteTitle": "Supprimer « {{titre}} » ?",
+    "confirmDeleteDesc": "L’activité et la liste de ses intervenants seront retirées du programme. Cette action est définitive."
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",
