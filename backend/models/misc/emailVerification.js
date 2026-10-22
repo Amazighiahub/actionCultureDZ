@@ -157,15 +157,16 @@ module.exports = (sequelize) => {
     let message = 'Vérification réussie';
 
     if (type === 'email_verification') {
-      // Déterminer le nouveau statut selon le type d'utilisateur
+      // Statut : un visiteur en attente devient actif. Un professionnel garde son statut :
+      // il est déjà « en attente » depuis l'inscription, et s'il a été validé entre-temps par
+      // l'administration, vérifier son e-mail ne doit pas le remettre en attente (ni réactiver
+      // un compte suspendu ou banni).
       const TYPE_USER_IDS = { VISITEUR: 1, PROFESSIONNEL: 2, ADMIN: 3 };
       const isVisiteur = user.id_type_user === TYPE_USER_IDS.VISITEUR;
-      const newStatut = isVisiteur ? 'actif' : 'en_attente_validation';
+      const maj = { email_verifie: true };
+      if (isVisiteur && user.statut === 'en_attente_validation') maj.statut = 'actif';
 
-      await user.update({
-        email_verifie: true,
-        statut: newStatut
-      });
+      await user.update(maj);
       message = 'Email vérifié avec succès';
     } else if (type === 'email_change' && verification.metadata?.newEmail) {
       // Changer l'email
