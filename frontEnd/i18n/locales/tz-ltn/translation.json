@@ -555,7 +555,8 @@
       "tags": "Awalen igejdanen",
       "tagsPlaceholder": "Amedya: afexxar, tamacahut, Bgayet (Entrée i tmerna)",
       "addTag": "Rnu awal agejdan",
-      "removeTag": "Kkes awal agejdan {{tag}}"
+      "removeTag": "Kkes awal agejdan {{tag}}",
+      "saveChanges": "Sekles ibeddilen"
     },
     "types": {
       "concert": "Aḥebbi",

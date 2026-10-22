@@ -749,7 +749,8 @@ const DashboardPro = () => {
                           onClick={() => handleView('evenement', evenement)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {evenement.statut === 'brouillon' && (
+                        {/* Modifiable aussi après publication (pas une fois annulé ou terminé) */}
+                        {evenement.statut !== 'annule' && evenement.statut !== 'termine' && (
                           <Button
                             variant="ghost"
                             size="sm"

@@ -195,7 +195,12 @@ const AjouterEvenement = () => {
           setAffichePreview(evt.image_url);
         }
         if (evt.id_lieu) setSelectedLieuId(evt.id_lieu);
-        if (evt.id_organisation) setSelectedOrganisationId(evt.id_organisation);
+        // Organisation : la fiche envoie la liste Organisations (avec le rôle), pas id_organisation
+        const orgs = (Array.isArray(evt.Organisations) ? evt.Organisations : []) as Array<{ id_organisation: number; EvenementOrganisation?: { role?: string } }>;
+        const orgPrincipale = orgs.find(o => o.EvenementOrganisation?.role === 'organisateur_principal') || orgs[0];
+        const idOrg = (evt.id_organisation as number | undefined) ?? orgPrincipale?.id_organisation;
+        if (idOrg) setSelectedOrganisationId(idOrg);
+        if (typeof evt.statut === 'string') setStatutActuel(evt.statut);
         if (evt.tarif === 0 || !evt.tarif) setGratuit(true);
         if (evt.url_virtuel) setIsVirtual(true);
         // Data loaded for edit mode
@@ -336,6 +341,8 @@ const AjouterEvenement = () => {
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Statut de l'événement modifié : publié → un seul bouton « Enregistrer les modifications »
+  const [statutActuel, setStatutActuel] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const clearFieldError = (field: string) => {
@@ -1064,6 +1071,7 @@ const AjouterEvenement = () => {
             )}
 
             <div className={`flex justify-end gap-4 ${rtlClasses.flexRow}`}>
+              {!(isEditMode && statutActuel && statutActuel !== 'brouillon') && (
               <Button
                 type="button"
                 variant="outline"
@@ -1073,6 +1081,7 @@ const AjouterEvenement = () => {
                 <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {isSubmitting ? t('common.saving', 'Saving...') : t('events.create.saveAsDraft')}
               </Button>
+              )}
               <span
                 title={!isVirtual && !hasOrganisation ? t('events.create.organisationRequiredMessage') : undefined}
               >
@@ -1086,7 +1095,11 @@ const AjouterEvenement = () => {
                     ? <Loader2 className={`h-4 w-4 animate-spin ${rtlClasses.marginEnd(2)}`} />
                     : <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                   }
-                  {isSubmitting ? t('common.publishing', 'Publication...') : t('events.create.publishEvent')}
+                  {isSubmitting
+                    ? t('common.publishing', 'Publication...')
+                    : (isEditMode && statutActuel && statutActuel !== 'brouillon'
+                      ? t('events.create.saveChanges', 'Enregistrer les modifications')
+                      : t('events.create.publishEvent'))}
                 </Button>
               </span>
             </div>
