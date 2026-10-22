@@ -31,7 +31,6 @@ import { API_ENDPOINTS } from '@/config/api';
 
 // Import des types
 import { Wilaya } from '@/types';
-import { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import MotsClesInput from '@/components/shared/MotsClesInput';
@@ -81,7 +80,6 @@ const AjouterEvenement = () => {
     
   // État pour le lieu sélectionné
   const [selectedLieuId, setSelectedLieuId] = useState<number | undefined>();
-  const [selectedLieu, setSelectedLieu] = useState<Lieu | undefined>();
   const [selectedWilayaId, setSelectedWilayaId] = useState<number | undefined>();
   
   // État pour le formulaire multilingue (FR, AR, EN, Tamazight Latin, Tamazight Tifinagh)
@@ -716,7 +714,6 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <RequiredLabel required>{t('events.create.eventName')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
                     label={t('events.create.eventName')}
@@ -731,10 +728,9 @@ const AjouterEvenement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('common.description')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <MultiLangInput
                     name="description"
-                    label={t('common.description')}
+                    label={`${t('common.description')} (${t('common.optional')})`}
                     value={formData.description}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } }))}
                     type="textarea"
@@ -799,20 +795,14 @@ const AjouterEvenement = () => {
                     <React.Suspense fallback={<div className="h-20 bg-muted animate-pulse rounded" />}>
                       <LieuSelector
                         value={selectedLieuId}
-                        onChange={(lieuId, lieu) => {
+                        onChange={(lieuId) => {
                           clearFieldError('lieu');
                           setSelectedLieuId(lieuId);
-                          setSelectedLieu(lieu);
                         }}
                         wilayaId={selectedWilayaId}
                         required
                       />
                     </React.Suspense>
-                    {selectedLieu && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {selectedLieu.adresse}
-                      </p>
-                    )}
                     {fieldErrors.lieu && (
                       <p id="lieu-error" role="alert" className="text-sm text-destructive mt-1">{fieldErrors.lieu}</p>
                     )}

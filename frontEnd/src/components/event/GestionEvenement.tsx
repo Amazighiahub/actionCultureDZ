@@ -46,7 +46,7 @@ import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeFo
 import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
+import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 interface GestionEvenementProps {
@@ -212,8 +212,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         description: data.description,
         type_activite: data.type_activite, // Conforme
         date_programme: data.date_programme, // jour de l'activité (événement sur plusieurs jours)
-        heure_debut: `${data.date_programme}T${data.heure_debut}:00`, // Format ISO pour la base
-        heure_fin: `${data.date_programme}T${data.heure_fin}:00`, // Format ISO pour la base
+        heure_debut: heurePourApi(data.date_programme, data.heure_debut), // Format ISO pour la base
+        heure_fin: heurePourApi(data.date_programme, data.heure_fin), // Format ISO pour la base
         id_lieu: data.id_lieu, // Conforme
         lieu_specifique: data.lieu_specifique?.fr, // Base attend: string?, on prend le français
         nb_participants_max: data.nb_participants_max, // Conforme

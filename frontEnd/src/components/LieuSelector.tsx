@@ -115,6 +115,18 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     };
   }, [showMapPreview, previewLieu]);
 
+  // Lieu déjà choisi (modification d'un événement) : l'afficher au lieu de la liste vide
+  useEffect(() => {
+    if (!value || selectedLieu?.id_lieu === value) return;
+    const dejaCharge = lieux.find(l => l.id_lieu === value);
+    if (dejaCharge) { setSelectedLieu(dejaCharge); return; }
+    let actif = true;
+    lieuService.getById(value)
+      .then(res => { if (actif && res.success && res.data) setSelectedLieu(res.data); })
+      .catch(() => { /* la liste reste affichée */ });
+    return () => { actif = false; };
+  }, [value, lieux]);
+
   // Charger les lieux existants
   useEffect(() => {
     loadLieux();

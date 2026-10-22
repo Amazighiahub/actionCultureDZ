@@ -29,7 +29,7 @@ class ProgrammeRepository extends BaseRepository {
         model: this.models.Intervenant,
         through: {
           model: this.models.ProgrammeIntervenant,
-          attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention']
+          attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention', 'biographie_courte']
         },
         // id_user conservé : utilisé par le formulaire d'édition du programme
         attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url', 'biographie', 'specialites', 'id_user'],

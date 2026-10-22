@@ -31,3 +31,12 @@ export function dureeMinutes(debut?: string | null, fin?: string | null): number
   if (!d || !f) return 0;
   return Math.max(0, enMinutes(f) - enMinutes(d));
 }
+
+/**
+ * Heure envoyée au serveur (« 2026-10-29T10:00:00 »), ou undefined si l'heure n'est pas
+ * renseignée : les heures sont facultatives (« 2026-10-29T:00 » était refusé).
+ */
+export function heurePourApi(jour: string, heure?: string | null): string | undefined {
+  const h = heureProgramme(heure);
+  return jour && h ? `${jour}T${h}:00` : undefined;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { jourProgramme, heureProgramme, dureeMinutes } from '../programmeHoraire';
+import { jourProgramme, heureProgramme, dureeMinutes, heurePourApi } from '../programmeHoraire';
 
 describe('programmeHoraire', () => {
   it('jour : date_programme du serveur, sinon la date d’un horaire ISO', () => {
@@ -21,5 +21,15 @@ describe('programmeHoraire', () => {
     expect(dureeMinutes('13:00:00', '15:30:00')).toBe(150);
     expect(dureeMinutes('2026-10-29T09:00:00', '2026-10-29T10:00:00')).toBe(60);
     expect(dureeMinutes('13:00:00', undefined)).toBe(0);
+  });
+});
+
+describe('heurePourApi', () => {
+  it('heure renseignée → « jourTHH:MM:00 » ; heure absente → rien (heures facultatives)', () => {
+    expect(heurePourApi('2026-11-20', '14:00')).toBe('2026-11-20T14:00:00');
+    expect(heurePourApi('2026-11-20', '14:00:00')).toBe('2026-11-20T14:00:00');
+    expect(heurePourApi('2026-11-20', '')).toBeUndefined();
+    expect(heurePourApi('2026-11-20', undefined)).toBeUndefined();
+    expect(heurePourApi('', '14:00')).toBeUndefined();
   });
 });
