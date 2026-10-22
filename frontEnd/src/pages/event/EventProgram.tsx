@@ -272,7 +272,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{t('programme.level', 'Niveau')}:</span>
                 <Badge variant="outline">
-                  {t(`programme.levels.${niveauRequis}`, niveauRequis)}
+                  {t(`programme.form.levels.${niveauRequis}`, niveauRequis)}
                 </Badge>
               </div>
             )}

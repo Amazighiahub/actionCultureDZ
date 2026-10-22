@@ -598,7 +598,12 @@
     "upcoming": "Upcoming",
     "upcomingLower": "upcoming",
     "pastLower": "past",
-    "resultsHeading": "Events list"
+    "resultsHeading": "Events list",
+    "statuses": {
+      "a_venir": "Upcoming",
+      "en_cours": "Ongoing",
+      "termine": "Finished"
+    }
   },
   "footer": {
     "legal": "Legal",
@@ -789,7 +794,16 @@
       "registration": "Registration",
       "seeAllEvents": "See all events",
       "subtitle": "Participate in events that bring the Algerian cultural scene to life",
-      "title": "Cultural Events"
+      "title": "Cultural Events",
+      "status": {
+        "brouillon": "Draft",
+        "publie": "Published",
+        "planifie": "Scheduled",
+        "en_cours": "Ongoing",
+        "termine": "Finished",
+        "annule": "Cancelled",
+        "reporte": "Postponed"
+      }
     },
     "heritage": {
       "discover": "Discover",
@@ -2401,7 +2415,9 @@
         "commentaire": "Comment",
         "utilisateur": "User",
         "oeuvre": "Work",
-        "evenement": "Event"
+        "evenement": "Event",
+        "user": "User",
+        "artisanat": "Crafts"
       },
       "reasons": {
         "inappropriateContent": "Inappropriate content",
@@ -2409,7 +2425,9 @@
         "harassment": "Harassment",
         "copyright": "Copyright violation",
         "falseInformation": "False information",
-        "other": "Other"
+        "other": "Other",
+        "hateSpeech": "Hate speech",
+        "illegalContent": "Illegal content"
       },
       "noDescription": "No description",
       "reportedBy": "Reported by {{name}}",
@@ -2571,7 +2589,26 @@
       "confirmSuspend": "Suspend this user?",
       "confirmSuspendDesc": "The user will be suspended for 7 days.",
       "confirmBulkDelete": "Delete {{count}} user(s)?",
-      "confirmBulkDeleteDesc": "This action cannot be undone."
+      "confirmBulkDeleteDesc": "This action cannot be undone.",
+      "statuses": {
+        "actif": "Active",
+        "en_attente_validation": "Awaiting validation",
+        "inactif": "Inactive",
+        "suspendu": "Suspended",
+        "banni": "Banned"
+      },
+      "validations": {
+        "en_attente": "Pending",
+        "valide": "Validated",
+        "rejete": "Rejected"
+      },
+      "types": {
+        "visiteur": "Visitor",
+        "artiste": "Artist",
+        "organisateur": "Organiser",
+        "guide": "Guide",
+        "artisan": "Craftsperson"
+      }
     },
     "oeuvres": {
       "title": "Works Management",
@@ -2588,7 +2625,13 @@
         "actions": "Actions"
       },
       "confirmDelete": "Delete this work?",
-      "confirmDeleteDesc": "This action cannot be undone."
+      "confirmDeleteDesc": "This action cannot be undone.",
+      "statuses": {
+        "publie": "Published",
+        "en_attente": "Pending",
+        "brouillon": "Draft",
+        "rejete": "Rejected"
+      }
     },
     "events": {
       "title": "Events Management",
@@ -2603,7 +2646,13 @@
       "cancelEvent": "Cancel event",
       "confirmDelete": "Delete this event?",
       "confirmDeleteDesc": "This action cannot be undone.",
-      "registered": "{{count}} registered"
+      "registered": "{{count}} registered",
+      "statuses": {
+        "publie": "Published",
+        "brouillon": "Draft",
+        "annule": "Cancelled",
+        "termine": "Finished"
+      }
     },
     "services": {
       "title": "Services Management",
@@ -2950,7 +2999,9 @@
       "animateur": "Facilitator",
       "benevole": "Volunteer",
       "staff": "Staff",
-      "participant": "Participant"
+      "participant": "Participant",
+      "media_partner": "Media partner",
+      "soutien": "Supporter"
     },
     "viewOnMap": "View on map",
     "metadata": {
@@ -3296,7 +3347,9 @@
     "closed": "Closed",
     "unknown": "Unknown",
     "present": "Present",
-    "absent": "Absent"
+    "absent": "Absent",
+    "pendingValidation": "Awaiting validation",
+    "banned": "Banned"
   },
   "patrimoine": {
     "filters": {
@@ -3944,7 +3997,8 @@
         "debutant": "Beginner",
         "intermediaire": "Intermediate",
         "avance": "Advanced",
-        "tous_niveaux": "All levels"
+        "tous_niveaux": "All levels",
+        "expert": "Expert"
       },
       "actions": {
         "cancel": "Cancel",
@@ -4264,7 +4318,14 @@
     "all": "All",
     "emptyDescOeuvre": "The gallery is empty for now",
     "gridView": "Grid view",
-    "listView": "List view"
+    "listView": "List view",
+    "types": {
+      "image": "Images",
+      "video": "Videos",
+      "document": "Documents",
+      "diaporama": "Slideshows",
+      "audio": "Audio"
+    }
   },
   "gestionArtisanat": {
     "errors": {

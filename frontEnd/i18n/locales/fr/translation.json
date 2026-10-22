@@ -623,7 +623,12 @@
     "upcoming": "À venir",
     "upcomingLower": "à venir",
     "pastLower": "passés",
-    "resultsHeading": "Liste des événements"
+    "resultsHeading": "Liste des événements",
+    "statuses": {
+      "a_venir": "À venir",
+      "en_cours": "En cours",
+      "termine": "Terminé"
+    }
   },
   "footer": {
     "legal": "Légal",
@@ -814,7 +819,16 @@
       "registration": "Inscription",
       "seeAllEvents": "Voir tous les événements",
       "subtitle": "Participez aux événements qui animent la scène culturelle algérienne",
-      "title": "Événements culturels"
+      "title": "Événements culturels",
+      "status": {
+        "brouillon": "Brouillon",
+        "publie": "Publié",
+        "planifie": "Prévu",
+        "en_cours": "En cours",
+        "termine": "Terminé",
+        "annule": "Annulé",
+        "reporte": "Reporté"
+      }
     },
     "heritage": {
       "discover": "Découvrir",
@@ -2374,7 +2388,26 @@
       "confirmSuspend": "Suspendre cet utilisateur ?",
       "confirmSuspendDesc": "L'utilisateur sera suspendu pendant 7 jours.",
       "confirmBulkDelete": "Supprimer {{count}} utilisateur(s) ?",
-      "confirmBulkDeleteDesc": "Cette action est irréversible."
+      "confirmBulkDeleteDesc": "Cette action est irréversible.",
+      "statuses": {
+        "actif": "Actif",
+        "en_attente_validation": "En attente de validation",
+        "inactif": "Inactif",
+        "suspendu": "Suspendu",
+        "banni": "Banni"
+      },
+      "validations": {
+        "en_attente": "En attente",
+        "valide": "Validé",
+        "rejete": "Refusé"
+      },
+      "types": {
+        "visiteur": "Visiteur",
+        "artiste": "Artiste",
+        "organisateur": "Organisateur",
+        "guide": "Guide",
+        "artisan": "Artisan"
+      }
     },
     "oeuvres": {
       "title": "Gestion des œuvres",
@@ -2391,7 +2424,13 @@
         "actions": "Actions"
       },
       "confirmDelete": "Supprimer cette œuvre ?",
-      "confirmDeleteDesc": "Cette action est irréversible."
+      "confirmDeleteDesc": "Cette action est irréversible.",
+      "statuses": {
+        "publie": "Publiée",
+        "en_attente": "En attente",
+        "brouillon": "Brouillon",
+        "rejete": "Refusée"
+      }
     },
     "events": {
       "title": "Gestion des événements",
@@ -2406,7 +2445,13 @@
       "cancelEvent": "Annuler l'événement",
       "confirmDelete": "Supprimer cet événement ?",
       "confirmDeleteDesc": "Cette action est irréversible.",
-      "registered": "{{count}} inscrit(s)"
+      "registered": "{{count}} inscrit(s)",
+      "statuses": {
+        "publie": "Publié",
+        "brouillon": "Brouillon",
+        "annule": "Annulé",
+        "termine": "Terminé"
+      }
     },
     "services": {
       "title": "Gestion des services",
@@ -2515,7 +2560,9 @@
         "commentaire": "Commentaire",
         "utilisateur": "Utilisateur",
         "oeuvre": "Œuvre",
-        "evenement": "Événement"
+        "evenement": "Événement",
+        "user": "Utilisateur",
+        "artisanat": "Artisanat"
       },
       "reasons": {
         "inappropriateContent": "Contenu inapproprié",
@@ -2523,7 +2570,9 @@
         "harassment": "Harcèlement",
         "copyright": "Violation des droits d'auteur",
         "falseInformation": "Fausse information",
-        "other": "Autre"
+        "other": "Autre",
+        "hateSpeech": "Incitation à la haine",
+        "illegalContent": "Contenu illégal"
       },
       "noDescription": "Aucune description",
       "reportedBy": "Signalé par {{name}}",
@@ -2955,7 +3004,9 @@
       "animateur": "Animateur",
       "benevole": "Bénévole",
       "staff": "Staff",
-      "participant": "Participant"
+      "participant": "Participant",
+      "media_partner": "Partenaire média",
+      "soutien": "Soutien"
     },
     "viewOnMap": "Voir sur la carte",
     "metadata": {
@@ -3301,7 +3352,9 @@
     "closed": "Fermé",
     "unknown": "Inconnu",
     "present": "Présent",
-    "absent": "Absent"
+    "absent": "Absent",
+    "pendingValidation": "En attente de validation",
+    "banned": "Banni"
   },
   "patrimoine": {
     "filters": {
@@ -3804,7 +3857,8 @@
         "debutant": "Débutant",
         "intermediaire": "Intermédiaire",
         "avance": "Avancé",
-        "tous_niveaux": "Tous niveaux"
+        "tous_niveaux": "Tous niveaux",
+        "expert": "Expert"
       },
       "actions": {
         "cancel": "Annuler",
@@ -4264,7 +4318,14 @@
     "all": "Tous",
     "emptyDescOeuvre": "La galerie est vide pour le moment",
     "gridView": "Vue en grille",
-    "listView": "Vue en liste"
+    "listView": "Vue en liste",
+    "types": {
+      "image": "Images",
+      "video": "Vidéos",
+      "document": "Documents",
+      "diaporama": "Diaporamas",
+      "audio": "Audio"
+    }
   },
   "gestionArtisanat": {
     "errors": {

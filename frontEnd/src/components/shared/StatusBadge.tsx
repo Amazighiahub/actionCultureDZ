@@ -158,6 +158,19 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         icon: <AlertTriangle className="h-3 w-3" />,
         className: 'bg-orange-100 text-orange-800 border-orange-200'
       },
+      // Statuts de compte (user.statut) : en_attente_validation, banni
+      en_attente_validation: {
+        label: t('status.pendingValidation', 'En attente de validation'),
+        variant: 'outline',
+        icon: <Clock className="h-3 w-3" />,
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      },
+      banni: {
+        label: t('status.banned', 'Banni'),
+        variant: 'destructive',
+        icon: <XCircle className="h-3 w-3" />,
+        className: ''
+      },
       complet: {
         label: t('status.full', 'Complet'),
         variant: 'outline',

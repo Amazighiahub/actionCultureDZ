@@ -330,7 +330,7 @@ const ViewProgrammePage: React.FC = () => {
                         )}
                         {pi?.statut_confirmation && (
                           <Badge variant={pi.statut_confirmation === 'confirme' ? 'default' : 'outline'}>
-                            {t(`programme.form.participants.status.${pi.statut_confirmation}`, pi.statut_confirmation)}
+                            {t(`programme.confirmation.${pi.statut_confirmation}`, pi.statut_confirmation)}
                           </Badge>
                         )}
                       </div>
