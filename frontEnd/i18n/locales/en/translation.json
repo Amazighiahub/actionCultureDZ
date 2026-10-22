@@ -4068,6 +4068,20 @@
       "confirme": "Confirmed",
       "decline": "Declined",
       "annule": "Cancelled"
+    },
+    "speakerCard": {
+      "title": "Speaker profile",
+      "description": "Introduction shown on the event page.",
+      "edit": "Speaker profile (photo, biography…)",
+      "photo": "Change photo",
+      "jobTitle": "Title or occupation",
+      "jobTitlePlaceholder": "E.g. potter, painter",
+      "organisation": "Organisation",
+      "website": "Website",
+      "biography": "Biography",
+      "hasAccount": "This speaker has their own Tala DZ account and manages their own profile.",
+      "shared": "This speaker also appears in another organiser’s event: only the administration can edit their profile.",
+      "shortBioHint": "You can still fill in the “short biography” of your activity."
     }
   },
   "emailChange": {

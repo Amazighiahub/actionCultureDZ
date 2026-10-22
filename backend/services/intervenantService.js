@@ -39,6 +39,34 @@ class IntervenantService extends BaseService {
     return { intervenant, stats };
   }
 
+  /**
+   * Droit de modifier la fiche d'un intervenant.
+   * Administration : toujours. Professionnel : seulement un intervenant qu'il a ajouté, c.-à-d.
+   * présent uniquement dans des activités de ses propres événements, et sans compte sur le site
+   * (une personne inscrite gère elle-même son profil ; un intervenant partagé avec un autre
+   * organisateur reste du ressort de l'administration).
+   * @returns {Promise<{ intervenant: Object|null, peutModifier: boolean, raison: string|null }>}
+   */
+  async droitsEdition(id, user) {
+    const intervenant = await this.models.Intervenant.findByPk(id);
+    if (!intervenant) return { intervenant: null, peutModifier: false, raison: null };
+    if (user?.isAdmin) return { intervenant, peutModifier: true, raison: null };
+    if (intervenant.id_user) return { intervenant, peutModifier: false, raison: 'compte' };
+
+    const liens = await this.models.ProgrammeIntervenant.findAll({
+      where: { id_intervenant: id }, attributes: ['id_programme'], raw: true
+    });
+    if (!liens.length) return { intervenant, peutModifier: false, raison: 'autre_organisateur' };
+    const programmes = await this.models.Programme.findAll({
+      where: { id_programme: liens.map(l => l.id_programme) }, attributes: ['id_evenement'], raw: true
+    });
+    const evenements = await this.models.Evenement.findAll({
+      where: { id_evenement: [...new Set(programmes.map(p => p.id_evenement))] }, attributes: ['id_user'], raw: true
+    });
+    const tousLesSiens = evenements.length > 0 && evenements.every(e => Number(e.id_user) === Number(user?.id_user));
+    return { intervenant, peutModifier: tousLesSiens, raison: tousLesSiens ? null : 'autre_organisateur' };
+  }
+
   async getOeuvresByIntervenant(intervenantId, { page = 1, limit = 20 }) {
     const intervenant = await this.models.Intervenant.findByPk(intervenantId);
     if (!intervenant) return null;
@@ -239,7 +267,7 @@ class IntervenantService extends BaseService {
       }
 
       // Whitelist
-      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune'];
+      const allowedFields = ['email', 'telephone', 'specialite', 'titre_professionnel', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune'];
       const updates = {};
       allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 

@@ -3928,6 +3928,20 @@
       "confirme": "Confirmé",
       "decline": "Décliné",
       "annule": "Annulé"
+    },
+    "speakerCard": {
+      "title": "Fiche de l’intervenant",
+      "description": "Présentation affichée sur la page de l’événement.",
+      "edit": "Fiche de l’intervenant (photo, biographie…)",
+      "photo": "Changer la photo",
+      "jobTitle": "Titre ou métier",
+      "jobTitlePlaceholder": "Ex. : potière, artiste peintre",
+      "organisation": "Organisme",
+      "website": "Site web",
+      "biography": "Biographie",
+      "hasAccount": "Cet intervenant a son propre compte sur Tala DZ : il gère lui-même son profil.",
+      "shared": "Cet intervenant figure aussi dans l’événement d’un autre organisateur : seule l’administration peut modifier sa fiche.",
+      "shortBioHint": "Vous pouvez toujours renseigner la « biographie courte » de votre activité."
     }
   },
   "emailChange": {

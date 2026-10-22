@@ -9,6 +9,9 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translate, translateDeep } = require('../helpers/i18n');
 
+// Champs de la fiche qu'un professionnel peut modifier (pas l'e-mail, le téléphone ni le compte lié)
+const CHAMPS_MODIFIABLES_PRO = ['prenom', 'nom', 'biographie', 'titre_professionnel', 'organisation', 'site_web', 'photo_url'];
+
 class IntervenantController extends BaseController {
   get intervenantService() {
     return container.intervenantService;
@@ -158,10 +161,53 @@ class IntervenantController extends BaseController {
     }
   }
 
+  /**
+   * Fiche d'un intervenant à modifier (toutes les langues) et droit de la modifier
+   */
+  async getIntervenantEdition(req, res) {
+    try {
+      const { intervenant, peutModifier, raison } = await this.intervenantService.droitsEdition(req.params.id, req.user);
+      if (!intervenant) {
+        return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });
+      }
+      const i = intervenant.toJSON();
+      res.json({
+        success: true,
+        data: {
+          id_intervenant: i.id_intervenant,
+          prenom: i.prenom, nom: i.nom, biographie: i.biographie,
+          titre_professionnel: i.titre_professionnel, organisation: i.organisation,
+          site_web: i.site_web, photo_url: i.photo_url,
+          peut_modifier: peutModifier, raison
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async updateIntervenant(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const updated = await this.intervenantService.updateIntervenant(req.params.id, lang, req.body);
+      let donnees = req.body;
+      // Un professionnel ne modifie que les intervenants qu'il a ajoutés, et seulement leur présentation
+      if (!req.user.isAdmin) {
+        const { intervenant, peutModifier } = await this.intervenantService.droitsEdition(req.params.id, req.user);
+        if (!intervenant) {
+          return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });
+        }
+        if (!peutModifier) {
+          return res.status(403).json({
+            success: false,
+            error: req.t('intervenant.editForbidden', 'Seule l’administration peut modifier la fiche de cet intervenant.')
+          });
+        }
+        donnees = {};
+        for (const champ of CHAMPS_MODIFIABLES_PRO) {
+          if (req.body[champ] !== undefined) donnees[champ] = req.body[champ];
+        }
+      }
+      const updated = await this.intervenantService.updateIntervenant(req.params.id, lang, donnees);
 
       if (!updated) {
         return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });

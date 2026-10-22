@@ -207,10 +207,18 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.createIntervenant(req, res)
   );
 
-  // Mettre à jour un intervenant
+  // Fiche à modifier + droit de la modifier (professionnel : intervenants qu'il a ajoutés)
+  router.get('/:id/edition',
+    authMiddleware.authenticate,
+    requireAdminOrProfessional,
+    validationMiddleware.validateId('id'),
+    (req, res) => intervenantController.getIntervenantEdition(req, res)
+  );
+
+  // Mettre à jour un intervenant (administration, ou professionnel pour ses intervenants : vérifié par le contrôleur)
   router.put('/:id',
     authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
+    requireAdminOrProfessional,
     validationMiddleware.validateId('id'),
     [
       body('nom').optional().custom((value) => {
@@ -230,7 +238,10 @@ const initIntervenantRoutes = (models, authMiddleware) => {
       }),
       body('email').optional().trim().isEmail(),
       body('telephone').optional().trim().matches(/^[0-9+\-\s()]+$/),
-      body('site_web').optional().trim().isURL(),
+      body('site_web').optional({ values: 'falsy' }).trim().isURL(),
+      body('photo_url').optional({ values: 'falsy' }).trim().isURL(),
+      body('titre_professionnel').optional({ values: 'null' }).isString().isLength({ max: 255 }),
+      body('organisation').optional({ values: 'null' }).isString().isLength({ max: 255 }),
       body('wilaya_id').optional().isInt({ min: 1 }),
       body('disponible').optional().isBoolean()
     ],
