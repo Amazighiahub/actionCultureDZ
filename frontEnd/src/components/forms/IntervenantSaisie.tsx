@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { UserCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { UserCheck, PencilLine } from 'lucide-react';
+import FicheIntervenantDialog from './FicheIntervenantDialog';
 import { httpClient } from '@/services/httpClient';
 import type { IntervenantData } from '@/services/programme.service';
 
@@ -25,6 +27,7 @@ const IntervenantSaisie: React.FC<Props> = ({ index, valeur, onChange, disabled 
   const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [ouvert, setOuvert] = useState(false);
+  const [ficheOuverte, setFicheOuverte] = useState(false);
   const minuterie = useRef<ReturnType<typeof setTimeout>>();
 
   // Recherche des fiches existantes à partir de 2 caractères (nom ou prénom)
@@ -86,11 +89,25 @@ const IntervenantSaisie: React.FC<Props> = ({ index, valeur, onChange, disabled 
       </div>
 
       {valeur.id_intervenant && (
-        <Badge variant="secondary" className="gap-1 font-normal">
-          <UserCheck className="h-3 w-3" aria-hidden="true" />
-          {t('programme.form.participants.existingSpeaker', 'Intervenant déjà connu sur Tala DZ')}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="gap-1 font-normal">
+            <UserCheck className="h-3 w-3" aria-hidden="true" />
+            {t('programme.form.participants.existingSpeaker', 'Intervenant déjà connu sur Tala DZ')}
+          </Badge>
+          {!disabled && (
+            <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={() => setFicheOuverte(true)}>
+              <PencilLine className="h-3.5 w-3.5 me-1" aria-hidden="true" />
+              {t('programme.speakerCard.edit', 'Fiche de l’intervenant (photo, biographie…)')}
+            </Button>
+          )}
+        </div>
       )}
+
+      <FicheIntervenantDialog
+        idIntervenant={ficheOuverte && valeur.id_intervenant ? valeur.id_intervenant : null}
+        onClose={() => setFicheOuverte(false)}
+        onSaved={({ prenom, nom }) => onChange({ prenom, nom })}
+      />
 
       {ouvert && suggestions.length > 0 && !valeur.id_intervenant && (
         <div role="listbox" aria-label={t('programme.form.participants.suggestions', 'Intervenants existants')} className="rounded-md border bg-background divide-y">

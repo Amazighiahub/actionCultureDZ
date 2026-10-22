@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Calendar, Clock, Users, MapPin, AlertCircle, RefreshCw } from 'lucide-react';
+import { heurePourApi } from '@/utils/programmeHoraire';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
 import { evenementService } from '@/services/evenement.service';
@@ -78,8 +79,8 @@ const CreateProgrammePage: React.FC = () => {
         titre: data.titre,
         description: data.description,
         type_activite: data.type_activite,
-        heure_debut: `${data.date_programme}T${data.heure_debut}:00`,
-        heure_fin: `${data.date_programme}T${data.heure_fin}:00`,
+        heure_debut: heurePourApi(data.date_programme, data.heure_debut),
+        heure_fin: heurePourApi(data.date_programme, data.heure_fin),
         id_lieu: data.id_lieu,
         lieu_specifique: data.lieu_specifique,
         nb_participants_max: data.nb_participants_max,

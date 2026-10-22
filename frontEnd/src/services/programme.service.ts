@@ -80,8 +80,8 @@ interface CreateProgrammeData {
   titre: string | Partial<Record<string, string>>;
   description?: string | Partial<Record<string, string>>;
   type_activite: string;
-  heure_debut: string;
-  heure_fin: string;
+  heure_debut?: string; // facultative
+  heure_fin?: string;
   id_lieu?: number;
   lieu_specifique?: string;
   nb_participants_max?: number;

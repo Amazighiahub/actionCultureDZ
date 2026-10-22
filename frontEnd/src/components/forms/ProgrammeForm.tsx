@@ -147,7 +147,7 @@ const generateDateRange = (startDate: string, endDate: string): string[] => {
   const start = new Date(startDate);
   const end = new Date(endDate);
   
-  for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+  for (let date = new Date(start); date <= end; date.setUTCDate(date.getUTCDate() + 1)) {
     dates.push(date.toISOString().split('T')[0]);
   }
   return dates;
@@ -164,6 +164,14 @@ const rolesIntervenantKeys = ['principal', 'co_intervenant', 'moderateur', 'anim
 
 // Constants to avoid creating new array references on every render
 const EMPTY_LIEUX_ARRAY: any[] = [];
+
+// Onglet où se trouve chaque champ validé
+const ONGLET_DU_CHAMP: Record<string, string> = {
+  description: 'basic',
+  date_programme: 'schedule',
+  heure_fin: 'schedule',
+  intervenants: 'participants'
+};
 
 const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   eventId,
@@ -214,6 +222,15 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
   const [newMateriel, setNewMateriel] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [onglet, setOnglet] = useState('basic');
+
+  // Événement d'un seul jour : la date de l'activité est forcément celle-là
+  const dateUnique = availableDates.length === 1 ? availableDates[0] : '';
+  useEffect(() => {
+    if (dateUnique && mode === 'create') {
+      setFormData(prev => (prev.date_programme ? prev : { ...prev, date_programme: dateUnique }));
+    }
+  }, [dateUnique, mode]);
 
   // Initialiser avec les données existantes, une seule fois par programme édité : le parent
   // recrée l'objet à chaque rendu, ce qui écrasait la saisie en cours
@@ -333,6 +350,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     setErrors(newErrors);
     const hasErrors = Object.keys(newErrors).length > 0;
     if (hasErrors) {
+      // L'erreur peut se trouver dans un autre onglet que celui affiché : on l'ouvre
+      const premier = Object.keys(newErrors)[0];
+      setOnglet(ONGLET_DU_CHAMP[premier] || 'basic');
       setTimeout(() => {
         const firstError = document.querySelector('[aria-invalid="true"]');
         if (firstError) {
@@ -381,8 +401,20 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         </div>
       )}
 
+      {Object.values(errors).some(Boolean) && (
+        <div role="alert" className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div className="text-sm text-destructive">
+            <p className="font-medium">{t('programme.form.errors.summary', 'Le formulaire n’est pas complet :')}</p>
+            <ul className="list-disc ps-5">
+              {Object.values(errors).filter(Boolean).map(m => <li key={m}>{m}</li>)}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Onglets */}
-      <Tabs defaultValue="basic" className="w-full">
+      <Tabs value={onglet} onValueChange={setOnglet} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic">{t('programme.form.tabs.basic')}</TabsTrigger>
           <TabsTrigger value="schedule">{t('programme.form.tabs.schedule')}</TabsTrigger>

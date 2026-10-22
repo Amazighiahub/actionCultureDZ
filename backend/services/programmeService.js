@@ -462,7 +462,7 @@ class ProgrammeService extends BaseService {
     }
     const memes = await this.models.Intervenant.findAll({
       where: this.sequelize.where(
-        this.sequelize.fn('LOWER', this.sequelize.fn('JSON_UNQUOTE', this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'))),
+        this.sequelize.fn('LOWER', this.sequelize.fn('JSON_UNQUOTE', this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal("'$.fr'")))),
         nom.toLowerCase()
       ),
       transaction

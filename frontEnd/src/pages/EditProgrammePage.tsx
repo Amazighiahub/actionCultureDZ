@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
-import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
+import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { useTranslation } from 'react-i18next';
@@ -138,8 +138,8 @@ const EditProgrammePage: React.FC = () => {
         description: data.description,
         type_activite: data.type_activite,
         date_programme: data.date_programme,
-        heure_debut: `${data.date_programme}T${data.heure_debut}:00`,
-        heure_fin: `${data.date_programme}T${data.heure_fin}:00`,
+        heure_debut: heurePourApi(data.date_programme, data.heure_debut),
+        heure_fin: heurePourApi(data.date_programme, data.heure_fin),
         id_lieu: data.id_lieu,
         lieu_specifique: data.lieu_specifique,
         nb_participants_max: data.nb_participants_max,

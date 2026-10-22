@@ -24,7 +24,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
@@ -41,6 +41,10 @@ import type { GroupedFavoris } from '@/services/favori.service';
 
 const DashboardUser = () => {
   const { user } = useAuth();
+  const { isProfessional } = usePermissions();
+  // Onglet dans l'adresse : il reste ouvert quand la page se recharge (ex. après « Enregistrer » du profil)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const onglet = searchParams.get('onglet') || 'favoris';
   const { t } = useTranslation();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
@@ -160,7 +164,7 @@ const DashboardUser = () => {
               <h1 className="text-4xl font-bold tracking-tight font-serif">{t("dashboarduser.mon_espace_personnel")}
 
               </h1>
-              <p className="text-lg text-muted-foreground mt-1">{t("dashboarduser.bienvenue")}
+              <p className="text-lg text-muted-foreground mt-1">{t("dashboarduser.bienvenue")}{' '}
                 {user?.prenom}{t("dashboarduser.grez_votre_profil")}
               </p>
             </div>
@@ -177,7 +181,8 @@ const DashboardUser = () => {
             {t("dashboarduser.actualiser", "Actualiser")}
           </Button>
 
-          {/* Message d'information pour les visiteurs */}
+          {/* Message d'information pour les visiteurs (pas pour un compte professionnel) */}
+          {!isProfessional && (
           <Alert className="border-blue-200 bg-blue-50/50">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertTitle className="text-blue-800">{t("dashboarduser.compte_visiteur")}</AlertTitle>
@@ -189,6 +194,7 @@ const DashboardUser = () => {
               </Link>.
             </AlertDescription>
           </Alert>
+          )}
         </div>
 
         {/* Statistiques rapides */}
@@ -248,7 +254,7 @@ const DashboardUser = () => {
         </div>
 
         {/* Contenu principal avec onglets */}
-        <Tabs defaultValue="favoris" className="space-y-6">
+        <Tabs value={onglet} onValueChange={(v) => setSearchParams({ onglet: v }, { replace: true })} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 w-full sm:grid sm:grid-cols-3">
             <TabsTrigger value="favoris" className="flex items-center gap-2">
               <Heart className="h-4 w-4" />

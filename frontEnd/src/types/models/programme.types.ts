@@ -20,6 +20,9 @@ export interface ProgrammeIntervenantData {
 export interface ProgrammeIntervenant extends User {
   /** Fiche intervenant (table Intervenant) : présente même sans compte sur le site */
   id_intervenant?: number;
+  /** Titre ou métier et organisme, tirés de la fiche */
+  titre_professionnel?: string | null;
+  organisation?: string | null;
   ProgrammeIntervenant?: ProgrammeIntervenantData;
 }
 

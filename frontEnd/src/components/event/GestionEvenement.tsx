@@ -5,6 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lieuService } from '@/services/lieu.service';
+import { evenementService } from '@/services/evenement.service';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +46,7 @@ import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeFo
 import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
+import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 interface GestionEvenementProps {
@@ -78,12 +80,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   evenementNom,
   onClose,
   hideOeuvres = false,
-  eventDates
+  eventDates: eventDatesProp
 }) => {
   const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
-  const { formatTime: hookFormatTime } = useFormatDate();
+  const { formatTime: hookFormatTime, formatDate } = useFormatDate();
 
   // État pour activer/désactiver la gestion des œuvres
   const [showOeuvresSection, setShowOeuvresSection] = useState(!hideOeuvres);
@@ -96,6 +98,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
 
   // Données dynamiques pour le formulaire programme
   const [lieux, setLieux] = useState<any[]>([]);
+  // Jours de l'événement proposés pour une activité ; sans eux, aucune activité ne peut être créée
+  const [eventDatesChargees, setEventDatesChargees] = useState<{ dateDebut: string; dateFin: string }>();
+  const eventDates = eventDatesProp || eventDatesChargees;
 
   // États pour les œuvres
   const [oeuvresData, setOeuvresData] = useState<MesOeuvresResponse | null>(null);
@@ -125,6 +130,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   useEffect(() => {
     loadProgrammes();
     loadLieuxAndUsers();
+    if (!eventDatesProp) loadEventDates();
     if (showOeuvresSection) {
       loadOeuvres();
     }
@@ -141,6 +147,20 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       }
     } catch (e) {
       console.error('Erreur chargement lieux/users:', e);
+    }
+  };
+
+  const loadEventDates = async () => {
+    try {
+      const res = await evenementService.getDetail(evenementId);
+      if (res.success && res.data) {
+        // Jours à l'heure de l'Algérie (la date UTC peut être la veille)
+        const dateDebut = partiesEvenement(res.data.date_debut as string).date;
+        const dateFin = partiesEvenement(res.data.date_fin as string).date || dateDebut;
+        if (dateDebut) setEventDatesChargees({ dateDebut, dateFin });
+      }
+    } catch (e) {
+      console.error('Erreur chargement dates de l’événement:', e);
     }
   };
 
@@ -192,8 +212,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         description: data.description,
         type_activite: data.type_activite, // Conforme
         date_programme: data.date_programme, // jour de l'activité (événement sur plusieurs jours)
-        heure_debut: `${data.date_programme}T${data.heure_debut}:00`, // Format ISO pour la base
-        heure_fin: `${data.date_programme}T${data.heure_fin}:00`, // Format ISO pour la base
+        heure_debut: heurePourApi(data.date_programme, data.heure_debut), // Format ISO pour la base
+        heure_fin: heurePourApi(data.date_programme, data.heure_fin), // Format ISO pour la base
         id_lieu: data.id_lieu, // Conforme
         lieu_specifique: data.lieu_specifique?.fr, // Base attend: string?, on prend le français
         nb_participants_max: data.nb_participants_max, // Conforme
@@ -451,7 +471,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold">{td(programme.titre)}</h4>
-                          <Badge variant="outline">{programme.type_activite}</Badge>
+                          <Badge variant="outline">{t(`programme.form.types.${programme.type_activite}`, programme.type_activite)}</Badge>
                           <Badge
                             variant={
                               programme.statut === 'planifie' ? 'default' :
@@ -459,7 +479,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                               'outline'
                             }
                           >
-                            {programme.statut}
+                            {t(`programme.status.${programme.statut}`, programme.statut)}
                           </Badge>
                         </div>
                         {programme.description && (
@@ -471,6 +491,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                           {programme.heure_debut && (
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
+                              {/* Jour de l'activité (événement sur plusieurs jours) */}
+                              {jourProgramme(programme) && <span className="capitalize">{formatDate(jourProgramme(programme), { weekday: 'short', day: 'numeric', month: 'short' })} ·</span>}
                               {formatTime(programme.heure_debut)}
                               {programme.heure_fin && ` - ${formatTime(programme.heure_fin)}`}
                             </span>

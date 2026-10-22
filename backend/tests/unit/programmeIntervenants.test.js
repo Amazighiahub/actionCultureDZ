@@ -12,7 +12,8 @@ const makeService = ({ existants = [], programme } = {}) => {
   const transaction = { commit: jest.fn(), rollback: jest.fn() };
   const sequelize = {
     transaction: jest.fn().mockResolvedValue(transaction),
-    where: jest.fn((a, b) => ({ a, b })), fn: jest.fn((...x) => x), col: jest.fn(c => c)
+    where: jest.fn((a, b) => ({ a, b })), fn: jest.fn((...x) => x), col: jest.fn(c => c),
+    literal: jest.fn(s => ({ literal: s }))
   };
   const models = {
     Evenement: { findByPk: jest.fn().mockResolvedValue({ id_evenement: 5, id_user: 7, statut: 'publie' }) },
@@ -53,6 +54,9 @@ describe('ProgrammeService — intervenants', () => {
     await service.createProgramme(5, 7, 'fr', { titre: { fr: 'Atelier' }, description: { fr: 'x' }, intervenants: [{ prenom: 'noureddine', nom: 'Hammouche', role_intervenant: 'animateur' }] });
     expect(models.Intervenant.create).not.toHaveBeenCalled();
     expect(models.ProgrammeIntervenant.create).toHaveBeenCalledWith(expect.objectContaining({ id_intervenant: 13, role_intervenant: 'animateur' }), expect.anything());
+    // Le chemin JSON doit être écrit tel quel dans la requête : passé en paramètre, MySQL le refuse (« Invalid JSON path »)
+    const appel = models.Intervenant.findAll.mock.calls[0][0].where.a;
+    expect(JSON.stringify(appel)).toContain('{"literal":"\'$.fr\'"}');
   });
 
   it('nouvel intervenant sans compte : fiche créée avec son nom', async () => {

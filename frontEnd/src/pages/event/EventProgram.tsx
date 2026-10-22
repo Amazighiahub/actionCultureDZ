@@ -242,15 +242,21 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
                               </Badge>
                             )}
                           </div>
+                          {(user.titre_professionnel || user.organisation) && (
+                            <p className="text-xs text-muted-foreground">
+                              {[user.titre_professionnel, user.organisation].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
                           {pi?.sujet_intervention && (
                             <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
                               <Mic className="h-3.5 w-3.5 flex-shrink-0" />
                               {pi.sujet_intervention}
                             </p>
                           )}
-                          {pi?.biographie_courte && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {pi.biographie_courte}
+                          {/* Biographie de l'activité, sinon celle de la fiche de l'intervenant */}
+                          {(pi?.biographie_courte || td(user.biographie)) && (
+                            <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                              {pi?.biographie_courte || td(user.biographie)}
                             </p>
                           )}
                           {pi?.duree_intervention && (
