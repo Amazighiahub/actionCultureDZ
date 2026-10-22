@@ -52,6 +52,8 @@ export interface Evenement {
   Participants?: User[];
   Oeuvres?: Oeuvre[];
   Organisations?: Organisation[];
+  /** Mots-clés (table tagmotcle, partagée avec les œuvres) */
+  Tags?: Array<{ id_tag: number; nom: Record<string, string> | string }>;
 }
 
 // Interface pour les champs virtuels d'un événement

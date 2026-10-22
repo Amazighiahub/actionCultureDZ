@@ -219,6 +219,9 @@ const loadModels = (sequelize) => {
   const evenementOrganisationModel = loadModelSafely('./associations/evenementOrganisation', 'EvenementOrganisation', sequelize);
   if (evenementOrganisationModel) models.EvenementOrganisation = evenementOrganisationModel;
 
+  const evenementTagModel = loadModelSafely('./associations/evenementTag', 'EvenementTag', sequelize);
+  if (evenementTagModel) models.EvenementTag = evenementTagModel;
+
   const programmeIntervenantModel = loadModelSafely('./associations/programmeIntervenant', 'ProgrammeIntervenant', sequelize);
   if (programmeIntervenantModel) models.ProgrammeIntervenant = programmeIntervenantModel;
 

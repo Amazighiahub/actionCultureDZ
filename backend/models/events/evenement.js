@@ -282,6 +282,15 @@ module.exports = (sequelize) => {
       as: 'Medias',
       onDelete: 'CASCADE'
     });
+
+    if (models.EvenementTag && models.TagMotCle) {
+      Evenement.belongsToMany(models.TagMotCle, {
+        through: models.EvenementTag,
+        foreignKey: 'id_evenement',
+        otherKey: 'id_tag',
+        as: 'Tags'
+      });
+    }
   };
   
   // ⚡ NOUVELLES MÉTHODES I18N

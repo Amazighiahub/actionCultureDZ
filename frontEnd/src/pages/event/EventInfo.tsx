@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   MapPin, Clock, Calendar, Users, Ticket, Phone, Mail,
   Globe, Accessibility, Baby, Award, CheckCircle, AlertCircle,
-  Navigation, ExternalLink
+  Navigation, ExternalLink, Tag
 } from 'lucide-react';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -65,6 +65,19 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
                 {td(event.description)}
               </p>
             </div>
+            {/* Mots-clés */}
+            {(event.Tags?.length ?? 0) > 0 && (
+              <ul className="flex flex-wrap gap-2 mt-4" aria-label={t('event.tags', 'Mots-clés')}>
+                {event.Tags!.map(tag => (
+                  <li key={tag.id_tag}>
+                    <Badge variant="secondary" className="font-normal">
+                      <Tag className="h-3 w-3 me-1" aria-hidden="true" />
+                      {td(tag.nom)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       )}

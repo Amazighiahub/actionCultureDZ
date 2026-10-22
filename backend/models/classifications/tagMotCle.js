@@ -26,6 +26,13 @@ module.exports = (sequelize) => {
       through: models.OeuvreTag, 
       foreignKey: 'id_tag' 
     });
+    if (models.EvenementTag) {
+      TagMotCle.belongsToMany(models.Evenement, {
+        through: models.EvenementTag,
+        foreignKey: 'id_tag',
+        otherKey: 'id_evenement'
+      });
+    }
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N

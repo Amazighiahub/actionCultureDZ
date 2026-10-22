@@ -575,7 +575,11 @@
       "virtualUrlPlaceholder": "https://zoom.us/j/... ou https://meet.google.com/...",
       "virtualUrlHint": "Lien Zoom, Google Meet, YouTube Live, etc.",
       "availableAfterCreation": "Disponible après la création de l'événement",
-      "organisationRequiredMessage": "Vous devez d'abord créer une organisation pour publier un événement en présentiel."
+      "organisationRequiredMessage": "Vous devez d'abord créer une organisation pour publier un événement en présentiel.",
+      "tags": "Mots-clés",
+      "tagsPlaceholder": "Ex. poterie, conte, Béjaïa (Entrée pour ajouter)",
+      "addTag": "Ajouter le mot-clé",
+      "removeTag": "Retirer le mot-clé {{tag}}"
     },
     "types": {
       "concert": "Concert",
@@ -2981,7 +2985,8 @@
       "copied": "Copié !",
       "copyLink": "Copier le lien",
       "share": "Partager"
-    }
+    },
+    "tags": "Mots-clés"
   },
   "places": {
     "address": "Adresse",

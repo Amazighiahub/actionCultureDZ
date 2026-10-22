@@ -4,6 +4,7 @@
  */
 
 const BaseService = require('../core/baseService');
+const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
@@ -211,6 +212,7 @@ class EvenementService extends BaseService {
           role: 'organisateur_principal'
         }, { transaction });
       }
+      await this._syncTags(created.id_evenement, data.tags, transaction);
       return created;
     });
 
@@ -225,6 +227,21 @@ class EvenementService extends BaseService {
   /**
    * Modifier un événement
    */
+  /**
+   * Mots-clés de l'événement (même table que ceux des œuvres). Champ absent : rien ne change ;
+   * liste (ou texte JSON du formulaire) : remplace les mots-clés de l'événement.
+   */
+  async _syncTags(idEvenement, valeur, transaction) {
+    const { EvenementTag } = this.models || {};
+    const tags = lireTags(valeur);
+    if (tags === null || !EvenementTag) return;
+    const ids = await resolveTagIds(this.models, tags, transaction);
+    await EvenementTag.destroy({ where: { id_evenement: idEvenement }, transaction });
+    if (ids.length) {
+      await EvenementTag.bulkCreate(ids.map(id_tag => ({ id_evenement: idEvenement, id_tag })), { transaction, ignoreDuplicates: true });
+    }
+  }
+
   /**
    * Jour (« 2026-10-29 ») + heure (« 10:00 ») → instant à l'heure de l'Algérie (UTC+1,
    * sans heure d'été). Une date déjà complète, ou sans heure, est gardée telle quelle.
@@ -298,6 +315,7 @@ class EvenementService extends BaseService {
       }
 
       await this.repository.update(id, updateData, { transaction });
+      await this._syncTags(id, data.tags, transaction);
 
       if (newOrgId && this.models?.EvenementOrganisation) {
         await this._assertOrganisationMember(newOrgId, userId, options.isAdmin, transaction);
