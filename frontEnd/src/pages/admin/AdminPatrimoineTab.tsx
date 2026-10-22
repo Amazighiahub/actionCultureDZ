@@ -226,6 +226,7 @@ const AdminPatrimoineTab: React.FC = () => {
               <Card key={item.id_patrimoine || item.id_lieu || item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-40">
                   <LazyImage
+                    containerClassName="h-full"
                     src={imageUrl ? getAssetUrl(imageUrl) : '/images/placeholder-patrimoine.svg'}
                     alt={nom}
                     className="w-full h-full object-cover"
