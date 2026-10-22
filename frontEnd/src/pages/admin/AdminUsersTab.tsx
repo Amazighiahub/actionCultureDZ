@@ -44,6 +44,14 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 // Types de filtres
 const STATUS_OPTIONS = ['tous', 'actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni'];
 const VALIDATION_OPTIONS = ['tous', 'en_attente', 'valide', 'rejete'];
+
+// La colonne statut_validation n'existe plus (fusionnée dans statut, migration 20260312) :
+// l'état de validation se déduit du statut du compte
+const etatValidation = (user: { statut?: string; statut_validation?: string }): string =>
+  user.statut_validation
+  || (user.statut === 'en_attente_validation' ? 'en_attente'
+    : user.statut === 'actif' ? 'valide'
+    : user.statut === 'rejete' ? 'rejete' : (user.statut || ''));
 const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'artisan'];
 
 // Contrôle d'accès séparé du contenu : un return avant les hooks du contenu faisait
@@ -168,7 +176,7 @@ const AdminUsersTabContent: React.FC = () => {
       }
 
       // Filtre de validation
-      if (validationFilter !== 'tous' && user.statut_validation !== validationFilter) {
+      if (validationFilter !== 'tous' && etatValidation(user) !== validationFilter) {
         return false;
       }
 
@@ -397,7 +405,7 @@ const AdminUsersTabContent: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {user.statut_validation === 'en_attente' && (
+                    {etatValidation(user) === 'en_attente' && (
                       <>
                         <Button
                           size="sm"
