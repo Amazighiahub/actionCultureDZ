@@ -18,6 +18,8 @@ export interface ProgrammeIntervenantData {
 
 /** Un User en tant qu'intervenant dans un programme */
 export interface ProgrammeIntervenant extends User {
+  /** Fiche intervenant (table Intervenant) : présente même sans compte sur le site */
+  id_intervenant?: number;
   ProgrammeIntervenant?: ProgrammeIntervenantData;
 }
 

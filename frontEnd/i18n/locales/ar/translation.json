@@ -4089,6 +4089,19 @@
       "termine": "انتهى",
       "annule": "أُلغي",
       "reporte": "مؤجَّل"
+    },
+    "roles": {
+      "principal": "مداخلة",
+      "co_intervenant": "مداخلة مشتركة",
+      "moderateur": "إدارة النقاش",
+      "invite": "ضيف",
+      "animateur": "تنشيط"
+    },
+    "confirmation": {
+      "en_attente": "في انتظار التأكيد",
+      "confirme": "مؤكَّد",
+      "decline": "معتذر",
+      "annule": "ملغى"
     }
   },
   "emailChange": {

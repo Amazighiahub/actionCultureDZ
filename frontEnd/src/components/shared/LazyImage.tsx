@@ -131,6 +131,9 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       ref={imgRef}
       className={cn(
         'relative overflow-hidden',
+        // Image qui remplit sa zone (h-full) : le conteneur la remplit aussi, sinon l'image
+        // garde sa hauteur naturelle et déborde (affiche d'événement sur les onglets)
+        /(^|\s)h-full(\s|$)/.test(className) && 'h-full',
         aspectRatioClasses[aspectRatio],
         containerClassName
       )}

@@ -4004,6 +4004,19 @@
       "termine": "Yekfa",
       "annule": "Yettwasefsex",
       "reporte": "Yettwasmenned"
+    },
+    "roles": {
+      "principal": "Amyager",
+      "co_intervenant": "Amyager amaddud",
+      "moderateur": "Aseɣzen",
+      "invite": "Inebgi",
+      "animateur": "Asedmer"
+    },
+    "confirmation": {
+      "en_attente": "Ad yettwasentem",
+      "confirme": "Yettwasentem",
+      "decline": "Yugi",
+      "annule": "Yettwasefsex"
     }
   },
   "emailChange": {

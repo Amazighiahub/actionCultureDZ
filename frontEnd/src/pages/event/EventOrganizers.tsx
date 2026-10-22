@@ -145,8 +145,9 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
 
           {/* Infos */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
+            {/* flex-wrap : le badge passe à la ligne au lieu d'écraser le nom dans la colonne latérale */}
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
                 <h4 className="font-semibold">
                   {organizer.type === 'user' ? (
                     // Organisateur : son nom mène à son portfolio public
