@@ -628,6 +628,10 @@
       "a_venir": "À venir",
       "en_cours": "En cours",
       "termine": "Terminé"
+    },
+    "edit": {
+      "title": "Modifier l’événement",
+      "subtitle": "Les modifications sont visibles dès l’enregistrement."
     }
   },
   "footer": {
@@ -3877,7 +3881,9 @@
         "endTimeRequired": "L'heure de fin est requise",
         "endTimeAfterStart": "L'heure de fin doit être après l'heure de début",
         "descriptionRequired": "La description est requise (au moins en français ou arabe)",
-        "intervenantUserRequired": "Chaque intervenant doit avoir un utilisateur sélectionné"
+        "intervenantUserRequired": "Chaque intervenant doit avoir un utilisateur sélectionné",
+        "summary": "Le formulaire n’est pas complet :",
+        "intervenantNameRequired": "Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)"
       }
     },
     "loadError": "Erreur lors du chargement des programmes",

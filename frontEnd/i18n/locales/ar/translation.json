@@ -608,6 +608,10 @@
       "a_venir": "قادم",
       "en_cours": "جارٍ",
       "termine": "انتهى"
+    },
+    "edit": {
+      "title": "تعديل الفعالية",
+      "subtitle": "تظهر التعديلات فور الحفظ."
     }
   },
   "footer": {
@@ -4119,7 +4123,9 @@
         "endTimeRequired": "وقت النهاية مطلوب",
         "endTimeAfterStart": "وقت النهاية يجب أن يكون بعد وقت البداية",
         "descriptionRequired": "الوصف مطلوب (بالفرنسية أو العربية على الأقل)",
-        "intervenantUserRequired": "يجب اختيار مستخدم لكل متدخل"
+        "intervenantUserRequired": "يجب اختيار مستخدم لكل متدخل",
+        "summary": "النموذج غير مكتمل:",
+        "intervenantNameRequired": "أدخل اسم كل متدخل (أو احذف السطر الفارغ)"
       }
     },
     "loadError": "خطأ أثناء تحميل البرامج",

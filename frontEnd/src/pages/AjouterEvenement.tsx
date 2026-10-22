@@ -558,8 +558,8 @@ const AjouterEvenement = () => {
           <FormPageHeader
             backTo="/dashboard-pro"
             backLabel={t('common.backToDashboard')}
-            title={t('events.create.title')}
-            subtitle={t('events.create.subtitle')}
+            title={isEditMode ? t('events.edit.title', 'Modifier l’événement') : t('events.create.title')}
+            subtitle={isEditMode ? t('events.edit.subtitle', 'Les modifications sont visibles dès l’enregistrement.') : t('events.create.subtitle')}
           />
 
           <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)}>
@@ -666,7 +666,7 @@ const AjouterEvenement = () => {
                       <div className="flex gap-2">
                         <Select
                           value={selectedOrganisationId?.toString() ?? ''}
-                          onValueChange={(value) => { clearFieldError('organisation'); setSelectedOrganisationId(parseInt(value)); }}
+                          onValueChange={(value) => { if (!value) return; clearFieldError('organisation'); setSelectedOrganisationId(parseInt(value)); }}
                         >
                           <SelectTrigger className="flex-1" aria-invalid={!!fieldErrors.organisation} aria-describedby={fieldErrors.organisation ? 'organisation-error' : undefined}>
                             <SelectValue placeholder={t('events.create.selectOrganisationPlaceholder', 'Choisir une organisation')} />
@@ -749,7 +749,11 @@ const AjouterEvenement = () => {
                     <RequiredLabel htmlFor="type" required>{t('events.create.eventType')}</RequiredLabel>
                     <Select
                       value={formData.idTypeEvenement}
-                      onValueChange={(value) => { clearFieldError('type'); setFormData(prev => ({ ...prev, idTypeEvenement: value })); }}
+                      onValueChange={(value) => {
+                        // Radix renvoie '' quand les choix arrivent après la valeur (modification) : on l'ignore
+                        if (!value) return;
+                        clearFieldError('type'); setFormData(prev => ({ ...prev, idTypeEvenement: value }));
+                      }}
                       required
                     >
                       <SelectTrigger id="type" aria-required="true" aria-invalid={!!fieldErrors.type} aria-describedby={fieldErrors.type ? 'type-error' : undefined}>
@@ -771,7 +775,7 @@ const AjouterEvenement = () => {
                       <Label htmlFor="wilaya">{t('common.wilaya')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Select 
                         value={selectedWilayaId?.toString() ?? ''}
-                        onValueChange={(value) => setSelectedWilayaId(parseInt(value))}
+                        onValueChange={(value) => { if (value) setSelectedWilayaId(parseInt(value)); }}
                       >
                         <SelectTrigger id="wilaya">
                           <SelectValue placeholder={t('common.selectWilaya')} />

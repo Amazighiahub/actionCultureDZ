@@ -8,7 +8,7 @@ const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
-const { mergeTranslations } = require('../../helpers/i18n');
+const { mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {
@@ -144,7 +144,9 @@ class EvenementService extends BaseService {
     }
 
     // Vérifier les doublons (même nom + même date + même lieu)
-    const nomEvent = data.nom_evenement || data.nom;
+    // Formulaire multipart : nom et description arrivent en texte JSON
+    data = { ...data, nom_evenement: lireMultiLang(data.nom_evenement || data.nom), description: lireMultiLang(data.description) };
+    const nomEvent = data.nom_evenement;
     const nomFr = typeof nomEvent === 'object' ? nomEvent.fr : nomEvent;
     if (nomFr && data.date_debut) {
       const { Sequelize, Op } = require('sequelize');

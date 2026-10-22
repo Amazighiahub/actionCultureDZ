@@ -134,12 +134,29 @@ const createMultiLang = (value, lang = DEFAULT_LANGUAGE, existingTranslations = 
 };
 
 /**
+ * Champ multilingue reçu d'un formulaire multipart (FormData) : l'objet { fr, ar, … } y arrive
+ * en texte JSON. Le relit en objet ; un texte simple est rendu tel quel.
+ * @param {string|Object} value
+ * @returns {string|Object}
+ */
+const lireMultiLang = (value) => {
+  if (typeof value !== 'string' || !value.trim().startsWith('{')) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : value;
+  } catch {
+    return value;
+  }
+};
+
+/**
  * Fusionne les traductions existantes avec de nouvelles
  * @param {Object} existing - Traductions existantes
  * @param {Object} updates - Nouvelles traductions
  * @returns {Object} - Traductions fusionnées
  */
 const mergeTranslations = (existing, updates) => {
+  updates = lireMultiLang(updates);
   if (!existing && !updates) return {};
   if (!existing) return updates;
   if (!updates) return existing;
@@ -315,6 +332,7 @@ module.exports = {
   translate,
   translateDeep,
   createMultiLang,
+  lireMultiLang,
   mergeTranslations,
   prepareMultiLangField,
   buildMultiLangSearch,

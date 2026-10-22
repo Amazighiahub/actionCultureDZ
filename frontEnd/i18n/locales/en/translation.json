@@ -603,6 +603,10 @@
       "a_venir": "Upcoming",
       "en_cours": "Ongoing",
       "termine": "Finished"
+    },
+    "edit": {
+      "title": "Edit event",
+      "subtitle": "Changes are visible as soon as you save."
     }
   },
   "footer": {
@@ -4017,7 +4021,9 @@
         "endTimeRequired": "End time is required",
         "endTimeAfterStart": "End time must be after start time",
         "descriptionRequired": "Description is required (at least in French or Arabic)",
-        "intervenantUserRequired": "Each contributor must have a selected user"
+        "intervenantUserRequired": "Each contributor must have a selected user",
+        "summary": "The form is incomplete:",
+        "intervenantNameRequired": "Enter the name of each speaker (or remove the empty row)"
       }
     },
     "loadError": "Error loading programmes",
