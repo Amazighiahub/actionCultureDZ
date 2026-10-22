@@ -224,13 +224,13 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [onglet, setOnglet] = useState('basic');
 
-  // Événement d'un seul jour : la date de l'activité est forcément celle-là
-  const dateUnique = availableDates.length === 1 ? availableDates[0] : '';
+  // Nouvelle activité : premier jour de l'événement proposé (modifiable dans « Horaires »)
+  const premierJour = availableDates[0] || '';
   useEffect(() => {
-    if (dateUnique && mode === 'create') {
-      setFormData(prev => (prev.date_programme ? prev : { ...prev, date_programme: dateUnique }));
+    if (premierJour && mode === 'create') {
+      setFormData(prev => (prev.date_programme ? prev : { ...prev, date_programme: premierJour }));
     }
-  }, [dateUnique, mode]);
+  }, [premierJour, mode]);
 
   // Initialiser avec les données existantes, une seule fois par programme édité : le parent
   // recrée l'objet à chaque rendu, ce qui écrasait la saisie en cours
@@ -527,11 +527,12 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Date - Menu déroulant avec dates de l'événement */}
+              {/* Date - Menu déroulant avec dates de l'événement. Les listes ignorent la valeur vide
+                  qu'elles renvoient en se rechargeant (sinon la date choisie était effacée) */}
               <FormField label={t('programme.form.schedule.activityDate')} required={true} error={errors.date_programme}>
                 <Select
                   value={formData.date_programme}
-                  onValueChange={(value) => handleChange('date_programme', value)}
+                  onValueChange={(value) => value && handleChange('date_programme', value)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
@@ -559,7 +560,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 <FormField label={t('programme.form.schedule.startTime')} error={errors.heure_debut}>
                   <Select
                     value={formData.heure_debut}
-                    onValueChange={(value) => handleChange('heure_debut', value)}
+                    onValueChange={(value) => value && handleChange('heure_debut', value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
@@ -578,7 +579,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 <FormField label={t('programme.form.schedule.endTime')} error={errors.heure_fin}>
                   <Select
                     value={formData.heure_fin}
-                    onValueChange={(value) => handleChange('heure_fin', value)}
+                    onValueChange={(value) => value && handleChange('heure_fin', value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
