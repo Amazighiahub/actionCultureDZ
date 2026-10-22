@@ -40,6 +40,7 @@ import {
   Loader2
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
+import { ConfirmDialog } from '@/components/shared';
 import { useToast } from '@/components/ui/use-toast';
 import { programmeService, type Programme } from '@/services/programme.service';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
@@ -95,6 +96,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [loadingProgrammes, setLoadingProgrammes] = useState(true);
   const [showProgrammeDialog, setShowProgrammeDialog] = useState(false);
   const [editingProgramme, setEditingProgramme] = useState<Programme | null>(null);
+  // Activité dont la suppression attend confirmation (le titre est rappelé : la corbeille est à côté du crayon)
+  const [programmeASupprimer, setProgrammeASupprimer] = useState<Programme | null>(null);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 
   // Données dynamiques pour le formulaire programme
   const [lieux, setLieux] = useState<any[]>([]);
@@ -250,18 +254,23 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     }
   };
 
-  const handleDeleteProgramme = async (programmeId: number) => {
-    if (window.confirm(t('programme.confirmDelete', 'Êtes-vous sûr de vouloir supprimer ce programme ?'))) {
-      try {
-        const response = await programmeService.delete(programmeId);
-        if (response.success) {
-          toast({ title: t('common.success'), description: t('programme.deleted', 'Programme supprimé') });
-          loadProgrammes();
-        }
-      } catch (error) {
-        console.error('Erreur suppression programme:', error);
-        toast({ title: t('common.error'), description: t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
+  const handleDeleteProgramme = async () => {
+    if (!programmeASupprimer) return;
+    setSuppressionEnCours(true);
+    try {
+      const response = await programmeService.delete(programmeASupprimer.id_programme);
+      if (response.success) {
+        toast({ title: t('common.success'), description: t('programme.deleted', 'Programme supprimé') });
+        loadProgrammes();
+      } else {
+        toast({ title: t('common.error'), description: response.error || t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
       }
+    } catch (error) {
+      console.error('Erreur suppression programme:', error);
+      toast({ title: t('common.error'), description: t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
+    } finally {
+      setSuppressionEnCours(false);
+      setProgrammeASupprimer(null);
     }
   };
 
@@ -506,14 +515,22 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditProgramme(programme)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditProgramme(programme)}
+                          aria-label={t('programme.editActivity', 'Modifier l’activité')}
+                          title={t('programme.editActivity', 'Modifier l’activité')}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-destructive"
-                          onClick={() => handleDeleteProgramme(programme.id_programme)}
+                          onClick={() => setProgrammeASupprimer(programme)}
+                          aria-label={t('programme.deleteActivity', 'Supprimer l’activité')}
+                          title={t('programme.deleteActivity', 'Supprimer l’activité')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -725,6 +742,18 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
           </div>
         )}
       </Tabs>
+
+      <ConfirmDialog
+        open={programmeASupprimer !== null}
+        onOpenChange={(open) => { if (!open && !suppressionEnCours) setProgrammeASupprimer(null); }}
+        title={t('programme.confirmDeleteTitle', 'Supprimer « {{titre}} » ?', { titre: programmeASupprimer ? td(programmeASupprimer.titre) : '' })}
+        description={t('programme.confirmDeleteDesc', 'L’activité et la liste de ses intervenants seront retirées du programme. Cette action est définitive.')}
+        confirmLabel={t('programme.deleteActivity', 'Supprimer l’activité')}
+        cancelLabel={t('common.cancel', 'Annuler')}
+        variant="destructive"
+        loading={suppressionEnCours}
+        onConfirm={handleDeleteProgramme}
+      />
     </div>
   );
 };

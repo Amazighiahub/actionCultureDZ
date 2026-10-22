@@ -157,11 +157,19 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async deleteProgramme(id, userId) {
+  /**
+   * Supprimer une activité (organisateur de l'événement). La suppression est inscrite au journal
+   * d'actions avec le titre, l'événement, l'horaire et les intervenants : l'activité n'existe plus ensuite.
+   * @param {Object} [contexte] - { ip, userAgent } de la requête
+   */
+  async deleteProgramme(id, userId, contexte = {}) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement, as: 'Evenement' }]
+        include: [
+          { model: this.models.Evenement, as: 'Evenement' },
+          { model: this.models.Intervenant, as: 'Intervenants', attributes: ['prenom', 'nom'], through: { attributes: [] }, required: false }
+        ]
       });
 
       if (!programme) {
@@ -178,6 +186,27 @@ class ProgrammeService extends BaseService {
         where: { id_programme: id }, transaction
       });
       await programme.destroy({ transaction });
+
+      if (this.models.AuditLog) {
+        const fr = (v) => (v && typeof v === 'object' ? v.fr || Object.values(v).find(Boolean) || '' : v || '');
+        await this.models.AuditLog.create({
+          id_admin: userId,
+          action: 'delete_programme',
+          entity_type: 'programme',
+          entity_id: Number(id),
+          details: {
+            titre: fr(programme.titre),
+            id_evenement: programme.id_evenement,
+            evenement: fr(programme.Evenement.nom_evenement),
+            date_programme: programme.date_programme,
+            heure_debut: programme.heure_debut,
+            heure_fin: programme.heure_fin,
+            intervenants: (programme.Intervenants || []).map(i => `${fr(i.prenom)} ${fr(i.nom)}`.trim())
+          },
+          ip_address: contexte.ip || null,
+          user_agent: contexte.userAgent ? String(contexte.userAgent).slice(0, 500) : null
+        }, { transaction });
+      }
 
       await transaction.commit();
       return { success: true };
