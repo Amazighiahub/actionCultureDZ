@@ -41,7 +41,8 @@ import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
 // Helper pour extraire le texte multilingue
 
 // Types de filtres
-const TYPE_OPTIONS = ['tous', 'monument', 'vestige', 'musee', 'site_naturel', 'ville_village', 'autre'];
+// Valeurs de typePatrimoine (« vestige » n'en est pas une : c'est « site_archeologique »)
+const TYPE_OPTIONS = ['tous', 'monument', 'site_archeologique', 'musee', 'edifice_religieux', 'palais_forteresse', 'site_naturel', 'ville_village', 'autre'];
 
 const AdminPatrimoineTab: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -173,7 +174,7 @@ const AdminPatrimoineTab: React.FC = () => {
               onChange={setTypeFilter}
               options={TYPE_OPTIONS}
               placeholder={t('common.type', 'Type')}
-              translationPrefix="admin.patrimoine.types"
+              translationPrefix="patrimoine.types"
               allLabel={t('common.allTypes', 'Tous les types')}
             />
 
@@ -248,7 +249,7 @@ const AdminPatrimoineTab: React.FC = () => {
                     <h4 className="font-semibold truncate">{nom || t('common.noName', 'Sans nom')}</h4>
                     <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
                       {wilaya && <><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{wilaya}</span></>}
-                      {type && <><span>·</span><span>{t(`admin.patrimoine.types.${type}`, type)}</span></>}
+                      {type && <><span>·</span><span>{t(`patrimoine.types.${type}`, type)}</span></>}
                     </div>
                   </div>
 

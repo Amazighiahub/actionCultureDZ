@@ -35,6 +35,7 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { heureEvenement } from '@/utils/dateHeureEvenement';
 
 // Helper pour extraire le texte multilingue
 
@@ -187,7 +188,9 @@ const AdminEvenementsTab: React.FC = () => {
           {filteredEvents.map((event: any) => {
             const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang, t('common.unnamed', 'Sans nom'));
             const description = getLocalizedText(event.description, currentLang, t('common.noDescription', 'Pas de description'));
-            const lieu = getLocalizedText(event.lieu?.nom || event.lieu_nom, currentLang, '');
+            // L'API renvoie le lieu sous « Lieu » ; l'heure est dans date_debut (heure d'Algérie)
+            const lieu = getLocalizedText(event.Lieu?.nom || event.lieu?.nom || event.lieu_nom, currentLang, '');
+            const heure = heureEvenement(event.date_debut);
 
             return (
               <Card key={event.id_evenement} className="relative hover:shadow-md transition-shadow overflow-hidden cursor-pointer">
@@ -244,10 +247,10 @@ const AdminEvenementsTab: React.FC = () => {
                             {t('admin.events.registered', '{{count}} inscrit(s)', { count: Number(event.nombre_inscrits) || 0 })}
                           </span>
                         )}
-                        {event.heure_debut && (
+                        {heure && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {event.heure_debut}
+                            {heure}
                           </span>
                         )}
                       </div>

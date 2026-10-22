@@ -22,16 +22,19 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
+// Valeurs du motif de signalement (ENUM signalement.motif)
 const RAISONS_SIGNALEMENT_CONFIG: Record<string, string> = {
   contenu_inapproprie: 'admin.moderation.reasons.inappropriateContent',
   spam: 'admin.moderation.reasons.spam',
   harcelement: 'admin.moderation.reasons.harassment',
-  droits_auteur: 'admin.moderation.reasons.copyright',
-  fausse_information: 'admin.moderation.reasons.falseInformation',
+  violation_droits: 'admin.moderation.reasons.copyright',
+  faux_contenu: 'admin.moderation.reasons.falseInformation',
+  incitation_haine: 'admin.moderation.reasons.hateSpeech',
+  contenu_illegal: 'admin.moderation.reasons.illegalContent',
   autre: 'admin.moderation.reasons.other'
 };
 
-const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'user'];
+const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'artisanat', 'user'];
 
 const AdminModerationTab: React.FC = () => {
   const { t } = useTranslation();

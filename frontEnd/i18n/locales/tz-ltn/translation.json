@@ -599,7 +599,12 @@
     "upcoming": "Ad d-yas",
     "upcomingLower": "ad d-asent",
     "pastLower": "iɛeddan",
-    "resultsHeading": "Tabdart n tedyanin"
+    "resultsHeading": "Tabdart n tedyanin",
+    "statuses": {
+      "a_venir": "Ad d-yas",
+      "en_cours": "Itteddu",
+      "termine": "Yekfa"
+    }
   },
   "footer": {
     "legal": "Azref",
@@ -793,7 +798,16 @@
       "registration": "Ajerred",
       "seeAllEvents": "Wali akk tidyanin",
       "subtitle": "Ttekki deg tdyanin i yesseḥlayen tasna tadelsant n Lezzayer",
-      "title": "Tidyanin tidelsanin"
+      "title": "Tidyanin tidelsanin",
+      "status": {
+        "brouillon": "Arewway",
+        "publie": "Yettwasuffeɣ",
+        "planifie": "Yettwaheyyaq",
+        "en_cours": "Itteddu",
+        "termine": "Yekfa",
+        "annule": "Yettwasefsex",
+        "reporte": "Yettwasmenned"
+      }
     },
     "heritage": {
       "discover": "Af-d",
@@ -2588,7 +2602,11 @@
       "confirmSuspend": "Ad tḥebseḍ aseqdac-a?",
       "confirmSuspendDesc": "Aseqdac ad yettwaḥbes i 7 n wussan.",
       "confirmBulkDelete": "Ad tekkseḍ {{count}} n useqdac (iseqdacen)?",
-      "confirmBulkDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir."
+      "confirmBulkDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir.",
+      "types": {
+        "visiteur": "Inebgi",
+        "guide": "Amnir"
+      }
     },
     "oeuvres": {
       "title": "Asefrek n lewwayen",
@@ -2605,7 +2623,10 @@
         "actions": "Tigawin"
       },
       "confirmDelete": "Ad tekkseḍ axeddim-a?",
-      "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir."
+      "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir.",
+      "statuses": {
+        "brouillon": "Arewway"
+      }
     },
     "events": {
       "title": "Asefrek n tedyanin",
@@ -2620,7 +2641,13 @@
       "cancelEvent": "Sefsex tadyant",
       "confirmDelete": "Ad tekkseḍ tadyant-a?",
       "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir.",
-      "registered": "{{count}} yettwajerden"
+      "registered": "{{count}} yettwajerden",
+      "statuses": {
+        "publie": "Yettwasuffeɣ",
+        "brouillon": "Arewway",
+        "annule": "Yettwasefsex",
+        "termine": "Yekfa"
+      }
     },
     "services": {
       "title": "Asefrek n tenefliwin",
@@ -4259,7 +4286,11 @@
     "all": "Akk",
     "emptyDescOeuvre": "Tamidelt d tilemt akka tura",
     "gridView": "Askan s uẓeṭṭa",
-    "listView": "Askan s tebdart"
+    "listView": "Askan s tebdart",
+    "types": {
+      "image": "Tugniwin",
+      "video": "Tividyutin"
+    }
   },
   "gestionArtisanat": {
     "errors": {

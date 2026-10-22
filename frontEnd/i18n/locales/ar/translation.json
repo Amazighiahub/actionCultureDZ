@@ -603,7 +603,12 @@
     "upcoming": "قادمة",
     "upcomingLower": "قادمة",
     "pastLower": "سابقة",
-    "resultsHeading": "قائمة الفعاليات"
+    "resultsHeading": "قائمة الفعاليات",
+    "statuses": {
+      "a_venir": "قادم",
+      "en_cours": "جارٍ",
+      "termine": "انتهى"
+    }
   },
   "footer": {
     "legal": "قانوني",
@@ -813,7 +818,16 @@
       "registration": "التسجيل",
       "seeAllEvents": "عرض جميع الفعاليات",
       "subtitle": "شارك في الفعاليات التي تحيي الساحة الثقافية الجزائرية",
-      "title": "الفعاليات الثقافية"
+      "title": "الفعاليات الثقافية",
+      "status": {
+        "brouillon": "مسودة",
+        "publie": "منشور",
+        "planifie": "مبرمج",
+        "en_cours": "جارٍ",
+        "termine": "انتهى",
+        "annule": "ملغى",
+        "reporte": "مؤجَّل"
+      }
     },
     "unregister": {
       "error": "خطأ أثناء إلغاء التسجيل"
@@ -1098,7 +1112,9 @@
         "commentaire": "تعليق",
         "utilisateur": "مستخدم",
         "oeuvre": "عمل",
-        "evenement": "حدث"
+        "evenement": "حدث",
+        "user": "مستخدم",
+        "artisanat": "صناعة تقليدية"
       },
       "reasons": {
         "inappropriateContent": "محتوى غير لائق",
@@ -1106,7 +1122,9 @@
         "harassment": "مضايقة",
         "copyright": "انتهاك حقوق الطبع والنشر",
         "falseInformation": "معلومات كاذبة",
-        "other": "أخرى"
+        "other": "أخرى",
+        "hateSpeech": "تحريض على الكراهية",
+        "illegalContent": "محتوى غير قانوني"
       },
       "noDescription": "لا يوجد وصف",
       "reportedBy": "أبلغ عنه {{name}}",
@@ -1268,7 +1286,26 @@
       "confirmSuspend": "تعليق هذا المستخدم؟",
       "confirmSuspendDesc": "سيتم تعليق المستخدم لمدة 7 أيام.",
       "confirmBulkDelete": "حذف {{count}} مستخدم(ين)؟",
-      "confirmBulkDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
+      "confirmBulkDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه.",
+      "statuses": {
+        "actif": "نشط",
+        "en_attente_validation": "في انتظار المصادقة",
+        "inactif": "غير نشط",
+        "suspendu": "موقوف",
+        "banni": "محظور"
+      },
+      "validations": {
+        "en_attente": "قيد الانتظار",
+        "valide": "مصادق عليه",
+        "rejete": "مرفوض"
+      },
+      "types": {
+        "visiteur": "زائر",
+        "artiste": "فنان",
+        "organisateur": "منظم",
+        "guide": "مرشد",
+        "artisan": "حرفي"
+      }
     },
     "oeuvres": {
       "title": "إدارة الأعمال",
@@ -1285,7 +1322,13 @@
         "actions": "الإجراءات"
       },
       "confirmDelete": "حذف هذا العمل؟",
-      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
+      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه.",
+      "statuses": {
+        "publie": "منشورة",
+        "en_attente": "قيد الانتظار",
+        "brouillon": "مسودة",
+        "rejete": "مرفوضة"
+      }
     },
     "events": {
       "title": "إدارة الفعاليات",
@@ -1300,7 +1343,13 @@
       "cancelEvent": "إلغاء الفعالية",
       "confirmDelete": "حذف هذه الفعالية؟",
       "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه.",
-      "registered": "{{count}} مسجَّل"
+      "registered": "{{count}} مسجَّل",
+      "statuses": {
+        "publie": "منشور",
+        "brouillon": "مسودة",
+        "annule": "ملغى",
+        "termine": "انتهى"
+      }
     },
     "services": {
       "title": "إدارة الخدمات",
@@ -3052,7 +3101,9 @@
       "animateur": "منشط",
       "benevole": "متطوع",
       "staff": "فريق العمل",
-      "participant": "مشارك"
+      "participant": "مشارك",
+      "media_partner": "شريك إعلامي",
+      "soutien": "داعم"
     },
     "viewOnMap": "عرض على الخريطة",
     "metadata": {
@@ -3398,7 +3449,9 @@
     "closed": "مغلق",
     "unknown": "غير معروف",
     "present": "حاضر",
-    "absent": "غائب"
+    "absent": "غائب",
+    "pendingValidation": "في انتظار المصادقة",
+    "banned": "محظور"
   },
   "patrimoine": {
     "filters": {
@@ -4046,7 +4099,8 @@
         "debutant": "مبتدئ",
         "intermediaire": "متوسط",
         "avance": "متقدم",
-        "tous_niveaux": "جميع المستويات"
+        "tous_niveaux": "جميع المستويات",
+        "expert": "خبير"
       },
       "actions": {
         "cancel": "إلغاء",
@@ -4366,7 +4420,14 @@
     "all": "الكل",
     "emptyDescOeuvre": "المعرض فارغ حالياً",
     "gridView": "عرض شبكي",
-    "listView": "عرض قائمة"
+    "listView": "عرض قائمة",
+    "types": {
+      "image": "صور",
+      "video": "فيديوهات",
+      "document": "وثائق",
+      "diaporama": "عروض صور",
+      "audio": "تسجيلات صوتية"
+    }
   },
   "gestionArtisanat": {
     "errors": {

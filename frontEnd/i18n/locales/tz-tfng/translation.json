@@ -599,7 +599,12 @@
     "upcoming": "ⴰⴷ ⴷ-ⵢⴰⵙ",
     "upcomingLower": "ⴰⴷ ⴷ-ⴰⵙⴻⵏⵜ",
     "pastLower": "ⵉⵄⴻⴷⴷⴰⵏ",
-    "resultsHeading": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ"
+    "resultsHeading": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ",
+    "statuses": {
+      "a_venir": "ⴰⴷ ⴷ-ⵢⴰⵙ",
+      "en_cours": "ⵉⵜⵜⴻⴷⴷⵓ",
+      "termine": "ⵢⴻⴽⴼⴰ"
+    }
   },
   "footer": {
     "legal": "ⴰⵙⵔⴼⴰⵏ",
@@ -793,7 +798,16 @@
       "registration": "ⴰⵊⵊⵔⴷ",
       "seeAllEvents": "ⵥⵕ ⴰⴽⴽ ⵜⵉⴷⵢⴰⵏⵉⵏ",
       "subtitle": "ⴰⵜⵜⴽⵉ ⴳ ⵜⵎⵖⵔⵉⵡⵉⵏ ⵏⵏⴰ ⵉⵙⵙⵉⴷⵉⵔⵏ ⵜⴰⴳⵔⴰⵡⵜ ⵜⴰⴷⵍⵙⴰⵏⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
-      "title": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⵍⵙⴰⵏⵉⵏ"
+      "title": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⵍⵙⴰⵏⵉⵏ",
+      "status": {
+        "brouillon": "ⴰⵔⴻⵡⵡⴰⵢ",
+        "publie": "ⵢⴻⵜⵜⵡⴰⵙⵓⴼⴼⴻⵖ",
+        "planifie": "ⵢⴻⵜⵜⵡⴰⵀⴻⵢⵢⴰⵇ",
+        "en_cours": "ⵉⵜⵜⴻⴷⴷⵓ",
+        "termine": "ⵢⴻⴽⴼⴰ",
+        "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
+        "reporte": "ⵢⴻⵜⵜⵡⴰⵙⵎⴻⵏⵏⴻⴷ"
+      }
     },
     "heritage": {
       "discover": "ⴰⴼ",
@@ -2588,7 +2602,11 @@
       "confirmSuspend": "ⴰⴷ ⵜⵃⴻⴱⵙⴻⴹ ⴰⵙⴻⵇⴷⴰⵛ-ⴰ?",
       "confirmSuspendDesc": "ⴰⵙⴻⵇⴷⴰⵛ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵃⴱⴻⵙ ⵉ 7 ⵏ ⵡⵓⵙⵙⴰⵏ.",
       "confirmBulkDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ {{count}} ⵏ ⵓⵙⴻⵇⴷⴰⵛ (ⵉⵙⴻⵇⴷⴰⵛⴻⵏ)?",
-      "confirmBulkDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ."
+      "confirmBulkDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
+      "types": {
+        "visiteur": "ⵉⵏⴻⴱⴳⵉ",
+        "guide": "ⴰⵎⵏⵉⵔ"
+      }
     },
     "oeuvres": {
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵍⵡⵡⴰⵢⵏ",
@@ -2605,7 +2623,10 @@
         "actions": "ⵜⵉⴳⴰⵡⵉⵏ"
       },
       "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵅⴻⴷⴷⵉⵎ-ⴰ?",
-      "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ."
+      "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
+      "statuses": {
+        "brouillon": "ⴰⵔⴻⵡⵡⴰⵢ"
+      }
     },
     "events": {
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⴷⵢⴰⵏⵉⵏ",
@@ -2620,7 +2641,13 @@
       "cancelEvent": "ⵙⴻⴼⵙⴻⵅ ⵜⴰⴷⵢⴰⵏⵜ",
       "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⵜⴰⴷⵢⴰⵏⵜ-ⴰ?",
       "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
-      "registered": "{{count}} ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ"
+      "registered": "{{count}} ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ",
+      "statuses": {
+        "publie": "ⵢⴻⵜⵜⵡⴰⵙⵓⴼⴼⴻⵖ",
+        "brouillon": "ⴰⵔⴻⵡⵡⴰⵢ",
+        "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
+        "termine": "ⵢⴻⴽⴼⴰ"
+      }
     },
     "services": {
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⵏⴼⵍⵉⵡⵉⵏ",
@@ -4259,7 +4286,11 @@
     "all": "ⴰⴽⴽ",
     "emptyDescOeuvre": "ⵜⴰⵎⵉⴷⴻⵍⵜ ⴷ ⵜⵉⵍⴻⵎⵜ ⴰⴽⴽⴰ ⵜⵓⵔⴰ",
     "gridView": "ⴰⵙⴽⴰⵏ ⵙ ⵓⵥⴻⵟⵟⴰ",
-    "listView": "ⴰⵙⴽⴰⵏ ⵙ ⵜⴻⴱⴷⴰⵔⵜ"
+    "listView": "ⴰⵙⴽⴰⵏ ⵙ ⵜⴻⴱⴷⴰⵔⵜ",
+    "types": {
+      "image": "ⵜⵓⴳⵏⵉⵡⵉⵏ",
+      "video": "ⵜⵉvⵉⴷⵢⵓⵜⵉⵏ"
+    }
   },
   "gestionArtisanat": {
     "errors": {

@@ -75,7 +75,7 @@ const EventParticipants: React.FC<EventParticipantsProps> = ({ participants, tot
                         variant="secondary"
                         className={`text-xs mt-1 ${roleColors[p.role_participation] || ''}`}
                       >
-                        {t(`event.participants.roles.${p.role_participation}`, p.role_participation)}
+                        {t(`event.roles.${p.role_participation}`, p.role_participation)}
                       </Badge>
                     )}
                   </div>
