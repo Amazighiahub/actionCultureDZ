@@ -13,6 +13,7 @@ import { programmeService, IntervenantUser } from '@/services/programme.service'
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '@/components/SEOHead';
+import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 const ViewProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
@@ -82,16 +83,7 @@ const ViewProgrammePage: React.FC = () => {
             diffusion_live: false,
             support_numerique: false,
             notes_organisateur: '',
-            intervenants: programme.Intervenants?.map(intervenant => ({
-              id_user: intervenant.id_user,
-              role_intervenant: intervenant.ProgrammeIntervenant?.role_intervenant || 'principal',
-              sujet_intervention: intervenant.ProgrammeIntervenant?.sujet_intervention || '',
-              biographie_courte: intervenant.ProgrammeIntervenant?.biographie_courte || '',
-              ordre_intervention: intervenant.ProgrammeIntervenant?.ordre_intervention || 1,
-              duree_intervention: intervenant.ProgrammeIntervenant?.duree_intervention,
-              honoraires: intervenant.ProgrammeIntervenant?.honoraires,
-              frais_deplacement: intervenant.ProgrammeIntervenant?.frais_deplacement
-            })) || []
+            intervenants: intervenantsPourFormulaire(programme.Intervenants, i18n.language)
           };
 
           setProgrammeData(formData);
@@ -317,7 +309,7 @@ const ViewProgrammePage: React.FC = () => {
                 const prenom = typeof intervenant.prenom === 'object' ? (intervenant.prenom as any).fr || '' : intervenant.prenom || '';
                 return (
                   <div
-                    key={intervenant.id_user}
+                    key={intervenant.id_intervenant ?? intervenant.id_user}
                     className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30"
                   >
                     {/* Avatar / icône */}

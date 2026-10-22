@@ -238,10 +238,10 @@ const AdminEvenementsTab: React.FC = () => {
                             {lieu}
                           </span>
                         )}
-                        {event.nombre_participants !== undefined && (
+                        {event.nombre_inscrits !== undefined && (
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {t('admin.events.participants', '{{count}} participants', { count: event.nombre_participants })}
+                            {t('admin.events.registered', '{{count}} inscrit(s)', { count: Number(event.nombre_inscrits) || 0 })}
                           </span>
                         )}
                         {event.heure_debut && (

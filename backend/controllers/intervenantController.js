@@ -99,6 +99,8 @@ class IntervenantController extends BaseController {
           id: i.id_intervenant,
           label: `${i.titre_professionnel ? i.titre_professionnel + ' ' : ''}${i.prenom} ${i.nom}`,
           value: i.id_intervenant,
+          prenom: i.prenom,
+          nom: i.nom,
           titre: i.titre_professionnel,
           organisation: i.organisation,
           specialites: i.specialites || [],

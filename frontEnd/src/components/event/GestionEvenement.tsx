@@ -4,7 +4,6 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { httpClient } from '@/services/httpClient';
 import { lieuService } from '@/services/lieu.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +45,7 @@ import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse }
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
+import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 interface GestionEvenementProps {
   evenementId: number;
@@ -96,7 +96,6 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
 
   // Données dynamiques pour le formulaire programme
   const [lieux, setLieux] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
 
   // États pour les œuvres
   const [oeuvresData, setOeuvresData] = useState<MesOeuvresResponse | null>(null);
@@ -133,17 +132,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
 
   const loadLieuxAndUsers = async () => {
     try {
-      const [lieuxRes, usersRes] = await Promise.all([
+      const [lieuxRes] = await Promise.all([
         lieuService.getAll({ limit: 100 }),
-        httpClient.get<{ intervenants?: any[] }>('/intervenants/search', { q: '', limit: 50 }),
       ]);
       if (lieuxRes.success && lieuxRes.data) {
         const items = (lieuxRes.data as any).lieux || lieuxRes.data;
         setLieux(Array.isArray(items) ? items : []);
-      }
-      if (usersRes.success && usersRes.data) {
-        const items = (usersRes.data as any).intervenants || usersRes.data;
-        setUsers(Array.isArray(items) ? items : []);
       }
     } catch (e) {
       console.error('Erreur chargement lieux/users:', e);
@@ -410,7 +404,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     heure_fin: heureProgramme(editingProgramme.heure_fin),
                     type_activite: editingProgramme.type_activite as any,
                     statut: 'planifie',
-                    ordre: 1,
+                    // Position actuelle (avant : 1, l'activité modifiée remontait en tête du programme)
+                    ordre: editingProgramme.ordre ?? 1,
                     nb_participants_max: editingProgramme.nb_participants_max,
                     niveau_requis: 'tous_niveaux',
                     materiel_requis: [],
@@ -420,13 +415,13 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     diffusion_live: false,
                     support_numerique: false,
                     notes_organisateur: '',
-                    intervenants: []
+                    // Intervenants actuels : le formulaire les renvoie, ils remplacent ceux de l'activité
+                    intervenants: intervenantsPourFormulaire((editingProgramme as { Intervenants?: unknown }).Intervenants, i18n.language)
                   } : undefined}
                   onSubmit={handleSaveProgramme}
                   onCancel={handleCancelProgramme}
                   mode={editingProgramme ? 'edit' : 'create'}
                   lieux={lieux}
-                  users={users}
                   eventDates={eventDates}
                 />
               </DialogContent>

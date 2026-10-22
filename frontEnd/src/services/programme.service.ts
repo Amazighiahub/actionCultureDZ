@@ -6,6 +6,8 @@ import { httpClient } from './httpClient';
 
 // Interface pour un intervenant (qui est un User avec des infos supplémentaires)
 interface IntervenantUser {
+  /** Fiche intervenant (présente même sans compte sur le site) */
+  id_intervenant?: number;
   id_user: number;
   nom: string;
   prenom: string;
@@ -56,7 +58,12 @@ interface Programme {
 
 // Données pour créer/modifier une association intervenant
 interface IntervenantData {
-  id_user: number;
+  /** Fiche intervenant existante (choisie dans les suggestions) */
+  id_intervenant?: number;
+  /** Compte du site, s'il en a un (facultatif : un intervenant peut ne pas avoir de compte) */
+  id_user?: number;
+  prenom?: string;
+  nom?: string;
   role_intervenant?: 'principal' | 'co_intervenant' | 'moderateur' | 'invite' | 'animateur';
   sujet_intervention?: string;
   biographie_courte?: string;

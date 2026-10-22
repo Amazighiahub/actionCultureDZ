@@ -37,8 +37,9 @@ const initProgrammeRoutes = (models) => {
         return true;
       })
       .withMessage((value, { req }) => req.t('validation.descriptionTooLong')),
-    body('id_lieu').optional().isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
-    body('lieu_specifique').optional().isLength({ max: 255 }),
+    // Champs vides envoyés à null par le formulaire (pas de lieu, pas de limite de places…)
+    body('id_lieu').optional({ values: 'null' }).isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
+    body('lieu_specifique').optional({ values: 'null' }).isLength({ max: 255 }),
     body('heure_debut').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
     body('heure_fin')
       .optional()
@@ -53,8 +54,8 @@ const initProgrammeRoutes = (models) => {
     body('type_activite')
       .optional()
       .isIn(['conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'autre']),
-    body('duree_estimee').optional().isInt({ min: 1 }),
-    body('nb_participants_max').optional().isInt({ min: 1 }),
+    body('duree_estimee').optional({ values: 'falsy' }).isInt({ min: 1 }),
+    body('nb_participants_max').optional({ values: 'falsy' }).isInt({ min: 1 }),
     body('materiel_requis').optional().isLength({ max: 1000 }),
     body('notes_organisateur').optional().isLength({ max: 2000 }),
     body('intervenants').optional().isArray()

@@ -1282,7 +1282,8 @@
     "loadEventsFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ",
     "loadServicesFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵎⴻⵥⵍⴰ",
     "loadArtisanatsFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⴰⵥⵓⵔⵉ ⵜⴰⵎⴻⵖⵔⴰⴷⵜ",
-    "loadPatrimoinesFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵙⵎⴰⵍ ⵏ ⵜⴷⴻⵍⵙⴰ"
+    "loadPatrimoinesFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵙⵎⴰⵍ ⵏ ⵜⴷⴻⵍⵙⴰ",
+    "registered": "ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ"
   },
   "dashboardadmin": {
     "label_validation": "ⴰⵙⵖⵏⵜ",
@@ -2618,7 +2619,8 @@
       "confirmCancelDesc": "ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ ⴰⴷ ⵜⵜⵡⴰⵍⵖⵓⵏ ⵙ ⵓⵙⴻⴼⵙⴻⵅ.",
       "cancelEvent": "ⵙⴻⴼⵙⴻⵅ ⵜⴰⴷⵢⴰⵏⵜ",
       "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⵜⴰⴷⵢⴰⵏⵜ-ⴰ?",
-      "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ."
+      "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
+      "registered": "{{count}} ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ"
     },
     "services": {
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⵏⴼⵍⵉⵡⵉⵏ",

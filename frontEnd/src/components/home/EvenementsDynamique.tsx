@@ -205,7 +205,7 @@ const EvenementsDynamique: React.FC = () => {
                     <div className="flex items-center justify-between text-sm">
                       <div className={`flex items-center space-x-1 rtl:space-x-reverse ${rtlClasses.flexRow}`}>
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatNumber(event.nombre_participants || 0)}/{formatNumber(event.capacite_max)}</span>
+                        <span>{formatNumber(Number(event.nombre_inscrits) || 0)}/{formatNumber(event.capacite_max)}</span>
                       </div>
                       {event.tarif !== undefined && (
                         <span className="font-semibold text-primary">
@@ -218,7 +218,7 @@ const EvenementsDynamique: React.FC = () => {
                       <div
                         className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-500"
                         style={{
-                          width: `${((event.nombre_participants || 0) / event.capacite_max) * 100}%`
+                          width: `${Math.min(100, ((Number(event.nombre_inscrits) || 0) / event.capacite_max) * 100)}%`
                         }}
                       />
                     </div>

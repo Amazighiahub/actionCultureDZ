@@ -3,6 +3,7 @@
  * Gère : profils, œuvres, événements, artisanats, statistiques, exports
  */
 const { Op } = require('sequelize');
+const { attributsComptes } = require('../utils/comptesEvenement');
 const { mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
@@ -291,6 +292,7 @@ class ProfessionnelService {
 
     const { rows, count } = await this.models.Evenement.findAndCountAll({
       where,
+      attributes: { include: attributsComptes() },
       include: [
         { model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom_type'], required: false },
         { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse'], required: false }

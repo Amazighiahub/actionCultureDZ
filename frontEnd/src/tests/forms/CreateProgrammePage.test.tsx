@@ -201,9 +201,10 @@ describe('CreateProgrammePage — Page de création de programme', () => {
 
     await waitFor(() => {
       expect(mockGetAllLieux).toHaveBeenCalled();
-      expect(mockHttpGet).toHaveBeenCalled();
       expect(mockGetDetail).toHaveBeenCalledWith(5);
     });
+    // Plus de recherche d'intervenants vide (refusée par le serveur) : ils se saisissent par nom
+    expect(mockHttpGet).not.toHaveBeenCalledWith('/intervenants/search', expect.anything());
 
     expect(screen.getByTestId('programme-form')).toBeInTheDocument();
     expect(screen.getByTestId('form-mode')).toHaveTextContent('create');
