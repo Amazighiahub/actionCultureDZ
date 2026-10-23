@@ -142,12 +142,23 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
         const count = result.data?.notified ?? 0;
         // E-mails : envoyés un par un en arrière-plan, sauf à ceux qui ont refusé les annonces
         const emails = (result.data as { emails?: number } | undefined)?.emails;
+        const etat = (result.data as { email_etat?: string } | undefined)?.email_etat;
+        if (formData.sendEmail && etat && etat !== 'actif') {
+          // Les notifications sur le site sont parties, mais aucun e-mail : le dire clairement
+          toast({
+            title: t('admin.notifications.emailOffTitle', 'Aucun e-mail n’est parti'),
+            description: etat === 'pause'
+              ? t('admin.notifications.emailPaused', 'L’envoi d’e-mails est en pause sur le serveur (EMAIL_PAUSED). Les notifications sur le site, elles, sont bien envoyées.')
+              : t('admin.notifications.emailNotConfigured', 'L’envoi d’e-mails n’est pas configuré sur le serveur (adresse ou mot de passe SMTP). Les notifications sur le site, elles, sont bien envoyées.'),
+            variant: 'destructive'
+          });
+        }
         toast({
           title: t('admin.notifications.sent'),
           description: t(`admin.notifications.sentCount_${count === 1 ? 'one' : 'other'}`, {
             count,
             defaultValue: `Envoyé à ${count} utilisateur(s)`
-          }) + (typeof emails === 'number'
+          }) + (typeof emails === 'number' && (!etat || etat === 'actif')
             ? ' ' + t('admin.notifications.emailsQueued', '{{n}} e-mail(s) en cours d’envoi (quelques minutes).', { n: emails })
             : '')
         });

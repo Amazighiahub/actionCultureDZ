@@ -1015,8 +1015,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
       // E-mail si demandé : sauf à ceux qui ont refusé les e-mails ou les annonces (préférences,
       // ou lien « Ne plus recevoir ces annonces »)
       if (data.sendEmail !== false) {
+        // Requête « raw » : MySQL renvoie 0 / 1 (et non false / true) pour un booléen
+        const refuse = (v) => v === false || v === 0 || v === '0';
         for (const user of usersToNotify) {
-          if (user.email && user.notifications_email !== false && user.notifications_evenements !== false) {
+          if (user.email && !refuse(user.notifications_email) && !refuse(user.notifications_evenements)) {
             destinatairesEmail.push({ id_user: user.id_user, email: user.email });
           }
         }
@@ -1044,7 +1046,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
 
     return {
       total_users: totalTargetUsers, notified: totalNotified,
-      skipped: totalSkipped, emails: destinatairesEmail.length, target, type, timestamp: new Date()
+      skipped: totalSkipped, emails: destinatairesEmail.length,
+      // L'administration voit si les e-mails partent vraiment (en pause, ils sont seulement simulés)
+      email_etat: typeof this.emailService.etatEnvoi === 'function' ? this.emailService.etatEnvoi() : 'actif',
+      target, type, timestamp: new Date()
     };
   }
 
