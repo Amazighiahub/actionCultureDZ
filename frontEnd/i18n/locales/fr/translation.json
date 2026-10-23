@@ -3703,7 +3703,8 @@
     "serviceValidationFailed": "Erreur de validation",
     "imageUploadFailed": "Échec de l'envoi de l'image (bloc {{index}})",
     "notFoundDesc": "La ressource demandée est introuvable.",
-    "notFound": "Ressource introuvable"
+    "notFound": "Ressource introuvable",
+    "rateLimitWait": "Réessayez dans {{minutes}} minute(s)."
   },
   "visit": {
     "title": "Planifier votre visite",

@@ -4,6 +4,7 @@
 // Les changer casserait tous les ~200 appelants du httpClient.
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import i18next from 'i18next';
+import { delaiAvantReessai, DELAI_MAX_REESSAI_AUTO } from '@/utils/delaiRateLimit';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
 import { apiLogger } from '@/utils/logger';
 
@@ -400,33 +401,30 @@ class HttpClient {
         
         // Gestion améliorée du rate limiting (429)
         if (error.response?.status === 429) {
-          const retryAfter = error.response.headers['retry-after'];
-          const delay = retryAfter
-            ? parseInt(retryAfter) * 1000
-            : this.getBackoffDelay(originalRequest.url || '');
-         
-          // Extraction plus intelligente du délai
-          let actualDelay = delay;
           const errorData = error.response.data as Record<string, unknown> | undefined;
-         
-          if (errorData?.retryAfter) {
-            actualDelay = Number(errorData.retryAfter) * 1000;
-          } else if (typeof errorData?.message === 'string') {
-            const match = errorData.message.match(/(\d+)\s*secondes?/i);
-            if (match) {
-              actualDelay = parseInt(match[1]) * 1000;
-            }
+          const actualDelay = delaiAvantReessai(error.response.headers['retry-after'], errorData)
+            ?? this.getBackoffDelay(originalRequest.url || '');
+
+          // Compte bloqué ou attente longue : pas de nouvel essai automatique (la requête restait
+          // en attente et l'écran figé) ; l'utilisateur est prévenu et l'erreur est renvoyée
+          if (errorData?.code === 'ACCOUNT_LOCKED' || actualDelay > DELAI_MAX_REESSAI_AUTO) {
+            // Compte bloqué : le formulaire de connexion affiche déjà le message du serveur
+            if (errorData?.code !== 'ACCOUNT_LOCKED') this.showToast({
+              title: i18next.t('toasts.rateLimitReached'),
+              description: i18next.t('toasts.rateLimitWait', 'Réessayez dans {{minutes}} minute(s).', { minutes: Math.max(1, Math.ceil(actualDelay / 60000)) }),
+              variant: "warning",
+            });
+            return Promise.reject(this.transformError(error));
           }
 
-          // Notification plus détaillée
           this.showToast({
             title: i18next.t('toasts.rateLimitReached'),
-            description: `${i18next.t('toasts.rateLimitDesc', { seconds: Math.ceil(actualDelay/1000) })} ${typeof errorData?.message === 'string' ? errorData.message : ''}`,
+            description: i18next.t('toasts.rateLimitDesc', { seconds: Math.ceil(actualDelay / 1000) }),
             variant: "warning",
           });
-         
-          // Ajuster la queue pour éviter d'autres 429
-          this.requestQueue.setMinDelay(Math.max(1000, actualDelay / 10));
+
+          // Ralentir la file pour éviter d'autres 429 (borné : un délai énorme figeait toutes les requêtes)
+          this.requestQueue.setMinDelay(Math.min(Math.max(1000, actualDelay / 10), 5000));
           
           // Attendre et réessayer
           await new Promise(resolve => setTimeout(resolve, actualDelay));
@@ -559,11 +557,14 @@ class HttpClient {
 
   private transformError(error: AxiosError): HttpError {
     if (error.response?.status === 429) {
+      // Message du serveur (ex. « Compte temporairement bloqué… Réessayez dans 15 minute(s). »)
+      const data = (error.response.data || {}) as Record<string, unknown>;
+      const duServeur = [data.error, data.message].filter(v => typeof v === 'string' && v).join(' ');
       const retryAfter = error.response.headers['retry-after'];
-      const message = retryAfter 
+      const message = duServeur || (retryAfter
         ? `Limite d'actions atteinte. Réessayez dans ${retryAfter} secondes.`
-        : 'Limite d\'actions sensibles atteinte';
-      return new HttpError(message, 429, 'RATE_LIMITED');
+        : 'Limite d\'actions sensibles atteinte');
+      return new HttpError(message, 429, typeof data.code === 'string' ? data.code : 'RATE_LIMITED');
     }
     
     // Gérer le type unknown de response.data
