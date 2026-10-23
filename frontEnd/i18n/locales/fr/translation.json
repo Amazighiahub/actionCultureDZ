@@ -3393,7 +3393,8 @@
       "description": "Description",
       "history": "Histoire",
       "openingHours": "Horaires de visite",
-      "references": "Références historiques"
+      "references": "Références historiques",
+      "nomHint": "Le nom du lieu lui-même (monument, musée, source, village…), pas celui de la commune déjà choisie. Ex. : Musée de la poterie de Tergregt."
     },
     "placeholders": {
       "nom": "Ex: Casbah d'Alger, Djemila...",

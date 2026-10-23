@@ -3388,7 +3388,8 @@
       "description": "Description",
       "history": "History",
       "openingHours": "Opening hours",
-      "references": "Historical references"
+      "references": "Historical references",
+      "nomHint": "The name of the place itself (monument, museum, spring, village…), not the municipality already chosen. E.g. Tergregt Pottery Museum."
     },
     "types": {
       "monument": "Monument",
