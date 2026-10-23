@@ -3384,7 +3384,11 @@
       "adresse": "Address / Precise location",
       "position": "Position on map",
       "myPosition": "My location",
-      "clickMap": "Click on the map or use \"My location\""
+      "clickMap": "Click on the map or use \"My location\"",
+      "description": "Description",
+      "history": "History",
+      "openingHours": "Opening hours",
+      "references": "Historical references"
     },
     "types": {
       "monument": "Monument",
@@ -3572,10 +3576,42 @@
       "tooLarge": "File too large (50 MB max)",
       "notAudio": "This file was not recognised as an audio recording",
       "added": "Recording added",
-      "uploadError": "The recording could not be uploaded"
+      "uploadError": "The recording could not be uploaded",
+      "delete": "Delete recording {{n}}"
     },
     "sectionEmpty": "to be completed",
-    "directions": "Directions"
+    "directions": "Directions",
+    "edit": {
+      "button": "Edit",
+      "title": "Edit the site",
+      "titlePoint": "Edit the point of interest",
+      "viewPage": "View page",
+      "forbidden": "Only the creator of this site and the moderators can edit it. You can still add an audio recording or a point of interest from its page.",
+      "general": "Information",
+      "details": "Site description",
+      "detailsHint": "Shown on the site page. A language left empty keeps the text already saved.",
+      "position": "Position on the map",
+      "positionHint": "Click the map to move the marker.",
+      "save": "Save changes",
+      "saved": "Changes saved",
+      "saveError": "The changes could not be saved",
+      "nameRequired": "The name is required (at least in French or Arabic)",
+      "photos": "Photos and videos",
+      "photosHint": "Added or removed immediately. The first photo is used as the main image.",
+      "noPhoto": "No photos yet.",
+      "addPhotos": "Add photos",
+      "photosAdded": "Photos added",
+      "uploadError": "Upload failed",
+      "photoN": "Photo {{n}}",
+      "mainPhoto": "Main",
+      "deletePhoto": "Delete photo {{n}}",
+      "mediaDeleted": "Deleted",
+      "deleteError": "Deletion failed",
+      "confirmDeletePhoto": "Delete this photo?",
+      "confirmDeleteAudio": "Delete this recording?",
+      "confirmDeleteDesc": "It will be removed from the site page. This cannot be undone.",
+      "audio": "Audio guide"
+    }
   },
   "toasts": {
     "error": "Error",

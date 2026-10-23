@@ -3389,7 +3389,11 @@
       "adresse": "Adresse / Localisation précise",
       "position": "Position sur la carte",
       "myPosition": "Ma position",
-      "clickMap": "Cliquez sur la carte ou utilisez \"Ma position\""
+      "clickMap": "Cliquez sur la carte ou utilisez \"Ma position\"",
+      "description": "Description",
+      "history": "Histoire",
+      "openingHours": "Horaires de visite",
+      "references": "Références historiques"
     },
     "placeholders": {
       "nom": "Ex: Casbah d'Alger, Djemila...",
@@ -3577,10 +3581,42 @@
       "tooLarge": "Fichier trop lourd (50 Mo maximum)",
       "notAudio": "Ce fichier n'a pas été reconnu comme un enregistrement audio",
       "added": "Enregistrement ajouté",
-      "uploadError": "L'enregistrement n'a pas pu être envoyé"
+      "uploadError": "L'enregistrement n'a pas pu être envoyé",
+      "delete": "Supprimer l’enregistrement {{n}}"
     },
     "sectionEmpty": "à compléter",
-    "directions": "Itinéraire"
+    "directions": "Itinéraire",
+    "edit": {
+      "button": "Modifier",
+      "title": "Modifier le site",
+      "titlePoint": "Modifier le point de visite",
+      "viewPage": "Voir la page",
+      "forbidden": "Seuls le créateur de ce site et la modération peuvent le modifier. Vous pouvez y ajouter un enregistrement audio ou un point de visite depuis sa page.",
+      "general": "Informations",
+      "details": "Fiche du site",
+      "detailsHint": "Affichée sur la page du site. Une langue laissée vide garde le texte déjà enregistré.",
+      "position": "Position sur la carte",
+      "positionHint": "Cliquez sur la carte pour déplacer le repère.",
+      "save": "Enregistrer les modifications",
+      "saved": "Modifications enregistrées",
+      "saveError": "Les modifications n’ont pas pu être enregistrées",
+      "nameRequired": "Le nom est requis (au moins en français ou en arabe)",
+      "photos": "Photos et vidéos",
+      "photosHint": "Ajoutées ou supprimées immédiatement. La première photo sert d’image principale.",
+      "noPhoto": "Aucune photo pour l’instant.",
+      "addPhotos": "Ajouter des photos",
+      "photosAdded": "Photos ajoutées",
+      "uploadError": "L’envoi a échoué",
+      "photoN": "Photo {{n}}",
+      "mainPhoto": "Principale",
+      "deletePhoto": "Supprimer la photo {{n}}",
+      "mediaDeleted": "Supprimé",
+      "deleteError": "La suppression a échoué",
+      "confirmDeletePhoto": "Supprimer cette photo ?",
+      "confirmDeleteAudio": "Supprimer cet enregistrement ?",
+      "confirmDeleteDesc": "Elle sera retirée de la page du site. Cette action est définitive.",
+      "audio": "Guide audio"
+    }
   },
   "toasts": {
     "error": "Erreur",

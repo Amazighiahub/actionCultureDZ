@@ -151,7 +151,8 @@
   "patrimoine": {
     "created": "Site patrimonial créé avec succès",
     "updated": "Site mis à jour",
-    "deleted": "Site supprimé"
+    "deleted": "Site supprimé",
+    "editForbidden": "Seuls le créateur du site et la modération peuvent le modifier."
   },
   "artisanat": {
     "created": "Artisanat créé avec succès",
@@ -252,7 +253,8 @@
     "emailExists": "Un intervenant avec cet email existe déjà",
     "userAlreadyLinked": "Ce compte utilisateur est déjà lié à un autre intervenant",
     "hasPrograms": "Impossible de désactiver cet intervenant car il est associé à ${count} programme(s)",
-    "serverErrorGet": "Erreur serveur lors de la récupération des intervenants"
+    "serverErrorGet": "Erreur serveur lors de la récupération des intervenants",
+    "editForbidden": "Seule l’administration peut modifier la fiche de cet intervenant."
   },
   "programme": {
     "notFound": "Programme non trouvé",

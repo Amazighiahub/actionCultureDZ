@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
-  Camera, Calendar, Route, ChevronRight, Download, Share2,
+  Camera, Calendar, Route, ChevronRight, Download, Share2, Pencil,
   CheckCircle2, XCircle, Info, History, Image as ImageIcon, Play,
   Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints
 } from 'lucide-react';
@@ -82,7 +82,7 @@ interface SitePatrimoineDetail {
   id_lieu_parent?: number | null;
   repere?: string | MultilingualField | null;
   SousLieux?: PointVisite[];
-  Ancetres?: Array<{ id_lieu: number; nom: string | MultilingualField }>;
+  Ancetres?: Array<{ id_lieu: number; nom: string | MultilingualField; id_createur?: number | null }>;
   Voisins?: Array<{ id_lieu: number; nom: string | MultilingualField; ordre_visite?: number | null }>;
   Commune?: { id_commune: number; nom: string; Daira?: { id_daira: number; nom: string; Wilaya?: { id_wilaya: number; nom: string } } };
   DetailLieu?: {
@@ -297,6 +297,10 @@ const PatrimoineDetail = () => {
     .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '');
   const canAddContent = isAdmin || isValidatedProfessional();
   const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
+  // Modifier la fiche, les photos et les audios : même règle que le serveur (créateur du site,
+  // ou du site d'un point de visite, et modération)
+  const parentDirect = site.Ancetres?.length ? site.Ancetres[site.Ancetres.length - 1] : null;
+  const canEditSite = canReorderPoints || (!!parentDirect?.id_createur && isOwner(parentDirect.id_createur));
 
   // Libellé accessible d'un média (titre/légende sinon « Site – photo N »)
   const siteDisplayName = translate(site.nom, lang);
@@ -344,6 +348,12 @@ const PatrimoineDetail = () => {
             <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
+          {canEditSite && (
+            <Button variant="outline" size="sm" className="order-last ms-auto shrink-0" onClick={() => navigate(`/modifier-patrimoine/${site.id_lieu}`)}>
+              <Pencil className="h-4 w-4 me-1" />
+              {t('patrimoine.edit.button', 'Modifier')}
+            </Button>
+          )}
           {/* Chemin d'un point de visite : Timgad › Musée de Timgad › Salle 3 */}
           <nav aria-label={t('patrimoine.points.breadcrumb', 'Emplacement dans le site')} className="flex flex-wrap items-center gap-2 min-w-0">
             {ancetres.map(a => (

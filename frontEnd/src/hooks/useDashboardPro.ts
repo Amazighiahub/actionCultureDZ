@@ -329,7 +329,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       // Mise à jour optimiste : retirer l'élément du cache local immédiatement
       const idFields: Record<string, string> = {
         oeuvre: 'id_oeuvre', evenement: 'id_evenement', artisanat: 'id_artisanat',
-        service: 'id_service', patrimoine: 'id_site',
+        service: 'id_service', patrimoine: 'id_lieu',
       };
       const queryKeys: Record<string, string> = {
         oeuvre: 'dashboard-pro-oeuvres', evenement: 'dashboard-pro-evenements',

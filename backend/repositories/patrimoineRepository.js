@@ -160,11 +160,12 @@ class PatrimoineRepository extends BaseRepository {
    * Tous les sites avec pagination
    */
   async findAllSites(options = {}) {
-    const { page = 1, limit = 20, typePatrimoine, wilayaId } = options;
+    const { page = 1, limit = 20, typePatrimoine, wilayaId, createurId } = options;
     const p = parseInt(page);
     const l = parseInt(limit);
-    // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
-    const where = { statut: 'publie', id_lieu_parent: null };
+    // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération).
+    // « Mes sites » (createurId) : tous les sites et points créés par ce compte, quel que soit leur statut.
+    const where = createurId ? { id_createur: createurId } : { statut: 'publie', id_lieu_parent: null };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     let include = this._defaultIncludes();

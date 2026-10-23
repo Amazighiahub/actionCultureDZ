@@ -151,7 +151,8 @@
   "patrimoine": {
     "created": "Heritage site created successfully",
     "updated": "Site updated",
-    "deleted": "Site deleted"
+    "deleted": "Site deleted",
+    "editForbidden": "Only the creator of the site and the moderators can edit it."
   },
   "artisanat": {
     "created": "Craft created successfully",
@@ -252,7 +253,8 @@
     "emailExists": "A speaker with this email already exists",
     "userAlreadyLinked": "This user account is already linked to another speaker",
     "hasPrograms": "Cannot deactivate this speaker as they are associated with ${count} program(s)",
-    "serverErrorGet": "Server error while retrieving speakers"
+    "serverErrorGet": "Server error while retrieving speakers",
+    "editForbidden": "Only the administration can edit this speaker’s profile."
   },
   "programme": {
     "notFound": "Program not found",

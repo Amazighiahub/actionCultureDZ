@@ -268,7 +268,7 @@ const AdminPatrimoineTab: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1 h-8 text-xs"
-                      onClick={() => navigate(`/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } })}
+                      onClick={() => navigate(`/admin/patrimoine/modifier/${item.id_patrimoine || item.id_lieu || item.id}`)}
                     >
                       <Edit className="h-3 w-3 me-1" />
                       {t('common.edit', 'Modifier')}
