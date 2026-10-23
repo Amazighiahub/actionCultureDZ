@@ -2412,7 +2412,13 @@
       "emailsQueued": "{{n}} email(s) being sent (a few minutes).",
       "emailOffTitle": "No email was sent",
       "emailPaused": "Email sending is paused on the server (EMAIL_PAUSED). Notifications on the site were sent.",
-      "emailNotConfigured": "Email sending is not configured on the server (SMTP address or password). Notifications on the site were sent."
+      "emailNotConfigured": "Email sending is not configured on the server (SMTP address or password). Notifications on the site were sent.",
+      "emailSentTitle": "Email sent",
+      "emailSentDesc": "The mail server accepted it. If it does not arrive, check the spam folder.",
+      "emailFailedTitle": "Email not sent",
+      "emailRefused": "This person chose not to receive emails.",
+      "emailMissing": "This account has no email address.",
+      "emailError": "Rejected by the mail server: {{erreur}}"
     },
     "moderation": {
       "title": "Moderation",

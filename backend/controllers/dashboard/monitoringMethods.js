@@ -54,7 +54,10 @@ const monitoringMethods = {
         if (!notification) {
           return res.status(404).json({ success: false, error: req.t('common.notFound') });
         }
-        return res.json({ success: true, data: { queued: false, target, type, notified: 1 } });
+        // L'e-mail part aussi (la case « e-mail » était ignorée) ; son résultat est renvoyé
+        const email = sendEmail === false ? null
+          : await container.notificationService.envoyerEmailDirect(userId, { title, message });
+        return res.json({ success: true, data: { queued: false, target, type, notified: 1, email } });
       }
 
       // Compter les destinataires directement depuis les modèles
@@ -72,11 +75,17 @@ const monitoringMethods = {
         console.warn('broadcastNotification: impossible de compter les cibles:', countErr.message);
       }
 
+      // État de l'envoi d'e-mails, connu tout de suite (en pause : rien ne part)
+      const etatEmail = () => {
+        const service = container.notificationService.emailService;
+        return typeof service?.etatEnvoi === 'function' ? service.etatEnvoi() : 'actif';
+      };
+
       // Répondre immédiatement avec le nombre d'utilisateurs ciblés
       res.json({
         success: true,
         message: req.t('notification.broadcastQueued', 'Notification en cours d\'envoi en arrière-plan'),
-        data: { queued: true, target, type, notified }
+        data: { queued: true, target, type, notified, email_etat: etatEmail() }
       });
 
       // Traitement asynchrone après la réponse

@@ -1069,6 +1069,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
           </div>`;
     let envoyes = 0;
     let echecs = 0;
+    let derniereErreur = null;
     for (const [index, user] of destinataires.entries()) {
       const url = buildUnsubscribeUrl(user.id_user, 'annonces');
       try {
@@ -1079,18 +1080,36 @@ async envoyerNewsletter(contenu, filtres = {}) {
         );
         if (res && res.success === false) {
           echecs++;
+          derniereErreur = res.error || null;
           logger.warn(`E-mail d’annonce non envoyé à ${maskEmail(user.email)}: ${res.error}`);
         } else {
           envoyes++;
         }
       } catch (err) {
         echecs++;
+        derniereErreur = err.message;
         logger.warn(`E-mail d’annonce non envoyé à ${maskEmail(user.email)}:`, err.message);
       }
       if (pauseMs && index < destinataires.length - 1) await new Promise(resolve => setTimeout(resolve, pauseMs));
     }
     logger.info(`Annonce « ${title} » : ${envoyes} e-mail(s) envoyé(s), ${echecs} échec(s)`);
-    return { envoyes, echecs };
+    return { envoyes, echecs, erreur: derniereErreur };
+  }
+
+  /**
+   * Message de l'administration à une seule personne : l'e-mail est envoyé tout de suite et le
+   * résultat est renvoyé (envoyé, refusé avec la raison, en pause…) — c'est aussi le moyen de
+   * vérifier que l'envoi d'e-mails fonctionne. Respecte le refus des e-mails.
+   * @returns {Promise<{ etat: string, envoye: boolean, erreur?: string|null, raison?: string }>}
+   */
+  async envoyerEmailDirect(userId, { title, message }) {
+    const etat = typeof this.emailService.etatEnvoi === 'function' ? this.emailService.etatEnvoi() : 'actif';
+    const user = await this.models.User.findByPk(userId, { attributes: ['id_user', 'email', 'notifications_email'], raw: true });
+    if (!user?.email) return { etat, envoye: false, raison: 'sans_email' };
+    if (user.notifications_email === false || user.notifications_email === 0) return { etat, envoye: false, raison: 'refuse' };
+    if (etat !== 'actif') return { etat, envoye: false, raison: etat };
+    const res = await this._envoyerAnnonceParEmail([user], { title, message }, { pauseMs: 0 });
+    return { etat, envoye: res.envoyes === 1, erreur: res.erreur };
   }
   // ========================================================================
   // MÉTHODES USER-FACING (appelées par NotificationController)

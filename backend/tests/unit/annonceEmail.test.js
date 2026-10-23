@@ -48,7 +48,7 @@ describe('Annonce par e-mail', () => {
       { title: 'Salon <b>', message: 'Programme : https://taladz.com/evenements/1.' },
       { pauseMs: 0 }
     );
-    expect(res).toEqual({ envoyes: 2, echecs: 0 });
+    expect(res).toEqual({ envoyes: 2, echecs: 0, erreur: null });
     const [to, sujet, html, , texte, options] = mockSendEmail.mock.calls[0];
     expect(to).toBe('a@x.dz');
     expect(sujet).toBe('Salon <b>');
@@ -67,7 +67,7 @@ describe('Annonce par e-mail', () => {
     const res = await service._envoyerAnnonceParEmail(
       [{ id_user: 1, email: 'a@x.dz' }, { id_user: 2, email: 'b@x.dz' }], { title: 'T', message: 'M' }, { pauseMs: 0 }
     );
-    expect(res).toEqual({ envoyes: 1, echecs: 1 });
+    expect(res).toEqual({ envoyes: 1, echecs: 1, erreur: 'refusé' });
   });
 
   it('l’administration voit si les e-mails partent vraiment (en pause : simulés)', async () => {
@@ -76,5 +76,20 @@ describe('Annonce par e-mail', () => {
     mockEtat = 'pause';
     expect((await service.broadcastNotification({ title: 'T', message: 'M' }, 9)).email_etat).toBe('pause');
     mockEtat = 'actif';
+  });
+
+  it('message à une personne : e-mail envoyé tout de suite, résultat renvoyé', async () => {
+    service.models.User.findByPk = jest.fn().mockResolvedValue({ id_user: 7, email: 'moi@yahoo.fr', notifications_email: 1 });
+    expect(await service.envoyerEmailDirect(7, { title: 'Test', message: 'Bonjour' })).toEqual({ etat: 'actif', envoye: true, erreur: null });
+    expect(mockSendEmail.mock.calls[0][0]).toBe('moi@yahoo.fr');
+
+    mockSendEmail.mockResolvedValueOnce({ success: false, error: '550 Sender not authorized' });
+    expect(await service.envoyerEmailDirect(7, { title: 'Test', message: 'Bonjour' })).toEqual({ etat: 'actif', envoye: false, erreur: '550 Sender not authorized' });
+
+    mockEtat = 'pause';
+    expect(await service.envoyerEmailDirect(7, { title: 'T', message: 'M' })).toEqual({ etat: 'pause', envoye: false, raison: 'pause' });
+    mockEtat = 'actif';
+    service.models.User.findByPk.mockResolvedValue({ id_user: 7, email: 'moi@yahoo.fr', notifications_email: 0 });
+    expect((await service.envoyerEmailDirect(7, { title: 'T', message: 'M' })).raison).toBe('refuse');
   });
 });

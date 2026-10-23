@@ -2557,7 +2557,13 @@
       "emailsQueued": "{{n}} e-mail(s) en cours d’envoi (quelques minutes).",
       "emailOffTitle": "Aucun e-mail n’est parti",
       "emailPaused": "L’envoi d’e-mails est en pause sur le serveur (EMAIL_PAUSED). Les notifications sur le site, elles, sont bien envoyées.",
-      "emailNotConfigured": "L’envoi d’e-mails n’est pas configuré sur le serveur (adresse ou mot de passe SMTP). Les notifications sur le site, elles, sont bien envoyées."
+      "emailNotConfigured": "L’envoi d’e-mails n’est pas configuré sur le serveur (adresse ou mot de passe SMTP). Les notifications sur le site, elles, sont bien envoyées.",
+      "emailSentTitle": "E-mail envoyé",
+      "emailSentDesc": "Le serveur d’envoi l’a accepté. S’il n’arrive pas, regardez dans les spams.",
+      "emailFailedTitle": "E-mail non envoyé",
+      "emailRefused": "Cette personne a choisi de ne pas recevoir d’e-mails.",
+      "emailMissing": "Ce compte n’a pas d’adresse e-mail.",
+      "emailError": "Refusé par le serveur d’envoi : {{erreur}}"
     },
     "moderation": {
       "title": "Modération",

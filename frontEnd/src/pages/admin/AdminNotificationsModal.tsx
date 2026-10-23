@@ -142,7 +142,22 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
         const count = result.data?.notified ?? 0;
         // E-mails : envoyés un par un en arrière-plan, sauf à ceux qui ont refusé les annonces
         const emails = (result.data as { emails?: number } | undefined)?.emails;
-        const etat = (result.data as { email_etat?: string } | undefined)?.email_etat;
+        const direct = (result.data as { email?: { envoye: boolean; etat: string; erreur?: string | null; raison?: string } | null } | undefined)?.email;
+        const etat = direct?.etat ?? (result.data as { email_etat?: string } | undefined)?.email_etat;
+        // Message à une personne : résultat réel de l'e-mail (envoyé, ou refusé avec la raison)
+        if (formData.sendEmail && direct && direct.etat === 'actif') {
+          toast(direct.envoye
+            ? { title: t('admin.notifications.emailSentTitle', 'E-mail envoyé'), description: t('admin.notifications.emailSentDesc', 'Le serveur d’envoi l’a accepté. S’il n’arrive pas, regardez dans les spams.') }
+            : {
+                title: t('admin.notifications.emailFailedTitle', 'E-mail non envoyé'),
+                description: direct.raison === 'refuse'
+                  ? t('admin.notifications.emailRefused', 'Cette personne a choisi de ne pas recevoir d’e-mails.')
+                  : direct.raison === 'sans_email'
+                    ? t('admin.notifications.emailMissing', 'Ce compte n’a pas d’adresse e-mail.')
+                    : t('admin.notifications.emailError', 'Refusé par le serveur d’envoi : {{erreur}}', { erreur: direct.erreur || '?' }),
+                variant: 'destructive'
+              });
+        }
         if (formData.sendEmail && etat && etat !== 'actif') {
           // Les notifications sur le site sont parties, mais aucun e-mail : le dire clairement
           toast({
