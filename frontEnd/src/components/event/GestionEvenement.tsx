@@ -348,9 +348,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-6 min-w-0">
+      {/* Sur téléphone, les lignes passent à la ligne au lieu de déborder à droite (corbeille cachée) */}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
           <h2 className="text-2xl font-bold">{t('gestion.title', 'Gestion de l\'événement')}</h2>
           <p className="text-muted-foreground">{evenementNom}</p>
         </div>
@@ -362,8 +363,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       </div>
 
       <Tabs defaultValue="programmes">
-        <div className="flex items-center justify-between mb-2">
-          <TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <TabsList className="max-w-full overflow-x-auto justify-start">
             <TabsTrigger value="programmes">
               <Calendar className="h-4 w-4 me-2" />
               {t('gestion.programmes', 'Programmes')}
@@ -397,7 +398,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
 
         {/* Onglet Programmes */}
         <TabsContent value="programmes" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-2">
             <h3 className="text-lg font-semibold">
               {t('programme.list', 'Liste des programmes')} ({programmes.length})
             </h3>
@@ -408,7 +409,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                   {t('programme.add', 'Ajouter une activité')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[calc(100%-2rem)] max-w-6xl max-h-[90vh] overflow-y-auto [&>*]:min-w-0">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProgramme
@@ -476,9 +477,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               {programmes.map((programme) => (
                 <Card key={programme.id_programme}>
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <h4 className="font-semibold">{td(programme.titre)}</h4>
                           <Badge variant="outline">{t(`programme.form.types.${programme.type_activite}`, programme.type_activite)}</Badge>
                           <Badge
@@ -514,7 +515,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
