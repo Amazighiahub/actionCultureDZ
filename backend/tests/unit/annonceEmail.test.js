@@ -4,7 +4,8 @@
  * un texte échappé, des liens cliquables ; envoi un par un.
  */
 const mockSendEmail = jest.fn();
-jest.mock('../../services/emailService', () => ({ sendEmail: (...a) => mockSendEmail(...a) }));
+let mockEtat = 'actif';
+jest.mock('../../services/emailService', () => ({ sendEmail: (...a) => mockSendEmail(...a), etatEnvoi: () => mockEtat }));
 jest.mock('../../services/smsService', () => ({ sendSMS: jest.fn() }));
 jest.mock('../../services/whatsappService', () => ({ sendWhatsApp: jest.fn() }));
 
@@ -17,7 +18,7 @@ describe('Annonce par e-mail', () => {
   beforeEach(() => {
     mockSendEmail.mockReset().mockResolvedValue({ success: true });
     service = new NotificationService({
-      User: { count: jest.fn().mockResolvedValue(3), findAll: jest.fn() },
+      User: { count: jest.fn().mockResolvedValue(5), findAll: jest.fn() },
       Notification: { bulkCreate: jest.fn() },
       AuditLog: { create: jest.fn() }
     });
@@ -27,15 +28,18 @@ describe('Annonce par e-mail', () => {
     service.models.User.findAll.mockResolvedValueOnce([
       { id_user: 1, email: 'a@x.dz', preferences_notification: null },
       { id_user: 2, email: 'b@x.dz', preferences_notification: null, notifications_evenements: false },
-      { id_user: 3, email: 'c@x.dz', preferences_notification: null, notifications_email: false }
+      { id_user: 3, email: 'c@x.dz', preferences_notification: null, notifications_email: false },
+      // Valeurs brutes de MySQL : 0 = non, 1 = oui
+      { id_user: 4, email: 'd@x.dz', preferences_notification: null, notifications_evenements: 0 },
+      { id_user: 5, email: 'e@x.dz', preferences_notification: null, notifications_email: 1, notifications_evenements: 1 }
     ]).mockResolvedValueOnce([]);
     const envoi = jest.spyOn(service, '_envoyerAnnonceParEmail').mockResolvedValue({ envoyes: 1, echecs: 0 });
 
     const res = await service.broadcastNotification({ title: 'Salon', message: 'Venez' }, 9);
 
-    expect(res.notified).toBe(3);
-    expect(res.emails).toBe(1);
-    expect(envoi).toHaveBeenCalledWith([{ id_user: 1, email: 'a@x.dz' }], { title: 'Salon', message: 'Venez' });
+    expect(res.notified).toBe(5);
+    expect(res.emails).toBe(2);
+    expect(envoi).toHaveBeenCalledWith([{ id_user: 1, email: 'a@x.dz' }, { id_user: 5, email: 'e@x.dz' }], { title: 'Salon', message: 'Venez' });
   });
 
   it('e-mail : texte échappé, lien cliquable, lien de désinscription signé, un par un', async () => {
@@ -64,5 +68,13 @@ describe('Annonce par e-mail', () => {
       [{ id_user: 1, email: 'a@x.dz' }, { id_user: 2, email: 'b@x.dz' }], { title: 'T', message: 'M' }, { pauseMs: 0 }
     );
     expect(res).toEqual({ envoyes: 1, echecs: 1 });
+  });
+
+  it('l’administration voit si les e-mails partent vraiment (en pause : simulés)', async () => {
+    service.models.User.findAll.mockResolvedValueOnce([{ id_user: 1, email: 'a@x.dz', preferences_notification: null }]).mockResolvedValueOnce([]);
+    jest.spyOn(service, '_envoyerAnnonceParEmail').mockResolvedValue({ envoyes: 1, echecs: 0 });
+    mockEtat = 'pause';
+    expect((await service.broadcastNotification({ title: 'T', message: 'M' }, 9)).email_etat).toBe('pause');
+    mockEtat = 'actif';
   });
 });

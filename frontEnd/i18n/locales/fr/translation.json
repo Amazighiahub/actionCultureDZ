@@ -2554,7 +2554,10 @@
       "titleRequired": "Le titre est requis",
       "messageRequired": "Le message est requis",
       "noRecipient": "Choisissez un destinataire",
-      "emailsQueued": "{{n}} e-mail(s) en cours d’envoi (quelques minutes)."
+      "emailsQueued": "{{n}} e-mail(s) en cours d’envoi (quelques minutes).",
+      "emailOffTitle": "Aucun e-mail n’est parti",
+      "emailPaused": "L’envoi d’e-mails est en pause sur le serveur (EMAIL_PAUSED). Les notifications sur le site, elles, sont bien envoyées.",
+      "emailNotConfigured": "L’envoi d’e-mails n’est pas configuré sur le serveur (adresse ou mot de passe SMTP). Les notifications sur le site, elles, sont bien envoyées."
     },
     "moderation": {
       "title": "Modération",

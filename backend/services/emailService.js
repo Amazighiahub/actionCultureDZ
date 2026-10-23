@@ -19,6 +19,16 @@ class EmailService {
   }
 
   /**
+   * État de l'envoi réel : 'pause' (EMAIL_PAUSED : envois simulés, rien ne part),
+   * 'non_configure' (adresse ou mot de passe SMTP manquant) ou 'actif'.
+   * @returns {'pause'|'non_configure'|'actif'}
+   */
+  etatEnvoi() {
+    if (this.isPaused) return 'pause';
+    return this.transporter ? 'actif' : 'non_configure';
+  }
+
+  /**
    * Échappe les caractères HTML pour prévenir les injections XSS dans les emails.
    * @param {string} str - La chaîne à échapper.
    * @returns {string} La chaîne échappée.
