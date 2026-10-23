@@ -391,6 +391,12 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   showCharCount
                   errors={errors.nom ? { fr: errors.nom } : {}}
                 />
+                {/* La commune est choisie à l'étape 1 : « COMMUNE AIT SMAIL » avait été saisi ici pour un musée */}
+                {!parentId && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('patrimoine.fields.nomHint', 'Le nom du lieu lui-même (monument, musée, source, village…), pas celui de la commune déjà choisie. Ex. : Musée de la poterie de Tergregt.')}
+                  </p>
+                )}
               </div>
 
               {/* Type de patrimoine */}
