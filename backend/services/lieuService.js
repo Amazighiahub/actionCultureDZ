@@ -10,6 +10,7 @@ const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
+const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 
 const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
@@ -676,9 +677,25 @@ class LieuService extends BaseService {
       }
     ];
 
-    // Rechercher par nom similaire
+    // Rechercher par nom similaire : d'abord parmi les lieux proches (~5 km, colonnes indexées),
+    // noms comparés sans accents ni mots génériques (« COMMUNE AIT SMAIL » = « Aït Smaïl »)
     let lieuByName = null;
-    if (normalizedNom.length >= 3) {
+    if (normalizedNom.length >= 3 && hasValidCoords) {
+      const rayon = 0.05;
+      const proches = await this.models.Lieu.findAll({
+        where: {
+          latitude: { [Op.between]: [parsedLatitude - rayon, parsedLatitude + rayon] },
+          longitude: { [Op.between]: [parsedLongitude - rayon, parsedLongitude + rayon] }
+        },
+        attributes: ['id_lieu', 'nom'],
+        limit: 500
+      });
+      const similaire = proches.find(l => textesNom(l.nom).some(texte => nomsSimilaires(texte, normalizedNom)));
+      if (similaire) {
+        lieuByName = await this.models.Lieu.findByPk(similaire.id_lieu, { include: commonIncludes });
+      }
+    }
+    if (!lieuByName && normalizedNom.length >= 3) {
       const safeNom = `%${sanitizeLike(normalizedNom)}%`;
       try {
         lieuByName = await this.models.Lieu.findOne({
@@ -686,15 +703,15 @@ class LieuService extends BaseService {
             ...typeCondition,
             [Op.or]: [
               this.sequelize.where(
-                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'),
+                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal("'$.fr'")),
                 { [Op.like]: safeNom }
               ),
               this.sequelize.where(
-                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.ar'),
+                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal("'$.ar'")),
                 { [Op.like]: safeNom }
               ),
               this.sequelize.where(
-                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.en'),
+                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal("'$.en'")),
                 { [Op.like]: safeNom }
               )
             ]

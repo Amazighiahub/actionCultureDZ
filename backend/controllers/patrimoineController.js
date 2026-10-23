@@ -8,6 +8,7 @@ const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
 const logger = require('../utils/logger');
 const { mergeTranslations } = require('../helpers/i18n');
+const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
@@ -143,19 +144,18 @@ class PatrimoineController extends BaseController {
         });
       }
 
-      const { Sequelize } = require('sequelize');
+      // Lieux principaux de la commune (colonne indexée), comparés ici : accents, casse et mots
+      // génériques ignorés. LOWER(JSON_EXTRACT(...)) gardait les guillemets JSON et ne trouvait
+      // jamais rien (« COMMUNE AIT SMAIL » a été créé à côté de « Aït Smaïl »).
       const Lieu = this.patrimoineService.models.Lieu;
-      const existing = await Lieu.findAll({
-        where: {
-          communeId: communeIdInt,
-          [Sequelize.Op.or]: [
-            Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.fr'"))), search.toLowerCase()),
-            Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.ar'"))), search.toLowerCase()),
-          ]
-        },
+      const lieux = await Lieu.findAll({
+        where: { communeId: communeIdInt, id_lieu_parent: null },
         attributes: ['id_lieu', 'nom', 'typePatrimoine'],
-        limit: 5
+        limit: 500
       });
+      const existing = lieux
+        .filter(l => textesNom(l.nom).some(texte => nomsSimilaires(texte, search)))
+        .slice(0, 5);
       res.json({
         success: true,
         data: {
