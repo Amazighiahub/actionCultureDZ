@@ -488,6 +488,13 @@ class UserService extends BaseService {
     return true;
   }
 
+  /** Lien « Ne plus recevoir ces annonces » des e-mails envoyés aux inscrits */
+  async unsubscribeAnnonces(userId) {
+    await this.repository.update(userId, { notifications_evenements: false });
+    this.logger.info(`Désinscription des annonces par e-mail: ${userId}`);
+    return true;
+  }
+
   async exportMyData(userId) {
     const models = this.repository.models;
     // unscoped : le defaultScope masque les IP de consentement, qui font partie des données à remettre

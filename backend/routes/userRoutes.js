@@ -116,6 +116,8 @@ const initUserRoutes = (models, authMiddleware) => {
   // Désinscription newsletter : lien signé dans chaque email (GET) et bouton « Se désabonner » des messageries (POST, RFC 8058)
   router.get('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
   router.post('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
+  router.get('/annonces/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeAnnonces(req, res)));
+  router.post('/annonces/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeAnnonces(req, res)));
   router.get('/profile/export', authenticate, asyncHandler((req, res) => gdprController.exportMyData(req, res)));
 
   // Recherche utilisateurs (reservee aux connectes, userAdminController gere

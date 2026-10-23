@@ -978,11 +978,12 @@ async envoyerNewsletter(contenu, filtres = {}) {
     let offset = 0;
     let totalNotified = 0;
     let totalSkipped = 0;
+    const destinatairesEmail = [];
 
     while (true) {
       const users = await this.models.User.findAll({
         where: targetWhere,
-        attributes: ['id_user', 'email', 'preferences_notification'],
+        attributes: ['id_user', 'email', 'preferences_notification', 'notifications_email', 'notifications_evenements'],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
@@ -1011,20 +1012,12 @@ async envoyerNewsletter(contenu, filtres = {}) {
         totalNotified += usersToNotify.length;
       }
 
-      // Envoi email si demandé
+      // E-mail si demandé : sauf à ceux qui ont refusé les e-mails ou les annonces (préférences,
+      // ou lien « Ne plus recevoir ces annonces »)
       if (data.sendEmail !== false) {
-        const htmlBody = `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#1a1a1a">${title}</h2>
-            <p style="color:#444;line-height:1.6;white-space:pre-wrap">${message}</p>
-            <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-            <p style="color:#999;font-size:12px">Taladz — ActionCulture DZ</p>
-          </div>`;
-        const textBody = `${title}\n\n${message}\n\n--\nTaladz — ActionCulture DZ`;
         for (const user of usersToNotify) {
-          if (user.email) {
-            this.emailService.sendEmail(user.email, title, htmlBody, null, textBody)
-              ?.catch(err => logger.warn(`Broadcast email failed for ${maskEmail(user.email)}:`, err.message));
+          if (user.email && user.notifications_email !== false && user.notifications_evenements !== false) {
+            destinatairesEmail.push({ id_user: user.id_user, email: user.email });
           }
         }
       }
@@ -1042,10 +1035,57 @@ async envoyerNewsletter(contenu, filtres = {}) {
       });
     }
 
+    // Les e-mails partent un par un, en arrière-plan : envoyés tous en même temps, une partie
+    // était refusée par la messagerie sans que personne ne le voie
+    if (destinatairesEmail.length > 0) {
+      this._envoyerAnnonceParEmail(destinatairesEmail, { title, message })
+        .catch(err => logger.error('Envoi des e-mails d’annonce interrompu:', err.message));
+    }
+
     return {
       total_users: totalTargetUsers, notified: totalNotified,
-      skipped: totalSkipped, target, type, timestamp: new Date()
+      skipped: totalSkipped, emails: destinatairesEmail.length, target, type, timestamp: new Date()
     };
+  }
+
+  /**
+   * E-mail d'une annonce (titre + message en texte) : texte échappé, liens cliquables,
+   * lien « Ne plus recevoir ces annonces ». Envoi un par un avec une courte pause.
+   * @returns {Promise<{ envoyes: number, echecs: number }>}
+   */
+  async _envoyerAnnonceParEmail(destinataires, { title, message }, { pauseMs = 300 } = {}) {
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const avecLiens = (texte) => esc(texte).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#6b6b2e">${url}</a>`);
+    const html = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1a1a1a">${esc(title)}</h2>
+            <p style="color:#444;line-height:1.6;white-space:pre-wrap">${avecLiens(message)}</p>
+            <p style="color:#999;font-size:12px;margin-top:24px">Tala DZ — taladz.com</p>
+          </div>`;
+    let envoyes = 0;
+    let echecs = 0;
+    for (const [index, user] of destinataires.entries()) {
+      const url = buildUnsubscribeUrl(user.id_user, 'annonces');
+      try {
+        const res = await this.emailService.sendEmail(
+          user.email, title, withUnsubscribeFooter(html, url, 'annonces'), null,
+          `${title}\n\n${message}\n\n--\nTala DZ — taladz.com\nNe plus recevoir ces annonces : ${url}`,
+          { headers: unsubscribeHeaders(url) }
+        );
+        if (res && res.success === false) {
+          echecs++;
+          logger.warn(`E-mail d’annonce non envoyé à ${maskEmail(user.email)}: ${res.error}`);
+        } else {
+          envoyes++;
+        }
+      } catch (err) {
+        echecs++;
+        logger.warn(`E-mail d’annonce non envoyé à ${maskEmail(user.email)}:`, err.message);
+      }
+      if (pauseMs && index < destinataires.length - 1) await new Promise(resolve => setTimeout(resolve, pauseMs));
+    }
+    logger.info(`Annonce « ${title} » : ${envoyes} e-mail(s) envoyé(s), ${echecs} échec(s)`);
+    return { envoyes, echecs };
   }
   // ========================================================================
   // MÉTHODES USER-FACING (appelées par NotificationController)

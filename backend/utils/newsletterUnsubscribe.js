@@ -8,21 +8,26 @@ const crypto = require('crypto');
 
 const secret = () => process.env.NEWSLETTER_SECRET || process.env.JWT_SECRET || '';
 
-function signUnsubscribe(userId) {
-  return crypto.createHmac('sha256', secret()).update(`newsletter-unsubscribe:${userId}`).digest('hex');
+// Listes auxquelles on peut renoncer par lien : la newsletter (accord préalable) et les annonces
+// d'événements envoyées aux inscrits (refus possible à tout moment). Signatures distinctes :
+// un lien de l'une ne désinscrit pas de l'autre.
+const LISTES = { newsletter: 'newsletter', annonces: 'annonces' };
+
+function signUnsubscribe(userId, liste = 'newsletter') {
+  return crypto.createHmac('sha256', secret()).update(`${LISTES[liste] || 'newsletter'}-unsubscribe:${userId}`).digest('hex');
 }
 
-function verifyUnsubscribe(userId, token) {
+function verifyUnsubscribe(userId, token, liste = 'newsletter') {
   if (!secret() || !/^\d+$/.test(String(userId)) || typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
     return false;
   }
-  const expected = Buffer.from(signUnsubscribe(userId), 'hex');
+  const expected = Buffer.from(signUnsubscribe(userId, liste), 'hex');
   return crypto.timingSafeEqual(expected, Buffer.from(token, 'hex'));
 }
 
-function buildUnsubscribeUrl(userId) {
+function buildUnsubscribeUrl(userId, liste = 'newsletter') {
   const base = (process.env.API_URL || process.env.BASE_URL || '').replace(/\/+$/, '');
-  return `${base}/api/users/newsletter/unsubscribe?u=${userId}&t=${signUnsubscribe(userId)}`;
+  return `${base}/api/users/${LISTES[liste] || 'newsletter'}/unsubscribe?u=${userId}&t=${signUnsubscribe(userId, liste)}`;
 }
 
 // En-têtes reconnus par Gmail / Outlook (bouton « Se désabonner », RFC 8058)
@@ -33,11 +38,15 @@ function unsubscribeHeaders(url) {
   };
 }
 
-function withUnsubscribeFooter(html, url) {
+function withUnsubscribeFooter(html, url, liste = 'newsletter') {
+  const pourquoi = liste === 'annonces'
+    ? 'Vous recevez cet email car vous êtes inscrit(e) sur Tala DZ.'
+    : 'Vous recevez cet email car vous êtes abonné(e) à la newsletter.';
+  const lien = liste === 'annonces' ? 'Ne plus recevoir ces annonces' : 'Se désabonner';
   return `${html || ''}
 <hr style="margin-top:24px;border:none;border-top:1px solid #ddd">
-<p style="font-size:12px;color:#777">Vous recevez cet email car vous êtes abonné(e) à la newsletter.
-<a href="${url}">Se désabonner</a></p>`;
+<p style="font-size:12px;color:#777">${pourquoi}
+<a href="${url}">${lien}</a></p>`;
 }
 
 module.exports = {

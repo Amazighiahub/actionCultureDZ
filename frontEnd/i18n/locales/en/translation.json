@@ -61,7 +61,7 @@
         "and": "and the",
         "privacy": "privacy policy"
       },
-      "newsletter": "I wish to receive news and updates by email",
+      "newsletter": "Yes, send me the Tala DZ cultural newsletter: events, festivals and heritage near me (unsubscribe in one click)",
       "registering": "Registering...",
       "createAccount": "Create My Account",
       "requiredFieldsLegend": "* Required field",
@@ -2034,7 +2034,11 @@
     "emailEnabled": "✓ Email notifications enabled",
     "emailDisabled": "✗ Email notifications disabled",
     "smsEnabled": "✓ SMS notifications enabled",
-    "smsDisabled": "✗ SMS notifications disabled"
+    "smsDisabled": "✗ SMS notifications disabled",
+    "annonces": "Event announcements",
+    "annoncesDesc": "New events and Tala DZ announcements, on the site and by email. Reminders and changes for events you registered for are always sent.",
+    "newsletter": "Newsletter",
+    "newsletterDesc": "The Tala DZ cultural newsletter, by email."
   },
   "notifications_notifications": {
     "voir_plus": "See more →",
@@ -2404,7 +2408,8 @@
       "sendError": "Error sending notification",
       "titleRequired": "Title is required",
       "messageRequired": "Message is required",
-      "noRecipient": "Choose a recipient"
+      "noRecipient": "Choose a recipient",
+      "emailsQueued": "{{n}} email(s) being sent (a few minutes)."
     },
     "moderation": {
       "title": "Moderation",

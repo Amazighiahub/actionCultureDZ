@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Bell,
   Mail,
-  MessageSquare,
   Settings,
   Save,
   ArrowLeft,
@@ -104,17 +103,10 @@ export default function NotificationPreferences() {
   const navigate = useNavigate();
   const { requestNotificationPermission } = useNotifications();
 
+  // Seuls les choix enregistrés par le serveur sont proposés (SMS, rappels… n'étaient enregistrés nulle part)
   const [preferences, setPreferences] = useState<NotificationPreferences>({
-    global: {
-      actives: true,
-      email: true,
-      sms: false
-    },
-    types: {
-      nouveauxEvenements: true,
-      modificationsProgramme: true,
-      rappels: true
-    }
+    global: { email: true, push: true, newsletter: false },
+    types: { evenements: true, commentaires: true, favoris: true }
   });
 
   const [loading, setLoading] = useState(true);
@@ -175,7 +167,7 @@ export default function NotificationPreferences() {
         types: preferences.types
       };
 
-      await notificationService.updatePreferences(updateData);
+      setPreferences(await notificationService.updatePreferences(updateData));
 
       setSaved(true);
       setHasChanges(false);
@@ -282,26 +274,10 @@ export default function NotificationPreferences() {
           icon={<Settings className="w-5 h-5" />}>
 
           <PreferenceItem
-            label={t("notifications_preferences.label_notifications_actives")}
-            description={t("notifications_preferences.description_activer_dsactiver_toutes")}
-            checked={preferences.global.actives}
-            onChange={(checked) => updateGlobalPreference('actives', checked)} />
-
-          
-          <PreferenceItem
             label={t("notifications_preferences.label_notifications_par_email")}
             description={t("notifications_preferences.description_recevoir_les_notifications")}
             checked={preferences.global.email}
-            onChange={(checked) => updateGlobalPreference('email', checked)}
-            disabled={!preferences.global.actives} />
-
-          
-          <PreferenceItem
-            label={t("notifications_preferences.label_notifications_sms")}
-            description={t("notifications_preferences.description_recevoir_les_notifications_1")}
-            checked={preferences.global.sms}
-            onChange={(checked) => updateGlobalPreference('sms', checked)}
-            disabled={!preferences.global.actives} />
+            onChange={(checked) => updateGlobalPreference('email', checked)} />
 
         </PreferenceSection>
 
@@ -312,27 +288,16 @@ export default function NotificationPreferences() {
           icon={<Bell className="w-5 h-5" />}>
 
           <PreferenceItem
-            label={t("notifications_preferences.label_nouveaux_vnements")}
-            description={t("notifications_preferences.description_tre_notifi_lors")}
-            checked={preferences.types.nouveauxEvenements}
-            onChange={(checked) => updateTypePreference('nouveauxEvenements', checked)}
-            disabled={!preferences.global.actives} />
+            label={t('notifications_preferences.annonces', 'Annonces d’événements')}
+            description={t('notifications_preferences.annoncesDesc', 'Nouveaux événements et annonces de Tala DZ, sur le site et par e-mail. Les rappels et changements des événements où vous êtes inscrit(e) sont toujours envoyés.')}
+            checked={preferences.types.evenements}
+            onChange={(checked) => updateTypePreference('evenements', checked)} />
 
-          
           <PreferenceItem
-            label={t("notifications_preferences.label_modifications_programme")}
-            description={t("notifications_preferences.description_recevoir_des_alertes")}
-            checked={preferences.types.modificationsProgramme}
-            onChange={(checked) => updateTypePreference('modificationsProgramme', checked)}
-            disabled={!preferences.global.actives} />
-
-          
-          <PreferenceItem
-            label={t("notifications_preferences.label_rappels_dvnements")}
-            description={t("notifications_preferences.description_recevoir_rappel_24h")}
-            checked={preferences.types.rappels}
-            onChange={(checked) => updateTypePreference('rappels', checked)}
-            disabled={!preferences.global.actives} />
+            label={t('notifications_preferences.newsletter', 'Newsletter')}
+            description={t('notifications_preferences.newsletterDesc', 'La lettre d’information culturelle de Tala DZ, par e-mail.')}
+            checked={preferences.global.newsletter}
+            onChange={(checked) => updateGlobalPreference('newsletter', checked)} />
 
         </PreferenceSection>
 
@@ -363,18 +328,6 @@ export default function NotificationPreferences() {
                   {preferences.global.email ?
                   t('notifications_preferences.emailEnabled', '✓ Notifications par email activées') :
                   t('notifications_preferences.emailDisabled', '✗ Notifications par email désactivées')}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <MessageSquare className="w-5 h-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="font-medium">{t("notifications_preferences.sms")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {preferences.global.sms ?
-                  t('notifications_preferences.smsEnabled', '✓ Notifications SMS activées') :
-                  t('notifications_preferences.smsDisabled', '✗ Notifications SMS désactivées')}
                 </p>
               </div>
             </div>

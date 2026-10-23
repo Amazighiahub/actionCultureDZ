@@ -9,7 +9,6 @@ import {
   NotificationSummary,
   NotificationSummaryAPI,
   NotificationPreferences,
-  NotificationPreferencesAPI,
   NotificationListResponse,
   LoadNotificationsOptions,
   UpdatePreferencesData,
@@ -238,7 +237,7 @@ async getNotifications(
    */
   async getPreferences(): Promise<NotificationPreferences> {
     try {
-      const response = await httpClient.get<NotificationPreferences | NotificationPreferencesAPI>(
+      const response = await httpClient.get<NotificationPreferences>(
         API_ENDPOINTS.notifications.preferences
       );
 
@@ -246,23 +245,18 @@ async getNotifications(
         throw new Error(response.error || 'Erreur lors de la récupération');
       }
 
-      // Si c'est déjà au bon format
-      if ('global' in response.data && response.data.global.actives !== undefined) {
-        return response.data as NotificationPreferences;
-      }
-
-      // Sinon on convertit depuis le format API
-      const apiPrefs = response.data as NotificationPreferencesAPI;
+      // Format du serveur ; valeurs absentes : oui, sauf la newsletter (accord préalable)
+      const d = response.data as Partial<NotificationPreferences>;
       return {
         global: {
-          actives: true, // Par défaut si non disponible
-          email: apiPrefs.email_enabled,
-          sms: false // Par défaut si non disponible
+          email: d.global?.email ?? true,
+          push: d.global?.push ?? true,
+          newsletter: d.global?.newsletter === true
         },
         types: {
-          nouveauxEvenements: apiPrefs.types.evenements.inscription,
-          modificationsProgramme: apiPrefs.types.evenements.modification,
-          rappels: apiPrefs.types.evenements.rappel
+          evenements: d.types?.evenements ?? true,
+          commentaires: d.types?.commentaires ?? true,
+          favoris: d.types?.favoris ?? true
         }
       };
     } catch (error) {
@@ -282,11 +276,12 @@ async getNotifications(
         preferences
       );
 
-      if (!response.success || !response.data) {
+      if (!response.success) {
         throw new Error(response.error || 'Erreur lors de la mise à jour');
       }
 
-      return response.data;
+      // Le serveur renvoie les préférences enregistrées (sinon, on les relit)
+      return response.data ? response.data : this.getPreferences();
     } catch (error) {
       throw error;
     }
