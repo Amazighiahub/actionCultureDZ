@@ -176,7 +176,9 @@ class NotificationController extends BaseController {
   async updatePreferences(req, res) {
     try {
       await this.notificationService.updateUserPreferences(req.user.id_user, req.body);
-      this._sendMessage(res, req.t('notification.preferencesUpdated'));
+      // Préférences enregistrées renvoyées : sans elles, la page affichait une erreur alors que tout était sauvé
+      const preferences = await this.notificationService.getUserPreferences(req.user.id_user);
+      this._sendSuccess(res, preferences);
     } catch (error) {
       this._handleError(res, error);
     }

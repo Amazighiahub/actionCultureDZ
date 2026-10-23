@@ -140,12 +140,16 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
 
       if (result.success) {
         const count = result.data?.notified ?? 0;
+        // E-mails : envoyés un par un en arrière-plan, sauf à ceux qui ont refusé les annonces
+        const emails = (result.data as { emails?: number } | undefined)?.emails;
         toast({
           title: t('admin.notifications.sent'),
           description: t(`admin.notifications.sentCount_${count === 1 ? 'one' : 'other'}`, {
             count,
             defaultValue: `Envoyé à ${count} utilisateur(s)`
-          })
+          }) + (typeof emails === 'number'
+            ? ' ' + t('admin.notifications.emailsQueued', '{{n}} e-mail(s) en cours d’envoi (quelques minutes).', { n: emails })
+            : '')
         });
         onClose();
       }

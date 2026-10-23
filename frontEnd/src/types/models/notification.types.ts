@@ -177,16 +177,20 @@ export function mapAPISummaryToSummary(apiSummary: NotificationSummaryAPI): Noti
 // TYPES POUR LES PRÉFÉRENCES
 // ================================================
 
+/** Préférences enregistrées par le serveur (GET/PUT /notifications/preferences) */
 export interface NotificationPreferences {
   global: {
-    actives: boolean;
+    /** Recevoir des e-mails (tous types) */
     email: boolean;
-    sms: boolean;
+    push: boolean;
+    /** Newsletter : accord préalable, non par défaut */
+    newsletter: boolean;
   };
   types: {
-    nouveauxEvenements: boolean;
-    modificationsProgramme: boolean;
-    rappels: boolean;
+    /** Annonces d'événements (sur le site et par e-mail) ; lien « Ne plus recevoir ces annonces » */
+    evenements: boolean;
+    commentaires: boolean;
+    favoris: boolean;
   };
 }
 

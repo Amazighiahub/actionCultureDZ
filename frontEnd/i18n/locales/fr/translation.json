@@ -89,7 +89,7 @@
       "biography": "Biographie",
       "biographyPlaceholder": "Présentez-vous, parlez de votre parcours, de vos projets, de vos inspirations... (minimum 50 caractères)",
       "charactersMinimum": "caractères (minimum 50)",
-      "newsletter": "Je souhaite recevoir les actualités et nouveautés par email",
+      "newsletter": "Oui, je veux recevoir la lettre culturelle de Tala DZ : événements, festivals et patrimoine près de chez moi (désinscription en un clic)",
       "registering": "Inscription en cours...",
       "createAccount": "Créer mon compte",
       "requiredFieldsLegend": "* Champ obligatoire",
@@ -2059,7 +2059,11 @@
     "emailEnabled": "✓ Notifications par email activées",
     "emailDisabled": "✗ Notifications par email désactivées",
     "smsEnabled": "✓ Notifications SMS activées",
-    "smsDisabled": "✗ Notifications SMS désactivées"
+    "smsDisabled": "✗ Notifications SMS désactivées",
+    "annonces": "Annonces d’événements",
+    "annoncesDesc": "Nouveaux événements et annonces de Tala DZ, sur le site et par e-mail. Les rappels et changements des événements où vous êtes inscrit(e) sont toujours envoyés.",
+    "newsletter": "Newsletter",
+    "newsletterDesc": "La lettre d’information culturelle de Tala DZ, par e-mail."
   },
   "notifications_notifications": {
     "voir_plus": "Voir plus →",
@@ -2549,7 +2553,8 @@
       "sendError": "Erreur lors de l'envoi de la notification",
       "titleRequired": "Le titre est requis",
       "messageRequired": "Le message est requis",
-      "noRecipient": "Choisissez un destinataire"
+      "noRecipient": "Choisissez un destinataire",
+      "emailsQueued": "{{n}} e-mail(s) en cours d’envoi (quelques minutes)."
     },
     "moderation": {
       "title": "Modération",

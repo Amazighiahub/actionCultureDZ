@@ -71,6 +71,24 @@ class GdprController extends BaseController {
     }
   }
 
+  /** Lien « Ne plus recevoir ces annonces » (sans connexion, signé) */
+  async unsubscribeAnnonces(req, res) {
+    const { verifyUnsubscribe } = require('../utils/newsletterUnsubscribe');
+    const userId = req.query.u ?? req.body?.u;
+    const token = req.query.t ?? req.body?.t;
+    if (!verifyUnsubscribe(userId, token, 'annonces')) {
+      return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+    }
+    try {
+      await this.userService.unsubscribeAnnonces(parseInt(userId, 10));
+      if (req.method === 'POST') return res.json({ success: true });
+      res.type('html').send('<!doctype html><meta charset="utf-8"><title>Désinscription</title>'
+        + '<p>Vous ne recevrez plus les annonces de Tala DZ par e-mail. Vous pouvez changer d’avis dans vos préférences de notifications.</p>');
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   // ============================================================================
   // ART. 20 - DROIT A LA PORTABILITE
   // ============================================================================
