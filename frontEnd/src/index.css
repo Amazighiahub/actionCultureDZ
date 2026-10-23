@@ -948,8 +948,9 @@ html, body, #root {
 @media (max-width: 639px) {
   [role="listbox"] { max-height: 50dvh; }
 
+  /* Pas de marge : les fenêtres sont centrées (translate -50 %) et leur largeur est déjà
+     limitée à l'écran − 2rem ; une marge les décalait de 16 px vers la droite */
   [role="dialog"] {
-    margin: 1rem;
     border-radius: 0.75rem;
   }
 }

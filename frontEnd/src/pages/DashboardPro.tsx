@@ -985,7 +985,7 @@ const DashboardPro = () => {
         open={gestionEvenement !== null}
         onOpenChange={(open) => !open && setGestionEvenement(null)}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-4xl max-h-[90vh] overflow-y-auto [&>*]:min-w-0" aria-describedby={undefined}>
           <DialogTitle className="sr-only">
             {t('gestion.title', "Gestion de l'événement")}{gestionEvenement?.nom ? ` – ${gestionEvenement.nom}` : ''}
           </DialogTitle>

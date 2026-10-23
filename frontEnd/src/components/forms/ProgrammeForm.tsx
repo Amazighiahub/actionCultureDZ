@@ -381,7 +381,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const isReadOnly = mode === 'view';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
       <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
 
       {/* Messages d'erreur et succès */}
@@ -415,7 +415,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
       {/* Onglets */}
       <Tabs value={onglet} onValueChange={setOnglet} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full h-auto grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="basic">{t('programme.form.tabs.basic')}</TabsTrigger>
           <TabsTrigger value="schedule">{t('programme.form.tabs.schedule')}</TabsTrigger>
           <TabsTrigger value="participants">{t('programme.form.tabs.participants')}</TabsTrigger>
