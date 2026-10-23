@@ -3800,7 +3800,8 @@
     "serviceValidationFailed": "خطأ في المصادقة",
     "imageUploadFailed": "فشل رفع الصورة (الكتلة {{index}})",
     "notFoundDesc": "المورد المطلوب غير موجود.",
-    "notFound": "المورد غير موجود"
+    "notFound": "المورد غير موجود",
+    "rateLimitWait": "أعد المحاولة بعد {{minutes}} دقيقة."
   },
   "ajouterArtisanat": {
     "title": "إضافة منتج حرفي",

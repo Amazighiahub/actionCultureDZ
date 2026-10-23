@@ -3698,7 +3698,8 @@
     "serviceValidationFailed": "Validation error",
     "imageUploadFailed": "Image upload failed (block {{index}})",
     "notFoundDesc": "The requested resource could not be found.",
-    "notFound": "Resource not found"
+    "notFound": "Resource not found",
+    "rateLimitWait": "Try again in {{minutes}} minute(s)."
   },
   "ajouterArtisanat": {
     "title": "Add a craft product",
