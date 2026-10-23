@@ -65,6 +65,8 @@ interface DashboardItem {
   id_oeuvre?: number;
   id_evenement?: number;
   id_site?: number;
+  /** Sites patrimoine : identifiant renvoyé par le serveur */
+  id_lieu?: number;
   id_service?: number;
   id_artisanat?: number;
   titre?: unknown;
@@ -103,7 +105,8 @@ interface ItemRowProps {
   type: string;
   onView: (item: DashboardItem) => void;
   onEdit: (item: DashboardItem) => void;
-  onDelete: (item: DashboardItem) => void;
+  /** Absent : pas de bouton « Supprimer » (un site patrimoine ne se supprime que par la modération) */
+  onDelete?: (item: DashboardItem) => void;
 }
 
 type MultiLangValue = string | Record<string, string> | undefined | null;
@@ -357,6 +360,7 @@ const DashboardPro = () => {
 
               <Edit className="h-4 w-4" />
             </Button>
+            {onDelete &&
             <Button
               variant="ghost"
               size="sm"
@@ -365,6 +369,7 @@ const DashboardPro = () => {
 
               <Trash2 className="h-4 w-4" />
             </Button>
+            }
           </div>
         </div>
       </div>);
@@ -376,7 +381,7 @@ const DashboardPro = () => {
     const routes: Record<string, string> = {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
-      patrimoine: `/patrimoine/${item.id_site || item.id}`,
+      patrimoine: `/patrimoine/${item.id_lieu || item.id_site || item.id}`,
       service: `/modifier-service/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
@@ -386,7 +391,7 @@ const DashboardPro = () => {
     const routes: Record<string, string> = {
       oeuvre: `/modifier-oeuvre/${item.id_oeuvre}`,
       evenement: `/modifier-evenement/${item.id_evenement}`,
-      patrimoine: `/modifier-patrimoine/${item.id_site || item.id}`,
+      patrimoine: `/modifier-patrimoine/${item.id_lieu || item.id_site || item.id}`,
       service: `/modifier-service/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
@@ -402,7 +407,7 @@ const DashboardPro = () => {
     const ids: Record<string, number | undefined> = {
       oeuvre: item?.id_oeuvre,
       evenement: item?.id_evenement,
-      patrimoine: item?.id_site || item?.id,
+      patrimoine: item?.id_lieu || item?.id_site || item?.id,
       service: item?.id || item?.id_service,
       // (manquait : la suppression envoyait DELETE /artisanat/undefined)
       artisanat: item?.id_artisanat || item?.id
@@ -953,12 +958,11 @@ const DashboardPro = () => {
                   mesPatrimoines?.items && mesPatrimoines.items.length > 0 ?
                   filterBySearch(mesPatrimoines.items as DashboardItem[]).map((site) =>
                   <ItemRow
-                    key={site.id_site || site.id}
+                    key={site.id_lieu || site.id_site || site.id}
                     item={site}
                     type="patrimoine"
                     onView={() => handleView('patrimoine', site)}
-                    onEdit={() => handleEdit('patrimoine', site)}
-                    onDelete={() => handleDeleteItem('patrimoine', site)} />
+                    onEdit={() => handleEdit('patrimoine', site)} />
 
                   ) :
 

@@ -337,12 +337,10 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
       `sites_patrimoine.${format}`
     );
   }
+  /** Sites et points de visite créés par le compte connecté, tous statuts (tableau de bord pro) */
   async getMySites(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<SitePatrimoine>>> {
-  return this.getAll({
-    ...params,
-    user_id: 'current'
-  });
-}
+    return httpClient.get<PaginatedResponse<SitePatrimoine>>('/patrimoine/mes-sites', params);
+  }
 }
 
 export const patrimoineService = new PatrimoineService();

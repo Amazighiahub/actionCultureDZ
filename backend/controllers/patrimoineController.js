@@ -7,6 +7,10 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
 const logger = require('../utils/logger');
+const { mergeTranslations } = require('../helpers/i18n');
+
+// Champs qu'un créateur (professionnel) peut modifier sur son site
+const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
 
 class PatrimoineController extends BaseController {
   get patrimoineService() {
@@ -179,8 +183,44 @@ class PatrimoineController extends BaseController {
     });
   }
 
+  /** Modération (administrateur ou modérateur) */
+  _estModeration(req) {
+    return req.user?.isAdmin === true || req.user?.isModerateur === true;
+  }
+
+  /** 403 si le compte ne peut pas modifier ce site (ni modération, ni créateur) ; true si autorisé */
+  async _verifierDroitModification(req, res) {
+    const ok = await this.patrimoineService.peutModifier(parseInt(req.params.id), {
+      userId: req.user?.id_user, isModerator: this._estModeration(req)
+    });
+    if (!ok) {
+      res.status(403).json({
+        success: false,
+        error: req.t('patrimoine.editForbidden', 'Seuls le créateur du site et la modération peuvent le modifier.')
+      });
+    }
+    return ok;
+  }
+
+  /** Sites et points de visite créés par le compte connecté (tous statuts) */
+  async mesSites(req, res) {
+    const { page, limit } = this._paginate(req);
+    const result = await this.patrimoineService.findAllSites({ page, limit, createurId: req.user.id_user });
+    res.json({ success: true, data: result.data.map(s => s.toCardJSON(req.lang)), pagination: result.pagination });
+  }
+
   async update(req, res) {
-    const site = await this.patrimoineService.update(parseInt(req.params.id), req.body);
+    if (!(await this._verifierDroitModification(req, res))) return;
+    // Le créateur modifie la fiche du site ; le rattachement, l'ordre de visite et les listes
+    // (monuments, services, médias) restent à la modération
+    let donnees = req.body;
+    if (!this._estModeration(req)) {
+      donnees = {};
+      for (const champ of CHAMPS_MODIFIABLES_CREATEUR) {
+        if (req.body[champ] !== undefined) donnees[champ] = req.body[champ];
+      }
+    }
+    const site = await this.patrimoineService.update(parseInt(req.params.id), donnees);
     res.json({
       success: true,
       message: req.t('patrimoine.updated'),
@@ -266,21 +306,22 @@ class PatrimoineController extends BaseController {
       const userId = req.user?.id_user;
       const allowedFields = ['histoire', 'gastronomie', 'traditions', 'artisanat_local', 'personnalites', 'architecture', 'infos_pratiques', 'referencesHistoriques', 'description', 'horaires'];
 
-      // Filtrer seulement les champs autorisés
+      // Trouver ou créer le DetailLieu
+      const models = container.patrimoineService.models;
+      let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
+
+      // Filtrer seulement les champs autorisés ; les langues sont fusionnées : une contribution
+      // dans une langue ne doit pas effacer les autres traductions de la section
       const updates = {};
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
-          updates[field] = req.body[field];
+          updates[field] = mergeTranslations(detail?.[field], req.body[field]);
         }
       }
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ success: false, error: 'Aucun champ valide à mettre à jour' });
       }
-
-      // Trouver ou créer le DetailLieu
-      const models = container.patrimoineService.models;
-      let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
 
       if (!detail) {
         detail = await models.DetailLieu.create({ id_lieu: lieuId, ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: 1 });
@@ -437,6 +478,7 @@ class PatrimoineController extends BaseController {
   }
 
   async deleteMedia(req, res) {
+    if (!(await this._verifierDroitModification(req, res))) return;
     const { id, mediaId } = req.params;
     await this.patrimoineService.deleteMedia(id, mediaId);
     res.json({ success: true, message: req.t('common.deleted') });

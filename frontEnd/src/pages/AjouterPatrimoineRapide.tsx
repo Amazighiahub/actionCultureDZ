@@ -35,14 +35,10 @@ const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Types alignés sur le backend (lieu.js typePatrimoine ENUM)
-const TYPES_PATRIMOINE = [
-  'monument', 'musee', 'ville_village', 'site_archeologique',
-  'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre'
-] as const;
 
 interface FormData {
   nom: { fr: string; ar: string; en: string; [key: string]: string };

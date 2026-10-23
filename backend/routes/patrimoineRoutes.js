@@ -20,6 +20,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
   // Actions destructives sur un site (partagé) : réservées à la modération
   const requireModeration = requireRole('Administrateur', 'Moderateur');
+  // Modification d'un site : modération, ou professionnel validé (le contrôleur vérifie qu'il en est le créateur)
+  const requireModerationOuPro = (req, res, next) =>
+    (req.user?.isAdmin || req.user?.isModerateur) ? next() : requireValidatedProfessional(req, res, next);
 
   // Relevé Excel de points de visite (modèle Taladz) : lu en mémoire, jamais stocké
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -47,6 +50,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   const cachePublic = publicHttpCache(300);
 
   router.get('/', cachePublic, patrimoineController.wrap('list'));
+  // Sites et points créés par le compte connecté (tableau de bord professionnel), tous statuts
+  router.get('/mes-sites', authenticate, requireModerationOuPro, patrimoineController.wrap('mesSites'));
   router.get('/popular', cachePublic, patrimoineController.wrap('popular'));
   router.get('/search', cachePublic, patrimoineController.wrap('search'));
   // Vérifier les doublons avant création (nom + commune)
@@ -100,7 +105,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     [body('ordre').isArray({ min: 1, max: 200 }).withMessage('ordre doit être la liste des points')],
     handleValidationErrors,
     patrimoineController.wrap('reordonnerPoints'));
-  router.delete('/:id/medias/:mediaId', authenticate, requireModeration, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  router.delete('/:id/medias/:mediaId', authenticate, requireModerationOuPro, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // Enrichir les détails culturels d'un site (contribution collaborative)
@@ -495,7 +500,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     ],
     handleValidationErrors,
     patrimoineController.wrap('create'));
-  router.put('/:id', authenticate, requireModeration, validateId(),
+  router.put('/:id', authenticate, requireModerationOuPro, validateId(),
     validateStringLengths,
     validateGPS,
     patrimoineController.wrap('update'));

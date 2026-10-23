@@ -75,9 +75,11 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
 
   const openEditor = () => {
     if (typeof content === 'object' && content) {
-      setEditValue({ fr: content.fr || '', ar: content.ar || '', en: content.en || '' });
+      setEditValue({ fr: '', ar: '', en: '', ...content });
     } else if (typeof content === 'string') {
-      setEditValue({ fr: content, ar: '', en: '' });
+      // La page reçoit la section traduite dans la langue affichée : le texte est rangé sous
+      // cette langue (il partait en « fr ») ; le serveur garde les autres traductions
+      setEditValue({ fr: '', ar: '', en: '', [lang]: content });
     } else {
       setEditValue({ fr: '', ar: '', en: '' });
     }

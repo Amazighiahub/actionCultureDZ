@@ -4,7 +4,7 @@
  */
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Headphones, Upload, Loader2 } from 'lucide-react';
+import { Headphones, Upload, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +25,8 @@ interface GuideAudioProps {
   lang: string;
   canUpload: boolean;
   onUploaded: (medias: MediaAudio[]) => void;
+  /** Page de modification du site : bouton « Supprimer » sur chaque enregistrement */
+  onDelete?: (media: MediaAudio) => void;
 }
 
 // Noms des langues dans leur propre écriture : chacun reconnaît la sienne
@@ -41,7 +43,7 @@ const SANS_LANGUE = 'autre';
 const ACCEPT_AUDIO = 'audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/aac,audio/mp4,audio/x-m4a,.m4a,.mp3,.wav,.ogg,.aac';
 const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
 
-const GuideAudio: React.FC<GuideAudioProps> = ({ lieuId, medias, lang, canUpload, onUploaded }) => {
+const GuideAudio: React.FC<GuideAudioProps> = ({ lieuId, medias, lang, canUpload, onUploaded, onDelete }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,10 +112,16 @@ const GuideAudio: React.FC<GuideAudioProps> = ({ lieuId, medias, lang, canUpload
           </div>
           <ul className="space-y-2">
             {(parLangue.get(langueActive) || []).map((m, i) => (
-              <li key={m.id}>
+              <li key={m.id} className="flex items-center gap-2">
                 {/* preload none : rien n'est téléchargé avant que le visiteur appuie sur lecture */}
-                <audio controls preload="none" src={getAssetUrl(m.url)} className="w-full"
+                <audio controls preload="none" src={getAssetUrl(m.url)} className="w-full min-w-0"
                   aria-label={t('patrimoine.audio.recording', 'Enregistrement {{n}} ({{langue}})', { n: i + 1, langue: infoActive?.label || '' })} />
+                {onDelete && (
+                  <Button type="button" variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => onDelete(m)}
+                    aria-label={t('patrimoine.audio.delete', 'Supprimer l’enregistrement {{n}}', { n: i + 1 })}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

@@ -8,6 +8,7 @@ const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
+const { mergeTranslations } = require('../../helpers/i18n');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -407,6 +408,24 @@ class PatrimoineService extends BaseService {
   }
 
   /**
+   * Droit de modifier un site (fiche, photos, audios) : la modération, ou le compte qui l'a créé.
+   * Un point de visite est aussi modifiable par le créateur de son site.
+   * @returns {Promise<boolean>}
+   */
+  async peutModifier(siteId, { userId, isModerator = false } = {}) {
+    if (isModerator) return true;
+    const { Lieu } = this.models || {};
+    const site = await Lieu.findByPk(siteId, { attributes: ['id_lieu', 'id_createur', 'id_lieu_parent'] });
+    if (!site) throw this._notFoundError(siteId);
+    if (userId && site.id_createur === userId) return true;
+    if (userId && site.id_lieu_parent) {
+      const parent = await Lieu.findByPk(site.id_lieu_parent, { attributes: ['id_createur'] });
+      return !!parent && parent.id_createur === userId;
+    }
+    return false;
+  }
+
+  /**
    * Modifier un site patrimonial
    */
   async update(id, data) {
@@ -421,8 +440,9 @@ class PatrimoineService extends BaseService {
 
     return this.repository.withTransaction(async (transaction) => {
       const updateData = {};
-      if (data.nom) updateData.nom = data.nom;
-      if (data.adresse) updateData.adresse = data.adresse;
+      // Champs multilingues fusionnés : envoyer le français seul n'efface plus l'arabe
+      if (data.nom) updateData.nom = mergeTranslations(plain.nom, data.nom);
+      if (data.adresse) updateData.adresse = mergeTranslations(plain.adresse, data.adresse);
       if (data.latitude !== undefined) updateData.latitude = data.latitude;
       if (data.longitude !== undefined) updateData.longitude = data.longitude;
       if (data.typeLieu) updateData.typeLieu = data.typeLieu;
@@ -444,12 +464,12 @@ class PatrimoineService extends BaseService {
       }
 
       let detail = await DetailLieu?.findOne({ where: { id_lieu: lieuId }, transaction });
-      if (data.description !== undefined || data.horaires !== undefined || data.histoire !== undefined) {
+      const champsFiche = ['description', 'horaires', 'histoire', 'referencesHistoriques'];
+      if (champsFiche.some(champ => data[champ] !== undefined)) {
         const detailData = {};
-        if (data.description !== undefined) detailData.description = data.description;
-        if (data.horaires !== undefined) detailData.horaires = data.horaires;
-        if (data.histoire !== undefined) detailData.histoire = data.histoire;
-        if (data.referencesHistoriques !== undefined) detailData.referencesHistoriques = data.referencesHistoriques;
+        for (const champ of champsFiche) {
+          if (data[champ] !== undefined) detailData[champ] = mergeTranslations(detail?.[champ], data[champ]);
+        }
         if (detail) {
           await detail.update(detailData, { transaction });
         } else if (DetailLieu && Object.keys(detailData).length > 0) {

@@ -96,9 +96,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
 
   const openEditor = () => {
     if (typeof content === 'object' && content) {
-      setEditValue({ fr: content.fr || '', ar: content.ar || '', en: content.en || '' });
+      setEditValue({ fr: '', ar: '', en: '', ...content });
     } else if (typeof content === 'string') {
-      setEditValue({ fr: content, ar: '', en: '' });
+      // Texte reçu traduit dans la langue affichée : rangé sous cette langue (le serveur garde les autres)
+      setEditValue({ fr: '', ar: '', en: '', [lang]: content });
     } else {
       setEditValue({ fr: '', ar: '', en: '' });
     }

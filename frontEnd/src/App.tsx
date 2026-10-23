@@ -59,6 +59,7 @@ const AjouterEvenement = React.lazy(() => import('./pages/AjouterEvenement'));
 const AjouterService = React.lazy(() => import('./pages/AjouterService'));
 const AjouterServicePro = React.lazy(() => import('./pages/AjouterServicePro'));
 const AjouterPatrimoineRapide = React.lazy(() => import('./pages/AjouterPatrimoineRapide'));
+const ModifierPatrimoine = React.lazy(() => import('./pages/ModifierPatrimoine'));
 const AjouterArtisanat = React.lazy(() => import('./pages/AjouterArtisanat'));
 const AjouterOrganisation = React.lazy(() => import('./pages/AjouterOrganisation'));
 const EditArticle = React.lazy(() => import('./pages/articles/edit/EditArticle'));
@@ -340,7 +341,7 @@ const App = () => (
               path="/modifier-patrimoine/:id"
               element={
                 <ProfessionalRoute>
-                  <AjouterPatrimoineRapide />
+                  <ModifierPatrimoine />
                 </ProfessionalRoute>
               }
             />
@@ -422,7 +423,7 @@ const App = () => (
               path="/admin/patrimoine/modifier/:id"
               element={
                 <AdminRoute>
-                  <AjouterPatrimoineRapide />
+                  <ModifierPatrimoine />
                 </AdminRoute>
               }
             />
