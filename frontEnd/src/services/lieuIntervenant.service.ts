@@ -20,6 +20,11 @@ export interface LieuIntervenant {
     specialites?: string[];
     biographie?: string | { fr?: string; ar?: string; [k: string]: string | undefined };
     wikipedia_url?: string;
+    date_naissance?: string | null;
+    lieu_naissance?: string | null;
+    date_deces?: string | null;
+    lieu_deces?: string | null;
+    id_user?: number | null;
   };
 }
 

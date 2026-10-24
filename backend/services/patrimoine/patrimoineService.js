@@ -426,6 +426,86 @@ class PatrimoineService extends BaseService {
   }
 
   /**
+   * Nouvelle personnalité d'un site (poète, résistant, potière…) : fiche d'intervenant créée et
+   * rattachée au site en une fois. Le contributeur pourra ensuite modifier la fiche et y relier
+   * ses œuvres. Une personne de même prénom et nom existe déjà : 409, pour la rattacher plutôt.
+   * @returns {Promise<Object>} le lien site ↔ personnalité, avec la fiche
+   */
+  async creerPersonnalite(lieuId, data, { userId } = {}) {
+    const { Lieu, Intervenant, LieuIntervenant } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const texte = (v) => (typeof v === 'string' ? v : (v?.fr || v?.ar || '')).trim();
+    const nom = texte(data.nom);
+    const prenom = texte(data.prenom);
+    if (!nom) throw this._validationError('Le nom de la personnalité est requis');
+
+    // Même prénom et même nom (accents et majuscules ignorés) : la rattacher, pas la recréer
+    const { sequelize } = Intervenant;
+    const memes = await Intervenant.findAll({
+      where: sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(\`nom\`, '$.fr')) COLLATE utf8mb4_0900_ai_ci = ${sequelize.escape(nom)}`),
+      attributes: ['id_intervenant', 'prenom'], limit: 20
+    });
+    const egal = (a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }) === 0;
+    const existant = memes.find(i => egal(texte(i.prenom), prenom));
+    if (existant) {
+      const err = new Error('Cette personnalité existe déjà sur Tala DZ : rattachez-la depuis la recherche');
+      err.statusCode = 409;
+      err.code = 'PERSONNALITE_EXISTANTE';
+      err.data = { id_intervenant: existant.id_intervenant };
+      throw err;
+    }
+
+    const multi = (v) => (v && typeof v === 'object' ? v : (v ? { fr: String(v) } : null));
+    return this.repository.withTransaction(async (transaction) => {
+      const intervenant = await Intervenant.create({
+        nom: multi(data.nom),
+        prenom: multi(data.prenom) || { fr: '' },
+        titre_professionnel: data.titre_professionnel || null,
+        organisation: data.organisation || null,
+        site_web: data.site_web || null,
+        biographie: multi(data.biographie),
+        date_naissance: data.date_naissance || null,
+        lieu_naissance: data.lieu_naissance || null,
+        date_deces: data.date_deces || null,
+        lieu_deces: data.lieu_deces || null,
+        photo_url: data.photo_url || null,
+        wikipedia_url: data.wikipedia_url || null
+      }, { transaction });
+      const ordre = ((await LieuIntervenant.max('ordre', { where: { id_lieu: lieuId }, transaction })) || 0) + 1;
+      const lien = await LieuIntervenant.create({
+        id_lieu: lieuId,
+        id_intervenant: intervenant.id_intervenant,
+        role_sur_site: data.role_sur_site || null,
+        periode: data.periode || null,
+        contexte: data.contexte || null,
+        ordre,
+        id_contributeur: userId || null
+      }, { transaction });
+      return { ...lien.toJSON(), Intervenant: intervenant.toJSON() };
+    });
+  }
+
+  /**
+   * Retirer une personnalité d'un site : la modération, le compte qui l'a rattachée, ou le
+   * créateur du site (auparavant, tout compte connecté pouvait la retirer).
+   * @returns {Promise<'ok'|'introuvable'|'interdit'>}
+   */
+  async retirerPersonnalite(lieuId, lieuIntervenantId, { userId, isModerator = false } = {}) {
+    const { LieuIntervenant, Lieu } = this.models || {};
+    const lien = await LieuIntervenant.findOne({ where: { id_lieu_intervenant: lieuIntervenantId, id_lieu: lieuId } });
+    if (!lien) return 'introuvable';
+    let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
+    if (!autorise && userId) {
+      const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
+      autorise = !!lieu && lieu.id_createur === userId;
+    }
+    if (!autorise) return 'interdit';
+    await lien.destroy();
+    return 'ok';
+  }
+
+  /**
    * Modifier un site patrimonial
    */
   async update(id, data) {

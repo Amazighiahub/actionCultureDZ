@@ -202,6 +202,25 @@ class PatrimoineController extends BaseController {
     return ok;
   }
 
+  /** Nouvelle personnalité du site (fiche créée et rattachée) */
+  async creerPersonnalite(req, res) {
+    const lien = await this.patrimoineService.creerPersonnalite(parseInt(req.params.id, 10), req.body, { userId: req.user.id_user });
+    res.status(201).json({ success: true, data: lien });
+  }
+
+  /** Retirer une personnalité du site (modération, contributeur ou créateur du site) */
+  async retirerPersonnalite(req, res) {
+    const resultat = await this.patrimoineService.retirerPersonnalite(
+      parseInt(req.params.id, 10), parseInt(req.params.lieuIntervenantId, 10),
+      { userId: req.user.id_user, isModerator: this._estModeration(req) }
+    );
+    if (resultat === 'introuvable') return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    if (resultat === 'interdit') {
+      return res.status(403).json({ success: false, error: req.t('patrimoine.personnaliteForbidden', 'Seuls la personne qui l’a ajoutée, le créateur du site et la modération peuvent la retirer.') });
+    }
+    res.json({ success: true });
+  }
+
   /** Sites et points de visite créés par le compte connecté (tous statuts) */
   async mesSites(req, res) {
     const { page, limit } = this._paginate(req);

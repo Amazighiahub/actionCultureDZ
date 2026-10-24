@@ -55,4 +55,19 @@ describe('FicheIntervenantDialog', () => {
     expect(screen.getByDisplayValue('Hammouche')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Enregistrer' })).toBeNull();
   });
+
+  test('nouvelle fiche (personnalité) : nom repris, rien n’est enregistré ici, données rendues', async () => {
+    const onCree = vi.fn(); const onClose = vi.fn();
+    render(<FicheIntervenantDialog idIntervenant={null} creation={{ prenom: 'Mohand', nom: 'Ouhammou' }} onCree={onCree} onClose={onClose} />);
+
+    expect(screen.getByDisplayValue('Ouhammou')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Date de naissance'), { target: { value: '1902-03-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuer' }));
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockPut).not.toHaveBeenCalled();
+    expect(onCree).toHaveBeenCalledWith(expect.objectContaining({ prenom: { fr: 'Mohand' }, nom: { fr: 'Ouhammou' }, date_naissance: '1902-03-01' }));
+    expect(onClose).toHaveBeenCalled();
+  });
 });
+

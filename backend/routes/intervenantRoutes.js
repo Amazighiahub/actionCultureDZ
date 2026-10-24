@@ -242,6 +242,11 @@ const initIntervenantRoutes = (models, authMiddleware) => {
       body('photo_url').optional({ values: 'falsy' }).trim().isURL(),
       body('titre_professionnel').optional({ values: 'null' }).isString().isLength({ max: 255 }),
       body('organisation').optional({ values: 'null' }).isString().isLength({ max: 255 }),
+      body('date_naissance').optional({ values: 'falsy' }).isISO8601(),
+      body('date_deces').optional({ values: 'falsy' }).isISO8601(),
+      body('lieu_naissance').optional({ values: 'null' }).isString().isLength({ max: 255 }),
+      body('lieu_deces').optional({ values: 'null' }).isString().isLength({ max: 255 }),
+      body('wikipedia_url').optional({ values: 'falsy' }).trim().isURL(),
       body('wilaya_id').optional().isInt({ min: 1 }),
       body('disponible').optional().isBoolean()
     ],

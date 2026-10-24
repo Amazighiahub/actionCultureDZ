@@ -1,7 +1,11 @@
 /**
- * FicheIntervenantDialog — fiche complète d'un intervenant (photo, titre, organisme, biographie).
+ * FicheIntervenantDialog — fiche complète d'un intervenant (photo, titre, organisme, biographie,
+ * dates de vie). Sert à modifier une fiche existante, ou à préparer une nouvelle fiche (mode
+ * « creation », ex. nouvelle personnalité d'un site patrimonial) : les données sont alors rendues
+ * à l'appelant, qui les enregistre.
  * Un professionnel ne peut modifier que les intervenants qu'il a ajoutés (présents uniquement dans
- * ses événements, sans compte sur le site) : le serveur le vérifie et le dit (peut_modifier).
+ * ses événements ou rattachés par lui à des sites, sans compte sur le site) : le serveur le
+ * vérifie et le dit (peut_modifier).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,21 +30,49 @@ interface Fiche {
   organisation?: string | null;
   site_web?: string | null;
   photo_url?: string | null;
+  date_naissance?: string | null;
+  lieu_naissance?: string | null;
+  date_deces?: string | null;
+  lieu_deces?: string | null;
+  wikipedia_url?: string | null;
   peut_modifier: boolean;
   raison?: 'compte' | 'autre_organisateur' | null;
 }
 
+/** Données de la fiche, au format attendu par le serveur */
+export interface DonneesFiche {
+  prenom: { fr: string };
+  nom: { fr: string };
+  biographie: Multilingue;
+  titre_professionnel: string | null;
+  organisation: string | null;
+  site_web: string | null;
+  photo_url: string | null;
+  date_naissance: string | null;
+  lieu_naissance: string | null;
+  date_deces: string | null;
+  lieu_deces: string | null;
+  wikipedia_url: string | null;
+}
+
 interface Props {
   idIntervenant: number | null;
+  /** Nouvelle fiche (pré-remplie avec le nom saisi) : rien n'est enregistré ici, voir onCree */
+  creation?: { prenom?: string; nom?: string } | null;
+  onCree?: (donnees: DonneesFiche) => void;
+  /** Titre de la fenêtre (par défaut : « Fiche de l'intervenant ») */
+  titre?: string;
   onClose: () => void;
   /** Appelé après l'enregistrement avec le prénom et le nom (français) mis à jour */
   onSaved?: (maj: { prenom: string; nom: string }) => void;
+  /** Texte sous le titre (par défaut : page de l'événement) */
+  description?: string;
 }
 
 const enObjet = (v: Fiche['biographie']): Multilingue =>
   !v ? {} : typeof v === 'string' ? { fr: v } : v;
 
-const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSaved }) => {
+const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCree, titre, onClose, onSaved, description }) => {
   const { t } = useTranslation();
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [chargement, setChargement] = useState(false);
@@ -50,8 +82,20 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
   const fichierRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     prenom: '', nom: '', titre_professionnel: '', organisation: '', site_web: '', photo_url: '',
+    date_naissance: '', lieu_naissance: '', date_deces: '', lieu_deces: '', wikipedia_url: '',
     biographie: {} as Multilingue
   });
+
+  // Nouvelle fiche : formulaire vide (nom déjà saisi repris), modifiable
+  useEffect(() => {
+    if (!creation) return;
+    setErreur(null);
+    setFiche({ id_intervenant: 0, peut_modifier: true });
+    setForm({
+      prenom: creation.prenom || '', nom: creation.nom || '', titre_professionnel: '', organisation: '', site_web: '', photo_url: '',
+      date_naissance: '', lieu_naissance: '', date_deces: '', lieu_deces: '', wikipedia_url: '', biographie: {}
+    });
+  }, [creation]);
 
   useEffect(() => {
     if (!idIntervenant) return;
@@ -67,6 +111,8 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
           prenom: texteLangue(f.prenom), nom: texteLangue(f.nom),
           titre_professionnel: f.titre_professionnel || '', organisation: f.organisation || '',
           site_web: f.site_web || '', photo_url: f.photo_url || '',
+          date_naissance: f.date_naissance || '', lieu_naissance: f.lieu_naissance || '',
+          date_deces: f.date_deces || '', lieu_deces: f.lieu_deces || '', wikipedia_url: f.wikipedia_url || '',
           biographie: enObjet(f.biographie)
         });
       })
@@ -92,22 +138,38 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
   };
 
   const enregistrer = async () => {
-    if (!idIntervenant) return;
+    if (!idIntervenant && !creation) return;
     if (!form.nom.trim() && !form.prenom.trim()) {
       setErreur(t('programme.form.errors.intervenantNameRequired', 'Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)'));
       return;
     }
-    setEnvoi(true); setErreur(null);
-    try {
-      const res = await httpClient.put(`/intervenants/${idIntervenant}`, {
+    if (creation && !form.nom.trim()) {
+      setErreur(t('personnalites.nomRequis', 'Le nom est requis'));
+      return;
+    }
+    const donnees: DonneesFiche = {
         prenom: { fr: form.prenom.trim() },
         nom: { fr: form.nom.trim() },
         biographie: form.biographie,
         titre_professionnel: form.titre_professionnel.trim() || null,
         organisation: form.organisation.trim() || null,
         site_web: form.site_web.trim() || null,
-        photo_url: form.photo_url || null
-      });
+        photo_url: form.photo_url || null,
+        // Personnalités (patrimoine) : dates et lieux de vie ; vides → effacés
+        date_naissance: form.date_naissance || null,
+        lieu_naissance: form.lieu_naissance.trim() || null,
+        date_deces: form.date_deces || null,
+        lieu_deces: form.lieu_deces.trim() || null,
+        wikipedia_url: form.wikipedia_url.trim() || null
+    };
+    if (creation) {
+      onCree?.(donnees);
+      onClose();
+      return;
+    }
+    setEnvoi(true); setErreur(null);
+    try {
+      const res = await httpClient.put(`/intervenants/${idIntervenant}`, donnees);
       if (!res.success) { setErreur(res.error || t('common.error', 'Erreur')); return; }
       onSaved?.({ prenom: form.prenom.trim(), nom: form.nom.trim() });
       onClose();
@@ -119,12 +181,12 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
   const lectureSeule = !!fiche && !fiche.peut_modifier;
 
   return (
-    <Dialog open={idIntervenant !== null} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={idIntervenant !== null || !!creation} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('programme.speakerCard.title', 'Fiche de l’intervenant')}</DialogTitle>
+          <DialogTitle>{titre || t('programme.speakerCard.title', 'Fiche de l’intervenant')}</DialogTitle>
           <DialogDescription>
-            {t('programme.speakerCard.description', 'Présentation affichée sur la page de l’événement.')}
+            {description || t('programme.speakerCard.description', 'Présentation affichée sur la page de l’événement.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -185,6 +247,30 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
               <Input id="fiche-site" type="url" value={form.site_web} disabled={lectureSeule} placeholder="https://" onChange={e => setForm(f => ({ ...f, site_web: e.target.value }))} />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="fiche-naissance">{t('personnalites.birthDate', 'Date de naissance')}</Label>
+                <Input id="fiche-naissance" type="date" value={form.date_naissance} disabled={lectureSeule} onChange={e => setForm(f => ({ ...f, date_naissance: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fiche-lieu-naissance">{t('personnalites.birthPlace', 'Lieu de naissance')}</Label>
+                <Input id="fiche-lieu-naissance" value={form.lieu_naissance} disabled={lectureSeule} onChange={e => setForm(f => ({ ...f, lieu_naissance: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fiche-deces">{t('personnalites.deathDate', 'Date de décès')}</Label>
+                <Input id="fiche-deces" type="date" value={form.date_deces} disabled={lectureSeule} onChange={e => setForm(f => ({ ...f, date_deces: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fiche-lieu-deces">{t('personnalites.deathPlace', 'Lieu de décès')}</Label>
+                <Input id="fiche-lieu-deces" value={form.lieu_deces} disabled={lectureSeule} onChange={e => setForm(f => ({ ...f, lieu_deces: e.target.value }))} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="fiche-wikipedia">{t('personnalites.wikipedia', 'Page Wikipédia')}</Label>
+              <Input id="fiche-wikipedia" type="url" value={form.wikipedia_url} disabled={lectureSeule} placeholder="https://fr.wikipedia.org/wiki/…" onChange={e => setForm(f => ({ ...f, wikipedia_url: e.target.value }))} />
+            </div>
+
             <MultiLangInput
               name="fiche-biographie"
               label={t('programme.speakerCard.biography', 'Biographie')}
@@ -206,7 +292,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, onClose, onSav
           {fiche && !lectureSeule && (
             <Button type="button" onClick={enregistrer} disabled={envoi || photoEnvoi}>
               {envoi && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
-              {t('common.save', 'Enregistrer')}
+              {creation ? t('common.continue', 'Continuer') : t('common.save', 'Enregistrer')}
             </Button>
           )}
         </DialogFooter>
