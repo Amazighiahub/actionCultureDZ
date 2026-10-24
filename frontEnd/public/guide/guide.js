@@ -33,7 +33,11 @@ document.addEventListener('DOMContentLoaded', function () {
     liens.forEach(function (a, i) {
       var etait = a.classList.contains('actif');
       a.classList.toggle('actif', i === actif);
-      if (i === actif && !etait && a.scrollIntoView) a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: reduit ? 'auto' : 'smooth' });
+      if (i === actif && !etait) {
+        // Page arabe (de droite à gauche) : le défilement horizontal se compte autrement
+        if (document.dir === 'rtl') a.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduit ? 'auto' : 'smooth' });
+        else a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: reduit ? 'auto' : 'smooth' });
+      }
     });
   }
   window.addEventListener('scroll', function () { if (!attente) { attente = true; requestAnimationFrame(maj); } }, { passive: true });
