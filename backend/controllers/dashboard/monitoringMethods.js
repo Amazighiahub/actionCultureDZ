@@ -2,7 +2,6 @@
 // Monitoring, alerts, and notification methods for DashboardController
 
 const container = require('../../services/serviceContainer');
-const { Op } = require('sequelize');
 
 const monitoringMethods = {
 
@@ -60,44 +59,26 @@ const monitoringMethods = {
         return res.json({ success: true, data: { queued: false, target, type, notified: 1, email } });
       }
 
-      // Compter les destinataires directement depuis les modèles
-      let notified = 0;
-      try {
-        const { User } = container._models || require('../../models');
-        const VISITEUR_TYPE = 1;
-        const whereClause = target === 'professionals'
-          ? { id_type_user: { [Op.ne]: VISITEUR_TYPE } }
-          : target === 'visitors'
-            ? { id_type_user: VISITEUR_TYPE }
-            : {};
-        notified = await User.count({ where: { ...whereClause, statut: 'actif' } });
-      } catch (countErr) {
-        console.warn('broadcastNotification: impossible de compter les cibles:', countErr.message);
-      }
-
-      // État de l'envoi d'e-mails, connu tout de suite (en pause : rien ne part)
-      const etatEmail = () => {
-        const service = container.notificationService.emailService;
-        return typeof service?.etatEnvoi === 'function' ? service.etatEnvoi() : 'actif';
-      };
-
-      // Répondre immédiatement avec le nombre d'utilisateurs ciblés
+      // Notifications créées avant de répondre (rapide) : l'administration voit le vrai résultat
+      // ou l'erreur. Auparavant la réponse « envoyé » partait avant le traitement, qui échouait
+      // en silence. Les e-mails, eux, partent un par un en arrière-plan.
+      const resultat = await container.notificationService.broadcastNotification(
+        { title, message, target, type, sendEmail },
+        req.user.id_user
+      );
       res.json({
         success: true,
         message: req.t('notification.broadcastQueued', 'Notification en cours d\'envoi en arrière-plan'),
-        data: { queued: true, target, type, notified, email_etat: etatEmail() }
+        data: { queued: true, ...resultat }
       });
-
-      // Traitement asynchrone après la réponse
-      container.notificationService.broadcastNotification(
-        { title, message, target, type, sendEmail },
-        req.user.id_user
-      ).catch(err => console.error('Erreur broadcastNotification (background):', err?.message || String(err)));
 
     } catch (error) {
       if (!res.headersSent) {
         if (error.message === 'MISSING_TITLE_OR_MESSAGE') {
           return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+        }
+        if (error.message === 'NO_TARGET_USERS') {
+          return res.status(400).json({ success: false, error: req.t('notification.noTargetUsers', 'Aucun destinataire dans ce groupe') });
         }
         console.error('Erreur broadcastNotification:', error.message);
         res.status(500).json({ success: false, error: req.t('common.serverError') });

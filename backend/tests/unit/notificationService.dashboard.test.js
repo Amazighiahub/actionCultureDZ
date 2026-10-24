@@ -119,19 +119,15 @@ describe('NotificationService — dashboard methods', () => {
       );
     });
 
-    it('should skip users who opted out of admin notifications', async () => {
-      mockModels.User.count.mockResolvedValue(2);
-      mockModels.User.findAll.mockResolvedValueOnce([
-        { id_user: 10, email: 'a@b.c', preferences_notification: JSON.stringify({ admin_notifications: false }) },
-        { id_user: 11, email: 'd@e.f', preferences_notification: null }
-      ]).mockResolvedValueOnce([]);
+    it('ne demande que des colonnes existantes de la table users (la colonne inexistante faisait échouer tout l’envoi)', async () => {
+      mockModels.User.count.mockResolvedValue(1);
+      mockModels.User.findAll.mockResolvedValueOnce([{ id_user: 10, email: 'a@b.c' }]).mockResolvedValueOnce([]);
 
-      const result = await service.broadcastNotification(
-        { title: 'T', message: 'M' }, 1
-      );
+      const result = await service.broadcastNotification({ title: 'T', message: 'M' }, 1);
 
+      expect(mockModels.User.findAll.mock.calls[0][0].attributes).toEqual(['id_user', 'email', 'notifications_email', 'notifications_evenements']);
       expect(result.notified).toBe(1);
-      expect(result.skipped).toBe(1);
+      expect(result.skipped).toBe(0);
     });
   });
 });
