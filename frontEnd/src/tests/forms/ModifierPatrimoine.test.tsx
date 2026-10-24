@@ -13,7 +13,7 @@ import React from 'react';
 
 const { mockGet, mockPut, mockDeleteMedia, mockPermissions } = vi.hoisted(() => ({
   mockGet: vi.fn(), mockPut: vi.fn(), mockDeleteMedia: vi.fn(),
-  mockPermissions: { isAdmin: false, hasRole: () => false, isOwner: (id: number) => id === 60 },
+  mockPermissions: { isAdmin: false, hasRole: (_r: string): boolean => false, isOwner: (id: number): boolean => id === 60 },
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -52,6 +52,7 @@ describe('ModifierPatrimoine', () => {
   beforeEach(() => {
     mockGet.mockReset(); mockPut.mockReset(); mockDeleteMedia.mockReset();
     mockPermissions.isOwner = (id: number) => id === 60;
+    mockPermissions.isAdmin = false;
   });
 
   test('créateur : fiche pré-remplie en toutes langues, enregistrée par PUT', async () => {
@@ -92,5 +93,29 @@ describe('ModifierPatrimoine', () => {
 
     expect(await screen.findByText(/Seuls le créateur de ce site et la modération/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Enregistrer les modifications/ })).toBeNull();
+  });
+
+  test('administration : rattacher le lieu à un site (le musée devient un point d’Aït Smaïl)', async () => {
+    mockPermissions.isAdmin = true;
+    mockPermissions.isOwner = () => false;
+    mockGet.mockImplementation(async (url: string) => url === '/patrimoine/search'
+      ? { success: true, data: [{ id_lieu: 39, nom: 'Aït Smaïl' }, { id_lieu: 10, nom: 'Lui-même' }] }
+      : { success: true, data: { ...site, id_lieu_parent: null } });
+    mockPut.mockResolvedValue({ success: true });
+    render(<ModifierPatrimoine />);
+
+    fireEvent.change(await screen.findByPlaceholderText('Rechercher le site (ex. : Aït Smaïl)'), { target: { value: 'Ait' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Aït Smaïl' }));
+    expect(screen.queryByRole('button', { name: 'Lui-même' })).toBeNull();
+    expect(screen.getByText('Aït Smaïl')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Enregistrer les modifications/ }));
+    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/patrimoine/10', expect.objectContaining({ id_lieu_parent: 39 })));
+  });
+
+  test('créateur (pas la modération) : pas de champ de rattachement', async () => {
+    mockGet.mockResolvedValue({ success: true, data: site });
+    render(<ModifierPatrimoine />);
+    await screen.findByDisplayValue('Casbah de Béjaïa');
+    expect(screen.queryByText('Fait partie d’un site')).toBeNull();
   });
 });

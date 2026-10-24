@@ -452,6 +452,11 @@ class PatrimoineService extends BaseService {
       if (data.id_lieu_parent !== undefined) {
         const parent = await this._resolveParent(data.id_lieu_parent, { idLieu: lieuId });
         updateData.id_lieu_parent = parent ? parent.id_lieu : null;
+        // Un lieu qui devient point de visite d'un autre site prend place à la fin de la visite ;
+        // détaché, il redevient un lieu principal (sans ordre de visite)
+        if (data.ordre_visite === undefined && updateData.id_lieu_parent !== (plain.id_lieu_parent ?? null)) {
+          updateData.ordre_visite = parent ? await this._ordreVisite(undefined, parent.id_lieu, transaction) : null;
+        }
       }
       if (data.ordre_visite !== undefined) {
         const ordre = parseInt(data.ordre_visite, 10);

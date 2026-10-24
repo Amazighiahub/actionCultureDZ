@@ -3630,7 +3630,14 @@
       "confirmDeletePhoto": "Supprimer cette photo ?",
       "confirmDeleteAudio": "Supprimer cet enregistrement ?",
       "confirmDeleteDesc": "Elle sera retirée de la page du site. Cette action est définitive.",
-      "audio": "Guide audio"
+      "audio": "Guide audio",
+      "parentTitle": "Fait partie d’un site",
+      "parentHint": "Pour faire de ce lieu un point de visite d’un autre site (ex. : un musée dans sa commune). Il quitte alors la liste des sites et apparaît dans les points du site choisi.",
+      "pointOf": "Point de visite de :",
+      "detach": "Détacher (redevient un site principal)",
+      "noParent": "Site principal (ne fait partie d’aucun autre site).",
+      "searchSite": "Rechercher le site (ex. : Aït Smaïl)",
+      "parentPending": "Cliquez sur « Enregistrer les modifications » pour appliquer ce rattachement."
     }
   },
   "toasts": {
