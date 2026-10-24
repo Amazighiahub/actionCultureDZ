@@ -983,22 +983,15 @@ async envoyerNewsletter(contenu, filtres = {}) {
     while (true) {
       const users = await this.models.User.findAll({
         where: targetWhere,
-        attributes: ['id_user', 'email', 'preferences_notification', 'notifications_email', 'notifications_evenements'],
+        // « preferences_notification » n'existe pas dans la table users : la requête échouait
+        // et l'envoi à un groupe s'arrêtait en silence (ni notification, ni e-mail)
+        attributes: ['id_user', 'email', 'notifications_email', 'notifications_evenements'],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
 
-      const usersToNotify = users.filter(user => {
-        try {
-          const prefs = user.preferences_notification
-            ? (typeof user.preferences_notification === 'string'
-                ? JSON.parse(user.preferences_notification)
-                : user.preferences_notification)
-            : {};
-          return prefs.admin_notifications !== false;
-        } catch (_) { return true; }
-      });
-      totalSkipped += users.length - usersToNotify.length;
+      // Notification sur le site pour tous ; l'e-mail respecte les choix (voir plus bas)
+      const usersToNotify = users;
 
       if (usersToNotify.length > 0 && this.models.Notification) {
         const notifications = usersToNotify.map(user => ({
