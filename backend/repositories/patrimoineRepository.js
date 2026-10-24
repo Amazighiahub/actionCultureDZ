@@ -4,7 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
-const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { MAX_NIVEAUX_LIEU } = require('../constants/patrimoineTypes');
 
 class PatrimoineRepository extends BaseRepository {
@@ -303,19 +303,18 @@ class PatrimoineRepository extends BaseRepository {
    */
   async searchSites(query, options = {}) {
     const { page = 1, limit = 20 } = options;
-    const pattern = `%${this._sanitizeSearchQuery(query)}%`;
+    const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
+    // Texte extrait (JSON_UNQUOTE) comparé sans tenir compte des accents ni des majuscules :
+    // « ait smail » trouve « Aït Smaïl » (la valeur JSON brute se comparait à l'identique)
+    const champs = [
+      ['nom', 'fr'], ['nom', 'ar'], ['nom', 'en'], ['nom', '"tz-ltn"'], ['nom', '"tz-tfng"'],
+      ['adresse', 'fr'], ['adresse', 'ar']
+    ];
 
     const where = {
       statut: 'publie',
-      [Op.or]: [
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.en'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.\"tz-ltn\"'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.\"tz-tfng\"'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.fr'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.ar'")), { [Op.like]: pattern })
-      ]
+      [Op.or]: champs.map(([champ, langue]) =>
+        literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
     };
 
     return this.findAll({
