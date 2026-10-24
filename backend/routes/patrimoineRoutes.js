@@ -387,7 +387,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/:id/articles', validateId(), async (req, res) => {
     try {
       const { section } = req.query;
-      const where = { id_article: parseInt(req.params.id), article_type: 'patrimoine' };
+      const where = { id_article: parseInt(req.params.id), article_type: 'patrimoine', visible: true };
       if (section) where.section_patrimoine = section;
 
       // models déjà disponible via initPatrimoineRoutes(models, ...)
@@ -404,7 +404,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   });
 
-  router.post('/:id/articles', authenticate, requireRole('Administrateur', 'Moderateur'), validateId(),
+  // Articles : modération et professionnels validés (comme la modification du site)
+  router.post('/:id/articles', authenticate, requireModerationOuPro, validateId(),
     [
       body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage('Type de bloc invalide'),
       body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage('Section invalide'),
@@ -418,6 +419,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         const lieuId = parseInt(req.params.id);
         const { type_block, section_patrimoine, contenu, contenu_json, metadata } = req.body;
+
+        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+        if (!lieu) return res.status(404).json({ success: false, error: 'Site patrimoine non trouvé' });
 
         // Sanitiser le contenu
         const sanitizedContenu = contenu ? sanitizeBlockContent(type_block, contenu) : null;

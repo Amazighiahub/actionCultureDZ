@@ -26,10 +26,12 @@ const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePla
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
+import { patrimoineArticlesService, type PatrimoineBlock } from '@/services/patrimoineArticles.service';
 import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
 import PointsVisite, { type PointVisite } from '@/components/patrimoine/PointsVisite';
 import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio';
 import { usePermissions } from '@/hooks/usePermissions';
+import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Type multilingue réutilisé dans l'interface du site
@@ -108,8 +110,10 @@ interface SitePatrimoineDetail {
     id_programme: number;
     titre: string | MultilingualField;
     description?: string | MultilingualField;
-    date_debut: string;
-    date_fin?: string;
+    /** Jour de l'activité (« 2026-10-29 ») et heures seules (« 13:00:00 ») */
+    date_programme?: string | null;
+    heure_debut?: string | null;
+    heure_fin?: string | null;
     Evenement?: {
       id_evenement: number;
       nom_evenement: string | MultilingualField;
@@ -207,6 +211,16 @@ const PatrimoineDetail = () => {
     loadSiteDetail();
   }, [id]);
 
+  // Articles des sections (« Écrire un article ») : une seule requête pour toute la page
+  const [blocsArticles, setBlocsArticles] = useState<PatrimoineBlock[]>([]);
+  const chargerArticles = React.useCallback(async (idLieu: number) => {
+    const res = await patrimoineArticlesService.getBlocks(idLieu);
+    setBlocsArticles(res.success && Array.isArray(res.data) ? res.data : []);
+  }, []);
+  useEffect(() => {
+    if (site?.id_lieu) chargerArticles(site.id_lieu);
+  }, [site?.id_lieu, chargerArticles]);
+
   // Charger le QR code depuis l'API backend
   useEffect(() => {
     if (!site?.id_lieu) return;
@@ -293,9 +307,12 @@ const PatrimoineDetail = () => {
     || translate(site.adresse, lang);
   const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
   // Sections « Culture & Patrimoine vivant » : masquées pour un visiteur quand elles sont toutes vides
+  const blocsDe = (section: string) => blocsArticles.filter(b => b.section_patrimoine === section);
   const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
-    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '');
+    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0);
   const canAddContent = isAdmin || isValidatedProfessional();
+  // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
+  const peutEcrireArticle = canAddContent || hasRole('Moderateur');
   const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
   // Modifier la fiche, les photos et les audios : même règle que le serveur (créateur du site,
   // ou du site d'un point de visite, et modération)
@@ -583,7 +600,8 @@ const PatrimoineDetail = () => {
                 programmes:  site.programmes?.length || 0,
                 parcours:    site.parcours?.length || 0,
                 galerie:     visuels.length,
-                histoire:    translate(site.DetailLieu?.histoire, lang) || translate(site.DetailLieu?.referencesHistoriques, lang) ? 1 : 0,
+                histoire:    translate(site.DetailLieu?.histoire, lang) || translate(site.DetailLieu?.referencesHistoriques, lang)
+                  || blocsDe('histoire').length || blocsDe('referencesHistoriques').length ? 1 : 0,
                 musees:      0,
                 collections: 0,
                 faune_flore: 0,
@@ -711,12 +729,22 @@ const PatrimoineDetail = () => {
                                     <CardHeader className="pb-2">
                                       <div className="flex items-center justify-between">
                                         <CardTitle className="text-base">{translate(programme.titre, lang)}</CardTitle>
-                                        {programme.Evenement && <Badge>{programme.Evenement.statut}</Badge>}
                                       </div>
+                                      {programme.Evenement && (
+                                        <p className="text-sm font-medium text-primary">{translate(programme.Evenement.nom_evenement, lang)}</p>
+                                      )}
                                       <CardDescription className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        {new Date(programme.date_debut).toLocaleDateString(getDateLocale(lang))}
-                                        {programme.date_fin && ` — ${new Date(programme.date_fin).toLocaleDateString(getDateLocale(lang))}`}
+                                        <Calendar className="h-4 w-4" aria-hidden="true" />
+                                        {(() => {
+                                          // Jour seul « AAAA-MM-JJ » : lu à midi pour ne pas changer de jour selon le fuseau
+                                          const jour = jourProgramme(programme);
+                                          const debut = heureProgramme(programme.heure_debut);
+                                          const fin = heureProgramme(programme.heure_fin);
+                                          return [
+                                            jour && new Date(`${jour}T12:00:00`).toLocaleDateString(getDateLocale(lang), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                                            debut && (fin ? `${debut} – ${fin}` : debut)
+                                          ].filter(Boolean).join(' · ') || t('programme.noDate', 'Date non définie');
+                                        })()}
                                       </CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -788,8 +816,8 @@ const PatrimoineDetail = () => {
                           {/* Histoire */}
                           {sectionKey === 'histoire' && (
                             <div className="space-y-4">
-                              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
-                              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
+                              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" blocs={blocsDe('histoire')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
+                              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" blocs={blocsDe('referencesHistoriques')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
                             </div>
                           )}
 
@@ -816,12 +844,12 @@ const PatrimoineDetail = () => {
                   <p className="text-sm text-muted-foreground">{t('patrimoine.sections.cultureVivanteDesc', 'Enrichissez ces sections avec vos connaissances')}</p>
                 </div>
               </div>
-              <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
-              <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
-              <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
-              <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
+              <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" blocs={blocsDe('architecture')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" blocs={blocsDe('traditions')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
+              <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" blocs={blocsDe('gastronomie')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" blocs={blocsDe('artisanat_local')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
+              <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
+              <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" blocs={blocsDe('infos_pratiques')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
             </div>}
           </div>
 
