@@ -15,7 +15,8 @@ import PersonnaliteDialog from '@/components/patrimoine/PersonnaliteDialog';
 import { useToast } from '@/hooks/use-toast';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
-import { PATRIMOINE_SECTIONS, type PatrimoineSection } from '@/services/patrimoineArticles.service';
+import BlocsArticle from '@/components/patrimoine/BlocsArticle';
+import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock } from '@/services/patrimoineArticles.service';
 import {
   lieuIntervenantService,
   getIntervenantNom,
@@ -33,6 +34,10 @@ interface SectionPersonnalitesProps {
   /** Créateur du site : il peut retirer les personnalités du site */
   idCreateurSite?: number | null;
   onSaved?: (newContent: MultilingualField) => void;
+  /** Blocs « Écrire un article » de la section, affichés sous le texte */
+  blocs?: PatrimoineBlock[];
+  /** Après ajout ou suppression d'un bloc d'article */
+  onArticlesChange?: () => void;
 }
 
 const translate = (v: string | MultilingualField | null | undefined, lang: string): string => {
@@ -41,12 +46,13 @@ const translate = (v: string | MultilingualField | null | undefined, lang: strin
   return v[lang] || v.fr || v.ar || v.en || '';
 };
 
-const patrimoineSection: PatrimoineSection | null = (PATRIMOINE_SECTIONS as readonly string[]).includes('personnalites')
+const sectionArticles: PatrimoineSection | null = (PATRIMOINE_SECTIONS as readonly string[]).includes('personnalites')
   ? 'personnalites' as PatrimoineSection
   : null;
 
 const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
-  icon, title, content, lang, lieuId, idCreateurSite, onSaved
+  icon, title, content, lang, lieuId, idCreateurSite, onSaved,
+  blocs = [], onArticlesChange
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
@@ -54,6 +60,8 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   const estModeration = isAdmin || hasRole('Moderateur');
   // Créer la fiche d'une nouvelle personnalité : professionnels validés et modération
   const peutCreer = estModeration || isValidatedProfessional();
+  // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
+  const patrimoineSection = peutCreer ? sectionArticles : null;
   const { toast } = useToast();
 
   // ── texte libre ──
@@ -82,7 +90,8 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   // Fiche ouverte d'une personnalité liée
   const [detail, setDetail] = useState<LieuIntervenant | null>(null);
 
-  const hasContent = content && translate(content, lang).trim().length > 0;
+  const texte = translate(content, lang).trim();
+  const hasContent = texte.length > 0 || blocs.length > 0;
 
   // Charger les intervenants liés
   const chargerIntervenants = useCallback(() => {
@@ -240,8 +249,9 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               )}
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(content, lang)}</p>
+          <CardContent className="space-y-4">
+            {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
+            <BlocsArticle blocs={blocs} />
           </CardContent>
         </Card>
       ) : isAuthenticated ? (
@@ -556,7 +566,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
-          onSaved={() => onSaved?.(editValue)}
+          onSaved={onArticlesChange}
         />
       )}
     </>

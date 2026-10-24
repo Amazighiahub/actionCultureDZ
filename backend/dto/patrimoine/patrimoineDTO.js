@@ -97,7 +97,7 @@ class PatrimoineDTO extends BaseDTO {
       programmes: (raw.Programmes || raw.programmes || []).map(p => ({
         id: p.id_programme,
         titre: BaseDTO.normalizeMultilang(p.titre),
-        date: p.date,
+        date: p.date_programme,
         heureDebut: p.heure_debut,
         heureFin: p.heure_fin
       })),

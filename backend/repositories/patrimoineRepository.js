@@ -226,7 +226,22 @@ class PatrimoineRepository extends BaseRepository {
     const includes = this._fullIncludes();
 
     if (this.models.Programme) {
-      includes.push({ model: this.models.Programme, required: false });
+      // Activités d'événements publics qui ont lieu ici : champs publics seulement
+      // (pas les notes de l'organisateur), avec l'événement pour le lien « Voir l'événement »
+      includes.push({
+        model: this.models.Programme,
+        required: false,
+        separate: true,
+        attributes: ['id_programme', 'titre', 'description', 'date_programme', 'heure_debut', 'heure_fin', 'statut', 'type_activite', 'id_evenement', 'id_lieu'],
+        include: [{
+          model: this.models.Evenement,
+          as: 'Evenement',
+          required: true,
+          where: { statut: { [Op.in]: ['publie', 'planifie', 'en_cours', 'termine', 'reporte'] } },
+          attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut']
+        }],
+        order: [['date_programme', 'ASC'], ['heure_debut', 'ASC']]
+      });
     }
 
     // Points de visite publiés, dans l'ordre de la visite, avec leurs images

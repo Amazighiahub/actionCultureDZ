@@ -18,9 +18,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
+import BlocsArticle from '@/components/patrimoine/BlocsArticle';
 import {
   PATRIMOINE_SECTIONS,
   type PatrimoineSection,
+  type PatrimoineBlock,
 } from '@/services/patrimoineArticles.service';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
@@ -40,6 +42,12 @@ interface SectionEnrichissableProps {
   fieldName: string;
   /** Callback après sauvegarde réussie */
   onSaved?: (newContent: MultilingualField) => void;
+  /** Blocs « Écrire un article » de cette section, affichés sous le texte */
+  blocs?: PatrimoineBlock[];
+  /** Bouton « Écrire un article » : modération et professionnels validés (règle du serveur) */
+  peutEcrireArticle?: boolean;
+  /** Après ajout ou suppression d'un bloc d'article */
+  onArticlesChange?: () => void;
 }
 
 const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
@@ -49,7 +57,8 @@ const translate = (value: string | MultilingualField | null | undefined, lang: s
 };
 
 const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
-  icon, title, content, lang, lieuId, fieldName, onSaved
+  icon, title, content, lang, lieuId, fieldName, onSaved,
+  blocs = [], peutEcrireArticle = false, onArticlesChange
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
@@ -64,14 +73,15 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   // patrimoine valides côté backend. On filtre defensivement : si la section
   // n'est pas reconnue, on masque simplement le bouton "Article".
   const patrimoineSection = useMemo<PatrimoineSection | null>(() => {
-    return (PATRIMOINE_SECTIONS as readonly string[]).includes(fieldName)
+    return peutEcrireArticle && (PATRIMOINE_SECTIONS as readonly string[]).includes(fieldName)
       ? (fieldName as PatrimoineSection)
       : null;
-  }, [fieldName]);
+  }, [fieldName, peutEcrireArticle]);
 
   const openArticleEditor = () => setIsArticleEditorOpen(true);
 
-  const hasContent = content && translate(content, lang).trim().length > 0;
+  const texte = translate(content, lang).trim();
+  const hasContent = texte.length > 0 || blocs.length > 0;
 
   const openEditor = () => {
     if (typeof content === 'object' && content) {
@@ -136,8 +146,9 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(content, lang)}</p>
+        <CardContent className="space-y-4">
+          {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
+          <BlocsArticle blocs={blocs} />
         </CardContent>
 
         {/* Modal d'édition */}
@@ -179,7 +190,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
-          onSaved={() => onSaved?.(editValue)}
+          onSaved={onArticlesChange}
         />
       )}
       </>
@@ -251,7 +262,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
-          onSaved={() => onSaved?.(editValue)}
+          onSaved={onArticlesChange}
         />
       )}
     </>
