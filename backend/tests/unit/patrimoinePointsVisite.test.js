@@ -128,6 +128,13 @@ describe('PatrimoineService.update - rattachement', () => {
     await service.update(10, { id_lieu_parent: null });
     expect(existing.update).toHaveBeenCalledWith(expect.objectContaining({ id_lieu_parent: null }), expect.anything());
   });
+
+  it('un lieu principal devient point d’un site : à la fin de la visite (musée de Tergregt › Aït Smaïl)', async () => {
+    const { service, existing, models } = makeUpdate([]);
+    models.Lieu.max.mockResolvedValue(4);
+    await service.update(10, { id_lieu_parent: 40 });
+    expect(existing.update).toHaveBeenCalledWith(expect.objectContaining({ id_lieu_parent: 40, ordre_visite: 5 }), expect.anything());
+  });
 });
 
 describe('PatrimoineService.reordonnerPoints', () => {

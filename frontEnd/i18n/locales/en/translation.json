@@ -3625,7 +3625,14 @@
       "confirmDeletePhoto": "Delete this photo?",
       "confirmDeleteAudio": "Delete this recording?",
       "confirmDeleteDesc": "It will be removed from the site page. This cannot be undone.",
-      "audio": "Audio guide"
+      "audio": "Audio guide",
+      "parentTitle": "Part of a site",
+      "parentHint": "To make this place a point of interest of another site (e.g. a museum in its municipality). It then leaves the list of sites and appears among the points of the chosen site.",
+      "pointOf": "Point of interest of:",
+      "detach": "Detach (becomes a main site again)",
+      "noParent": "Main site (not part of another site).",
+      "searchSite": "Search for the site (e.g. Aït Smaïl)",
+      "parentPending": "Click “Save changes” to apply this link."
     }
   },
   "toasts": {

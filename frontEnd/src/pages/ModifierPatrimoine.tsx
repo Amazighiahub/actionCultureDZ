@@ -17,7 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MultiLangInput from '@/components/MultiLangInput';
 import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio';
-import { Loader2, Save, Upload, Trash2, Eye, Lock } from 'lucide-react';
+import { Loader2, Save, Upload, Trash2, Eye, Lock, Footprints, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { httpClient } from '@/services/httpClient';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
@@ -25,6 +26,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/hooks/use-toast';
 import { useRTL } from '@/hooks/useRTL';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
+import { texteLangue } from '@/utils/programmeIntervenants';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -48,7 +50,7 @@ interface SiteEdition {
     horaires?: Multilingue | null;
     referencesHistoriques?: Multilingue | null;
   } | null;
-  Ancetres?: Array<{ id_lieu: number; id_createur?: number | null }>;
+  Ancetres?: Array<{ id_lieu: number; id_createur?: number | null; nom?: Multilingue | string | null }>;
   medias?: Media[];
   LieuMedia?: Media[];
 }
@@ -76,6 +78,10 @@ const ModifierPatrimoine: React.FC = () => {
   const [medias, setMedias] = useState<Media[]>([]);
   const [mediaASupprimer, setMediaASupprimer] = useState<Media | null>(null);
   const [suppression, setSuppression] = useState(false);
+  // Rattachement à un site (modération) : le lieu devient un point de visite de ce site
+  const [parentChoisi, setParentChoisi] = useState<{ id: number; nom: string } | null>(null);
+  const [rechercheSite, setRechercheSite] = useState('');
+  const [sitesTrouves, setSitesTrouves] = useState<Array<{ id_lieu: number; nom: string }>>([]);
   const [form, setForm] = useState({
     nom: {} as Multilingue, adresse: {} as Multilingue, repere: {} as Multilingue,
     typePatrimoine: 'monument', latitude: 0, longitude: 0,
@@ -93,6 +99,8 @@ const ModifierPatrimoine: React.FC = () => {
       const s = res.data;
       setSite(s);
       setMedias(s.medias || s.LieuMedia || []);
+      const parentActuel = s.Ancetres?.length ? s.Ancetres[s.Ancetres.length - 1] : null;
+      setParentChoisi(parentActuel ? { id: parentActuel.id_lieu, nom: texteLangue(parentActuel.nom) } : null);
       const d = s.DetailLieu || {};
       setForm({
         nom: enObjet(s.nom), adresse: enObjet(s.adresse), repere: enObjet(s.repere),
@@ -114,6 +122,7 @@ const ModifierPatrimoine: React.FC = () => {
 
   // Même règle que le serveur : modération, créateur du site, ou créateur du site d'un point de visite
   const parent = site?.Ancetres?.length ? site.Ancetres[site.Ancetres.length - 1] : null;
+  const estModeration = isAdmin || hasRole('Moderateur');
   const peutModifier = !!site && (isAdmin || hasRole('Moderateur')
     || (!!site.id_createur && isOwner(site.id_createur))
     || (!!parent?.id_createur && isOwner(parent.id_createur)));
@@ -130,16 +139,37 @@ const ModifierPatrimoine: React.FC = () => {
         latitude: form.latitude, longitude: form.longitude,
         description: form.description, histoire: form.histoire,
         horaires: form.horaires, referencesHistoriques: form.referencesHistoriques,
-        ...(site?.id_lieu_parent ? { repere: form.repere } : {})
+        ...(site?.id_lieu_parent ? { repere: form.repere } : {}),
+        // Rattachement changé (modération seulement : le serveur l'ignore pour un créateur)
+        ...(estModeration && (parentChoisi?.id ?? null) !== (site?.id_lieu_parent ?? null)
+          ? { id_lieu_parent: parentChoisi?.id ?? null } : {})
       });
       if (!res.success) throw new Error(res.error);
       toast({ title: t('patrimoine.edit.saved', 'Modifications enregistrées') });
+      // Recharger : le rattachement change le titre de la page et la liste des points
+      if (estModeration && (parentChoisi?.id ?? null) !== (site?.id_lieu_parent ?? null)) charger();
     } catch (e) {
       toast({ title: t('common.error', 'Erreur'), description: e instanceof Error && e.message ? e.message : t('patrimoine.edit.saveError', 'Les modifications n’ont pas pu être enregistrées'), variant: 'destructive' });
     } finally {
       setEnregistrement(false);
     }
   };
+
+  // Recherche d'un site à qui rattacher ce lieu (2 lettres au moins)
+  useEffect(() => {
+    const q = rechercheSite.trim();
+    if (q.length < 2) { setSitesTrouves([]); return; }
+    let actif = true;
+    const minuterie = setTimeout(async () => {
+      try {
+        const res = await httpClient.get<Array<{ id_lieu: number; nom: Multilingue | string }>>('/patrimoine/search', { q, limit: 8 });
+        if (actif && res.success && Array.isArray(res.data)) {
+          setSitesTrouves(res.data.filter(x => x.id_lieu !== siteId).map(x => ({ id_lieu: x.id_lieu, nom: texteLangue(x.nom) })));
+        }
+      } catch { if (actif) setSitesTrouves([]); }
+    }, 300);
+    return () => { actif = false; clearTimeout(minuterie); };
+  }, [rechercheSite, siteId]);
 
   const ajouterPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fichiers = Array.from(e.target.files || []);
@@ -265,6 +295,49 @@ const ModifierPatrimoine: React.FC = () => {
                 </React.Suspense>
               </CardContent>
             </Card>
+
+            {estModeration && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('patrimoine.edit.parentTitle', 'Fait partie d’un site')}</CardTitle>
+                  <CardDescription>{t('patrimoine.edit.parentHint', 'Pour faire de ce lieu un point de visite d’un autre site (ex. : un musée dans sa commune). Il quitte alors la liste des sites et apparaît dans les points du site choisi.')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {parentChoisi ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
+                      <Footprints className="h-4 w-4 text-primary" aria-hidden="true" />
+                      <span className="text-sm">{t('patrimoine.edit.pointOf', 'Point de visite de :')} <strong>{parentChoisi.nom}</strong></span>
+                      <Button type="button" variant="ghost" size="sm" className="ms-auto" onClick={() => setParentChoisi(null)}>
+                        <X className="h-4 w-4 me-1" aria-hidden="true" />{t('patrimoine.edit.detach', 'Détacher (redevient un site principal)')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('patrimoine.edit.noParent', 'Site principal (ne fait partie d’aucun autre site).')}</p>
+                  )}
+                  <Input
+                    value={rechercheSite}
+                    onChange={(e) => setRechercheSite(e.target.value)}
+                    placeholder={t('patrimoine.edit.searchSite', 'Rechercher le site (ex. : Aït Smaïl)')}
+                    aria-label={t('patrimoine.edit.searchSite', 'Rechercher le site (ex. : Aït Smaïl)')}
+                  />
+                  {sitesTrouves.length > 0 && (
+                    <ul className="rounded-md border divide-y">
+                      {sitesTrouves.map(x => (
+                        <li key={x.id_lieu}>
+                          <button type="button" className="w-full text-start px-3 py-2 text-sm hover:bg-muted"
+                            onClick={() => { setParentChoisi({ id: x.id_lieu, nom: x.nom }); setRechercheSite(''); setSitesTrouves([]); }}>
+                            {x.nom}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {(parentChoisi?.id ?? null) !== (site.id_lieu_parent ?? null) && (
+                    <p className="text-sm text-primary">{t('patrimoine.edit.parentPending', 'Cliquez sur « Enregistrer les modifications » pour appliquer ce rattachement.')}</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex justify-end">
               <Button onClick={enregistrer} disabled={enregistrement}>
