@@ -5,6 +5,7 @@ import { MapPin, Mail, ExternalLink, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { lienGuide } from '@/utils/lienGuide';
 
 const Footer = () => {
   const { t, i18n } = useTranslation();
@@ -26,7 +27,7 @@ const Footer = () => {
       links: [
         { label: t('common.about'), href: '/a-propos' },
         // Page statique (public/guide), hors de l'application : lien classique, pas <Link>
-        { label: t('common.contributorGuide', 'Guide du contributeur'), href: '/guide', statique: true },
+        { label: t('common.contributorGuide', 'Guide du contributeur'), href: lienGuide(i18n.language), statique: true },
       ]
     },
     {

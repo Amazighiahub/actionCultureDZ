@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SEOHead from '@/components/SEOHead';
+import { lienGuide } from '@/utils/lienGuide';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
@@ -231,7 +232,7 @@ const Patrimoine = () => {
             </Button>
             {/* Page statique (public/guide) : lien classique */}
             <Button asChild variant="outline">
-              <a href="/guide">
+              <a href={lienGuide(lang)}>
                 <BookOpen className="h-4 w-4 me-2" aria-hidden="true" />
                 {t('common.contributorGuide', 'Guide du contributeur')}
               </a>

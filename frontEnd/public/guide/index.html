@@ -9,226 +9,13 @@
 <meta property="og:description" content="Faire vivre le patrimoine de votre région : lieux, points de visite, photos et voix en tamazight, en arabe et en français.">
 <meta property="og:image" content="https://taladz.com/og-image.jpg">
 <meta property="og:url" content="https://taladz.com/guide">
+<link rel="alternate" hreflang="fr" href="https://taladz.com/guide/">
+<link rel="alternate" hreflang="ar" href="https://taladz.com/guide/ar/">
 <meta name="theme-color" content="#3A4224">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <script src="/guide/guide.js"></script>
-<style>
-  :root {
-    color-scheme: light;
-    --olive: #5F6B3A; --olive-dark: #3A4224; --terre: #B5562F; --ocre: #C9A227;
-    --sable: #F3F1EA; --encre: #2B2A26; --gris: #6B6A63; --blanc: #FFFFFF;
-    --serif: Cambria, "Noto Serif", Georgia, "Times New Roman", serif;
-    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", Arial, sans-serif;
-    --rayon: 18px;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 110px; }
-  body { margin: 0; font-family: var(--sans); color: var(--encre); background: var(--blanc); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-  img { max-width: 100%; display: block; }
-  a { color: inherit; }
-  h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0; }
-  .ar { font-family: "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif; }
-  .conteneur { width: min(1120px, 100% - 32px); margin-inline: auto; }
-
-  /* ---------- Barre du haut ---------- */
-  .barre { position: fixed; inset: 0 0 auto 0; z-index: 50; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid #e7e4da; transform: translateY(-100%); transition: transform .4s ease; }
-  .barre.visible { transform: none; }
-  .barre .conteneur { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; }
-  .marque { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
-  .marque img { width: 30px; height: 30px; }
-  .marque small { font-weight: 500; color: var(--gris); }
-  .progression { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: linear-gradient(90deg, var(--olive), var(--terre)); transform-origin: left; transform: scaleX(0); }
-  .etapes-nav { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; border-top: 1px solid #efece3; }
-  .etapes-nav::-webkit-scrollbar { display: none; }
-  .etapes-nav a { flex: none; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 999px; color: var(--gris); border: 1px solid #e3dfd3; transition: all .25s; white-space: nowrap; }
-  .etapes-nav a.actif { background: var(--olive); color: var(--blanc); border-color: var(--olive); }
-  @media (min-width: 900px) { .etapes-nav { justify-content: center; } }
-
-  .bouton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 16px; transition: transform .2s, box-shadow .2s, background .2s; }
-  .bouton:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.15); }
-  .bouton.plein { background: var(--olive); color: var(--blanc); }
-  .bouton.clair { background: var(--blanc); color: var(--olive-dark); }
-  .bouton.contour { border: 2px solid currentColor; }
-  .bouton.petit { min-height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
-  .bouton svg { width: 18px; height: 18px; }
-
-  /* ---------- Couverture ---------- */
-  .couverture { position: relative; min-height: 100svh; display: grid; align-items: end; color: var(--blanc); overflow: hidden; background: var(--olive-dark); }
-  .couverture .fond { position: absolute; inset: 0; background: url("/guide/img/boussaada.webp") center/cover; animation: zoom 22s ease-out both; }
-  .couverture::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(30,34,18,.25) 0%, rgba(30,34,18,.55) 45%, rgba(30,34,18,.94) 100%); }
-  .couverture .conteneur { position: relative; z-index: 1; padding: 120px 0 72px; }
-  .surtitre { font-size: 14px; letter-spacing: .18em; font-weight: 700; color: var(--ocre); text-transform: uppercase; }
-  .couverture h1 { font-size: clamp(38px, 7vw, 76px); max-width: 15ch; margin: 14px 0 18px; }
-  .couverture h1 span { display: inline-block; opacity: 0; transform: translateY(28px); animation: monte .8s cubic-bezier(.2,.7,.2,1) forwards; }
-  .couverture p.chapeau { font-size: clamp(17px, 2.2vw, 21px); max-width: 40ch; opacity: 0; animation: monte .8s .9s forwards; }
-  .couverture .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; opacity: 0; animation: monte .8s 1.1s forwards; }
-  .langues { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; opacity: 0; animation: monte .8s 1.3s forwards; }
-  .langues span { border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
-  .defiler { position: absolute; z-index: 1; left: 50%; bottom: 18px; width: 26px; height: 42px; border: 2px solid rgba(255,255,255,.7); border-radius: 14px; transform: translateX(-50%); }
-  .defiler::after { content: ""; position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--blanc); animation: molette 1.8s infinite; }
-
-  /* ---------- Sections ---------- */
-  section { padding: 84px 0; }
-  section.sable { background: var(--sable); }
-  .entete { max-width: 760px; margin-bottom: 44px; }
-  .entete .surtitre { color: var(--terre); }
-  .entete h2 { font-size: clamp(30px, 4.4vw, 46px); margin-top: 10px; }
-  .entete p { font-size: 18px; color: var(--gris); margin: 14px 0 0; }
-
-  .cartes { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-  .carte { background: var(--blanc); border-radius: var(--rayon); padding: 28px; box-shadow: 0 1px 0 #e9e5da; }
-  section:not(.sable) .carte { background: var(--sable); box-shadow: none; }
-  .pastille-icone { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--blanc); color: var(--olive); margin-bottom: 18px; }
-  section:not(.sable) .pastille-icone { background: var(--blanc); }
-  .sable .pastille-icone { background: var(--sable); }
-  .pastille-icone svg { width: 28px; height: 28px; }
-  .carte h3 { font-size: 22px; margin-bottom: 8px; }
-  .carte p { margin: 0; color: #45443e; }
-  .accroche { font-family: var(--serif); font-style: italic; font-size: clamp(19px, 2.4vw, 24px); color: var(--olive); margin-top: 36px; }
-
-  /* Arbre lieu → points */
-  .arbre { position: relative; max-width: 980px; margin: 0 auto; }
-  .arbre svg.liens { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-  .arbre svg.liens path { fill: none; stroke: #a7b08a; stroke-width: 2.5; stroke-dasharray: var(--long, 400); stroke-dashoffset: var(--long, 400); transition: stroke-dashoffset 1.2s ease .3s; }
-  .arbre.vu svg.liens path { stroke-dashoffset: 0; }
-  .niveau { position: relative; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
-  .niveau + .niveau { margin-top: 56px; }
-  .noeud { min-width: 200px; flex: 0 1 280px; border-radius: 16px; padding: 16px 18px; text-align: center; background: var(--sable); }
-  .noeud b { display: block; font-size: 18px; }
-  .noeud small { color: var(--gris); font-size: 14px; }
-  .noeud.racine { background: var(--olive); color: var(--blanc); }
-  .noeud.racine small { color: #e6ead8; }
-  .noeud.interieur { background: var(--blanc); border: 2px dashed #a7b08a; }
-  .niveau.bas { justify-content: flex-end; }
-  @media (max-width: 760px) {
-    .arbre svg.liens { display: none; }
-    .niveau { flex-direction: column; align-items: stretch; gap: 10px; padding-left: 22px; border-left: 3px solid #c5cbb0; }
-    .niveau:first-child { padding-left: 0; border: 0; }
-    .niveau + .niveau { margin-top: 10px; }
-    .noeud { flex: none; text-align: left; }
-    .niveau.bas { margin-left: 22px; }
-  }
-
-  /* Frise des étapes */
-  .frise { display: grid; gap: 14px; grid-template-columns: repeat(5, 1fr); counter-reset: e; }
-  .frise a { position: relative; text-decoration: none; text-align: center; padding: 8px 6px; border-radius: 16px; transition: background .25s; }
-  .frise a:hover { background: var(--sable); }
-  .frise .rond { width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--olive); color: var(--blanc); transition: transform .3s; }
-  .frise a:last-child .rond { background: var(--terre); }
-  .frise a:hover .rond { transform: scale(1.08) rotate(-4deg); }
-  .frise .rond svg { width: 36px; height: 36px; }
-  .frise a:not(:last-child)::after { content: ""; position: absolute; top: 50px; left: calc(50% + 52px); width: calc(100% - 104px + 14px); height: 2px; background: repeating-linear-gradient(90deg, #a7b08a 0 8px, transparent 8px 14px); }
-  .frise .num { color: var(--terre); font-weight: 700; }
-  .frise b { display: block; font-size: 18px; }
-  .frise small { color: var(--gris); }
-  @media (max-width: 760px) {
-    .frise { grid-template-columns: 1fr; gap: 6px; }
-    .frise a { display: grid; grid-template-columns: 64px 1fr; align-items: center; text-align: left; gap: 14px; }
-    .frise .rond { width: 60px; height: 60px; margin: 0; }
-    .frise .rond svg { width: 26px; height: 26px; }
-    .frise a:not(:last-child)::after { top: 70px; left: 37px; width: 2px; height: 20px; background: #a7b08a; }
-  }
-  .encart { margin-top: 32px; background: var(--sable); border-radius: 14px; padding: 18px 22px; font-size: 17px; }
-  section.sable .encart { background: var(--blanc); }
-  .encart b { color: var(--olive-dark); }
-
-  /* ---------- Étape : texte + téléphone ---------- */
-  .etape { display: grid; gap: 40px; align-items: center; grid-template-columns: 1fr; }
-  .etape + .etape { margin-top: 90px; }
-  @media (min-width: 900px) {
-    .etape { grid-template-columns: 1.15fr .85fr; gap: 64px; }
-    .etape.inverse > .texte { order: 2; }
-    .etape.deux { grid-template-columns: 1fr 1fr; }
-  }
-  .etape h3 { font-size: clamp(25px, 3.2vw, 34px); margin-bottom: 20px; }
-  .etape .mini { font-size: 13px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; color: var(--terre); margin-bottom: 8px; }
-  ol.pas { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; counter-reset: pas; }
-  ol.pas li { counter-increment: pas; position: relative; padding-left: 54px; min-height: 40px; font-size: 18px; padding-top: 6px; }
-  ol.pas li::before { content: counter(pas); position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: var(--blanc); display: grid; place-items: center; font-weight: 700; }
-  .conseil { margin-top: 24px; padding: 16px 18px 16px 52px; position: relative; border-radius: 14px; background: var(--sable); font-size: 16px; }
-  section.sable .conseil { background: var(--blanc); }
-  .conseil::before { content: ""; position: absolute; left: 18px; top: 17px; width: 22px; height: 22px; background: var(--ocre); -webkit-mask: var(--ampoule) center/contain no-repeat; mask: var(--ampoule) center/contain no-repeat; }
-  :root { --ampoule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E"); }
-  .exemple { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
-  .exemple span { background: var(--blanc); border: 1px solid #ddd8ca; border-radius: 999px; padding: 6px 14px; font-size: 16px; }
-
-  /* Téléphone */
-  .telephones { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-  .telephone { position: relative; width: min(300px, 78vw); margin: 0; padding: 10px; border-radius: 36px; background: var(--encre); box-shadow: 0 30px 60px -20px rgba(43,42,38,.45), 0 10px 20px -10px rgba(43,42,38,.3); }
-  .telephones.duo .telephone { width: min(270px, 78vw); }
-  @media (min-width: 900px) { .telephones.duo { flex-wrap: nowrap; } .telephones.duo .telephone { width: min(240px, 45%); } }
-  .telephone .ecran { position: relative; border-radius: 27px; overflow: hidden; background: var(--blanc); }
-  .telephone .ecran img { width: 100%; height: auto; }
-  .telephone.recadre { border-radius: 26px; }
-  .telephone.recadre .ecran { border-radius: 18px; }
-  .anneau { position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); border: 3px solid var(--terre); border-radius: 10px; }
-  .js .anneau { opacity: 0; transform: scale(1.25); transition: opacity .4s, transform .5s cubic-bezier(.2,1.4,.4,1); }
-  .js .vu .anneau { opacity: 1; transform: none; animation: pulse 2.2s 1s infinite; }
-  .vu .anneau + .anneau { transition-delay: .35s; }
-  figcaption { color: var(--gris); font-size: 14px; text-align: center; margin-top: 12px; }
-
-  /* Deux cas : plein air / intérieur */
-  .cas { display: grid; gap: 34px; grid-template-columns: 1fr; }
-  @media (min-width: 900px) { .cas { grid-template-columns: 1fr 1fr; } }
-  .cas article { display: grid; gap: 22px; justify-items: center; text-align: center; }
-  .cas h3 { font-size: 26px; }
-  .cas p { margin: 8px 0 0; font-size: 17px; max-width: 34ch; }
-
-  /* Conseils */
-  .grille-conseils { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-
-  /* Excel */
-  .excel { display: grid; gap: 40px; grid-template-columns: 1fr; align-items: center; }
-  @media (min-width: 900px) { .excel { grid-template-columns: 1fr 1fr; } }
-  .tableau { overflow-x: auto; border-radius: 14px; background: var(--blanc); padding: 18px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.3); }
-  .tableau table { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 15px; }
-  .tableau th { background: var(--olive); color: var(--blanc); text-align: left; padding: 10px; font-weight: 600; }
-  .tableau td { background: #FFF2CC; padding: 10px; border: 1px solid #e5dcc0; }
-  .js .tableau tr { opacity: 0; transform: translateX(-14px); transition: all .5s; }
-  .js .tableau.vu tr, .js .vu .tableau tr { opacity: 1; transform: none; }
-  .tableau.vu tbody tr:nth-child(1) { transition-delay: .2s; } .tableau.vu tbody tr:nth-child(2) { transition-delay: .35s; } .tableau.vu tbody tr:nth-child(3) { transition-delay: .5s; }
-  .tableau caption { caption-side: bottom; color: var(--gris); font-style: italic; font-size: 14px; padding-top: 10px; text-align: left; }
-  .telechargements { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
-
-  /* Fin */
-  .fin { position: relative; color: var(--blanc); text-align: center; overflow: hidden; background: var(--olive-dark); }
-  .fin .fond { position: absolute; inset: 0; background: url("/guide/img/boussaada.webp") center/cover; opacity: .28; }
-  .fin .conteneur { position: relative; }
-  .merci { display: flex; justify-content: center; gap: clamp(14px, 4vw, 40px); flex-wrap: wrap; font-family: var(--serif); font-size: clamp(38px, 7vw, 72px); font-weight: 700; }
-  .js .merci span { opacity: 0; transform: translateY(24px) scale(.95); transition: all .8s cubic-bezier(.2,.7,.2,1); }
-  .js .vu .merci span { opacity: 1; transform: none; }
-  .vu .merci span:nth-child(2) { transition-delay: .2s; } .vu .merci span:nth-child(3) { transition-delay: .4s; }
-  .fin p { font-size: 19px; max-width: 46ch; margin: 18px auto 30px; color: #eef0e4; }
-  .fin .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-  .fin .contact { margin-top: 30px; color: var(--ocre); }
-  footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; text-align: center; }
-
-  /* ---------- Apparitions ---------- */
-  .js .apparait { opacity: 0; transform: translateY(34px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
-  .js .apparait.droite { transform: translateX(50px) rotate(2deg); }
-  .js .apparait.gauche { transform: translateX(-50px) rotate(-2deg); }
-  .js .apparait.vu { opacity: 1; transform: none; }
-  .cartes > .apparait:nth-child(2), .grille-conseils > .apparait:nth-child(3n+2) { transition-delay: .12s; }
-  .cartes > .apparait:nth-child(3), .grille-conseils > .apparait:nth-child(3n) { transition-delay: .24s; }
-  .js .frise a { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s, background .25s; }
-  .js .vu .frise a { opacity: 1; transform: none; }
-  .vu .frise a:nth-child(2) { transition-delay: .12s; } .vu .frise a:nth-child(3) { transition-delay: .24s; }
-  .vu .frise a:nth-child(4) { transition-delay: .36s; } .vu .frise a:nth-child(5) { transition-delay: .48s; }
-
-  @keyframes zoom { from { transform: scale(1.18); } to { transform: scale(1); } }
-  @keyframes monte { to { opacity: 1; transform: none; } }
-  @keyframes molette { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(181,86,47,.45); } 50% { box-shadow: 0 0 0 9px rgba(181,86,47,0); } }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-    .apparait, .frise a, .tableau tr, .merci span, .couverture h1 span, .couverture p.chapeau, .couverture .actions, .langues { opacity: 1 !important; transform: none !important; }
-    .anneau { opacity: 1; transform: none; }
-    .arbre svg.liens path { stroke-dashoffset: 0; }
-    html { scroll-behavior: auto; }
-  }
-</style>
+<link rel="stylesheet" href="/guide/guide.css">
 </head>
 <body>
 
@@ -255,7 +42,10 @@
 <header class="barre" id="barre">
   <div class="conteneur">
     <a class="marque" href="/"><img src="/favicon.svg" alt="" width="30" height="30">Tala DZ <small>· Guide du contributeur</small></a>
-    <a class="bouton plein petit" href="/auth">S’inscrire</a>
+    <div class="actions-barre">
+      <a class="autre-langue" href="/guide/ar/" lang="ar" hreflang="ar">العربية</a>
+      <a class="bouton plein petit" href="/auth">S’inscrire</a>
+    </div>
   </div>
   <nav class="etapes-nav" aria-label="Étapes du guide">
     <a href="#pourquoi">Pourquoi</a>
@@ -273,6 +63,7 @@
   <!-- Couverture -->
   <section class="couverture" aria-label="Couverture">
     <div class="fond" role="img" aria-label="Bou Saâda et sa palmeraie"></div>
+    <a class="autre-langue" href="/guide/ar/" lang="ar" hreflang="ar">العربية</a>
     <div class="conteneur">
       <div class="surtitre">Guide du contributeur · Tala DZ</div>
       <h1><span>Faire</span> <span style="animation-delay:.1s">vivre</span> <span style="animation-delay:.2s">le</span> <span style="animation-delay:.3s">patrimoine</span> <span style="animation-delay:.4s">de</span> <span style="animation-delay:.5s">votre</span> <span style="animation-delay:.6s">région</span></h1>
