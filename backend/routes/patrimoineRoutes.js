@@ -73,7 +73,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         include: [{
           model: models.Intervenant,
           as: 'Intervenant',
-          attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites', 'biographie', 'wikipedia_url']
+          attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites', 'biographie', 'wikipedia_url',
+            'date_naissance', 'lieu_naissance', 'date_deces', 'lieu_deces', 'id_user']
         }]
       });
       res.json({ success: true, data: intervenants });
@@ -166,23 +167,27 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   );
 
-  router.delete('/:id/intervenants/:lieuIntervenantId', authenticate, validateId(), async (req, res) => {
-    try {
-      const lieuIntervenantId = parseInt(req.params.lieuIntervenantId);
-      if (isNaN(lieuIntervenantId)) {
-        return res.status(400).json({ success: false, error: 'identifiant invalide' });
-      }
-      const lien = await models.LieuIntervenant.findOne({
-        where: { id_lieu_intervenant: lieuIntervenantId, id_lieu: parseInt(req.params.id) }
-      });
-      if (!lien) return res.status(404).json({ success: false, error: 'Association non trouvée' });
-      await lien.destroy();
-      res.json({ success: true, message: 'Intervenant retiré du site' });
-    } catch (error) {
-      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-    }
-  });
+  // Retirer une personnalité : modération, contributeur qui l'a rattachée ou créateur du site
+  router.delete('/:id/intervenants/:lieuIntervenantId', authenticate, validateId(), validateId('lieuIntervenantId'),
+    patrimoineController.wrap('retirerPersonnalite'));
+
+  // Nouvelle personnalité (fiche + rattachement) : professionnels validés et modération
+  router.post('/:id/personnalites', authenticate, requireModerationOuPro, validateId(),
+    [
+      body('nom').custom(v => (typeof v === 'string' ? v.trim().length > 0 : !!(v && (v.fr || v.ar)))).withMessage('Le nom est requis'),
+      body('titre_professionnel').optional({ values: 'falsy' }).isString().isLength({ max: 255 }),
+      body('date_naissance').optional({ values: 'falsy' }).isISO8601(),
+      body('date_deces').optional({ values: 'falsy' }).isISO8601(),
+      body('lieu_naissance').optional({ values: 'falsy' }).isString().isLength({ max: 255 }),
+      body('lieu_deces').optional({ values: 'falsy' }).isString().isLength({ max: 255 }),
+      body('photo_url').optional({ values: 'falsy' }).isURL(),
+      body('wikipedia_url').optional({ values: 'falsy' }).isURL(),
+      body('role_sur_site').optional({ values: 'falsy' }).isLength({ max: 80 }),
+      body('periode').optional({ values: 'falsy' }).isLength({ max: 100 }),
+      body('contexte').optional({ values: 'falsy' }).isLength({ max: 5000 })
+    ],
+    handleValidationErrors,
+    patrimoineController.wrap('creerPersonnalite'));
 
   // ============================================================================
   // MONUMENTS — ajout / suppression depuis la fiche enrichissement

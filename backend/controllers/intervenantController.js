@@ -10,7 +10,8 @@ const container = require('../services/serviceContainer');
 const { translate, translateDeep } = require('../helpers/i18n');
 
 // Champs de la fiche qu'un professionnel peut modifier (pas l'e-mail, le téléphone ni le compte lié)
-const CHAMPS_MODIFIABLES_PRO = ['prenom', 'nom', 'biographie', 'titre_professionnel', 'organisation', 'site_web', 'photo_url'];
+const CHAMPS_MODIFIABLES_PRO = ['prenom', 'nom', 'biographie', 'titre_professionnel', 'organisation', 'site_web', 'photo_url',
+  'date_naissance', 'lieu_naissance', 'date_deces', 'lieu_deces', 'wikipedia_url'];
 
 class IntervenantController extends BaseController {
   get intervenantService() {
@@ -178,6 +179,8 @@ class IntervenantController extends BaseController {
           prenom: i.prenom, nom: i.nom, biographie: i.biographie,
           titre_professionnel: i.titre_professionnel, organisation: i.organisation,
           site_web: i.site_web, photo_url: i.photo_url,
+          date_naissance: i.date_naissance, lieu_naissance: i.lieu_naissance,
+          date_deces: i.date_deces, lieu_deces: i.lieu_deces, wikipedia_url: i.wikipedia_url,
           peut_modifier: peutModifier, raison
         }
       });

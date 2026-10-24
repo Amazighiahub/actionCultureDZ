@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Plus, Pencil, FileText, Trash2, User, Search } from 'lucide-react';
+import { Loader2, Plus, Pencil, FileText, Trash2, User, Search, UserPlus } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
+import FicheIntervenantDialog, { type DonneesFiche } from '@/components/forms/FicheIntervenantDialog';
+import PersonnaliteDialog from '@/components/patrimoine/PersonnaliteDialog';
 import { useToast } from '@/hooks/use-toast';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
@@ -26,6 +30,8 @@ interface SectionPersonnalitesProps {
   content?: string | MultilingualField | null;
   lang: string;
   lieuId: number;
+  /** Créateur du site : il peut retirer les personnalités du site */
+  idCreateurSite?: number | null;
   onSaved?: (newContent: MultilingualField) => void;
 }
 
@@ -40,10 +46,14 @@ const patrimoineSection: PatrimoineSection | null = (PATRIMOINE_SECTIONS as read
   : null;
 
 const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
-  icon, title, content, lang, lieuId, onSaved
+  icon, title, content, lang, lieuId, idCreateurSite, onSaved
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { isAdmin, hasRole, isValidatedProfessional } = usePermissions();
+  const estModeration = isAdmin || hasRole('Moderateur');
+  // Créer la fiche d'une nouvelle personnalité : professionnels validés et modération
+  const peutCreer = estModeration || isValidatedProfessional();
   const { toast } = useToast();
 
   // ── texte libre ──
@@ -64,18 +74,25 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   const [selected, setSelected] = useState<any | null>(null);
   const [roleSurSite, setRoleSurSite] = useState('');
   const [periode, setPeriode] = useState('');
+  const [contexte, setContexte] = useState('');
   const [adding, setAdding] = useState(false);
+  // Nouvelle personnalité : fiche préparée avec le formulaire d'intervenant, enregistrée à « Associer »
+  const [creation, setCreation] = useState<{ prenom?: string; nom?: string } | null>(null);
+  const [nouvelle, setNouvelle] = useState<DonneesFiche | null>(null);
+  // Fiche ouverte d'une personnalité liée
+  const [detail, setDetail] = useState<LieuIntervenant | null>(null);
 
   const hasContent = content && translate(content, lang).trim().length > 0;
 
   // Charger les intervenants liés
-  useEffect(() => {
+  const chargerIntervenants = useCallback(() => {
     setLoadingIntervenants(true);
     lieuIntervenantService.getByLieu(lieuId)
       .then(setIntervenants)
       .catch(() => setIntervenants([]))
       .finally(() => setLoadingIntervenants(false));
   }, [lieuId]);
+  useEffect(() => { chargerIntervenants(); }, [chargerIntervenants]);
 
   // Recherche avec debounce
   useEffect(() => {
@@ -132,19 +149,47 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
     setSearchQuery('');
     setSearchResults([]);
     setSelected(null);
+    setNouvelle(null);
     setRoleSurSite('');
     setPeriode('');
+    setContexte('');
+  };
+
+  // Nom tapé dans la recherche → prénom et nom de la nouvelle fiche
+  const ouvrirCreation = () => {
+    const mots = searchQuery.trim().split(/\s+/).filter(Boolean);
+    setCreation(mots.length > 1 ? { prenom: mots.slice(0, -1).join(' '), nom: mots[mots.length - 1] } : { nom: mots[0] || '' });
   };
 
   const handleAdd = async () => {
-    if (!selected) return;
+    if (!selected && !nouvelle) return;
     setAdding(true);
     try {
-      const lien = await lieuIntervenantService.add(lieuId, {
-        id_intervenant: selected.id_intervenant,
-        role_sur_site: roleSurSite || undefined,
-        periode: periode || undefined,
-      });
+      // Nouvelle personnalité : fiche créée et rattachée au site en une fois
+      const lien = nouvelle
+        ? (await httpClient.post<LieuIntervenant>(`/patrimoine/${lieuId}/personnalites`, {
+            ...nouvelle,
+            role_sur_site: roleSurSite || undefined,
+            periode: periode || undefined,
+            contexte: contexte || undefined
+          }).then(res => {
+            if (!res.success || !res.data) throw new Error(res.error || 'Erreur');
+            return res.data;
+          }))
+        : await lieuIntervenantService.add(lieuId, {
+            id_intervenant: selected.id_intervenant,
+            role_sur_site: roleSurSite || undefined,
+            periode: periode || undefined,
+            contexte: contexte || undefined,
+          });
+      if (nouvelle) {
+        setIntervenants(prev => [...prev, lien]);
+        setIsAddOpen(false);
+        const nom = `${nouvelle.prenom.fr} ${nouvelle.nom.fr}`.trim();
+        resetAddForm();
+        toast({ title: t('personnalites.ajoutee', 'Personnalité ajoutée'), description: nom });
+        return;
+      }
       setIntervenants(prev => [...prev, lien]);
       setIsAddOpen(false);
       resetAddForm();
@@ -156,6 +201,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       setAdding(false);
     }
   };
+
+  // Retirer : la personne qui l'a ajoutée, le créateur du site et la modération (vérifié par le serveur)
+  const peutRetirer = (lien: LieuIntervenant) => estModeration
+    || (!!user?.id_user && (lien.id_contributeur === user.id_user || idCreateurSite === user.id_user));
 
   const handleRemove = async (lieuIntervenantId: number, nom: string) => {
     try {
@@ -252,6 +301,8 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                     : `Intervenant #${lien.id_intervenant}`;
                   return (
                     <div key={lien.id_lieu_intervenant} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                      <button type="button" onClick={() => setDetail(lien)} className="flex flex-1 min-w-0 items-start gap-3 text-start rounded-md hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={t('personnalites.voirFiche', 'Voir la fiche de {{nom}}', { nom: nomComplet })}>
                       {inv?.photo_url ? (
                         <img loading="lazy" decoding="async" src={inv.photo_url} alt={nomComplet} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                       ) : (
@@ -275,12 +326,14 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                           </span>
                         )}
                       </div>
-                      {isAuthenticated && (
+                      </button>
+                      {peutRetirer(lien) && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="flex-shrink-0 text-muted-foreground hover:text-destructive"
                           onClick={() => handleRemove(lien.id_lieu_intervenant, nomComplet)}
+                          aria-label={t('personnalites.retirer', 'Retirer {{nom}} de ce site', { nom: nomComplet })}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -335,7 +388,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
 
           <div className="space-y-4 mt-2">
             {/* Recherche */}
-            {!selected ? (
+            {!selected && !nouvelle ? (
               <>
                 <div className="relative">
                   <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -386,16 +439,23 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
 
                 {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-2">
-                    Aucun résultat. Créez d'abord la personnalité dans la section Intervenants.
+                    {t('personnalites.aucunResultat', 'Personne de ce nom sur Tala DZ.')}
                   </p>
+                )}
+
+                {peutCreer && (
+                  <Button type="button" variant="outline" className="w-full" onClick={ouvrirCreation}>
+                    <UserPlus className="h-4 w-4 me-2" aria-hidden="true" />
+                    {t('personnalites.creerFiche', 'Pas dans la liste ? Créer sa fiche')}
+                  </Button>
                 )}
               </>
             ) : (
               /* Personnalité sélectionnée — champs optionnels */
               <>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                  {selected.photo_url ? (
-                    <img loading="lazy" decoding="async" src={selected.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  {(nouvelle?.photo_url || selected?.photo_url) ? (
+                    <img loading="lazy" decoding="async" src={nouvelle?.photo_url || selected?.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                       <User className="h-5 w-5 text-muted-foreground" />
@@ -403,11 +463,19 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">
-                      {`${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)}`.trim()}
+                      {nouvelle
+                        ? `${nouvelle.prenom.fr} ${nouvelle.nom.fr}`.trim()
+                        : `${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)}`.trim()}
                     </p>
-                    {selected.titre_professionnel && <p className="text-xs text-muted-foreground">{selected.titre_professionnel}</p>}
+                    {(nouvelle?.titre_professionnel || selected?.titre_professionnel) && <p className="text-xs text-muted-foreground">{nouvelle?.titre_professionnel || selected?.titre_professionnel}</p>}
+                    {nouvelle && <p className="text-xs text-primary">{t('personnalites.nouvelleFiche', 'Nouvelle fiche, enregistrée en l’associant')}</p>}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-muted-foreground">
+                  {nouvelle && (
+                    <Button variant="ghost" size="sm" onClick={() => setCreation({ prenom: nouvelle.prenom.fr, nom: nouvelle.nom.fr })} className="text-muted-foreground">
+                      {t('common.edit', 'Modifier')}
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => { setSelected(null); setNouvelle(null); }} className="text-muted-foreground">
                     Changer
                   </Button>
                 </div>
@@ -435,6 +503,18 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                       className="mt-1"
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="contexte_site">{t('personnalites.lienSite', 'Son lien avec ce lieu')} <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                    <Textarea
+                      id="contexte_site"
+                      placeholder={t('personnalites.lienSitePlaceholder', 'Ex. : née au village, elle y a transmis la poterie à toute une génération…')}
+                      value={contexte}
+                      onChange={e => setContexte(e.target.value)}
+                      maxLength={5000}
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -443,7 +523,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               <Button variant="outline" onClick={() => { setIsAddOpen(false); resetAddForm(); }}>
                 {t('common.cancel', 'Annuler')}
               </Button>
-              {selected && (
+              {(selected || nouvelle) && (
                 <Button onClick={handleAdd} disabled={adding}>
                   {adding && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
                   Associer
@@ -453,6 +533,19 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Nouvelle personnalité : le formulaire d'intervenant, en mode création ── */}
+      <FicheIntervenantDialog
+        idIntervenant={null}
+        creation={creation}
+        titre={t('personnalites.nouvelle', 'Nouvelle personnalité')}
+        description={t('personnalites.ficheDescription', 'Présentation affichée sur la page du site.')}
+        onCree={(donnees) => { setNouvelle(donnees); setSelected(null); }}
+        onClose={() => setCreation(null)}
+      />
+
+      {/* ── Fiche d'une personnalité liée ── */}
+      <PersonnaliteDialog lien={detail} lang={lang} onClose={() => setDetail(null)} onModifiee={chargerIntervenants} />
 
       {/* ── Modal articles riches ── */}
       {patrimoineSection && (

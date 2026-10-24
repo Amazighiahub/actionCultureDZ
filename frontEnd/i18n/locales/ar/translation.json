@@ -449,7 +449,8 @@
     "loadMore": "عرض المزيد",
     "yes": "نعم",
     "no": "لا",
-    "contributorGuide": "دليل المساهم"
+    "contributorGuide": "دليل المساهم",
+    "continue": "متابعة"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -4642,5 +4643,31 @@
   "media": {
     "videoNotSupported": "متصفحك لا يدعم تشغيل الفيديو.",
     "audioNotSupported": "متصفحك لا يدعم تشغيل الصوت."
+  },
+  "personnalites": {
+    "ajoutee": "تمت إضافة الشخصية",
+    "ajouterOeuvre": "إضافة أحد أعماله",
+    "ajouterOeuvreAide": "في الاستمارة، أضف هذه الشخصية ضمن المساهمين في العمل (بحث بالاسم): سيظهر العمل هنا بعد نشره.",
+    "aucunResultat": "لا أحد بهذا الاسم على Tala DZ.",
+    "aucuneOeuvre": "لا توجد أعمال على Tala DZ حاليًا.",
+    "biographie": "السيرة الذاتية",
+    "birthDate": "تاريخ الميلاد",
+    "birthPlace": "مكان الميلاد",
+    "creerFiche": "غير موجود في القائمة؟ أنشئ بطاقته",
+    "deathDate": "تاريخ الوفاة",
+    "deathPlace": "مكان الوفاة",
+    "deces": "الوفاة",
+    "ficheDescription": "التعريف المعروض في صفحة الموقع.",
+    "lienSite": "علاقته بهذا المكان",
+    "lienSitePlaceholder": "مثال: وُلدت في القرية ونقلت فن الفخار إلى جيل كامل…",
+    "modifierFiche": "تعديل البطاقة",
+    "naissance": "الميلاد",
+    "nomRequis": "الاسم مطلوب",
+    "nouvelle": "شخصية جديدة",
+    "nouvelleFiche": "بطاقة جديدة، تُحفظ عند الربط",
+    "oeuvres": "أعماله",
+    "retirer": "إزالة {{nom}} من هذا الموقع",
+    "voirFiche": "عرض بطاقة {{nom}}",
+    "wikipedia": "صفحة ويكيبيديا"
   }
 }

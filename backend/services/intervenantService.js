@@ -42,9 +42,9 @@ class IntervenantService extends BaseService {
   /**
    * Droit de modifier la fiche d'un intervenant.
    * Administration : toujours. Professionnel : seulement un intervenant qu'il a ajouté, c.-à-d.
-   * présent uniquement dans des activités de ses propres événements, et sans compte sur le site
-   * (une personne inscrite gère elle-même son profil ; un intervenant partagé avec un autre
-   * organisateur reste du ressort de l'administration).
+   * présent uniquement dans des activités de ses propres événements et/ou rattaché par lui à des
+   * sites patrimoniaux (personnalités), et sans compte sur le site (une personne inscrite gère
+   * elle-même son profil ; un intervenant partagé avec quelqu'un d'autre reste à l'administration).
    * @returns {Promise<{ intervenant: Object|null, peutModifier: boolean, raison: string|null }>}
    */
   async droitsEdition(id, user) {
@@ -53,17 +53,28 @@ class IntervenantService extends BaseService {
     if (user?.isAdmin) return { intervenant, peutModifier: true, raison: null };
     if (intervenant.id_user) return { intervenant, peutModifier: false, raison: 'compte' };
 
+    // Comptes « responsables » de chaque usage : organisateur de l'événement, ou contributeur
+    // qui a rattaché la personnalité à un site patrimonial
+    const responsables = [];
     const liens = await this.models.ProgrammeIntervenant.findAll({
       where: { id_intervenant: id }, attributes: ['id_programme'], raw: true
     });
-    if (!liens.length) return { intervenant, peutModifier: false, raison: 'autre_organisateur' };
-    const programmes = await this.models.Programme.findAll({
-      where: { id_programme: liens.map(l => l.id_programme) }, attributes: ['id_evenement'], raw: true
-    });
-    const evenements = await this.models.Evenement.findAll({
-      where: { id_evenement: [...new Set(programmes.map(p => p.id_evenement))] }, attributes: ['id_user'], raw: true
-    });
-    const tousLesSiens = evenements.length > 0 && evenements.every(e => Number(e.id_user) === Number(user?.id_user));
+    if (liens.length) {
+      const programmes = await this.models.Programme.findAll({
+        where: { id_programme: liens.map(l => l.id_programme) }, attributes: ['id_evenement'], raw: true
+      });
+      const evenements = await this.models.Evenement.findAll({
+        where: { id_evenement: [...new Set(programmes.map(p => p.id_evenement))] }, attributes: ['id_user'], raw: true
+      });
+      responsables.push(...evenements.map(e => e.id_user));
+    }
+    if (this.models.LieuIntervenant) {
+      const sites = await this.models.LieuIntervenant.findAll({
+        where: { id_intervenant: id }, attributes: ['id_contributeur'], raw: true
+      });
+      responsables.push(...sites.map(s => s.id_contributeur));
+    }
+    const tousLesSiens = responsables.length > 0 && responsables.every(r => Number(r) === Number(user?.id_user));
     return { intervenant, peutModifier: tousLesSiens, raison: tousLesSiens ? null : 'autre_organisateur' };
   }
 
@@ -72,18 +83,20 @@ class IntervenantService extends BaseService {
     if (!intervenant) return null;
 
     const offset = (page - 1) * limit;
-    const { count, rows } = await this.models.Oeuvre.findAndCountAll({
-      include: [{
-        model: this.models.Intervenant,
-        as: 'Intervenants',
-        where: { id_intervenant: intervenantId },
-        through: { attributes: ['role_principal'] },
-        required: true
-      }],
+    // Œuvres publiées, par la table de liaison : il n'existe pas d'association directe
+    // Oeuvre ↔ Intervenant (la requête échouait : « Intervenant is not associated to Oeuvre »)
+    const { count, rows: liens } = await this.models.OeuvreIntervenant.findAndCountAll({
+      where: { id_intervenant: intervenantId },
+      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', where: { statut: 'publie' }, required: true }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['date_creation', 'DESC']]
+      order: [[{ model: this.models.Oeuvre, as: 'Oeuvre' }, 'date_creation', 'DESC']],
+      distinct: true,
+      col: 'id_oeuvre'
     });
+    // Une œuvre où la personne a plusieurs rôles n'apparaît qu'une fois
+    const vues = new Set();
+    const rows = liens.filter(l => !vues.has(l.id_oeuvre) && vues.add(l.id_oeuvre)).map(l => l.Oeuvre);
 
     return {
       data: rows,
@@ -267,7 +280,8 @@ class IntervenantService extends BaseService {
       }
 
       // Whitelist
-      const allowedFields = ['email', 'telephone', 'specialite', 'titre_professionnel', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune'];
+      const allowedFields = ['email', 'telephone', 'specialite', 'titre_professionnel', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune',
+        'date_naissance', 'lieu_naissance', 'date_deces', 'lieu_deces', 'wikipedia_url'];
       const updates = {};
       allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 

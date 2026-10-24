@@ -453,7 +453,8 @@
     "loadMore": "Voir plus",
     "yes": "Oui",
     "no": "Non",
-    "contributorGuide": "Guide du contributeur"
+    "contributorGuide": "Guide du contributeur",
+    "continue": "Continuer"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -4540,5 +4541,31 @@
   "media": {
     "videoNotSupported": "Votre navigateur ne supporte pas la lecture vidéo.",
     "audioNotSupported": "Votre navigateur ne supporte pas la lecture audio."
+  },
+  "personnalites": {
+    "ajoutee": "Personnalité ajoutée",
+    "ajouterOeuvre": "Ajouter une de ses œuvres",
+    "ajouterOeuvreAide": "Dans le formulaire, ajoutez cette personnalité parmi les intervenants de l’œuvre (recherche par nom) : l’œuvre apparaîtra ici une fois publiée.",
+    "aucunResultat": "Personne de ce nom sur Tala DZ.",
+    "aucuneOeuvre": "Aucune œuvre sur Tala DZ pour l’instant.",
+    "biographie": "Biographie",
+    "birthDate": "Date de naissance",
+    "birthPlace": "Lieu de naissance",
+    "creerFiche": "Pas dans la liste ? Créer sa fiche",
+    "deathDate": "Date de décès",
+    "deathPlace": "Lieu de décès",
+    "deces": "Décès",
+    "ficheDescription": "Présentation affichée sur la page du site.",
+    "lienSite": "Son lien avec ce lieu",
+    "lienSitePlaceholder": "Ex. : née au village, elle y a transmis la poterie à toute une génération…",
+    "modifierFiche": "Modifier la fiche",
+    "naissance": "Naissance",
+    "nomRequis": "Le nom est requis",
+    "nouvelle": "Nouvelle personnalité",
+    "nouvelleFiche": "Nouvelle fiche, enregistrée en l’associant",
+    "oeuvres": "Ses œuvres",
+    "retirer": "Retirer {{nom}} de ce site",
+    "voirFiche": "Voir la fiche de {{nom}}",
+    "wikipedia": "Page Wikipédia"
   }
 }

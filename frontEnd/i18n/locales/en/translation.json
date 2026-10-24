@@ -448,7 +448,8 @@
     "loadMore": "Load more",
     "yes": "Yes",
     "no": "No",
-    "contributorGuide": "Contributor guide"
+    "contributorGuide": "Contributor guide",
+    "continue": "Continue"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -4540,5 +4541,31 @@
   "media": {
     "videoNotSupported": "Your browser does not support video playback.",
     "audioNotSupported": "Your browser does not support audio playback."
+  },
+  "personnalites": {
+    "ajoutee": "Personality added",
+    "ajouterOeuvre": "Add one of their works",
+    "ajouterOeuvreAide": "In the form, add this personality among the work’s contributors (search by name): the work will appear here once published.",
+    "aucunResultat": "Nobody by that name on Tala DZ.",
+    "aucuneOeuvre": "No works on Tala DZ yet.",
+    "biographie": "Biography",
+    "birthDate": "Date of birth",
+    "birthPlace": "Place of birth",
+    "creerFiche": "Not in the list? Create their profile",
+    "deathDate": "Date of death",
+    "deathPlace": "Place of death",
+    "deces": "Death",
+    "ficheDescription": "Introduction shown on the site page.",
+    "lienSite": "Their connection to this place",
+    "lienSitePlaceholder": "E.g. born in the village, she passed pottery on to a whole generation…",
+    "modifierFiche": "Edit profile",
+    "naissance": "Birth",
+    "nomRequis": "The name is required",
+    "nouvelle": "New personality",
+    "nouvelleFiche": "New profile, saved when you link it",
+    "oeuvres": "Works",
+    "retirer": "Remove {{nom}} from this site",
+    "voirFiche": "See {{nom}}’s profile",
+    "wikipedia": "Wikipedia page"
   }
 }
