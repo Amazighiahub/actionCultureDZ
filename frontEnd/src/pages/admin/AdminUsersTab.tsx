@@ -2,7 +2,7 @@
  * AdminUsersTab - Gestion des utilisateurs
  * Utilise useDashboardAdmin
  */
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -56,6 +56,9 @@ const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'a
 
 // Contrôle d'accès séparé du contenu : un return avant les hooks du contenu faisait
 // varier leur nombre d'un rendu à l'autre (règle des hooks React, risque de plantage)
+// Fenêtre d'envoi (notification sur le site + e-mail), ouverte pour une seule personne
+const AdminNotificationsModal = React.lazy(() => import('./AdminNotificationsModal'));
+
 const AdminUsersTab: React.FC = () => {
   const { isAdmin } = useAuth();
   if (!isAdmin) return <Navigate to="/" replace />;
@@ -76,6 +79,8 @@ const AdminUsersTabContent: React.FC = () => {
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId?: number }>({ open: false });
   const [confirmSuspend, setConfirmSuspend] = useState<{ open: boolean; userId?: number }>({ open: false });
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  // « Envoyer un email » : destinataire de la fenêtre d'envoi (le menu ne faisait rien)
+  const [destinataire, setDestinataire] = useState<{ id: number; nom: string } | null>(null);
 
   const notifyProfessionals = async () => {
     setNotifying(true);
@@ -432,7 +437,10 @@ const AdminUsersTabContent: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDestinataire({
+                          id: user.id_user,
+                          nom: `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`.trim() || user.email
+                        })}>
                           <Mail className="h-4 w-4 me-2" />
                           {t('admin.users.sendEmail', 'Envoyer un email')}
                         </DropdownMenuItem>
@@ -507,6 +515,18 @@ const AdminUsersTabContent: React.FC = () => {
         confirmLabel={t('common.delete', 'Supprimer')}
         onConfirm={executeBulkDelete}
       />
+
+      {destinataire && (
+        <Suspense fallback={null}>
+          <AdminNotificationsModal
+            isOpen
+            onClose={() => setDestinataire(null)}
+            targetType="user"
+            targetId={destinataire.id}
+            targetName={destinataire.nom}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
