@@ -84,19 +84,20 @@ class IntervenantService extends BaseService {
 
     const offset = (page - 1) * limit;
     // Œuvres publiées, par la table de liaison : il n'existe pas d'association directe
-    // Oeuvre ↔ Intervenant (la requête échouait : « Intervenant is not associated to Oeuvre »)
-    const { count, rows: liens } = await this.models.OeuvreIntervenant.findAndCountAll({
-      where: { id_intervenant: intervenantId },
-      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', where: { statut: 'publie' }, required: true }],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [[{ model: this.models.Oeuvre, as: 'Oeuvre' }, 'date_creation', 'DESC']],
-      distinct: true,
-      col: 'id_oeuvre'
+    // Oeuvre ↔ Intervenant (« Intervenant is not associated to Oeuvre »). Deux requêtes simples :
+    // les œuvres liées, puis celles qui sont publiées.
+    const liens = await this.models.OeuvreIntervenant.findAll({
+      where: { id_intervenant: intervenantId }, attributes: ['id_oeuvre'], raw: true
     });
-    // Une œuvre où la personne a plusieurs rôles n'apparaît qu'une fois
-    const vues = new Set();
-    const rows = liens.filter(l => !vues.has(l.id_oeuvre) && vues.add(l.id_oeuvre)).map(l => l.Oeuvre);
+    const ids = [...new Set(liens.map(l => l.id_oeuvre))];
+    const { count, rows } = ids.length
+      ? await this.models.Oeuvre.findAndCountAll({
+          where: { id_oeuvre: ids, statut: 'publie' },
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          order: [['date_creation', 'DESC']]
+        })
+      : { count: 0, rows: [] };
 
     return {
       data: rows,
