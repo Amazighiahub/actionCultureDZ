@@ -1,6 +1,7 @@
 // pages/EditArticle.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Header from '@/components/Header';
 import ArticleEditor from '@/components/article/ArticleEditor';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
@@ -45,13 +46,8 @@ const EditArticle: React.FC = () => {
 
         const isScientific = oeuvre.id_type_oeuvre === 5;
         const articleType = isScientific ? 'article_scientifique' : 'article';
-        const articleData = oeuvre.Article || oeuvre.ArticleScientifique || oeuvre.article || oeuvre.article_scientifique;
-        const blocksRecordId = articleData?.id_article ?? articleData?.id_article_scientifique ?? parseInt(id!);
 
-        // Charger les blocs (utiliser l'ID article/article_scientifique, pas oeuvre)
-        const blocksResponse = await articleBlockService.getBlocksByArticle(blocksRecordId, articleType);
-
-        // Préparer les données initiales avec les blocs
+        // Données initiales ; les blocs du contenu sont chargés par l'éditeur (articleId)
         setInitialData({
           id_oeuvre: oeuvre.id_oeuvre,
           titre: oeuvre.titre,
@@ -69,9 +65,7 @@ const EditArticle: React.FC = () => {
           pages: oeuvre.ArticleScientifique?.pages || null,
           volume: oeuvre.ArticleScientifique?.volume || null,
           numero: oeuvre.ArticleScientifique?.numero || null,
-          peer_reviewed: oeuvre.ArticleScientifique?.peer_reviewed || false,
-          // Ajouter les blocs existants
-          existingBlocks: blocksResponse.data || []
+          peer_reviewed: oeuvre.ArticleScientifique?.peer_reviewed || false
         });
       } else {
         setError("Article non trouvé");
@@ -255,9 +249,13 @@ const EditArticle: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pattern-geometric">
+      <Header />
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
+          {/* articleId : l'éditeur recharge les blocs de l'article (sans lui, le contenu restait vide
+              et l'enregistrement effaçait tous les blocs) */}
           <ArticleEditor
+            articleId={parseInt(id!, 10)}
             initialData={initialData}
             onBack={() => navigate('/dashboard-pro')}
             onSave={handleSave} />

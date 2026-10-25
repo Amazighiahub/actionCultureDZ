@@ -62,8 +62,13 @@ class VueController extends BaseController {
         ? rawIp.split(':').slice(0, 3).join(':') + '::'
         : rawIp.replace(/\.\d+$/, '.0');
 
-      // Verifier si c'est une vue unique pour cette session
+      // Une seule vue par session et par contenu : l'index unique (type_entite, id_entite, session_id)
+      // s'applique à toutes les lignes (MySQL ignore sa condition is_unique). Revoir un article dans
+      // la même session n'est donc pas recompté — avant, l'insertion échouait (erreur 500 affichée)
       const existingView = await this.vueService.findExistingView(type_entite, id_entite, sessionId);
+      if (existingView) {
+        return this._sendSuccess(res, { id_vue: existingView.id_vue, is_unique: false });
+      }
 
       // Creer la vue
       const viewData = {
@@ -77,12 +82,19 @@ class VueController extends BaseController {
         page_source,
         session_id: sessionId,
         device_type: this.vueService.detectDeviceType(userAgent),
-        is_unique: !existingView,
+        is_unique: true,
         duree_secondes: duree_secondes || null,
         date_vue: new Date()
       };
 
-      const vue = await this.vueService.createView(viewData);
+      let vue;
+      try {
+        vue = await this.vueService.createView(viewData);
+      } catch (error) {
+        // Deux vues simultanées de la même session : la seconde est déjà comptée
+        if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+        return this._sendSuccess(res, { id_vue: null, is_unique: false });
+      }
 
       // Mettre a jour le compteur de vues sur l'entite
       await this.vueService.updateEntityViewCount(type_entite, id_entite);

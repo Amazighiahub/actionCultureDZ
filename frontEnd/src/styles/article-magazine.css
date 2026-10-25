@@ -191,6 +191,9 @@
 /* Listes */
 .mag-corps ul,
 .mag-corps ol { margin: 0 0 1.75rem; padding-inline-start: 1.5rem; }
+/* La remise à zéro de Tailwind retire puces et numéros : on les rétablit */
+.mag-corps ul { list-style: disc; }
+.mag-corps ol { list-style: decimal; }
 .mag-corps li { margin: 0.45rem 0; padding-inline-start: 0.35rem; }
 .mag-corps ul li::marker { content: "◆  "; color: hsl(var(--primary)); font-size: 0.7em; }
 .mag-corps ol li::marker { font-family: var(--font-serif); font-weight: 700; color: hsl(var(--primary)); }
