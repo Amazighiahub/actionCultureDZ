@@ -93,7 +93,7 @@ module.exports = (sequelize) => {
       }
     },
     statut: {
-      type: DataTypes.ENUM('brouillon', 'publie', 'planifie', 'en_cours', 'termine', 'annule', 'reporte'),
+      type: DataTypes.ENUM('brouillon', 'en_attente', 'publie', 'planifie', 'en_cours', 'termine', 'annule', 'reporte'),
       defaultValue: 'brouillon'
     },
     capacite_max: {
@@ -194,8 +194,8 @@ module.exports = (sequelize) => {
     
     hooks: {
       beforeValidate: (evenement) => {
-        // Ne pas écraser les statuts manuels (brouillon, annule, reporte)
-        const manualStatuses = ['brouillon', 'annule', 'reporte'];
+        // Ne pas écraser les statuts manuels (brouillon, en attente de validation, annule, reporte)
+        const manualStatuses = ['brouillon', 'en_attente', 'annule', 'reporte'];
         if (manualStatuses.includes(evenement.statut)) return;
 
         const now = new Date();

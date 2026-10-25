@@ -101,7 +101,7 @@ const initOgRoutes = (models) => {
       const ev = await models.Evenement.findByPk(id, {
         include: [{ model: models.Media, as: 'Medias', attributes: ['url', 'type_media'], required: false }],
       });
-      if (!ev || ev.statut === 'brouillon') return null;
+      if (!ev || ['brouillon', 'en_attente'].includes(ev.statut)) return null;
       const date = ev.date_debut ? new Date(ev.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
       const desc = summary(ev.description);
       return {

@@ -11,7 +11,7 @@ const BaseService = require('../core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent } = require('../../utils/sanitizeArticle');
 const { mergeTranslations } = require('../../helpers/i18n');
-const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 
 const TYPES_BLOCS = ['text', 'heading', 'image', 'video', 'citation', 'list', 'table', 'code', 'separator', 'embed'];
 const MAX_BLOCS = 150;
@@ -227,24 +227,12 @@ class ArticleRevisionService extends BaseService {
     });
   }
 
-  /** Comptes administrateurs actifs (rôle Administrateur ou type administrateur) */
-  async _administrateurs() {
-    const { User, Role } = this.models;
-    const parType = await User.findAll({ where: { id_type_user: TYPE_USER_IDS.ADMINISTRATEUR }, attributes: ['id_user'] });
-    const parRole = Role ? await User.findAll({
-      attributes: ['id_user'],
-      include: [{ model: Role, as: 'Roles', where: { nom_role: 'Administrateur' }, attributes: [], through: { attributes: [] } }]
-    }) : [];
-    return [...new Set([...parType, ...parRole].map(u => u.id_user))];
+  _administrateurs() {
+    return idsAdministrateurs(this.models);
   }
 
-  async _notifier(idUser, { titre, message, url_action, metadata }) {
-    if (!idUser || !this.notificationService) return;
-    try {
-      await this.notificationService.sendToUser(idUser, { titre, message, url_action, metadata, type_notification: 'autre', priorite: 'normale' });
-    } catch {
-      // Une notification manquée ne doit pas annuler la proposition ni la décision
-    }
+  _notifier(idUser, contenu) {
+    return notifier(this.notificationService, idUser, contenu);
   }
 }
 

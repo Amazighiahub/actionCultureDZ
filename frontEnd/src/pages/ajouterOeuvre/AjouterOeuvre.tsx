@@ -63,6 +63,7 @@ const AjouterOeuvre: React.FC = () => {
     handleSubmit,
     loadMetadata,
     getTagName,
+    isEditMode,
   } = hook;
 
   // ============================================================================
@@ -149,8 +150,8 @@ const AjouterOeuvre: React.FC = () => {
               <FormPageHeader
                 onBack={() => window.history.back()}
                 backLabel={t("ajouteroeuvre.retour")}
-                title={t("ajouteroeuvre.ajouter_une_uvre")}
-                subtitle={t("ajouteroeuvre.partagez_votre_cration")}
+                title={isEditMode ? t('ajouteroeuvre.editTitle', 'Modifier l’œuvre') : t("ajouteroeuvre.ajouter_une_uvre")}
+                subtitle={isEditMode ? t('ajouteroeuvre.editSubtitle', 'Corrigez ou complétez votre œuvre, puis enregistrez.') : t("ajouteroeuvre.partagez_votre_cration")}
                 aside={isAuthenticated && user &&
                   <div className="text-end text-sm text-muted-foreground">
                     <p>{t("ajouteroeuvre.connect_tant_que")}</p>
@@ -550,14 +551,17 @@ const AjouterOeuvre: React.FC = () => {
                       {uploadProgress &&
                       <div className="text-center text-sm text-muted-foreground animate-pulse">{uploadProgress}</div>
                       }
-                      <div className="flex justify-end gap-4">
+                      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
+                        {/* Modification : un seul bouton, le statut ne change pas (un brouillon s'envoie depuis le tableau de bord) */}
+                        {!isEditMode &&
                         <Button type="button" variant="outline" onClick={() => handleSubmit(true)}
                           disabled={loading || !isAuthenticated} className="hover:bg-secondary hover:text-secondary-foreground hover:border-secondary">
                           {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}{t("ajouteroeuvre.sauvegarder_comme_brouillon")}
                         </Button>
+                        }
                         <Button type="submit" size="lg" disabled={loading || !isAuthenticated} className="w-full">
                           {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
-                          <Save className="h-4 w-4 me-2" />{t("ajouteroeuvre.publier_luvre")}
+                          <Save className="h-4 w-4 me-2" />{isEditMode ? t('events.create.saveChanges', 'Enregistrer les modifications') : t("ajouteroeuvre.publier_luvre")}
                         </Button>
                       </div>
                     </div>

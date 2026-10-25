@@ -9,10 +9,16 @@ const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
 const { mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
+const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+const { evenementPath } = require('../../utils/slug');
+
+/** Nom lisible d'un événement (nom multilingue) pour les notifications */
+const nomLisible = (nom) => (typeof nom === 'object' && nom ? (nom.fr || nom.ar || Object.values(nom).find(Boolean)) : nom) || 'Événement';
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {
     super(evenementRepository, options);
+    this.notificationService = options.notificationService;
     this.cache = CacheManager.create({
       namespace: 'evenements',
       defaultTTL: 2 * 60 * 1000, // 2 min — les événements changent plus souvent que les metadata
@@ -189,7 +195,8 @@ class EvenementService extends BaseService {
       date_fin: this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin),
       id_lieu: data.id_lieu || data.lieuId,
       id_type_evenement: data.id_type_evenement || data.typeEvenementId,
-      statut: 'brouillon', // Toujours brouillon à la création — publication via modération admin uniquement
+      // « Publier » : un professionnel envoie l'événement à la validation ; l'administration publie
+      statut: this._statutDemande(data.statut, options.isAdmin),
       capacite_max: data.capacite_max || data.capaciteMax,
       tarif: data.tarif || 0,
       inscription_requise: data.inscription_requise || data.inscriptionRequise || false,
@@ -222,6 +229,7 @@ class EvenementService extends BaseService {
 
     this.cache.invalidate();
     this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}`);
+    if (full?.statut === 'en_attente') await this._prevenirModeration(full);
 
     return EvenementDTO.fromEntity(full);
   }
@@ -272,6 +280,7 @@ class EvenementService extends BaseService {
   }
 
   async update(id, data, userId, options = {}) {
+    let envoye = false;
     await this.withTransaction(async (transaction) => {
       const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!existing) throw this._notFoundError(id);
@@ -294,7 +303,12 @@ class EvenementService extends BaseService {
       if (data.date_fin || data.dateFin) updateData.date_fin = this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin);
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
       if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
-      // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
+      // Statut : un brouillon peut être envoyé à la validation (ou publié par l'administration) ;
+      // le reste passe par les routes dédiées (/publish, /cancel)
+      if (existing.statut === 'brouillon' && data.statut === 'publie') {
+        updateData.statut = this._statutDemande('publie', options.isAdmin);
+        envoye = updateData.statut === 'en_attente';
+      }
       if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
       if (data.tarif !== undefined) updateData.tarif = data.tarif;
       if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
@@ -347,6 +361,7 @@ class EvenementService extends BaseService {
     await cacheMiddleware.clearCache('professionnel');
     await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement modifié: ${id} par user: ${userId}`);
+    if (envoye) await this._prevenirModeration(updated);
 
     return EvenementDTO.fromEntity(updated);
   }
@@ -366,7 +381,7 @@ class EvenementService extends BaseService {
     }
 
     // Contrôle d'état : seuls les brouillons peuvent être supprimés (admin bypass)
-    if (!options.isAdmin && existing.statut !== 'brouillon') {
+    if (!options.isAdmin && !['brouillon', 'en_attente'].includes(existing.statut)) {
       throw this._validationError('Seuls les événements en brouillon peuvent être supprimés. Utilisez l\'annulation pour les événements publiés.');
     }
 
@@ -694,16 +709,60 @@ class EvenementService extends BaseService {
   /**
    * Publier un événement
    */
-  async publish(id, adminId) {
+  async publish(id, adminId, { statut, raison } = {}) {
     const evenement = await this.repository.findById(id);
     if (!evenement) throw this._notFoundError(id);
+    const nom = nomLisible(evenement.nom_evenement);
+    const lien = evenementPath(id, evenement.nom_evenement);
+
+    // Refus : l'événement revient en brouillon, l'organisateur le corrige et le renvoie
+    if (statut === 'rejete') {
+      const motif = String(raison || '').trim();
+      if (!motif) throw this._validationError('Un motif de refus est requis');
+      if (evenement.statut !== 'en_attente') throw this._validationError('Cet événement n\'est pas en attente de validation');
+      await this.repository.update(id, { statut: 'brouillon' });
+      this.cache.invalidate();
+      this.logger.info(`Événement refusé: ${id} par admin: ${adminId}`);
+      await notifier(this.notificationService, evenement.id_user, {
+        titre: 'Événement à corriger',
+        message: `« ${nom} » n'a pas été publié : ${motif.slice(0, 300)}. Modifiez-le, puis touchez « Publier l'événement » pour le renvoyer.`,
+        url_action: '/dashboard-pro', metadata: { id_evenement: id }
+      });
+      return EvenementDTO.fromEntity(await this.repository.findWithFullDetails(id));
+    }
 
     await this.repository.update(id, { statut: 'publie' });
     const updated = await this.repository.findWithFullDetails(id);
 
     this.cache.invalidate();
     this.logger.info(`Événement publié: ${id} par admin: ${adminId}`);
+    if (['brouillon', 'en_attente'].includes(evenement.statut)) {
+      await notifier(this.notificationService, evenement.id_user, {
+        titre: 'Événement publié',
+        message: `« ${nom} » est en ligne : tout le monde peut le voir et s'y inscrire.`,
+        url_action: lien, metadata: { id_evenement: id }
+      });
+    }
     return EvenementDTO.fromEntity(updated);
+  }
+
+  /** Statut à la demande « Publier » : publié pour l'administration, en attente de validation sinon */
+  _statutDemande(statut, isAdmin) {
+    if (statut !== 'publie') return 'brouillon';
+    return isAdmin ? 'publie' : 'en_attente';
+  }
+
+  /** Un événement attend une validation : les administrateurs sont prévenus */
+  async _prevenirModeration(evenement) {
+    const nom = nomLisible(evenement.nom_evenement);
+    for (const idAdmin of await idsAdministrateurs(this.models)) {
+      if (idAdmin === evenement.id_user) continue;
+      await notifier(this.notificationService, idAdmin, {
+        titre: 'Événement à valider',
+        message: `« ${nom} » attend votre validation avant d'être publié.`,
+        url_action: '/admin/dashboard?tab=evenements', metadata: { id_evenement: evenement.id_evenement }
+      });
+    }
   }
 
   /**

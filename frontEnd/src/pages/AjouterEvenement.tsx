@@ -453,7 +453,13 @@ const AjouterEvenement = () => {
         queryClient.invalidateQueries({ queryKey: ['evenements'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
         queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });
-        toast({
+        // Événement d'un professionnel envoyé à l'équipe : publié après validation
+        const envoye = statut === 'publie' && (response.data as { statut?: string } | undefined)?.statut === 'en_attente'
+          && statutActuel !== 'en_attente';
+        toast(envoye ? {
+          title: t('events.create.sentTitle', 'Envoyé pour validation'),
+          description: t('events.create.sentDesc', 'L’équipe Tala DZ va relire votre événement. Vous recevrez une notification dès qu’il sera publié.'),
+        } : {
           title: t('common.success', 'Succès'),
           description: isEditMode
             ? t('events.create.updateSuccess', 'Événement mis à jour avec succès')
@@ -1064,7 +1070,8 @@ const AjouterEvenement = () => {
               </Alert>
             )}
 
-            <div className={`flex justify-end gap-4 ${rtlClasses.flexRow}`}>
+            {/* Téléphone : boutons l'un sous l'autre, « Publier » en premier */}
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
               {!(isEditMode && statutActuel && statutActuel !== 'brouillon') && (
               <Button
                 type="button"

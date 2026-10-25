@@ -333,8 +333,8 @@ const AjouterArtisanat: React.FC = () => {
         <FormPageHeader
           backTo="/dashboard-pro"
           backLabel={t('common.back', 'Retour')}
-          title={t('ajouterArtisanat.title', 'Ajouter un artisanat')}
-          subtitle={t('ajouterArtisanat.subtitle', 'Partagez votre savoir-faire artisanal')}
+          title={isEditMode ? t('ajouterArtisanat.editTitle', 'Modifier l’artisanat') : t('ajouterArtisanat.title', 'Ajouter un artisanat')}
+          subtitle={isEditMode ? t('ajouterArtisanat.editSubtitle', 'Corrigez ou complétez votre produit, puis enregistrez.') : t('ajouterArtisanat.subtitle', 'Partagez votre savoir-faire artisanal')}
         />
 
         {/* Success message */}
@@ -676,12 +676,12 @@ const AjouterArtisanat: React.FC = () => {
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                        {t('ajouterArtisanat.submitting', 'Création en cours...')}
+                        {isEditMode ? t('common.saving', 'Enregistrement...') : t('ajouterArtisanat.submitting', 'Création en cours...')}
                       </>
                     ) : (
                       <>
                         <Save className="h-4 w-4 me-2" />
-                        {t('ajouterArtisanat.submit', 'Créer l\'artisanat')}
+                        {isEditMode ? t('events.create.saveChanges', 'Enregistrer les modifications') : t('ajouterArtisanat.submit', 'Créer l\'artisanat')}
                       </>
                     )}
                   </Button>
