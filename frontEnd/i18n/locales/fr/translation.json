@@ -4594,7 +4594,8 @@
     "guide": "Guide : écrire un article",
     "compte_one": "{{count}} plat",
     "compte_other": "{{count}} plats",
-    "liste": "Liste des plats"
+    "liste": "Liste des plats",
+    "voirTous": "Voir tous les plats d’Algérie"
   },
   "revisions": {
     "titre": "Proposer une modification",

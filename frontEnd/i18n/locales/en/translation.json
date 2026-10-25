@@ -4594,7 +4594,8 @@
     "guide": "Guide: writing an article",
     "compte_one": "{{count}} dish",
     "compte_other": "{{count}} dishes",
-    "liste": "List of dishes"
+    "liste": "List of dishes",
+    "voirTous": "See all Algerian dishes"
   },
   "revisions": {
     "titre": "Suggest an edit",

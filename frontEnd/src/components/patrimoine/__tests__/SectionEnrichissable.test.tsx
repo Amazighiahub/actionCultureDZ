@@ -74,6 +74,14 @@ describe('SectionEnrichissable — articles de la section', () => {
     expect(screen.getByRole('link', { name: /La rechta/ })).toBeInTheDocument();
   });
 
+  test('Gastronomie : lien vers les plats de toute l’Algérie ; pas dans les autres blocs', () => {
+    const { unmount } = render(<SectionEnrichissable {...props} content={{ fr: 'Rechta, chorba frik' }} />);
+    expect(screen.getByRole('link', { name: /Voir tous les plats/ })).toHaveAttribute('href', '/artisanat/gastronomie');
+    unmount();
+    render(<SectionEnrichissable {...props} fieldName="architecture" content={{ fr: 'Maisons à patio' }} />);
+    expect(screen.queryByRole('link', { name: /Voir tous les plats/ })).not.toBeInTheDocument();
+  });
+
   test('une vidéo hors liste autorisée n’est pas intégrée', () => {
     const { container } = render(
       <SectionEnrichissable {...props} content={{ fr: 'x' }} blocs={[bloc(1, 'video', 'https://exemple.dz/v', { url: 'https://exemple.dz/v' })]} />

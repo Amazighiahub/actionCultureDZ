@@ -4700,7 +4700,8 @@
     "compte_few": "{{count}} أطباق",
     "compte_many": "{{count}} طبقًا",
     "compte_other": "{{count}} طبق",
-    "liste": "قائمة الأطباق"
+    "liste": "قائمة الأطباق",
+    "voirTous": "عرض كل الأطباق الجزائرية"
   },
   "revisions": {
     "titre": "اقتراح تعديل",
