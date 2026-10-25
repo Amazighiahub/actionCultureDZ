@@ -502,15 +502,20 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
   // ACTIONS ÉVÉNEMENTS
   // ========================================
 
-  const updateEvenementStatus = async (evenementId: number, status: string) => {
+  /** Publier un événement (status « publie »), ou le refuser (« rejete », avec un motif : retour en brouillon) */
+  const updateEvenementStatus = async (evenementId: number, status: string, raison?: string) => {
     try {
-      const response = await httpClient.post(`/evenements/${evenementId}/publish`, { statut: status });
+      const response = await httpClient.post(`/evenements/${evenementId}/publish`, { statut: status, raison });
       if (response.success) {
         toast({
           title: t('toasts.success'),
-          description: t('toasts.eventStatusUpdated')
+          description: status === 'rejete'
+            ? t('admin.events.rejected', 'Événement refusé : l’organisateur a reçu votre motif.')
+            : t('admin.events.published', 'Événement publié : l’organisateur a été prévenu.')
         });
         await loadEvenements();
+      } else {
+        toast({ title: t('toasts.error'), description: response.error || t('toasts.statusUpdateFailed'), variant: 'destructive' });
       }
     } catch (error) {
       toast({

@@ -556,7 +556,9 @@
       "tagsPlaceholder": "E.g. pottery, storytelling, Béjaïa (Enter to add)",
       "addTag": "Add keyword",
       "removeTag": "Remove keyword {{tag}}",
-      "saveChanges": "Save changes"
+      "saveChanges": "Save changes",
+      "sentTitle": "Sent for approval",
+      "sentDesc": "The Tala DZ team will review your event. You will be notified as soon as it is published."
     },
     "types": {
       "concert": "Concert",
@@ -582,7 +584,8 @@
       "upcoming": "Upcoming",
       "ongoing": "Ongoing",
       "finished": "Finished",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "pending": "Awaiting approval"
     },
     "cancel": "Cancel event",
     "almostFull": "Almost full",
@@ -1332,7 +1335,17 @@
     "loadServicesFailed": "Error loading services",
     "loadArtisanatsFailed": "Error loading crafts",
     "loadPatrimoinesFailed": "Error loading heritage sites",
-    "registered": "registered"
+    "registered": "registered",
+    "submitOeuvre": "Send for approval",
+    "oeuvreSubmitted": "Work sent",
+    "oeuvreSubmittedDesc": "It will be visible once the Tala DZ team approves it.",
+    "oeuvreStatus": {
+      "brouillon": "Draft",
+      "en_attente": "Awaiting approval",
+      "publie": "Published",
+      "rejete": "Declined",
+      "archive": "Archived"
+    }
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1862,7 +1875,7 @@
     "connecter": "Log in",
     "type_duvre": "Work type",
     "informations_gnrales": "General information",
-    "titre_luvre": "Work title *",
+    "titre_luvre": "Work title",
     "placeholder_lart_calligraphie_maghrebine": "E.g.: The art of Maghrebi calligraphy",
     "langue": "Language *",
     "franais": "French",
@@ -1933,7 +1946,9 @@
     "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "uploadingMediaN": "Uploading media ({{current}}/{{total}}): {{percent}}%",
     "mediasFailedTitle": "Media not uploaded",
-    "mediasFailed": "{{count}} file(s) could not be uploaded. Add them from your dashboard."
+    "mediasFailed": "{{count}} file(s) could not be uploaded. Add them from your dashboard.",
+    "editTitle": "Edit the work",
+    "editSubtitle": "Correct or complete your work, then save."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -2717,8 +2732,19 @@
         "publie": "Published",
         "brouillon": "Draft",
         "annule": "Cancelled",
-        "termine": "Finished"
-      }
+        "termine": "Finished",
+        "en_attente": "Pending"
+      },
+      "published": "Event published: the organiser has been notified.",
+      "rejected": "Event declined: the organiser has received your reason.",
+      "pendingCount": "{{count}} event(s) to review",
+      "pendingShow": "Show",
+      "publish": "Approve and publish",
+      "reject": "Decline",
+      "rejectTitle": "Decline this event?",
+      "rejectDesc": "“{{nom}}” goes back to draft. The organiser receives your reason, fixes the event and can send it again.",
+      "rejectReason": "Reason",
+      "rejectPlaceholder": "E.g. the exact address and start time are missing."
     },
     "services": {
       "title": "Services Management",
@@ -3859,7 +3885,9 @@
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",
     "mediasFailedTitle": "Photos not uploaded",
-    "mediasFailed": "Your item was saved, but the photos could not be uploaded. Add them from your dashboard."
+    "mediasFailed": "Your item was saved, but the photos could not be uploaded. Add them from your dashboard.",
+    "editTitle": "Edit the craft item",
+    "editSubtitle": "Correct or complete your product, then save."
   },
   "service": {
     "addTitle": "Add my service",

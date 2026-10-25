@@ -102,7 +102,7 @@ const ViewProgrammePage: React.FC = () => {
 
   const handleEdit = () => {
     if (eventId && programmeId) {
-      navigate(`/programme/modifier/${programmeId}`);
+      navigate(`/programme/modifier/${eventId}/${programmeId}`);
     }
   };
 

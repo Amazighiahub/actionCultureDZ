@@ -550,6 +550,14 @@ class OeuvreService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres œuvres');
     }
 
+    return this.enregistrerMedias(oeuvreId, files);
+  }
+
+  /**
+   * Enregistre les fichiers déjà envoyés (Cloudinary) comme médias de l'œuvre.
+   * Sans contrôle de propriété : à appeler après ce contrôle (œuvre, fiche artisanat…).
+   */
+  async enregistrerMedias(oeuvreId, files) {
     const fileArray = Array.isArray(files) ? files : [files];
     const results = [];
 

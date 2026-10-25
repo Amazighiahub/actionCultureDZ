@@ -76,9 +76,9 @@ class EvenementController extends BaseController {
   async getById(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
-      // Brouillon : visible seulement par l'organisateur et la modération
+      // Brouillon ou en attente de validation : visible seulement par l'organisateur et la modération
       const raw = evenement._raw || evenement;
-      if (raw.statut === 'brouillon' && !this._canSeeUnpublished(req, raw.id_user)) {
+      if (['brouillon', 'en_attente'].includes(raw.statut) && !this._canSeeUnpublished(req, raw.id_user)) {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
       res.json({
@@ -238,9 +238,11 @@ class EvenementController extends BaseController {
 
   async publish(req, res) {
     try {
+      // Corps vide : publier ; { statut: 'rejete', raison } : refuser (retour en brouillon)
       const evenement = await this.evenementService.publish(
         parseInt(req.params.id),
-        req.user.id_user
+        req.user.id_user,
+        { statut: req.body?.statut, raison: req.body?.raison }
       );
       res.json({
         success: true,

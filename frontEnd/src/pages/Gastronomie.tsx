@@ -4,7 +4,6 @@
  * de fête » pour la Casbah d'Alger). Chaque carte mène à l'article complet ; recherche et wilaya.
  */
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Search, Utensils, X } from 'lucide-react';
 import Header from '@/components/Header';
@@ -114,7 +113,8 @@ const Gastronomie: React.FC = () => {
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
                 {t('gastronomie.commentAjouter', 'Les plats s’ajoutent depuis la page d’un lieu : bloc « Gastronomie locale », bouton « Écrire un article ».')}
               </p>
-              <Button asChild variant="outline"><Link to={arabe ? '/guide/ar/article' : '/guide/article'}><BookOpen className="h-4 w-4 me-2" aria-hidden="true" />{t('gastronomie.guide', 'Guide : écrire un article')}</Link></Button>
+              {/* Page statique (public/guide) : lien classique, pas <Link> (le routeur afficherait « page introuvable ») */}
+              <Button asChild variant="outline"><a href={arabe ? '/guide/ar/article' : '/guide/article'}><BookOpen className="h-4 w-4 me-2" aria-hidden="true" />{t('gastronomie.guide', 'Guide : écrire un article')}</a></Button>
             </Card>
           ) : (
             <>

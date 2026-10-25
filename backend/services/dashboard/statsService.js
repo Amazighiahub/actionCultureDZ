@@ -6,6 +6,7 @@ const { Op, fn, col, literal } = require('sequelize');
 const { subDays, subHours, subMonths, subYears, startOfDay } = require('date-fns');
 const LRUCache = require('../../utils/LRUCache');
 const { getClient: getRedisClient } = require('../../utils/redisClient');
+const { parcourirCles } = require('../../utils/redisScan');
 const logger = require('../../utils/logger');
 
 const STATS_CACHE_PREFIX = 'stats:';
@@ -65,12 +66,7 @@ class DashboardStatsService {
       const redisPattern = pattern ? `${STATS_CACHE_PREFIX}*${pattern}*` : `${STATS_CACHE_PREFIX}*`;
       (async () => {
         try {
-          let cursor = 0;
-          do {
-            const reply = await redis.scan(cursor, { MATCH: redisPattern, COUNT: 200 });
-            cursor = reply.cursor;
-            if (reply.keys.length > 0) await redis.del(reply.keys);
-          } while (cursor !== 0);
+          await parcourirCles(redis, redisPattern, (keys) => redis.del(keys));
         } catch (_) { /* best-effort */ }
       })();
     }

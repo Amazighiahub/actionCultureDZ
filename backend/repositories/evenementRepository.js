@@ -321,7 +321,7 @@ class EvenementRepository extends BaseRepository {
    */
   async findByOeuvre(oeuvreId) {
     return this.model.findAll({
-      where: { statut: { [Op.ne]: 'brouillon' } },
+      where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
       attributes: { include: attributsComptes() },
       include: [
         ...this._defaultIncludes(),
@@ -344,7 +344,7 @@ class EvenementRepository extends BaseRepository {
   async searchEvenements(query, options = {}) {
     return this.search(query, ['nom_evenement', 'description'], {
       ...options,
-      additionalWhere: { ...options.additionalWhere, statut: { [Op.ne]: 'brouillon' } },
+      additionalWhere: { ...options.additionalWhere, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
       include: this._defaultIncludes()
     });
   }
@@ -690,7 +690,7 @@ class EvenementRepository extends BaseRepository {
   async findPending(options = {}) {
     return this.findAll({
       ...options,
-      where: { ...options.where, statut: 'brouillon' },
+      where: { ...options.where, statut: 'en_attente' },
       include: this._defaultIncludes(),
       order: [['date_creation', 'DESC']]
     });

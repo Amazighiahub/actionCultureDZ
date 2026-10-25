@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajouter une œuvre — Tala DZ</title>
+<meta name="description" content="Livre, film, album, œuvre d’art : présenter une œuvre sur Tala DZ, pas à pas, depuis votre téléphone.">
+<meta property="og:title" content="Ajouter une œuvre — Tala DZ">
+<meta property="og:description" content="Livre, film, album, œuvre d’art : présenter une œuvre sur Tala DZ, pas à pas, depuis votre téléphone.">
+<meta property="og:image" content="https://taladz.com/og-image.jpg">
+<meta property="og:url" content="https://taladz.com/guide/oeuvre">
+<link rel="alternate" hreflang="fr" href="https://taladz.com/guide/oeuvre">
+<link rel="alternate" hreflang="ar" href="https://taladz.com/guide/ar/oeuvre">
+<meta name="theme-color" content="#3A4224">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<script src="/guide/guide.js"></script>
+<link rel="stylesheet" href="/guide/guide.css">
+</head>
+<body>
+
+<!-- Icônes (Lucide) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+    <symbol id="i-site" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
+    <symbol id="i-hammer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 12-8.373 8.373a1 1 0 1 1-3-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172V7l-2.26-2.26a6 6 0 0 0-4.202-1.756L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h.01M3 18h.01M3 6h.01M8 12h13M8 18h13M8 6h13"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  </defs>
+</svg>
+<header class="barre" id="barre">
+  <div class="conteneur">
+    <a class="marque" href="/"><img class="logo" src="/logo-taladz.webp" alt="Tala DZ" width="350" height="87"> <small>· Ajouter une œuvre</small></a>
+    <div class="actions-barre">
+      <a class="lien-sommaire" href="/guide/sommaire"><svg aria-hidden="true"><use href="#i-list"/></svg>Sommaire</a>
+      <a class="autre-langue" href="/guide/ar/oeuvre" lang="ar" hreflang="ar">العربية</a>
+      <a class="bouton plein petit" href="/auth">S’inscrire</a>
+    </div>
+  </div>
+  <nav class="etapes-nav" aria-label="Étapes">
+    <a href="#avant">Avant</a>
+    <a href="#ouvrir">1 · Ouvrir</a>
+    <a href="#type">2 · Type</a>
+    <a href="#infos">3 · Infos</a>
+    <a href="#details">4 · Détails</a>
+    <a href="#auteur">5 · Auteur</a>
+    <a href="#medias">6 · Photos</a>
+    <a href="#envoyer">7 · Envoyer</a>
+    <a href="#resultat">Résultat</a>
+    <a href="#conseils">Conseils</a>
+  </nav>
+  <div class="progression" id="progression"></div>
+</header>
+
+<main>
+  <section class="couverture oeuvre" aria-label="Couverture">
+    <div class="fond" role="img" aria-label="Prière sur une terrasse à Bou-Saâda, peinture de Nasreddine Dinet"></div>
+    <a class="lien-sommaire" href="/guide/sommaire"><svg aria-hidden="true"><use href="#i-list"/></svg>Tous les guides</a>
+    <a class="autre-langue" href="/guide/ar/oeuvre" lang="ar" hreflang="ar">العربية</a>
+    <div class="conteneur">
+      <img class="logo-couverture" src="/logo-taladz.webp" alt="Tala DZ" width="350" height="87">
+      <div class="surtitre">Guide · Tala DZ</div>
+      <h1>Faire connaître une œuvre</h1>
+      <p class="chapeau">Un livre, un film, un album, une peinture : présentez-la avec ses auteurs, ses photos et son histoire.</p>
+      <div class="actions">
+        <a class="bouton clair" href="#avant">Lire le guide <svg class="fleche" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="bouton contour" href="/oeuvres">Voir les œuvres</a>
+      </div>
+      <p class="credit-photo">Peinture : Nasreddine Dinet, « Prière sur une terrasse à Bou-Saâda » (domaine public) — photo Didier Descouens, Wikimedia Commons.</p>
+    </div>
+    <div class="defiler" aria-hidden="true"></div>
+  </section>
+
+  <section class="sable" id="avant">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Avant de commencer</div><h2>Quelle œuvre, et quel outil ?</h2><p>Il faut un compte professionnel validé par l’équipe Tala DZ. Ensuite, chaque type d’œuvre a sa place :</p></div>
+      <div class="cartes">
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-book"/></svg></div><h3>Livre, film, album, œuvre d’art</h3><p>Le formulaire « Ajouter une œuvre » : c’est l’objet de ce guide.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-lang"/></svg></div><h3>Article</h3><p>Pour raconter un lieu, un plat ou une personnalité, avec photos et intertitres : voyez le guide <a href="/guide/article">« Écrire un article »</a>.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-hammer"/></svg></div><h3>Artisanat</h3><p>Un tapis, une poterie, un bijou, avec son prix et son délai : voyez le guide <a href="/guide/artisanat">« Présenter son artisanat »</a>.</p></article>
+      </div>
+      <div class="encart apparait">Préparez avant de commencer : le <b>titre</b>, un <b>résumé</b> de quelques lignes, la <b>langue</b> de l’œuvre, et une ou deux <b>photos</b> (couverture, affiche, photo de l’œuvre).</div>
+    </div>
+  </section>
+
+  <section id="ouvrir">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 1</div><h2>Ouvrir le formulaire</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Tableau de bord Pro</div>
+          <h3>« Nouvelle œuvre »</h3>
+          <ol class="pas">
+            <li>Touchez votre photo de profil (en haut), puis <b>« Tableau de bord Pro »</b>.</li>
+            <li>Onglet <b>« Œuvres »</b>, puis <b>« Nouvelle œuvre »</b>.</li>
+            <li>Autres chemins : le bouton <b>« Ajouter ▾ »</b> du tableau de bord, ou <b>« Ajouter une œuvre »</b> dans le menu de votre compte.</li>
+          </ol>
+          <div class="conseil">Les champs marqués d’une étoile <b>*</b> sont obligatoires ; les autres peuvent attendre.</div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-01-tableau.webp" width="600" height="1298" alt="Tableau de bord, onglet Œuvres, bouton Nouvelle œuvre" loading="lazy"><span class="anneau" style="--l:46.3%;--t:44.3%;--w:44.7%;--h:5.7%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="type">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 2</div><h2>Choisir le type d’œuvre</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Type d’œuvre</div>
+          <h3>Un seul choix, et le formulaire s’adapte</h3>
+          <ol class="pas">
+            <li>Touchez le type : <b>Livre</b>, <b>Film</b>, <b>Album musical</b>, <b>Article</b>, <b>Article scientifique</b>, <b>Œuvre d’art</b> ou <b>Artisanat</b>.</li>
+            <li>Les questions suivantes dépendent de ce choix (ISBN pour un livre, durée pour un film…).</li>
+            <li>Pour un <b>Article</b>, choisissez <b>« Éditeur avancé »</b> : photos, titres et citations, comme dans un magazine.</li>
+          </ol>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-02-type.webp" width="600" height="1298" alt="Boutons Livre, Film, Album musical, Article…" loading="lazy"><span class="anneau" style="--l:9%;--t:31.1%;--w:82.1%;--h:11.4%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="infos">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 3</div><h2>Titre, résumé et langue</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Informations générales</div>
+          <h3>Ce que tout le monde lira en premier</h3>
+          <ol class="pas">
+            <li><b>Titre de l’œuvre</b> et <b>Résumé</b> : obligatoires. Les onglets <b>Français · العربية · English · Tamaziɣt</b> permettent de les écrire dans plusieurs langues.</li>
+            <li><b>Année de création</b> et <b>Prix (en DA)</b> : si vous les connaissez.</li>
+            <li><b>Langue originale de l’œuvre</b> : obligatoire.</li>
+          </ol>
+          <div class="conseil">Une traduction ? Cochez « Cette œuvre est une traduction d’une œuvre existante » et retrouvez l’original par son titre.</div>
+        </div>
+        <div class="telephones duo apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-03-infos.webp" width="600" height="1298" alt="Titre et résumé de l’œuvre" loading="lazy"><span class="anneau" style="--l:9%;--t:34.9%;--w:82.1%;--h:6.6%"></span><span class="anneau" style="--l:9%;--t:60.3%;--w:82.1%;--h:15.9%"></span></div></figure><figure class="telephone"><div class="ecran"><img src="/guide/img/oe-04-langue.webp" width="600" height="1298" alt="Année, prix et langue originale" loading="lazy"><span class="anneau" style="--l:9%;--t:50%;--w:82.1%;--h:7.1%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="details">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 4</div><h2>Les détails et les catégories</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Informations spécifiques</div>
+          <h3>Selon le type d’œuvre</h3>
+          <ol class="pas">
+            <li><b>Livre</b> : ISBN, nombre de pages. <b>Film</b> : durée, réalisateur. <b>Album</b> : durée, label, nombre de pistes. <b>Œuvre d’art</b> : technique, dimensions, support.</li>
+            <li><b>Catégories</b> : cochez au moins une catégorie (Historique, Contemporain, Poésie…).</li>
+            <li>Ces informations aident les visiteurs à trouver l’œuvre avec les filtres.</li>
+          </ol>
+        </div>
+        <div class="telephones duo apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-05-specifique.webp" width="600" height="1298" alt="ISBN et nombre de pages d’un livre" loading="lazy"><span class="anneau" style="--l:3.6%;--t:8.7%;--w:92.8%;--h:39.1%"></span></div></figure><figure class="telephone"><div class="ecran"><img src="/guide/img/oe-06-categories.webp" width="600" height="1298" alt="Catégories à cocher" loading="lazy"><span class="anneau" style="--l:13.1%;--t:62.1%;--w:77.9%;--h:6.6%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="auteur">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 5</div><h2>Qui est l’auteur ?</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Auteurs et contributeurs</div>
+          <h3>Vous, ou quelqu’un d’autre</h3>
+          <ol class="pas">
+            <li><b>« Je suis l’auteur de cette œuvre »</b> : votre nom s’affiche comme auteur.</li>
+            <li><b>« J’ajoute l’œuvre d’un autre auteur »</b> : cherchez l’auteur par son nom ; s’il n’existe pas encore, touchez <b>« Ajouter un nouvel auteur »</b>.</li>
+            <li>Ajoutez aussi les co-auteurs, traducteurs, illustrateurs et l’éditeur, avec leur rôle.</li>
+            <li><b>Tags</b> : jusqu’à 10 mots-clés (conte, Casbah, chaâbi…).</li>
+          </ol>
+          <div class="conseil">Cherchez toujours l’auteur avant de le créer : une même personne en double sépare ses œuvres en deux pages.</div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-07-auteur.webp" width="600" height="1298" alt="Je suis l’auteur, ou j’ajoute l’œuvre d’un autre auteur" loading="lazy"><span class="anneau" style="--l:9%;--t:19.7%;--w:82.1%;--h:12.9%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="medias">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 6</div><h2>Photos, sons et documents</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Fichiers et médias</div>
+          <h3>La première image devient l’image principale</h3>
+          <ol class="pas">
+            <li>Touchez <b>« Choisir des fichiers »</b> : photos (10 Mo), vidéos (100 Mo), sons ou PDF (50 Mo).</li>
+            <li>La première image est l’<b>image principale</b> (étoile). Touchez une autre image pour la choisir à sa place.</li>
+            <li>Une couverture de livre, une affiche de film, la photo de la peinture : nette et bien cadrée.</li>
+          </ol>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-08-photos.webp" width="600" height="1298" alt="Photo ajoutée, marquée d’une étoile" loading="lazy"><span class="anneau" style="--l:13.6%;--t:26.6%;--w:72.8%;--h:16.6%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="envoyer">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 7</div><h2>Envoyer, puis suivre la validation</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Publier</div>
+          <h3>L’équipe relit, puis publie</h3>
+          <ol class="pas">
+            <li>Touchez <b>« Publier l’œuvre »</b> : elle est envoyée à l’équipe Tala DZ, qui la relit avant de la mettre en ligne.</li>
+            <li>Pas fini ? <b>« Sauvegarder comme brouillon »</b> la garde pour plus tard, sans l’envoyer.</li>
+          </ol>
+        </div>
+        <div class="telephones duo apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-09-publier.webp" width="600" height="1298" alt="Boutons Publier l’œuvre et Sauvegarder comme brouillon" loading="lazy"><span class="anneau" style="--l:2.6%;--t:49%;--w:94.9%;--h:7.1%"></span></div></figure><figure class="telephone"><div class="ecran"><img src="/guide/img/oe-10-envoye.webp" width="600" height="1298" alt="Message : œuvre soumise" loading="lazy"></div></figure>
+        </div>
+      </div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Tableau de bord</div>
+          <h3>Où en est votre œuvre ?</h3>
+          <ol class="pas">
+            <li><b>Brouillon</b> : pas encore envoyée. Touchez <b>« Envoyer pour validation »</b> quand elle est prête.</li>
+            <li><b>En attente de validation</b> : l’équipe la relit.</li>
+            <li><b>Publiée</b> : tout le monde la voit. <b>Refusée</b> : écrivez à l’équipe (contact@taladz.com) pour en connaître la raison.</li>
+            <li>L’œil 👁 ouvre la page de l’œuvre ; le crayon ✎ la modifie.</li>
+          </ol>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-11-statut.webp" width="600" height="1298" alt="Œuvre en attente de validation dans le tableau de bord" loading="lazy"><span class="anneau" style="--l:21.4%;--t:41%;--w:30.7%;--h:5.9%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="resultat">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Le résultat</div><h2>Votre œuvre sur Tala DZ</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Après validation</div>
+          <h3>Une page pour l’œuvre</h3>
+          <ol class="pas">
+            <li>L’œuvre a sa page : image, titre, auteurs, résumé, détails.</li>
+            <li>Elle apparaît dans <b>« Œuvres »</b> et dans votre portfolio.</li>
+            <li>Les visiteurs peuvent la mettre en favori et la <b>partager</b>.</li>
+          </ol>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/oe-12-resultat.webp" width="600" height="1298" alt="Page publique de l’œuvre" loading="lazy"></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="conseils">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Bien faire</div><h2>Six conseils pour une belle fiche</h2></div>
+      <div class="grille-conseils">
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-image"/></svg></div><h3>Une image nette</h3><p>Photo de jour, sans reflet, bien droite : c’est elle qu’on voit dans les listes.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-book"/></svg></div><h3>Un résumé qui donne envie</h3><p>Trois ou quatre phrases : de quoi parle l’œuvre, pourquoi elle compte.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-lang"/></svg></div><h3>Plusieurs langues</h3><p>Titre et résumé en arabe ou en tamazight : l’œuvre touche plus de monde.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-users"/></svg></div><h3>Les bons auteurs</h3><p>Cherchez avant de créer ; ajoutez traducteur, illustrateur, éditeur.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><h3>Vos droits</h3><p>N’ajoutez que des œuvres et des images que vous avez le droit de montrer.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-check"/></svg></div><h3>Relisez avant d’envoyer</h3><p>Une faute dans le titre se voit partout : relisez, puis publiez.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="fin oeuvre">
+    <div class="fond" aria-hidden="true"></div>
+    <div class="conteneur apparait">
+      <div class="merci"><span>Tanemmirt</span><span class="ar" lang="ar" dir="rtl">شكرا</span><span>Merci</span></div>
+      <p>Chaque œuvre ajoutée fait connaître celles et ceux qui écrivent, filment, chantent et peignent l’Algérie.</p>
+      <div class="actions">
+        <a class="bouton clair" href="/oeuvres">Voir les œuvres</a>
+        <a class="bouton contour" href="/guide/sommaire">Tous les guides</a>
+      </div>
+      <div class="contact">Une question ? <a href="mailto:contact@taladz.com">contact@taladz.com</a></div>
+    </div>
+  </section>
+</main>
+<footer>© Tala DZ — la source de la culture algérienne · <a href="/">taladz.com</a></footer>
+
+</body>
+</html>

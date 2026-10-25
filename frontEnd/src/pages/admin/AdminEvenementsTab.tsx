@@ -9,6 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+} from '@/components/ui/dialog';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Calendar, Search, CheckCircle, XCircle, Edit,
@@ -40,7 +45,7 @@ import { heureEvenement } from '@/utils/dateHeureEvenement';
 // Helper pour extraire le texte multilingue
 
 // Types de filtres
-const STATUS_OPTIONS = ['tous', 'publie', 'brouillon', 'annule', 'termine'];
+const STATUS_OPTIONS = ['tous', 'en_attente', 'publie', 'brouillon', 'annule', 'termine'];
 
 const AdminEvenementsTab: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -53,6 +58,9 @@ const AdminEvenementsTab: React.FC = () => {
   const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; eventId?: number }>({ open: false });
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; eventId?: number }>({ open: false });
   const [isDeleting, setIsDeleting] = useState(false);
+  // Refus d'un événement en attente : le motif est envoyé à l'organisateur
+  const [refus, setRefus] = useState<{ eventId: number; nom: string } | null>(null);
+  const [motifRefus, setMotifRefus] = useState('');
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -62,8 +70,11 @@ const AdminEvenementsTab: React.FC = () => {
     errorEvenements,
     deleteEvenement,
     cancelEvenement,
+    updateEvenementStatus,
     refreshAll
   } = useDashboardAdmin('evenements');
+
+  const enAttente = (evenements?.items || []).filter((e: any) => e.statut === 'en_attente').length;
 
   // Filtrer les événements
   const filteredEvents = React.useMemo(() => {
@@ -124,6 +135,18 @@ const AdminEvenementsTab: React.FC = () => {
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
+
+      {/* Événements envoyés par les organisateurs, à valider */}
+      {enAttente > 0 && statusFilter !== 'en_attente' && (
+        <button
+          type="button"
+          onClick={() => setStatusFilter('en_attente')}
+          className="w-full text-start rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 hover:bg-amber-100"
+        >
+          <span className="font-semibold">{t('admin.events.pendingCount', '{{count}} événement(s) à valider', { count: enAttente })}</span>
+          {' · '}{t('admin.events.pendingShow', 'Afficher')}
+        </button>
+      )}
 
       {/* Filtres */}
       <Card>
@@ -263,6 +286,18 @@ const AdminEvenementsTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {(event.statut === 'en_attente' || event.statut === 'brouillon') && (
+                          <DropdownMenuItem className="text-green-700" onClick={() => updateEvenementStatus(event.id_evenement, 'publie')}>
+                            <CheckCircle className="h-4 w-4 me-2" />
+                            {t('admin.events.publish', 'Valider et publier')}
+                          </DropdownMenuItem>
+                        )}
+                        {event.statut === 'en_attente' && (
+                          <DropdownMenuItem className="text-amber-700" onClick={() => { setMotifRefus(''); setRefus({ eventId: event.id_evenement, nom }); }}>
+                            <XCircle className="h-4 w-4 me-2" />
+                            {t('admin.events.reject', 'Refuser')}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => navigate(`/evenements/${event.id_evenement}`, { state: { from: '/admin/dashboard?tab=evenements' } })}>
                           <Eye className="h-4 w-4 me-2" />
                           {t('common.view', 'Voir')}
@@ -271,7 +306,7 @@ const AdminEvenementsTab: React.FC = () => {
                           <Edit className="h-4 w-4 me-2" />
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>
-                        {event.statut !== 'brouillon' && event.statut !== 'annule' && (
+                        {!['brouillon', 'en_attente', 'annule'].includes(event.statut) && (
                           <DropdownMenuItem onClick={() => setConfirmCancel({ open: true, eventId: event.id_evenement })}>
                             <XCircle className="h-4 w-4 me-2" />
                             {t('admin.events.cancel', 'Annuler')}
@@ -294,6 +329,40 @@ const AdminEvenementsTab: React.FC = () => {
           })}
         </div>
       )}
+      <Dialog open={!!refus} onOpenChange={(open) => { if (!open) setRefus(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('admin.events.rejectTitle', 'Refuser cet événement ?')}</DialogTitle>
+            <DialogDescription>
+              {t('admin.events.rejectDesc', '« {{nom}} » revient en brouillon. L’organisateur reçoit votre motif, corrige l’événement et peut le renvoyer.', { nom: refus?.nom })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="motif-refus-evenement">{t('admin.events.rejectReason', 'Motif du refus')}</Label>
+            <Textarea
+              id="motif-refus-evenement"
+              value={motifRefus}
+              onChange={(e) => setMotifRefus(e.target.value)}
+              placeholder={t('admin.events.rejectPlaceholder', 'Ex. : il manque l’adresse exacte et l’heure de début.')}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefus(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button
+              disabled={!motifRefus.trim()}
+              onClick={async () => {
+                if (!refus) return;
+                await updateEvenementStatus(refus.eventId, 'rejete', motifRefus.trim());
+                setRefus(null);
+              }}
+            >
+              {t('admin.events.reject', 'Refuser')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ConfirmDialog
         open={confirmCancel.open}
         onOpenChange={(open) => setConfirmCancel({ open })}

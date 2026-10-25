@@ -249,7 +249,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               )}
             </div>
 
-            {oeuvre.prix !== undefined && (
+            {oeuvre.prix != null && ( /* prix non renseigné (null) : rien à afficher */
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-primary">{oeuvre.prix === 0 ? t('works.pricing.free', 'Gratuit') : formatPrice(oeuvre.prix)}</span>
               </div>

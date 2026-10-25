@@ -581,7 +581,9 @@
       "tagsPlaceholder": "Ex. poterie, conte, Béjaïa (Entrée pour ajouter)",
       "addTag": "Ajouter le mot-clé",
       "removeTag": "Retirer le mot-clé {{tag}}",
-      "saveChanges": "Enregistrer les modifications"
+      "saveChanges": "Enregistrer les modifications",
+      "sentTitle": "Envoyé pour validation",
+      "sentDesc": "L’équipe Tala DZ va relire votre événement. Vous recevrez une notification dès qu’il sera publié."
     },
     "types": {
       "concert": "Concert",
@@ -607,7 +609,8 @@
       "upcoming": "À venir",
       "ongoing": "En cours",
       "finished": "Terminé",
-      "cancelled": "Annulé"
+      "cancelled": "Annulé",
+      "pending": "En attente de validation"
     },
     "cancel": "Annuler l'événement",
     "almostFull": "Presque complet",
@@ -1357,7 +1360,17 @@
     "loadServicesFailed": "Erreur lors du chargement des services",
     "loadArtisanatsFailed": "Erreur lors du chargement des artisanats",
     "loadPatrimoinesFailed": "Erreur lors du chargement des sites patrimoine",
-    "registered": "inscrit(s)"
+    "registered": "inscrit(s)",
+    "submitOeuvre": "Envoyer pour validation",
+    "oeuvreSubmitted": "Œuvre envoyée",
+    "oeuvreSubmittedDesc": "Elle sera visible après validation par l’équipe Tala DZ.",
+    "oeuvreStatus": {
+      "brouillon": "Brouillon",
+      "en_attente": "En attente de validation",
+      "publie": "Publiée",
+      "rejete": "Refusée",
+      "archive": "Archivée"
+    }
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1894,7 +1907,7 @@
     "type_duvre": "Type d'œuvre",
     "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).",
     "informations_gnrales": "Informations générales",
-    "titre_luvre": "Titre de l'œuvre *",
+    "titre_luvre": "Titre de l'œuvre",
     "placeholder_lart_calligraphie_maghrebine": "Ex: L'art de la calligraphie maghrebine",
     "langue": "Langue *",
     "franais": "Français",
@@ -1958,7 +1971,9 @@
     "saveError": "Une erreur est survenue lors de l'enregistrement",
     "uploadingMediaN": "Envoi des médias ({{current}}/{{total}}) : {{percent}} %",
     "mediasFailedTitle": "Médias non envoyés",
-    "mediasFailed": "{{count}} fichier(s) n'ont pas pu être envoyés. Ajoutez-les depuis votre tableau de bord."
+    "mediasFailed": "{{count}} fichier(s) n'ont pas pu être envoyés. Ajoutez-les depuis votre tableau de bord.",
+    "editTitle": "Modifier l’œuvre",
+    "editSubtitle": "Corrigez ou complétez votre œuvre, puis enregistrez."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -2506,8 +2521,19 @@
         "publie": "Publié",
         "brouillon": "Brouillon",
         "annule": "Annulé",
-        "termine": "Terminé"
-      }
+        "termine": "Terminé",
+        "en_attente": "En attente"
+      },
+      "published": "Événement publié : l’organisateur a été prévenu.",
+      "rejected": "Événement refusé : l’organisateur a reçu votre motif.",
+      "pendingCount": "{{count}} événement(s) à valider",
+      "pendingShow": "Afficher",
+      "publish": "Valider et publier",
+      "reject": "Refuser",
+      "rejectTitle": "Refuser cet événement ?",
+      "rejectDesc": "« {{nom}} » revient en brouillon. L’organisateur reçoit votre motif, corrige l’événement et peut le renvoyer.",
+      "rejectReason": "Motif du refus",
+      "rejectPlaceholder": "Ex. : il manque l’adresse exacte et l’heure de début."
     },
     "services": {
       "title": "Gestion des services",
@@ -4134,7 +4160,9 @@
     "addTag": "Ajouter le tag",
     "removeTag": "Supprimer le tag {{tag}}",
     "mediasFailedTitle": "Photos non envoyées",
-    "mediasFailed": "Votre création est enregistrée, mais les photos n'ont pas pu être envoyées. Ajoutez-les depuis votre tableau de bord."
+    "mediasFailed": "Votre création est enregistrée, mais les photos n'ont pas pu être envoyées. Ajoutez-les depuis votre tableau de bord.",
+    "editTitle": "Modifier l’artisanat",
+    "editSubtitle": "Corrigez ou complétez votre produit, puis enregistrez."
   },
   "service": {
     "addTitle": "Ajouter mon service",

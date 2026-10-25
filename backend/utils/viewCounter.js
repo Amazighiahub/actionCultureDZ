@@ -10,6 +10,7 @@
  * Fallback : buffer en mémoire si Redis est indisponible.
  */
 const { getClient: getRedisClient } = require('./redisClient');
+const { parcourirCles } = require('./redisScan');
 const logger = require('./logger');
 
 const FLUSH_INTERVAL_MS = 30000; // 30 secondes
@@ -102,18 +103,12 @@ class ViewCounter {
         // gros dataset). On collecte par pages de 500 cles et on accumule.
         const match = `${REDIS_KEY_PREFIX}*`;
         const collected = [];
-        let cursor = 0;
-        // node-redis v4 : scan() renvoie { cursor, keys }. Boucle jusqu'a
-        // cursor === 0. En cas d'API incompatible, on fallback sur keys().
+        // En cas d'API incompatible, on fallback sur keys().
         if (typeof redis.scan === 'function') {
           try {
-            do {
-              const res = await redis.scan(cursor, { MATCH: match, COUNT: 500 });
-              cursor = Number(res.cursor || res[0] || 0);
-              const page = res.keys || res[1] || [];
+            await parcourirCles(redis, match, async (page) => {
               for (const k of page) collected.push(k);
-              if (collected.length > 100000) break; // ceinture de securite
-            } while (cursor !== 0);
+            }, 500);
           } catch (_) {
             // Fallback sur KEYS si l'API scan differe (mock, vieille version)
             const fallback = await redis.keys(match);

@@ -8,6 +8,7 @@
  */
 const LRUCache = require('./LRUCache');
 const { getClient: getRedisClient } = require('./redisClient');
+const { parcourirCles } = require('./redisScan');
 
 class CacheManager {
   /**
@@ -134,12 +135,7 @@ class CacheManager {
     if (redis) {
       (async () => {
         try {
-          let cursor = 0;
-          do {
-            const reply = await redis.scan(cursor, { MATCH: `cm:${this.namespace}:*`, COUNT: 200 });
-            cursor = reply.cursor;
-            if (reply.keys.length > 0) await redis.del(reply.keys);
-          } while (cursor !== 0);
+          await parcourirCles(redis, `cm:${this.namespace}:*`, (keys) => redis.del(keys));
         } catch (_) { /* best-effort */ }
       })();
     }
@@ -167,12 +163,7 @@ class CacheManager {
     if (redis) {
       (async () => {
         try {
-          let cursor = 0;
-          do {
-            const reply = await redis.scan(cursor, { MATCH: `cm:${this.namespace}:*${pattern}*`, COUNT: 200 });
-            cursor = reply.cursor;
-            if (reply.keys.length > 0) await redis.del(reply.keys);
-          } while (cursor !== 0);
+          await parcourirCles(redis, `cm:${this.namespace}:*${pattern}*`, (keys) => redis.del(keys));
         } catch (_) { /* best-effort */ }
       })();
     }

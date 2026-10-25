@@ -369,15 +369,16 @@ const App = () => (
                 </ProfessionalRoute>
               }
             />
+            {/* Les deux pages lisent l'événement et l'activité dans l'adresse */}
             <Route
-              path="/programme/modifier/:id"
+              path="/programme/modifier/:eventId/:programmeId"
               element={
                 <ProfessionalRoute>
                   <EditProgrammePage />
                 </ProfessionalRoute>
               }
             />
-            <Route path="/programme/:id" element={<ErrorBoundary><ViewProgrammePage /></ErrorBoundary>} />
+            <Route path="/programme/:eventId/:programmeId" element={<ErrorBoundary><ViewProgrammePage /></ErrorBoundary>} />
 
             {/* Gestion Artisanat */}
             <Route
