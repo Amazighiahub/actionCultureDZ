@@ -80,7 +80,11 @@ const withStore = (name, config) => {
 // 1. Rate limiter global (pour toutes les routes)
 const globalLimiter = rateLimit(withStore('global', {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: IS_PRODUCTION ? 100 : 1000, // 100 en prod, 1000 en dev
+  // Compté par adresse internet : un Wi-Fi de salon ou un opérateur mobile (adresse partagée par
+  // de nombreux abonnés) regroupe beaucoup de visiteurs. Une page en demande 2 à 5 : à 100, un
+  // groupe qui scannait les QR codes d'un salon était bloqué en quelques minutes. Les limites
+  // strictes (connexion, inscription, créations, envois) restent à part.
+  max: 1000, // 15 minutes, par adresse internet
   handler: (req, res) => {
     res.status(429).json({
       success: false,

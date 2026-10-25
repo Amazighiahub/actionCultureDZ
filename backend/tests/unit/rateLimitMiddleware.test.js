@@ -304,3 +304,22 @@ describe('AccountRateLimiter', () => {
     });
   });
 });
+
+describe('globalLimiter : limite générale', () => {
+  it('1 000 requêtes / 15 min par adresse en production (visiteurs partageant un Wi-Fi ou un opérateur)', () => {
+    const avant = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    let configs;
+    jest.isolateModules(() => {
+      const rateLimit = require('express-rate-limit');
+      rateLimit.mockClear();
+      require('../../middlewares/rateLimitMiddleware');
+      configs = rateLimit.mock.calls.map(c => c[0]);
+    });
+    process.env.NODE_ENV = avant;
+    const globale = configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 1000);
+    expect(globale).toBeDefined();
+    // La connexion reste strictement limitée
+    expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 15)).toBe(true);
+  });
+});
