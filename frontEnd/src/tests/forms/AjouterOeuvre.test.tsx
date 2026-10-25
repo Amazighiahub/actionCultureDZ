@@ -51,6 +51,7 @@ const {
 }));
 
 let mockParams: Record<string, string> = {};
+let mockSearch = new URLSearchParams();
 
 // ---------------------------------------------------------------------------
 // Donnees de reference
@@ -89,6 +90,7 @@ const MOCK_METADATA = {
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
+  useSearchParams: () => [mockSearch, vi.fn()],
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,
 }));
 
@@ -175,7 +177,20 @@ vi.mock('@/types/api/create-oeuvre-backend.dto', () => ({
 }));
 
 vi.mock('@/components/article/ArticleEditor', () => ({
-  default: () => <div data-testid="article-editor" />,
+  // « Enregistrer » de l'éditeur avancé : un article simple, sans blocs
+  default: ({ onSave }: any) => (
+    <div data-testid="article-editor">
+      <button type="button" onClick={() => onSave({ article: {
+        formData: { titre: 'La rechta', description: 'Pâtes fraîches', type: 'article', id_langue: 5 },
+        blocks: [], contributeurs: {}, editeurs: []
+      } })}>Enregistrer l’article</button>
+      <button type="button" onClick={() => onSave({ article: {
+        formData: { titre: 'Le patio', description: 'Architecture', type: 'article', id_langue: 5 },
+        blocks: [{ type_block: 'image', metadata: { caption: 'Le patio', tempFile: new File(['x'], 'patio.jpg', { type: 'image/jpeg' }) } }],
+        contributeurs: {}, editeurs: []
+      } })}>Enregistrer avec une image</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/oeuvre/IntervenantEditeurManager', () => ({
@@ -359,6 +374,7 @@ describe('AjouterOeuvre', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.clearAllMocks();
     mockParams = {};
+    mockSearch = new URLSearchParams();
     user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
     mockGetAllCached.mockResolvedValue({ success: true, data: MOCK_METADATA });
@@ -431,6 +447,48 @@ describe('AjouterOeuvre', () => {
       );
       expect(submitBtn).toBeTruthy();
       expect(submitBtn).toBeInTheDocument();
+    });
+  });
+
+  // =========================================================================
+  // PAGE DÉTAILLÉE D'UN LIEU (« Écrire un article » depuis une section)
+  // =========================================================================
+
+  describe('Page détaillée d’un lieu', () => {
+    test('ouvre directement l’éditeur avancé, puis relie l’article à la section du lieu', async () => {
+      mockSearch = new URLSearchParams('lieu=69&section=gastronomie');
+      const { httpClient } = await import('@/services/httpClient');
+      (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
+      render(<AjouterOeuvre />);
+      expect(await screen.findByTestId('article-editor')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Enregistrer l’article' }));
+      await waitFor(() => expect(httpClient.post).toHaveBeenCalledWith('/patrimoine/69/pages', { id_oeuvre: 42, section_patrimoine: 'gastronomie' }));
+      expect(mockCreateOeuvre).toHaveBeenCalledWith(expect.objectContaining({ id_type_oeuvre: 4 }));
+      expect(mockNavigate).toHaveBeenCalledWith('/patrimoine/69');
+    });
+
+    test('les images de l’article sont envoyées dans le champ « medias » attendu par le serveur', async () => {
+      mockSearch = new URLSearchParams('lieu=69&section=architecture');
+      const { httpClient } = await import('@/services/httpClient');
+      (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
+      (httpClient.postFormData as any).mockResolvedValue({ success: true, data: [{ id_media: 7 }] });
+      mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 }, subtype: { id_article: 9 } } });
+      render(<AjouterOeuvre />);
+      await screen.findByTestId('article-editor');
+
+      await user.click(screen.getByRole('button', { name: 'Enregistrer avec une image' }));
+      await waitFor(() => expect(httpClient.postFormData).toHaveBeenCalled());
+      const [url, fd] = (httpClient.postFormData as any).mock.calls[0];
+      expect(url).toBe('/oeuvres/42/medias/upload');
+      expect((fd as FormData).get('medias')).toBeInstanceOf(File);
+      expect((fd as FormData).get('files')).toBeNull();
+    });
+
+    test('sans lieu : l’article s’ouvre comme avant', async () => {
+      render(<AjouterOeuvre />);
+      await waitForDataLoad();
+      expect(screen.queryByTestId('article-editor')).not.toBeInTheDocument();
     });
   });
 

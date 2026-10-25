@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Upload, Save, X, Plus, AlertCircle,
-  Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star,
+  Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star, MapPin,
 } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import ArticleEditor from '@/components/article/ArticleEditor';
@@ -40,6 +40,11 @@ const getTypeIcon = (typeId: number): React.ReactNode => {
   return icons[typeId] ?? <FileText className="h-5 w-5" />;
 };
 
+// Section d'un lieu patrimoine → clé de son libellé (patrimoine.sections.*)
+const SECTION_CLES: Record<string, string> = {
+  artisanat_local: 'artisanat', infos_pratiques: 'infosPratiques', referencesHistoriques: 'references'
+};
+
 const AjouterOeuvre: React.FC = () => {
   const hook = useAjouterOeuvre();
   const {
@@ -52,7 +57,7 @@ const AjouterOeuvre: React.FC = () => {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice,
+    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle,
     handleInputChange,
     handleTagAdd, handleTagRemove,
     handleMediaUpload, handleDragOver, handleDragLeave, handleDrop,
@@ -108,6 +113,19 @@ const AjouterOeuvre: React.FC = () => {
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           {/* Si l'éditeur d'article est activé ET qu'un type article est sélectionné */}
+          {cibleArticle && useArticleEditor &&
+          <Alert className="mb-6">
+              <MapPin className="h-4 w-4" />
+              <AlertDescription>
+                {cibleArticle.section
+                  ? t('patrimoine.pages.bandeau', {
+                      defaultValue: 'Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ.',
+                      section: t(`patrimoine.sections.${SECTION_CLES[cibleArticle.section] || cibleArticle.section}`)
+                    })
+                  : t('personnalites.bandeauArticle', 'Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ.')}
+              </AlertDescription>
+            </Alert>
+          }
           {useArticleEditor && formData.id_type_oeuvre > 0 && showEditorChoice ?
           <ArticleEditor
             initialData={{

@@ -9,6 +9,7 @@ const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
 const { mergeTranslations } = require('../../helpers/i18n');
+const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -494,6 +495,88 @@ class PatrimoineService extends BaseService {
   async retirerPersonnalite(lieuId, lieuIntervenantId, { userId, isModerator = false } = {}) {
     const { LieuIntervenant, Lieu } = this.models || {};
     const lien = await LieuIntervenant.findOne({ where: { id_lieu_intervenant: lieuIntervenantId, id_lieu: lieuId } });
+    if (!lien) return 'introuvable';
+    let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
+    if (!autorise && userId) {
+      const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
+      autorise = !!lieu && lieu.id_createur === userId;
+    }
+    if (!autorise) return 'interdit';
+    await lien.destroy();
+    return 'ok';
+  }
+
+  /**
+   * Pages détaillées d'un site (articles de l'éditeur avancé reliés à ses sections).
+   * Un visiteur ne voit que les articles publiés ; l'auteur, la personne qui a relié la page
+   * et la modération voient aussi ceux en attente de validation.
+   */
+  async pagesDetaillees(lieuId, { userId = null, isModerator = false } = {}) {
+    const { LieuOeuvre, Lieu } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'id_createur'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const liens = await LieuOeuvre.findAll({
+      where: { id_lieu: lieuId },
+      order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC'], ['id_lieu_oeuvre', 'ASC']],
+      include: [includeOeuvreCarte(this.models)]
+    });
+    return ajouterCouvertures(this.models, liens
+      .map(l => l.get({ plain: true }))
+      .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
+      .map(l => ({
+        ...versCarte(l.id_lieu_oeuvre, l.Oeuvre,
+          isModerator || (!!userId && (l.id_contributeur === userId || lieu.id_createur === userId))),
+        section_patrimoine: l.section_patrimoine
+      })));
+  }
+
+  /**
+   * Relier un article (éditeur avancé) à une section du site. Un article non publié ne peut
+   * être relié que par son auteur ou la modération.
+   */
+  async lierPage(lieuId, { id_oeuvre, section_patrimoine }, { userId, isModerator = false } = {}) {
+    const { LieuOeuvre, Oeuvre, Lieu } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const oeuvre = await Oeuvre.findByPk(id_oeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'statut', 'saisi_par'] });
+    const refus = refusLien(oeuvre, { userId, isModerator });
+    if (refus) throw refus.code === 403 ? this._forbiddenError(refus.message) : this._validationError(refus.message);
+    const ordre = ((await LieuOeuvre.max('ordre', { where: { id_lieu: lieuId, section_patrimoine } })) || 0) + 1;
+    const [lien] = await LieuOeuvre.findOrCreate({
+      where: { id_lieu: lieuId, id_oeuvre, section_patrimoine },
+      defaults: { ordre, id_contributeur: userId || null }
+    });
+    return lien;
+  }
+
+  /**
+   * D'où vient un article : lieux (et sections) et personnalités auxquels il est relié,
+   * pour le fil « Casbah d'Alger › Gastronomie » de la page de l'article. Lieux publiés seulement.
+   */
+  async contexteArticle(idOeuvre) {
+    const { LieuOeuvre, Lieu, IntervenantArticle, Intervenant } = this.models || {};
+    const liensLieux = await LieuOeuvre.findAll({
+      where: { id_oeuvre: idOeuvre },
+      include: [{ model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom'] }],
+      order: [['id_lieu_oeuvre', 'ASC']]
+    });
+    const liensPersonnes = IntervenantArticle ? await IntervenantArticle.findAll({
+      where: { id_oeuvre: idOeuvre },
+      include: [{ model: Intervenant, as: 'Intervenant', required: true, attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url'] }],
+      order: [['id_intervenant_article', 'ASC']]
+    }) : [];
+    return {
+      lieux: liensLieux.map(l => ({ id_lieu: l.Lieu.id_lieu, nom: l.Lieu.nom, section_patrimoine: l.section_patrimoine })),
+      personnalites: liensPersonnes.map(l => ({
+        id_intervenant: l.Intervenant.id_intervenant, nom: l.Intervenant.nom, prenom: l.Intervenant.prenom, photo_url: l.Intervenant.photo_url
+      }))
+    };
+  }
+
+  /** Retirer une page détaillée du site (modération, la personne qui l'a reliée ou le créateur du site) */
+  async retirerPage(lieuId, lieuOeuvreId, { userId, isModerator = false } = {}) {
+    const { LieuOeuvre, Lieu } = this.models || {};
+    const lien = await LieuOeuvre.findOne({ where: { id_lieu_oeuvre: lieuOeuvreId, id_lieu: lieuId } });
     if (!lien) return 'introuvable';
     let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
     if (!autorise && userId) {

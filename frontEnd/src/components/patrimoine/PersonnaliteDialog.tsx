@@ -5,7 +5,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, Pencil, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, ExternalLink, Pencil, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import FicheIntervenantDialog from '@/components/forms/FicheIntervenantDialog';
@@ -98,13 +99,18 @@ const PersonnaliteDialog: React.FC<Props> = ({ lien, lang, onClose, onModifiee }
 
             <OeuvresPersonnalite idIntervenant={inv.id_intervenant} peutAjouter={isAdmin || isValidatedProfessional()} />
 
-            {peutModifier && (
-              <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+              {peutModifier && (
                 <Button type="button" variant="outline" onClick={() => setFicheOuverte(true)}>
                   <Pencil className="h-4 w-4 me-2" aria-hidden="true" />{t('personnalites.modifierFiche', 'Modifier la fiche')}
                 </Button>
-              </div>
-            )}
+              )}
+              <Button asChild>
+                <Link to={`/personnalites/${inv.id_intervenant}`}>
+                  {t('personnalites.voirPage', 'Voir sa page complète')}<ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

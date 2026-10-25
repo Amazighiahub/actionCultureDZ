@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Liens de l'arbre lieu → points, dessinés entre les cases
   function tracerArbre() {
     var arbre = document.getElementById('arbre');
+    if (!arbre) return; // pages sans arbre (guide « Écrire un article »)
     var svg = arbre.querySelector('svg.liens');
     if (getComputedStyle(svg).display === 'none') return;
     var base = arbre.getBoundingClientRect();

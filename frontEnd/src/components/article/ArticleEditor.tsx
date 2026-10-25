@@ -53,15 +53,16 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
       <div className="container py-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          {/* Passe à la ligne sur téléphone : « Sauvegarder » sortait de l'écran */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
               {onBack && (
                 <Button variant="outline" size="sm" onClick={onBack}>
                   <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("article_articleeditor.retour")}
                 </Button>
               )}
               <div>
-                <h1 className="text-3xl font-bold">
+                <h1 className="text-2xl sm:text-3xl font-bold">
                   {articleId ? 'Modifier l\'article' : 'Créer un article'}
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -69,7 +70,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 </p>
               </div>
             </div>
-            <div className="flex space-x-2 rtl:space-x-reverse">
+            <div className="flex gap-2">
               <Button variant="outline" onClick={() => editor.setActiveTab(editor.activeTab === 'preview' ? 'content' : 'preview')}>
                 <Eye className="h-4 w-4 me-2" />
                 {editor.activeTab === 'preview' ? 'Éditer' : 'Aperçu'}

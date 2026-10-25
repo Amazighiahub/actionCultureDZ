@@ -201,3 +201,93 @@ class PatrimoineArticlesService {
 }
 
 export const patrimoineArticlesService = new PatrimoineArticlesService();
+
+// ============================================================================
+// PAGES DÉTAILLÉES : articles de l'éditeur avancé reliés à une section
+// ============================================================================
+
+type TexteMulti = string | Record<string, string | undefined> | null;
+
+/** Carte « En savoir plus » : article relié à une page (lieu ou personnalité) */
+export interface CarteArticle {
+  /** Identifiant du lien (pour le retirer de la page) */
+  id_lien: number;
+  id_oeuvre: number;
+  id_type_oeuvre: number;
+  titre: TexteMulti;
+  resume: TexteMulti;
+  image: string | null;
+  statut: 'publie' | 'brouillon' | 'en_attente' | 'rejete' | string;
+  peut_retirer: boolean;
+}
+
+/** Article relié à une section du lieu (GET /patrimoine/:id/pages) */
+export interface PagePatrimoine extends CarteArticle {
+  section_patrimoine: PatrimoineSection;
+}
+
+/** Pages visibles par la personne connectée (publiées, ou les siennes en attente) */
+export async function getPagesPatrimoine(lieuId: number): Promise<PagePatrimoine[]> {
+  try {
+    const res = await httpClient.get<PagePatrimoine[]>(`/patrimoine/${lieuId}/pages`);
+    return res.success && Array.isArray(res.data) ? res.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export function retirerPagePatrimoine(lieuId: number, lieuOeuvreId: number): Promise<ApiResponse<void>> {
+  return httpClient.delete<void>(`/patrimoine/${lieuId}/pages/${lieuOeuvreId}`);
+}
+
+/** Éditeur avancé, pour un article qui sera relié à cette section du lieu */
+export const lienEcrirePage = (lieuId: number, section: PatrimoineSection) =>
+  `/ajouter-oeuvre?lieu=${lieuId}&section=${section}`;
+
+// ============================================================================
+// PAGE D'UNE PERSONNALITÉ : fiche, lieux liés, articles qui lui sont consacrés
+// ============================================================================
+
+export interface PagePersonnaliteData {
+  intervenant: {
+    id_intervenant: number;
+    nom: TexteMulti;
+    prenom: TexteMulti;
+    titre_professionnel?: string | null;
+    biographie?: TexteMulti;
+    photo_url?: string | null;
+    wikipedia_url?: string | null;
+    date_naissance?: string | null;
+    lieu_naissance?: string | null;
+    date_deces?: string | null;
+    lieu_deces?: string | null;
+  };
+  lieux: Array<{ id_lieu: number; nom: TexteMulti; typePatrimoine?: string; role_sur_site?: string | null; periode?: string | null; contexte?: string | null }>;
+  articles: CarteArticle[];
+}
+
+export function getPagePersonnalite(id: number): Promise<ApiResponse<PagePersonnaliteData>> {
+  return httpClient.get<PagePersonnaliteData>(`/intervenants/${id}/page`);
+}
+
+export function retirerArticlePersonnalite(id: number, lienId: number): Promise<ApiResponse<void>> {
+  return httpClient.delete<void>(`/intervenants/${id}/articles/${lienId}`);
+}
+
+/** Éditeur avancé, pour un article qui sera publié sur la page de cette personnalité */
+export const lienEcrireArticlePersonnalite = (id: number) => `/ajouter-oeuvre?personnalite=${id}`;
+
+/** Lieux et personnalités auxquels un article est relié (fil de la page de l'article) */
+export interface ContexteArticle {
+  lieux: Array<{ id_lieu: number; nom: TexteMulti; section_patrimoine: PatrimoineSection }>;
+  personnalites: Array<{ id_intervenant: number; nom: TexteMulti; prenom: TexteMulti; photo_url?: string | null }>;
+}
+
+export async function getContexteArticle(idOeuvre: number): Promise<ContexteArticle | null> {
+  try {
+    const res = await httpClient.get<ContexteArticle>(`/patrimoine/article-contexte/${idOeuvre}`);
+    return res.success && res.data ? res.data : null;
+  } catch {
+    return null;
+  }
+}

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Écrire un article — Tala DZ</title>
+<meta name="description" content="Écrire un article complet sur Tala DZ avec l’éditeur avancé : titres, paragraphes, photos, citations et séparateurs, pas à pas.">
+<meta property="og:title" content="Écrire un article — Tala DZ">
+<meta property="og:description" content="Écrire un article complet sur Tala DZ avec l’éditeur avancé : titres, paragraphes, photos, citations et séparateurs, pas à pas.">
+<meta property="og:image" content="https://taladz.com/og-image.jpg">
+<meta property="og:url" content="https://taladz.com/guide/article">
+<link rel="alternate" hreflang="fr" href="https://taladz.com/guide/article">
+<link rel="alternate" hreflang="ar" href="https://taladz.com/guide/ar/article">
+<meta name="theme-color" content="#3A4224">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<script src="/guide/guide.js"></script>
+<link rel="stylesheet" href="/guide/guide.css">
+</head>
+<body>
+
+<!-- Icônes (Lucide) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+    <symbol id="i-site" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  </defs>
+</svg>
+
+<header class="barre" id="barre">
+  <div class="conteneur">
+    <a class="marque" href="/"><img src="/favicon.svg" alt="" width="30" height="30">Tala DZ <small>· Écrire un article</small></a>
+    <div class="actions-barre">
+      <a class="autre-langue" href="/guide/ar/article" lang="ar" hreflang="ar">العربية</a>
+      <a class="bouton plein petit" href="/guide">Guide du contributeur</a>
+    </div>
+  </div>
+  <nav class="etapes-nav" aria-label="Étapes">
+    <a href="#ouvrir">1 · Ouvrir</a>
+    <a href="#titre">2 · Titre</a>
+    <a href="#blocs">3 · Blocs</a>
+    <a href="#images">4 · Images</a>
+    <a href="#texte">5 · Texte</a>
+    <a href="#publier">6 · Publier</a>
+    <a href="#resultat">Résultat</a>
+    <a href="#conseils">Conseils</a>
+  </nav>
+  <div class="progression" id="progression"></div>
+</header>
+
+<main>
+  <!-- Couverture -->
+  <section class="couverture article" aria-label="Couverture">
+    <div class="fond" role="img" aria-label="Le patio de Dar Mustapha Pacha, dans la Casbah d’Alger"></div>
+    <a class="autre-langue" href="/guide/ar/article" lang="ar" hreflang="ar">العربية</a>
+    <div class="conteneur">
+      <div class="surtitre">Guide · Tala DZ</div>
+      <h1>Écrire un article, comme dans un magazine</h1>
+      <p class="chapeau">Un plat, une maison, une personnalité, un pan d’histoire : racontez-le en détail, avec des titres, des photos et des citations.</p>
+      <div class="actions">
+        <a class="bouton clair" href="#ouvrir">Lire le guide <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="bouton contour" href="/articles/57">Voir un exemple d’article</a>
+      </div>
+      <p class="credit-photo">Photo : patio de Dar Mustapha Pacha, Alger — Reda Kerbush, Wikimedia Commons, CC BY-SA 3.0.</p>
+    </div>
+    <div class="defiler" aria-hidden="true"></div>
+  </section>
+
+  <section id="ouvrir">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 1</div><h2>Ouvrir l’éditeur d’articles</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Depuis un lieu ou une personnalité</div>
+          <h3>Un article est toujours rattaché à une page</h3>
+          <ol class="pas">
+            <li>Sur la page d’un lieu, dans un bloc (Architecture, Gastronomie, Traditions…), touchez <b>« Article »</b> ou <b>« Écrire un article »</b>.</li>
+            <li>Pour une personnalité : ouvrez sa page, puis <b>« Écrire un article sur cette personnalité »</b>.</li>
+            <li>L’éditeur s’ouvre ; un message en haut rappelle où l’article sera publié.</li>
+          </ol>
+          <div class="conseil">Il faut un compte professionnel validé. Le texte court du bloc reste en résumé ; l’article devient la page « En savoir plus ».</div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-01-ouvrir.webp" width="600" height="1298" alt="Bloc Traditions d’un lieu, bouton Article" loading="lazy"><span class="anneau" style="--l:38.7%;--t:18.6%;--w:27.6%;--h:5.7%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="titre">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 2</div><h2>Le titre et le chapeau</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Informations principales</div>
+          <h3>Donnez envie de lire</h3>
+          <ol class="pas">
+            <li><b>Titre</b> : court et parlant (« La rechta, le fil des jours de fête »).</li>
+            <li><b>Description / Chapeau</b> : deux ou trois phrases qui résument l’article. Elles s’affichent en grand sous le titre.</li>
+            <li>Les onglets de langue permettent d’écrire aussi le titre en arabe ou en tamazight.</li>
+          </ol>
+          <div class="conseil">Le chapeau apparaît aussi sur la carte « En savoir plus » de la page du lieu.</div>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-02-titre.webp" width="600" height="1298" alt="Titre et chapeau de l’article" loading="lazy"><span class="anneau" style="--l:13.1%;--t:26.6%;--w:73.8%;--h:6.6%"></span><span class="anneau" style="--l:13.1%;--t:36.3%;--w:73.8%;--h:13.3%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="blocs">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 3</div><h2>Construire l’article bloc par bloc</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Ajouter un bloc</div>
+          <h3>Chaque bouton ajoute un bloc à la suite</h3>
+          <ol class="pas">
+            <li>En bas de l’éditeur, touchez le type de bloc à ajouter.</li>
+            <li>Pour placer un bloc entre deux autres, touchez <b>« + Insérer ici »</b>.</li>
+            <li>Les blocs les plus utiles :</li>
+          </ol>
+          <ul class="blocs-liste"><li><b>Paragraphe</b>Le texte de l’article. Faites des paragraphes courts.</li><li><b>Titre</b>Un intertitre pour chaque partie (« Le patio », « Les terrasses »…).</li><li><b>Image</b>Une photo, avec sa légende et son auteur.</li><li><b>Citation</b>Une phrase mise en avant, au centre, en grand.</li><li><b>Liste</b>Des ingrédients, des étapes, des dates…</li><li><b>Séparateur</b>Trois petits losanges pour changer de partie.</li><li><b>Vidéo</b>Un lien YouTube, Vimeo ou Dailymotion.</li><li><b>Tableau</b>Colonnes séparées par des virgules, cases par « | ».</li></ul>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-03-blocs.webp" width="600" height="1298" alt="Barre Ajouter un bloc : Paragraphe, Titre, Image, Séparateur…" loading="lazy"><span class="anneau" style="--l:13.1%;--t:34.9%;--w:73.8%;--h:32.3%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="images">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 4</div><h2>Les images</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Bloc Image</div>
+          <h3>Une photo, une légende, une mise en page</h3>
+          <ol class="pas">
+            <li>Touchez la zone en pointillés et choisissez la photo dans le téléphone.</li>
+            <li>Écrivez la <b>légende</b> : ce qu’on voit, et le nom de l’auteur de la photo.</li>
+            <li><b>Mise en page</b> : « Pleine largeur » pour une grande photo, « Centrée » pour un portrait, « Flottante » pour une photo à côté du texte.</li>
+            <li>Si l’article <b>commence</b> par une image en pleine largeur, elle devient la grande photo d’ouverture.</li>
+          </ol>
+          <div class="conseil">Utilisez vos propres photos, ou des photos libres (Wikimedia Commons) en citant l’auteur et la licence dans la légende.</div>
+        </div>
+        <div class="telephones apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-04-image.webp" width="600" height="1298" alt="Bloc Image : photo, légende et mise en page" loading="lazy"><span class="anneau" style="--l:17.4%;--t:49%;--w:65.1%;--h:6.6%"></span><span class="anneau" style="--l:20.8%;--t:59.7%;--w:26.7%;--h:3.8%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="texte">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 5</div><h2>Titres, paragraphes et séparateurs</h2></div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Organiser le texte</div>
+          <h3>Des parties claires, faciles à lire</h3>
+          <ol class="pas">
+            <li>Un <b>Titre</b> annonce chaque partie, suivi d’un ou plusieurs <b>Paragraphes</b>.</li>
+            <li>Un <b>Séparateur</b> marque un changement de partie.</li>
+            <li>En haut de chaque bloc : <b>↑ ↓</b> pour le déplacer, <b>⧉</b> pour le copier, la <b>corbeille</b> pour le supprimer.</li>
+          </ol>
+          <div class="conseil">Le premier paragraphe commence par une grande lettrine, comme dans les magazines.</div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-05-texte.webp" width="600" height="1298" alt="Blocs Titre, Paragraphe et Séparateur avec leurs boutons" loading="lazy"><span class="anneau" style="--l:14.1%;--t:11.7%;--w:71.8%;--h:23%"></span><span class="anneau" style="--l:31.3%;--t:13.3%;--w:51.3%;--h:6.6%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="publier">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Étape 6</div><h2>Langue, catégorie, puis sauvegarder</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Onglet Métadonnées</div>
+          <h3>Deux informations obligatoires</h3>
+          <ol class="pas">
+            <li>Touchez l’onglet <b>« Métadonnées »</b>.</li>
+            <li>Choisissez la <b>langue</b> de l’article.</li>
+            <li>Cochez au moins une <b>catégorie</b>. Vous pouvez aussi indiquer l’auteur (vous, votre association).</li>
+          </ol>
+        </div>
+        <div class="telephones duo apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-06-langue.webp" width="600" height="1298" alt="Choix de la langue" loading="lazy"><span class="anneau" style="--l:13.1%;--t:23%;--w:73.8%;--h:6.6%"></span></div></figure><figure class="telephone"><div class="ecran"><img src="/guide/img/art-07-categorie.webp" width="600" height="1298" alt="Choix d’une catégorie" loading="lazy"><span class="anneau" style="--l:23.6%;--t:34.7%;--w:56.9%;--h:6.6%"></span></div></figure>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="texte apparait">
+          <div class="mini">Enregistrer</div>
+          <h3>Sauvegarder et faire valider</h3>
+          <ol class="pas">
+            <li>Touchez <b>« Aperçu »</b> pour relire l’article tel qu’il sera publié.</li>
+            <li>Touchez <b>« Sauvegarder »</b> : vous revenez sur la page du lieu ou de la personnalité.</li>
+            <li>L’article y apparaît avec la mention « En attente de validation » ; après validation par l’équipe Tala DZ, tout le monde peut le lire.</li>
+          </ol>
+          <div class="conseil">Vous pouvez modifier l’article plus tard : ouvrez-le, puis « Modifier ».</div>
+        </div>
+        <div class="telephones apparait droite">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-08-sauver.webp" width="600" height="1298" alt="Boutons Aperçu et Sauvegarder" loading="lazy"><span class="anneau" style="--l:38.1%;--t:44%;--w:41.4%;--h:6.6%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultat">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Le résultat</div><h2>Un article digne d’un magazine</h2></div>
+      <div class="etape inverse">
+        <div class="texte apparait">
+          <div class="mini">Après validation</div>
+          <h3>Photo d’ouverture, titre, chapeau, intertitres</h3>
+          <ol class="pas">
+            <li>L’article s’affiche avec sa grande photo, son titre, son chapeau et ses photos légendées.</li>
+            <li>Sur la page du lieu, une carte <b>« En savoir plus »</b> avec la photo et le résumé mène à l’article.</li>
+            <li>En haut de l’article, un lien ramène au lieu ou à la personnalité.</li>
+          </ol>
+        </div>
+        <div class="telephones duo apparait gauche">
+          <figure class="telephone"><div class="ecran"><img src="/guide/img/art-09-article.webp" width="600" height="1298" alt="Un article publié, sur téléphone" loading="lazy"></div></figure><figure class="telephone"><div class="ecran"><img src="/guide/img/art-10-carte.webp" width="600" height="1298" alt="Carte En savoir plus sur la page du lieu" loading="lazy"><span class="anneau" style="--l:9.2%;--t:41.8%;--w:81.5%;--h:16.8%"></span></div></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sable" id="conseils">
+    <div class="conteneur">
+      <div class="entete apparait"><div class="surtitre">Bien écrire</div><h2>Six conseils pour un bel article</h2></div>
+      <div class="grille-conseils">
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-book"/></svg></div><h3>Des paragraphes courts</h3><p>Trois à cinq phrases : sur téléphone, c’est bien plus agréable à lire.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-lang"/></svg></div><h3>Un intertitre par partie</h3><p>Le lecteur repère d’un coup d’œil ce qui l’intéresse.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-cam"/></svg></div><h3>Une belle photo d’ouverture</h3><p>Prise de jour, nette, en largeur : c’est elle qui donne envie de lire.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-user"/></svg></div><h3>Toujours le crédit</h3><p>Qui a pris la photo ? Sous quelle licence ? Écrivez-le dans la légende.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-house"/></svg></div><h3>Citez vos sources</h3><p>Un ancien du village, un livre, un musée : dites d’où vient l’information.</p></article>
+        <article class="carte apparait"><div class="pastille-icone"><svg aria-hidden="true"><use href="#i-sun"/></svg></div><h3>Relisez avec l’aperçu</h3><p>Avant de sauvegarder, vérifiez l’ordre des blocs et les fautes.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="fin article">
+    <div class="fond" aria-hidden="true"></div>
+    <div class="conteneur apparait">
+      <div class="merci"><span>Tanemmirt</span><span class="ar" lang="ar" dir="rtl">شكرا</span><span>Merci</span></div>
+      <p>Chaque article raconte un peu plus notre patrimoine : ses maisons, ses plats, ses voix et ceux qui l’ont fait vivre.</p>
+      <div class="actions">
+        <a class="bouton clair" href="/articles/57">Voir un exemple d’article</a>
+        <a class="bouton contour" href="/guide">Guide du contributeur</a>
+      </div>
+      <div class="contact">Une question ? <a href="mailto:contact@taladz.com">contact@taladz.com</a></div>
+    </div>
+  </section>
+</main>
+<footer>© Tala DZ — la source de la culture algérienne · <a href="/">taladz.com</a></footer>
+
+</body>
+</html>

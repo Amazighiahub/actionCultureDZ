@@ -253,3 +253,11 @@ footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; 
 .barre .bouton, .autre-langue { white-space: nowrap; }
 /* Téléphone : la barre garde le nom, le lien de langue et « S’inscrire » sur une ligne */
 @media (max-width: 480px) { .marque small { display: none; } }
+
+/* Guide « Écrire un article » : photo de couverture (patio de Dar Mustapha Pacha) */
+.couverture.article .fond,
+.fin.article .fond { background-image: url("/guide/img/art-couverture.webp"); }
+.credit-photo { margin-top: 10px; font-size: 12px; opacity: .75; }
+.blocs-liste { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin: 18px 0 0; padding: 0; list-style: none; }
+.blocs-liste li { background: var(--blanc); border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.45; }
+.blocs-liste b { display: block; color: var(--olive); }

@@ -1,0 +1,244 @@
+/*
+ * Mise en page « magazine » des articles (ArticleViewPage) : grande photo d'ouverture, titre
+ * en Playfair Display, chapeau, lettrine, colonne de lecture confortable, citations mises en
+ * avant, images plus larges que le texte avec légende. Couleurs : jetons du thème (clair/sombre).
+ * Propriétés logiques (margin-inline, inset-inline…) : la page reste correcte en arabe (RTL).
+ */
+
+.mag-hero {
+  position: relative;
+  margin: 0;
+  background: hsl(var(--muted));
+}
+.mag-hero img {
+  display: block;
+  width: 100%;
+  height: min(72vh, 640px);
+  object-fit: cover;
+}
+.mag-hero figcaption {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 0.6rem 1rem 0;
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  text-align: end;
+}
+
+.mag-entete {
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: 3rem 1rem 0;
+}
+.mag-fil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+}
+.mag-fil a { color: inherit; text-decoration: none; }
+.mag-fil a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mag-titre {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 5vw, 3.4rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0.9rem 0 0;
+  color: hsl(var(--foreground));
+}
+.mag-chapeau {
+  margin: 1.25rem 0 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+.mag-signature {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 1.75rem;
+  padding: 1rem 0;
+  border-block: 1px solid hsl(var(--border));
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+.mag-signature .mag-auteur { display: flex; align-items: center; gap: 0.6rem; color: hsl(var(--foreground)); font-weight: 600; }
+.mag-signature .mag-initiale {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+/* ---------- Corps de l'article ---------- */
+.mag-corps {
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 2.5rem 1rem 1rem;
+  font-size: 1.15rem;
+  line-height: 1.85;
+  color: hsl(var(--foreground) / 0.92);
+}
+/* Taille fixée ici : la règle générale « p » du site (petit texte d'interface) l'emporterait */
+.mag-corps > p { margin: 0 0 1.5rem; font-size: 1.15rem; line-height: 1.85; }
+.mag-corps > p.mag-premier::first-letter {
+  float: inline-start;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 4.1em;
+  line-height: 0.82;
+  margin-inline-end: 0.6rem;
+  margin-top: 0.35rem;
+  color: hsl(var(--primary));
+}
+.mag-corps h2,
+.mag-corps h3,
+.mag-corps h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.25;
+  color: hsl(var(--foreground));
+}
+.mag-corps h2 { font-size: 2rem; margin: 3.25rem 0 1rem; }
+.mag-corps h3 { font-size: 1.55rem; margin: 2.75rem 0 0.85rem; }
+.mag-corps h4 { font-size: 1.25rem; margin: 2.25rem 0 0.75rem; }
+.mag-corps h2::before,
+.mag-corps h3::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  margin-bottom: 0.9rem;
+  border-radius: 2px;
+  background: hsl(var(--primary));
+}
+
+/* Images : plus larges que la colonne de texte sur grand écran */
+.mag-figure { margin: 2.5rem 0; }
+.mag-figure img { display: block; width: 100%; border-radius: 0.9rem; }
+/* Image centrée (un portrait…) : jamais plus haute que l'écran */
+.mag-figure:not(.mag-large) img { width: auto; max-width: 100%; max-height: 75vh; margin-inline: auto; }
+.mag-figure:not(.mag-large) figcaption { max-width: 32rem; margin-inline: auto; }
+.mag-figure figcaption {
+  margin-top: 0.7rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 2px solid hsl(var(--primary));
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+@media (min-width: 900px) {
+  .mag-figure.mag-large { margin-inline: -6rem; }
+  .mag-figure.mag-flottante-debut,
+  .mag-figure.mag-flottante-fin { width: 46%; margin-top: 0.4rem; margin-bottom: 1.25rem; }
+  .mag-figure.mag-flottante-debut { float: inline-start; margin-inline: -3rem 1.75rem; }
+  .mag-figure.mag-flottante-fin { float: inline-end; margin-inline: 1.75rem -3rem; }
+}
+
+/* Citation mise en avant */
+.mag-citation {
+  position: relative;
+  margin: 3rem 0;
+  padding: 2rem 0 1.5rem;
+  border-block: 1px solid hsl(var(--border));
+  text-align: center;
+}
+.mag-citation::before {
+  content: "“";
+  position: absolute;
+  /* Boîte courte : le guillemet coupe la ligne du haut sans recouvrir la citation */
+  top: -0.95rem;
+  inset-inline: 0;
+  margin-inline: auto;
+  width: 3rem;
+  height: 1.9rem;
+  overflow: hidden;
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  line-height: 1.15;
+  color: hsl(var(--primary));
+  background: hsl(var(--background));
+}
+.mag-citation p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+  line-height: 1.45;
+  color: hsl(var(--foreground));
+}
+.mag-citation cite {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Listes */
+.mag-corps ul,
+.mag-corps ol { margin: 0 0 1.75rem; padding-inline-start: 1.5rem; }
+/* La remise à zéro de Tailwind retire puces et numéros : on les rétablit */
+.mag-corps ul { list-style: disc; }
+.mag-corps ol { list-style: decimal; }
+.mag-corps li { margin: 0.45rem 0; padding-inline-start: 0.35rem; }
+.mag-corps ul li::marker { content: "◆  "; color: hsl(var(--primary)); font-size: 0.7em; }
+.mag-corps ol li::marker { font-family: var(--font-serif); font-weight: 700; color: hsl(var(--primary)); }
+
+/* Séparateur décoratif */
+.mag-separateur {
+  border: 0;
+  margin: 3rem 0;
+  text-align: center;
+  overflow: visible;
+}
+.mag-separateur::after {
+  content: "◆   ◆   ◆";
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  color: hsl(var(--primary) / 0.7);
+}
+
+/* Tableau, code, vidéo */
+.mag-tableau { margin: 2rem 0; overflow-x: auto; font-size: 0.95rem; }
+.mag-tableau table { width: 100%; border-collapse: collapse; }
+.mag-tableau th { text-align: start; font-weight: 600; border-bottom: 2px solid hsl(var(--primary)); padding: 0.6rem 0.75rem; }
+.mag-tableau td { border-bottom: 1px solid hsl(var(--border)); padding: 0.6rem 0.75rem; }
+.mag-code { margin: 2rem 0; border-radius: 0.75rem; background: hsl(var(--muted)); padding: 1.25rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.6; }
+.mag-video { margin: 2.5rem 0; aspect-ratio: 16 / 9; border-radius: 0.9rem; overflow: hidden; background: hsl(var(--muted)); }
+.mag-video iframe { width: 100%; height: 100%; border: 0; }
+@media (min-width: 900px) { .mag-video { margin-inline: -6rem; } }
+
+/* Fin de l'article : retour vers les lieux et personnalités */
+.mag-fin {
+  clear: both;
+  max-width: 42rem;
+  margin: 1rem auto 0;
+  padding: 1.5rem 1rem 0;
+}
+.mag-fin h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.75rem;
+}
+
+@media print {
+  .mag-hero img { height: auto; max-height: 50vh; }
+  .mag-figure.mag-large, .mag-video { margin-inline: 0; }
+}

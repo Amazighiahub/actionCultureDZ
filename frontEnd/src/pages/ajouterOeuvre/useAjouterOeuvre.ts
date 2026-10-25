@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,6 +55,23 @@ export function useAjouterOeuvre() {
   const navigate = useNavigate();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
+  // Article complet pour une page (« Écrire un article ») : ouvre l'éditeur avancé, puis relie
+  // l'article à la section d'un lieu (?lieu=69&section=gastronomie) ou à une personnalité
+  // (?personnalite=33) et revient sur cette page
+  const [searchParams] = useSearchParams();
+  const cibleArticle = useMemo(() => {
+    if (isEditMode) return null;
+    const lieu = parseInt(searchParams.get('lieu') || '', 10);
+    const section = searchParams.get('section');
+    if (lieu > 0 && section) {
+      return { type: 'lieu' as const, section, url: `/patrimoine/${lieu}/pages`, corps: { section_patrimoine: section }, retour: `/patrimoine/${lieu}` };
+    }
+    const personnalite = parseInt(searchParams.get('personnalite') || '', 10);
+    if (personnalite > 0) {
+      return { type: 'personnalite' as const, section: null, url: `/intervenants/${personnalite}/articles`, corps: {}, retour: `/personnalites/${personnalite}` };
+    }
+    return null;
+  }, [searchParams, isEditMode]);
 
   // État de chargement et erreurs
   const [loading, setLoading] = useState(false);
@@ -125,6 +142,12 @@ export function useAjouterOeuvre() {
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  useEffect(() => {
+    if (!cibleArticle) return;
+    setFormData(prev => ({ ...prev, id_type_oeuvre: 4 }));
+    setUseArticleEditor(true);
+  }, [cibleArticle]);
 
   useEffect(() => {
     if (isEditMode && editId && !loadingMetadata) {
@@ -549,8 +572,9 @@ export function useAjouterOeuvre() {
             let id_media = block.id_media || null;
             if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
               try {
+                // Champ « medias » attendu par le serveur (avec « files », chaque image était refusée)
                 const fd = new FormData();
-                fd.append('files', block.metadata.tempFile);
+                fd.append('medias', await prepareImageForUpload(block.metadata.tempFile));
                 const uploadResult = await httpClient.postFormData<MediaUploadResult | MediaUploadResult[]>(
                   `/oeuvres/${oeuvreId}/medias/upload`, fd
                 );
@@ -560,8 +584,14 @@ export function useAjouterOeuvre() {
                     id_media = uploadedMedias[0].id_media;
                   }
                 }
+                if (!id_media) throw new Error(uploadResult.error || 'upload');
               } catch (uploadErr) {
                 console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
+                toast({
+                  title: t('toasts.warning'),
+                  description: t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: index + 1 }),
+                  variant: 'destructive',
+                });
               }
             }
             return { block, id_media, index };
@@ -600,6 +630,15 @@ export function useAjouterOeuvre() {
         }
       }
 
+      if (cibleArticle) {
+        const lien = await httpClient.post(cibleArticle.url, { id_oeuvre: oeuvreId, ...cibleArticle.corps })
+          .catch(() => ({ success: false }));
+        toast(lien.success
+          ? { title: t('ajouteroeuvre.succes'), description: t('patrimoine.pages.ajoutee', 'Article enregistré : il apparaîtra après validation par l’équipe Tala DZ.') }
+          : { title: t('toasts.warning'), description: t('patrimoine.pages.lienEchec', 'Article enregistré, mais il n’a pas pu être relié à la page.'), variant: 'destructive' });
+        navigate(cibleArticle.retour);
+        return;
+      }
       toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
       navigate(`/articles/${oeuvreId}`);
 
@@ -610,7 +649,7 @@ export function useAjouterOeuvre() {
     } finally {
       submittingRef.current = false;
     }
-  }, [toast, t, navigate]);
+  }, [toast, t, navigate, cibleArticle]);
 
   // ============================================================================
   // SOUMISSION DU FORMULAIRE
@@ -834,7 +873,7 @@ export function useAjouterOeuvre() {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice,
+    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle,
     // Handlers
     handleInputChange,
     handleTagAdd, handleTagRemove,
