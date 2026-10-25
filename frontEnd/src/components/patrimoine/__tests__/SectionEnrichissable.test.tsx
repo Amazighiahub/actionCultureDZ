@@ -26,7 +26,7 @@ const bloc = (id: number, type_block: PatrimoineBlock['type_block'], contenu: st
   type_block, contenu, metadata, ordre: id, visible: true
 });
 const page = (id: number, statut: string, extra: Partial<PagePatrimoine> = {}): PagePatrimoine => ({
-  id_lieu_oeuvre: id, section_patrimoine: 'gastronomie', id_oeuvre: 100 + id, id_type_oeuvre: 4,
+  id_lien: id, section_patrimoine: 'gastronomie', id_oeuvre: 100 + id, id_type_oeuvre: 4,
   titre: { fr: 'La rechta' }, resume: { fr: 'Pâtes fraîches algéroises' }, image: null, statut, peut_retirer: false, ...extra
 });
 

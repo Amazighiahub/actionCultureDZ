@@ -3647,8 +3647,8 @@
       "enAttente": "En attente de validation",
       "retirer": "Retirer de la page du lieu",
       "confirmRetrait": "Retirer cet article de la page du lieu ? L’article lui-même n’est pas supprimé.",
-      "ajoutee": "Article enregistré : il apparaîtra sur la page du lieu après validation.",
-      "lienEchec": "Article enregistré, mais il n’a pas pu être relié au lieu.",
+      "ajoutee": "Article enregistré : il apparaîtra après validation par l’équipe Tala DZ.",
+      "lienEchec": "Article enregistré, mais il n’a pas pu être relié à la page.",
       "bandeau": "Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ."
     }
   },
@@ -4577,6 +4577,7 @@
     "oeuvres": "Ses œuvres",
     "retirer": "Retirer {{nom}} de ce site",
     "voirFiche": "Voir la fiche de {{nom}}",
-    "wikipedia": "Page Wikipédia"
+    "wikipedia": "Page Wikipédia",
+    "bandeauArticle": "Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ."
   }
 }

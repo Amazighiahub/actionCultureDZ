@@ -165,6 +165,40 @@ class IntervenantController extends BaseController {
   /**
    * Fiche d'un intervenant à modifier (toutes les langues) et droit de la modifier
    */
+  /** Page d'une personnalité : fiche, lieux liés, articles qui lui sont consacrés */
+  async getPagePersonnalite(req, res) {
+    const page = await this.intervenantService.pagePersonnalite(parseInt(req.params.id, 10), {
+      userId: req.user?.id_user || null, isModerator: this._estModeration(req)
+    });
+    if (!page) return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });
+    res.json({ success: true, data: page });
+  }
+
+  /** Relier un article (éditeur avancé) à la page d'une personnalité */
+  async lierArticle(req, res) {
+    const lien = await this.intervenantService.lierArticle(parseInt(req.params.id, 10), {
+      id_oeuvre: parseInt(req.body.id_oeuvre, 10)
+    }, { userId: req.user.id_user, isModerator: this._estModeration(req) });
+    res.status(201).json({ success: true, data: lien });
+  }
+
+  /** Retirer un article de la page d'une personnalité */
+  async retirerArticle(req, res) {
+    const resultat = await this.intervenantService.retirerArticle(
+      parseInt(req.params.id, 10), parseInt(req.params.lienId, 10),
+      { userId: req.user.id_user, isModerator: this._estModeration(req) }
+    );
+    if (resultat === 'introuvable') return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    if (resultat === 'interdit') {
+      return res.status(403).json({ success: false, error: req.t('intervenant.articleForbidden', 'Seuls la personne qui l’a ajouté et la modération peuvent le retirer.') });
+    }
+    res.json({ success: true });
+  }
+
+  _estModeration(req) {
+    return req.user?.isAdmin === true || req.user?.isModerateur === true;
+  }
+
   async getIntervenantEdition(req, res) {
     try {
       const { intervenant, peutModifier, raison } = await this.intervenantService.droitsEdition(req.params.id, req.user);

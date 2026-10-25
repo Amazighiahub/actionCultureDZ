@@ -9,6 +9,8 @@ const { Op, Sequelize } = require('sequelize');
 const { mergeTranslations, createMultiLang, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
 const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
+const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
+const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../utils/carteArticle');
 
 class IntervenantService extends BaseService {
   constructor(repository, options = {}) {
@@ -76,6 +78,72 @@ class IntervenantService extends BaseService {
     }
     const tousLesSiens = responsables.length > 0 && responsables.every(r => Number(r) === Number(user?.id_user));
     return { intervenant, peutModifier: tousLesSiens, raison: tousLesSiens ? null : 'autre_organisateur' };
+  }
+
+  /**
+   * Page d'une personnalité : fiche publique, lieux patrimoniaux publiés auxquels elle est
+   * liée, et articles complets qui lui sont consacrés (mêmes règles de visibilité que les
+   * pages détaillées d'un lieu). La naissance n'est affichée que pour une personne décédée.
+   * @returns {Promise<Object|null>} { intervenant, lieux, articles }, null si introuvable
+   */
+  async pagePersonnalite(id, { userId = null, isModerator = false } = {}) {
+    const { Intervenant, LieuIntervenant, Lieu, IntervenantArticle } = this.models;
+    const fiche = await Intervenant.findByPk(id, {
+      attributes: [...PUBLIC_INTERVENANT_ATTRIBUTES, 'date_naissance', 'lieu_naissance']
+    });
+    if (!fiche) return null;
+    const intervenant = fiche.get({ plain: true });
+    if (!intervenant.date_deces) {
+      delete intervenant.date_naissance;
+      delete intervenant.lieu_naissance;
+    }
+
+    const liensLieux = LieuIntervenant ? await LieuIntervenant.findAll({
+      where: { id_intervenant: id },
+      include: [{ model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom', 'typePatrimoine'] }],
+      order: [['ordre', 'ASC'], ['id_lieu_intervenant', 'ASC']]
+    }) : [];
+    const lieux = liensLieux.map(l => ({
+      id_lieu: l.Lieu.id_lieu, nom: l.Lieu.nom, typePatrimoine: l.Lieu.typePatrimoine,
+      role_sur_site: l.role_sur_site, periode: l.periode, contexte: l.contexte
+    }));
+
+    const liensArticles = IntervenantArticle ? await IntervenantArticle.findAll({
+      where: { id_intervenant: id },
+      include: [includeOeuvreCarte(this.models)],
+      order: [['ordre', 'ASC'], ['id_intervenant_article', 'ASC']]
+    }) : [];
+    const articles = await ajouterCouvertures(this.models, liensArticles
+      .map(l => l.get({ plain: true }))
+      .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
+      .map(l => versCarte(l.id_intervenant_article, l.Oeuvre, isModerator || (!!userId && l.id_contributeur === userId))));
+
+    return { intervenant, lieux, articles };
+  }
+
+  /** Relier un article (éditeur avancé) à la page d'une personnalité */
+  async lierArticle(id, { id_oeuvre }, { userId, isModerator = false } = {}) {
+    const { Intervenant, Oeuvre, IntervenantArticle } = this.models;
+    const intervenant = await Intervenant.findByPk(id, { attributes: ['id_intervenant'] });
+    if (!intervenant) throw this._notFoundError(id);
+    const oeuvre = await Oeuvre.findByPk(id_oeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'statut', 'saisi_par'] });
+    const refus = refusLien(oeuvre, { userId, isModerator });
+    if (refus) throw refus.code === 403 ? this._forbiddenError(refus.message) : this._validationError(refus.message);
+    const ordre = ((await IntervenantArticle.max('ordre', { where: { id_intervenant: id } })) || 0) + 1;
+    const [lien] = await IntervenantArticle.findOrCreate({
+      where: { id_intervenant: id, id_oeuvre },
+      defaults: { ordre, id_contributeur: userId || null }
+    });
+    return lien;
+  }
+
+  /** Retirer un article de la page d'une personnalité (modération ou la personne qui l'a relié) */
+  async retirerArticle(id, lienId, { userId, isModerator = false } = {}) {
+    const lien = await this.models.IntervenantArticle.findOne({ where: { id_intervenant_article: lienId, id_intervenant: id } });
+    if (!lien) return 'introuvable';
+    if (!isModerator && !(userId && lien.id_contributeur === userId)) return 'interdit';
+    await lien.destroy();
+    return 'ok';
   }
 
   async getOeuvresByIntervenant(intervenantId, { page = 1, limit = 20 }) {

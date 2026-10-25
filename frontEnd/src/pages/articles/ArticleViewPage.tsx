@@ -1,11 +1,10 @@
 // pages/articles/ArticleViewPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,14 +21,12 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  User,
   BookOpen,
   Share2,
   Bookmark,
   Heart,
   MessageCircle,
   Printer,
-  Eye,
   CheckCircle,
   Award,
   Globe,
@@ -38,7 +35,6 @@ import {
   Loader2,
   Link as LinkIcon,
   Star,
-  Quote,
   ChevronUp,
   Send } from
 'lucide-react';
@@ -52,6 +48,10 @@ import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
+import { getContexteArticle, type ContexteArticle } from '@/services/patrimoineArticles.service';
+import { getAllowedEmbedUrl } from '@/utils/safeUrl';
+import { texteLangue } from '@/utils/programmeIntervenants';
+import '@/styles/article-magazine.css';
 
 // Types
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -178,6 +178,11 @@ const ReadingProgress: React.FC = () => {
 
 
 
+// Section d'un lieu patrimoine → clé de son libellé (patrimoine.sections.*)
+const SECTION_CLES: Record<string, string> = {
+  artisanat_local: 'artisanat', infos_pratiques: 'infosPratiques', referencesHistoriques: 'references'
+};
+
 const ArticleViewPage: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
@@ -198,7 +203,8 @@ const ArticleViewPage: React.FC = () => {
   const [commentContent, setCommentContent] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [replyToComment, setReplyToComment] = useState<number | null>(null);
-  const { t } = useTranslation();
+  const [contexte, setContexte] = useState<ContexteArticle | null>(null);
+  const { t, i18n } = useTranslation();
   const { formatDate: hookFormatDate } = useFormatDate();
   const { toast } = useToast();
 
@@ -224,6 +230,8 @@ const ArticleViewPage: React.FC = () => {
   useEffect(() => {
     if (articleId) {
       loadArticle();
+      // Lieux et personnalités auxquels l'article est relié (fil en haut, liens en bas)
+      getContexteArticle(articleId).then(setContexte);
     }
   }, [articleId]);
 
@@ -454,124 +462,91 @@ const ArticleViewPage: React.FC = () => {
     });
   };
 
+  // Photo d'ouverture : le premier bloc, s'il s'agit d'une image en pleine largeur
+  // (une image « centrée » ou « flottante », un portrait par exemple, reste dans le texte)
+  const blocOuverture = blocks[0]?.type_block === 'image' && blocks[0].media
+    && ['full-width', 'full', undefined].includes(blocks[0].metadata?.layout) ? blocks[0] : null;
+  const blocsCorps = blocOuverture ? blocks.slice(1) : blocks;
+  const premierTexte = blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
+
+  // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante)
+  const classeFigure = (layout?: string) => ({
+    'full-width': 'mag-large', full: 'mag-large', 'float-left': 'mag-flottante-debut', 'float-right': 'mag-flottante-fin'
+  } as Record<string, string>)[layout || 'full-width'] || '';
+
   // Rendu des blocs
   const renderBlock = (block: ArticleBlock, index: number) => {
+    const cle = block.id_block || index;
     switch (block.type_block) {
-      case 'heading':{
-          const HeadingTag = `h${block.metadata?.level || 2}` as keyof JSX.IntrinsicElements;
-          return (
-            <HeadingTag
-              key={block.id_block || index}
-              className={`font-bold ${block.metadata?.level === 1 ? 'text-4xl mt-12 mb-6' :
-              block.metadata?.level === 2 ? 'text-3xl mt-10 mb-4' :
-              'text-2xl mt-8 mb-3'}`
-              }>
-              
-                    {block.contenu}
-                </HeadingTag>);
-
-        }
+      case 'heading': {
+        // Le titre de l'article est le h1 : les intertitres commencent au h2
+        const niveau = Math.min(Math.max(Number(block.metadata?.level) || 2, 2), 4);
+        const HeadingTag = `h${niveau}` as keyof JSX.IntrinsicElements;
+        return <HeadingTag key={cle}>{block.contenu}</HeadingTag>;
+      }
 
       case 'text':
         return (
-          <p key={block.id_block || index} className="text-lg leading-relaxed mb-6 md:text-justify md:hyphens-auto">
+          <p key={cle} className={index === premierTexte ? 'mag-premier' : undefined}>
             {block.contenu}
           </p>);
 
-
       case 'image':
         return block.media ?
-        <figure key={block.id_block || index} className="my-8">
-            <img
-            src={getAssetUrl(block.media.url)}
-            alt={block.metadata?.caption || 'Image'}
-            className={`rounded-lg shadow-lg max-w-full max-h-[600px] object-contain ${
-            block.metadata?.layout === 'full' ? 'w-full' : 'max-w-3xl mx-auto'}`
-            }
-            loading="lazy" />
-          
-            {block.metadata?.caption &&
-          <figcaption className="text-center text-sm text-muted-foreground mt-3 italic">
-                {block.metadata.caption}
-              </figcaption>
-          }
+        <figure key={cle} className={`mag-figure ${classeFigure(block.metadata?.layout)}`}>
+            <img src={getAssetUrl(block.media.url)} alt={block.metadata?.caption || ''} loading="lazy" decoding="async" />
+            {block.metadata?.caption && <figcaption>{block.metadata.caption}</figcaption>}
           </figure> :
         null;
 
+      case 'video':
+      case 'embed': {
+        // Adresse vérifiée (https, hôte autorisé) : aucun HTML du bloc n'est injecté
+        const src = getAllowedEmbedUrl(block.contenu);
+        return src ?
+        <div key={cle} className="mag-video">
+            <iframe
+            src={src}
+            title={block.metadata?.caption || t('article.video', 'Vidéo')}
+            allowFullScreen
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin" />
+          </div> :
+        null;
+      }
+
       case 'citation':
         return (
-          <blockquote
-            key={block.id_block || index}
-            className="relative my-8 ps-8 pe-4 py-4 border-s-4 border-primary bg-primary/5 rounded-e-lg">
-            
-            <Quote className="absolute -start-3 -top-3 h-8 w-8 text-primary/20 bg-background rounded-full p-1" />
-            <p className="text-lg italic mb-2">{block.contenu}</p>
-            {block.metadata?.author &&
-            <cite className="text-sm text-muted-foreground not-italic">
-                — {block.metadata.author}
-              </cite>
-            }
+          <blockquote key={cle} className="mag-citation">
+            <p>{block.contenu}</p>
+            {block.metadata?.author && <cite>{block.metadata.author}</cite>}
           </blockquote>);
-
 
       case 'list':
         return block.contenu_json ?
-        <div key={block.id_block || index} className="my-6">
-            {block.metadata?.listType === 'ordered' ?
-          <ol className="list-decimal list-inside space-y-2 ms-6 text-lg">
-                {block.contenu_json.map((item: string, idx: number) =>
-            <li key={idx} className="leading-relaxed">{item}</li>
-            )}
-              </ol> :
-
-          <ul className="list-disc list-inside space-y-2 ms-6 text-lg">
-                {block.contenu_json.map((item: string, idx: number) =>
-            <li key={idx} className="leading-relaxed">{item}</li>
-            )}
-              </ul>
-          }
-          </div> :
+        block.metadata?.listType === 'ordered' ?
+        <ol key={cle}>{block.contenu_json.map((item: string, idx: number) => <li key={idx}>{item}</li>)}</ol> :
+        <ul key={cle}>{block.contenu_json.map((item: string, idx: number) => <li key={idx}>{item}</li>)}</ul> :
         null;
 
       case 'code':
         return (
-          <div key={block.id_block || index} className="my-6">
-            {block.metadata?.language &&
-            <div className="bg-muted px-4 py-2 rounded-t-lg">
-                <span className="text-sm font-mono">{block.metadata.language}</span>
-              </div>
-            }
-            <pre className="bg-muted p-6 rounded-b-lg overflow-x-auto">
-              <code className="text-sm font-mono">{block.contenu}</code>
-            </pre>
-          </div>);
-
+          <pre key={cle} className="mag-code"><code>{block.contenu}</code></pre>);
 
       case 'separator':
-        return <Separator key={block.id_block || index} className="my-12" />;
+        return <hr key={cle} className="mag-separateur" />;
 
       case 'table':
         return block.contenu_json ?
-        <div key={block.id_block || index} className="my-8 overflow-x-auto">
-            <table className="w-full border-collapse">
+        <div key={cle} className="mag-tableau">
+            <table>
               <thead>
-                <tr>
-                  {block.contenu_json.headers.map((header: string, idx: number) =>
-                <th key={idx} className="border p-3 bg-muted font-semibold text-start">
-                      {header}
-                    </th>
-                )}
-                </tr>
+                <tr>{block.contenu_json.headers.map((header: string, idx: number) => <th key={idx}>{header}</th>)}</tr>
               </thead>
               <tbody>
                 {block.contenu_json.rows.map((row: string[], rowIdx: number) =>
-              <tr key={rowIdx}>
-                    {row.map((cell: string, cellIdx: number) =>
-                <td key={cellIdx} className="border p-3">
-                        {cell}
-                      </td>
-                )}
-                  </tr>
+              <tr key={rowIdx}>{row.map((cell: string, cellIdx: number) => <td key={cellIdx}>{cell}</td>)}</tr>
               )}
               </tbody>
             </table>
@@ -614,6 +589,8 @@ const ArticleViewPage: React.FC = () => {
   }
 
   const contributeurs = extractContributeurs();
+  const chapeau = getLocalizedText(oeuvre.description)?.trim()
+    || (!isScientific ? articleHelpers.getResume(articleData) : undefined);
 
   return (
     <div className="min-h-screen bg-background">
@@ -685,119 +662,119 @@ const ArticleViewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Contenu principal */}
-      <main className="container max-w-4xl mx-auto px-4 py-8">
-        {/* En-tête de l'article */}
-        <header className="mb-12">
-          <div className="space-y-4">
-            {/* Badges et métadonnées */}
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="outline">
-                <FileText className="h-3 w-3 me-1" />
-                {isScientific ? t('article.scientific', 'Article Scientifique') : t('article.article', 'Article')}
-              </Badge>
-              
-              {articleHelpers.isPeerReviewed(articleData) &&
-              <Badge variant="secondary">
-                  <Award className="h-3 w-3 me-1" />{t("articles_articleviewpage.valu_par_les")}
+      {/* Photo d'ouverture */}
+      {blocOuverture?.media &&
+      <figure className="mag-hero">
+          <img src={getAssetUrl(blocOuverture.media.url)} alt={blocOuverture.metadata?.caption || ''} />
+          {blocOuverture.metadata?.caption && <figcaption>{blocOuverture.metadata.caption}</figcaption>}
+        </figure>
+      }
 
-              </Badge>
-              }
-              
-              {articleHelpers.isOpenAccess(articleData) &&
-              <Badge variant="secondary">
-                  <Globe className="h-3 w-3 me-1" />{t("articles_articleviewpage.accs_libre")}
+      {/* En-tête : fil (lieux, personnalités), titre, chapeau, signature */}
+      <header className="mag-entete">
+        <div className="mag-fil">
+          {contexte && (contexte.lieux.length > 0 || contexte.personnalites.length > 0) ?
+          <>
+              {contexte.lieux.map((l) =>
+            <Link key={`l${l.id_lieu}-${l.section_patrimoine}`} to={`/patrimoine/${l.id_lieu}`}>
+                  {texteLangue(l.nom, i18n.language)} › {t(`patrimoine.sections.${SECTION_CLES[l.section_patrimoine] || l.section_patrimoine}`)}
+                </Link>
+            )}
+              {contexte.personnalites.map((p) =>
+            <Link key={`p${p.id_intervenant}`} to={`/personnalites/${p.id_intervenant}`}>
+                  {`${texteLangue(p.prenom, i18n.language)} ${texteLangue(p.nom, i18n.language)}`.trim()}
+                </Link>
+            )}
+            </> :
+          <span>{isScientific ? t('article.scientific', 'Article Scientifique') : t('article.article', 'Article')}</span>
+          }
+        </div>
 
-              </Badge>
-              }
-              
-              {articleHelpers.isFactChecked(articleData) &&
-              <Badge variant="secondary">
-                  <CheckCircle className="h-3 w-3 me-1" />{t("articles_articleviewpage.vrifi")}
+        <h1 className="mag-titre">{oeuvre.titre}</h1>
 
-              </Badge>
-              }
-            </div>
+        {articleHelpers.getSousTitre(articleData) &&
+        <p className="mag-chapeau font-medium">{articleHelpers.getSousTitre(articleData)}</p>
+        }
+        {chapeau && <p className="mag-chapeau">{chapeau}</p>}
 
-            {/* Titre */}
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-              {oeuvre.titre}
-            </h1>
+        <div className="mag-signature">
+          {articleHelpers.getAuteur(articleData) &&
+          <span className="mag-auteur">
+              <span className="mag-initiale" aria-hidden="true">{articleHelpers.getAuteur(articleData)?.trim().charAt(0)}</span>
+              {articleHelpers.getAuteur(articleData)}
+            </span>
+          }
+          {oeuvre.annee_creation &&
+          <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" aria-hidden="true" />{oeuvre.annee_creation}</span>
+          }
+          <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" aria-hidden="true" />{contentStats.readingTime} {t("articles_articleviewpage.min_lecture")}</span>
+          {articleHelpers.isPeerReviewed(articleData) &&
+          <Badge variant="secondary"><Award className="h-3 w-3 me-1" />{t("articles_articleviewpage.valu_par_les")}</Badge>
+          }
+          {articleHelpers.isOpenAccess(articleData) &&
+          <Badge variant="secondary"><Globe className="h-3 w-3 me-1" />{t("articles_articleviewpage.accs_libre")}</Badge>
+          }
+          {articleHelpers.isFactChecked(articleData) &&
+          <Badge variant="secondary"><CheckCircle className="h-3 w-3 me-1" />{t("articles_articleviewpage.vrifi")}</Badge>
+          }
+        </div>
 
-            {/* Sous-titre si disponible */}
-            {articleHelpers.getSousTitre(articleData) &&
-            <h2 className="text-xl lg:text-2xl text-muted-foreground">
-                {articleHelpers.getSousTitre(articleData)}
-              </h2>
-            }
+        {/* Source/Journal */}
+        {(articleHelpers.getSource(articleData) || articleHelpers.getJournal(articleData)) &&
+        <p className="mt-3 text-sm text-muted-foreground">{t("articles_articleviewpage.publi_dans")}{' '}
+            <span className="font-medium text-foreground">
+              {articleHelpers.getJournal(articleData) || articleHelpers.getSource(articleData)}
+            </span>
+            {articleHelpers.getVolume(articleData) && ` • ${t('article.volume', 'Volume')} ${articleHelpers.getVolume(articleData)}`}
+            {articleHelpers.getNumero(articleData) && ` • ${t('article.numero', 'Numéro')} ${articleHelpers.getNumero(articleData)}`}
+            {articleHelpers.getPages(articleData) && ` • ${t('article.pages', 'Pages')} ${articleHelpers.getPages(articleData)}`}
+          </p>
+        }
 
-            {/* Auteur et métadonnées */}
-            <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-              {articleHelpers.getAuteur(articleData) &&
-              <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>{articleHelpers.getAuteur(articleData)}</span>
-                </div>
-              }
-              {oeuvre.annee_creation &&
-              <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{oeuvre.annee_creation}</span>
-                </div>
-              }
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{contentStats.readingTime} {t("articles_articleviewpage.min_lecture")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                <span>{contentStats.wordCount} {t("articles_articleviewpage.mots")}</span>
-              </div>
-            </div>
-
-            {/* Source/Journal */}
-            {(articleHelpers.getSource(articleData) || articleHelpers.getJournal(articleData)) &&
-            <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground">{t("articles_articleviewpage.publi_dans")}{' '}
-                <span className="font-medium text-foreground">
-                    {articleHelpers.getJournal(articleData) || articleHelpers.getSource(articleData)}
-                  </span>
-                  {articleHelpers.getVolume(articleData) && ` • ${t('article.volume', 'Volume')} ${articleHelpers.getVolume(articleData)}`}
-                  {articleHelpers.getNumero(articleData) && ` • ${t('article.numero', 'Numéro')} ${articleHelpers.getNumero(articleData)}`}
-                  {articleHelpers.getPages(articleData) && ` • ${t('article.pages', 'Pages')} ${articleHelpers.getPages(articleData)}`}
-                </p>
-              </div>
-            }
-          </div>
-        </header>
-
-        {/* Résumé/Abstract */}
-        {articleHelpers.getResume(articleData) &&
-        <Card className="mb-8">
+        {/* Résumé d'un article scientifique (abstract) */}
+        {isScientific && articleHelpers.getResume(articleData) &&
+        <Card className="mt-8">
             <CardHeader>
               <CardTitle className="text-lg">{t("articles_articleviewpage.rsum")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-base leading-relaxed">
-                {articleHelpers.getResume(articleData)}
-              </p>
+              <p className="text-base leading-relaxed">{articleHelpers.getResume(articleData)}</p>
             </CardContent>
           </Card>
         }
+      </header>
 
-        {/* Contenu de l'article */}
-        <article className="prose prose-lg dark:prose-invert max-w-none">
-          {blocks.length > 0 ?
-          blocks.map((block, index) => renderBlock(block, index)) :
+      {/* Contenu de l'article */}
+      <article className="mag-corps">
+        {blocsCorps.length > 0 ?
+        blocsCorps.map((block, index) => renderBlock(block, index)) :
+        <div className="text-center py-12">
+            <FileText className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-xl text-muted-foreground">{t("articles_articleviewpage.contenu_cet_article")}</p>
+          </div>
+        }
+      </article>
 
-          <div className="text-center py-12">
-              <FileText className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-xl text-muted-foreground">{t("articles_articleviewpage.contenu_cet_article")}
+      {/* Retour vers les lieux et personnalités de l'article */}
+      {contexte && (contexte.lieux.length > 0 || contexte.personnalites.length > 0) &&
+      <nav className="mag-fin" aria-label={t('article.voirAussi', 'Voir aussi')}>
+          <h2>{t('article.voirAussi', 'Voir aussi')}</h2>
+          <div className="flex flex-wrap gap-2">
+            {contexte.lieux.map((l) =>
+          <Button key={`fl${l.id_lieu}-${l.section_patrimoine}`} asChild variant="outline" size="sm">
+                <Link to={`/patrimoine/${l.id_lieu}`}>{texteLangue(l.nom, i18n.language)}</Link>
+              </Button>
+          )}
+            {contexte.personnalites.map((p) =>
+          <Button key={`fp${p.id_intervenant}`} asChild variant="outline" size="sm">
+                <Link to={`/personnalites/${p.id_intervenant}`}>{`${texteLangue(p.prenom, i18n.language)} ${texteLangue(p.nom, i18n.language)}`.trim()}</Link>
+              </Button>
+          )}
+          </div>
+        </nav>
+      }
 
-            </p>
-            </div>
-          }
-        </article>
+      <main className="container max-w-4xl mx-auto px-4 py-8">
 
         {/* Informations bibliographiques */}
         {isScientific && articleData.type === 'article_scientifique' &&
@@ -883,7 +860,7 @@ const ArticleViewPage: React.FC = () => {
         {/* Section commentaires améliorée */}
         <Card className="mt-12">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />{t("articles_articleviewpage.commentaires")} ({commentaires.length})
               </CardTitle>

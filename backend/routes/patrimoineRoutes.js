@@ -192,6 +192,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Pages détaillées : articles de l'éditeur avancé reliés à une section du site
   const SECTIONS_PAGES = ['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques'];
   router.get('/:id/pages', optionalAuth, validateId(), patrimoineController.wrap('pagesDetaillees'));
+  // Fil d'un article : lieux (et sections) et personnalités auxquels il est relié
+  router.get('/article-contexte/:idOeuvre', validateId('idOeuvre'), patrimoineController.wrap('contexteArticle'));
   router.post('/:id/pages', authenticate, requireModerationOuPro, validateId(),
     [
       body('id_oeuvre').isInt({ min: 1 }).withMessage('Article invalide'),

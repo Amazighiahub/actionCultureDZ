@@ -5,6 +5,7 @@ import ArticleEditor from '@/components/article/ArticleEditor';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -134,8 +135,9 @@ const EditArticle: React.FC = () => {
 
               if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
                 try {
+                  // Champ « medias » attendu par le serveur (avec « files », chaque image était refusée)
                   const formData = new FormData();
-                  formData.append('files', block.metadata.tempFile);
+                  formData.append('medias', await prepareImageForUpload(block.metadata.tempFile));
                   const uploadResult = await httpClient.postFormData<Record<string, unknown>>(
                     `/oeuvres/${oeuvreId}/medias/upload`,
                     formData

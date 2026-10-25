@@ -631,6 +631,7 @@ class UserRepository extends BaseRepository {
       await detach(m.Lieu, 'id_createur');
       await detach(m.LieuIntervenant, 'id_contributeur');
       await detach(m.LieuOeuvre, 'id_contributeur');
+      await detach(m.IntervenantArticle, 'id_contributeur');
       await detach(m.Service, 'id_user');
       await detach(m.Vue, 'id_user');
       await detach(m.QRScan, 'id_user');

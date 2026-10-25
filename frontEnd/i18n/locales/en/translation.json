@@ -3642,8 +3642,8 @@
       "enAttente": "Awaiting validation",
       "retirer": "Remove from the place page",
       "confirmRetrait": "Remove this article from the place page? The article itself is not deleted.",
-      "ajoutee": "Article saved: it will appear on the place page once validated.",
-      "lienEchec": "Article saved, but it could not be linked to the place.",
+      "ajoutee": "Article saved: it will appear once validated by the Tala DZ team.",
+      "lienEchec": "Article saved, but it could not be linked to the page.",
       "bandeau": "This article will be linked to the place page, in the “{{section}}” section. It will appear there once validated by the Tala DZ team."
     }
   },
@@ -4577,6 +4577,7 @@
     "oeuvres": "Works",
     "retirer": "Remove {{nom}} from this site",
     "voirFiche": "See {{nom}}’s profile",
-    "wikipedia": "Wikipedia page"
+    "wikipedia": "Wikipedia page",
+    "bandeauArticle": "This article will be published on this personality’s page once validated by the Tala DZ team."
   }
 }

@@ -18,7 +18,7 @@ import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
 import PagesDetaillees from '@/components/patrimoine/PagesDetaillees';
 import { useNavigate } from 'react-router-dom';
-import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock, type PagePatrimoine, lienEcrirePage } from '@/services/patrimoineArticles.service';
+import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock, type PagePatrimoine, lienEcrirePage, retirerPagePatrimoine } from '@/services/patrimoineArticles.service';
 import {
   lieuIntervenantService,
   getIntervenantNom,
@@ -266,7 +266,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           <CardContent className="space-y-4">
             {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
             <BlocsArticle blocs={blocs} />
-            <PagesDetaillees lieuId={lieuId} pages={pages} onChange={onPagesChange} />
+            <PagesDetaillees pages={pages} retirer={(pg) => retirerPagePatrimoine(lieuId, pg.id_lien)} onChange={onPagesChange} />
           </CardContent>
         </Card>
       ) : isAuthenticated ? (

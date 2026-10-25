@@ -162,6 +162,30 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.getOeuvresByIntervenant(req, res)
   );
 
+  // Page d'une personnalité : fiche, lieux liés, articles (l'auteur voit aussi les siens en attente)
+  router.get('/:id/page',
+    authMiddleware.optionalAuth,
+    validationMiddleware.validateId('id'),
+    intervenantController.wrap('getPagePersonnalite')
+  );
+
+  // Articles complets consacrés à la personnalité : modération et professionnels validés
+  const requireModerationOuPro = (req, res, next) =>
+    (req.user?.isAdmin || req.user?.isModerateur) ? next() : authMiddleware.requireValidatedProfessional(req, res, next);
+  router.post('/:id/articles',
+    authMiddleware.authenticate,
+    requireModerationOuPro,
+    validationMiddleware.validateId('id'),
+    [body('id_oeuvre').isInt({ min: 1 }).withMessage('Article invalide')],
+    validationMiddleware.handleValidationErrors,
+    intervenantController.wrap('lierArticle')
+  );
+  router.delete('/:id/articles/:lienId',
+    authMiddleware.authenticate,
+    validationMiddleware.validateId('id'),
+    intervenantController.wrap('retirerArticle')
+  );
+
   // ===== ROUTES PROTÉGÉES (Admin + Professionnel) =====
 
   // ⚡ Validation acceptant string OU JSON pour les champs multilingues

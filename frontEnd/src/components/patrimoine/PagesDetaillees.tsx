@@ -1,7 +1,7 @@
 /**
- * PagesDetaillees — cartes « En savoir plus » d'une section du lieu : chaque carte mène à un
- * article complet écrit avec l'éditeur avancé (« La rechta », « La bataille d'Alger »…).
- * Le texte de la section reste le résumé ; l'article est la page détaillée.
+ * PagesDetaillees — cartes « En savoir plus » : chaque carte mène à un article complet écrit
+ * avec l'éditeur avancé (« La rechta » dans une section d'un lieu, « Le père du chaâbi » sur la
+ * page d'une personnalité). Le texte de la section reste le résumé ; l'article est la page détaillée.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,27 +12,32 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
-import { retirerPagePatrimoine, type PagePatrimoine } from '@/services/patrimoineArticles.service';
+import type { ApiResponse } from '@/config/api';
+import type { CarteArticle } from '@/services/patrimoineArticles.service';
 
 interface Props {
-  lieuId: number;
-  pages: PagePatrimoine[];
+  pages: CarteArticle[];
+  /** Retire l'article de la page (lieu ou personnalité) ; bouton affiché si la carte le permet */
+  retirer?: (page: CarteArticle) => Promise<ApiResponse<void>>;
   /** Après le retrait d'une page */
   onChange?: () => void;
+  /** Titre au-dessus des cartes (« En savoir plus » par défaut) */
+  titre?: string;
 }
 
-const PagesDetaillees: React.FC<Props> = ({ lieuId, pages, onChange }) => {
+const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChange, titre: titreBloc }) => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [retrait, setRetrait] = useState<number | null>(null);
 
   if (pages.length === 0) return null;
 
-  const retirer = async (page: PagePatrimoine) => {
+  const retirer = async (page: CarteArticle) => {
+    if (!retirerPage) return;
     if (!window.confirm(t('patrimoine.pages.confirmRetrait', 'Retirer cet article de la page du lieu ? L’article lui-même n’est pas supprimé.') as string)) return;
-    setRetrait(page.id_lieu_oeuvre);
+    setRetrait(page.id_lien);
     try {
-      const res = await retirerPagePatrimoine(lieuId, page.id_lieu_oeuvre);
+      const res = await retirerPage(page);
       if (res.success) onChange?.();
       else toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
     } catch {
@@ -46,14 +51,14 @@ const PagesDetaillees: React.FC<Props> = ({ lieuId, pages, onChange }) => {
     <div className="space-y-2">
       <h4 className="text-sm font-medium flex items-center gap-2 text-primary">
         <BookOpen className="h-4 w-4" aria-hidden="true" />
-        {t('patrimoine.pages.enSavoirPlus', 'En savoir plus')}
+        {titreBloc || t('patrimoine.pages.enSavoirPlus', 'En savoir plus')}
       </h4>
       <ul className="grid gap-3 sm:grid-cols-2">
         {pages.map(page => {
           const titre = texteLangue(page.titre, i18n.language);
           const resume = texteLangue(page.resume, i18n.language);
           return (
-            <li key={page.id_lieu_oeuvre} className="relative group rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
+            <li key={page.id_lien} className="relative group rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
               <Link to={`/articles/${page.id_oeuvre}`} className="flex gap-3 p-3 h-full">
                 {page.image ? (
                   <img src={getAssetUrl(page.image, { width: 240 })} alt="" loading="lazy" decoding="async" className="h-20 w-20 shrink-0 rounded-md object-cover" />
@@ -72,11 +77,11 @@ const PagesDetaillees: React.FC<Props> = ({ lieuId, pages, onChange }) => {
                   )}
                 </span>
               </Link>
-              {page.peut_retirer && (
+              {page.peut_retirer && retirerPage && (
                 <Button
                   type="button" variant="ghost" size="icon"
                   className="absolute top-1 end-1 h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => retirer(page)} disabled={retrait === page.id_lieu_oeuvre}
+                  onClick={() => retirer(page)} disabled={retrait === page.id_lien}
                   aria-label={t('patrimoine.pages.retirer', 'Retirer de la page du lieu')}
                 >
                   <Trash2 className="h-4 w-4" />

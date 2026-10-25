@@ -184,6 +184,11 @@ vi.mock('@/components/article/ArticleEditor', () => ({
         formData: { titre: 'La rechta', description: 'Pâtes fraîches', type: 'article', id_langue: 5 },
         blocks: [], contributeurs: {}, editeurs: []
       } })}>Enregistrer l’article</button>
+      <button type="button" onClick={() => onSave({ article: {
+        formData: { titre: 'Le patio', description: 'Architecture', type: 'article', id_langue: 5 },
+        blocks: [{ type_block: 'image', metadata: { caption: 'Le patio', tempFile: new File(['x'], 'patio.jpg', { type: 'image/jpeg' }) } }],
+        contributeurs: {}, editeurs: []
+      } })}>Enregistrer avec une image</button>
     </div>
   ),
 }));
@@ -461,6 +466,23 @@ describe('AjouterOeuvre', () => {
       await waitFor(() => expect(httpClient.post).toHaveBeenCalledWith('/patrimoine/69/pages', { id_oeuvre: 42, section_patrimoine: 'gastronomie' }));
       expect(mockCreateOeuvre).toHaveBeenCalledWith(expect.objectContaining({ id_type_oeuvre: 4 }));
       expect(mockNavigate).toHaveBeenCalledWith('/patrimoine/69');
+    });
+
+    test('les images de l’article sont envoyées dans le champ « medias » attendu par le serveur', async () => {
+      mockSearch = new URLSearchParams('lieu=69&section=architecture');
+      const { httpClient } = await import('@/services/httpClient');
+      (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
+      (httpClient.postFormData as any).mockResolvedValue({ success: true, data: [{ id_media: 7 }] });
+      mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 }, subtype: { id_article: 9 } } });
+      render(<AjouterOeuvre />);
+      await screen.findByTestId('article-editor');
+
+      await user.click(screen.getByRole('button', { name: 'Enregistrer avec une image' }));
+      await waitFor(() => expect(httpClient.postFormData).toHaveBeenCalled());
+      const [url, fd] = (httpClient.postFormData as any).mock.calls[0];
+      expect(url).toBe('/oeuvres/42/medias/upload');
+      expect((fd as FormData).get('medias')).toBeInstanceOf(File);
+      expect((fd as FormData).get('files')).toBeNull();
     });
 
     test('sans lieu : l’article s’ouvre comme avant', async () => {

@@ -229,6 +229,12 @@ class PatrimoineController extends BaseController {
     res.json({ success: true, data: pages });
   }
 
+  /** Lieux et personnalités auxquels un article est relié (fil de la page de l'article) */
+  async contexteArticle(req, res) {
+    const contexte = await this.patrimoineService.contexteArticle(parseInt(req.params.idOeuvre, 10));
+    res.json({ success: true, data: contexte });
+  }
+
   /** Relier un article (éditeur avancé) à une section du site */
   async lierPage(req, res) {
     const lien = await this.patrimoineService.lierPage(parseInt(req.params.id, 10), {

@@ -95,3 +95,27 @@ describe('PatrimoineService.retirerPage', () => {
     expect(await make({ lien: null }).service.retirerPage(69, 10, { userId: 60 })).toBe('introuvable');
   });
 });
+
+describe('ajouterCouvertures', () => {
+  const { ajouterCouvertures } = require('../../utils/carteArticle');
+  it('la carte prend la première image de l’article, pas une image au hasard de l’œuvre', async () => {
+    const models = {
+      ArticleBlock: { findAll: jest.fn().mockResolvedValue([
+        { id_article: 9, media: { url: 'ouverture.jpg' } },
+        { id_article: 9, media: { url: 'deuxieme.jpg' } }
+      ]) },
+      Media: {}
+    };
+    const cartes = await ajouterCouvertures(models, [
+      { id_oeuvre: 57, id_article: 9, image: 'au-hasard.jpg' },
+      { id_oeuvre: 58, id_article: 10, image: 'image-oeuvre.jpg' }
+    ]);
+    expect(cartes).toEqual([
+      { id_oeuvre: 57, image: 'ouverture.jpg' },
+      { id_oeuvre: 58, image: 'image-oeuvre.jpg' }
+    ]);
+    expect(models.ArticleBlock.findAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: { article_type: 'article', id_article: [9, 10], type_block: 'image' }
+    }));
+  });
+});

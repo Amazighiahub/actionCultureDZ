@@ -26,7 +26,7 @@ import {
   type PatrimoineSection,
   type PatrimoineBlock,
   type PagePatrimoine,
-  lienEcrirePage,
+  lienEcrirePage, retirerPagePatrimoine,
 } from '@/services/patrimoineArticles.service';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
@@ -166,7 +166,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
         <CardContent className="space-y-4">
           {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
           <BlocsArticle blocs={blocs} />
-          <PagesDetaillees lieuId={lieuId} pages={pages} onChange={onPagesChange} />
+          <PagesDetaillees pages={pages} retirer={(pg) => retirerPagePatrimoine(lieuId, pg.id_lien)} onChange={onPagesChange} />
         </CardContent>
 
         {/* Modal d'édition */}

@@ -57,7 +57,7 @@ const AjouterOeuvre: React.FC = () => {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice, pageDeLieu,
+    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle,
     handleInputChange,
     handleTagAdd, handleTagRemove,
     handleMediaUpload, handleDragOver, handleDragLeave, handleDrop,
@@ -113,14 +113,16 @@ const AjouterOeuvre: React.FC = () => {
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           {/* Si l'éditeur d'article est activé ET qu'un type article est sélectionné */}
-          {pageDeLieu && useArticleEditor &&
+          {cibleArticle && useArticleEditor &&
           <Alert className="mb-6">
               <MapPin className="h-4 w-4" />
               <AlertDescription>
-                {t('patrimoine.pages.bandeau', {
-                  defaultValue: 'Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ.',
-                  section: t(`patrimoine.sections.${SECTION_CLES[pageDeLieu.section] || pageDeLieu.section}`)
-                })}
+                {cibleArticle.section
+                  ? t('patrimoine.pages.bandeau', {
+                      defaultValue: 'Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ.',
+                      section: t(`patrimoine.sections.${SECTION_CLES[cibleArticle.section] || cibleArticle.section}`)
+                    })
+                  : t('personnalites.bandeauArticle', 'Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ.')}
               </AlertDescription>
             </Alert>
           }

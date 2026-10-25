@@ -9,6 +9,7 @@ const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
 const { mergeTranslations } = require('../../helpers/i18n');
+const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -511,47 +512,22 @@ class PatrimoineService extends BaseService {
    * et la modération voient aussi ceux en attente de validation.
    */
   async pagesDetaillees(lieuId, { userId = null, isModerator = false } = {}) {
-    const { LieuOeuvre, Oeuvre, Article, Media, Lieu } = this.models || {};
+    const { LieuOeuvre, Lieu } = this.models || {};
     const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'id_createur'] });
     if (!lieu) throw this._notFoundError(lieuId);
     const liens = await LieuOeuvre.findAll({
       where: { id_lieu: lieuId },
       order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC'], ['id_lieu_oeuvre', 'ASC']],
-      include: [{
-        model: Oeuvre,
-        as: 'Oeuvre',
-        required: true,
-        attributes: ['id_oeuvre', 'titre', 'description', 'id_type_oeuvre', 'statut', 'saisi_par'],
-        include: [
-          { model: Article, attributes: ['resume'], required: false },
-          { model: Media, attributes: ['url', 'thumbnail_url', 'ordre'], where: { type_media: 'image' }, required: false }
-        ]
-      }]
+      include: [includeOeuvreCarte(this.models)]
     });
-    const STATUTS_EN_COURS = ['brouillon', 'en_attente'];
-    return liens
+    return ajouterCouvertures(this.models, liens
       .map(l => l.get({ plain: true }))
-      .filter(l => {
-        const o = l.Oeuvre;
-        if (o.statut === 'publie') return true;
-        if (!STATUTS_EN_COURS.includes(o.statut)) return isModerator;
-        return isModerator || (!!userId && (o.saisi_par === userId || l.id_contributeur === userId));
-      })
-      .map(l => {
-        const o = l.Oeuvre;
-        const image = (o.Media || []).slice().sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0))[0];
-        return {
-          id_lieu_oeuvre: l.id_lieu_oeuvre,
-          section_patrimoine: l.section_patrimoine,
-          id_oeuvre: o.id_oeuvre,
-          id_type_oeuvre: o.id_type_oeuvre,
-          titre: o.titre,
-          resume: o.Article?.resume || o.description || null,
-          image: image ? (image.thumbnail_url || image.url) : null,
-          statut: o.statut,
-          peut_retirer: isModerator || (!!userId && (l.id_contributeur === userId || lieu.id_createur === userId))
-        };
-      });
+      .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
+      .map(l => ({
+        ...versCarte(l.id_lieu_oeuvre, l.Oeuvre,
+          isModerator || (!!userId && (l.id_contributeur === userId || lieu.id_createur === userId))),
+        section_patrimoine: l.section_patrimoine
+      })));
   }
 
   /**
@@ -563,18 +539,38 @@ class PatrimoineService extends BaseService {
     const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
     if (!lieu) throw this._notFoundError(lieuId);
     const oeuvre = await Oeuvre.findByPk(id_oeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'statut', 'saisi_par'] });
-    if (!oeuvre) throw this._validationError('Article introuvable');
-    if (![4, 5].includes(oeuvre.id_type_oeuvre)) throw this._validationError('Seul un article peut être relié comme page détaillée');
-    if (!['publie', 'brouillon', 'en_attente'].includes(oeuvre.statut)) throw this._validationError('Cet article n’est plus disponible');
-    if (oeuvre.statut !== 'publie' && !isModerator && oeuvre.saisi_par !== userId) {
-      throw this._forbiddenError('Seul l’auteur peut relier un article qui n’est pas encore publié');
-    }
+    const refus = refusLien(oeuvre, { userId, isModerator });
+    if (refus) throw refus.code === 403 ? this._forbiddenError(refus.message) : this._validationError(refus.message);
     const ordre = ((await LieuOeuvre.max('ordre', { where: { id_lieu: lieuId, section_patrimoine } })) || 0) + 1;
     const [lien] = await LieuOeuvre.findOrCreate({
       where: { id_lieu: lieuId, id_oeuvre, section_patrimoine },
       defaults: { ordre, id_contributeur: userId || null }
     });
     return lien;
+  }
+
+  /**
+   * D'où vient un article : lieux (et sections) et personnalités auxquels il est relié,
+   * pour le fil « Casbah d'Alger › Gastronomie » de la page de l'article. Lieux publiés seulement.
+   */
+  async contexteArticle(idOeuvre) {
+    const { LieuOeuvre, Lieu, IntervenantArticle, Intervenant } = this.models || {};
+    const liensLieux = await LieuOeuvre.findAll({
+      where: { id_oeuvre: idOeuvre },
+      include: [{ model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom'] }],
+      order: [['id_lieu_oeuvre', 'ASC']]
+    });
+    const liensPersonnes = IntervenantArticle ? await IntervenantArticle.findAll({
+      where: { id_oeuvre: idOeuvre },
+      include: [{ model: Intervenant, as: 'Intervenant', required: true, attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url'] }],
+      order: [['id_intervenant_article', 'ASC']]
+    }) : [];
+    return {
+      lieux: liensLieux.map(l => ({ id_lieu: l.Lieu.id_lieu, nom: l.Lieu.nom, section_patrimoine: l.section_patrimoine })),
+      personnalites: liensPersonnes.map(l => ({
+        id_intervenant: l.Intervenant.id_intervenant, nom: l.Intervenant.nom, prenom: l.Intervenant.prenom, photo_url: l.Intervenant.photo_url
+      }))
+    };
   }
 
   /** Retirer une page détaillée du site (modération, la personne qui l'a reliée ou le créateur du site) */
