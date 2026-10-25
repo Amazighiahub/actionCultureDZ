@@ -35,6 +35,7 @@ const EventDetailsPage = React.lazy(() => import('./pages/EventDetailsPage'));
 const Oeuvres = React.lazy(() => import('./pages/Oeuvres'));
 const OeuvreDetail = React.lazy(() => import('./pages/oeuvreDetail/OeuvreDetailPage'));
 const Artisanat = React.lazy(() => import('./pages/Artisanat'));
+const Gastronomie = React.lazy(() => import('./pages/Gastronomie'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const APropos = React.lazy(() => import('./pages/APropos'));
@@ -186,6 +187,7 @@ const App = () => (
             <Route path="/oeuvres" element={<Oeuvres />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
+            <Route path="/artisanat/gastronomie" element={<ErrorBoundary><Gastronomie /></ErrorBoundary>} />
             <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
             <Route path="/professionnels/:id" element={<ErrorBoundary><ProfessionnelPortfolio /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />

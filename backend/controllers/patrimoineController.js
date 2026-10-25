@@ -229,6 +229,13 @@ class PatrimoineController extends BaseController {
     res.json({ success: true, data: pages });
   }
 
+  /** Plats de la page Gastronomie : ?wilaya=16&q=rechta */
+  async plats(req, res) {
+    const wilaya = parseInt(req.query.wilaya, 10) || null;
+    const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 100) : '';
+    res.json({ success: true, data: await this.patrimoineService.plats({ wilaya, q }) });
+  }
+
   /** Lieux et personnalités auxquels un article est relié (fil de la page de l'article) */
   async contexteArticle(req, res) {
     const contexte = await this.patrimoineService.contexteArticle(parseInt(req.params.idOeuvre, 10));

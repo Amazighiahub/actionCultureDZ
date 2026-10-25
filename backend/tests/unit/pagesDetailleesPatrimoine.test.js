@@ -119,3 +119,39 @@ describe('ajouterCouvertures', () => {
     }));
   });
 });
+
+describe('PatrimoineService.plats (page Gastronomie)', () => {
+  const lien = (idLien, idOeuvre, titre, lieu, wilaya) => ({
+    get: () => ({
+      id_lieu_oeuvre: idLien, id_oeuvre: idOeuvre,
+      Oeuvre: { id_oeuvre: idOeuvre, titre: { fr: titre }, statut: 'publie', id_type_oeuvre: 4, Article: { resume: 'Résumé' }, Media: [] },
+      Lieu: { id_lieu: lieu.id, nom: { fr: lieu.nom }, Commune: { commune_name_ascii: lieu.commune, Daira: { Wilaya: wilaya } } }
+    })
+  });
+  const alger = { id_wilaya: 16, wilaya_name_ascii: 'Alger' };
+  const bejaia = { id_wilaya: 6, wilaya_name_ascii: 'Bejaia' };
+  const make = () => {
+    const models = { LieuOeuvre: { findAll: jest.fn().mockResolvedValue([
+      lien(1, 58, 'La rechta', { id: 69, nom: 'Casbah d’Alger', commune: 'Casbah' }, alger),
+      lien(2, 58, 'La rechta', { id: 70, nom: 'Blida', commune: 'Blida' }, alger),
+      lien(3, 61, 'Le couscous aux fèves', { id: 39, nom: 'Aït Smaïl', commune: 'Ait Smail' }, bejaia)
+    ]) }, Lieu: {}, Commune: {}, Daira: {}, Wilaya: {}, Oeuvre: {}, Article: {}, Media: {} };
+    return new PatrimoineService({}, { models });
+  };
+
+  it('un plat relié à deux lieux n’apparaît qu’une fois, avec ses deux lieux ; wilayas proposées', async () => {
+    const { plats, wilayas } = await make().plats({});
+    expect(plats.map(p => p.id_oeuvre)).toEqual([58, 61]);
+    expect(plats[0].lieux.map(l => l.id_lieu)).toEqual([69, 70]);
+    expect(wilayas.map(w => w.wilaya_name_ascii)).toEqual(['Alger', 'Bejaia']);
+    expect(plats[0]).not.toHaveProperty('peut_retirer');
+  });
+
+  it('filtre par wilaya, et recherche sans accents ni majuscules (titre ou lieu)', async () => {
+    expect((await make().plats({ wilaya: 6 })).plats.map(p => p.id_oeuvre)).toEqual([61]);
+    expect((await make().plats({ q: 'FEVES' })).plats.map(p => p.id_oeuvre)).toEqual([61]);
+    expect((await make().plats({ q: 'casbah' })).plats.map(p => p.id_oeuvre)).toEqual([58]);
+    // la liste des wilayas ne dépend pas du filtre
+    expect((await make().plats({ wilaya: 6 })).wilayas).toHaveLength(2);
+  });
+});

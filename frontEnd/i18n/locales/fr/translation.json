@@ -4579,5 +4579,21 @@
     "voirFiche": "Voir la fiche de {{nom}}",
     "wikipedia": "Page Wikipédia",
     "bandeauArticle": "Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ."
+  },
+  "gastronomie": {
+    "menu": "Gastronomie",
+    "title": "Gastronomie algérienne",
+    "subtitle": "Les plats traditionnels d’Algérie, racontés par ceux qui les préparent : leur histoire, leurs ingrédients, les fêtes où on les sert.",
+    "subtitleShort": "Les plats traditionnels, leur histoire et les fêtes où on les sert",
+    "search": "Rechercher un plat, un lieu…",
+    "wilaya": "Wilaya",
+    "toutesWilayas": "Toutes les wilayas",
+    "aucun": "Aucun plat pour l’instant",
+    "aucunResultat": "Aucun plat ne correspond à votre recherche",
+    "commentAjouter": "Les plats s’ajoutent depuis la page d’un lieu : bloc « Gastronomie locale », bouton « Écrire un article ».",
+    "guide": "Guide : écrire un article",
+    "compte_one": "{{count}} plat",
+    "compte_other": "{{count}} plats",
+    "liste": "Liste des plats"
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -246,8 +246,11 @@ const Header = () => {
       { to: '/artisanat?materiau=textile', label: t('artisanat.materiaux.textile', 'Textile') },
       { to: '/artisanat?materiau=metal', label: t('artisanat.materiaux.metal', 'Métal') },
       { to: '/artisanat?materiau=bijoux', label: t('artisanat.materiaux.bijoux', 'Bijoux') },
+      { to: '/artisanat/gastronomie', label: t('gastronomie.menu', 'Gastronomie'), icon: Utensils },
     ],
   };
+  // La sous-page Gastronomie garde le menu de l'Artisanat
+  SOUS_NAV['/artisanat/gastronomie'] = SOUS_NAV['/artisanat'];
   const sousNav = SOUS_NAV[location.pathname];
 
   return (
