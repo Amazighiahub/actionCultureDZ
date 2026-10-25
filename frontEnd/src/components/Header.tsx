@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -246,8 +246,11 @@ const Header = () => {
       { to: '/artisanat?materiau=textile', label: t('artisanat.materiaux.textile', 'Textile') },
       { to: '/artisanat?materiau=metal', label: t('artisanat.materiaux.metal', 'Métal') },
       { to: '/artisanat?materiau=bijoux', label: t('artisanat.materiaux.bijoux', 'Bijoux') },
+      { to: '/artisanat/gastronomie', label: t('gastronomie.menu', 'Gastronomie'), icon: Utensils },
     ],
   };
+  // La sous-page Gastronomie garde le menu de l'Artisanat
+  SOUS_NAV['/artisanat/gastronomie'] = SOUS_NAV['/artisanat'];
   const sousNav = SOUS_NAV[location.pathname];
 
   return (
@@ -262,10 +265,15 @@ const Header = () => {
                 <MadgacenLogo className="w-full h-full" />
               </div>
               <div className="flex flex-col">
-                {/* span et non h1 : le seul h1 de chaque page est celui de son contenu */}
-                <span className="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
-                  {t('header.title')}
-                </span>
+                {/* Logo TALADZ (pas de h1 : le seul h1 de chaque page est celui de son contenu) ;
+                    fond clair en mode sombre, le vert du logo y serait peu lisible */}
+                <img
+                  src="/logo-taladz.webp"
+                  alt={t('header.title')}
+                  width={350}
+                  height={87}
+                  className="h-5 sm:h-6 w-auto self-start dark:bg-stone-100 dark:rounded dark:px-1"
+                />
                 <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
                   {t('header.subtitle')}
                 </p>

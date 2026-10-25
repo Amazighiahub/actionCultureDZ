@@ -30,7 +30,7 @@ const LANG_OPTIONS = [
   { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
 ];
 
-const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave }) => {
+const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave, titrePage, libelleEnregistrer }) => {
   const { t } = useTranslation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
@@ -63,7 +63,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               )}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">
-                  {articleId ? 'Modifier l\'article' : 'Créer un article'}
+                  {titrePage || (articleId ? 'Modifier l\'article' : 'Créer un article')}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {editor.formData.type === 'article_scientifique' ? 'Article scientifique' : 'Article'}
@@ -77,7 +77,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               </Button>
               <Button onClick={editor.handleSave} disabled={editor.saving}>
                 {editor.saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
-                <Save className="h-4 w-4 me-2" />{t("article_articleeditor.sauvegarder")}
+                <Save className="h-4 w-4 me-2" />{libelleEnregistrer || t("article_articleeditor.sauvegarder")}
               </Button>
             </div>
           </div>

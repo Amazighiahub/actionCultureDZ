@@ -9,11 +9,11 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, FileText } from 'lucide-react';
+import { Loader2, Plus, Pencil, FileText, ChevronRight } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -167,6 +167,12 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
           <BlocsArticle blocs={blocs} />
           <PagesDetaillees pages={pages} retirer={(pg) => retirerPagePatrimoine(lieuId, pg.id_lien)} onChange={onPagesChange} />
+          {/* Gastronomie : vers les plats de toute l'Algérie (sous-page de l'Artisanat) */}
+          {fieldName === 'gastronomie' && (
+            <Link to="/artisanat/gastronomie" className="inline-flex items-center text-sm font-medium text-primary hover:underline">
+              {t('gastronomie.voirTous', 'Voir tous les plats d’Algérie')}<ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+            </Link>
+          )}
         </CardContent>
 
         {/* Modal d'édition */}

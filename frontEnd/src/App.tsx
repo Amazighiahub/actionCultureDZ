@@ -35,11 +35,13 @@ const EventDetailsPage = React.lazy(() => import('./pages/EventDetailsPage'));
 const Oeuvres = React.lazy(() => import('./pages/Oeuvres'));
 const OeuvreDetail = React.lazy(() => import('./pages/oeuvreDetail/OeuvreDetailPage'));
 const Artisanat = React.lazy(() => import('./pages/Artisanat'));
+const Gastronomie = React.lazy(() => import('./pages/Gastronomie'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const APropos = React.lazy(() => import('./pages/APropos'));
 const ArticleViewPage = React.lazy(() => import('./pages/articles/ArticleViewPage'));
 const PagePersonnalite = React.lazy(() => import('./pages/PagePersonnalite'));
+const ProposerModification = React.lazy(() => import('./pages/articles/ProposerModification'));
 
 // Pages d'authentification
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -186,6 +188,7 @@ const App = () => (
             <Route path="/oeuvres" element={<Oeuvres />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
+            <Route path="/artisanat/gastronomie" element={<ErrorBoundary><Gastronomie /></ErrorBoundary>} />
             <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
             <Route path="/professionnels/:id" element={<ErrorBoundary><ProfessionnelPortfolio /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
@@ -199,6 +202,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/articles/:id" element={<ErrorBoundary><ArticleViewPage /></ErrorBoundary>} />
+            <Route path="/articles/:id/proposer" element={<ProtectedRoute><ErrorBoundary><ProposerModification /></ErrorBoundary></ProtectedRoute>} />
             <Route path="/personnalites/:id" element={<ErrorBoundary><PagePersonnalite /></ErrorBoundary>} />
             
             {/* Route dashboard qui redirige selon le rôle */}

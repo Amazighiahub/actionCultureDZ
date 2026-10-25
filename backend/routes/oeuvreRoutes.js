@@ -9,6 +9,7 @@ const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const oeuvreController = require('../controllers/oeuvreController');
+const articleRevisionController = require('../controllers/articleRevisionController');
 const { handleValidationErrors, validateId, validatePagination, validateWorkSubmission, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
@@ -52,6 +53,21 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
+
+  // Propositions de modification d'un article : brouillons jusqu'à la décision de l'auteur ou de l'administration
+  router.get('/:id/revisions', optionalAuth, validateId(), articleRevisionController.wrap('lister'));
+  router.get('/:id/revisions/:idRevision', authenticate, validateId(), validateId('idRevision'), articleRevisionController.wrap('detail'));
+  router.post('/:id/revisions', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+    [
+      body('motif').isString().trim().isLength({ min: 5, max: 2000 }).withMessage('Motif : 5 à 2 000 caractères'),
+      body('blocks').isArray({ min: 1, max: 150 }).withMessage('Contenu de l’article manquant')
+    ],
+    handleValidationErrors,
+    articleRevisionController.wrap('proposer'));
+  router.post('/:id/revisions/:idRevision/decision', authenticate, validateId(), validateId('idRevision'),
+    [body('decision').isIn(['accepter', 'refuser']).withMessage('Décision invalide')],
+    handleValidationErrors,
+    articleRevisionController.wrap('decider'));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 

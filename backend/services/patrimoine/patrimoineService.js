@@ -550,6 +550,58 @@ class PatrimoineService extends BaseService {
   }
 
   /**
+   * Plats de la page « Gastronomie » (sous-page de l'Artisanat) : articles publiés reliés à la
+   * section Gastronomie d'un lieu publié, avec les lieux (commune, wilaya) d'où vient chaque plat.
+   * @param {{ wilaya?: number, q?: string }} filtres q : sans tenir compte des accents ni des majuscules
+   * @returns {Promise<{ plats: Array, wilayas: Array }>} wilayas : celles qui ont au moins un plat
+   */
+  async plats({ wilaya = null, q = '' } = {}) {
+    const { LieuOeuvre, Lieu, Commune, Daira, Wilaya } = this.models || {};
+    const carte = includeOeuvreCarte(this.models);
+    const liens = await LieuOeuvre.findAll({
+      where: { section_patrimoine: 'gastronomie' },
+      include: [
+        { ...carte, where: { statut: 'publie' } },
+        {
+          model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom', 'communeId'],
+          include: [{
+            model: Commune, required: false, attributes: ['id_commune', 'nom', 'commune_name_ascii', 'dairaId'],
+            include: [{ model: Daira, required: false, attributes: ['id_daira', 'wilayaId'], include: [{ model: Wilaya, required: false, attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii', 'codeW'] }] }]
+          }]
+        }
+      ],
+      order: [['date_creation', 'DESC']],
+      limit: 500
+    });
+
+    // Un plat relié à plusieurs lieux n'apparaît qu'une fois, avec tous ses lieux
+    const parOeuvre = new Map();
+    for (const l of liens.map(x => x.get({ plain: true }))) {
+      const w = l.Lieu.Commune?.Daira?.Wilaya || null;
+      const lieu = { id_lieu: l.Lieu.id_lieu, nom: l.Lieu.nom, commune: l.Lieu.Commune || null, wilaya: w };
+      if (!parOeuvre.has(l.id_oeuvre)) parOeuvre.set(l.id_oeuvre, { ...versCarte(l.id_lieu_oeuvre, l.Oeuvre, false), lieux: [] });
+      const plat = parOeuvre.get(l.id_oeuvre);
+      if (!plat.lieux.some(x => x.id_lieu === lieu.id_lieu)) plat.lieux.push(lieu);
+    }
+    let plats = await ajouterCouvertures(this.models, [...parOeuvre.values()]);
+    for (const p of plats) { delete p.id_lien; delete p.peut_retirer; delete p.statut; }
+
+    // Wilayas proposées dans le filtre : celles des plats (avant filtrage)
+    const wilayas = [...new Map(plats.flatMap(p => p.lieux).filter(x => x.wilaya).map(x => [x.wilaya.id_wilaya, x.wilaya])).values()]
+      .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
+
+    if (wilaya) plats = plats.filter(p => p.lieux.some(x => x.wilaya?.id_wilaya === Number(wilaya)));
+    const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const recherche = sansAccent(q).trim();
+    if (recherche) {
+      const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
+      plats = plats.filter(p => textes(p.titre).includes(recherche) || textes(p.resume).includes(recherche)
+        || p.lieux.some(x => textes(x.nom).includes(recherche)));
+    }
+    return { plats, wilayas };
+  }
+
+  /**
    * D'où vient un article : lieux (et sections) et personnalités auxquels il est relié,
    * pour le fil « Casbah d'Alger › Gastronomie » de la page de l'article. Lieux publiés seulement.
    */

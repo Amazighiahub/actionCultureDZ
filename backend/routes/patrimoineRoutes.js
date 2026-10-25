@@ -57,6 +57,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Vérifier les doublons avant création (nom + commune)
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
   router.get('/types', cachePublic, patrimoineController.wrap('getTypes'));
+  // Plats de la page Gastronomie (articles des sections Gastronomie des lieux)
+  router.get('/gastronomie', patrimoineController.wrap('plats'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
