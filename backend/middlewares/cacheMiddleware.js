@@ -1,6 +1,7 @@
 // middlewares/cacheMiddleware.js - Cache with Redis + LRU fallback
 const logger = require('../utils/logger');
 const { getClient: getRedisClient, isReady: isRedisReady } = require('../utils/redisClient');
+const { parcourirCles } = require('../utils/redisScan');
 
 // ============================================================
 // LRU in-memory cache (fallback when Redis unavailable)
@@ -92,16 +93,11 @@ const store = {
     if (redis) {
       try {
         let redisDel = 0;
-        let cursor = 0;
-        do {
-          const reply = await redis.scan(cursor, { MATCH: `cache:*${pattern}*`, COUNT: 100 });
-          cursor = reply.cursor;
-          if (reply.keys.length > 0) {
-            await redis.del(reply.keys);
-            redisDel += reply.keys.length;
-            count += reply.keys.length;
-          }
-        } while (cursor !== 0);
+        await parcourirCles(redis, `cache:*${pattern}*`, async (keys) => {
+          await redis.del(keys);
+          redisDel += keys.length;
+          count += keys.length;
+        }, 100);
         if (redisDel > 0) {
           logger.info(`Cache Redis: ${redisDel} entries invalidated for pattern "${pattern}"`);
         }
@@ -127,15 +123,10 @@ const store = {
     const redis = getRedisClient();
     if (redis) {
       try {
-        let cursor = 0;
-        do {
-          const reply = await redis.scan(cursor, { MATCH: `cache:${prefix}*`, COUNT: 200 });
-          cursor = reply.cursor;
-          if (reply.keys.length > 0) {
-            await redis.del(reply.keys);
-            count += reply.keys.length;
-          }
-        } while (cursor !== 0);
+        await parcourirCles(redis, `cache:${prefix}*`, async (keys) => {
+          await redis.del(keys);
+          count += keys.length;
+        });
       } catch (e) { /* LRU already invalidated */ }
     }
     return count;
@@ -162,12 +153,7 @@ const store = {
     if (redis) {
       try {
         // Only clear cache: prefixed keys
-        let cursor = 0;
-        do {
-          const reply = await redis.scan(cursor, { MATCH: 'cache:*', COUNT: 100 });
-          cursor = reply.cursor;
-          if (reply.keys.length > 0) await redis.del(reply.keys);
-        } while (cursor !== 0);
+        await parcourirCles(redis, 'cache:*', (keys) => redis.del(keys), 100);
       } catch (e) { /* LRU already cleared */ }
     }
   }

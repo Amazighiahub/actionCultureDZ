@@ -43,6 +43,7 @@ const initProfessionnelRoutes = (models) => {
   // Toutes les routes nécessitent l'authentification et d'être un professionnel validé
   router.use(authMiddleware.authenticate);
   router.use(requireValidatedProfessional);
+  // Données propres à chaque professionnel : cache par compte (userCache), jamais partagé entre comptes
 
   // ========================================
   // DASHBOARD PROFESSIONNEL
@@ -54,7 +55,7 @@ const initProfessionnelRoutes = (models) => {
    * @access Private (Professionnel validé)
    */
   router.get('/dashboard', 
-    cacheMiddleware.conditionalCache(300), // 5 minutes de cache
+    cacheMiddleware.userCache(300), // 5 minutes de cache
     professionnelController.getDashboard.bind(professionnelController)
   );
 
@@ -74,7 +75,7 @@ const initProfessionnelRoutes = (models) => {
       query('type').optional().isInt().withMessage((value, { req }) => req.t('validation.invalidType'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(180), // 3 minutes de cache
+    cacheMiddleware.userCache(180), // 3 minutes de cache
     professionnelController.getMyOeuvres.bind(professionnelController)
   );
 
@@ -86,7 +87,7 @@ const initProfessionnelRoutes = (models) => {
   router.get('/oeuvres/:id/stats',
     validationMiddleware.validateId('id'),
     requireOwnership('Oeuvre', 'id', 'saisi_par'),
-    cacheMiddleware.conditionalCache(300),
+    cacheMiddleware.userCache(300),
     professionnelController.getOeuvreStats.bind(professionnelController)
   );
 
@@ -105,7 +106,7 @@ const initProfessionnelRoutes = (models) => {
       query('statut').optional().isIn(['en_vente', 'vendu', 'indisponible']).withMessage((value, { req }) => req.t('validation.invalidStatus'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(180),
+    cacheMiddleware.userCache(180),
     professionnelController.getMyArtisanats.bind(professionnelController)
   );
 
@@ -116,7 +117,7 @@ const initProfessionnelRoutes = (models) => {
    */
   router.get('/artisanats/:id/stats',
     validationMiddleware.validateId('id'),
-    cacheMiddleware.conditionalCache(300),
+    cacheMiddleware.userCache(300),
     professionnelController.getOeuvreStats.bind(professionnelController) // Réutilise la même méthode
   );
 
@@ -135,7 +136,7 @@ const initProfessionnelRoutes = (models) => {
       query('statut').optional().isIn(['avenir', 'passe', 'en_cours']).withMessage((value, { req }) => req.t('validation.invalidStatus'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(180),
+    cacheMiddleware.userCache(180),
     professionnelController.getMyEvenements.bind(professionnelController)
   );
 
@@ -147,7 +148,7 @@ const initProfessionnelRoutes = (models) => {
   router.get('/evenements/:id/stats',
     validationMiddleware.validateId('id'),
     requireOwnership('Evenement', 'id', 'id_user'),
-    cacheMiddleware.conditionalCache(300),
+    cacheMiddleware.userCache(300),
     professionnelController.getEvenementStats.bind(professionnelController)
   );
 
@@ -159,7 +160,7 @@ const initProfessionnelRoutes = (models) => {
   router.get('/evenements/:id/participants',
     validationMiddleware.validateId('id'),
     requireOwnership('Evenement', 'id', 'id_user'),
-    cacheMiddleware.conditionalCache(60),
+    cacheMiddleware.userCache(60),
     (req, res) => evenementController.getParticipants(req, res)
   );
 
@@ -211,7 +212,7 @@ const initProfessionnelRoutes = (models) => {
       query('month').optional().isInt({ min: 1, max: 12 }).withMessage((value, { req }) => req.t('validation.invalidMonth'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(600), // 10 minutes de cache
+    cacheMiddleware.userCache(600), // 10 minutes de cache
     professionnelController.getEventCalendar.bind(professionnelController)
   );
 
@@ -337,7 +338,7 @@ const initProfessionnelRoutes = (models) => {
       query('marque').optional().isBoolean().withMessage((value, { req }) => req.t('validation.booleanRequired'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(60), // 1 minute de cache
+    cacheMiddleware.userCache(60), // 1 minute de cache
     professionnelController.getNotifications.bind(professionnelController)
   );
 
@@ -355,7 +356,7 @@ const initProfessionnelRoutes = (models) => {
       query('period').optional().isInt({ min: 7, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(900), // 15 minutes de cache
+    cacheMiddleware.userCache(900), // 15 minutes de cache
     professionnelController.getAnalyticsOverview.bind(professionnelController)
   );
 
@@ -370,7 +371,7 @@ const initProfessionnelRoutes = (models) => {
       query('metric').optional().isIn(['vues', 'favoris', 'participations']).withMessage((value, { req }) => req.t('validation.invalidMetric'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(900),
+    cacheMiddleware.userCache(900),
     professionnelController.getAnalyticsOverview.bind(professionnelController)
   );
 
@@ -384,7 +385,7 @@ const initProfessionnelRoutes = (models) => {
       query('period').optional().isInt({ min: 7, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(1800), // 30 minutes de cache
+    cacheMiddleware.userCache(1800), // 30 minutes de cache
     professionnelController.getAnalyticsOverview.bind(professionnelController)
   );
 
@@ -404,7 +405,7 @@ const initProfessionnelRoutes = (models) => {
       query('specialite').optional().isInt().withMessage((value, { req }) => req.t('validation.invalidSpecialty'))
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(3600), // 1 heure de cache
+    cacheMiddleware.userCache(3600), // 1 heure de cache
     (req, res) => {
       res.json({
         success: true,
@@ -419,7 +420,7 @@ const initProfessionnelRoutes = (models) => {
    * @access Private (Professionnel validé)
    */
   router.get('/recommendations',
-    cacheMiddleware.conditionalCache(1800),
+    cacheMiddleware.userCache(1800),
     (req, res) => {
       res.json({
         success: true,
@@ -434,7 +435,7 @@ const initProfessionnelRoutes = (models) => {
    * @access Private (Professionnel validé)
    */
   router.get('/collaboration/suggestions',
-    cacheMiddleware.conditionalCache(3600),
+    cacheMiddleware.userCache(3600),
     (req, res) => {
       res.json({
         success: true,
@@ -521,7 +522,7 @@ const initProfessionnelRoutes = (models) => {
    * @access Private (Professionnel validé)
    */
   router.get('/help/faq',
-    cacheMiddleware.conditionalCache(3600),
+    cacheMiddleware.userCache(3600),
     (req, res) => {
       res.json({
         success: true,

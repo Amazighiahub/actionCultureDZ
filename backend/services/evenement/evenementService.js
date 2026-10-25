@@ -229,6 +229,7 @@ class EvenementService extends BaseService {
 
     this.cache.invalidate();
     this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}`);
+    await this._viderCachesListes();
     if (full?.statut === 'en_attente') await this._prevenirModeration(full);
 
     return EvenementDTO.fromEntity(full);
@@ -722,6 +723,7 @@ class EvenementService extends BaseService {
       if (evenement.statut !== 'en_attente') throw this._validationError('Cet événement n\'est pas en attente de validation');
       await this.repository.update(id, { statut: 'brouillon' });
       this.cache.invalidate();
+      await this._viderCachesListes();
       this.logger.info(`Événement refusé: ${id} par admin: ${adminId}`);
       await notifier(this.notificationService, evenement.id_user, {
         titre: 'Événement à corriger',
@@ -735,6 +737,7 @@ class EvenementService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.cache.invalidate();
+    await this._viderCachesListes();
     this.logger.info(`Événement publié: ${id} par admin: ${adminId}`);
     if (['brouillon', 'en_attente'].includes(evenement.statut)) {
       await notifier(this.notificationService, evenement.id_user, {
@@ -744,6 +747,13 @@ class EvenementService extends BaseService {
       });
     }
     return EvenementDTO.fromEntity(updated);
+  }
+
+  /** Listes en cache (tableau de bord du professionnel, listes publiques) : à jour après un changement */
+  async _viderCachesListes() {
+    const cacheMiddleware = require('../../middlewares/cacheMiddleware');
+    await cacheMiddleware.clearCache('professionnel');
+    await cacheMiddleware.clearCache('evenement');
   }
 
   /** Statut à la demande « Publier » : publié pour l'administration, en attente de validation sinon */
