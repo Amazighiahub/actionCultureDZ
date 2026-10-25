@@ -229,6 +229,11 @@ class PatrimoineController extends BaseController {
     res.json({ success: true, data: pages });
   }
 
+  /** Derniers articles publiés (« À lire » de la page d'accueil) : ?limit=4 */
+  async aLire(req, res) {
+    res.json({ success: true, data: await this.patrimoineService.aLire(parseInt(req.query.limit, 10) || 4) });
+  }
+
   /** Plats de la page Gastronomie : ?wilaya=16&q=rechta */
   async plats(req, res) {
     const wilaya = parseInt(req.query.wilaya, 10) || null;

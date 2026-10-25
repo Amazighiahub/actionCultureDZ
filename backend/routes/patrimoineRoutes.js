@@ -59,6 +59,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/types', cachePublic, patrimoineController.wrap('getTypes'));
   // Plats de la page Gastronomie (articles des sections Gastronomie des lieux)
   router.get('/gastronomie', patrimoineController.wrap('plats'));
+  // « À lire » de la page d'accueil : derniers articles publiés
+  router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));

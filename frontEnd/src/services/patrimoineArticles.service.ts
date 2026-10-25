@@ -291,3 +291,7 @@ export async function getContexteArticle(idOeuvre: number): Promise<ContexteArti
     return null;
   }
 }
+
+/** Section d'un lieu → clé de son libellé (patrimoine.sections.*) : t(`patrimoine.sections.${cleSectionPatrimoine(s)}`) */
+export const cleSectionPatrimoine = (section: string): string =>
+  ({ artisanat_local: 'artisanat', infos_pratiques: 'infosPratiques', referencesHistoriques: 'references' } as Record<string, string>)[section] || section;

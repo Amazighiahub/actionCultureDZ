@@ -23,6 +23,7 @@ import OeuvreSpecificFields from './OeuvreSpecificFields';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import { cleSectionPatrimoine } from '@/services/patrimoineArticles.service';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -38,11 +39,6 @@ const getTypeIcon = (typeId: number): React.ReactNode => {
     8: <Palette className="h-5 w-5" />
   };
   return icons[typeId] ?? <FileText className="h-5 w-5" />;
-};
-
-// Section d'un lieu patrimoine → clé de son libellé (patrimoine.sections.*)
-const SECTION_CLES: Record<string, string> = {
-  artisanat_local: 'artisanat', infos_pratiques: 'infosPratiques', referencesHistoriques: 'references'
 };
 
 const AjouterOeuvre: React.FC = () => {
@@ -120,7 +116,7 @@ const AjouterOeuvre: React.FC = () => {
                 {cibleArticle.section
                   ? t('patrimoine.pages.bandeau', {
                       defaultValue: 'Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ.',
-                      section: t(`patrimoine.sections.${SECTION_CLES[cibleArticle.section] || cibleArticle.section}`)
+                      section: t(`patrimoine.sections.${cleSectionPatrimoine(cibleArticle.section)}`)
                     })
                   : t('personnalites.bandeauArticle', 'Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ.')}
               </AlertDescription>
