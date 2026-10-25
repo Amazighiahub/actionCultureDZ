@@ -285,6 +285,20 @@ class ServiceContainer {
     return this._services.get('monitoring');
   }
 
+  /** Propositions de modification d'un article (brouillons validés par l'auteur ou l'administration) */
+  get articleRevisionService() {
+    this._checkInitialized();
+
+    if (!this._services.has('articleRevision')) {
+      const ArticleRevisionService = require('./oeuvre/articleRevisionService');
+      this._services.set('articleRevision', new ArticleRevisionService(this._models, {
+        notificationService: this.notificationService
+      }));
+    }
+
+    return this._services.get('articleRevision');
+  }
+
   get notificationService() {
     this._checkInitialized();
 

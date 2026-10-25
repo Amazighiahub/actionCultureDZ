@@ -173,6 +173,8 @@ const loadModels = (sequelize) => {
 
   const articleBlockModel = loadModelSafely('./oeuvres/articleBlock', 'ArticleBlock', sequelize);
   if (articleBlockModel) models.ArticleBlock = articleBlockModel;
+  const articleRevisionModel = loadModelSafely('./oeuvres/articleRevision', 'ArticleRevision', sequelize);
+  if (articleRevisionModel) models.ArticleRevision = articleRevisionModel;
 
   const artisanatModel = loadModelSafely('./oeuvres/artisanat', 'Artisanat', sequelize);
   if (artisanatModel) models.Artisanat = artisanatModel;

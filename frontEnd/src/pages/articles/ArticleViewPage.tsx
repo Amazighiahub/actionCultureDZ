@@ -1,6 +1,6 @@
 // pages/articles/ArticleViewPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,8 @@ import {
   Link as LinkIcon,
   Star,
   ChevronUp,
-  Send } from
+  Send,
+  GitPullRequestArrow } from
 'lucide-react';
 
 // Services
@@ -52,6 +53,8 @@ import { getContexteArticle, type ContexteArticle } from '@/services/patrimoineA
 import { getAllowedEmbedUrl } from '@/utils/safeUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import '@/styles/article-magazine.css';
+import PropositionsArticle from '@/components/article/PropositionsArticle';
+import { useAuth } from '@/hooks/useAuth';
 
 // Types
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -204,6 +207,10 @@ const ArticleViewPage: React.FC = () => {
   const [commentLoading, setCommentLoading] = useState(false);
   const [replyToComment, setReplyToComment] = useState<number | null>(null);
   const [contexte, setContexte] = useState<ContexteArticle | null>(null);
+  // Lien d'une notification (?proposition=…) : ouvre la proposition à examiner
+  const [searchParams] = useSearchParams();
+  const propositionAOuvrir = parseInt(searchParams.get('proposition') || '', 10) || null;
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { formatDate: hookFormatDate } = useFormatDate();
   const { toast } = useToast();
@@ -589,6 +596,8 @@ const ArticleViewPage: React.FC = () => {
   }
 
   const contributeurs = extractContributeurs();
+  // Compléter ou corriger l'article de quelqu'un d'autre : proposition validée par l'auteur ou l'administration
+  const peutProposer = !!user && oeuvre.statut === 'publie' && user.id_user !== oeuvre.saisi_par;
   const chapeau = getLocalizedText(oeuvre.description)?.trim()
     || (!isScientific ? articleHelpers.getResume(articleData) : undefined);
 
@@ -649,6 +658,15 @@ const ArticleViewPage: React.FC = () => {
                 
                 <Share2 className="h-4 w-4" />
               </Button>
+              {peutProposer &&
+              <Button asChild size="sm" variant="outline" className="me-1">
+                  <Link to={`/articles/${oeuvre.id_oeuvre}/proposer`}>
+                    <GitPullRequestArrow className="h-4 w-4 me-1.5" aria-hidden="true" />
+                    <span className="hidden sm:inline">{t('revisions.titre', 'Proposer une modification')}</span>
+                    <span className="sm:hidden">{t('revisions.court', 'Modifier')}</span>
+                  </Link>
+                </Button>
+              }
               <Button
                 size="icon"
                 variant="ghost"
@@ -775,6 +793,22 @@ const ArticleViewPage: React.FC = () => {
       }
 
       <main className="container max-w-4xl mx-auto px-4 py-8">
+        {peutProposer &&
+        <div className="mb-6 rounded-xl border border-dashed p-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">{t('revisions.invitation', 'Vous connaissez ce sujet ? Complétez ou corrigez cet article : son auteur validera votre proposition.')}</p>
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/articles/${oeuvre.id_oeuvre}/proposer`}><GitPullRequestArrow className="h-4 w-4 me-1.5" aria-hidden="true" />{t('revisions.titre', 'Proposer une modification')}</Link>
+            </Button>
+          </div>
+        }
+
+        <PropositionsArticle
+          idOeuvre={oeuvre.id_oeuvre}
+          blocsActuels={blocks}
+          titreActuel={oeuvre.titre}
+          descriptionActuelle={oeuvre.description}
+          propositionAOuvrir={propositionAOuvrir}
+          onAcceptee={() => { loadArticle(); getContexteArticle(articleId).then(setContexte); }} />
 
         {/* Informations bibliographiques */}
         {isScientific && articleData.type === 'article_scientifique' &&

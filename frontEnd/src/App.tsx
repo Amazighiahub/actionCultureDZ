@@ -41,6 +41,7 @@ const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPor
 const APropos = React.lazy(() => import('./pages/APropos'));
 const ArticleViewPage = React.lazy(() => import('./pages/articles/ArticleViewPage'));
 const PagePersonnalite = React.lazy(() => import('./pages/PagePersonnalite'));
+const ProposerModification = React.lazy(() => import('./pages/articles/ProposerModification'));
 
 // Pages d'authentification
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -201,6 +202,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/articles/:id" element={<ErrorBoundary><ArticleViewPage /></ErrorBoundary>} />
+            <Route path="/articles/:id/proposer" element={<ProtectedRoute><ErrorBoundary><ProposerModification /></ErrorBoundary></ProtectedRoute>} />
             <Route path="/personnalites/:id" element={<ErrorBoundary><PagePersonnalite /></ErrorBoundary>} />
             
             {/* Route dashboard qui redirige selon le rôle */}

@@ -84,7 +84,11 @@ export interface ArticleBlock {
     articleId?: string | number;
     initialData?: Partial<ArticleFormData>;
     onBack?: () => void;
-    onSave?: (data: ArticleSaveResponse) => void;
+    onSave?: (data: ArticleSaveResponse) => void | Promise<void>;
+    /** Titre de la page (« Proposer une modification »…) ; par défaut Créer / Modifier l'article */
+    titrePage?: string;
+    /** Libellé du bouton d'enregistrement (« Envoyer la proposition »…) */
+    libelleEnregistrer?: string;
   }
   
   export interface ArticleBlockEditorProps {
