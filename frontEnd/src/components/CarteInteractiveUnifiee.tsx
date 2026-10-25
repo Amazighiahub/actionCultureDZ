@@ -22,6 +22,7 @@ import 'leaflet/dist/leaflet.css';
 // Fix Leaflet icons
 // Icônes des marqueurs servies localement (voir src/lib/leafletIcons.ts)
 import '@/lib/leafletIcons';
+import { evenementPath } from '@/utils/slug';
 
 // Custom marker icons par catégorie
 const createIcon = (color: string, emoji: string) => {
@@ -186,7 +187,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           subtitle: evt.date_debut ? new Date(evt.date_debut).toLocaleDateString(getDateLocale(lang)) : '',
           description: translate(evt.description, lang),
           badge: evt.statut,
-          link: `/evenements/${evt.id_evenement}`,
+          link: evenementPath(evt.id_evenement, evt.nom_evenement),
           extra: {
             ...(evt.Lieu ? { lieu: translate(evt.Lieu.nom, lang) } : {}),
           },

@@ -33,6 +33,7 @@ import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio'
 import { usePermissions } from '@/hooks/usePermissions';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
+import { evenementPath } from '@/utils/slug';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -761,7 +762,7 @@ const PatrimoineDetail = () => {
                                     <CardContent>
                                       <p className="text-sm text-muted-foreground">{translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}</p>
                                       {programme.Evenement && (
-                                        <Button variant="link" className="p-0 mt-2" asChild><Link to={`/evenements/${programme.Evenement.id_evenement}`}>
+                                        <Button variant="link" className="p-0 mt-2" asChild><Link to={evenementPath(programme.Evenement.id_evenement, programme.Evenement.nom_evenement)}>
                                             {t('patrimoine.viewEvent', "Voir l'événement")}
                                             <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" />
                                           </Link></Button>

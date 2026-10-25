@@ -41,6 +41,7 @@ import { useEvenements } from '@/hooks/useEvenements';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { statutAffiche } from '@/utils/statutEvenement';
+import { evenementPath } from '@/utils/slug';
 
 // Types d'événements — labels resolved via t() in JSX
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
@@ -60,7 +61,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
   const { formatPrice } = useLocalizedNumber();
   const { formatDate } = useFormatDate();
   const eventTitle = event.nom_evenement || event.titre;
-  const eventUrl = `/evenements/${event.id_evenement}`;
+  const eventUrl = evenementPath(Number(event.id_evenement), event.nom_evenement);
 
   const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)

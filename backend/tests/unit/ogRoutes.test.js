@@ -45,7 +45,8 @@ describe('GET /api/og/:type/:id', () => {
     expect(res.text).toContain('Trois jours de concerts à Oran.');
     expect(res.text).toContain('20 novembre 2026');
     expect(res.text).toContain('c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/v1/taladz/medina.jpg');
-    expect(res.text).toContain('<link rel="canonical" href="https://taladz.com/evenements/12">');
+    // Adresse canonique lisible : numéro puis nom
+    expect(res.text).toContain('<link rel="canonical" href="https://taladz.com/evenements/12-festival-du-rai-musique">');
   });
 
   it('ne dévoile pas un contenu non public (404 + noindex)', async () => {

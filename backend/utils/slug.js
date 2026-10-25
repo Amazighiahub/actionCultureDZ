@@ -35,4 +35,10 @@ function professionnelPath(id, prenom, nom) {
   return `/professionnels/${id}${slug ? `-${slug}` : ''}`;
 }
 
-module.exports = { slugify, plainText, professionnelPath };
+/** Chemin public d'un événement : /evenements/1-salon-de-la-poterie-traditionnelle-d-ait-smail */
+function evenementPath(id, nom) {
+  const slug = slugify(plainText(nom));
+  return `/evenements/${id}${slug ? `-${slug}` : ''}`;
+}
+
+module.exports = { slugify, plainText, professionnelPath, evenementPath };

@@ -26,7 +26,7 @@ import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { idFromSlug, professionnelPath } from '@/utils/slug';
+import { idFromSlug, professionnelPath, evenementPath } from '@/utils/slug';
 
 // Types d'œuvres « articles » (page /articles/:id)
 const ARTICLE_TYPES = [4, 5];
@@ -315,7 +315,7 @@ const ProfessionnelPortfolio: React.FC = () => {
               <TabsContent value="evenements" className="mt-6">
                 <Grid>
                   {data.evenements.map((e) => (
-                    <ItemCard key={e.id_evenement} to={`/evenements/${e.id_evenement}`} title={e.nom_evenement} image={e.image_url}
+                    <ItemCard key={e.id_evenement} to={evenementPath(e.id_evenement, e.nom_evenement)} title={e.nom_evenement} image={e.image_url}
                       subtitle={e.date_debut ? formatDate(e.date_debut) : undefined}
                       badge={['annule', 'reporte'].includes(e.statut) ? t(`programme.form.statuses.${e.statut}`, e.statut) : undefined} />
                   ))}

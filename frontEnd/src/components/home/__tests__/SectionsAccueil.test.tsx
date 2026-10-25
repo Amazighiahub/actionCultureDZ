@@ -34,8 +34,8 @@ describe('À la une (prochains événements)', () => {
     expect(await screen.findByRole('heading', { name: 'Salon de la poterie d’Aït Smaïl' })).toBeInTheDocument();
     expect(screen.getByText('Aït Smaïl')).toBeInTheDocument();
     expect(screen.getByText('Salon')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Voir le programme' })).toHaveAttribute('href', '/evenements/1');
-    expect(screen.getByRole('link', { name: /Festival du film amazigh/ })).toHaveAttribute('href', '/evenements/2');
+    expect(screen.getByRole('link', { name: 'Voir le programme' })).toHaveAttribute('href', '/evenements/1-salon-de-la-poterie-d-ait-smail');
+    expect(screen.getByRole('link', { name: /Festival du film amazigh/ })).toHaveAttribute('href', '/evenements/2-festival-du-film-amazigh');
   });
 
   test('aucun événement à venir : la section n’apparaît pas', async () => {

@@ -17,6 +17,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { Evenement } from '@/types';
 import EnTeteSection from './EnTeteSection';
+import { evenementPath } from '@/utils/slug';
 
 type EvenementAccueil = Evenement & {
   image_url?: string | null;
@@ -92,7 +93,7 @@ const ALaUne: React.FC = () => {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             {/* Grande carte : le prochain événement */}
             <article className="group relative">
-              <Link to={`/evenements/${premier.id_evenement}`} className="block overflow-hidden rounded-2xl bg-muted aspect-[16/10]">
+              <Link to={evenementPath(premier.id_evenement, premier.nom_evenement)} className="block overflow-hidden rounded-2xl bg-muted aspect-[16/10]">
                 {image(premier) ? (
                   <img src={getAssetUrl(image(premier), { width: 1200 })} alt="" loading="eager" decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
@@ -110,7 +111,7 @@ const ALaUne: React.FC = () => {
                   )}
                 </div>
                 <h3 className="font-serif text-2xl md:text-3xl font-bold leading-tight">
-                  <Link to={`/evenements/${premier.id_evenement}`} className="hover:text-primary transition-colors">{nom(premier)}</Link>
+                  <Link to={evenementPath(premier.id_evenement, premier.nom_evenement)} className="hover:text-primary transition-colors">{nom(premier)}</Link>
                 </h3>
                 <p className="flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" aria-hidden="true" />{periode(premier)}</span>
@@ -120,7 +121,7 @@ const ALaUne: React.FC = () => {
                   <p className="text-muted-foreground line-clamp-3 max-w-2xl">{getLocalizedText(premier.description as unknown, i18n.language)}</p>
                 )}
                 <Button asChild size="lg" className="mt-1">
-                  <Link to={`/evenements/${premier.id_evenement}`}>{t('home.aLaUne.programme', 'Voir le programme')}</Link>
+                  <Link to={evenementPath(premier.id_evenement, premier.nom_evenement)}>{t('home.aLaUne.programme', 'Voir le programme')}</Link>
                 </Button>
               </div>
             </article>
@@ -130,7 +131,7 @@ const ALaUne: React.FC = () => {
               <ul className="divide-y border-y lg:border-y-0 lg:border-s lg:ps-8 self-start">
                 {suivants.map(e => (
                   <li key={e.id_evenement} className="py-4 first:pt-0 lg:first:pt-0">
-                    <Link to={`/evenements/${e.id_evenement}`} className="group flex gap-4">
+                    <Link to={evenementPath(e.id_evenement, e.nom_evenement)} className="group flex gap-4">
                       <div className="shrink-0 w-16 rounded-lg border bg-card text-center py-1.5">
                         {e.date_debut ? (
                           <>

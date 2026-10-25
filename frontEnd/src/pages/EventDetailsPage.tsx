@@ -4,6 +4,7 @@
  */
 import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { evenementPath, idFromSlug } from '@/utils/slug';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -67,7 +68,15 @@ const EventDetailsPage: React.FC = () => {
     unregisterFromEvent,
     isRegistered,
     registrationStatus
-  } = useEventDetails(id ? parseInt(id) : 0);
+  } = useEventDetails(idFromSlug(id) ?? 0);
+
+  // Adresse lisible et partageable : /evenements/1 -> /evenements/1-salon-de-la-poterie-…
+  const cheminCanonique = event ? evenementPath(event.id_evenement, event.nom_evenement) : null;
+  useEffect(() => {
+    if (cheminCanonique && id && `/evenements/${id}` !== cheminCanonique) {
+      navigate(cheminCanonique + window.location.search + window.location.hash, { replace: true });
+    }
+  }, [cheminCanonique, id, navigate]);
 
   // Retour si pas d'ID
   if (!id) {
@@ -128,7 +137,7 @@ const EventDetailsPage: React.FC = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Événements', url: '/evenements' },
-            { name: event.nom_evenement || event.titre || '', url: `/evenements/${event.id_evenement}` },
+            { name: event.nom_evenement || event.titre || '', url: evenementPath(event.id_evenement, event.nom_evenement) },
           ]),
         ]}
       />
