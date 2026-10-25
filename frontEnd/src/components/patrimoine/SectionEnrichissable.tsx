@@ -128,7 +128,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
       <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle>
             {isAuthenticated && (
               <div className="flex gap-2">

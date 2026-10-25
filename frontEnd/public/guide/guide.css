@@ -100,7 +100,7 @@ section:not(.sable) .pastille-icone { background: var(--blanc); }
 }
 
 /* Frise des étapes */
-.frise { display: grid; gap: 14px; grid-template-columns: repeat(5, 1fr); counter-reset: e; }
+.frise { display: grid; gap: 14px; grid-template-columns: repeat(6, 1fr); counter-reset: e; }
 .frise a { position: relative; text-decoration: none; text-align: center; padding: 8px 6px; border-radius: 16px; transition: background .25s; }
 .frise a:hover { background: var(--sable); }
 .frise .rond { width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--olive); color: var(--blanc); transition: transform .3s; }
