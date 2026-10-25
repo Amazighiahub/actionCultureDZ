@@ -46,6 +46,9 @@ interface CreateServiceData {
 }
 
 interface SearchLieuParams extends PaginationParams {
+  /** Filtres lus par GET /lieux */
+  search?: string;
+  wilaya?: number;
   q?: string;
   typeLieu?: string;
   typeLieuCulturel?: string;

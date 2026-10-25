@@ -181,12 +181,13 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   const loadLieux = async () => {
     setLoading(true);
     try {
+      // Noms des filtres attendus par GET /lieux : « wilaya » et « search »
       const params: any = { limit: 100 };
       if (wilayaId) {
-        params.wilayaId = wilayaId;
+        params.wilaya = wilayaId;
       }
-      if (searchQuery) {
-        params.q = searchQuery;
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
       }
       if (filterTypeLieuCulturel && filterTypeLieuCulturel !== 'all') {
         params.typeLieuCulturel = filterTypeLieuCulturel;
@@ -432,10 +433,10 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
         </Card>
       ) : (
         <>
-          {/* Barre de recherche + bouton Créer */}
-          <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
+          {/* Barre de recherche + bouton Créer (téléphone : « Créer » sur sa propre ligne) */}
+          <div className="flex flex-wrap gap-2">
             <Input
-              className="flex-1"
+              className="flex-1 min-w-[10rem]"
               placeholder={t('places.search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -453,6 +454,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => { setMode('create'); setShowCreateDialog(true); }}
             >
               <Plus className="h-4 w-4 me-1" />

@@ -342,9 +342,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-lg sm:text-2xl">
           <span className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+            <Users className="h-5 w-5 shrink-0" />
             {t('pro.participants.title', 'Participants')} - {evenementNom}
           </span>
           {stats && (
@@ -439,7 +439,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                   key={participant.id_EventUser}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start gap-4">
+                  {/* Téléphone : boutons sous les informations ; écran large : à droite */}
+                  <div className="flex flex-wrap items-start gap-4">
                     {/* Avatar */}
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={participant.User.photo_profil} />
@@ -501,7 +502,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"

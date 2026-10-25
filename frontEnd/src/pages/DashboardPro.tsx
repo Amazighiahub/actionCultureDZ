@@ -356,8 +356,8 @@ const DashboardPro = () => {
 
     return (
       <div className="py-4 border-b border-dashed border-border last:border-0">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
+        <div className="flex flex-wrap justify-between items-start gap-y-2">
+          <div className="flex-1 min-w-0">
             <h3 className="text-base font-medium mb-1">{getItemTitle()}</h3>
             {getItemInfo()}
           </div>
@@ -466,7 +466,7 @@ const DashboardPro = () => {
               <p className="text-muted-foreground mt-1">{t("dashboardpro.grez_vos_crations")}</p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {/* Page publique du professionnel */}
               {currentUser && (
                 <Button asChild variant="outline">
@@ -569,14 +569,14 @@ const DashboardPro = () => {
 
           {/* Bannière activation notifications navigateur */}
           {showNotifBanner && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-4">
               <div className="flex items-center gap-3">
                 <Bell className="h-5 w-5 text-primary shrink-0" />
                 <p className="text-sm">
                   {t('notifications.browserBanner', 'Activez les notifications pour être alerté en temps réel de vos ventes, événements et messages.')}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <Button size="sm" onClick={handleEnableNotifications}>
                   {t('notifications.enable', 'Activer')}
                 </Button>
@@ -591,7 +591,7 @@ const DashboardPro = () => {
           )}
 
           {/* Stats simplifiées */}
-          <div className="grid gap-4 md:grid-cols-4 mb-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 mb-6">
             {loadingStats ?
             <>
                 <Skeleton className="h-20" />
@@ -749,10 +749,11 @@ const DashboardPro = () => {
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
                   filterBySearch(mesEvenements.items as DashboardItem[]).map((evenement) =>
                   <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-border last:border-0">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                    {/* Téléphone : infos puis boutons en dessous ; écran large : côte à côte */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
+                      <div className="flex-1 min-w-0">
                         <h3 className="text-base font-medium mb-1">{td(evenement.nom_evenement)}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           {evenement.date_debut &&
                           <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -774,7 +775,7 @@ const DashboardPro = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 ms-4">
+                      <div className="flex flex-wrap gap-2 sm:ms-4">
                         <Button
                           variant="outline"
                           size="sm"
