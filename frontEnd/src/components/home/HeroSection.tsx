@@ -132,7 +132,8 @@ const HeroSection: React.FC = () => {
       value: publicStats?.membres_formatted || '...', raw: publicStats?.membres, 
       label: t('home.stats.members', 'membres') 
     }
-  ].filter(stat => stat.raw !== 0); // « 0 événements » en vitrine dessert le site : la tuile est masquée
+  // Un petit chiffre en vitrine (« 1 événement », « 6 sites ») dessert le site : affiché à partir de 10
+  ].filter(stat => stat.raw === undefined || stat.raw >= 10);
 
   return (
     <section

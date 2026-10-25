@@ -1,9 +1,11 @@
 /**
- * Page d'accueil - Index.tsx (Refactorisé)
- * Composants séparés, lazy loading, et bouton "Contribuer" visible
+ * Page d'accueil — mise en page magazine :
+ * grande photo, « À la une » (prochains événements), « À lire » (derniers articles),
+ * patrimoine, saveurs d'Algérie, artisanat, espace professionnels, mission et contribution.
+ * Une section sans contenu à montrer (aucun événement à venir, aucun article…) n'apparaît pas.
  */
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
@@ -11,16 +13,11 @@ import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Icônes
-import { 
-  MapPin, Calendar, Palette, Map, Bell, Hammer, 
-  Info, ArrowRight 
-} from 'lucide-react';
+import { Bell, Info, ArrowRight, BookOpen, Map } from 'lucide-react';
 
 // Hooks de localisation
 import { useRTL } from '@/hooks/useRTL';
@@ -34,23 +31,19 @@ import SEOHead, { buildWebsiteJsonLd } from '@/components/SEOHead';
 
 // ✅ Composants séparés (refactorisés)
 import HeroSection from '@/components/home/HeroSection';
-import IslamicPatternDivider from '@/components/home/IslamicPatternDivider';
+import ALaUne from '@/components/home/ALaUne';
+import ALire from '@/components/home/ALire';
+import EnTeteSection from '@/components/home/EnTeteSection';
 import PatrimoineDynamique from '@/components/home/PatrimoineDynamique';
-import EvenementsDynamique from '@/components/home/EvenementsDynamique';
-import OeuvresDynamique from '@/components/home/OeuvresDynamique';
-import ArtisanatDynamique from '@/components/home/ArtisanatDynamique';
+import SaveursAlgerie from '@/components/home/SaveursAlgerie';
+import ArtisanatALaUne from '@/components/home/ArtisanatALaUne';
 import EnhancedCTASection from '@/components/home/EnhancedCTASection';
-
-// Carte patrimoine (lazy loaded)
-const CartePatrimoine = React.lazy(() => import('@/components/CartePatrimoine'));
+import { lienGuide } from '@/utils/lienGuide';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
-  // États
-  const [activeTab, setActiveTab] = useState('patrimoine');
-
   // Direction RTL
   const direction = i18n.language === 'ar' || i18n.language === 'ar-DZ' ? 'rtl' : 'ltr';
 
@@ -116,181 +109,75 @@ const Index: React.FC = () => {
         {/* ✅ Hero Section (composant séparé avec bouton visible) */}
         <HeroSection />
 
-        {/* Séparateur décoratif */}
-        <IslamicPatternDivider />
+        {/* À la une : les prochains événements */}
+        <ALaUne />
 
-        {/* Section principale avec onglets */}
-        <section className="py-16">
+        {/* À lire : les derniers articles */}
+        <ALire />
+
+        {/* Patrimoine */}
+        <section className="py-14 lg:py-20" aria-labelledby="titre-patrimoine">
           <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight font-serif lg:text-4xl mb-4">
-                {t('home.explore.title')}
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                {t('home.explore.subtitle')}
-              </p>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-wrap justify-center gap-2 w-full max-w-3xl mx-auto h-auto p-2 mb-12">
-                <TabsTrigger value="patrimoine" className="group">
-                  <MapPin className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
-                  {t('home.explore.tabs.heritage')}
-                </TabsTrigger>
-                <TabsTrigger value="carte" className="group">
-                  <Map className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
-                  {t('home.explore.tabs.map')}
-                </TabsTrigger>
-                <TabsTrigger value="evenements" className="group">
-                  <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
-                  {t('home.explore.tabs.events')}
-                </TabsTrigger>
-                <TabsTrigger value="oeuvres" className="group">
-                  <Palette className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
-                  {t('home.explore.tabs.works')}
-                </TabsTrigger>
-                </TabsList>
-              
-              <TabsContent value="patrimoine" className="space-y-8">
-                <PatrimoineDynamique wilayasCache={wilayasCache || []} />
-              </TabsContent>
-              
-              <TabsContent value="carte" className="space-y-8">
-                <div className="text-center space-y-4 mb-8">
-                  <h3 className="text-2xl font-bold tracking-tight font-serif">
-                    {t('sections.heritage.interactiveMap')}
-                  </h3>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
-                    {t('sections.heritage.mapDescription')}
-                  </p>
-                </div>
-                <React.Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
-                  <CartePatrimoine />
-                </React.Suspense>
-              </TabsContent>
-              
-              <TabsContent value="evenements" className="space-y-8">
-                <EvenementsDynamique />
-              </TabsContent>
-              
-              <TabsContent value="oeuvres" className="space-y-8">
-                <OeuvresDynamique />
-              </TabsContent>
-            </Tabs>
+            <EnTeteSection
+              id="titre-patrimoine"
+              surtitre={t('home.patrimoine.surtitre', 'Patrimoine')}
+              titre={t('home.patrimoine.titre', 'Lieux à découvrir')}
+              accroche={t('home.patrimoine.accroche', 'Villages, médinas, sites antiques et musées, avec leurs points à visiter et leurs histoires.')}
+              lien={{ to: '/patrimoine', libelle: t('home.patrimoine.tous', 'Tous les lieux') }}
+            />
+            <PatrimoineDynamique wilayasCache={wilayasCache || []} />
+            <p className="mt-8 text-center">
+              <Button asChild variant="outline">
+                <Link to="/patrimoine"><Map className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} aria-hidden="true" />{t('home.patrimoine.carte', 'Explorer sur la carte')}</Link>
+              </Button>
+            </p>
           </div>
         </section>
 
-        {/* Section CTA pour les professionnels */}
+        {/* Saveurs d'Algérie */}
+        <SaveursAlgerie />
+
+        {/* Artisanat */}
+        <ArtisanatALaUne />
+
+        {/* Espace professionnels */}
         <EnhancedCTASection />
 
-        {/* Section Mission et Ressources */}
-        <section className="py-16 relative overflow-hidden">
-          {/* Background décoratif */}
-          <div className="absolute inset-0 opacity-5">
-            <svg className="w-full h-full">
-              <pattern id="dots-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-                <circle cx="20" cy="20" r="2" fill="currentColor" className="text-primary" />
-              </pattern>
-              <rect width="100%" height="100%" fill="url(#dots-pattern)" />
-            </svg>
-          </div>
-
-          <div className="container relative">
-            <div className="grid gap-8 lg:grid-cols-2">
-              {/* Mission */}
-              <Card className="bg-gradient-to-br from-primary/5 to-transparent hover-lift overflow-hidden group">
-                <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
-                  <img
-                    src="/images/hero/ghardaia.webp"
-                    alt=""
-                    loading="lazy"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-                <CardContent className="p-8 relative">
-                  <div className={`flex items-start gap-4 ${rtlClasses.flexRow}`}>
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Info className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-3">
-                        {t('home.mission.title')}
-                      </h3>
-                      <p className="text-muted-foreground mb-4">
-                        {t('home.mission.description')}
-                      </p>
-                      <Button variant="link" className="p-0 group" onClick={() => navigate('/a-propos')}>
-                        {t('home.mission.learnMore')}
-                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} />
-                      </Button>
-                    </div>
+        {/* Mission et contribution */}
+        <section className="py-14 lg:py-20" aria-label={t('home.contribuer.section', 'Notre mission et comment contribuer')}>
+          <div className="container grid gap-6 lg:grid-cols-2">
+            <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-transparent">
+              <CardContent className="p-8">
+                <div className={`flex items-start gap-4 ${rtlClasses.flexRow}`}>
+                  <div className="p-3 bg-primary/10 rounded-lg"><Info className="h-6 w-6 text-primary" aria-hidden="true" /></div>
+                  <div className="flex-1">
+                    <h2 className="font-serif text-2xl font-bold mb-3">{t('home.mission.title')}</h2>
+                    <p className="text-muted-foreground mb-4">{t('home.mission.description')}</p>
+                    <Button variant="link" className="p-0 group" onClick={() => navigate('/a-propos')}>
+                      {t('home.mission.learnMore')}
+                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} rtl:-scale-x-100`} aria-hidden="true" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Ressources */}
-              <Card className="bg-gradient-to-br from-accent/5 to-transparent hover-lift overflow-hidden group">
-                <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
-                  <img
-                    src="/images/hero/kabylie.webp"
-                    alt=""
-                    loading="lazy"
-                    className="w-full h-full object-cover rounded-full"
-                  />
                 </div>
-                <CardContent className="p-8 relative">
-                  <div className={`flex items-start gap-4 ${rtlClasses.flexRow}`}>
-                    <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
-                      <Hammer className="h-6 w-6 text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-3">
-                        {t('home.resources.title')}
-                      </h3>
-                      <ul className="space-y-2 text-muted-foreground">
-                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
-                          <span className={rtlClasses.marginEnd(2)}>•</span>
-                          {t('home.resources.guide')}
-                        </li>
-                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
-                          <span className={rtlClasses.marginEnd(2)}>•</span>
-                          {t('home.resources.calendar')}
-                        </li>
-                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
-                          <span className={rtlClasses.marginEnd(2)}>•</span>
-                          {t('home.resources.directory')}
-                        </li>
-                      </ul>
-                      <Button variant="link" className="p-0 mt-4 group" onClick={() => navigate('/a-propos#ressources')}>
-                        {t('home.resources.access')}
-                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} />
-                      </Button>
-                    </div>
+              </CardContent>
+            </Card>
+            <Card className="relative overflow-hidden bg-gradient-to-br from-accent/5 to-transparent">
+              <CardContent className="p-8">
+                <div className={`flex items-start gap-4 ${rtlClasses.flexRow}`}>
+                  <div className="p-3 bg-accent/10 rounded-lg"><BookOpen className="h-6 w-6 text-accent" aria-hidden="true" /></div>
+                  <div className="flex-1">
+                    <h2 className="font-serif text-2xl font-bold mb-3">{t('home.contribuer.titre', 'Contribuer')}</h2>
+                    <p className="text-muted-foreground mb-4">{t('home.contribuer.texte', 'Associations, artisans, passionnés : ajoutez un lieu, écrivez un article, publiez vos événements.')}</p>
+                    <ul className="space-y-2">
+                      {/* Guides : pages statiques (lien classique) */}
+                      <li><a className="font-medium text-primary hover:underline underline-offset-4" href={lienGuide(i18n.language)}>{t('home.contribuer.guide', 'Guide du contributeur')}</a></li>
+                      <li><a className="font-medium text-primary hover:underline underline-offset-4" href={i18n.language.startsWith('ar') ? '/guide/ar/article' : '/guide/article'}>{t('home.contribuer.article', 'Écrire un article')}</a></li>
+                      <li><Link className="font-medium text-primary hover:underline underline-offset-4" to="/evenements">{t('home.contribuer.agenda', 'L’agenda culturel')}</Link></li>
+                    </ul>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Section Artisanat - En bas de la page */}
-        <section className="py-16 bg-gradient-to-br from-accent/5 to-transparent">
-          <div className="container">
-            <div className="text-center mb-12">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Hammer className="h-8 w-8 text-accent" />
-                <h2 className="text-3xl font-bold tracking-tight font-serif lg:text-4xl">
-                  {t('home.explore.tabs.crafts')}
-                </h2>
-              </div>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                {t('sections.artisanat.description', 'Découvrez l\'artisanat traditionnel algérien et ses créateurs passionnés')}
-              </p>
-            </div>
-            
-            <div className="animate-safe">
-              <ArtisanatDynamique />
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>

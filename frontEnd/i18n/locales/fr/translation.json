@@ -753,6 +753,52 @@
       "subtitle": "Des chiffres qui parlent",
       "title": "Une plateforme vivante",
       "works": "œuvres"
+    },
+    "aLaUne": {
+      "surtitre": "À la une",
+      "titre": "Les prochains événements",
+      "tous": "Tout l’agenda",
+      "enCours": "En ce moment",
+      "aujourdhui": "Aujourd’hui",
+      "demain": "Demain",
+      "dansJours_one": "Dans {{count}} jour",
+      "dansJours_other": "Dans {{count}} jours",
+      "programme": "Voir le programme",
+      "organiser": "Vous organisez un événement ?",
+      "organiserTexte": "Salon, festival, exposition, conférence : publiez-le sur Tala DZ avec son programme et ses intervenants.",
+      "publier": "Publier un événement"
+    },
+    "aLire": {
+      "surtitre": "À lire",
+      "titre": "Histoires du patrimoine",
+      "accroche": "Des monuments, des plats et des personnalités racontés en détail par celles et ceux qui les connaissent."
+    },
+    "patrimoine": {
+      "surtitre": "Patrimoine",
+      "titre": "Lieux à découvrir",
+      "accroche": "Villages, médinas, sites antiques et musées, avec leurs points à visiter et leurs histoires.",
+      "tous": "Tous les lieux",
+      "carte": "Explorer sur la carte"
+    },
+    "saveurs": {
+      "surtitre": "Gastronomie",
+      "titre": "Saveurs d’Algérie",
+      "accroche": "Les plats de nos régions, leur histoire et les fêtes où on les sert.",
+      "tous": "Tous les plats"
+    },
+    "artisanat": {
+      "surtitre": "Fait main",
+      "titre": "Artisanat",
+      "accroche": "Poterie, tapis, bijoux, cuir : des savoir-faire transmis de génération en génération.",
+      "tous": "Tout l’artisanat"
+    },
+    "contribuer": {
+      "section": "Notre mission et comment contribuer",
+      "titre": "Contribuer",
+      "texte": "Associations, artisans, passionnés : ajoutez un lieu, écrivez un article, publiez vos événements.",
+      "guide": "Guide du contributeur",
+      "article": "Écrire un article",
+      "agenda": "L’agenda culturel"
     }
   },
   "notifications": {

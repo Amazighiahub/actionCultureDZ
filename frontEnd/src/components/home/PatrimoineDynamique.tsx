@@ -48,11 +48,14 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
   const { rtlClasses } = useRTL();
   // React Query : données gardées en cache (5 min) quand on revient sur l'accueil
   const { data: sites = [], isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['home', 'patrimoine', 'popular', 6, i18n.language],
+    queryKey: ['home', 'patrimoine', 'popular', 12, i18n.language],
     queryFn: async (): Promise<SitePatrimoine[]> => {
-      const response = await patrimoineService.getSitesPopulaires(6);
+      const response = await patrimoineService.getSitesPopulaires(12);
       if (response.success && response.data) {
-        return (Array.isArray(response.data) ? response.data : []) as SitePatrimoine[];
+        // Vitrine : les sites qui ont une photo d'abord (une carte sans photo fait inachevé)
+        const tous = (Array.isArray(response.data) ? response.data : []) as SitePatrimoine[];
+        const avecPhoto = tous.filter(s => s.medias && s.medias[0]);
+        return (avecPhoto.length >= 3 ? avecPhoto : tous).slice(0, 6);
       }
       throw new Error(response.error || t('errors.loadingError'));
     },
@@ -68,15 +71,6 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
 
   return (
     <div className="space-y-8">
-      <div className="text-center space-y-4 reveal-on-scroll">
-        <h2 className="text-3xl font-bold tracking-tight lg:text-4xl font-serif">
-          {t('sections.heritage.title')}
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          {t('sections.heritage.subtitle')}
-        </p>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
           Array(3).fill(0).map((_, i) => (
@@ -122,11 +116,13 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                     </Badge>
                   )}
                 </div>
-                <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
-                  <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
-                    {site.type}
-                  </Badge>
-                </div>
+                {site.type && (
+                  <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
+                    <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
+                      {site.type}
+                    </Badge>
+                  </div>
+                )}
                 {/* Overlay au hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity duration-300 flex items-end p-4">
                   <Button
@@ -174,26 +170,19 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                   {site.description}
                 </p>
 
-                <div className="flex items-center justify-between">
+                {/* « 0 avis » n'est pas affiché */}
+                {Number(site.nombre_avis) > 0 && (
                   <div className={`flex items-center space-x-1 rtl:space-x-reverse text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
                     <Eye className="h-3 w-3" />
-                    <span>{formatNumber(site.nombre_avis || 0)} {t('sections.heritage.reviews')}</span>
+                    <span>{formatNumber(Number(site.nombre_avis))} {t('sections.heritage.reviews')}</span>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           ))
         )}
       </div>
 
-      <div className="text-center">
-        <Button asChild size="lg" variant="outline" className="group">
-          <Link to="/patrimoine">
-            {t('sections.heritage.seeAll')}
-            <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} aria-hidden="true" />
-          </Link>
-        </Button>
-      </div>
     </div>
   );
 };

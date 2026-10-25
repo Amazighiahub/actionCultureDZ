@@ -155,3 +155,23 @@ describe('PatrimoineService.plats (page Gastronomie)', () => {
     expect((await make().plats({ wilaya: 6 })).wilayas).toHaveLength(2);
   });
 });
+
+describe('PatrimoineService.aLire (accueil)', () => {
+  it('derniers articles publiés dans l’ordre, avec leur lieu ou leur personnalité', async () => {
+    const oeuvre = (id, titre) => ({ get: () => ({ id_oeuvre: id, titre: { fr: titre }, statut: 'publie', id_type_oeuvre: 4, Article: { id_article: id, resume: 'R', auteur: 'Équipe' }, Media: [], date_creation: '2026-10-25' }) });
+    const models = {
+      Oeuvre: { findAll: jest.fn()
+        .mockResolvedValueOnce([{ id_oeuvre: 59 }, { id_oeuvre: 58 }])
+        .mockResolvedValueOnce([oeuvre(58, 'La rechta'), oeuvre(59, 'El Anka')]) },
+      Article: {}, Media: {}, Lieu: {}, Intervenant: {},
+      LieuOeuvre: { findAll: jest.fn().mockResolvedValue([{ id_oeuvre: 58, section_patrimoine: 'gastronomie', Lieu: { id_lieu: 69, nom: { fr: 'Casbah d’Alger' } } }]) },
+      IntervenantArticle: { findAll: jest.fn().mockResolvedValue([{ id_oeuvre: 59, Intervenant: { id_intervenant: 33, nom: { fr: 'El Anka' }, prenom: { fr: 'El Hadj M’hamed' } } }]) }
+    };
+    const articles = await new PatrimoineService({}, { models }).aLire(4);
+    expect(articles.map(a => a.id_oeuvre)).toEqual([59, 58]);
+    expect(articles[0]).toMatchObject({ personnalite: { id_intervenant: 33 }, lieu: null, auteur: 'Équipe' });
+    expect(articles[1]).toMatchObject({ lieu: { id_lieu: 69, section_patrimoine: 'gastronomie' } });
+    expect(articles[0]).not.toHaveProperty('peut_retirer');
+    expect(models.Oeuvre.findAll.mock.calls[0][0]).toMatchObject({ where: { id_type_oeuvre: 4, statut: 'publie' }, limit: 4 });
+  });
+});

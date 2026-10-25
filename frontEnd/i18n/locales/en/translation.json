@@ -728,6 +728,52 @@
       "subtitle": "Our platform in numbers",
       "title": "Tala DZ in numbers",
       "works": "works"
+    },
+    "aLaUne": {
+      "surtitre": "Featured",
+      "titre": "Upcoming events",
+      "tous": "Full calendar",
+      "enCours": "Happening now",
+      "aujourdhui": "Today",
+      "demain": "Tomorrow",
+      "dansJours_one": "In {{count}} day",
+      "dansJours_other": "In {{count}} days",
+      "programme": "See the programme",
+      "organiser": "Organising an event?",
+      "organiserTexte": "Fair, festival, exhibition, talk: publish it on Tala DZ with its programme and speakers.",
+      "publier": "Publish an event"
+    },
+    "aLire": {
+      "surtitre": "Read",
+      "titre": "Heritage stories",
+      "accroche": "Monuments, dishes and personalities, told in detail by those who know them."
+    },
+    "patrimoine": {
+      "surtitre": "Heritage",
+      "titre": "Places to discover",
+      "accroche": "Villages, medinas, ancient sites and museums, with their points of interest and their stories.",
+      "tous": "All places",
+      "carte": "Explore on the map"
+    },
+    "saveurs": {
+      "surtitre": "Gastronomy",
+      "titre": "Flavours of Algeria",
+      "accroche": "Dishes from our regions, their history and the celebrations where they are served.",
+      "tous": "All dishes"
+    },
+    "artisanat": {
+      "surtitre": "Handmade",
+      "titre": "Crafts",
+      "accroche": "Pottery, rugs, jewellery, leather: skills handed down through generations.",
+      "tous": "All crafts"
+    },
+    "contribuer": {
+      "section": "Our mission and how to contribute",
+      "titre": "Contribute",
+      "texte": "Associations, artisans, enthusiasts: add a place, write an article, publish your events.",
+      "guide": "Contributor guide",
+      "article": "Writing an article",
+      "agenda": "Cultural calendar"
     }
   },
   "notifications": {

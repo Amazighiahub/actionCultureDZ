@@ -602,6 +602,59 @@ class PatrimoineService extends BaseService {
   }
 
   /**
+   * « À lire » (page d'accueil) : derniers articles publiés, avec image de couverture, résumé,
+   * auteur, et d'où ils viennent (lieu et section, ou personnalité) quand ils y sont reliés.
+   * @param {number} limite 1 à 12
+   */
+  async aLire(limite = 4) {
+    const { Oeuvre, Article, Media, LieuOeuvre, Lieu, IntervenantArticle, Intervenant } = this.models || {};
+    // Deux temps : les derniers articles, puis leurs détails (avec « limit », une jointure sur
+    // les images compterait des lignes d'images au lieu d'articles)
+    const derniers = await Oeuvre.findAll({
+      where: { id_type_oeuvre: 4, statut: 'publie' },
+      attributes: ['id_oeuvre'],
+      order: [['date_creation', 'DESC']],
+      limit: Math.min(Math.max(Number(limite) || 4, 1), 12),
+      raw: true
+    });
+    const ids = derniers.map(o => o.id_oeuvre);
+    if (!ids.length) return [];
+    const oeuvres = await Oeuvre.findAll({
+      where: { id_oeuvre: ids },
+      attributes: ['id_oeuvre', 'titre', 'description', 'id_type_oeuvre', 'statut', 'saisi_par', 'date_creation'],
+      include: [
+        { model: Article, attributes: ['id_article', 'resume', 'auteur'], required: false },
+        { model: Media, attributes: ['url', 'thumbnail_url', 'ordre'], where: { type_media: 'image' }, required: false }
+      ]
+    });
+    const plain = oeuvres.map(o => o.get({ plain: true })).sort((a, b) => ids.indexOf(a.id_oeuvre) - ids.indexOf(b.id_oeuvre));
+
+    const [liensLieux, liensPersonnes] = await Promise.all([
+      LieuOeuvre.findAll({
+        where: { id_oeuvre: ids },
+        include: [{ model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom'] }]
+      }),
+      IntervenantArticle ? IntervenantArticle.findAll({
+        where: { id_oeuvre: ids },
+        include: [{ model: Intervenant, as: 'Intervenant', required: true, attributes: ['id_intervenant', 'nom', 'prenom'] }]
+      }) : []
+    ]);
+    const cartes = plain.map(o => {
+      const lieu = liensLieux.find(l => l.id_oeuvre === o.id_oeuvre);
+      const personne = liensPersonnes.find(l => l.id_oeuvre === o.id_oeuvre);
+      const { peut_retirer, id_lien, ...carte } = versCarte(o.id_oeuvre, o, false);
+      return {
+        ...carte,
+        auteur: o.Article?.auteur || null,
+        date: o.date_creation,
+        lieu: lieu ? { id_lieu: lieu.Lieu.id_lieu, nom: lieu.Lieu.nom, section_patrimoine: lieu.section_patrimoine } : null,
+        personnalite: personne ? { id_intervenant: personne.Intervenant.id_intervenant, nom: personne.Intervenant.nom, prenom: personne.Intervenant.prenom } : null
+      };
+    });
+    return ajouterCouvertures(this.models, cartes);
+  }
+
+  /**
    * D'où vient un article : lieux (et sections) et personnalités auxquels il est relié,
    * pour le fil « Casbah d'Alger › Gastronomie » de la page de l'article. Lieux publiés seulement.
    */

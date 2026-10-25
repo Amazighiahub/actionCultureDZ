@@ -49,7 +49,7 @@ import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
-import { getContexteArticle, type ContexteArticle } from '@/services/patrimoineArticles.service';
+import { getContexteArticle, cleSectionPatrimoine, type ContexteArticle } from '@/services/patrimoineArticles.service';
 import { getAllowedEmbedUrl } from '@/utils/safeUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import '@/styles/article-magazine.css';
@@ -180,11 +180,6 @@ const ReadingProgress: React.FC = () => {
 };
 
 
-
-// Section d'un lieu patrimoine → clé de son libellé (patrimoine.sections.*)
-const SECTION_CLES: Record<string, string> = {
-  artisanat_local: 'artisanat', infos_pratiques: 'infosPratiques', referencesHistoriques: 'references'
-};
 
 const ArticleViewPage: React.FC = () => {
   const { id } = useParams<{id: string;}>();
@@ -695,7 +690,7 @@ const ArticleViewPage: React.FC = () => {
           <>
               {contexte.lieux.map((l) =>
             <Link key={`l${l.id_lieu}-${l.section_patrimoine}`} to={`/patrimoine/${l.id_lieu}`}>
-                  {texteLangue(l.nom, i18n.language)} › {t(`patrimoine.sections.${SECTION_CLES[l.section_patrimoine] || l.section_patrimoine}`)}
+                  {texteLangue(l.nom, i18n.language)} › {t(`patrimoine.sections.${cleSectionPatrimoine(l.section_patrimoine)}`)}
                 </Link>
             )}
               {contexte.personnalites.map((p) =>
