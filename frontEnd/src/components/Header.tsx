@@ -19,75 +19,6 @@ import { useRTL } from '@/utils/rtl';
 import LanguageSelector from '@/components/LanguageSelector';
 import { professionnelPath } from '@/utils/slug';
 
-const MadgacenLogo = ({ className = "" }: { className?: string }) => (
-  <svg
-    viewBox="0 0 100 100"
-    className={className}
-    fill="none"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <defs>
-      {/* Gradient principal pour le monument */}
-      <linearGradient id="monumentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#8B7355" />
-        <stop offset="30%" stopColor="#A0826D" />
-        <stop offset="70%" stopColor="#C4A882" />
-        <stop offset="100%" stopColor="#D4BC9A" />
-      </linearGradient>
-
-      {/* Gradient pour l'ombre */}
-      <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#6B5344" />
-        <stop offset="100%" stopColor="#4A3828" />
-      </linearGradient>
-
-      {/* Gradient pour le ciel/fond */}
-      <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#E8DFD0" />
-        <stop offset="100%" stopColor="#F5EFE6" />
-      </linearGradient>
-    </defs>
-
-    {/* Cercle de fond */}
-    <circle cx="50" cy="50" r="48" fill="url(#skyGradient)" stroke="#C4A882" strokeWidth="2"/>
-
-    {/* Base du monument Madghacen - forme cylindrique étagée */}
-    {/* Niveau 1 - Base large */}
-    <ellipse cx="50" cy="82" rx="38" ry="8" fill="url(#shadowGradient)" opacity="0.6"/>
-    <path d="M12 78 L12 82 Q50 90 88 82 L88 78 Q50 86 12 78" fill="url(#monumentGradient)"/>
-
-    {/* Niveau 2 */}
-    <ellipse cx="50" cy="74" rx="34" ry="7" fill="url(#shadowGradient)" opacity="0.5"/>
-    <path d="M16 70 L16 74 Q50 81 84 74 L84 70 Q50 77 16 70" fill="url(#monumentGradient)"/>
-
-    {/* Niveau 3 */}
-    <ellipse cx="50" cy="66" rx="30" ry="6" fill="url(#shadowGradient)" opacity="0.4"/>
-    <path d="M20 62 L20 66 Q50 72 80 66 L80 62 Q50 68 20 62" fill="url(#monumentGradient)"/>
-
-    {/* Niveau 4 */}
-    <ellipse cx="50" cy="58" rx="26" ry="5" fill="url(#shadowGradient)" opacity="0.3"/>
-    <path d="M24 54 L24 58 Q50 63 76 58 L76 54 Q50 59 24 54" fill="url(#monumentGradient)"/>
-
-    {/* Niveau 5 */}
-    <path d="M28 46 L28 54 Q50 59 72 54 L72 46 Q50 51 28 46" fill="url(#monumentGradient)"/>
-
-    {/* Sommet conique */}
-    <path d="M32 46 L50 22 L68 46 Q50 51 32 46" fill="url(#monumentGradient)"/>
-
-    {/* Détails - lignes de pierre */}
-    <line x1="50" y1="22" x2="50" y2="46" stroke="#6B5344" strokeWidth="0.5" opacity="0.3"/>
-    <line x1="38" y1="38" x2="62" y2="38" stroke="#6B5344" strokeWidth="0.3" opacity="0.2"/>
-    <line x1="35" y1="42" x2="65" y2="42" stroke="#6B5344" strokeWidth="0.3" opacity="0.2"/>
-
-    {/* Porte/entrée symbolique */}
-    <rect x="46" y="70" width="8" height="10" rx="4" fill="#4A3828" opacity="0.6"/>
-
-    {/* Reflet lumineux */}
-    <path d="M40 30 Q50 25 55 35" stroke="#F5EFE6" strokeWidth="1.5" fill="none" opacity="0.4"/>
-  </svg>
-);
-
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -261,9 +192,14 @@ const Header = () => {
 
             {/* Logo et titre */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                <MadgacenLogo className="w-full h-full" />
-              </div>
+              {/* Le Madghacen (mausolée numide, Batna) en miniature. Photo : Bernard Gagnon, CC BY 4.0 */}
+              <img
+                src="/medracen.webp"
+                alt=""
+                width={96}
+                height={96}
+                className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-stone-200 dark:ring-stone-700"
+              />
               <div className="flex flex-col">
                 {/* Logo TALADZ (pas de h1 : le seul h1 de chaque page est celui de son contenu) ;
                     fond clair en mode sombre, le vert du logo y serait peu lisible */}

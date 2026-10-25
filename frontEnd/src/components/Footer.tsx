@@ -55,9 +55,7 @@ const Footer = () => {
             {/* Logo et titre */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground flex-shrink-0">
-                  <span className="text-lg font-bold">🏛️</span>
-                </div>
+                <img src="/medracen.webp" alt="" width={96} height={96} loading="lazy" className="h-10 w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-stone-200 dark:ring-stone-700" />
                 <div>
                   <h3 className="mb-1">
                     <img src="/logo-taladz.webp" alt={t('header.title')} width={350} height={87} loading="lazy" className="h-7 w-auto dark:bg-stone-100 dark:rounded dark:px-1" />
@@ -155,6 +153,11 @@ const Footer = () => {
           {/* Copyright */}
           <p className="text-sm text-muted-foreground text-center sm:text-start order-2 sm:order-1">
             © {currentYear} {t('header.title')}. {t('common.copyright')}
+            {/* Crédit exigé par la licence de la photo du logo (CC BY 4.0) */}
+            <span className="block text-xs mt-1">
+              {t('footer.creditLogo', 'Logo : le Madghacen, photo de Bernard Gagnon')} (
+              <a href="https://commons.wikimedia.org/wiki/File:Madghacen_01.jpg" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">CC BY 4.0</a>)
+            </span>
           </p>
           
           {/* Pas de réseaux sociaux du site : Tala DZ n'a pas de comptes officiels. Les réseaux
