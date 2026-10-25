@@ -610,14 +610,23 @@ class PatrimoineService extends BaseService {
     const { Oeuvre, Article, Media, LieuOeuvre, Lieu, IntervenantArticle, Intervenant } = this.models || {};
     // Deux temps : les derniers articles, puis leurs détails (avec « limit », une jointure sur
     // les images compterait des lignes d'images au lieu d'articles)
-    const derniers = await Oeuvre.findAll({
+    const max = Math.min(Math.max(Number(limite) || 4, 1), 12);
+    const candidats = await Oeuvre.findAll({
       where: { id_type_oeuvre: 4, statut: 'publie' },
       attributes: ['id_oeuvre'],
+      include: [{ model: Article, attributes: ['id_article'], required: true }],
       order: [['date_creation', 'DESC']],
-      limit: Math.min(Math.max(Number(limite) || 4, 1), 12),
-      raw: true
+      limit: max * 4
     });
-    const ids = derniers.map(o => o.id_oeuvre);
+    // Seulement les articles qui ont du contenu : un article vide (titre seul) ne va pas en vitrine
+    const idsArticles = candidats.map(o => o.Article?.id_article).filter(Boolean);
+    const avecContenu = new Set(idsArticles.length && this.models.ArticleBlock
+      ? (await this.models.ArticleBlock.findAll({
+          where: { article_type: 'article', id_article: idsArticles },
+          attributes: ['id_article'], group: ['id_article'], raw: true
+        })).map(b => b.id_article)
+      : []);
+    const ids = candidats.filter(o => avecContenu.has(o.Article?.id_article)).slice(0, max).map(o => o.id_oeuvre);
     if (!ids.length) return [];
     const oeuvres = await Oeuvre.findAll({
       where: { id_oeuvre: ids },
