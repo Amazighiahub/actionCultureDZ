@@ -13,7 +13,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { Skeleton } from '@/components/ui/skeleton';
-import { lienGuide } from '@/utils/lienGuide';
+import { lienSommaireGuides } from '@/utils/lienGuide';
 
 interface PublicStats {
   sites_patrimoniaux: number;
@@ -277,7 +277,7 @@ const HeroSection: React.FC = () => {
             {/* Guide du contributeur (page statique public/guide) : lien classique */}
             <p className="mb-8 sm:mb-10 md:mb-12 text-center sm:text-start">
               <a
-                href={lienGuide(i18n.language)}
+                href={lienSommaireGuides(i18n.language)}
                 className="inline-flex items-center gap-1.5 min-h-[44px] text-sm sm:text-base text-white/90 underline underline-offset-4 decoration-white/50 hover:decoration-white"
               >
                 {t('home.hero.guide', 'Comment contribuer ? Lire le guide')}
