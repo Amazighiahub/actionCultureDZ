@@ -211,6 +211,19 @@ class ArtisanatService extends BaseService {
   }
 
   /**
+   * Fiche de son propriétaire (ou de l'administration) ; sinon erreur. Sert aux photos.
+   */
+  async verifierProprietaire(id, userId, isAdmin = false) {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw this._notFoundError(id);
+    const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
+    if (ownerId !== userId && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas modifier cet artisanat');
+    }
+    return existing;
+  }
+
+  /**
    * Supprimer
    */
   async delete(id, userId, isAdmin = false) {

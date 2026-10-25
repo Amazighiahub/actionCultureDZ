@@ -133,13 +133,11 @@ class ArtisanatController extends BaseController {
         return res.status(400).json({ success: false, error: req.t('upload.noFile') });
       }
 
-      const medias = req.files.map(file => ({
-        url: file.path,
-        type_media: file.mimetype.startsWith('image') ? 'image' : 'document',
-        mime_type: file.mimetype,
-        taille_fichier: file.size,
-        originalname: file.originalname
-      }));
+      // Les photos sont les médias de l'œuvre parente (affichées sur la fiche et dans les listes)
+      const artisanat = await this.artisanatService.verifierProprietaire(
+        parseInt(req.params.id), req.user.id_user, req.user.isAdmin
+      );
+      const medias = await container.oeuvreService.enregistrerMedias(artisanat.id_oeuvre, req.files);
 
       res.status(201).json({ success: true, data: medias });
     } catch (error) {
