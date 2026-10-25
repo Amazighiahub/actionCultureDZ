@@ -59,8 +59,8 @@ const Footer = () => {
                   <span className="text-lg font-bold">🏛️</span>
                 </div>
                 <div>
-                  <h3 className={`text-base sm:text-lg font-bold text-gradient ${isRtl ? 'font-arabic' : ''}`}>
-                    {t('header.title')}
+                  <h3 className="mb-1">
+                    <img src="/logo-taladz.webp" alt={t('header.title')} width={350} height={87} loading="lazy" className="h-7 w-auto dark:bg-stone-100 dark:rounded dark:px-1" />
                   </h3>
                   <p className="text-xs text-muted-foreground">{t('header.subtitle')}</p>
                 </div>

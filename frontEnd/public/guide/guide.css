@@ -26,6 +26,7 @@ h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0; }
 .barre .conteneur { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; }
 .marque { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
 .marque img { width: 30px; height: 30px; }
+.marque img.logo { width: auto; height: 26px; }
 .marque small { font-weight: 500; color: var(--gris); }
 .progression { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: linear-gradient(90deg, var(--olive), var(--terre)); transform-origin: left; transform: scaleX(0); }
 .etapes-nav { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; border-top: 1px solid #efece3; }
@@ -261,3 +262,7 @@ footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; 
 .blocs-liste { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin: 18px 0 0; padding: 0; list-style: none; }
 .blocs-liste li { background: var(--blanc); border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.45; }
 .blocs-liste b { display: block; color: var(--olive); }
+
+/* Logo TALADZ sur la couverture : pastille crème, le vert reste lisible sur la photo */
+.logo-couverture { display: block; height: 52px; width: auto; margin-bottom: 18px; padding: 10px 16px; border-radius: 14px; background: rgba(247, 243, 232, .94); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+@media (max-width: 480px) { .logo-couverture { height: 40px; padding: 8px 12px; } }

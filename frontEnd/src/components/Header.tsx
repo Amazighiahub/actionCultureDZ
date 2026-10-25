@@ -265,10 +265,15 @@ const Header = () => {
                 <MadgacenLogo className="w-full h-full" />
               </div>
               <div className="flex flex-col">
-                {/* span et non h1 : le seul h1 de chaque page est celui de son contenu */}
-                <span className="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
-                  {t('header.title')}
-                </span>
+                {/* Logo TALADZ (pas de h1 : le seul h1 de chaque page est celui de son contenu) ;
+                    fond clair en mode sombre, le vert du logo y serait peu lisible */}
+                <img
+                  src="/logo-taladz.webp"
+                  alt={t('header.title')}
+                  width={350}
+                  height={87}
+                  className="h-5 sm:h-6 w-auto self-start dark:bg-stone-100 dark:rounded dark:px-1"
+                />
                 <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
                   {t('header.subtitle')}
                 </p>
