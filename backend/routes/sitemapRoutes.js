@@ -4,7 +4,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const { professionnelPath } = require('../utils/slug');
+const { professionnelPath, evenementPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
@@ -84,7 +84,7 @@ const initSitemapRoutes = (models) => {
         models.Evenement ? safeQuery('evenements', () => models.Evenement.findAll({
           // Statuts visibles publiquement (memes regles que la liste et la fiche)
           where: { statut: ['publie', 'planifie', 'en_cours', 'termine'] },
-          attributes: ['id_evenement', 'date_modification'],
+          attributes: ['id_evenement', 'nom_evenement', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
@@ -122,7 +122,7 @@ const initSitemapRoutes = (models) => {
       ]);
 
       oeuvres.forEach(o => { urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification); });
-      evenements.forEach(e => { urls += urlBlock(`/evenements/${e.id_evenement}`, 'daily', '0.8', e.date_modification); });
+      evenements.forEach(e => { urls += urlBlock(evenementPath(e.id_evenement, e.nom_evenement), 'daily', '0.8', e.date_modification); });
       lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
       artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a['Oeuvre.date_modification']); });
       articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });

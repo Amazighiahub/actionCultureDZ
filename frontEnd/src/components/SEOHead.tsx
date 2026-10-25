@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import i18n from 'i18next';
+import { evenementPath } from '@/utils/slug';
 
 const SITE_NAME = 'Tala DZ';
 // Domaine de production fixe : un canonical ou une URL JSON-LD ne doit jamais pointer
@@ -216,7 +217,7 @@ export function buildEvenementJsonLd(event: any): Record<string, any> {
       name: `${text(event.Organisateur.prenom)} ${text(event.Organisateur.nom)}`.trim(),
     } : undefined,
     image: absoluteImage(event.image_url || event.couverture_url),
-    url: `${SITE_URL}/evenements/${event.id_evenement}`,
+    url: `${SITE_URL}${evenementPath(event.id_evenement, event.nom_evenement)}`,
   };
 }
 

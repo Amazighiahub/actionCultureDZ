@@ -50,6 +50,7 @@ import type { Evenement } from '@/types/models/evenement.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import type { Intervenant } from '@/types/models/intervenant.types';
 import { getSafeRedirectPath, safeExternalUrl } from '@/utils/safeUrl';
+import { evenementPath } from '@/utils/slug';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -803,7 +804,7 @@ const OeuvreDetailPage: React.FC = () => {
                   {evenementsCreateur.map((event) => (
                     <Link
                       key={event.id_evenement}
-                      to={`/evenements/${event.id_evenement}`}
+                      to={evenementPath(event.id_evenement, event.nom_evenement)}
                       className="block p-4 rounded-lg border hover:bg-muted transition-colors"
                     >
                       <h4 className="font-medium">{getTranslation(event.nom_evenement, lang)}</h4>

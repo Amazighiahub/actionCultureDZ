@@ -16,6 +16,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Evenement } from '@/types/models/evenement.types';
+import { evenementPath } from '@/utils/slug';
 
 interface OeuvreEventsProps {
   events: Evenement[];
@@ -35,7 +36,7 @@ const EventCard: React.FC<{ event: Evenement }> = ({ event }) => {
   const isPast = event.date_fin ? new Date(event.date_fin) < new Date() : false;
 
   return (
-    <Link to={`/evenements/${event.id_evenement}`} className={CARD_LINK_CLASS}>
+    <Link to={evenementPath(event.id_evenement, event.nom_evenement)} className={CARD_LINK_CLASS}>
       <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer group">
         <div className="flex">
           {/* Image */}

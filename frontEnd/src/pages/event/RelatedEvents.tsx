@@ -20,6 +20,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Evenement } from '@/types/models/evenement.types';
+import { evenementPath } from '@/utils/slug';
 
 interface RelatedEventsProps {
   eventId: number;
@@ -45,7 +46,7 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
   const { td } = useTranslateData();
 
   return (
-    <Link to={`/evenements/${event.id_evenement}`} onClick={scrollToTop} className={CARD_LINK_CLASS}>
+    <Link to={evenementPath(event.id_evenement, event.nom_evenement)} onClick={scrollToTop} className={CARD_LINK_CLASS}>
       <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer group">
         <div className="flex">
           {/* Image */}
@@ -117,7 +118,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
     : 0;
 
   return (
-    <Link to={`/evenements/${event.id_evenement}`} onClick={scrollToTop} className={CARD_LINK_CLASS}>
+    <Link to={evenementPath(event.id_evenement, event.nom_evenement)} onClick={scrollToTop} className={CARD_LINK_CLASS}>
       <Card className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
         {/* Image */}
         <div className="relative h-40 overflow-hidden">

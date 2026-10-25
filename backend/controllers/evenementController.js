@@ -6,6 +6,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
+const { evenementPath } = require('../utils/slug');
 
 class EvenementController extends BaseController {
   get evenementService() {
@@ -355,7 +356,7 @@ class EvenementController extends BaseController {
       const data = this._serialize(evenement, 'toDetailJSON', req.lang);
       
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const eventUrl = `${baseUrl}/evenements/${req.params.id}`;
+      const eventUrl = `${baseUrl}${evenementPath(parseInt(req.params.id), data?.nom_evenement ?? evenement?.nom_evenement)}`;
 
       res.json({
         success: true,
@@ -550,10 +551,10 @@ class EvenementController extends BaseController {
     try {
       const eventId = parseInt(req.params.id);
       // Verify event exists (lightweight check)
-      await this.evenementService.findById(eventId);
+      const evenement = await this.evenementService.findById(eventId);
 
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const eventUrl = `${baseUrl}/evenements/${eventId}`;
+      const eventUrl = `${baseUrl}${evenementPath(eventId, evenement?.nom_evenement)}`;
 
       const { format = 'dataurl', size = 300 } = req.query;
       const qrSize = Math.min(Math.max(parseInt(size) || 300, 100), 1000);

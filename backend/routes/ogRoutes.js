@@ -6,7 +6,7 @@
 
 const express = require('express');
 const logger = require('../utils/logger');
-const { professionnelPath } = require('../utils/slug');
+const { professionnelPath, evenementPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
@@ -109,6 +109,8 @@ const initOgRoutes = (models) => {
         description: [date, desc].filter(Boolean).join(' — ') || undefined,
         image: ev.image_url || firstImage(ev.Medias),
         type: 'article',
+        // Adresse canonique avec le nom (1-salon-de-la-poterie…)
+        path: evenementPath(id, ev.nom_evenement),
       };
     },
     async oeuvres(id) {
