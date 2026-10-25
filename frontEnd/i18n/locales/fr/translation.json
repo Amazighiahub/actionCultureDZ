@@ -3470,7 +3470,8 @@
       "saveFailed": "Erreur lors de la sauvegarde",
       "addArticle": "Article",
       "addQuick": "Texte rapide",
-      "writeArticle": "Écrire un article"
+      "writeArticle": "Écrire un article",
+      "anciensBlocs": "Blocs"
     },
     "gps": {
       "unavailable": "Géolocalisation non disponible",
@@ -3639,6 +3640,16 @@
       "noParent": "Site principal (ne fait partie d’aucun autre site).",
       "searchSite": "Rechercher le site (ex. : Aït Smaïl)",
       "parentPending": "Cliquez sur « Enregistrer les modifications » pour appliquer ce rattachement."
+    },
+    "pages": {
+      "enSavoirPlus": "En savoir plus",
+      "lire": "Lire l’article",
+      "enAttente": "En attente de validation",
+      "retirer": "Retirer de la page du lieu",
+      "confirmRetrait": "Retirer cet article de la page du lieu ? L’article lui-même n’est pas supprimé.",
+      "ajoutee": "Article enregistré : il apparaîtra sur la page du lieu après validation.",
+      "lienEchec": "Article enregistré, mais il n’a pas pu être relié au lieu.",
+      "bandeau": "Cet article sera relié à la page du lieu, dans la section « {{section}} ». Il y apparaîtra après validation par l’équipe Tala DZ."
     }
   },
   "toasts": {

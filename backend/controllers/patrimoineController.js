@@ -221,6 +221,35 @@ class PatrimoineController extends BaseController {
     res.json({ success: true });
   }
 
+  /** Pages détaillées du site (articles reliés à ses sections) */
+  async pagesDetaillees(req, res) {
+    const pages = await this.patrimoineService.pagesDetaillees(parseInt(req.params.id, 10), {
+      userId: req.user?.id_user || null, isModerator: this._estModeration(req)
+    });
+    res.json({ success: true, data: pages });
+  }
+
+  /** Relier un article (éditeur avancé) à une section du site */
+  async lierPage(req, res) {
+    const lien = await this.patrimoineService.lierPage(parseInt(req.params.id, 10), {
+      id_oeuvre: parseInt(req.body.id_oeuvre, 10), section_patrimoine: req.body.section_patrimoine
+    }, { userId: req.user.id_user, isModerator: this._estModeration(req) });
+    res.status(201).json({ success: true, data: lien });
+  }
+
+  /** Retirer une page détaillée (modération, la personne qui l'a reliée ou le créateur du site) */
+  async retirerPage(req, res) {
+    const resultat = await this.patrimoineService.retirerPage(
+      parseInt(req.params.id, 10), parseInt(req.params.lieuOeuvreId, 10),
+      { userId: req.user.id_user, isModerator: this._estModeration(req) }
+    );
+    if (resultat === 'introuvable') return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    if (resultat === 'interdit') {
+      return res.status(403).json({ success: false, error: req.t('patrimoine.pageForbidden', 'Seuls la personne qui l’a ajoutée, le créateur du site et la modération peuvent la retirer.') });
+    }
+    res.json({ success: true });
+  }
+
   /** Sites et points de visite créés par le compte connecté (tous statuts) */
   async mesSites(req, res) {
     const { page, limit } = this._paginate(req);

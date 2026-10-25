@@ -189,6 +189,18 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     handleValidationErrors,
     patrimoineController.wrap('creerPersonnalite'));
 
+  // Pages détaillées : articles de l'éditeur avancé reliés à une section du site
+  const SECTIONS_PAGES = ['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques'];
+  router.get('/:id/pages', optionalAuth, validateId(), patrimoineController.wrap('pagesDetaillees'));
+  router.post('/:id/pages', authenticate, requireModerationOuPro, validateId(),
+    [
+      body('id_oeuvre').isInt({ min: 1 }).withMessage('Article invalide'),
+      body('section_patrimoine').isIn(SECTIONS_PAGES).withMessage('Section invalide')
+    ],
+    handleValidationErrors,
+    patrimoineController.wrap('lierPage'));
+  router.delete('/:id/pages/:lieuOeuvreId', authenticate, validateId(), patrimoineController.wrap('retirerPage'));
+
   // ============================================================================
   // MONUMENTS — ajout / suppression depuis la fiche enrichissement
   // ============================================================================

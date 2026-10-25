@@ -26,7 +26,7 @@ const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePla
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
-import { patrimoineArticlesService, type PatrimoineBlock } from '@/services/patrimoineArticles.service';
+import { patrimoineArticlesService, getPagesPatrimoine, type PatrimoineBlock, type PagePatrimoine } from '@/services/patrimoineArticles.service';
 import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
 import PointsVisite, { type PointVisite } from '@/components/patrimoine/PointsVisite';
 import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio';
@@ -220,6 +220,15 @@ const PatrimoineDetail = () => {
   useEffect(() => {
     if (site?.id_lieu) chargerArticles(site.id_lieu);
   }, [site?.id_lieu, chargerArticles]);
+  // Pages détaillées (articles de l'éditeur avancé reliés aux sections) ; rechargées à la
+  // connexion : l'auteur voit aussi ses articles en attente de validation
+  const [pagesDetaillees, setPagesDetaillees] = useState<PagePatrimoine[]>([]);
+  const chargerPages = React.useCallback(async (idLieu: number) => {
+    setPagesDetaillees(await getPagesPatrimoine(idLieu));
+  }, []);
+  useEffect(() => {
+    if (site?.id_lieu) chargerPages(site.id_lieu);
+  }, [site?.id_lieu, isAuthenticated, chargerPages]);
 
   // Charger le QR code depuis l'API backend
   useEffect(() => {
@@ -308,8 +317,9 @@ const PatrimoineDetail = () => {
   const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
   // Sections « Culture & Patrimoine vivant » : masquées pour un visiteur quand elles sont toutes vides
   const blocsDe = (section: string) => blocsArticles.filter(b => b.section_patrimoine === section);
+  const pagesDe = (section: string) => pagesDetaillees.filter(pg => pg.section_patrimoine === section);
   const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
-    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0);
+    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0 || pagesDe(k).length > 0);
   const canAddContent = isAdmin || isValidatedProfessional();
   // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
   const peutEcrireArticle = canAddContent || hasRole('Moderateur');
@@ -601,7 +611,8 @@ const PatrimoineDetail = () => {
                 parcours:    site.parcours?.length || 0,
                 galerie:     visuels.length,
                 histoire:    translate(site.DetailLieu?.histoire, lang) || translate(site.DetailLieu?.referencesHistoriques, lang)
-                  || blocsDe('histoire').length || blocsDe('referencesHistoriques').length ? 1 : 0,
+                  || blocsDe('histoire').length || blocsDe('referencesHistoriques').length
+                  || pagesDe('histoire').length || pagesDe('referencesHistoriques').length ? 1 : 0,
                 musees:      0,
                 collections: 0,
                 faune_flore: 0,
@@ -816,8 +827,8 @@ const PatrimoineDetail = () => {
                           {/* Histoire */}
                           {sectionKey === 'histoire' && (
                             <div className="space-y-4">
-                              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" blocs={blocsDe('histoire')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
-                              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" blocs={blocsDe('referencesHistoriques')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
+                              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" blocs={blocsDe('histoire')} pages={pagesDe('histoire')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
+                              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" blocs={blocsDe('referencesHistoriques')} pages={pagesDe('referencesHistoriques')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
                             </div>
                           )}
 
@@ -844,12 +855,12 @@ const PatrimoineDetail = () => {
                   <p className="text-sm text-muted-foreground">{t('patrimoine.sections.cultureVivanteDesc', 'Enrichissez ces sections avec vos connaissances')}</p>
                 </div>
               </div>
-              <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" blocs={blocsDe('architecture')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" blocs={blocsDe('traditions')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
-              <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" blocs={blocsDe('gastronomie')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" blocs={blocsDe('artisanat_local')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
-              <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
-              <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" blocs={blocsDe('infos_pratiques')} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
+              <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" blocs={blocsDe('architecture')} pages={pagesDe('architecture')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" blocs={blocsDe('traditions')} pages={pagesDe('traditions')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
+              <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" blocs={blocsDe('gastronomie')} pages={pagesDe('gastronomie')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" blocs={blocsDe('artisanat_local')} pages={pagesDe('artisanat_local')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
+              <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} pages={pagesDe('personnalites')} onPagesChange={() => chargerPages(site.id_lieu)} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
+              <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" blocs={blocsDe('infos_pratiques')} pages={pagesDe('infos_pratiques')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
             </div>}
           </div>
 

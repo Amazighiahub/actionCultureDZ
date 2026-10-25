@@ -506,6 +506,93 @@ class PatrimoineService extends BaseService {
   }
 
   /**
+   * Pages détaillées d'un site (articles de l'éditeur avancé reliés à ses sections).
+   * Un visiteur ne voit que les articles publiés ; l'auteur, la personne qui a relié la page
+   * et la modération voient aussi ceux en attente de validation.
+   */
+  async pagesDetaillees(lieuId, { userId = null, isModerator = false } = {}) {
+    const { LieuOeuvre, Oeuvre, Article, Media, Lieu } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'id_createur'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const liens = await LieuOeuvre.findAll({
+      where: { id_lieu: lieuId },
+      order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC'], ['id_lieu_oeuvre', 'ASC']],
+      include: [{
+        model: Oeuvre,
+        as: 'Oeuvre',
+        required: true,
+        attributes: ['id_oeuvre', 'titre', 'description', 'id_type_oeuvre', 'statut', 'saisi_par'],
+        include: [
+          { model: Article, attributes: ['resume'], required: false },
+          { model: Media, attributes: ['url', 'thumbnail_url', 'ordre'], where: { type_media: 'image' }, required: false }
+        ]
+      }]
+    });
+    const STATUTS_EN_COURS = ['brouillon', 'en_attente'];
+    return liens
+      .map(l => l.get({ plain: true }))
+      .filter(l => {
+        const o = l.Oeuvre;
+        if (o.statut === 'publie') return true;
+        if (!STATUTS_EN_COURS.includes(o.statut)) return isModerator;
+        return isModerator || (!!userId && (o.saisi_par === userId || l.id_contributeur === userId));
+      })
+      .map(l => {
+        const o = l.Oeuvre;
+        const image = (o.Media || []).slice().sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0))[0];
+        return {
+          id_lieu_oeuvre: l.id_lieu_oeuvre,
+          section_patrimoine: l.section_patrimoine,
+          id_oeuvre: o.id_oeuvre,
+          id_type_oeuvre: o.id_type_oeuvre,
+          titre: o.titre,
+          resume: o.Article?.resume || o.description || null,
+          image: image ? (image.thumbnail_url || image.url) : null,
+          statut: o.statut,
+          peut_retirer: isModerator || (!!userId && (l.id_contributeur === userId || lieu.id_createur === userId))
+        };
+      });
+  }
+
+  /**
+   * Relier un article (éditeur avancé) à une section du site. Un article non publié ne peut
+   * être relié que par son auteur ou la modération.
+   */
+  async lierPage(lieuId, { id_oeuvre, section_patrimoine }, { userId, isModerator = false } = {}) {
+    const { LieuOeuvre, Oeuvre, Lieu } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const oeuvre = await Oeuvre.findByPk(id_oeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'statut', 'saisi_par'] });
+    if (!oeuvre) throw this._validationError('Article introuvable');
+    if (![4, 5].includes(oeuvre.id_type_oeuvre)) throw this._validationError('Seul un article peut être relié comme page détaillée');
+    if (!['publie', 'brouillon', 'en_attente'].includes(oeuvre.statut)) throw this._validationError('Cet article n’est plus disponible');
+    if (oeuvre.statut !== 'publie' && !isModerator && oeuvre.saisi_par !== userId) {
+      throw this._forbiddenError('Seul l’auteur peut relier un article qui n’est pas encore publié');
+    }
+    const ordre = ((await LieuOeuvre.max('ordre', { where: { id_lieu: lieuId, section_patrimoine } })) || 0) + 1;
+    const [lien] = await LieuOeuvre.findOrCreate({
+      where: { id_lieu: lieuId, id_oeuvre, section_patrimoine },
+      defaults: { ordre, id_contributeur: userId || null }
+    });
+    return lien;
+  }
+
+  /** Retirer une page détaillée du site (modération, la personne qui l'a reliée ou le créateur du site) */
+  async retirerPage(lieuId, lieuOeuvreId, { userId, isModerator = false } = {}) {
+    const { LieuOeuvre, Lieu } = this.models || {};
+    const lien = await LieuOeuvre.findOne({ where: { id_lieu_oeuvre: lieuOeuvreId, id_lieu: lieuId } });
+    if (!lien) return 'introuvable';
+    let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
+    if (!autorise && userId) {
+      const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
+      autorise = !!lieu && lieu.id_createur === userId;
+    }
+    if (!autorise) return 'interdit';
+    await lien.destroy();
+    return 'ok';
+  }
+
+  /**
    * Modifier un site patrimonial
    */
   async update(id, data) {

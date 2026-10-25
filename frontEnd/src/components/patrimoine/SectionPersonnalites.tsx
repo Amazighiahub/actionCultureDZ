@@ -16,7 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
-import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock } from '@/services/patrimoineArticles.service';
+import PagesDetaillees from '@/components/patrimoine/PagesDetaillees';
+import { useNavigate } from 'react-router-dom';
+import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock, type PagePatrimoine, lienEcrirePage } from '@/services/patrimoineArticles.service';
 import {
   lieuIntervenantService,
   getIntervenantNom,
@@ -38,6 +40,9 @@ interface SectionPersonnalitesProps {
   blocs?: PatrimoineBlock[];
   /** Après ajout ou suppression d'un bloc d'article */
   onArticlesChange?: () => void;
+  /** Articles complets (éditeur avancé) reliés à la section : cartes « En savoir plus » */
+  pages?: PagePatrimoine[];
+  onPagesChange?: () => void;
 }
 
 const translate = (v: string | MultilingualField | null | undefined, lang: string): string => {
@@ -52,16 +57,20 @@ const sectionArticles: PatrimoineSection | null = (PATRIMOINE_SECTIONS as readon
 
 const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   icon, title, content, lang, lieuId, idCreateurSite, onSaved,
-  blocs = [], onArticlesChange
+  blocs = [], onArticlesChange, pages = [], onPagesChange
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const { isAdmin, hasRole, isValidatedProfessional } = usePermissions();
   const estModeration = isAdmin || hasRole('Moderateur');
   // Créer la fiche d'une nouvelle personnalité : professionnels validés et modération
   const peutCreer = estModeration || isValidatedProfessional();
   // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
   const patrimoineSection = peutCreer ? sectionArticles : null;
+  const ecrireArticle = () => { if (patrimoineSection) navigate(lienEcrirePage(lieuId, patrimoineSection)); };
+  // Anciens blocs (éditeur simple) : gérés par la modération seulement
+  const sectionBlocs = estModeration && blocs.length > 0 ? sectionArticles : null;
   const { toast } = useToast();
 
   // ── texte libre ──
@@ -91,7 +100,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   const [detail, setDetail] = useState<LieuIntervenant | null>(null);
 
   const texte = translate(content, lang).trim();
-  const hasContent = texte.length > 0 || blocs.length > 0;
+  const hasContent = texte.length > 0 || blocs.length > 0 || pages.length > 0;
 
   // Charger les intervenants liés
   const chargerIntervenants = useCallback(() => {
@@ -240,8 +249,13 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                   <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">
                     <Pencil className="h-4 w-4 me-1" />{t('common.edit', 'Modifier')}
                   </Button>
-                  {patrimoineSection && (
+                  {sectionBlocs && (
                     <Button variant="ghost" size="sm" onClick={() => setIsArticleEditorOpen(true)} className="text-muted-foreground hover:text-primary">
+                      {t('patrimoine.contribute.anciensBlocs', 'Blocs')}
+                    </Button>
+                  )}
+                  {patrimoineSection && (
+                    <Button variant="ghost" size="sm" onClick={ecrireArticle} className="text-muted-foreground hover:text-primary">
                       <FileText className="h-4 w-4 me-1" />{t('patrimoine.contribute.addArticle', 'Article')}
                     </Button>
                   )}
@@ -252,6 +266,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           <CardContent className="space-y-4">
             {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
             <BlocsArticle blocs={blocs} />
+            <PagesDetaillees lieuId={lieuId} pages={pages} onChange={onPagesChange} />
           </CardContent>
         </Card>
       ) : isAuthenticated ? (
@@ -265,7 +280,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                 <Plus className="h-4 w-4 me-2" />Texte rapide
               </Button>
               {patrimoineSection && (
-                <Button variant="default" onClick={() => setIsArticleEditorOpen(true)}>
+                <Button variant="default" onClick={ecrireArticle}>
                   <FileText className="h-4 w-4 me-2" />Écrire un article
                 </Button>
               )}
@@ -558,10 +573,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       <PersonnaliteDialog lien={detail} lang={lang} onClose={() => setDetail(null)} onModifiee={chargerIntervenants} />
 
       {/* ── Modal articles riches ── */}
-      {patrimoineSection && (
+      {sectionBlocs && (
         <SectionArticleEditor
           lieuId={lieuId}
-          section={patrimoineSection}
+          section={sectionBlocs}
           sectionTitle={title}
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}

@@ -3460,7 +3460,8 @@
       "contentRequired": "Please enter content (at least in French or Arabic)",
       "addArticle": "Article",
       "addQuick": "Quick text",
-      "writeArticle": "Write an article"
+      "writeArticle": "Write an article",
+      "anciensBlocs": "Blocks"
     },
     "gps": {
       "found": "Position found",
@@ -3634,6 +3635,16 @@
       "noParent": "Main site (not part of another site).",
       "searchSite": "Search for the site (e.g. Aït Smaïl)",
       "parentPending": "Click “Save changes” to apply this link."
+    },
+    "pages": {
+      "enSavoirPlus": "Learn more",
+      "lire": "Read the article",
+      "enAttente": "Awaiting validation",
+      "retirer": "Remove from the place page",
+      "confirmRetrait": "Remove this article from the place page? The article itself is not deleted.",
+      "ajoutee": "Article saved: it will appear on the place page once validated.",
+      "lienEchec": "Article saved, but it could not be linked to the place.",
+      "bandeau": "This article will be linked to the place page, in the “{{section}}” section. It will appear there once validated by the Tala DZ team."
     }
   },
   "toasts": {

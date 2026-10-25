@@ -201,3 +201,40 @@ class PatrimoineArticlesService {
 }
 
 export const patrimoineArticlesService = new PatrimoineArticlesService();
+
+// ============================================================================
+// PAGES DÉTAILLÉES : articles de l'éditeur avancé reliés à une section
+// ============================================================================
+
+type TexteMulti = string | Record<string, string | undefined> | null;
+
+/** Article relié à une section du lieu (GET /patrimoine/:id/pages) */
+export interface PagePatrimoine {
+  id_lieu_oeuvre: number;
+  section_patrimoine: PatrimoineSection;
+  id_oeuvre: number;
+  id_type_oeuvre: number;
+  titre: TexteMulti;
+  resume: TexteMulti;
+  image: string | null;
+  statut: 'publie' | 'brouillon' | 'en_attente' | 'rejete' | string;
+  peut_retirer: boolean;
+}
+
+/** Pages visibles par la personne connectée (publiées, ou les siennes en attente) */
+export async function getPagesPatrimoine(lieuId: number): Promise<PagePatrimoine[]> {
+  try {
+    const res = await httpClient.get<PagePatrimoine[]>(`/patrimoine/${lieuId}/pages`);
+    return res.success && Array.isArray(res.data) ? res.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export function retirerPagePatrimoine(lieuId: number, lieuOeuvreId: number): Promise<ApiResponse<void>> {
+  return httpClient.delete<void>(`/patrimoine/${lieuId}/pages/${lieuOeuvreId}`);
+}
+
+/** Éditeur avancé, pour un article qui sera relié à cette section du lieu */
+export const lienEcrirePage = (lieuId: number, section: PatrimoineSection) =>
+  `/ajouter-oeuvre?lieu=${lieuId}&section=${section}`;

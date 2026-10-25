@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,6 +55,14 @@ export function useAjouterOeuvre() {
   const navigate = useNavigate();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
+  // Page détaillée d'un lieu patrimoine (« Écrire un article » depuis une section) :
+  // /ajouter-oeuvre?lieu=69&section=gastronomie ouvre l'éditeur avancé et relie l'article au lieu
+  const [searchParams] = useSearchParams();
+  const pageDeLieu = useMemo(() => {
+    const lieu = parseInt(searchParams.get('lieu') || '', 10);
+    const section = searchParams.get('section');
+    return !isEditMode && lieu > 0 && section ? { lieu, section } : null;
+  }, [searchParams, isEditMode]);
 
   // État de chargement et erreurs
   const [loading, setLoading] = useState(false);
@@ -125,6 +133,12 @@ export function useAjouterOeuvre() {
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  useEffect(() => {
+    if (!pageDeLieu) return;
+    setFormData(prev => ({ ...prev, id_type_oeuvre: 4 }));
+    setUseArticleEditor(true);
+  }, [pageDeLieu]);
 
   useEffect(() => {
     if (isEditMode && editId && !loadingMetadata) {
@@ -600,6 +614,16 @@ export function useAjouterOeuvre() {
         }
       }
 
+      if (pageDeLieu) {
+        const lien = await httpClient.post(`/patrimoine/${pageDeLieu.lieu}/pages`, {
+          id_oeuvre: oeuvreId, section_patrimoine: pageDeLieu.section
+        }).catch(() => ({ success: false }));
+        toast(lien.success
+          ? { title: t('ajouteroeuvre.succes'), description: t('patrimoine.pages.ajoutee', 'Article enregistré : il apparaîtra sur la page du lieu après validation.') }
+          : { title: t('toasts.warning'), description: t('patrimoine.pages.lienEchec', 'Article enregistré, mais il n’a pas pu être relié au lieu.'), variant: 'destructive' });
+        navigate(`/patrimoine/${pageDeLieu.lieu}`);
+        return;
+      }
       toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
       navigate(`/articles/${oeuvreId}`);
 
@@ -610,7 +634,7 @@ export function useAjouterOeuvre() {
     } finally {
       submittingRef.current = false;
     }
-  }, [toast, t, navigate]);
+  }, [toast, t, navigate, pageDeLieu]);
 
   // ============================================================================
   // SOUMISSION DU FORMULAIRE
@@ -834,7 +858,7 @@ export function useAjouterOeuvre() {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice,
+    useArticleEditor, setUseArticleEditor, showEditorChoice, pageDeLieu,
     // Handlers
     handleInputChange,
     handleTagAdd, handleTagRemove,
