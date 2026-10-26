@@ -3372,6 +3372,12 @@
       "answers": "Registration form answers",
       "exportExcel": "Download as Excel",
       "partielle": "partial attendance",
+      "invitation": {
+        "pasEncore": "Has not chosen a password yet",
+        "renvoyer": "Resend the email",
+        "envoyee": "Email sent",
+        "envoyeeDesc": "A new link to choose a password, valid for 7 days, was sent to {{email}}."
+      },
       "profil": {
         "label": "Profile:",
         "de": "Profile of {{nom}}",

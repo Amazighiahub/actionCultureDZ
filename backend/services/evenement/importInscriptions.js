@@ -312,9 +312,7 @@ class ImportInscriptions {
         });
         if (cree) bilan.inscrits += 1;
         if (nouveau && inviter && this.emailService) {
-          const jeton = await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
-          const envoi = await this.emailService.sendInvitationInscription(user, jeton.token, evenement);
-          if (envoi?.success !== false) bilan.invitations += 1;
+          if (await this._inviter(user, evenement)) bilan.invitations += 1;
           else bilan.erreurs.push(`${l.email} : invitation non envoyée`);
         }
       } catch (e) {
@@ -323,6 +321,32 @@ class ImportInscriptions {
       }
     }
     return bilan;
+  }
+
+  /** Email « Choisir mon mot de passe » (lien valable 7 jours) ; true si envoyé */
+  async _inviter(user, evenement) {
+    const jeton = await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
+    const envoi = await this.emailService.sendInvitationInscription(user, jeton.token, evenement);
+    return envoi?.success !== false;
+  }
+
+  /**
+   * Renvoie l'invitation à un participant inscrit qui n'a pas encore choisi son mot de passe
+   * (email perdu, lien expiré). Un nouveau lien remplace l'ancien pour 7 jours.
+   */
+  async renvoyerInvitation(idEvenement, idUser, utilisateur) {
+    const { evenement } = await this._evenement(idEvenement, utilisateur);
+    const inscription = await this.models.EvenementUser.findOne({ where: { id_evenement: evenement.id_evenement, id_user: idUser } });
+    if (!inscription) throw Object.assign(new Error('Cette personne n\'est pas inscrite à l\'événement'), { statusCode: 404 });
+    const user = await this.models.User.findByPk(idUser);
+    if (!user) throw Object.assign(new Error('Compte introuvable'), { statusCode: 404 });
+    if (user.email_verifie) {
+      throw Object.assign(new Error('Cette personne a déjà choisi son mot de passe'), { statusCode: 400 });
+    }
+    if (!this.emailService || !(await this._inviter(user, evenement))) {
+      throw Object.assign(new Error('L\'email n\'a pas pu être envoyé, réessayez plus tard'), { statusCode: 502 });
+    }
+    return { email: user.email };
   }
 }
 

@@ -114,6 +114,10 @@ const initEvenementRoutes = (models, authMiddleware) => {
     invalidateCache([req => `/evenements/${req.params.id}/participants`]),
     asyncHandler((req, res) => evenementController.changerProfilParticipant(req, res)));
 
+  // Email « Choisir mon mot de passe » renvoyé à un participant qui ne l'a pas encore fait
+  router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, createContentLimiter, validateId(), validateId('userId'),
+    asyncHandler((req, res) => evenementController.renvoyerInvitation(req, res)));
+
   // Participants validation (owner ou admin)
   router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
     invalidateCache([req => `/evenements/${req.params.id}/participants`]), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));

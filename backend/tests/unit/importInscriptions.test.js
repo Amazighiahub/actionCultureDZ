@@ -142,3 +142,32 @@ describe('Import', () => {
     expect(m.crees.map(c => c.data.email)).toEqual(['lydia.amrani@exemple.dz']);
   });
 });
+
+describe('Renvoi de l’invitation', () => {
+  const avec = (user, inscrit = true) => {
+    const m = modeles();
+    m.EvenementUser.findOne = jest.fn().mockResolvedValue(inscrit ? { id_user: user.id_user } : null);
+    m.User.findByPk = jest.fn().mockResolvedValue(user);
+    return m;
+  };
+  const emailService = () => ({ sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) });
+
+  it('compte sans mot de passe choisi : nouveau lien de 7 jours envoyé', async () => {
+    const m = avec({ id_user: 101, email: 'lydia.amrani@exemple.dz', email_verifie: false });
+    const mail = emailService();
+    await expect(new ImportInscriptions(m, { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR)).resolves.toEqual({ email: 'lydia.amrani@exemple.dz' });
+    expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 168);
+    expect(mail.sendInvitationInscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('mot de passe déjà choisi, personne non inscrite ou autre organisateur : refusé, rien envoyé', async () => {
+    const mail = emailService();
+    await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: true }), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR))
+      .rejects.toMatchObject({ statusCode: 400 });
+    await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: false }, false), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR))
+      .rejects.toMatchObject({ statusCode: 404 });
+    await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: false }), { emailService: mail }).renvoyerInvitation(2, 101, { id_user: 12, isAdmin: false }))
+      .rejects.toMatchObject({ statusCode: 403 });
+    expect(mail.sendInvitationInscription).not.toHaveBeenCalled();
+  });
+});

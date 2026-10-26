@@ -514,6 +514,16 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** Renvoi de l'email « Choisir mon mot de passe » à un participant (compte créé par import) */
+  async renvoyerInvitation(req, res) {
+    try {
+      const data = await container.importInscriptionsService.renvoyerInvitation(parseInt(req.params.id), parseInt(req.params.userId), req.user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getProfilsParticipants(req, res) {
     try {
       const data = await this.evenementService.getProfilsParticipants(parseInt(req.params.id), req.user.id_user, req.user.isAdmin);
