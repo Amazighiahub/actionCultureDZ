@@ -476,7 +476,8 @@ class EvenementRepository extends BaseRepository {
       include: [{
         model: this.models.User,
         as: 'User',
-        attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url', 'id_type_user']
+        // email_verifie : faux tant qu'un compte créé par import n'a pas choisi son mot de passe
+        attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url', 'id_type_user', 'email_verifie']
       }],
       order: [['date_inscription', 'DESC']]
     });

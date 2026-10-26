@@ -3377,6 +3377,12 @@
       "answers": "Réponses au formulaire d'inscription",
       "exportExcel": "Télécharger en Excel",
       "partielle": "présence partielle",
+      "invitation": {
+        "pasEncore": "N’a pas encore choisi son mot de passe",
+        "renvoyer": "Renvoyer l’email",
+        "envoyee": "Email envoyé",
+        "envoyeeDesc": "Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}."
+      },
       "profil": {
         "label": "Profil :",
         "de": "Profil de {{nom}}",

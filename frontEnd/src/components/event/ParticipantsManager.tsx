@@ -107,6 +107,8 @@ interface Participant {
     nom: string;
     prenom: string;
     email: string;
+    /** Faux tant qu'un compte créé par import n'a pas choisi son mot de passe */
+    email_verifie?: boolean;
     bio?: string;
     photo_profil?: string;
     site_web?: string;
@@ -180,6 +182,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   /** Choix de « Vous êtes » : l'organisateur peut corriger le profil d'un participant (prix recalculé) */
   const [profils, setProfils] = useState<{ valeur: string; label?: string | Record<string, string> }[]>([]);
   const [profilEnCours, setProfilEnCours] = useState<number | null>(null);
+  const [renvoiEnCours, setRenvoiEnCours] = useState<number | null>(null);
 
   // État pour le dialogue de détails d'œuvre
   const [selectedOeuvre, setSelectedOeuvre] = useState<OeuvreSoumise | null>(null);
@@ -192,6 +195,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       .then(res => setProfils(res.success && Array.isArray(res.data) ? res.data : []))
       .catch(() => setProfils([]));
   }, [evenementId]);
+
+  /** Email « Choisir mon mot de passe » renvoyé (nouveau lien de 7 jours) */
+  const renvoyerInvitation = async (userId: number) => {
+    setRenvoiEnCours(userId);
+    const res = await httpClient.post<{ email: string }>(`/evenements/${evenementId}/participants/${userId}/invitation`, {});
+    setRenvoiEnCours(null);
+    if (res.success) {
+      toast({ title: t('pro.participants.invitation.envoyee', 'Email envoyé'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}.', { email: res.data?.email || '' }) });
+    } else {
+      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
+    }
+  };
 
   const changerProfil = async (userId: number, profil: string) => {
     setProfilEnCours(userId);
@@ -496,6 +511,21 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         {getRoleBadge(participant.role_participation)}
                       </div>
                       <p className="text-sm text-muted-foreground">{participant.User.email}</p>
+                      {participant.User.email_verifie === false && participant.statut_participation !== 'annule' && (
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className="text-xs text-amber-700">{t('pro.participants.invitation.pasEncore', 'N’a pas encore choisi son mot de passe')}</span>
+                          <Button
+                            variant="outline" size="sm" className="h-7"
+                            onClick={() => renvoyerInvitation(participant.id_user)}
+                            disabled={renvoiEnCours === participant.id_user}
+                          >
+                            {renvoiEnCours === participant.id_user
+                              ? <Loader2 className="h-3 w-3 me-1 animate-spin" aria-hidden="true" />
+                              : <Mail className="h-3 w-3 me-1" aria-hidden="true" />}
+                            {t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
+                          </Button>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         <Calendar className="inline h-3 w-3 me-1" />
                         {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
