@@ -82,6 +82,10 @@ const initDashboardRoutes = (models) => {
   // ========================================
 
   // Liste de TOUS les utilisateurs (avec filtres optionnels)
+  // Après une action sur un compte (suppression, validation, suspension, rôle…), les listes
+  // d'utilisateurs et la vue d'ensemble en cache sont vidées : la page rechargée est à jour
+  const invaliderListesUtilisateurs = cacheMiddleware.invalidateCache(['/dashboard/users', '/dashboard/overview']);
+
   router.get('/users',
     validationMiddleware.validatePagination,
     cacheMiddleware.conditionalCache(120),
@@ -147,6 +151,7 @@ const initDashboardRoutes = (models) => {
 
   // Validation d'un utilisateur (PATCH)
   router.patch('/users/:id/validate',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     [
       body('valide').isBoolean().withMessage((value, { req }) => req.t('validation.invalidValidationValue')),
@@ -172,6 +177,7 @@ const initDashboardRoutes = (models) => {
 
   // Mettre à jour un utilisateur
   router.put('/users/:id',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     [
       body('nom').optional().isString().trim().notEmpty().withMessage((value, { req }) => req.t('validation.invalidName')),
@@ -195,6 +201,7 @@ const initDashboardRoutes = (models) => {
  // Remplacez la route DELETE existante dans dashboardRoutes.js par celle-ci :
 // Supprimer un utilisateur (hard delete)
   router.delete('/users/:id',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('DELETE_USER'),
@@ -202,6 +209,7 @@ const initDashboardRoutes = (models) => {
   );
   // Réactiver un utilisateur suspendu
   router.post('/users/:id/suspend',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     [
       body('raison').notEmpty().isString().withMessage((value, { req }) => req.t('validation.reasonRequired')),
@@ -227,6 +235,7 @@ const initDashboardRoutes = (models) => {
 
   // Réactiver un utilisateur suspendu
   router.post('/users/:id/reactivate',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('REACTIVATE_USER'),
@@ -235,6 +244,7 @@ const initDashboardRoutes = (models) => {
 
   // Changer le rôle d'un utilisateur
   router.put('/users/:id/role',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     [
       body('role_id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidRoleId'))
@@ -247,6 +257,7 @@ const initDashboardRoutes = (models) => {
 
   // Réinitialiser le mot de passe d'un utilisateur
   router.post('/users/:id/reset-password',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('RESET_USER_PASSWORD'),
@@ -255,6 +266,7 @@ const initDashboardRoutes = (models) => {
 
   // Vérifier manuellement l'email d'un utilisateur
   router.post('/users/:id/verify-email',
+    invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('VERIFY_USER_EMAIL'),
@@ -263,6 +275,7 @@ const initDashboardRoutes = (models) => {
 
   // Actions en masse sur les utilisateurs
   router.post('/users/bulk-action',
+    invaliderListesUtilisateurs,
     [
       body('user_ids').isArray({ min: 1, max: 100 }).withMessage((value, { req }) => req.t('validation.userListRequired')),
       body('user_ids.*').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidUserId')),
@@ -390,7 +403,7 @@ const initDashboardRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('VALIDATE_OEUVRE'),
-    cacheMiddleware.invalidateCache(['pending-oeuvres', 'content/stats']),
+    cacheMiddleware.invalidateCache(['/dashboard/content/pending-oeuvres', '/dashboard/content/stats']),
     async (req, res) => {
       req.body = {
         action: 'validate_oeuvre',

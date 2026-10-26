@@ -309,7 +309,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
           title: t('toasts.success'),
           description: t('toasts.userUpdated')
         });
-        await loadPendingUsers();
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {
       toast({
@@ -328,7 +328,8 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
           title: t('toasts.success'),
           description: t('toasts.userDeleted')
         });
-        await loadPendingUsers();
+        // Les deux listes (tous les utilisateurs, en attente) : le compte supprimé disparaît des deux
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {
       toast({
@@ -347,7 +348,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
           title: t('toasts.success'),
           description: t('toasts.userSuspended')
         });
-        await loadPendingUsers();
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {
       toast({
@@ -366,7 +367,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
           title: t('toasts.success'),
           description: t('toasts.userReactivated')
         });
-        await loadPendingUsers();
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {
       toast({
