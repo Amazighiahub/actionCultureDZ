@@ -29,8 +29,13 @@ const PROFILS_DEFAUT = [
 /** Question « présence » d'un formulaire (chantier-école) : une présence « Partielle » paie une part du prix */
 const PRESENCE = { cle: 'presence', valeur: 'Partielle' };
 
-/** Profil « Autre » : son prix peut rester vide (prix à convenir avec l'organisateur) */
+/**
+ * Profil « Autre » : il paie au moins le prix professionnel (« Artisan ou professionnel » du
+ * chantier-école, « Professionnel » sinon). Vide, ou plus bas, c'est ce prix ; sans profil
+ * professionnel, un prix vide reste à convenir avec l'organisateur.
+ */
 const PROFIL_AUTRE = 'Autre';
+const PROFILS_PROFESSIONNELS = ['Artisan ou professionnel', 'Professionnel'];
 
 const lireJson = (v) => {
   if (typeof v !== 'string') return v;
@@ -48,6 +53,18 @@ const texteLabel = (label) => {
   if (typeof label === 'string') return label.trim();
   return String(label.fr || label.ar || label.en || '').trim();
 };
+
+const sansPrix = (prix) => prix === '' || prix === null || prix === undefined;
+
+/** Prix réellement payé pour un profil (null : à convenir) */
+function prixDuProfil(profils, profil) {
+  if (!profil) return null;
+  const prix = sansPrix(profil.prix) ? null : Number(profil.prix);
+  if (profil.valeur !== PROFIL_AUTRE) return prix;
+  const reference = (profils || []).find(p => PROFILS_PROFESSIONNELS.includes(p.valeur) && !sansPrix(p.prix));
+  if (!reference) return prix;
+  return Math.max(prix ?? 0, Number(reference.prix));
+}
 
 /**
  * Lit la tarification envoyée par le formulaire de l'événement.
@@ -86,8 +103,8 @@ function lireTarification(brut, tarifBrut) {
     partiel = nombre(t.partiel_pourcent);
     if (!Number.isInteger(partiel) || partiel < 1 || partiel > 100) return { erreur: 'La part payée pour une présence partielle va de 1 à 100 %' };
   }
-  // Prix affiché dans les listes : le plus bas des prix connus (un « Autre » à convenir n'en a pas)
-  const connus = profils.map(p => p.prix).filter(x => x !== null);
+  // Prix affiché dans les listes : le plus bas des prix payés (un « Autre » à convenir n'en a pas)
+  const connus = profils.map(p => prixDuProfil(profils, p)).filter(x => x !== null);
   return {
     tarification: { mode: 'profil', profils, ...(partiel ? { partiel_pourcent: partiel } : {}) },
     tarif: connus.length ? Math.min(...connus) : 0
@@ -136,11 +153,11 @@ function montantInscription(evenement, reponses = {}) {
   if (t.mode === 'payant') return Math.round(Number(evenement.tarif) * personnes * 100) / 100;
 
   const profil = (t.profils || []).find(p => p.valeur === reponses?.profil);
-  // Profil inconnu, ou « Autre » sans prix : à convenir avec l'organisateur
-  if (!profil || profil.prix === null || profil.prix === undefined || profil.prix === '') return null;
-  let prix = Number(profil.prix);
+  // Profil inconnu, ou « Autre » sans prix ni prix étudiant : à convenir avec l'organisateur
+  let prix = prixDuProfil(t.profils, profil);
+  if (prix === null) return null;
   if (t.partiel_pourcent && reponses?.[PRESENCE.cle] === PRESENCE.valeur) prix = prix * t.partiel_pourcent / 100;
   return Math.round(prix * personnes * 100) / 100;
 }
 
-module.exports = { MODES, PROFILS_DEFAUT, PRESENCE, PROFIL_AUTRE, lireTarification, tarificationDe, configAvecProfil, montantInscription };
+module.exports = { MODES, PROFILS_DEFAUT, PRESENCE, PROFIL_AUTRE, PROFILS_PROFESSIONNELS, prixDuProfil, lireTarification, tarificationDe, configAvecProfil, montantInscription };

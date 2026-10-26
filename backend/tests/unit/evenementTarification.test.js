@@ -110,19 +110,31 @@ describe('Inscription : montant enregistré par le serveur', () => {
   });
 });
 
-describe('Profil « Autre » : prix facultatif', () => {
+describe('Profil « Autre » : au moins le prix professionnel', () => {
   const profils = [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: '' }];
+  const avecPro = (autre) => ({ tarif: 2000, tarification: { mode: 'profil', partiel_pourcent: 70, profils: [
+    { valeur: 'Artisan ou professionnel', prix: 4000 }, { valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: autre }] } });
 
-  it('le prix de « Autre » peut rester vide (à convenir), pas celui des autres profils', () => {
+  it('le prix de « Autre » peut rester vide, pas celui des autres profils', () => {
     const lu = lireTarification({ mode: 'profil', profils });
     expect(lu.tarification.profils[1].prix).toBeNull();
     expect(lu.tarif).toBe(2000);
     expect(lireTarification({ mode: 'profil', profils: [{ valeur: 'Étudiant', prix: '' }] })).toHaveProperty('erreur');
   });
 
-  it('« Autre » sans prix : montant à convenir (null)', () => {
+  it('« Autre » vide, à 0 ou plus bas : prix professionnel (70 % en présence partielle) ; plus haut : son prix', () => {
+    expect(montantInscription(avecPro(null), { profil: 'Autre' })).toBe(4000);
+    expect(montantInscription(avecPro(0), { profil: 'Autre', presence: 'Partielle' })).toBe(2800);
+    expect(montantInscription(avecPro(5000), { profil: 'Autre' })).toBe(5000);
+    expect(montantInscription(avecPro(0), { profil: 'Étudiant' })).toBe(2000);
+  });
+
+  it('« Autre » à 0 ne fait plus afficher « à partir de 0 DA »', () => {
+    expect(lireTarification(avecPro(0).tarification).tarif).toBe(2000);
+  });
+
+  it('sans profil professionnel, « Autre » sans prix : à convenir (null)', () => {
     const evenement = { tarif: 2000, tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: null }] } };
     expect(montantInscription(evenement, { profil: 'Autre' })).toBeNull();
-    expect(montantInscription(evenement, { profil: 'Étudiant' })).toBe(2000);
   });
 });

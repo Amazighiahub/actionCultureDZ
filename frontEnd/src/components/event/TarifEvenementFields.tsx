@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { PROFIL_AUTRE, type ModeTarif, type ProfilTarif } from '@/utils/tarifEvenement';
+import { PROFIL_AUTRE, prixProfessionnel, type ModeTarif, type ProfilTarif } from '@/utils/tarifEvenement';
 
 export interface ValeurTarif {
   mode: ModeTarif | '';
@@ -46,6 +46,7 @@ const TarifEvenementFields: React.FC<Props> = ({ valeur, onChange, profilsDuForm
   const majProfil = (i: number, champ: Partial<ProfilTarif>) =>
     maj({ profils: valeur.profils.map((p, j) => (j === i ? { ...p, ...champ } : p)) });
   const fixes = !!profilsDuFormulaire;
+  const prixPro = prixProfessionnel(valeur.profils);
 
   const libelles: Record<ModeTarif, [string, string]> = {
     gratuit: [t('events.tarif.gratuit', 'Gratuit'), t('events.tarif.gratuitDesc', 'Aucun paiement')],
@@ -112,7 +113,7 @@ const TarifEvenementFields: React.FC<Props> = ({ valeur, onChange, profilsDuForm
                     aria-label={t('events.tarif.prixDe', 'Prix pour « {{profil}} » (DA)', { profil: getLocalizedText(p.label, lang, p.valeur) })}
                     value={String(p.prix ?? '')}
                     onChange={(e) => { if (prixValide(e.target.value)) majProfil(i, { prix: e.target.value }); }}
-                    placeholder={p.valeur === PROFIL_AUTRE ? t('events.tarif.aConvenir', 'à convenir') : '0'}
+                    placeholder={p.valeur === PROFIL_AUTRE ? (prixPro !== null ? String(prixPro) : t('events.tarif.aConvenir', 'à convenir')) : '0'}
                   />
                   <span className="text-sm text-muted-foreground">DA</span>
                   {!fixes && valeur.profils.length > 1 && (
@@ -150,7 +151,7 @@ const TarifEvenementFields: React.FC<Props> = ({ valeur, onChange, profilsDuForm
           )}
           {valeur.profils.some(p => p.valeur === PROFIL_AUTRE) && (
             <p className="text-sm text-muted-foreground">
-              {t('events.tarif.autreFacultatif', 'Le prix de « Autre » est facultatif : vide, le participant lit « Prix à convenir avec l’organisateur ».')}
+              {t('events.tarif.autreProfessionnel', 'Le prix de « Autre » est facultatif : vide ou plus bas, la personne paie le prix professionnel.')}
             </p>
           )}
           <p className="text-sm text-muted-foreground">

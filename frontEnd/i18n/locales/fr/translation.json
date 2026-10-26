@@ -668,7 +668,7 @@
       "toutLEvenement": "pour tout l’événement",
       "partielInfo": "(présence partielle, {{pourcent}} % du prix)",
       "aConvenir": "à convenir",
-      "autreFacultatif": "Le prix de « Autre » est facultatif : vide, le participant lit « Prix à convenir avec l’organisateur ».",
+      "autreProfessionnel": "Le prix de « Autre » est facultatif : vide ou plus bas, la personne paie le prix professionnel.",
       "prixAConvenir": "Prix à convenir avec l’organisateur."
     }
   },
