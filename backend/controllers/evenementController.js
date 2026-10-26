@@ -239,11 +239,23 @@ class EvenementController extends BaseController {
   /** Aperçu d'une liste d'inscriptions : rien n'est écrit */
   async apercuImportInscriptions(req, res) {
     try {
-      const data = await container.importInscriptionsService.apercu(req.file.buffer, parseInt(req.params.id), req.user);
+      const data = await container.importInscriptionsService.apercu(req.file.buffer, parseInt(req.params.id), req.user, {
+        profils: this._profilsChoisis(req.body?.profils)
+      });
       res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
     }
+  }
+
+  /** Profils choisis dans l'aperçu : { numéro de ligne: profil } (JSON) */
+  _profilsChoisis(brut) {
+    let profils = {};
+    try { profils = brut ? JSON.parse(brut) : {}; } catch { profils = {}; }
+    if (!profils || typeof profils !== 'object' || Array.isArray(profils)) return {};
+    return Object.fromEntries(Object.entries(profils)
+      .filter(([ligne, v]) => Number.isInteger(Number(ligne)) && typeof v === 'string')
+      .map(([ligne, v]) => [Number(ligne), v.slice(0, 80)]));
   }
 
   /** Import des lignes cochées (numéros de ligne), invitations envoyées aux comptes créés */
@@ -253,7 +265,8 @@ class EvenementController extends BaseController {
       try { lignes = req.body?.lignes ? JSON.parse(req.body.lignes) : null; } catch { lignes = null; }
       const data = await container.importInscriptionsService.importer(req.file.buffer, parseInt(req.params.id), req.user, {
         lignes: Array.isArray(lignes) ? lignes.map(Number).filter(Number.isInteger) : null,
-        inviter: req.body?.inviter !== 'false'
+        inviter: req.body?.inviter !== 'false',
+        profils: this._profilsChoisis(req.body?.profils)
       });
       res.json({ success: true, data });
     } catch (error) {
@@ -496,6 +509,30 @@ class EvenementController extends BaseController {
         req.user.id_user
       );
       res.json({ success: true, message: req.t('oeuvre.removedFromEvent') });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getProfilsParticipants(req, res) {
+    try {
+      const data = await this.evenementService.getProfilsParticipants(parseInt(req.params.id), req.user.id_user, req.user.isAdmin);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async changerProfilParticipant(req, res) {
+    try {
+      if (typeof req.body?.profil !== 'string' || !req.body.profil.trim()) {
+        return res.status(400).json({ success: false, error: req.t('validation.invalidData') });
+      }
+      const data = await this.evenementService.changerProfilParticipant(
+        parseInt(req.params.id), parseInt(req.params.userId), req.body.profil.trim().slice(0, 80),
+        { id: req.user.id_user, isAdmin: req.user.isAdmin }
+      );
+      res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
     }

@@ -1,7 +1,8 @@
 /**
  * ImportInscriptionsDialog — « Importer une liste (Excel) » dans Gérer › Participants.
  * 1. le classeur (export d'un formulaire en ligne) ; 2. l'aperçu : une ligne par personne, cochée
- * si elle sera inscrite, avec ses remarques ; 3. le bilan. Les personnes sont inscrites « En
+ * si elle sera inscrite, avec ses remarques, et le profil à choisir quand celui du classeur n'est pas
+ * un des choix du formulaire (« Amateur du patrimoine ») ; 3. le bilan. Les personnes sont inscrites « En
  * attente » (l'organisateur confirme ensuite) ; un compte visiteur est créé pour qui n'en a pas,
  * avec un email d'invitation pour choisir son mot de passe.
  */
@@ -12,11 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { httpClient } from '@/services/httpClient';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 type Action = 'creer' | 'inscrire' | 'deja_inscrit' | 'doublon' | 'invalide';
 interface LigneApercu {
@@ -27,8 +30,11 @@ interface LigneApercu {
   montant: number | null;
   remarques: string[];
   action: Action;
+  /** Profil écrit dans le classeur, absent des choix du formulaire : à choisir */
+  profil_inconnu: string | null;
 }
 interface Apercu {
+  profils: { valeur: string; label?: string | Record<string, string> }[];
   colonnes: { titre: string; cible: string | null }[];
   lignes: LigneApercu[];
 }
@@ -44,11 +50,13 @@ interface Props {
 }
 
 const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFermer, onImporte }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const [fichier, setFichier] = useState<File | null>(null);
   const [apercu, setApercu] = useState<Apercu | null>(null);
   const [cochees, setCochees] = useState<Set<number>>(new Set());
+  /** Profil choisi par numéro de ligne, pour les profils du classeur absents du formulaire */
+  const [profilsChoisis, setProfilsChoisis] = useState<Record<number, string>>({});
   const [inviter, setInviter] = useState(true);
   const [bilan, setBilan] = useState<Bilan | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -62,24 +70,32 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
   };
 
   const fermer = () => {
-    setFichier(null); setApercu(null); setBilan(null); setErreur(null); setCochees(new Set());
+    setFichier(null); setApercu(null); setBilan(null); setErreur(null); setCochees(new Set()); setProfilsChoisis({});
     onFermer();
   };
 
-  const lireApercu = async () => {
+  /** Aperçu ; relu à chaque profil choisi (montant et remarques recalculés), les cases cochées restent */
+  const lireApercu = async (choix: Record<number, string> = profilsChoisis) => {
     if (!fichier) return;
     setEnCours(true); setErreur(null);
-    const res = await httpClient.upload<Apercu>(`/evenements/${evenementId}/participants/import/apercu`, formulaire());
+    const res = await httpClient.upload<Apercu>(`/evenements/${evenementId}/participants/import/apercu`,
+      formulaire({ profils: JSON.stringify(choix) }));
     setEnCours(false);
     if (!res.success || !res.data) { setErreur(res.error || t('pro.participants.import.erreurLecture', 'Le fichier n’a pas pu être lu.')); return; }
+    if (!apercu) setCochees(new Set(res.data.lignes.filter(l => IMPORTABLES.includes(l.action)).map(l => l.ligne)));
     setApercu(res.data);
-    setCochees(new Set(res.data.lignes.filter(l => IMPORTABLES.includes(l.action)).map(l => l.ligne)));
+  };
+
+  const choisirProfil = (ligne: number, valeur: string) => {
+    const choix = { ...profilsChoisis, [ligne]: valeur };
+    setProfilsChoisis(choix);
+    lireApercu(choix);
   };
 
   const importer = async () => {
     setEnCours(true); setErreur(null);
     const res = await httpClient.upload<Bilan>(`/evenements/${evenementId}/participants/import`,
-      formulaire({ lignes: JSON.stringify([...cochees]), inviter: String(inviter) }));
+      formulaire({ lignes: JSON.stringify([...cochees]), inviter: String(inviter), profils: JSON.stringify(profilsChoisis) }));
     setEnCours(false);
     if (!res.success || !res.data) { setErreur(res.error || t('pro.participants.import.erreurImport', 'L’import a échoué.')); return; }
     setBilan(res.data);
@@ -100,6 +116,8 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
     invalide: t('pro.participants.import.invalide', 'Email non valable'),
   };
   const nonReprises = apercu?.colonnes.filter(c => !c.cible).map(c => c.titre) || [];
+  // Personnes cochées dont le profil reste à choisir : l'import attend
+  const profilsManquants = apercu?.lignes.filter(l => cochees.has(l.ligne) && l.profil_inconnu && !profilsChoisis[l.ligne]).length || 0;
 
   return (
     <Dialog open={ouvert} onOpenChange={(o) => { if (!o) fermer(); }}>
@@ -144,8 +162,9 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
                 {apercu.lignes.map(l => {
                   const importable = IMPORTABLES.includes(l.action);
                   return (
-                    <label key={l.ligne} className={`flex gap-3 p-3 ${importable ? 'cursor-pointer' : 'opacity-60'}`}>
+                    <div key={l.ligne} className={`flex gap-3 p-3 ${importable ? '' : 'opacity-60'}`}>
                       <Checkbox
+                        id={`import-ligne-${l.ligne}`}
                         checked={cochees.has(l.ligne)}
                         disabled={!importable}
                         onCheckedChange={() => basculer(l.ligne)}
@@ -154,7 +173,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{l.nom || '—'}</span>
+                          <label htmlFor={`import-ligne-${l.ligne}`} className={`font-medium ${importable ? 'cursor-pointer' : ''}`}>{l.nom || '—'}</label>
                           <span className="text-sm text-muted-foreground break-all">{l.email}</span>
                           <Badge variant={importable ? 'secondary' : 'outline'}>{libelleAction[l.action]}</Badge>
                         </div>
@@ -162,16 +181,41 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
                           {[l.reponses.profil, l.reponses.profil_autre && `(${l.reponses.profil_autre})`, l.reponses.presence].filter(Boolean).join(' · ')}
                           {l.montant !== null && l.montant !== undefined && ` · ${l.montant === 0 ? t('events.free', 'Gratuit') : formatPrice(l.montant)}`}
                         </p>
+                        {l.profil_inconnu && importable && (
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span>
+                              {t('pro.participants.import.profilAChoisir', 'Profil à choisir')}
+                              {typeof l.reponses.metier === 'string' && l.reponses.metier && (
+                                <span className="text-muted-foreground"> — {t('pro.participants.import.metier', 'métier : {{metier}}', { metier: l.reponses.metier })}</span>
+                              )}
+                            </span>
+                            <Select value={profilsChoisis[l.ligne] || ''} onValueChange={(v) => choisirProfil(l.ligne, v)} disabled={enCours}>
+                              <SelectTrigger className="w-64 h-8" aria-label={t('pro.participants.import.profilDe', 'Profil de {{nom}}', { nom: l.nom || l.email })}>
+                                <SelectValue placeholder={t('pro.participants.import.choisir', 'Choisir…')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {apercu.profils.map(p => (
+                                  <SelectItem key={p.valeur} value={p.valeur}>{getLocalizedText(p.label, i18n.language, p.valeur)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         {l.remarques.length > 0 && (
                           <ul className="text-xs text-amber-700 list-disc ps-4">
                             {l.remarques.map((r, i) => <li key={i}>{r}</li>)}
                           </ul>
                         )}
                       </div>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
+              {profilsManquants > 0 && (
+                <p className="text-sm text-amber-700" role="status">
+                  {t('pro.participants.import.profilsManquants', 'Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire.', { n: profilsManquants })}
+                </p>
+              )}
               <div className="flex items-start gap-2">
                 <Checkbox id="import-inviter" checked={inviter} onCheckedChange={(c) => setInviter(c === true)} className="mt-0.5" />
                 <Label htmlFor="import-inviter" className="font-normal">
@@ -203,8 +247,8 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
             <Button onClick={fermer}>{t('common.close', 'Fermer')}</Button>
           ) : apercu ? (
             <>
-              <Button variant="outline" onClick={() => setApercu(null)} disabled={enCours}>{t('common.back', 'Retour')}</Button>
-              <Button onClick={importer} disabled={enCours || cochees.size === 0}>
+              <Button variant="outline" onClick={() => { setApercu(null); setProfilsChoisis({}); }} disabled={enCours}>{t('common.back', 'Retour')}</Button>
+              <Button onClick={importer} disabled={enCours || cochees.size === 0 || profilsManquants > 0}>
                 {enCours && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
                 {t('pro.participants.import.confirmer', 'Inscrire {{n}} personne(s)', { n: cochees.size })}
               </Button>
@@ -212,7 +256,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
           ) : (
             <>
               <Button variant="outline" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
-              <Button onClick={lireApercu} disabled={!fichier || enCours}>
+              <Button onClick={() => lireApercu()} disabled={!fichier || enCours}>
                 {enCours ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4 me-2" aria-hidden="true" />}
                 {t('pro.participants.import.voir', 'Voir la liste')}
               </Button>

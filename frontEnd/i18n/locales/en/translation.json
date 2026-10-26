@@ -643,7 +643,7 @@
       "toutLEvenement": "for the whole event",
       "partielInfo": "(partial attendance, {{pourcent}}% of the price)",
       "aConvenir": "to be agreed",
-      "autreFacultatif": "The price for “Other” is optional: if empty, participants read “Price to be agreed with the organiser”.",
+      "autreProfessionnel": "The price for “Other” is optional: if empty or lower, the person pays the professional price.",
       "prixAConvenir": "Price to be agreed with the organiser."
     }
   },
@@ -3372,6 +3372,13 @@
       "answers": "Registration form answers",
       "exportExcel": "Download as Excel",
       "partielle": "partial attendance",
+      "profil": {
+        "label": "Profile:",
+        "de": "Profile of {{nom}}",
+        "choisir": "To choose",
+        "modifie": "Profile changed",
+        "modifieDesc": "The price has been recalculated. No message was sent."
+      },
       "import": {
         "bouton": "Import a list (Excel)",
         "titre": "Import a registration list",
@@ -3393,7 +3400,12 @@
         "bilanComptes": "{{n}} accounts created",
         "bilanInvitations": "{{n}} invitations sent",
         "erreurLecture": "The file could not be read.",
-        "erreurImport": "The import failed."
+        "erreurImport": "The import failed.",
+        "profilAChoisir": "Profile to choose",
+        "metier": "occupation: {{metier}}",
+        "profilDe": "Profile of {{nom}}",
+        "choisir": "Choose…",
+        "profilsManquants": "Choose the profile of {{n}} ticked person(s) before registering."
       }
     }
   },

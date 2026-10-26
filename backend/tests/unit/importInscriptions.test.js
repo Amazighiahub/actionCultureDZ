@@ -1,6 +1,6 @@
 /**
  * Import d'une liste d'inscriptions (Excel d'un formulaire en ligne) dans un chantier-école :
- * colonnes reconnues par leur titre, profil retiré → « Autre », email corrigé, doublons,
+ * colonnes reconnues par leur titre, profil inconnu choisi par l'organisateur, email corrigé, doublons,
  * comptes créés « en attente » avec invitation, personnes déjà inscrites laissées telles quelles.
  * Personnes fictives.
  */
@@ -15,8 +15,7 @@ const CONFIG = {
     { cle: 'tel', type: 'tel', requis: true, label: L('Téléphone / WhatsApp') },
     { cle: 'age', type: 'nombre', min: 10, max: 99, label: L('Âge') },
     { cle: 'ville', type: 'texte', requis: true, label: L('Ville ou wilaya') },
-    { cle: 'profil', type: 'choix', requis: true, label: L('Vous êtes'), options: opts('Artisan ou professionnel', 'Étudiant', 'Retraité', 'Autre') },
-    { cle: 'profil_autre', type: 'texte', requis: true, condition: { cle: 'profil', valeur: 'Autre' }, label: L('Précisez votre catégorie') },
+    { cle: 'profil', type: 'choix', requis: true, label: L('Vous êtes'), options: opts('Artisan ou professionnel', 'Étudiant', 'Retraité', 'Bénévole (préparation des repas)') },
     { cle: 'interets', type: 'choix_multiple', label: L('Ce qui vous intéresse'), options: opts('Pierre', 'Mortier et enduit', 'Toiture') },
     { cle: 'presence', type: 'choix', requis: true, label: L('Présence'), options: opts('Toute la durée', 'Partielle') },
     { cle: 'jours', type: 'nombre', requis: true, min: 1, max: 12, condition: { cle: 'presence', valeur: 'Partielle' }, label: L('Combien de jours ?') },
@@ -50,7 +49,7 @@ const modeles = ({ existants = [], dejaInscrits = [] } = {}) => {
     crees, inscriptions,
     Evenement: { findByPk: jest.fn().mockResolvedValue({
       id_evenement: 2, id_user: 37, nom_evenement: { fr: 'Chantier-école' }, tarif: 2000,
-      tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Retraité', prix: 3000 }, { valeur: 'Autre', prix: null }], partiel_pourcent: 70 },
+      tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Retraité', prix: 3000 }], partiel_pourcent: 70 },
       TypeEvenement: { config_inscription: CONFIG }
     }) },
     TypeEvenement: {},
@@ -80,20 +79,30 @@ describe('Lecture des cellules', () => {
 });
 
 describe('Aperçu', () => {
-  it('réponses reprises, « Amateur du patrimoine » → Autre précisé, doublon et email faux signalés', async () => {
+  it('réponses reprises, « Amateur du patrimoine » à choisir, doublon et email faux signalés', async () => {
     const svc = new ImportInscriptions(modeles());
-    const { lignes } = await svc.apercu(await classeur(LIGNES), 2, ORGANISATEUR);
+    const { lignes, profils } = await svc.apercu(await classeur(LIGNES), 2, ORGANISATEUR);
     const [lydia, karim, yanis, nadia, doublon, faux] = lignes;
+    expect(profils.map(p => p.valeur)).toEqual(['Artisan ou professionnel', 'Étudiant', 'Retraité', 'Bénévole (préparation des repas)']);
     expect(lydia).toMatchObject({ action: 'creer', nom: 'Amrani Lydia', montant: 2000,
       reponses: { tel: '0550 00 00 01', age: 25, ville: 'Alger', profil: 'Étudiant', interets: ['Pierre', 'Mortier et enduit', 'Toiture'],
         presence: 'Toute la durée', competences: ['Plans et dessin', 'Préparation des repas (bénévole)'], frais: 'Oui' } });
-    expect(karim.reponses).toMatchObject({ profil: 'Autre', profil_autre: 'Amateur du patrimoine' });
-    expect(karim.montant).toBeNull();
+    expect(karim.reponses).not.toHaveProperty('profil');
+    expect(karim).toMatchObject({ profil_inconnu: 'Amateur du patrimoine', montant: null });
+    expect(karim.remarques).toEqual(['« Amateur du patrimoine » n\'est pas un profil : choisissez le sien']);
+    expect(lydia.profil_inconnu).toBeNull();
     expect(yanis).toMatchObject({ action: 'creer', email: 'yanis.aitali@gmail.com' });
     expect(yanis.remarques[0]).toMatch(/Email corrigé/);
     expect(nadia).toMatchObject({ reponses: { presence: 'Partielle', jours: 2 }, montant: 2100 });
     expect(doublon.action).toBe('doublon');
     expect(faux.action).toBe('invalide');
+  });
+
+  it('profil choisi dans l’aperçu : réponse et prix de ce profil', async () => {
+    const svc = new ImportInscriptions(modeles());
+    const { lignes } = await svc.apercu(await classeur(LIGNES), 2, ORGANISATEUR, { profils: { 3: 'Retraité' } });
+    expect(lignes[1]).toMatchObject({ reponses: { profil: 'Retraité' }, montant: 3000, profil_inconnu: 'Amateur du patrimoine' });
+    expect(lignes[1].remarques).toEqual(['Profil « Amateur du patrimoine » → Retraité']);
   });
 
   it('compte existant : inscrit seulement ; déjà inscrit : laissé tel quel', async () => {
@@ -116,12 +125,20 @@ describe('Import', () => {
     const m = modeles();
     const emailService = { sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) };
     const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
-    const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2, 3, 4, 6, 7] });
+    const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2, 3, 4, 6, 7], profils: { 3: 'Étudiant', 4: 'Retraité' } });
     expect(bilan).toEqual({ comptes_crees: 3, inscrits: 3, invitations: 3, erreurs: [] });
     expect(m.crees[0].data).toMatchObject({ email: 'lydia.amrani@exemple.dz', id_type_user: 1, statut: 'actif', email_verifie: false, accepte_conditions: false, nom: { fr: 'Amrani Lydia' } });
     expect(m.crees[0].options).toEqual({ hooks: false });
     expect(m.inscriptions[0]).toMatchObject({ id_evenement: 2, statut_participation: 'inscrit', montant_du: 2000 });
     expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 168);
     expect(emailService.sendInvitationInscription).toHaveBeenCalledTimes(3);
+  });
+
+  it('profil pas encore choisi : la personne n’est pas inscrite, c’est signalé', async () => {
+    const m = modeles();
+    const bilan = await new ImportInscriptions(m).importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2, 3], inviter: false });
+    expect(bilan.inscrits).toBe(1);
+    expect(bilan.erreurs).toEqual(['Ligne 3 (Bensaid) : profil à choisir, non inscrite']);
+    expect(m.crees.map(c => c.data.email)).toEqual(['lydia.amrani@exemple.dz']);
   });
 });

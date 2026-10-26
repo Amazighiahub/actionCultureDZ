@@ -110,19 +110,63 @@ describe('Inscription : montant enregistré par le serveur', () => {
   });
 });
 
-describe('Profil « Autre » : prix facultatif', () => {
-  const profils = [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: '' }];
+describe('Profil d’un participant corrigé par l’organisateur', () => {
+  const EvenementService = require('../../services/evenement/evenementService');
+  const CONFIG = { sections: [{ champs: [
+    { cle: 'profil', type: 'choix', requis: true, label: { fr: 'Vous êtes' }, options: [
+      { valeur: 'Artisan ou professionnel' }, { valeur: 'Étudiant' }, { valeur: 'Retraité' }] },
+    { cle: 'presence', type: 'choix', label: { fr: 'Présence' }, options: [{ valeur: 'Toute la durée' }, { valeur: 'Partielle' }] }
+  ] }] };
+  const service = (inscription, id_user = 37) => {
+    const svc = Object.create(EvenementService.prototype);
+    svc.models = { TypeEvenement: { findByPk: jest.fn().mockResolvedValue({ config_inscription: CONFIG }) } };
+    svc.repository = {
+      findById: jest.fn().mockResolvedValue({ id_evenement: 2, id_user, id_type_evenement: 13, tarif: 10000,
+        tarification: { mode: 'profil', partiel_pourcent: 70, profils: [{ valeur: 'Artisan ou professionnel', prix: 20000 }, { valeur: 'Étudiant', prix: 10000 }, { valeur: 'Retraité', prix: 13000 }] } }),
+      getRegistration: jest.fn().mockResolvedValue(inscription)
+    };
+    return svc;
+  };
 
-  it('le prix de « Autre » peut rester vide (à convenir), pas celui des autres profils', () => {
+  it('« Autre (Amateur du patrimoine) » → Retraité : réponse remplacée, précision retirée, montant recalculé (70 %)', async () => {
+    const inscription = { reponses_inscription: { profil: 'Autre', profil_autre: 'Amateur du patrimoine', presence: 'Partielle' }, update: jest.fn() };
+    await service(inscription).changerProfilParticipant(2, 50, 'Retraité', { id: 37, isAdmin: false });
+    expect(inscription.update).toHaveBeenCalledWith({ reponses_inscription: { profil: 'Retraité', presence: 'Partielle' }, montant_du: 9100 });
+  });
+
+  it('profil hors des choix refusé ; seul l’organisateur (ou l’administration) peut le changer', async () => {
+    const inscription = { reponses_inscription: { profil: 'Étudiant' }, update: jest.fn() };
+    await expect(service(inscription).changerProfilParticipant(2, 50, 'Autre', { id: 37, isAdmin: false })).rejects.toThrow(/pas un choix/);
+    await expect(service(inscription, 99).changerProfilParticipant(2, 50, 'Retraité', { id: 37, isAdmin: false })).rejects.toThrow();
+    expect(inscription.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('Profil « Autre » : au moins le prix professionnel', () => {
+  const profils = [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: '' }];
+  const avecPro = (autre) => ({ tarif: 2000, tarification: { mode: 'profil', partiel_pourcent: 70, profils: [
+    { valeur: 'Artisan ou professionnel', prix: 4000 }, { valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: autre }] } });
+
+  it('le prix de « Autre » peut rester vide, pas celui des autres profils', () => {
     const lu = lireTarification({ mode: 'profil', profils });
     expect(lu.tarification.profils[1].prix).toBeNull();
     expect(lu.tarif).toBe(2000);
     expect(lireTarification({ mode: 'profil', profils: [{ valeur: 'Étudiant', prix: '' }] })).toHaveProperty('erreur');
   });
 
-  it('« Autre » sans prix : montant à convenir (null)', () => {
+  it('« Autre » vide, à 0 ou plus bas : prix professionnel (70 % en présence partielle) ; plus haut : son prix', () => {
+    expect(montantInscription(avecPro(null), { profil: 'Autre' })).toBe(4000);
+    expect(montantInscription(avecPro(0), { profil: 'Autre', presence: 'Partielle' })).toBe(2800);
+    expect(montantInscription(avecPro(5000), { profil: 'Autre' })).toBe(5000);
+    expect(montantInscription(avecPro(0), { profil: 'Étudiant' })).toBe(2000);
+  });
+
+  it('« Autre » à 0 ne fait plus afficher « à partir de 0 DA »', () => {
+    expect(lireTarification(avecPro(0).tarification).tarif).toBe(2000);
+  });
+
+  it('sans profil professionnel, « Autre » sans prix : à convenir (null)', () => {
     const evenement = { tarif: 2000, tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: null }] } };
     expect(montantInscription(evenement, { profil: 'Autre' })).toBeNull();
-    expect(montantInscription(evenement, { profil: 'Étudiant' })).toBe(2000);
   });
 });

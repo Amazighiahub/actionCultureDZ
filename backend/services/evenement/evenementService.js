@@ -7,7 +7,7 @@ const BaseService = require('../core/baseService');
 const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
-const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
+const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
 const { lireTarification, tarificationDe, configAvecProfil, montantInscription } = require('./tarification');
 const { mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
@@ -522,6 +522,35 @@ class EvenementService extends BaseService {
   async getParticipants(evenementId, requesterId, isAdmin) {
     await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
     return this.repository.getParticipants(evenementId);
+  }
+
+  /** Choix de la question « Vous êtes » de l'événement (pour corriger le profil d'un participant) */
+  async getProfilsParticipants(evenementId, requesterId, isAdmin) {
+    const evenement = await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
+    return this._optionsProfil(evenement);
+  }
+
+  async _optionsProfil(evenement) {
+    const config = configAvecProfil(await this._configInscription(evenement.id_type_evenement), tarificationDe(evenement));
+    const champ = listerChamps(config).find(c => c.cle === 'profil');
+    return (champ?.options || []).map(o => ({ valeur: o.valeur, label: o.label }));
+  }
+
+  /**
+   * L'organisateur corrige le profil d'un participant (ex. « Amateur du patrimoine » importé) :
+   * réponse « Vous êtes » remplacée, montant recalculé. Aucun message n'est envoyé.
+   */
+  async changerProfilParticipant(evenementId, userId, profil, requester) {
+    const evenement = await this._assertEventOwnerOrAdmin(evenementId, requester.id, requester.isAdmin);
+    const options = await this._optionsProfil(evenement);
+    if (!options.some(o => o.valeur === profil)) throw this._validationError("Ce profil n'est pas un choix du formulaire");
+    const inscription = await this.repository.getRegistration(evenementId, userId);
+    if (!inscription) throw this._notFoundError(userId);
+    const actuelles = typeof inscription.reponses_inscription === 'string'
+      ? JSON.parse(inscription.reponses_inscription) : (inscription.reponses_inscription || {});
+    const { profil_autre: _ancien, ...reponses } = { ...actuelles, profil };
+    await inscription.update({ reponses_inscription: reponses, montant_du: montantInscription(evenement, reponses) });
+    return inscription;
   }
 
   /**

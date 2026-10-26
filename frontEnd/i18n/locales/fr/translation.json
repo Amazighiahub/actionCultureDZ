@@ -668,7 +668,7 @@
       "toutLEvenement": "pour tout l’événement",
       "partielInfo": "(présence partielle, {{pourcent}} % du prix)",
       "aConvenir": "à convenir",
-      "autreFacultatif": "Le prix de « Autre » est facultatif : vide, le participant lit « Prix à convenir avec l’organisateur ».",
+      "autreProfessionnel": "Le prix de « Autre » est facultatif : vide ou plus bas, la personne paie le prix professionnel.",
       "prixAConvenir": "Prix à convenir avec l’organisateur."
     }
   },
@@ -3377,6 +3377,13 @@
       "answers": "Réponses au formulaire d'inscription",
       "exportExcel": "Télécharger en Excel",
       "partielle": "présence partielle",
+      "profil": {
+        "label": "Profil :",
+        "de": "Profil de {{nom}}",
+        "choisir": "À choisir",
+        "modifie": "Profil modifié",
+        "modifieDesc": "Le prix a été recalculé. Aucun message n’a été envoyé."
+      },
       "import": {
         "bouton": "Importer une liste (Excel)",
         "titre": "Importer une liste d’inscriptions",
@@ -3398,7 +3405,12 @@
         "bilanComptes": "{{n}} compte(s) créé(s)",
         "bilanInvitations": "{{n}} invitation(s) envoyée(s)",
         "erreurLecture": "Le fichier n’a pas pu être lu.",
-        "erreurImport": "L’import a échoué."
+        "erreurImport": "L’import a échoué.",
+        "profilAChoisir": "Profil à choisir",
+        "metier": "métier : {{metier}}",
+        "profilDe": "Profil de {{nom}}",
+        "choisir": "Choisir…",
+        "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire."
       }
     }
   },

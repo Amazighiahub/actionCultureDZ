@@ -56,6 +56,7 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
@@ -157,7 +158,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   evenementId,
   evenementNom
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const [importOuvert, setImportOuvert] = useState(false);
   const { td } = useTranslateData();
@@ -176,6 +177,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const [profilLoading, setProfilLoading] = useState(false);
   const [profilDialogOpen, setProfilDialogOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  /** Choix de « Vous êtes » : l'organisateur peut corriger le profil d'un participant (prix recalculé) */
+  const [profils, setProfils] = useState<{ valeur: string; label?: string | Record<string, string> }[]>([]);
+  const [profilEnCours, setProfilEnCours] = useState<number | null>(null);
 
   // État pour le dialogue de détails d'œuvre
   const [selectedOeuvre, setSelectedOeuvre] = useState<OeuvreSoumise | null>(null);
@@ -184,7 +188,22 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   useEffect(() => {
     loadParticipants();
+    httpClient.get<{ valeur: string; label?: string | Record<string, string> }[]>(`/evenements/${evenementId}/participants/profils`)
+      .then(res => setProfils(res.success && Array.isArray(res.data) ? res.data : []))
+      .catch(() => setProfils([]));
   }, [evenementId]);
+
+  const changerProfil = async (userId: number, profil: string) => {
+    setProfilEnCours(userId);
+    const res = await httpClient.put(`/evenements/${evenementId}/participants/${userId}/profil`, { profil });
+    setProfilEnCours(null);
+    if (res.success) {
+      toast({ title: t('pro.participants.profil.modifie', 'Profil modifié'), description: t('pro.participants.profil.modifieDesc', 'Le prix a été recalculé. Aucun message n’a été envoyé.') });
+      await loadParticipants();
+    } else {
+      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
+    }
+  };
 
   const loadParticipants = async () => {
     try {
@@ -499,6 +518,32 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                           )}
                         </p>
                       )}
+                      {profils.length > 0 && participant.statut_participation !== 'annule' && (() => {
+                        const actuel = participant.reponses_inscription?.profil;
+                        const connu = typeof actuel === 'string' && profils.some(pr => pr.valeur === actuel);
+                        return (
+                          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+                            <span className="text-muted-foreground">{t('pro.participants.profil.label', 'Profil :')}</span>
+                            <Select
+                              value={connu ? (actuel as string) : ''}
+                              onValueChange={(v) => changerProfil(participant.id_user, v)}
+                              disabled={profilEnCours === participant.id_user}
+                            >
+                              <SelectTrigger
+                                className={cn('w-64 h-8', !connu && 'border-amber-500')}
+                                aria-label={t('pro.participants.profil.de', 'Profil de {{nom}}', { nom: `${td(participant.User.prenom)} ${td(participant.User.nom)}`.trim() })}
+                              >
+                                <SelectValue placeholder={t('pro.participants.profil.choisir', 'À choisir')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {profils.map(pr => (
+                                  <SelectItem key={pr.valeur} value={pr.valeur}>{getLocalizedText(pr.label, i18n.language, pr.valeur)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })()}
 
                       {/* Œuvres soumises - cliquables pour voir les détails */}
                       {participant.oeuvres_soumises && participant.oeuvres_soumises.length > 0 && (

@@ -107,6 +107,13 @@ const initEvenementRoutes = (models, authMiddleware) => {
     invalidateCache([req => `/evenements/${req.params.id}/participants`]),
     asyncHandler((req, res) => evenementController.importerInscriptions(req, res)));
 
+  // Profil d'un participant corrigé par l'organisateur (choix de « Vous êtes »), montant recalculé
+  router.get('/:id/participants/profils', authenticate, validateId(),
+    asyncHandler((req, res) => evenementController.getProfilsParticipants(req, res)));
+  router.put('/:id/participants/:userId/profil', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
+    invalidateCache([req => `/evenements/${req.params.id}/participants`]),
+    asyncHandler((req, res) => evenementController.changerProfilParticipant(req, res)));
+
   // Participants validation (owner ou admin)
   router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
     invalidateCache([req => `/evenements/${req.params.id}/participants`]), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));
