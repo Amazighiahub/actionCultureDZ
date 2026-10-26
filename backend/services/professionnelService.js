@@ -9,6 +9,7 @@ const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const logger = require('../utils/logger');
 const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireInscription');
+const { configAvecProfil, tarificationDe } = require('./evenement/tarification');
 
 class ProfessionnelService {
   constructor(models) {
@@ -559,7 +560,7 @@ class ProfessionnelService {
   async _exportParticipants(userId, evenementId, limit) {
     const evenement = await this.models.Evenement.findOne({
       where: { id_evenement: evenementId, id_user: userId },
-      attributes: ['id_evenement'],
+      attributes: ['id_evenement', 'tarif', 'tarification'],
       include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['config_inscription'], required: false }]
     });
     if (!evenement) return [];
@@ -571,7 +572,11 @@ class ProfessionnelService {
       limit
     });
 
-    const champs = listerChamps(evenement.TypeEvenement?.config_inscription);
+    // Questions réellement posées (dont « Vous êtes » quand le prix dépend du profil)
+    const tarification = tarificationDe(evenement);
+    const config = configAvecProfil(evenement.TypeEvenement?.config_inscription, tarification);
+    const champs = listerChamps(config);
+    const avecBase = !config || !config.remplace_formulaire_base;
     const STATUTS = { inscrit: 'En attente', confirme: 'Confirmé', present: 'Présent', absent: 'Absent', annule: 'Refusé' };
 
     return participations.map((p) => {
@@ -584,12 +589,12 @@ class ProfessionnelService {
         'Statut': STATUTS[p.statut_participation] || p.statut_participation,
         'Date d\'inscription': p.date_inscription ? new Date(p.date_inscription).toISOString().slice(0, 10) : ''
       };
-      if (champs.length) {
-        for (const champ of champs) ligne[libelle(champ.label)] = valeurExport(reponses[champ.cle]);
-      } else {
+      for (const champ of champs) ligne[libelle(champ.label)] = valeurExport(reponses[champ.cle]);
+      if (avecBase) {
         ligne['Nombre de personnes'] = reponses.nombre_personnes || 1;
         ligne['Commentaire'] = reponses.commentaire || '';
       }
+      if (tarification.mode !== 'gratuit') ligne['Montant dû (DA)'] = p.montant_du != null ? Number(p.montant_du) : '';
       ligne['Notes de l\'organisateur'] = p.notes || '';
       return ligne;
     });

@@ -616,6 +616,35 @@
     "edit": {
       "title": "تعديل الفعالية",
       "subtitle": "تظهر التعديلات فور الحفظ."
+    },
+    "tarif": {
+      "titre": "السعر",
+      "gratuit": "مجاني",
+      "gratuitDesc": "بدون دفع",
+      "payant": "بمقابل",
+      "payantDesc": "سعر واحد للشخص",
+      "profil": "حسب الصفة",
+      "profilDesc": "سعر لكل صفة (طالب، مهني…) لكامل الفعالية",
+      "prixParPersonne": "السعر للشخص (دج)",
+      "profilsFormulaire": "الصفات هي صفات استمارة التسجيل: حدّد سعر كل منها لكامل الفعالية.",
+      "profilsLibres": "حدّد سعر كل صفة لكامل الفعالية. يمكنك إعادة التسمية أو الحذف أو الإضافة.",
+      "nomProfil": "اسم الصفة",
+      "prixDe": "السعر لـ «{{profil}}» (دج)",
+      "retirer": "حذف هذه الصفة",
+      "ajouterProfil": "إضافة صفة",
+      "partiel": "الحضور الجزئي: يُدفع",
+      "partielPourcent": "نسبة السعر للحضور الجزئي (%)",
+      "duPrix": "% من السعر",
+      "profilVisiteur": "في صفحة الفعالية يقرأ الزائر «السعر حسب صفتك»، ويرى سعره عند ملء التسجيل.",
+      "choisir": "اختر السعر: مجاني، بمقابل أو حسب الصفة",
+      "prixRequis": "حدّد السعر للشخص",
+      "profilsRequis": "حدّد اسم وسعر كل صفة (0 للمجاني)",
+      "selonProfil": "السعر حسب صفتك",
+      "prixALInscription": "يظهر سعرك عندما تحدّد صفتك.",
+      "indiquezProfil": "حدّد صفتك لترى سعرك.",
+      "votreParticipation": "مشاركتك:",
+      "toutLEvenement": "لكامل الفعالية",
+      "partielInfo": "(حضور جزئي، {{pourcent}} % من السعر)"
     }
   },
   "footer": {
@@ -3442,7 +3471,8 @@
       "presentationDesc": "ملاحظة لهذه الفعالية",
       "viewFullPage": "عرض الصفحة كاملة",
       "answers": "الإجابات على استمارة التسجيل",
-      "exportExcel": "تنزيل بصيغة Excel"
+      "exportExcel": "تنزيل بصيغة Excel",
+      "partielle": "حضور جزئي"
     }
   },
   "programmePages": {

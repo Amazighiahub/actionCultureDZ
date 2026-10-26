@@ -8,6 +8,7 @@ const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase } = require('./formulaireInscription');
+const { lireTarification, tarificationDe, configAvecProfil, montantInscription } = require('./tarification');
 const { mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { evenementPath } = require('../../utils/slug');
@@ -66,7 +67,14 @@ class EvenementService extends BaseService {
     if (!evenement) {
       throw this._notFoundError(id);
     }
-    return EvenementDTO.fromEntity(evenement);
+    const dto = EvenementDTO.fromEntity(evenement);
+    // Formulaire réellement posé : celui du type + « Vous êtes » quand le prix dépend du profil
+    const raw = dto?._raw;
+    if (raw?.TypeEvenement || tarificationDe(raw).mode === 'profil') {
+      const config = configAvecProfil(raw.TypeEvenement?.config_inscription, tarificationDe(raw));
+      if (config) raw.TypeEvenement = { ...(raw.TypeEvenement || {}), config_inscription: config };
+    }
+    return dto;
   }
 
   /**
@@ -210,6 +218,7 @@ class EvenementService extends BaseService {
       date_limite_inscription: data.date_limite_inscription || data.dateLimiteInscription,
       id_user: userId
     };
+    Object.assign(entityData, this._tarification(data));
 
     const evenement = await this.withTransaction(async (transaction) => {
       await this._assertOrganisationMember(orgId, userId, options.isAdmin, transaction);
@@ -312,6 +321,7 @@ class EvenementService extends BaseService {
       }
       if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
       if (data.tarif !== undefined) updateData.tarif = data.tarif;
+      Object.assign(updateData, this._tarification(data));
       if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
       if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
       if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
@@ -428,7 +438,9 @@ class EvenementService extends BaseService {
       }
 
       const reponses_inscription = await this._reponsesInscription(evenement, data, transaction);
-      return this.repository.registerParticipant(evenementId, userId, { transaction, reponses_inscription });
+      // Le montant est calculé ici (profil, présence, nombre de personnes), jamais choisi par le participant
+      const montant_du = montantInscription(evenement, reponses_inscription || {});
+      return this.repository.registerParticipant(evenementId, userId, { transaction, reponses_inscription, montant_du });
     });
 
     this.logger.info(`Participant inscrit: user ${userId} → événement ${evenementId}`);
@@ -440,7 +452,7 @@ class EvenementService extends BaseService {
    * (nombre de personnes + commentaire).
    */
   async _reponsesInscription(evenement, data, transaction) {
-    const config = await this._configInscription(evenement.id_type_evenement, transaction);
+    const config = configAvecProfil(await this._configInscription(evenement.id_type_evenement, transaction), tarificationDe(evenement));
     if (!config) return reponsesFormulaireBase(data);
 
     const { reponses, erreurs } = verifierReponses(config, data.reponses);
@@ -450,6 +462,8 @@ class EvenementService extends BaseService {
         erreurs
       );
     }
+    // Formulaire posé à côté du formulaire de base : nombre de personnes et commentaire gardés aussi
+    if (!config.remplace_formulaire_base) Object.assign(reponses, reponsesFormulaireBase(data) || {});
     return reponses;
   }
 
@@ -754,6 +768,14 @@ class EvenementService extends BaseService {
     const cacheMiddleware = require('../../middlewares/cacheMiddleware');
     await cacheMiddleware.clearCache('professionnel');
     await cacheMiddleware.clearCache('evenement');
+  }
+
+  /** Gratuit, payant ou selon le profil : { tarification, tarif } à enregistrer (rien si non envoyé) */
+  _tarification(data) {
+    const lu = lireTarification(data.tarification, data.tarif);
+    if (!lu) return {};
+    if (lu.erreur) throw this._validationError(lu.erreur);
+    return { tarification: lu.tarification, tarif: lu.tarif };
   }
 
   /** Statut à la demande « Publier » : publié pour l'administration, en attente de validation sinon */

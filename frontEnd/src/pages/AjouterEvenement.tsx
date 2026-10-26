@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Save, Calendar, Building2, Globe, AlertCircle, Plus, Loader2, Tag } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -34,6 +33,9 @@ import { Wilaya } from '@/types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import MotsClesInput from '@/components/shared/MotsClesInput';
+import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
+import { PROFILS_DEFAUT, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
+import type { ConfigInscription } from '@/utils/formulaireInscription';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -53,9 +55,10 @@ const AjouterEvenement = () => {
   const [isDirty, setIsDirty] = useState(false);
   useUnsavedChanges(isDirty);
 
-  const [gratuit, setGratuit] = useState(false);
+  // Tarif : à choisir (gratuit, payant, selon le profil) — plus rien n'est gratuit par défaut
+  const [tarifForm, setTarifForm] = useState<ValeurTarif>({ mode: '', prix: '', profils: [], partiel: '' });
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
-  const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: string | Record<string, string> }>>([]);
+  const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: string | Record<string, string>; config_inscription?: ConfigInscription | null }>>([]);
   
   // État pour l'organisation
   const [organisations, setOrganisations] = useState<Array<Record<string, unknown>>>([]);
@@ -132,7 +135,7 @@ const AjouterEvenement = () => {
         if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
         if (draft.selectedWilayaId) setSelectedWilayaId(draft.selectedWilayaId);
         if (draft.selectedOrganisationId) setSelectedOrganisationId(draft.selectedOrganisationId);
-        if (draft.gratuit !== undefined) setGratuit(draft.gratuit);
+        if (draft.tarifForm) setTarifForm(draft.tarifForm);
         if (draft.isVirtual !== undefined) setIsVirtual(draft.isVirtual);
         sessionStorage.removeItem(DRAFT_KEY);
         setIsDirty(true);
@@ -149,7 +152,7 @@ const AjouterEvenement = () => {
         selectedLieuId,
         selectedWilayaId,
         selectedOrganisationId,
-        gratuit,
+        tarifForm,
         isVirtual,
       }));
     } catch { /* storage full — proceed without saving */ }
@@ -199,7 +202,13 @@ const AjouterEvenement = () => {
         const idOrg = (evt.id_organisation as number | undefined) ?? orgPrincipale?.id_organisation;
         if (idOrg) setSelectedOrganisationId(idOrg);
         if (typeof evt.statut === 'string') setStatutActuel(evt.statut);
-        if (evt.tarif === 0 || !evt.tarif) setGratuit(true);
+        const tarification = tarificationDe(evt as { tarif?: number; tarification?: unknown });
+        setTarifForm({
+          mode: tarification.mode,
+          prix: tarification.mode === 'payant' ? String(evt.tarif ?? '') : '',
+          profils: (tarification.profils || []).map(pr => ({ ...pr, prix: String(pr.prix) })),
+          partiel: tarification.partiel_pourcent ? String(tarification.partiel_pourcent) : '',
+        });
         if (evt.url_virtuel) setIsVirtual(true);
         // Data loaded for edit mode
       } else {
@@ -334,8 +343,34 @@ const AjouterEvenement = () => {
     }
   };
 
-  const handleGratuitChange = (checked: boolean | "indeterminate") => {
-    setGratuit(checked === true);
+  // Profils du tarif : ceux de la question « Vous êtes » du formulaire du type (chantier-école),
+  // sinon des profils libres (Étudiant, Professionnel, Retraité, Bénévole au départ)
+  const configType = typesEvenements.find(ty => String(ty.id_type_evenement) === formData.idTypeEvenement)?.config_inscription;
+  const profilsDuFormulaire = React.useMemo(() => optionsProfilDuFormulaire(configType), [configType]);
+  const presencePartielle = aPresencePartielle(configType);
+  useEffect(() => {
+    if (tarifForm.mode !== 'profil') return;
+    setTarifForm(prev => {
+      if (profilsDuFormulaire) {
+        const memes = prev.profils.length === profilsDuFormulaire.length && profilsDuFormulaire.every((o, i) => prev.profils[i]?.valeur === o.valeur);
+        if (memes) return prev;
+        const prixDe = (v: string) => prev.profils.find(pr => pr.valeur === v)?.prix ?? '';
+        return { ...prev, profils: profilsDuFormulaire.map(o => ({ ...o, prix: prixDe(o.valeur) })), partiel: presencePartielle && prev.partiel === '' && !prev.profils.length ? '70' : prev.partiel };
+      }
+      return prev.profils.length ? prev : { ...prev, profils: PROFILS_DEFAUT.map(pr => ({ ...pr })) };
+    });
+  }, [tarifForm.mode, profilsDuFormulaire, presencePartielle]);
+
+  /** Tarification envoyée au serveur (absente tant qu'aucun choix n'est fait : brouillon) */
+  const tarificationAEnvoyer = () => {
+    if (tarifForm.mode === 'gratuit') return { mode: 'gratuit' };
+    if (tarifForm.mode === 'payant') return { mode: 'payant', prix: Number(tarifForm.prix) };
+    if (tarifForm.mode === 'profil') return {
+      mode: 'profil',
+      profils: tarifForm.profils.map(pr => ({ valeur: pr.valeur.trim(), label: pr.label, prix: pr.prix === '' ? '' : Number(pr.prix) })),
+      partiel_pourcent: presencePartielle && tarifForm.partiel !== '' ? Number(tarifForm.partiel) : null,
+    };
+    return null;
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -430,7 +465,9 @@ const AjouterEvenement = () => {
     if (formData.heureDebut) fd.append('heure_debut', formData.heureDebut);
     if (formData.heureFin) fd.append('heure_fin', formData.heureFin);
     if (formData.maxParticipants) fd.append('capacite_max', formData.maxParticipants);
-    fd.append('tarif', (!gratuit && formData.tarif) ? formData.tarif : '0');
+    fd.append('tarif', tarifForm.mode === 'payant' && tarifForm.prix ? tarifForm.prix : '0');
+    const tarification = tarificationAEnvoyer();
+    if (tarification) fd.append('tarification', JSON.stringify(tarification));
     fd.append('tags', JSON.stringify(formData.tags));
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
@@ -524,6 +561,15 @@ const AjouterEvenement = () => {
     // Validation: URL virtuel requis pour événements virtuels
     if (isVirtual && !formData.urlVirtuel?.trim()) {
       newErrors.urlVirtuel = t('events.create.virtualUrlRequired', 'Le lien de l\'événement virtuel est requis');
+    }
+
+    // Validation: Tarif choisi, et complet
+    if (!tarifForm.mode) {
+      newErrors.tarif = t('events.tarif.choisir', 'Choisissez le tarif : gratuit, payant ou selon le profil');
+    } else if (tarifForm.mode === 'payant' && !(Number(tarifForm.prix) > 0)) {
+      newErrors.tarif = t('events.tarif.prixRequis', 'Indiquez le prix par personne');
+    } else if (tarifForm.mode === 'profil' && (!tarifForm.profils.length || tarifForm.profils.some(pr => !pr.valeur.trim() || pr.prix === ''))) {
+      newErrors.tarif = t('events.tarif.profilsRequis', 'Indiquez le nom et le prix de chaque profil (0 pour gratuit)');
     }
 
     // Validation: Affiche requise (nouveau fichier OU image existante en mode édition)
@@ -942,33 +988,16 @@ const AjouterEvenement = () => {
                   />
                 </div>
                 
-                <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
-                  <Checkbox 
-                    id="gratuit" 
-                    checked={gratuit}
-                    onCheckedChange={handleGratuitChange}
+                <div className="space-y-2 pt-2">
+                  <RequiredLabel required>{t('events.tarif.titre', 'Tarif')}</RequiredLabel>
+                  <TarifEvenementFields
+                    valeur={tarifForm}
+                    onChange={(v) => { clearFieldError('tarif'); setTarifForm(v); }}
+                    profilsDuFormulaire={profilsDuFormulaire}
+                    presencePartielle={presencePartielle}
+                    erreur={fieldErrors.tarif}
                   />
-                  <Label htmlFor="gratuit">{t('events.create.freeEvent')}</Label>
                 </div>
-                
-                {!gratuit && (
-                  <div className={`space-y-2 ${rtlClasses.marginStart(6)}`}>
-                    <Label htmlFor="tarif">{t('events.create.price')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
-                    <Input
-                      id="tarif"
-                      type="number"
-                      min="0"
-                      max="1000000"
-                      step="0.01"
-                      value={formData.tarif}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || (Number(val) >= 0 && Number(val) <= 1000000)) setFormData(prev => ({ ...prev, tarif: val }));
-                      }}
-                      placeholder={t('events.create.pricePlaceholder')}
-                    />
-                  </div>
-                )}
               </CardContent>
             </Card>
 

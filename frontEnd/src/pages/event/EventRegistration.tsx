@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { montantInscription, tarificationDe, PRESENCE_PARTIELLE } from '@/utils/tarifEvenement';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,6 +126,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const formulaire = configInscriptionValide(configType) ? configType : null;
   const formulaireRemplaceBase = !!formulaire?.remplace_formulaire_base;
   const [reponses, setReponses] = useState<Reponses>({});
+  // Prix : calculé comme le serveur (profil, présence partielle, nombre de personnes)
+  const tarification = tarificationDe(event);
+  const montant = montantInscription(event, reponses, formulaireRemplaceBase ? 1 : nombrePersonnes);
+  const partiel = tarification.mode === 'profil' && !!tarification.partiel_pourcent
+    && reponses[PRESENCE_PARTIELLE.cle] === PRESENCE_PARTIELLE.valeur;
   const [erreursFormulaire, setErreursFormulaire] = useState<Record<string, ErreurChamp>>({});
 
   const changerReponse = (cle: string, valeur: ValeurReponse) => {
@@ -375,7 +381,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       <CardContent className="space-y-4">
         {/* Prix */}
         <div className="text-center py-4 bg-muted/50 rounded-lg">
-          {event.tarif === 0 ? (
+          {tarification.mode === 'profil' ? (
+            <div>
+              <p className="text-lg font-semibold text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</p>
+              <p className="text-sm text-muted-foreground">{t('events.tarif.prixALInscription', 'Votre prix s’affiche quand vous indiquez votre profil.')}</p>
+            </div>
+          ) : tarification.mode === 'gratuit' ? (
             <div>
               <Badge className="bg-green-500 text-white text-lg px-4 py-1">
                 {t('events.free', 'Gratuit')}
@@ -584,6 +595,19 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                   />
                 )}
 
+                {tarification.mode === 'profil' && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm" aria-live="polite">
+                    {montant === null
+                      ? t('events.tarif.indiquezProfil', 'Indiquez votre profil pour voir votre prix.')
+                      : (<>
+                          <span className="font-semibold">{t('events.tarif.votreParticipation', 'Votre participation :')} </span>
+                          <span className="font-bold text-primary">{montant === 0 ? t('events.free', 'Gratuit') : formatPrice(montant)}</span>
+                          {' '}{t('events.tarif.toutLEvenement', 'pour tout l’événement')}
+                          {partiel && <span className="text-muted-foreground"> {t('events.tarif.partielInfo', '(présence partielle, {{pourcent}} % du prix)', { pourcent: tarification.partiel_pourcent })}</span>}
+                        </>)}
+                  </div>
+                )}
+
                 {!formulaireRemplaceBase && (<>
                 {/* Nombre de personnes */}
                 <div className="space-y-2">
@@ -598,7 +622,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     value={nombrePersonnes}
                     onChange={(e) => setNombrePersonnes(parseInt(e.target.value) || 1)}
                   />
-                  {event.tarif > 0 && nombrePersonnes > 1 && (
+                  {tarification.mode === 'payant' && nombrePersonnes > 1 && (
                     <p className="text-sm text-muted-foreground">
                       {t('event.registration.total', 'Total')}: {formatPrice(event.tarif * nombrePersonnes)}
                     </p>
@@ -787,10 +811,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                   <div className="flex justify-between font-medium">
                     <span>{t('event.registration.total', 'Total')}</span>
                     <span className="text-primary">
-                      {event.tarif === 0 
-                        ? t('events.free', 'Gratuit')
-                        : formatPrice(event.tarif * (formulaireRemplaceBase ? 1 : nombrePersonnes))
-                      }
+                      {montant === null
+                        ? '—'
+                        : montant === 0 ? t('events.free', 'Gratuit') : formatPrice(montant)}
                     </span>
                   </div>
                 </div>

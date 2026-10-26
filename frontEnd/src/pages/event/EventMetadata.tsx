@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { tarificationDe } from '@/utils/tarifEvenement';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +67,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
                 {t('event.metadata.certificateDelivered', 'Certificat délivré')}
               </Badge>
             )}
-            {event.tarif === 0 && (
+            {tarificationDe(event).mode === 'gratuit' && (
               <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
                 <Ticket className="h-3.5 w-3.5" />
                 {t('event.metadata.free', 'Gratuit')}
