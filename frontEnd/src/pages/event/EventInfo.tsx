@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { tarificationDe } from '@/utils/tarifEvenement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -170,7 +171,9 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
             </div>
             <div>
               <p className="font-medium">{t('event.pricing', 'Tarification')}</p>
-              {event.tarif === 0 ? (
+              {tarificationDe(event).mode === 'profil' ? (
+                <p className="font-semibold text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</p>
+              ) : tarificationDe(event).mode === 'gratuit' ? (
                 <Badge className="bg-green-500 mt-1">
                   {t('events.free', 'Gratuit')}
                 </Badge>

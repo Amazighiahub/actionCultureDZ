@@ -611,6 +611,35 @@
     "edit": {
       "title": "Edit event",
       "subtitle": "Changes are visible as soon as you save."
+    },
+    "tarif": {
+      "titre": "Price",
+      "gratuit": "Free",
+      "gratuitDesc": "No payment",
+      "payant": "Paid",
+      "payantDesc": "One price per person",
+      "profil": "By profile",
+      "profilDesc": "A price per profile (student, professional…), for the whole event",
+      "prixParPersonne": "Price per person (DZD)",
+      "profilsFormulaire": "The profiles come from the registration form: enter the price of each, for the whole event.",
+      "profilsLibres": "Enter the price of each profile, for the whole event. You can rename, remove or add profiles.",
+      "nomProfil": "Profile name",
+      "prixDe": "Price for “{{profil}}” (DZD)",
+      "retirer": "Remove this profile",
+      "ajouterProfil": "Add a profile",
+      "partiel": "Partial attendance: pay",
+      "partielPourcent": "Share of the price for partial attendance (%)",
+      "duPrix": "% of the price",
+      "profilVisiteur": "On the event page, visitors read “Price according to your profile”; they see their price when registering.",
+      "choisir": "Choose the price: free, paid or by profile",
+      "prixRequis": "Enter the price per person",
+      "profilsRequis": "Enter the name and price of each profile (0 for free)",
+      "selonProfil": "Price according to your profile",
+      "prixALInscription": "Your price appears when you indicate your profile.",
+      "indiquezProfil": "Indicate your profile to see your price.",
+      "votreParticipation": "Your participation:",
+      "toutLEvenement": "for the whole event",
+      "partielInfo": "(partial attendance, {{pourcent}}% of the price)"
     }
   },
   "footer": {
@@ -3336,7 +3365,8 @@
       "presentationDesc": "Note for this event",
       "viewFullPage": "View full page",
       "answers": "Registration form answers",
-      "exportExcel": "Download as Excel"
+      "exportExcel": "Download as Excel",
+      "partielle": "partial attendance"
     }
   },
   "programmePages": {

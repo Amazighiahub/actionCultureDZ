@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { tarificationDe } from '@/utils/tarifEvenement';
 import { useShare } from '@/hooks/useShare';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,8 @@ const EventHero: React.FC<EventHeroProps> = ({
   const { t } = useTranslation();
   const { formatDate, formatDateRange } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
+  // Gratuit, prix, ou « Tarif selon votre profil » (le prix se découvre à l'inscription)
+  const modeTarif = tarificationDe(event).mode;
   const { td, safe } = useTranslateData();
 
   // Calculer le pourcentage de remplissage
@@ -63,7 +66,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                   {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
                 </Badge>
               )}
-              {event.tarif === 0 && (
+              {modeTarif === 'gratuit' && (
                 <Badge className="bg-green-500 text-white">
                   {t('events.free', 'Gratuit')}
                 </Badge>
@@ -116,11 +119,11 @@ const EventHero: React.FC<EventHeroProps> = ({
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              {event.tarif > 0 && (
+              {modeTarif !== 'gratuit' && (
                 <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-4 py-2">
                   <Ticket className="h-5 w-5 text-primary" />
-                  <span className="text-xl font-bold text-primary">
-                    {formatPrice(event.tarif)}
+                  <span className={modeTarif === 'profil' ? 'font-semibold text-primary' : 'text-xl font-bold text-primary'}>
+                    {modeTarif === 'profil' ? t('events.tarif.selonProfil', 'Tarif selon votre profil') : formatPrice(event.tarif)}
                   </span>
                 </div>
               )}
@@ -186,7 +189,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                   </Badge>
                 )}
 
-                {event.tarif === 0 && (
+                {modeTarif === 'gratuit' && (
                   <Badge className="bg-green-500 text-white">
                     {t('events.free', 'Gratuit')}
                   </Badge>
@@ -242,11 +245,11 @@ const EventHero: React.FC<EventHeroProps> = ({
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                {event.tarif > 0 && (
+                {modeTarif !== 'gratuit' && (
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
                     <Ticket className="h-5 w-5 text-white" />
-                    <span className="text-xl font-bold text-white">
-                      {formatPrice(event.tarif)}
+                    <span className={modeTarif === 'profil' ? 'font-semibold text-white' : 'text-xl font-bold text-white'}>
+                      {modeTarif === 'profil' ? t('events.tarif.selonProfil', 'Tarif selon votre profil') : formatPrice(event.tarif)}
                     </span>
                   </div>
                 )}

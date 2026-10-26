@@ -5,6 +5,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { tarificationDe } from '@/utils/tarifEvenement';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -150,12 +151,12 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
 
         {/* Prix */}
         <div className="mt-4 flex items-center justify-between">
-          {event.gratuit ? (
+          {tarificationDe(event).mode === 'profil' ? (
+            <span className="text-sm font-medium text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</span>
+          ) : event.gratuit || !Number(event.tarif) ? (
             <Badge variant="secondary">{t('events.free', 'Gratuit')}</Badge>
-          ) : event.tarif ? (
-            <span className="font-semibold text-primary">{formatPrice(Number(event.tarif))}</span>
           ) : (
-            <span></span>
+            <span className="font-semibold text-primary">{formatPrice(Number(event.tarif))}</span>
           )}
           
           <Button asChild variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">

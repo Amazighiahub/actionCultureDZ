@@ -51,6 +51,11 @@ module.exports = (sequelize) => {
       defaultValue: null,
       comment: 'Réponses du participant au formulaire d\'inscription (de base ou du type d\'événement)'
     },
+    montant_du: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      comment: 'Montant calculé à l\'inscription (tarif, profil, présence, nombre de personnes)'
+    },
     date_validation: {
       type: DataTypes.DATE,
       comment: 'Date de validation de la participation'

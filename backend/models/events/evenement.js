@@ -110,6 +110,12 @@ module.exports = (sequelize) => {
         min: 0
       }
     },
+    // Gratuit, payant ou selon le profil du participant (services/evenement/tarification.js)
+    tarification: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null
+    },
     inscription_requise: {
       type: DataTypes.BOOLEAN,
       defaultValue: false

@@ -636,6 +636,35 @@
     "edit": {
       "title": "Modifier l’événement",
       "subtitle": "Les modifications sont visibles dès l’enregistrement."
+    },
+    "tarif": {
+      "titre": "Tarif",
+      "gratuit": "Gratuit",
+      "gratuitDesc": "Aucun paiement",
+      "payant": "Payant",
+      "payantDesc": "Un seul prix, par personne",
+      "profil": "Selon le profil",
+      "profilDesc": "Un prix par profil (étudiant, professionnel…), pour tout l’événement",
+      "prixParPersonne": "Prix par personne (DA)",
+      "profilsFormulaire": "Les profils sont ceux du formulaire d’inscription : indiquez le prix de chacun, pour tout l’événement.",
+      "profilsLibres": "Indiquez le prix de chaque profil, pour tout l’événement. Vous pouvez renommer, retirer ou ajouter des profils.",
+      "nomProfil": "Nom du profil",
+      "prixDe": "Prix pour « {{profil}} » (DA)",
+      "retirer": "Retirer ce profil",
+      "ajouterProfil": "Ajouter un profil",
+      "partiel": "Présence partielle : on paie",
+      "partielPourcent": "Part du prix pour une présence partielle (%)",
+      "duPrix": "% du prix",
+      "profilVisiteur": "Sur la page de l’événement, le visiteur lit « Tarif selon votre profil » ; il voit son prix en remplissant l’inscription.",
+      "choisir": "Choisissez le tarif : gratuit, payant ou selon le profil",
+      "prixRequis": "Indiquez le prix par personne",
+      "profilsRequis": "Indiquez le nom et le prix de chaque profil (0 pour gratuit)",
+      "selonProfil": "Tarif selon votre profil",
+      "prixALInscription": "Votre prix s’affiche quand vous indiquez votre profil.",
+      "indiquezProfil": "Indiquez votre profil pour voir votre prix.",
+      "votreParticipation": "Votre participation :",
+      "toutLEvenement": "pour tout l’événement",
+      "partielInfo": "(présence partielle, {{pourcent}} % du prix)"
     }
   },
   "footer": {
@@ -3341,7 +3370,8 @@
       "presentationDesc": "Note pour cet événement",
       "viewFullPage": "Voir page complète",
       "answers": "Réponses au formulaire d'inscription",
-      "exportExcel": "Télécharger en Excel"
+      "exportExcel": "Télécharger en Excel",
+      "partielle": "présence partielle"
     }
   },
   "programmePages": {

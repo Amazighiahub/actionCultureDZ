@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +96,9 @@ interface Participant {
   role_participation: string;
   date_inscription: string;
   notes?: string;
+  /** Montant calculé à l'inscription (profil, présence, nombre de personnes) ; null : gratuit ou inconnu */
+  montant_du?: number | string | null;
+  reponses_inscription?: Reponses | null;
   User: {
     id_user: number;
     nom: string;
@@ -152,6 +156,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   evenementNom
 }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useLocalizedNumber();
   const { td } = useTranslateData();
   const { formatDate } = useLocalizedDate();
   const { toast } = useToast();
@@ -463,6 +468,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         <Calendar className="inline h-3 w-3 me-1" />
                         {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
                       </p>
+                      {/* À payer : profil choisi et montant calculé à l'inscription */}
+                      {Number(participant.montant_du) > 0 && (
+                        <p className="text-sm mt-1">
+                          <span className="font-semibold text-primary">{formatPrice(Number(participant.montant_du))}</span>
+                          {typeof participant.reponses_inscription?.profil === 'string' && (
+                            <span className="text-muted-foreground"> · {participant.reponses_inscription.profil}</span>
+                          )}
+                          {participant.reponses_inscription?.presence === 'Partielle' && (
+                            <span className="text-muted-foreground"> · {t('pro.participants.partielle', 'présence partielle')}</span>
+                          )}
+                        </p>
+                      )}
 
                       {/* Œuvres soumises - cliquables pour voir les détails */}
                       {participant.oeuvres_soumises && participant.oeuvres_soumises.length > 0 && (

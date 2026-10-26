@@ -293,6 +293,9 @@ async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
   // Lieu
   await user.click(screen.getByTestId('lieu-selector'));
 
+  // Tarif : un choix est obligatoire
+  await user.click(document.getElementById('tarif-gratuit') as HTMLElement);
+
   // Image
   const fileInput = document.getElementById('affiche-upload') as HTMLInputElement;
   const file = createMockFile('affiche.jpg', 200, 'image/jpeg');
@@ -464,7 +467,8 @@ describe('AjouterEvenement', () => {
       render(<AjouterEvenement />);
       await waitForDataLoad();
 
-      // Le tarif est visible car gratuit=false par defaut
+      // Le prix apparaît quand on choisit « Payant »
+      await user.click(document.getElementById('tarif-payant') as HTMLElement);
       const tarifInput = document.getElementById('tarif') as HTMLInputElement;
 
       await user.clear(tarifInput);
@@ -719,10 +723,45 @@ describe('AjouterEvenement', () => {
         document.getElementById('affiche-upload') as HTMLInputElement,
         createMockFile('img.jpg', 100, 'image/jpeg')
       );
+      await user.click(document.getElementById('tarif-gratuit') as HTMLElement);
 
       submitForm();
 
       await waitFor(() => expect(mockCreate).toHaveBeenCalled());
+    });
+  });
+
+  // =========================================================================
+  // TARIF
+  // =========================================================================
+
+  describe('Tarif', () => {
+    test('aucun choix : l’événement n’est pas envoyé (plus de gratuit par défaut)', async () => {
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+      await user.type(screen.getByTestId('input-nom-fr'), 'Chantier');
+      await selectEventType(user);
+      await user.type(document.getElementById('date-debut')!, '2026-06-15');
+      await user.click(screen.getByTestId('lieu-selector'));
+      await user.upload(document.getElementById('affiche-upload') as HTMLInputElement, createMockFile('img.jpg', 100, 'image/jpeg'));
+      submitForm();
+      expect(await screen.findByText(/Choisissez le tarif/)).toBeInTheDocument();
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    test('selon le profil : un prix par profil est envoyé, le prix des listes est 0', async () => {
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+      await fillMinimalForm(user);
+      await user.click(document.getElementById('tarif-profil') as HTMLElement);
+      const prix = await screen.findAllByLabelText(/Prix pour/);
+      for (const [i, champ] of prix.entries()) await user.type(champ, String((i + 1) * 1000));
+      submitForm();
+      await waitFor(() => expect(mockCreate).toHaveBeenCalled());
+      const fd = mockCreate.mock.calls[0][0] as FormData;
+      const tarification = JSON.parse(fd.get('tarification') as string);
+      expect(tarification.mode).toBe('profil');
+      expect(tarification.profils.map((p: { prix: number }) => p.prix)).toEqual([1000, 2000, 3000, 4000]);
     });
   });
 });
