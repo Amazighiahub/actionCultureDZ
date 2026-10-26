@@ -1,6 +1,8 @@
 // types/common/multilingual.types.ts
 // Types communs pour le multilingue dans tout le projet
 
+import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
+
 export interface TranslatableValue {
   fr?: string;
   ar?: string;
@@ -65,7 +67,7 @@ export const LANGUAGE_FONT_CLASSES: Partial<Record<SupportedLanguage, string>> =
 // Helpers pour le multilingue
 export function getTranslation(value: TranslatableValue | undefined, lang: SupportedLanguage = 'fr'): string {
   if (!value) return '';
-  return value[lang] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 }
 
 export function setTranslation(value: TranslatableValue, lang: SupportedLanguage, text: string): TranslatableValue {
@@ -86,7 +88,7 @@ export function createEmptyTranslation(): RequiredTranslatableValue {
 }
 
 export function hasRequiredTranslations(value: TranslatableValue): boolean {
-  return !!(value.fr || value.ar || value.en);
+  return aDuTexte(value);
 }
 
 export function getFirstAvailableTranslation(value: TranslatableValue): string {

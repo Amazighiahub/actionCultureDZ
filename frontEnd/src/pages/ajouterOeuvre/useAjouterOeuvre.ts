@@ -32,6 +32,7 @@ import type {
   ArticleBlockToSave,
 } from './types';
 import { INITIAL_FORM_DATA } from './types';
+import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -40,8 +41,7 @@ export const getTagName = (nom: unknown, lang: SupportedLanguage = 'fr'): string
   if (!nom) return '';
   if (typeof nom === 'string') return nom;
   if (typeof nom === 'object' && nom !== null) {
-    const record = nom as Record<string, string | undefined>;
-    return record[lang] || record.fr || record.ar || record.en || '';
+    return getLocalizedText(nom, lang);
   }
   return String(nom);
 };
@@ -695,14 +695,14 @@ export function useAjouterOeuvre() {
       setFieldErrors({});
 
       const errors: Record<string, string> = {};
-      if (!formData.titre?.fr?.trim() && !formData.titre?.ar?.trim()) {
-        errors.titre = t('oeuvre.errors.titleRequired', 'Le titre est requis (au moins en français ou arabe)');
+      if (!aDuTexte(formData.titre)) {
+        errors.titre = t('oeuvre.errors.titleRequired', 'Le titre est requis, dans au moins une langue');
       }
       if (!formData.id_type_oeuvre) {
         errors.id_type_oeuvre = t('oeuvre.errors.typeRequired', 'Veuillez sélectionner un type d\'œuvre');
       }
-      if (!formData.description?.fr?.trim() && !formData.description?.ar?.trim()) {
-        errors.description = t('oeuvre.errors.descriptionRequired', 'La description est requise (au moins en français ou arabe)');
+      if (!aDuTexte(formData.description)) {
+        errors.description = t('oeuvre.errors.descriptionRequired', 'La description est requise, dans au moins une langue');
       }
       if (formData.id_type_oeuvre) {
         const hasCategories = await metadataService.checkIfTypeHasCategories(formData.id_type_oeuvre);

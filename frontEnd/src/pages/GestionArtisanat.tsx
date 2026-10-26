@@ -25,6 +25,7 @@ import { artisanatService, CreateArtisanatData, UpdateArtisanatData } from '@/se
 import { metadataService } from '@/services/metadata.service';
 import MultiLangInput from '@/components/MultiLangInput';
 import { FormField } from '@/components/forms';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 type MultiLangText = {
   fr: string;
@@ -249,8 +250,8 @@ const GestionArtisanat: React.FC = () => {
 
     // Validation — collect ALL errors before returning
     const errors: Record<string, string> = {};
-    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
-      errors.nom = t('gestionArtisanat.errors.nomRequired', 'Le nom est requis (au moins en français ou arabe)');
+    if (!aDuTexte(formData.nom)) {
+      errors.nom = t('gestionArtisanat.errors.nomRequired', 'Le nom est requis, dans au moins une langue');
     }
     if (!formData.id_materiau) {
       errors.id_materiau = t('gestionArtisanat.errors.materiauRequired', 'Le matériau est requis');

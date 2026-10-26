@@ -36,6 +36,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -121,8 +122,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
     }
 
     if (currentStep === 2) {
-      if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
-        newErrors.nom = t('patrimoine.errors.nomRequired', 'Le nom est requis (au moins en français ou arabe)');
+      if (!aDuTexte(formData.nom)) {
+        newErrors.nom = t('patrimoine.errors.nomRequired', 'Le nom est requis, dans au moins une langue');
       }
       if (!formData.typePatrimoine) {
         newErrors.type = t('patrimoine.errors.typeRequired', 'Le type de patrimoine est requis');
@@ -147,7 +148,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
     // Vérification doublons à l'étape 2 (un point est contrôlé par le serveur parmi les points du site)
     if (step === 2 && formData.communeId && !parentId) {
-      const nom = formData.nom.fr?.trim() || formData.nom.ar?.trim() || '';
+      const nom = getLocalizedText(formData.nom, 'fr').trim();
       if (nom) {
         setCheckingDuplicate(true);
         try {

@@ -5,6 +5,7 @@ import { ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
 import { Lieu } from '@/types/models/lieu.types';
 import { DetailLieu, Service } from '@/types/models/lieux-details.types';
 import { Wilaya, Daira } from '@/types/models/geography.types';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Types pour les données multilingues
 interface MultiLangString {
@@ -229,8 +230,7 @@ class LieuService {
    */
   private getStringValue(value: string | MultiLangString | undefined): string {
     if (!value) return '';
-    if (typeof value === 'string') return value;
-    return value.fr || value.ar || value.en || '';
+    return getLocalizedText(value, 'fr');
   }
 
   /**

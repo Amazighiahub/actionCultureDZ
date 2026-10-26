@@ -538,7 +538,7 @@
       "updateSuccess": "Event updated successfully",
       "success": "Event created successfully!",
       "error": "Error while creating",
-      "nameRequired": "Event name is required (at least in French or Arabic)",
+      "nameRequired": "Event name is required, in at least one language",
       "organisationRequired": "An organisation is required for in-person events",
       "virtualUrlRequired": "The virtual event link is required",
       "imageRequired": "The event image is required",
@@ -2978,9 +2978,9 @@
       "loadMetadataFailed": "Unable to load the data needed for the form.",
       "loadRefFailed": "Unable to load reference data",
       "connectionError": "Server connection error. Please try again.",
-      "titleRequired": "Title is required (at least in French or Arabic)",
+      "titleRequired": "A title is required, in at least one language",
       "typeRequired": "Please select a work type",
-      "descriptionRequired": "Description is required (at least in French or Arabic)",
+      "descriptionRequired": "A description is required, in at least one language",
       "categoryRequired": "Please select at least one category",
       "languageRequired": "Please select the original language",
       "invalidYear": "The year must be between 1800 and {{max}}",
@@ -3597,7 +3597,7 @@
     "errors": {
       "wilayaRequired": "Wilaya is required",
       "communeRequired": "Commune is required",
-      "nomRequired": "Name is required (at least in French or Arabic)",
+      "nomRequired": "A name is required, in at least one language",
       "typeRequired": "Heritage type is required",
       "photoRequired": "At least one photo is required",
       "createFailed": "Error during creation",
@@ -3635,7 +3635,7 @@
       "saved": "Contribution saved!",
       "thanks": "Thank you for your contribution",
       "saveFailed": "Error saving",
-      "contentRequired": "Please enter content (at least in French or Arabic)",
+      "contentRequired": "Please enter some content, in at least one language",
       "addArticle": "Article",
       "addQuick": "Quick text",
       "writeArticle": "Write an article",
@@ -3790,7 +3790,7 @@
       "save": "Save changes",
       "saved": "Changes saved",
       "saveError": "The changes could not be saved",
-      "nameRequired": "The name is required (at least in French or Arabic)",
+      "nameRequired": "A name is required, in at least one language",
       "photos": "Photos and videos",
       "photosHint": "Added or removed immediately. The first photo is used as the main image.",
       "noPhoto": "No photos yet.",
@@ -3985,7 +3985,7 @@
       "loadFailed": "Unable to load the craft product",
       "loadMetadataFailed": "Error loading materials and techniques",
       "prixMinMax": "The minimum price cannot be higher than the maximum price",
-      "descriptionRequired": "A description is required (at least in French or Arabic)"
+      "descriptionRequired": "A description is required, in at least one language"
     },
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",
@@ -4039,7 +4039,7 @@
       "description": "Your service has been submitted and will be reviewed by an administrator."
     },
     "errors": {
-      "nomRequired": "Service name is required (at least in French or Arabic)",
+      "nomRequired": "Service name is required, in at least one language",
       "typeRequired": "Service type is required",
       "lieuRequired": "Please choose where your service is",
       "newLieuNomRequired": "New place name is required (at least in French or Arabic)",
@@ -4073,7 +4073,7 @@
       "info": "Information",
       "name": "Organization name",
       "namePlaceholder": "E.g.: Cultural association...",
-      "nameRequired": "Organization name is required (at least in French or Arabic)",
+      "nameRequired": "A name is required, in at least one language",
       "type": "Organization type",
       "typePlaceholder": "Choose a type",
       "typeRequired": "Organization type is required",
@@ -4276,7 +4276,7 @@
         "startTimeRequired": "Start time is required",
         "endTimeRequired": "End time is required",
         "endTimeAfterStart": "End time must be after start time",
-        "descriptionRequired": "Description is required (at least in French or Arabic)",
+        "descriptionRequired": "A description is required, in at least one language",
         "intervenantUserRequired": "Each contributor must have a selected user",
         "summary": "The form is incomplete:",
         "intervenantNameRequired": "Enter the name of each speaker (or remove the empty row)"
@@ -4610,7 +4610,7 @@
   "gestionArtisanat": {
     "errors": {
       "loadFailed": "Error while loading",
-      "nomRequired": "The name is required (at least in French or Arabic)",
+      "nomRequired": "A name is required, in at least one language",
       "materiauRequired": "The material is required",
       "techniqueRequired": "The technique is required",
       "saveFailed": "Error while saving"

@@ -32,6 +32,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
@@ -253,8 +254,8 @@ const AjouterServicePro: React.FC = () => {
   const validateForm = (): boolean => {
     const errs: Record<string, string> = {};
 
-    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
-      errs.nom = t('service.errors.nomRequired', 'Le nom du service est requis (au moins en français ou arabe)');
+    if (!aDuTexte(formData.nom)) {
+      errs.nom = t('service.errors.nomRequired', 'Le nom du service est requis, dans au moins une langue');
     }
     if (!formData.type_service) {
       errs.type_service = t('service.errors.typeRequired', 'Le type de service est requis');

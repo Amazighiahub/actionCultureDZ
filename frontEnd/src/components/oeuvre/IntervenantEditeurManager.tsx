@@ -42,6 +42,7 @@ import type {
 } from '@/types/api/oeuvre-creation.types';
 import type { Editeur } from '@/types/models/references.types';
 import type { TypeUser } from '@/types/models/type-user.types';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface IntervenantEditeurManagerProps {
   typeOeuvreId: number;
@@ -69,7 +70,7 @@ interface DisplayIntervenant {
 const getEditeurName = (nom: any, lang: SupportedLanguage = 'fr'): string => {
   if (!nom) return '';
   if (typeof nom === 'string') return nom;
-  if (typeof nom === 'object') return nom[lang] || nom.fr || nom.ar || nom.en || '';
+  if (typeof nom === 'object') return getLocalizedText(nom, lang);
   return String(nom);
 };
 

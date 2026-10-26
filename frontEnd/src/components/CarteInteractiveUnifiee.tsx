@@ -23,6 +23,7 @@ import 'leaflet/dist/leaflet.css';
 // Icônes des marqueurs servies localement (voir src/lib/leafletIcons.ts)
 import '@/lib/leafletIcons';
 import { evenementPath } from '@/utils/slug';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Custom marker icons par catégorie
 const createIcon = (color: string, emoji: string) => {
@@ -95,8 +96,7 @@ interface CarteInteractiveUnifieeProps {
 
 const translate = (value: any, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({

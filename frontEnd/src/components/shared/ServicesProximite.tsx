@@ -18,6 +18,7 @@ import { styleTypeService } from '@/components/services/typesService';
 import type { TFunction } from 'i18next';
 import { lieuService } from '@/services/lieu.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Icône, couleurs et libellé traduit de chaque type de service
 const configType = (type: string | undefined, t: TFunction) => {
@@ -55,8 +56,7 @@ interface ServicesProximiteProps {
 
 const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang as keyof typeof value] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 const ServicesProximite: React.FC<ServicesProximiteProps> = ({

@@ -564,7 +564,7 @@
       "success": "Événement créé avec succès!",
       "error": "Erreur lors de la création",
       "errorEvent": "Erreur lors de la création de l'événement",
-      "nameRequired": "Le nom de l'événement est requis (au moins en français ou arabe)",
+      "nameRequired": "Le nom de l'événement est requis, dans au moins une langue",
       "organisationRequired": "Une organisation est requise pour les événements en présentiel",
       "virtualUrlRequired": "Le lien de l'événement virtuel est requis",
       "imageRequired": "L'image de l'événement est requise",
@@ -2983,9 +2983,9 @@
       "loadMetadataFailed": "Impossible de charger les données nécessaires au formulaire.",
       "loadRefFailed": "Impossible de charger les données de référence",
       "connectionError": "Erreur de connexion au serveur. Veuillez réessayer.",
-      "titleRequired": "Le titre est requis (au moins en français ou arabe)",
+      "titleRequired": "Le titre est requis, dans au moins une langue",
       "typeRequired": "Veuillez sélectionner un type d'œuvre",
-      "descriptionRequired": "La description est requise (au moins en français ou arabe)",
+      "descriptionRequired": "La description est requise, dans au moins une langue",
       "categoryRequired": "Veuillez sélectionner au moins une catégorie",
       "languageRequired": "Veuillez sélectionner la langue originale",
       "invalidYear": "L'année doit être entre 1800 et {{max}}",
@@ -3606,7 +3606,7 @@
     "errors": {
       "wilayaRequired": "La wilaya est requise",
       "communeRequired": "La commune est requise",
-      "nomRequired": "Le nom est requis (au moins en français ou arabe)",
+      "nomRequired": "Le nom est requis, dans au moins une langue",
       "typeRequired": "Le type de patrimoine est requis",
       "photoRequired": "Au moins une photo est requise",
       "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
@@ -3644,7 +3644,7 @@
       "empty": "Cette section n'est pas encore documentée.",
       "saved": "Contribution enregistrée !",
       "thanks": "Merci pour votre contribution",
-      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)",
+      "contentRequired": "Veuillez saisir du contenu, dans au moins une langue",
       "saveFailed": "Erreur lors de la sauvegarde",
       "addArticle": "Article",
       "addQuick": "Texte rapide",
@@ -3795,7 +3795,7 @@
       "save": "Enregistrer les modifications",
       "saved": "Modifications enregistrées",
       "saveError": "Les modifications n’ont pas pu être enregistrées",
-      "nameRequired": "Le nom est requis (au moins en français ou en arabe)",
+      "nameRequired": "Le nom est requis, dans au moins une langue",
       "photos": "Photos et vidéos",
       "photosHint": "Ajoutées ou supprimées immédiatement. La première photo sert d’image principale.",
       "noPhoto": "Aucune photo pour l’instant.",
@@ -4129,7 +4129,7 @@
         "startTimeRequired": "L'heure de début est requise",
         "endTimeRequired": "L'heure de fin est requise",
         "endTimeAfterStart": "L'heure de fin doit être après l'heure de début",
-        "descriptionRequired": "La description est requise (au moins en français ou arabe)",
+        "descriptionRequired": "La description est requise, dans au moins une langue",
         "intervenantUserRequired": "Chaque intervenant doit avoir un utilisateur sélectionné",
         "summary": "Le formulaire n’est pas complet :",
         "intervenantNameRequired": "Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)"
@@ -4260,7 +4260,7 @@
       "loadFailed": "Impossible de charger l'artisanat",
       "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques",
       "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum",
-      "descriptionRequired": "La description est requise (au moins en français ou en arabe)"
+      "descriptionRequired": "La description est requise, dans au moins une langue"
     },
     "addTag": "Ajouter le tag",
     "removeTag": "Supprimer le tag {{tag}}",
@@ -4314,7 +4314,7 @@
       "description": "Votre service a été soumis et sera validé par un administrateur."
     },
     "errors": {
-      "nomRequired": "Le nom du service est requis (au moins en français ou arabe)",
+      "nomRequired": "Le nom du service est requis, dans au moins une langue",
       "typeRequired": "Le type de service est requis",
       "lieuRequired": "Veuillez choisir le lieu de votre service",
       "newLieuNomRequired": "Le nom du nouveau lieu est requis (au moins en français ou arabe)",
@@ -4348,7 +4348,7 @@
       "info": "Informations",
       "name": "Nom de l'organisation",
       "namePlaceholder": "Ex: Association culturelle...",
-      "nameRequired": "Le nom de l'organisation est requis (au moins en français ou arabe)",
+      "nameRequired": "Le nom est requis, dans au moins une langue",
       "type": "Type d'organisation",
       "typePlaceholder": "Choisir un type",
       "typeRequired": "Le type d'organisation est requis",
@@ -4610,7 +4610,7 @@
   "gestionArtisanat": {
     "errors": {
       "loadFailed": "Erreur lors du chargement",
-      "nomRequired": "Le nom est requis (au moins en français ou arabe)",
+      "nomRequired": "Le nom est requis, dans au moins une langue",
       "materiauRequired": "Le matériau est requis",
       "techniqueRequired": "La technique est requise",
       "saveFailed": "Erreur lors de la sauvegarde"
