@@ -3377,6 +3377,13 @@
       "answers": "Réponses au formulaire d'inscription",
       "exportExcel": "Télécharger en Excel",
       "partielle": "présence partielle",
+      "profil": {
+        "label": "Profil :",
+        "de": "Profil de {{nom}}",
+        "choisir": "À choisir",
+        "modifie": "Profil modifié",
+        "modifieDesc": "Le prix a été recalculé. Aucun message n’a été envoyé."
+      },
       "import": {
         "bouton": "Importer une liste (Excel)",
         "titre": "Importer une liste d’inscriptions",

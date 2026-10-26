@@ -514,6 +514,30 @@ class EvenementController extends BaseController {
     }
   }
 
+  async getProfilsParticipants(req, res) {
+    try {
+      const data = await this.evenementService.getProfilsParticipants(parseInt(req.params.id), req.user.id_user, req.user.isAdmin);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async changerProfilParticipant(req, res) {
+    try {
+      if (typeof req.body?.profil !== 'string' || !req.body.profil.trim()) {
+        return res.status(400).json({ success: false, error: req.t('validation.invalidData') });
+      }
+      const data = await this.evenementService.changerProfilParticipant(
+        parseInt(req.params.id), parseInt(req.params.userId), req.body.profil.trim().slice(0, 80),
+        { id: req.user.id_user, isAdmin: req.user.isAdmin }
+      );
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async validateParticipation(req, res) {
     try {
       const { validated } = req.body;

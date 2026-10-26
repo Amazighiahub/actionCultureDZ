@@ -3372,6 +3372,13 @@
       "answers": "Registration form answers",
       "exportExcel": "Download as Excel",
       "partielle": "partial attendance",
+      "profil": {
+        "label": "Profile:",
+        "de": "Profile of {{nom}}",
+        "choisir": "To choose",
+        "modifie": "Profile changed",
+        "modifieDesc": "The price has been recalculated. No message was sent."
+      },
       "import": {
         "bouton": "Import a list (Excel)",
         "titre": "Import a registration list",
