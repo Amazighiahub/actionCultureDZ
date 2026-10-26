@@ -34,7 +34,7 @@ import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import MotsClesInput from '@/components/shared/MotsClesInput';
 import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
-import { PROFILS_DEFAUT, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
+import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
 import type { ConfigInscription } from '@/utils/formulaireInscription';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
@@ -568,7 +568,7 @@ const AjouterEvenement = () => {
       newErrors.tarif = t('events.tarif.choisir', 'Choisissez le tarif : gratuit, payant ou selon le profil');
     } else if (tarifForm.mode === 'payant' && !(Number(tarifForm.prix) > 0)) {
       newErrors.tarif = t('events.tarif.prixRequis', 'Indiquez le prix par personne');
-    } else if (tarifForm.mode === 'profil' && (!tarifForm.profils.length || tarifForm.profils.some(pr => !pr.valeur.trim() || pr.prix === ''))) {
+    } else if (tarifForm.mode === 'profil' && (!tarifForm.profils.length || tarifForm.profils.some(pr => !pr.valeur.trim() || (pr.prix === '' && pr.valeur !== PROFIL_AUTRE)))) {
       newErrors.tarif = t('events.tarif.profilsRequis', 'Indiquez le nom et le prix de chaque profil (0 pour gratuit)');
     }
 

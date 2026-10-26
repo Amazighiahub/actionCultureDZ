@@ -664,7 +664,10 @@
       "indiquezProfil": "Indiquez votre profil pour voir votre prix.",
       "votreParticipation": "Votre participation :",
       "toutLEvenement": "pour tout l’événement",
-      "partielInfo": "(présence partielle, {{pourcent}} % du prix)"
+      "partielInfo": "(présence partielle, {{pourcent}} % du prix)",
+      "aConvenir": "à convenir",
+      "autreFacultatif": "Le prix de « Autre » est facultatif : vide, le participant lit « Prix à convenir avec l’organisateur ».",
+      "prixAConvenir": "Prix à convenir avec l’organisateur."
     }
   },
   "footer": {

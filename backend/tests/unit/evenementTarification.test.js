@@ -109,3 +109,20 @@ describe('Inscription : montant enregistré par le serveur', () => {
     expect(opts.montant_du).toBe(1500);
   });
 });
+
+describe('Profil « Autre » : prix facultatif', () => {
+  const profils = [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: '' }];
+
+  it('le prix de « Autre » peut rester vide (à convenir), pas celui des autres profils', () => {
+    const lu = lireTarification({ mode: 'profil', profils });
+    expect(lu.tarification.profils[1].prix).toBeNull();
+    expect(lu.tarif).toBe(2000);
+    expect(lireTarification({ mode: 'profil', profils: [{ valeur: 'Étudiant', prix: '' }] })).toHaveProperty('erreur');
+  });
+
+  it('« Autre » sans prix : montant à convenir (null)', () => {
+    const evenement = { tarif: 2000, tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Autre', prix: null }] } };
+    expect(montantInscription(evenement, { profil: 'Autre' })).toBeNull();
+    expect(montantInscription(evenement, { profil: 'Étudiant' })).toBe(2000);
+  });
+});

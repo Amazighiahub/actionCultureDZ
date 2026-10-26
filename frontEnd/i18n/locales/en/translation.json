@@ -639,7 +639,10 @@
       "indiquezProfil": "Indicate your profile to see your price.",
       "votreParticipation": "Your participation:",
       "toutLEvenement": "for the whole event",
-      "partielInfo": "(partial attendance, {{pourcent}}% of the price)"
+      "partielInfo": "(partial attendance, {{pourcent}}% of the price)",
+      "aConvenir": "to be agreed",
+      "autreFacultatif": "The price for “Other” is optional: if empty, participants read “Price to be agreed with the organiser”.",
+      "prixAConvenir": "Price to be agreed with the organiser."
     }
   },
   "footer": {

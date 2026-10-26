@@ -29,6 +29,9 @@ const PROFILS_DEFAUT = [
 /** Question « présence » d'un formulaire (chantier-école) : une présence « Partielle » paie une part du prix */
 const PRESENCE = { cle: 'presence', valeur: 'Partielle' };
 
+/** Profil « Autre » : son prix peut rester vide (prix à convenir avec l'organisateur) */
+const PROFIL_AUTRE = 'Autre';
+
 const lireJson = (v) => {
   if (typeof v !== 'string') return v;
   try { return JSON.parse(v); } catch { return undefined; }
@@ -70,9 +73,10 @@ function lireTarification(brut, tarifBrut) {
   const profils = [];
   for (const p of t.profils) {
     const valeur = String(p?.valeur ?? texteLabel(p?.label)).trim().slice(0, 80);
-    const prix = nombre(p?.prix);
+    const vide = p?.prix === '' || p?.prix === null || p?.prix === undefined;
+    const prix = vide && valeur === PROFIL_AUTRE ? null : nombre(p?.prix);
     if (!valeur) return { erreur: 'Chaque profil doit avoir un nom' };
-    if (!(prix >= 0) || prix > PRIX_MAX) return { erreur: `Indiquez le prix du profil « ${valeur} »` };
+    if (prix !== null && (!(prix >= 0) || prix > PRIX_MAX)) return { erreur: `Indiquez le prix du profil « ${valeur} »` };
     if (profils.some(x => x.valeur === valeur)) return { erreur: `Le profil « ${valeur} » est en double` };
     const label = p?.label && typeof p.label === 'object' ? p.label : { fr: valeur };
     profils.push({ valeur, label, prix });
@@ -82,9 +86,11 @@ function lireTarification(brut, tarifBrut) {
     partiel = nombre(t.partiel_pourcent);
     if (!Number.isInteger(partiel) || partiel < 1 || partiel > 100) return { erreur: 'La part payée pour une présence partielle va de 1 à 100 %' };
   }
+  // Prix affiché dans les listes : le plus bas des prix connus (un « Autre » à convenir n'en a pas)
+  const connus = profils.map(p => p.prix).filter(x => x !== null);
   return {
     tarification: { mode: 'profil', profils, ...(partiel ? { partiel_pourcent: partiel } : {}) },
-    tarif: Math.min(...profils.map(p => p.prix))
+    tarif: connus.length ? Math.min(...connus) : 0
   };
 }
 
@@ -130,10 +136,11 @@ function montantInscription(evenement, reponses = {}) {
   if (t.mode === 'payant') return Math.round(Number(evenement.tarif) * personnes * 100) / 100;
 
   const profil = (t.profils || []).find(p => p.valeur === reponses?.profil);
-  if (!profil) return null;
+  // Profil inconnu, ou « Autre » sans prix : à convenir avec l'organisateur
+  if (!profil || profil.prix === null || profil.prix === undefined || profil.prix === '') return null;
   let prix = Number(profil.prix);
   if (t.partiel_pourcent && reponses?.[PRESENCE.cle] === PRESENCE.valeur) prix = prix * t.partiel_pourcent / 100;
   return Math.round(prix * personnes * 100) / 100;
 }
 
-module.exports = { MODES, PROFILS_DEFAUT, PRESENCE, lireTarification, tarificationDe, configAvecProfil, montantInscription };
+module.exports = { MODES, PROFILS_DEFAUT, PRESENCE, PROFIL_AUTRE, lireTarification, tarificationDe, configAvecProfil, montantInscription };
