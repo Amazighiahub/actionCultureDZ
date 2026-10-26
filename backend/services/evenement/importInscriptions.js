@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 const { listerChamps, verifierReponses } = require('./formulaireInscription');
-const { configAvecProfil, tarificationDe, montantInscription } = require('./tarification');
+const { configAvecProfil, tarificationDe, montantInscription, PROFILS_PROFESSIONNELS } = require('./tarification');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 const LIGNES_MAX = 500;
@@ -132,7 +132,8 @@ function lireDate(v) {
 
 /**
  * Une ligne → réponses au formulaire de l'événement, avec les remarques à montrer dans l'aperçu.
- * Un profil absent des choix (« Amateur du patrimoine ») devient « Autre », précisé.
+ * Un profil absent des choix (« Amateur du patrimoine ») devient « Autre », précisé ; sans choix
+ * « Autre », il devient le profil professionnel (« Artisan ou professionnel »).
  */
 function convertirLigne(ligne, colonnes, config) {
   const champs = listerChamps(config);
@@ -152,6 +153,9 @@ function convertirLigne(ligne, colonnes, config) {
         brutes.profil = optionProche(champ, 'Autre').valeur;
         brutes.profil_autre = v;
         remarques.push(`Profil « ${v} » → Autre (${v})`);
+      } else if (champ.cle === 'profil' && PROFILS_PROFESSIONNELS.some(p => optionProche(champ, p))) {
+        brutes.profil = PROFILS_PROFESSIONNELS.map(p => optionProche(champ, p)).find(Boolean).valeur;
+        remarques.push(`Profil « ${v} » → ${brutes.profil}`);
       } else remarques.push(`« ${v} » n'est pas un choix de « ${typeof champ.label === 'string' ? champ.label : champ.label?.fr} » : ignoré`);
     } else if (champ.type === 'choix_multiple') {
       const choisis = [];

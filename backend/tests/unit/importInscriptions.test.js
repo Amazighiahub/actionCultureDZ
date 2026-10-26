@@ -96,6 +96,19 @@ describe('Aperçu', () => {
     expect(faux.action).toBe('invalide');
   });
 
+  it('formulaire sans « Autre » : un profil absent des choix devient le profil professionnel', async () => {
+    const m = modeles();
+    const sansAutre = JSON.parse(JSON.stringify(CONFIG));
+    const champs = sansAutre.sections[0].champs.filter(c => c.cle !== 'profil_autre');
+    champs.find(c => c.cle === 'profil').options = opts('Artisan ou professionnel', 'Étudiant', 'Retraité');
+    sansAutre.sections[0].champs = champs;
+    (await m.Evenement.findByPk()).TypeEvenement.config_inscription = sansAutre;
+    const { lignes } = await new ImportInscriptions(m).apercu(await classeur(LIGNES), 2, ORGANISATEUR);
+    expect(lignes[1].reponses.profil).toBe('Artisan ou professionnel');
+    expect(lignes[1].reponses).not.toHaveProperty('profil_autre');
+    expect(lignes[1].remarques[0]).toBe('Profil « Amateur du patrimoine » → Artisan ou professionnel');
+  });
+
   it('compte existant : inscrit seulement ; déjà inscrit : laissé tel quel', async () => {
     const svc = new ImportInscriptions(modeles({
       existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz' }, { id_user: 10, email: 'nadia.ferhat@exemple.dz' }], dejaInscrits: [10]
