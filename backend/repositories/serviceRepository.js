@@ -123,6 +123,20 @@ class ServiceRepository extends BaseRepository {
   }
 
   /**
+   * Services des professionnels pour la modération (équipements des sites exclus), par statut
+   */
+  async findForModeration({ statut, ...options } = {}) {
+    const where = { id_user: { [Op.ne]: null } };
+    if (['en_attente', 'valide', 'rejete'].includes(statut)) where.statut = statut;
+    return this.findAll({
+      ...options,
+      where,
+      include: this._defaultIncludes(),
+      order: [['createdAt', 'DESC']]
+    });
+  }
+
+  /**
    * Services en attente de validation (admin)
    */
   async findPending(options = {}) {

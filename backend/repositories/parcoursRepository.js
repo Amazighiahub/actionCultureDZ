@@ -5,6 +5,7 @@
 
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
+const { whereServicesVisibles } = require('../utils/servicesVisibles');
 
 class ParcoursRepository extends BaseRepository {
   constructor(models) {
@@ -323,7 +324,7 @@ class ParcoursRepository extends BaseRepository {
     return this.models.Service.findAll({
       where: {
         type_service: { [Op.in]: serviceTypes },
-        [Op.or]: orConditions
+        [Op.and]: [{ [Op.or]: orConditions }, whereServicesVisibles()]
       },
       include: includes,
       limit,

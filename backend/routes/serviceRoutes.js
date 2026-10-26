@@ -12,7 +12,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const initServiceRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, optionalAuth, requireRole } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -33,6 +33,8 @@ const initServiceRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/admin/pending', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => serviceController.getPending(req, res)));
+  // Tous les services des professionnels (?statut=en_attente|valide|rejete), pour la modération
+  router.get('/admin/list', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => serviceController.listForModeration(req, res)));
   router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => serviceController.getStats(req, res)));
 
   // ============================================================================
@@ -40,18 +42,20 @@ const initServiceRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => serviceController.getById(req, res)));
-  router.post('/', authenticate,
+  // Réservé aux professionnels validés (comme les œuvres et les événements)
+  router.post('/', authenticate, requireValidatedProfessional,
     createContentLimiter,
     validateStringLengths,
     validateGPS,
     [
       body('nom').notEmpty().withMessage('Le nom du service est requis'),
       body('type_service').optional().notEmpty().withMessage('Le type de service est requis'),
-      body('email').optional().isEmail().withMessage('Email invalide'),
-      body('telephone').optional().matches(/^[0-9+\-\s()]{8,20}$/).withMessage('Numéro de téléphone invalide'),
-      body('site_web').optional().isURL().withMessage('URL du site web invalide'),
-      body('tarif_min').optional().isFloat({ min: 0 }).withMessage('Tarif minimum invalide'),
-      body('tarif_max').optional().isFloat({ min: 0 }).withMessage('Tarif maximum invalide'),
+      // Champs facultatifs : le formulaire envoie '' ou null quand ils sont laissés vides
+      body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email invalide'),
+      body('telephone').optional({ values: 'falsy' }).matches(/^[0-9+\-\s()]{8,20}$/).withMessage('Numéro de téléphone invalide'),
+      body('site_web').optional({ values: 'falsy' }).isURL().withMessage('URL du site web invalide'),
+      body('tarif_min').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('Tarif minimum invalide'),
+      body('tarif_max').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('Tarif maximum invalide'),
     ],
     handleValidationErrors,
     asyncHandler((req, res) => serviceController.create(req, res)));

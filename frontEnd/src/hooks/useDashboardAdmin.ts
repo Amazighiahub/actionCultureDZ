@@ -660,8 +660,11 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
     const response = await adminService.getServices(filters);
 
     if (response.success && response.data) {
+      // Le serveur renvoie { data: [services], pagination }
       const raw = response.data as any;
-      setServices({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
+      const items = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+      const pagination = (response as any).pagination || raw.pagination || { total: items.length, page: 1, limit: 100, pages: 1 };
+      setServices({ items, pagination });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
@@ -778,15 +781,19 @@ const deleteService = async (serviceId: number) => {
   }
 };
 
-const validateService = async (serviceId: number, validated: boolean) => {
+const validateService = async (serviceId: number, validated: boolean, motif?: string) => {
   try {
-    const response = await adminService.validateService(serviceId, validated);
+    const response = await adminService.validateService(serviceId, validated, motif);
     if (response.success) {
       toast({
         title: t('toasts.success'),
-        description: validated ? t('toasts.serviceValidated', 'Service validé') : t('toasts.serviceRejected', 'Service rejeté')
+        description: validated
+          ? t('admin.services.published', 'Service publié : le professionnel a été prévenu.')
+          : t('admin.services.rejected', 'Service refusé : le professionnel a reçu votre motif.')
       });
       await loadServices();
+    } else {
+      toast({ title: t('toasts.error'), description: response.error || t('toasts.serviceValidationFailed', 'Erreur de validation'), variant: 'destructive' });
     }
   } catch (error) {
     toast({

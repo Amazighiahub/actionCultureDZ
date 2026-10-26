@@ -6,10 +6,15 @@
 const BaseService = require('../core/baseService');
 const ServiceDTO = require('../../dto/service/serviceDTO');
 const { mergeTranslations } = require('../../helpers/i18n');
+const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+
+/** Nom lisible d'un service (nom multilingue) pour les notifications */
+const nomLisible = (nom) => (typeof nom === 'object' && nom ? (nom.fr || nom.ar || Object.values(nom).find(Boolean)) : nom) || 'Service';
 
 class ServiceService extends BaseService {
   constructor(serviceRepository, options = {}) {
     super(serviceRepository, options);
+    this.notificationService = options.notificationService;
   }
 
   // ============================================================================
@@ -128,6 +133,7 @@ class ServiceService extends BaseService {
     const full = await this.repository.findWithFullDetails(service.id);
 
     this.logger.info(`Service créé: ${service.id} par user: ${userId}`);
+    await this._prevenirModeration(service.id, entityData.nom, userId);
     return ServiceDTO.fromEntity(full);
   }
 
@@ -179,8 +185,13 @@ class ServiceService extends BaseService {
         && PUBLIC_FIELDS.some(f => updateData[f] !== undefined)) {
       updateData.statut = 'en_attente';
     }
+    // Un service refusé, corrigé par son propriétaire, repart en validation
+    if (!isModerator && existing.statut === 'rejete') {
+      updateData.statut = 'en_attente';
+    }
 
     await this.repository.update(id, updateData);
+    if (updateData.statut === 'en_attente') await this._prevenirModeration(id, updateData.nom || existing.nom, userId);
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service modifié: ${id} par user: ${userId}`);
@@ -209,6 +220,28 @@ class ServiceService extends BaseService {
   // MODÉRATION
   // ============================================================================
 
+  /** Tous les services des professionnels, par statut (modération) */
+  async findForModeration(options = {}) {
+    const result = await this.repository.findForModeration(options);
+    return {
+      data: ServiceDTO.fromEntities(result.data),
+      pagination: result.pagination
+    };
+  }
+
+  /** Un service attend une validation : les administrateurs sont prévenus */
+  async _prevenirModeration(id, nom, auteurId) {
+    if (!this.models) return;
+    for (const idAdmin of await idsAdministrateurs(this.models)) {
+      if (idAdmin === auteurId) continue;
+      await notifier(this.notificationService, idAdmin, {
+        titre: 'Service à valider',
+        message: `« ${nomLisible(nom)} » attend votre validation avant d'être publié.`,
+        url_action: '/admin/dashboard?tab=services', metadata: { id_service: id }
+      });
+    }
+  }
+
   /**
    * En attente de validation
    */
@@ -235,6 +268,11 @@ class ServiceService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service validé: ${id} par admin: ${adminId}`);
+    await notifier(this.notificationService, service.id_user, {
+      titre: 'Service publié',
+      message: `« ${nomLisible(service.nom)} » est en ligne : les visiteurs le voient sur Tala DZ.`,
+      url_action: `/services/${id}`, metadata: { id_service: id }
+    });
     return ServiceDTO.fromEntity(updated);
   }
 
@@ -253,6 +291,11 @@ class ServiceService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service rejeté: ${id} par admin: ${adminId}, motif: ${motif}`);
+    await notifier(this.notificationService, service.id_user, {
+      titre: 'Service à corriger',
+      message: `« ${nomLisible(service.nom)} » n'a pas été publié : ${String(motif).trim().slice(0, 300)}. Modifiez-le : il repartira en validation.`,
+      url_action: `/modifier-service/${id}`, metadata: { id_service: id }
+    });
     return ServiceDTO.fromEntity(updated);
   }
 

@@ -329,13 +329,20 @@ const DashboardPro = () => {
               }
             </div>);
 
-        case 'service':
+        case 'service': {
+          // Les tarifs arrivent en texte (« 1500.00 ») ; le type est une clé (« hotel »)
+          const tarifMin = item.tarif_min != null && item.tarif_min !== '' ? Number(item.tarif_min) : null;
+          const tarifMax = item.tarif_max != null && item.tarif_max !== '' ? Number(item.tarif_max) : null;
+          const statut = typeof item.statut === 'string' ? item.statut : 'en_attente';
           return (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{td(item.type_service) || td(item.type) || t('common.service', 'Service')}</span>
-              {(typeof item.tarif_min === 'number' || typeof item.tarif_max === 'number') && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span>{item.type_service ? t(`service.types.${item.type_service}`, String(item.type_service)) : t('common.service', 'Service')}</span>
+              <Badge variant={statut === 'valide' ? 'default' : statut === 'rejete' ? 'destructive' : 'secondary'}>
+                {t(`dashboardpro.serviceStatus.${statut}`, statut)}
+              </Badge>
+              {(tarifMin != null || tarifMax != null) && (
                 <span className="font-medium text-primary">
-                  {item.tarif_min ?? '0'} - {item.tarif_max ?? '?'} {t("dashboardpro.da")}
+                  {tarifMin ?? 0} – {tarifMax ?? '?'} {t("dashboardpro.da")}
                 </span>
               )}
               {item.horaires && typeof item.horaires === 'object' && (
@@ -348,6 +355,7 @@ const DashboardPro = () => {
                 </span>
               )}
             </div>);
+        }
 
         default:
           return null;
@@ -420,7 +428,8 @@ const DashboardPro = () => {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
       patrimoine: `/patrimoine/${item.id_lieu || item.id_site || item.id}`,
-      service: `/modifier-service/${item.id || item.id_service}`
+      // Page publique du service (visible par son propriétaire même avant validation)
+      service: `/services/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
   }, [navigate]);
@@ -546,7 +555,7 @@ const DashboardPro = () => {
                     <MapPin className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouveau_patrimoine", "Nouveau patrimoine")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/ajouter-service')}>
+                  <DropdownMenuItem onClick={() => navigate('/ajouter-mon-service')}>
                     <Briefcase className="h-4 w-4 me-2" />
                     {t("dashboardpro.nouveau_service", "Nouveau service")}
                   </DropdownMenuItem>
@@ -847,7 +856,7 @@ const DashboardPro = () => {
               <TabsContent value="services" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")} ({filterBySearch(mesServices?.items || []).length})</h2>
-                  <Button size="sm" asChild><Link to="/ajouter-service">
+                  <Button size="sm" asChild><Link to="/ajouter-mon-service">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouveau_service")}
                     </Link></Button>
                 </div>
@@ -882,7 +891,7 @@ const DashboardPro = () => {
                     <div className="text-center py-12">
                       <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_service")}</p>
-                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-service">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-mon-service">
                           <Plus className="h-4 w-4 me-2" />{t("dashboardpro.crer_mon_premier_1")}
                         </Link></Button>
                     </div>

@@ -822,8 +822,10 @@ class LieuService extends BaseService {
     const lieu = await this.models.Lieu.findByPk(lieuId);
     if (!lieu) return { lieu: null, services: [] };
 
+    // Public : services validés et équipements du site seulement
+    const { whereServicesVisibles } = require('../utils/servicesVisibles');
     const services = await this.models.Service.findAll({
-      where: { id_lieu: lieuId }
+      where: { id_lieu: lieuId, ...whereServicesVisibles() }
     });
 
     return { lieu, services };

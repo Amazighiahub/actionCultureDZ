@@ -251,8 +251,9 @@ class AdminService {
   }
 
   // Services
+  /** Services des professionnels, tous statuts (GET /services ne renvoie que les services validés) */
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<Service>>> {
-    return httpClient.getPaginated<Service>('/services', params);
+    return httpClient.getPaginated<Service>('/services/admin/list', { limit: 100, ...params });
   }
 
   async getServiceDetails(serviceId: number): Promise<ApiResponse<Service>> {
@@ -267,10 +268,10 @@ class AdminService {
     return httpClient.delete<void>(`/services/${serviceId}`);
   }
 
-  async validateService(serviceId: number, validated: boolean): Promise<ApiResponse<void>> {
-    // Backend uses POST /services/:id/validate OR /services/:id/reject
+  /** Valider, ou refuser avec un motif (obligatoire, envoyé au professionnel) */
+  async validateService(serviceId: number, validated: boolean, motif?: string): Promise<ApiResponse<void>> {
     const endpoint = validated ? `/services/${serviceId}/validate` : `/services/${serviceId}/reject`;
-    return httpClient.post<void>(endpoint, {});
+    return httpClient.post<void>(endpoint, validated ? {} : { motif });
   }
 
   // ========================================

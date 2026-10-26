@@ -1,15 +1,18 @@
 import { getLocalizedText } from '@/utils/getLocalizedText';
 /**
- * AdminServicesTab - Onglet de gestion des services
- * Utilise useDashboardAdmin
+ * AdminServicesTab - Services proposés par les professionnels (restaurant, hébergement, guide…)
+ * Validation : « Valider et publier », ou « Refuser » avec un motif envoyé au professionnel.
+ * Les équipements des sites (parking, toilettes…) se gèrent avec le site, pas ici.
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -25,8 +28,11 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
-  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw, CheckCircle, XCircle,
-  Package, Star, MapPin, X, AlertCircle
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+} from '@/components/ui/dialog';
+import {
+  Search, MoreVertical, Trash2, Eye, RefreshCw, CheckCircle, XCircle,
+  Package, MapPin, X, AlertCircle
 } from 'lucide-react';
 
 import {
@@ -38,8 +44,11 @@ import {
 
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
-// Helper pour extraire le texte multilingue
+// Valeurs du champ type_service (modèle Service)
+const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'];
+const STATUTS = ['tous', 'en_attente', 'valide', 'rejete'];
 
 const AdminServicesTab: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -49,7 +58,11 @@ const AdminServicesTab: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
+  const [statutFilter, setStatutFilter] = useState('tous');
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  // Refus : le motif est envoyé au professionnel
+  const [refus, setRefus] = useState<{ id: number; nom: string } | null>(null);
+  const [motifRefus, setMotifRefus] = useState('');
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -62,38 +75,27 @@ const AdminServicesTab: React.FC = () => {
     refreshAll
   } = useDashboardAdmin('services');
 
-  // Filtrer les services
-  const filteredServices = React.useMemo(() => {
-    if (!services?.items) return [];
+  const tous = (services?.items || []) as any[];
+  const enAttente = tous.filter((s) => s.statut === 'en_attente').length;
 
-    return services.items.filter((service: any) => {
-      // Filtre de recherche
-      if (debouncedSearch) {
-        const searchLower = debouncedSearch.toLowerCase();
-        const nom = getLocalizedText(service.nom, currentLang);
-        const type = getLocalizedText(service.type_service || service.type, currentLang);
-        const matchesSearch =
-          nom.toLowerCase().includes(searchLower) ||
-          type.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
+  const filteredServices = React.useMemo(() => tous.filter((service: any) => {
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      const nom = getLocalizedText(service.nom, currentLang).toLowerCase();
+      const lieu = getLocalizedText(service.Lieu?.nom, currentLang).toLowerCase();
+      if (!nom.includes(q) && !lieu.includes(q)) return false;
+    }
+    if (typeFilter !== 'tous' && service.type_service !== typeFilter) return false;
+    if (statutFilter !== 'tous' && service.statut !== statutFilter) return false;
+    return true;
+  }), [tous, debouncedSearch, typeFilter, statutFilter, currentLang]);
 
-      // Filtre de type
-      if (typeFilter !== 'tous') {
-        const serviceType = service.type_service || service.type || '';
-        const typeValue = typeof serviceType === 'string' ? serviceType : getLocalizedText(serviceType, 'fr');
-        if (typeValue !== typeFilter) return false;
-      }
-
-      return true;
-    });
-  }, [services, debouncedSearch, typeFilter, currentLang]);
-
-  const hasActiveFilters = searchQuery || typeFilter !== 'tous';
+  const hasActiveFilters = searchQuery || typeFilter !== 'tous' || statutFilter !== 'tous';
 
   const resetFilters = () => {
     setSearchQuery('');
     setTypeFilter('tous');
+    setStatutFilter('tous');
   };
 
   return (
@@ -115,13 +117,26 @@ const AdminServicesTab: React.FC = () => {
         </Button>
       </div>
 
+      {/* Services envoyés par les professionnels, à valider */}
+      {enAttente > 0 && statutFilter !== 'en_attente' && (
+        <button
+          type="button"
+          onClick={() => setStatutFilter('en_attente')}
+          className="w-full text-start rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 hover:bg-amber-100"
+        >
+          <span className="font-semibold">{t('admin.services.pendingCount', '{{count}} service(s) à valider', { count: enAttente })}</span>
+          {' · '}{t('admin.events.pendingShow', 'Afficher')}
+        </button>
+      )}
+
       {/* Filtres */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
+                aria-label={t('admin.services.searchPlaceholder', 'Rechercher un service...')}
                 placeholder={t('admin.services.searchPlaceholder', 'Rechercher un service...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -129,16 +144,28 @@ const AdminServicesTab: React.FC = () => {
               />
             </div>
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.type', 'Type')} />
+            <Select value={statutFilter} onValueChange={setStatutFilter}>
+              <SelectTrigger className="w-full md:w-[190px]" aria-label={t('common.status', 'Statut')}>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tous">{t('common.all', 'Tous')}</SelectItem>
-                <SelectItem value="guide_touristique">{t('admin.services.types.tourGuide', 'Guide touristique')}</SelectItem>
-                <SelectItem value="transport">{t('admin.services.types.transport', 'Transport')}</SelectItem>
-                <SelectItem value="hebergement">{t('admin.services.types.accommodation', 'Hébergement')}</SelectItem>
-                <SelectItem value="atelier">{t('admin.services.types.workshop', 'Atelier')}</SelectItem>
+                {STATUTS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s === 'tous' ? t('common.allStatuses', 'Tous les statuts') : t(`dashboardpro.serviceStatus.${s}`, s)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full md:w-[180px]" aria-label={t('common.type', 'Type')}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tous">{t('common.allTypes', 'Tous les types')}</SelectItem>
+                {TYPES_SERVICE.map((type) => (
+                  <SelectItem key={type} value={type}>{t(`service.types.${type}`, type)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -148,9 +175,6 @@ const AdminServicesTab: React.FC = () => {
                   <X className="h-4 w-4" />
                 </Button>
               )}
-              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -181,45 +205,44 @@ const AdminServicesTab: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {filteredServices.map((service: any) => {
-            const nom = getLocalizedText(service.nom, currentLang, 'Sans nom');
-            const type = getLocalizedText(service.type_service || service.type, currentLang);
+            const id: number = service.id_service || service.id;
+            const nom = getLocalizedText(service.nom, currentLang, t('common.unnamed', 'Sans nom'));
+            const lieu = getLocalizedText(service.Lieu?.nom, currentLang, '');
+            const pro = service.Professionnel;
+            const auteur = pro ? `${getLocalizedText(pro.prenom, currentLang, '')} ${getLocalizedText(pro.nom, currentLang, '')}`.trim() : '';
+            const tarifMin = service.tarif_min != null ? Number(service.tarif_min) : null;
+            const tarifMax = service.tarif_max != null ? Number(service.tarif_max) : null;
 
             return (
-              <Card key={service.id_service || service.id} className="hover:shadow-md transition-shadow">
+              <Card key={id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                      <Package className="h-8 w-8 text-muted-foreground" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 shrink-0 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                      {service.photo_url
+                        ? <img src={getAssetUrl(service.photo_url)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        : <Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h4 className="font-medium">{nom}</h4>
                         <StatusBadge status={service.statut || 'en_attente'} size="sm" />
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        {type && <span>{type}</span>}
-                        {(service.wilaya || service.Lieu?.Commune?.Daira?.Wilaya?.nom) && (
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                        {service.type_service && <span>{t(`service.types.${service.type_service}`, String(service.type_service))}</span>}
+                        {lieu && (
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {service.wilaya || service.Lieu?.Commune?.Daira?.Wilaya?.nom}
+                            <MapPin className="h-3 w-3" aria-hidden="true" />
+                            {lieu}
                           </span>
                         )}
-                        {service.note_moyenne != null && (
-                          <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            {Number(service.note_moyenne).toFixed(1)}
-                          </span>
-                        )}
-                        {(service.tarif_min != null || service.tarif) && (
-                          <span>
-                            {service.tarif || formatPriceRange(service.tarif_min, service.tarif_max)}
-                          </span>
+                        {(tarifMin != null || tarifMax != null) && (
+                          <span>{formatPriceRange(tarifMin ?? undefined, tarifMax ?? undefined)}</span>
                         )}
                       </div>
-                      {(service.prestataire || service.User) && (
+                      {auteur && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {t('common.by', 'Par')} {service.prestataire?.prenom || service.User?.prenom} {service.prestataire?.nom || service.User?.nom}
+                          {t('common.by', 'Par')} {auteur}
                         </p>
                       )}
                     </div>
@@ -231,29 +254,26 @@ const AdminServicesTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          const lieuId = service.id_lieu || service.Lieu?.id_lieu;
-                          if (lieuId) navigate(`/patrimoine/${lieuId}`, { state: { from: '/admin/dashboard?tab=services' } });
-                        }}>
-                          <Eye className="h-4 w-4 me-2" />
-                          {t('common.view', 'Voir le lieu')}
-                        </DropdownMenuItem>
-                        {service.statut === 'en_attente' && (
-                          <>
-                            <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, true)}>
-                              <CheckCircle className="h-4 w-4 me-2" />
-                              {t('common.validate', 'Valider')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, false)}>
-                              <XCircle className="h-4 w-4 me-2" />
-                              {t('common.reject', 'Rejeter')}
-                            </DropdownMenuItem>
-                          </>
+                        {(service.statut === 'en_attente' || service.statut === 'rejete') && (
+                          <DropdownMenuItem className="text-green-700" onClick={() => validateService(id, true)}>
+                            <CheckCircle className="h-4 w-4 me-2" />
+                            {t('admin.events.publish', 'Valider et publier')}
+                          </DropdownMenuItem>
                         )}
+                        {service.statut === 'en_attente' && (
+                          <DropdownMenuItem className="text-amber-700" onClick={() => { setMotifRefus(''); setRefus({ id, nom }); }}>
+                            <XCircle className="h-4 w-4 me-2" />
+                            {t('admin.events.reject', 'Refuser')}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => navigate(`/services/${id}`, { state: { from: '/admin/dashboard?tab=services' } })}>
+                          <Eye className="h-4 w-4 me-2" />
+                          {t('admin.services.view', 'Voir la fiche')}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => setConfirmDeleteId(service.id_service || service.id)}
+                          onClick={() => setConfirmDeleteId(id)}
                         >
                           <Trash2 className="h-4 w-4 me-2" />
                           {t('common.delete', 'Supprimer')}
@@ -267,6 +287,40 @@ const AdminServicesTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <Dialog open={!!refus} onOpenChange={(open) => { if (!open) setRefus(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('admin.services.rejectTitle', 'Refuser ce service ?')}</DialogTitle>
+            <DialogDescription>
+              {t('admin.services.rejectDesc', 'Le professionnel reçoit votre motif. Quand il corrige « {{nom}} », le service revient en validation.', { nom: refus?.nom })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="motif-refus-service">{t('admin.events.rejectReason', 'Motif du refus')}</Label>
+            <Textarea
+              id="motif-refus-service"
+              value={motifRefus}
+              onChange={(e) => setMotifRefus(e.target.value)}
+              placeholder={t('admin.services.rejectPlaceholder', 'Ex. : ajoutez une photo et le numéro de téléphone.')}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefus(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button
+              disabled={!motifRefus.trim()}
+              onClick={async () => {
+                if (!refus) return;
+                await validateService(refus.id, false, motifRefus.trim());
+                setRefus(null);
+              }}
+            >
+              {t('admin.events.reject', 'Refuser')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmDeleteId !== null}

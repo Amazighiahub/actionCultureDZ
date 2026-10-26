@@ -6,6 +6,7 @@
 const BaseRepository = require('./baseRepository');
 const { Op, literal } = require('sequelize');
 const { MAX_NIVEAUX_LIEU } = require('../constants/patrimoineTypes');
+const { whereServicesVisibles } = require('../utils/servicesVisibles');
 
 class PatrimoineRepository extends BaseRepository {
   constructor(models) {
@@ -89,7 +90,8 @@ class PatrimoineRepository extends BaseRepository {
     }
 
     if (this.models.Service) {
-      includes.push({ model: this.models.Service, required: false, separate: true });
+      // Public : services validés et équipements du site seulement
+      includes.push({ model: this.models.Service, required: false, separate: true, where: whereServicesVisibles() });
     }
 
     if (this.models.QRCode) {

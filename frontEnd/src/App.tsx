@@ -59,7 +59,6 @@ const DashboardUser = React.lazy(() => import('./pages/DashboardUser'));
 // Pages de création/modification (professionnels)
 const AjouterOeuvre = React.lazy(() => import('./pages/ajouterOeuvre'));
 const AjouterEvenement = React.lazy(() => import('./pages/AjouterEvenement'));
-const AjouterService = React.lazy(() => import('./pages/AjouterService'));
 const AjouterServicePro = React.lazy(() => import('./pages/AjouterServicePro'));
 const AjouterPatrimoineRapide = React.lazy(() => import('./pages/AjouterPatrimoineRapide'));
 const ModifierPatrimoine = React.lazy(() => import('./pages/ModifierPatrimoine'));
@@ -273,14 +272,8 @@ const App = () => (
               }
             />
 
-            <Route
-              path="/ajouter-service"
-              element={
-                <ProfessionalRoute>
-                  <AjouterService />
-                </ProfessionalRoute>
-              }
-            />
+            {/* Ancienne adresse : un seul formulaire de service, celui des professionnels */}
+            <Route path="/ajouter-service" element={<Navigate to="/ajouter-mon-service" replace />} />
 
             <Route
               path="/ajouter-mon-service"

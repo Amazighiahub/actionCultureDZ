@@ -1345,6 +1345,11 @@
       "publie": "Published",
       "rejete": "Declined",
       "archive": "Archived"
+    },
+    "serviceStatus": {
+      "en_attente": "Awaiting approval",
+      "valide": "Published",
+      "rejete": "Declined"
     }
   },
   "dashboardadmin": {
@@ -2758,7 +2763,14 @@
       },
       "count": "{{count}} service(s)",
       "noServicesDesc": "No services match your criteria",
-      "confirmDelete": "Delete this service?"
+      "confirmDelete": "Delete this service?",
+      "pendingCount": "{{count}} service(s) to review",
+      "view": "View",
+      "rejectTitle": "Decline this service?",
+      "rejectDesc": "The professional receives your reason. Once “{{nom}}” is corrected, it comes back for review.",
+      "rejectPlaceholder": "E.g. add a photo and the phone number.",
+      "published": "Service published: the professional has been notified.",
+      "rejected": "Service declined: the professional has received your reason."
     },
     "emailVerified": "Email verified successfully",
     "emailVerifyFailed": "Unable to verify the email",
@@ -3936,7 +3948,7 @@
     "errors": {
       "nomRequired": "Service name is required (at least in French or Arabic)",
       "typeRequired": "Service type is required",
-      "lieuRequired": "Please select an existing place",
+      "lieuRequired": "Please choose where your service is",
       "newLieuNomRequired": "New place name is required (at least in French or Arabic)",
       "newLieuGpsRequired": "GPS coordinates for the new place are required",
       "tarifMinMax": "Minimum rate cannot exceed maximum rate",
@@ -3954,7 +3966,9 @@
       "artisanat": "Crafts",
       "location": "Rental",
       "autre": "Other"
-    }
+    },
+    "placeLabel": "Location of the service",
+    "placeHint": "Search for the place (site, district, village). Not found? “Create a new place”: name, address and a point on the map."
   },
   "organisations": {
     "create": {

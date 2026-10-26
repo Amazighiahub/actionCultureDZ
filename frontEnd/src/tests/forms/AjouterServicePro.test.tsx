@@ -150,6 +150,21 @@ vi.mock('@/components/ui/radio-group', () => ({
   ),
 }));
 
+// Après l'envoi, le formulaire rafraîchit les listes du tableau de bord
+const mockInvalidate = vi.hoisted(() => vi.fn());
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-query')>()),
+  useQueryClient: () => ({ invalidateQueries: mockInvalidate }),
+}));
+
+// Choix du lieu : le vrai composant (recherche, carte) est testé à part ; ici un lieu n° 5 se choisit d'un clic
+vi.mock('@/components/LieuSelector', () => ({
+  LieuSelector: ({ value, onChange }: { value?: number; onChange: (id?: number, lieu?: unknown) => void }) => (
+    <div data-testid="lieu-selector" data-value={value ?? ''}>
+      <button type="button" onClick={() => onChange(5, { id_lieu: 5, latitude: 36.78, longitude: 3.06 })}>choisir-lieu</button>
+    </div>
+  ),
+}));
 vi.mock('@/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('@/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
@@ -389,7 +404,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       typeInto(screen.getByPlaceholderText('500'), '3000');
@@ -416,7 +431,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       typeInto(screen.getByPlaceholderText('500'), '500');
@@ -450,7 +465,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       typeInto(screen.getByPlaceholderText('contact@example.com'), 'test@example.com');
@@ -486,7 +501,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       submitForm();
@@ -511,7 +526,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       submitForm();
@@ -536,7 +551,7 @@ describe('AjouterServicePro', () => {
       selectServiceType();
 
       await waitFor(() => {
-        expect(mockGetSiteDetail).toHaveBeenCalledWith(5);
+        expect(screen.getByTestId('lieu-selector')).toHaveAttribute('data-value', '5');
       });
 
       typeInto(screen.getByPlaceholderText('contact@example.com'), 'bad-email');

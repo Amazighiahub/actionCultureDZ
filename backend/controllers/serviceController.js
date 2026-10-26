@@ -161,6 +161,20 @@ class ServiceController extends BaseController {
     }
   }
 
+  async listForModeration(req, res) {
+    try {
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findForModeration({ page, limit, statut: req.query.statut });
+      res.json({
+        success: true,
+        data: result.data.map(s => s.toAdminJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async validate(req, res) {
     try {
       const service = await this.serviceService.validate(

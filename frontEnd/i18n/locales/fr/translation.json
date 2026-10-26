@@ -1370,6 +1370,11 @@
       "publie": "Publiée",
       "rejete": "Refusée",
       "archive": "Archivée"
+    },
+    "serviceStatus": {
+      "en_attente": "En attente de validation",
+      "valide": "Publié",
+      "rejete": "Refusé"
     }
   },
   "dashboardadmin": {
@@ -2547,7 +2552,14 @@
       },
       "count": "{{count}} service(s)",
       "noServicesDesc": "Aucun service ne correspond à vos critères",
-      "confirmDelete": "Supprimer ce service ?"
+      "confirmDelete": "Supprimer ce service ?",
+      "pendingCount": "{{count}} service(s) à valider",
+      "view": "Voir la fiche",
+      "rejectTitle": "Refuser ce service ?",
+      "rejectDesc": "Le professionnel reçoit votre motif. Quand il corrige « {{nom}} », le service revient en validation.",
+      "rejectPlaceholder": "Ex. : ajoutez une photo et le numéro de téléphone.",
+      "published": "Service publié : le professionnel a été prévenu.",
+      "rejected": "Service refusé : le professionnel a reçu votre motif."
     },
     "alerts": {
       "title": "Alertes",
@@ -4211,7 +4223,7 @@
     "errors": {
       "nomRequired": "Le nom du service est requis (au moins en français ou arabe)",
       "typeRequired": "Le type de service est requis",
-      "lieuRequired": "Veuillez sélectionner un lieu existant",
+      "lieuRequired": "Veuillez choisir le lieu de votre service",
       "newLieuNomRequired": "Le nom du nouveau lieu est requis (au moins en français ou arabe)",
       "newLieuGpsRequired": "Les coordonnées GPS du nouveau lieu sont requises",
       "tarifMinMax": "Le tarif minimum ne peut pas être supérieur au tarif maximum",
@@ -4229,7 +4241,9 @@
       "artisanat": "Artisanat",
       "location": "Location",
       "autre": "Autre"
-    }
+    },
+    "placeLabel": "Lieu du service",
+    "placeHint": "Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte."
   },
   "organisations": {
     "create": {
