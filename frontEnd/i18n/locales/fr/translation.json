@@ -3537,6 +3537,23 @@
     "banned": "Banni"
   },
   "patrimoine": {
+    "historique": {
+      "bouton": "Historique",
+      "titre": "Historique des modifications",
+      "description": "Chaque modification des textes de ce lieu, la plus récente en premier. « Revenir à cette version » remet le texte d’avant, dans toutes les langues.",
+      "vide": "Aucune modification enregistrée pour l’instant.",
+      "ligne": "{{auteur}} a modifié {{quoi}}",
+      "inconnu": "Une personne",
+      "retour": "retour en arrière",
+      "avant": "Avant",
+      "apres": "Après",
+      "videTexte": "(vide)",
+      "revenir": "Revenir à cette version",
+      "confirmerTitre": "Revenir à la version précédente ?",
+      "confirmerTexte": "{{quoi}} reprendra le texte « Avant », dans toutes les langues. Le texte actuel restera dans l’historique.",
+      "restaure": "Version précédente remise",
+      "restaureDesc": "Le texte d’avant est de nouveau affiché."
+    },
     "filters": {
       "all": "Tous",
       "allTypes": "Tous les types",

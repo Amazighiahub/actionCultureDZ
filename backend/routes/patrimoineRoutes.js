@@ -14,6 +14,8 @@ const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const logger = require('../utils/logger');
+const container = require('../services/serviceContainer');
+const { notifierModification } = require('../services/patrimoine/historiqueLieu');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -108,6 +110,11 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('reordonnerPoints'));
   router.delete('/:id/medias/:mediaId', authenticate, requireModerationOuPro, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
+
+  // Historique des textes du lieu, et retour à une version précédente (administration)
+  router.get('/:id/historique', authenticate, requireModeration, validateId(), patrimoineController.wrap('historique'));
+  router.post('/:id/historique/:idHistorique/restaurer', authenticate, requireModeration, validateId(), validateId('idHistorique'),
+    patrimoineController.wrap('restaurerVersion'));
 
   // Enrichir les détails culturels d'un site (contribution collaborative)
   router.patch('/:id/detail', authenticate, validateId(),
@@ -239,6 +246,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
           type
         });
 
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: `a ajouté le monument « ${nom?.fr || nom?.ar || ''} » à`
+        });
         res.status(201).json({ success: true, data: monument });
       } catch (error) {
         logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
@@ -291,6 +301,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         if (type !== undefined) monument.type = type;
         if (description !== undefined) monument.description = description;
         await monument.save();
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: `a modifié le monument « ${monument.nom?.fr || monument.nom?.ar || ''} » de`
+        });
 
         res.json({ success: true, data: monument });
       } catch (error) {
@@ -336,6 +349,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
           type
         });
 
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: `a ajouté le vestige « ${nom?.fr || nom?.ar || ''} » à`
+        });
         res.status(201).json({ success: true, data: vestige });
       } catch (error) {
         logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
@@ -388,6 +404,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         if (type !== undefined) vestige.type = type;
         if (description !== undefined) vestige.description = description;
         await vestige.save();
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: `a modifié le vestige « ${vestige.nom?.fr || vestige.nom?.ar || ''} » de`
+        });
 
         res.json({ success: true, data: vestige });
       } catch (error) {

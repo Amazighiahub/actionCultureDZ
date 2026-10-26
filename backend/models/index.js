@@ -116,6 +116,9 @@ const loadModels = (sequelize) => {
   const vestigeModel = loadModelSafely('./places/vestige', 'Vestige', sequelize);
   if (vestigeModel) models.Vestige = vestigeModel;
 
+  const historiqueLieuModel = loadModelSafely('./places/historiqueLieu', 'HistoriqueLieu', sequelize);
+  if (historiqueLieuModel) models.HistoriqueLieu = historiqueLieuModel;
+
   // 4. Types et classifications
   const langueModel = loadModelSafely('./classifications/langue', 'Langue', sequelize);
   if (langueModel) models.Langue = langueModel;

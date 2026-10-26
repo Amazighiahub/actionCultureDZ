@@ -3532,6 +3532,23 @@
     "banned": "Banned"
   },
   "patrimoine": {
+    "historique": {
+      "bouton": "History",
+      "titre": "Edit history",
+      "description": "Every change to this place’s texts, most recent first. “Restore this version” brings back the previous text, in every language.",
+      "vide": "No changes recorded yet.",
+      "ligne": "{{auteur}} changed {{quoi}}",
+      "inconnu": "Someone",
+      "retour": "restored",
+      "avant": "Before",
+      "apres": "After",
+      "videTexte": "(empty)",
+      "revenir": "Restore this version",
+      "confirmerTitre": "Restore the previous version?",
+      "confirmerTexte": "{{quoi}} will go back to the “Before” text, in every language. The current text stays in the history.",
+      "restaure": "Previous version restored",
+      "restaureDesc": "The previous text is displayed again."
+    },
     "filters": {
       "all": "All",
       "allTypes": "All types",

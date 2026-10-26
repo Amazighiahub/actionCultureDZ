@@ -73,7 +73,7 @@ describe('PatrimoineController.update — droits', () => {
   it('créateur : seuls les champs de la fiche sont transmis', async () => {
     mockContainer.patrimoineService = service(true);
     await controller.update(req({ id_user: 60 }, { nom: { fr: 'Casbah' }, description: { fr: 'x' }, id_lieu_parent: 3, medias: [], services: [] }), res());
-    expect(mockContainer.patrimoineService.update).toHaveBeenCalledWith(10, { nom: { fr: 'Casbah' }, description: { fr: 'x' } });
+    expect(mockContainer.patrimoineService.update).toHaveBeenCalledWith(10, { nom: { fr: 'Casbah' }, description: { fr: 'x' } }, { idUser: 60 });
   });
 
   it('autre compte : 403, rien n’est enregistré ; modération : tout est transmis', async () => {
@@ -85,7 +85,7 @@ describe('PatrimoineController.update — droits', () => {
 
     mockContainer.patrimoineService = service(true);
     await controller.update(req({ id_user: 1, isAdmin: true }, { nom: { fr: 'x' }, services: [] }), res());
-    expect(mockContainer.patrimoineService.update).toHaveBeenCalledWith(10, { nom: { fr: 'x' }, services: [] });
+    expect(mockContainer.patrimoineService.update).toHaveBeenCalledWith(10, { nom: { fr: 'x' }, services: [] }, { idUser: 1 });
   });
 
   it('suppression d’un média par un autre compte : 403', async () => {

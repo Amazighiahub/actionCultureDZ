@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePlanner'));
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
+import HistoriqueLieuDialog from '@/components/patrimoine/HistoriqueLieuDialog';
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
 import { patrimoineArticlesService, getPagesPatrimoine, type PatrimoineBlock, type PagePatrimoine } from '@/services/patrimoineArticles.service';
 import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
@@ -381,6 +382,16 @@ const PatrimoineDetail = () => {
               <Pencil className="h-4 w-4 me-1" />
               {t('patrimoine.edit.button', 'Modifier')}
             </Button>
+          )}
+          {/* Historique des textes et retour en arrière : administration */}
+          {(isAdmin || hasRole('Moderateur')) && (
+            <HistoriqueLieuDialog
+              lieuId={site.id_lieu}
+              onRestaure={async () => {
+                const res = await patrimoineService.getSiteDetail(site.id_lieu);
+                if (res.success && res.data) setSite(res.data as unknown as SitePatrimoineDetail);
+              }}
+            />
           )}
           {/* Chemin d'un point de visite : Timgad › Musée de Timgad › Salle 3 */}
           <nav aria-label={t('patrimoine.points.breadcrumb', 'Emplacement dans le site')} className="flex flex-wrap items-center gap-2 min-w-0">
