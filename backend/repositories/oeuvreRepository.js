@@ -6,6 +6,12 @@ const BaseRepository = require('./baseRepository');
 const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
 const subtypeRegistry = require('../services/oeuvre/subtypes/subtypeRegistry');
 
+/**
+ * Catalogue des Œuvres : sans les plats. Un article de la section Gastronomie d'un lieu (la rechta…)
+ * se lit dans Artisanat › Gastronomie et sur la page du lieu, pas parmi les livres, films et albums.
+ */
+const HORS_PLATS = literal("`Oeuvre`.`id_oeuvre` NOT IN (SELECT id_oeuvre FROM lieu_oeuvre WHERE section_patrimoine = 'gastronomie')");
+
 class OeuvreRepository extends BaseRepository {
   constructor(models) {
     super(models.Oeuvre);
@@ -48,7 +54,8 @@ class OeuvreRepository extends BaseRepository {
       ...options,
       where: {
         ...options.where,
-        statut: 'publie'
+        statut: 'publie',
+        [Op.and]: [HORS_PLATS]
       },
       include: options.include || this.getDefaultIncludes()
     });
@@ -77,7 +84,8 @@ class OeuvreRepository extends BaseRepository {
       where: {
         ...options.where,
         id_type_oeuvre: typeOeuvreId,
-        statut: 'publie'
+        statut: 'publie',
+        [Op.and]: [HORS_PLATS]
       },
       include: options.include || this.getDefaultIncludes()
     });
@@ -114,7 +122,8 @@ class OeuvreRepository extends BaseRepository {
       ],
       where: {
         ...options.where,
-        statut: 'publie'
+        statut: 'publie',
+        [Op.and]: [HORS_PLATS]
       }
     });
   }
