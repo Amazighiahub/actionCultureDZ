@@ -4243,7 +4243,10 @@
       "autre": "Autre"
     },
     "placeLabel": "Lieu du service",
-    "placeHint": "Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte."
+    "placeHint": "Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte.",
+    "descriptionPlaceholder": "Décrivez votre service...",
+    "addressPlaceholder": "Adresse complète...",
+    "hoursPlaceholder": "Ex : tous les jours, 9 h – 18 h"
   },
   "organisations": {
     "create": {

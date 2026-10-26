@@ -3968,7 +3968,10 @@
       "autre": "Other"
     },
     "placeLabel": "Location of the service",
-    "placeHint": "Search for the place (site, district, village). Not found? “Create a new place”: name, address and a point on the map."
+    "placeHint": "Search for the place (site, district, village). Not found? “Create a new place”: name, address and a point on the map.",
+    "descriptionPlaceholder": "Describe your service...",
+    "addressPlaceholder": "Full address...",
+    "hoursPlaceholder": "E.g. every day, 9am – 6pm"
   },
   "organisations": {
     "create": {

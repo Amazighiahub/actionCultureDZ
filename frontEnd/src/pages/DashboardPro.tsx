@@ -683,7 +683,7 @@ const DashboardPro = () => {
 
               {/* Contenu des onglets */}
               <TabsContent value="oeuvres" className="p-6 m-0">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_uvres")} ({filterBySearch(mesOeuvres?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-oeuvre">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvelle_uvre")}
@@ -732,7 +732,7 @@ const DashboardPro = () => {
 
               {/* Les autres onglets suivent le même pattern... */}
               <TabsContent value="evenements" className="p-6 m-0">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_vnements")} ({filterBySearch(mesEvenements?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-evenement">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvel_vnement")}
@@ -854,7 +854,7 @@ const DashboardPro = () => {
               </TabsContent>
 
               <TabsContent value="services" className="p-6 m-0">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")} ({filterBySearch(mesServices?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-mon-service">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouveau_service")}
@@ -900,7 +900,7 @@ const DashboardPro = () => {
               </TabsContent>
 
               <TabsContent value="artisanat" className="p-6 m-0">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_artisanats", "Mes artisanats")} ({filterBySearch(mesArtisanats?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-artisanat">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouvel_artisanat", "Nouvel artisanat")}
@@ -981,7 +981,7 @@ const DashboardPro = () => {
               </TabsContent>
 
               <TabsContent value="patrimoine" className="p-6 m-0">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mon_patrimoine")} ({filterBySearch(mesPatrimoines?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-patrimoine">
                       <Plus className="h-4 w-4 me-2" />{t("dashboardpro.nouveau_site")}

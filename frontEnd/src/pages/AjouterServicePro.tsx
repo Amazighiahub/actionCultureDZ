@@ -450,10 +450,8 @@ const AjouterServicePro: React.FC = () => {
                   <RequiredLabel required>{t('service.name', 'Nom du service')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
-                    label={t('service.name', 'Nom du service')}
                     value={formData.nom}
                     onChange={(value) => updateField('nom', value)}
-                    required
                     requiredLanguages={['fr']}
                     placeholder="Ex: Restaurant Le Casbah"
                     aria-invalid={!!fieldErrors.nom}
@@ -467,7 +465,7 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.description}
                     onChange={(value) => updateField('description', value)}
-                    placeholder={{ fr: 'Décrivez votre service...', ar: 'صف خدمتك...', en: 'Describe your service...' }}
+                    placeholder={t('service.descriptionPlaceholder', 'Décrivez votre service...')}
                     multiline
                     requiredLanguages={[]}
                   />
@@ -553,7 +551,7 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.adresse}
                     onChange={(value) => updateField('adresse', value)}
-                    placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
+                    placeholder={t('service.addressPlaceholder', 'Adresse complète...')}
                     requiredLanguages={[]}
                   />
                 </div>
@@ -635,7 +633,7 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.horaires}
                     onChange={(value) => updateField('horaires', value)}
-                    placeholder={{ fr: 'Ex: Lun-Ven 9h-18h', ar: 'مثال: الاثنين-الجمعة 9-18', en: 'Ex: Mon-Fri 9am-6pm' }}
+                    placeholder={t('service.hoursPlaceholder', 'Ex : tous les jours, 9 h – 18 h')}
                     requiredLanguages={[]}
                   />
                 </div>
