@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { montantInscription, tarificationDe, PRESENCE_PARTIELLE } from '@/utils/tarifEvenement';
+import { montantInscription, prixAConvenir, tarificationDe, PRESENCE_PARTIELLE } from '@/utils/tarifEvenement';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -598,7 +598,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 {tarification.mode === 'profil' && (
                   <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm" aria-live="polite">
                     {montant === null
-                      ? t('events.tarif.indiquezProfil', 'Indiquez votre profil pour voir votre prix.')
+                      ? (prixAConvenir(event, reponses)
+                          ? t('events.tarif.prixAConvenir', 'Prix à convenir avec l’organisateur.')
+                          : t('events.tarif.indiquezProfil', 'Indiquez votre profil pour voir votre prix.'))
                       : (<>
                           <span className="font-semibold">{t('events.tarif.votreParticipation', 'Votre participation :')} </span>
                           <span className="font-bold text-primary">{montant === 0 ? t('events.free', 'Gratuit') : formatPrice(montant)}</span>

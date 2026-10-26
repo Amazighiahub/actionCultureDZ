@@ -644,7 +644,10 @@
       "indiquezProfil": "حدّد صفتك لترى سعرك.",
       "votreParticipation": "مشاركتك:",
       "toutLEvenement": "لكامل الفعالية",
-      "partielInfo": "(حضور جزئي، {{pourcent}} % من السعر)"
+      "partielInfo": "(حضور جزئي، {{pourcent}} % من السعر)",
+      "aConvenir": "للاتفاق",
+      "autreFacultatif": "سعر «أخرى» اختياري: إن تُرك فارغًا يقرأ المشارك «السعر يُتّفق عليه مع المنظّم».",
+      "prixAConvenir": "السعر يُتّفق عليه مع المنظّم."
     }
   },
   "footer": {

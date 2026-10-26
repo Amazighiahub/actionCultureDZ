@@ -469,11 +469,17 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
                       </p>
                       {/* À payer : profil choisi et montant calculé à l'inscription */}
-                      {Number(participant.montant_du) > 0 && (
+                      {(Number(participant.montant_du) > 0 || typeof participant.reponses_inscription?.profil === 'string') && (
                         <p className="text-sm mt-1">
-                          <span className="font-semibold text-primary">{formatPrice(Number(participant.montant_du))}</span>
+                          {participant.montant_du === null || participant.montant_du === undefined
+                            ? <span className="text-muted-foreground">{t('events.tarif.aConvenir', 'à convenir')}</span>
+                            : Number(participant.montant_du) > 0
+                              ? <span className="font-semibold text-primary">{formatPrice(Number(participant.montant_du))}</span>
+                              : <span className="text-muted-foreground">{t('events.free', 'Gratuit')}</span>}
                           {typeof participant.reponses_inscription?.profil === 'string' && (
-                            <span className="text-muted-foreground"> · {participant.reponses_inscription.profil}</span>
+                            <span className="text-muted-foreground"> · {participant.reponses_inscription.profil}
+                              {typeof participant.reponses_inscription?.profil_autre === 'string' && ` (${participant.reponses_inscription.profil_autre})`}
+                            </span>
                           )}
                           {participant.reponses_inscription?.presence === 'Partielle' && (
                             <span className="text-muted-foreground"> · {t('pro.participants.partielle', 'présence partielle')}</span>
