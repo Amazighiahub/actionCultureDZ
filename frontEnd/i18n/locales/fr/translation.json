@@ -235,7 +235,9 @@
       "invalidTokenTitle": "Lien invalide",
       "invalidTokenDescription": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
       "requestNewLink": "Demander un nouveau lien",
-      "tokenExpired": "Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation."
+      "tokenExpired": "Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation.",
+      "conditions": "En choisissant votre mot de passe, vous acceptez les",
+      "conditionsLien": "conditions d’utilisation"
     },
     "idleWarning": "Session bientôt expirée",
     "idleWarningDesc": "Vous serez déconnecté dans 2 minutes pour inactivité.",
@@ -3374,7 +3376,30 @@
       "viewFullPage": "Voir page complète",
       "answers": "Réponses au formulaire d'inscription",
       "exportExcel": "Télécharger en Excel",
-      "partielle": "présence partielle"
+      "partielle": "présence partielle",
+      "import": {
+        "bouton": "Importer une liste (Excel)",
+        "titre": "Importer une liste d’inscriptions",
+        "description": "Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Les personnes sont inscrites « En attente » : vous confirmez ensuite.",
+        "fichier": "Classeur Excel (.xlsx)",
+        "aide": "Rien n’est enregistré à cette étape : vous verrez d’abord la liste.",
+        "voir": "Voir la liste",
+        "resume": "{{n}} personne(s) cochée(s) sur {{total}}.",
+        "colonnesIgnorees": "Colonnes non reprises :",
+        "creer": "Nouveau compte",
+        "inscrire": "Compte existant",
+        "dejaInscrit": "Déjà inscrit",
+        "doublon": "Email en double",
+        "invalide": "Email non valable",
+        "inviter": "Envoyer à chaque nouveau compte un email pour choisir son mot de passe (lien valable 7 jours)",
+        "confirmer": "Inscrire {{n}} personne(s)",
+        "termine": "Import terminé",
+        "bilanInscrits": "{{n}} personne(s) inscrite(s) « En attente »",
+        "bilanComptes": "{{n}} compte(s) créé(s)",
+        "bilanInvitations": "{{n}} invitation(s) envoyée(s)",
+        "erreurLecture": "Le fichier n’a pas pu être lu.",
+        "erreurImport": "L’import a échoué."
+      }
     }
   },
   "programmePages": {

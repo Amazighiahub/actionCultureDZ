@@ -69,8 +69,10 @@ module.exports = (sequelize) => {
    * @param {string} type - Type de token (email_verification, password_reset, email_change)
    * @param {object} metadata - Données additionnelles (ex: { newEmail: '...' })
    * @param {string} ipAddress - Adresse IP de la requête
+   * @param {number} [dureeHeures] - Durée de validité, si différente de celle du type
+   *   (invitation d'un participant importé : 7 jours)
    */
-  EmailVerification.createVerificationToken = async function(userId, type = 'email_verification', metadata = {}, ipAddress = null) {
+  EmailVerification.createVerificationToken = async function(userId, type = 'email_verification', metadata = {}, ipAddress = null, dureeHeures = null) {
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
 
@@ -80,7 +82,7 @@ module.exports = (sequelize) => {
       'password_reset': 2,
       'email_change': 24
     };
-    const expiresIn = expiresInHours[type] || 24;
+    const expiresIn = dureeHeures || expiresInHours[type] || 24;
 
     // Invalider les anciens tokens non utilisés du même type
     await this.update(

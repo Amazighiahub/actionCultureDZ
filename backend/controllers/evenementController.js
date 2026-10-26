@@ -236,6 +236,31 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** Aperçu d'une liste d'inscriptions : rien n'est écrit */
+  async apercuImportInscriptions(req, res) {
+    try {
+      const data = await container.importInscriptionsService.apercu(req.file.buffer, parseInt(req.params.id), req.user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** Import des lignes cochées (numéros de ligne), invitations envoyées aux comptes créés */
+  async importerInscriptions(req, res) {
+    try {
+      let lignes = null;
+      try { lignes = req.body?.lignes ? JSON.parse(req.body.lignes) : null; } catch { lignes = null; }
+      const data = await container.importInscriptionsService.importer(req.file.buffer, parseInt(req.params.id), req.user, {
+        lignes: Array.isArray(lignes) ? lignes.map(Number).filter(Number.isInteger) : null,
+        inviter: req.body?.inviter !== 'false'
+      });
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async publish(req, res) {
     try {
       // Corps vide : publier ; { statut: 'rejete', raison } : refuser (retour en brouillon)

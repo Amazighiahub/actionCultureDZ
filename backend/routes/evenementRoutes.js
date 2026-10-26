@@ -4,13 +4,14 @@
  */
 
 const express = require('express');
-const { publicHttpCache } = require('../middlewares/cacheMiddleware');
+const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddleware');
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
+const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 
 const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -99,8 +100,16 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.put('/:id/oeuvres/reorder', authenticate, validateId(), asyncHandler((req, res) => evenementController.reorderOeuvres(req, res)));
   router.delete('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.removeOeuvre(req, res)));
 
+  // Liste d'inscriptions (Excel d'un formulaire en ligne) : aperçu, puis import (organisateur ou admin)
+  router.post('/:id/participants/import/apercu', authenticate, validateId(), ...uploadClasseurXlsx,
+    asyncHandler((req, res) => evenementController.apercuImportInscriptions(req, res)));
+  router.post('/:id/participants/import', authenticate, requireVerifiedEmail, validateId(), ...uploadClasseurXlsx,
+    invalidateCache([req => `/evenements/${req.params.id}/participants`]),
+    asyncHandler((req, res) => evenementController.importerInscriptions(req, res)));
+
   // Participants validation (owner ou admin)
-  router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));
+  router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
+    invalidateCache([req => `/evenements/${req.params.id}/participants`]), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));
 
   // Cancel (owner or admin)
   router.post('/:id/cancel', authenticate, validateId(), asyncHandler((req, res) => evenementController.cancel(req, res)));

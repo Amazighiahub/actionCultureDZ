@@ -287,6 +287,18 @@ class ServiceContainer {
     return this._services.get('monitoring');
   }
 
+  /** Import d'une liste d'inscriptions (Excel) dans un événement : comptes, inscriptions, invitations */
+  get importInscriptionsService() {
+    this._checkInitialized();
+
+    if (!this._services.has('importInscriptions')) {
+      const { ImportInscriptions } = require('./evenement/importInscriptions');
+      this._services.set('importInscriptions', new ImportInscriptions(this._models, { emailService: this.emailService }));
+    }
+
+    return this._services.get('importInscriptions');
+  }
+
   /** Propositions de modification d'un article (brouillons validés par l'auteur ou l'administration) */
   get articleRevisionService() {
     this._checkInitialized();

@@ -5,8 +5,8 @@
 
 const express = require('express');
 const { publicHttpCache } = require('../middlewares/cacheMiddleware');
-const multer = require('multer');
-const { secureDiskUpload, multerErrorGuard, validateMagicBytesBuffer } = require('../middlewares/uploadSecurity');
+const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
 const { param, body } = require('express-validator');
@@ -25,12 +25,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     (req.user?.isAdmin || req.user?.isModerateur) ? next() : requireValidatedProfessional(req, res, next);
 
   // Relevé Excel de points de visite (modèle Taladz) : lu en mémoire, jamais stocké
-  const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-  const MAX_RELEVE_SIZE = 5 * 1024 * 1024;
   const releveUpload = [
-    multerErrorGuard(multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_RELEVE_SIZE, files: 1 } }).single('fichier')),
-    (req, res, next) => (req.file ? next() : res.status(400).json({ success: false, error: 'Fichier Excel (.xlsx) requis' })),
-    validateMagicBytesBuffer([XLSX_MIME], { maxFileSize: MAX_RELEVE_SIZE }),
+    ...uploadClasseurXlsx,
     [body('parentId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage('Lieu invalide')],
     handleValidationErrors
   ];
