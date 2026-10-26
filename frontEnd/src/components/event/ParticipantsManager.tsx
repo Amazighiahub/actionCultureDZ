@@ -48,9 +48,11 @@ import {
   UserX,
   UserCog,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Send
 } from 'lucide-react';
 import ImportInscriptionsDialog from './ImportInscriptionsDialog';
+import MessageParticipantsDialog from './MessageParticipantsDialog';
 import { httpClient } from '@/services/httpClient';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
@@ -163,6 +165,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const { t, i18n } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const [importOuvert, setImportOuvert] = useState(false);
+  const [messageOuvert, setMessageOuvert] = useState(false);
   const { td } = useTranslateData();
   const { formatDate } = useLocalizedDate();
   const { toast } = useToast();
@@ -447,7 +450,16 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
             <FileSpreadsheet className="h-4 w-4 me-2" aria-hidden="true" />
             {t('pro.participants.import.bouton', 'Importer une liste (Excel)')}
           </Button>
+          <Button onClick={() => setMessageOuvert(true)} disabled={participants.length === 0}>
+            <Send className="h-4 w-4 me-2" aria-hidden="true" />
+            {t('pro.participants.messages.bouton', 'Écrire aux participants')}
+          </Button>
         </div>
+        <MessageParticipantsDialog
+          evenementId={evenementId}
+          ouvert={messageOuvert}
+          onFermer={() => setMessageOuvert(false)}
+        />
         <ImportInscriptionsDialog
           evenementId={evenementId}
           ouvert={importOuvert}

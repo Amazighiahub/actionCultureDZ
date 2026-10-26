@@ -524,6 +524,48 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** Messages de l'organisateur à ses participants : nombres de destinataires et messages déjà envoyés */
+  async listerMessagesParticipants(req, res) {
+    try {
+      const data = await container.messagesParticipantsService.lister(parseInt(req.params.id), req.user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Programme en PDF d'un message, lu chez Cloudinary et servi en « programme.pdf » (lien de l'email
+   * et de la notification : il s'ouvre sans être connecté, sur téléphone comme sur ordinateur).
+   */
+  async programmeMessage(req, res) {
+    try {
+      const url = await container.messagesParticipantsService.programme(parseInt(req.params.id), parseInt(req.params.idMessage));
+      const fichier = await fetch(url);
+      if (!fichier.ok || !fichier.body) return res.status(502).json({ success: false, error: req.t('common.serverError') });
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="programme.pdf"',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Content-Type-Options': 'nosniff'
+      });
+      if (fichier.headers.get('content-length')) res.set('Content-Length', fichier.headers.get('content-length'));
+      require('stream').Readable.fromWeb(fichier.body).pipe(res);
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** Message envoyé aux participants (notification sur le site + email) */
+  async envoyerMessageParticipants(req, res) {
+    try {
+      const data = await container.messagesParticipantsService.envoyer(parseInt(req.params.id), req.user, req.body || {});
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getProfilsParticipants(req, res) {
     try {
       const data = await this.evenementService.getProfilsParticipants(parseInt(req.params.id), req.user.id_user, req.user.isAdmin);

@@ -49,6 +49,7 @@ export type TypeNotification =
   | 'validation_compte' 
   | 'message_admin' 
   | 'rappel_evenement' 
+  | 'message_evenement'
   | 'autre';
 
 // Article
@@ -132,5 +133,6 @@ export enum TypeNotificationEnum {
   VALIDATION_COMPTE = 'validation_compte',
   MESSAGE_ADMIN = 'message_admin',
   RAPPEL_EVENEMENT = 'rappel_evenement',
+  MESSAGE_EVENEMENT = 'message_evenement',
   AUTRE = 'autre'
 }

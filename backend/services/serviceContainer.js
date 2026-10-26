@@ -300,6 +300,17 @@ class ServiceContainer {
     return this._services.get('importInscriptions');
   }
 
+  get messagesParticipantsService() {
+    this._checkInitialized();
+
+    if (!this._services.has('messagesParticipants')) {
+      const { MessagesParticipants } = require('./evenement/messagesParticipants');
+      this._services.set('messagesParticipants', new MessagesParticipants(this._models, { emailService: this.emailService }));
+    }
+
+    return this._services.get('messagesParticipants');
+  }
+
   /** Propositions de modification d'un article (brouillons validés par l'auteur ou l'administration) */
   get articleRevisionService() {
     this._checkInitialized();

@@ -17,6 +17,7 @@ export type NotificationType =
   | 'validation_compte'
   | 'message_admin'
   | 'rappel_evenement'
+  | 'message_evenement'
   | 'autre';
 
 // Priorités des notifications
@@ -74,15 +75,18 @@ export interface NotificationAPI {
 // MAPPERS DE CONVERSION
 // ================================================
 
-// Convertir de l'API vers le format unifié
-export function mapAPIToNotification(apiNotif: NotificationAPI): Notification {
+// Convertir de l'API vers le format unifié. Le serveur renvoie déjà ce format (id_notification,
+// type_notification, date_creation…) : converti comme l'autre format, il perdait l'identifiant, le
+// type, la date (« Invalid Date ») et le lien « Voir plus », et « lu » / « supprimer » ne marchaient plus
+export function mapAPIToNotification(apiNotif: NotificationAPI | Notification): Notification {
+  if ('id_notification' in apiNotif) return apiNotif;
   return {
     id_notification: apiNotif.id,
     id_user: apiNotif.user_id,
     type_notification: apiNotif.type as NotificationType,
     titre: apiNotif.titre,
     message: apiNotif.message,
-    lu: !apiNotif.is_read,
+    lu: Boolean(apiNotif.is_read),
     date_creation: apiNotif.created_at,
     date_lecture: apiNotif.read_at,
     url_action: apiNotif.action_url,
