@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -168,6 +168,7 @@ const Header = () => {
       { to: '/patrimoine?type=site_naturel', label: t('patrimoine.types.site_naturel', 'Sites naturels'), icon: Trees },
       { to: '/patrimoine?type=ville_village', label: t('patrimoine.types.ville_village', 'Villes historiques'), icon: Compass },
       { to: '/patrimoine?type=edifice_religieux', label: t('patrimoine.types.edifice_religieux', 'Édifices religieux'), icon: Landmark },
+      { to: '/patrimoine/services', label: t('servicesVisiteurs.menu', 'Services aux visiteurs'), icon: Store },
     ],
     '/artisanat': [
       { to: '/artisanat', label: t('common.all', 'Tous') },
@@ -182,6 +183,8 @@ const Header = () => {
   };
   // La sous-page Gastronomie garde le menu de l'Artisanat
   SOUS_NAV['/artisanat/gastronomie'] = SOUS_NAV['/artisanat'];
+  // La sous-page Services aux visiteurs garde le menu du Patrimoine
+  SOUS_NAV['/patrimoine/services'] = SOUS_NAV['/patrimoine'];
   const sousNav = SOUS_NAV[location.pathname];
 
   return (

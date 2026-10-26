@@ -281,6 +281,7 @@ footer { background: #23281a; color: #b9bda9; font-size: 14px; padding: 22px 0; 
 .couverture.oeuvre .fond, .fin.oeuvre .fond { background-image: url("/guide/img/oeuvre-couverture.webp"); }
 .couverture.evenement .fond, .fin.evenement .fond { background-image: url("/guide/img/evenement-couverture.webp"); }
 .couverture.artisanat .fond, .fin.artisanat .fond { background-image: url("/guide/img/artisanat-couverture.webp"); }
+.couverture.service .fond, .fin.service .fond { background-image: url("/guide/img/service-couverture.webp"); background-position: center 70%; }
 .carte p a, .encart a { color: var(--olive-dark); font-weight: 600; }
 
 /* Page Sommaire : trois étapes, puis les guides en cartes */

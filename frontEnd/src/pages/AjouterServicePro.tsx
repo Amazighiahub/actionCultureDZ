@@ -2,9 +2,10 @@
  * AjouterServicePro - Formulaire pour les professionnels
  * Permet d'ajouter un service commercial autour d'un lieu patrimonial
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -22,10 +23,9 @@ import { Separator } from '@/components/ui/separator';
 import {
   Save, Loader2, AlertCircle, CheckCircle2,
   MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
-  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus, X
+  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, X
 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { patrimoineService } from '@/services/patrimoine.service';
+import { LieuSelector } from '@/components/LieuSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
@@ -95,6 +95,7 @@ const AjouterServicePro: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const currentLang = i18n.language as 'fr' | 'ar' | 'en';
   const { direction } = useRTL();
 
@@ -102,24 +103,6 @@ const AjouterServicePro: React.FC = () => {
   const [formData, setFormData] = useState<ServiceFormData>(INITIAL_FORM);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-
-  // Lieu selection
-  const [searchQuery, setSearchQuery] = useState('');
-  const [lieux, setLieux] = useState<Array<Record<string, unknown>>>([]);
-  const [selectedLieu, setSelectedLieu] = useState<Record<string, unknown> | null>(null);
-  const [showLieuSearch, setShowLieuSearch] = useState(false);
-  const [loadingLieux, setLoadingLieux] = useState(false);
-  
-  // Nouveau lieu
-  const [lieuMode, setLieuMode] = useState<'existing' | 'new'>('existing');
-  const [newLieu, setNewLieu] = useState({
-    nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-    adresse: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-    latitude: '',
-    longitude: '',
-    wilaya: '',
-    commune: '',
-  });
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -165,6 +148,7 @@ const AjouterServicePro: React.FC = () => {
           tarif_max: svc.tarif_max?.toString() || '',
           disponible: svc.disponible !== false,
         });
+        if (typeof svc.photo_url === 'string' && svc.photo_url) setPhotoPreview(svc.photo_url);
         // Service loaded for editing
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.serviceNotFound'), variant: 'destructive' });
@@ -176,89 +160,11 @@ const AjouterServicePro: React.FC = () => {
     }
   };
 
-  // Pré-remplir si un lieu est passé en paramètre
+  // Pré-remplir si un lieu est passé en paramètre (page d'un site : « Proposez vos services ici »)
   useEffect(() => {
-    const lieuId = searchParams.get('lieu');
-    if (lieuId) {
-      loadLieuById(parseInt(lieuId));
-    }
-  }, [searchParams]);
-
-  // Charger un lieu par ID
-  const loadLieuById = async (id: number) => {
-    try {
-      const response = await patrimoineService.getSiteDetail(id);
-      if (response.success && response.data) {
-        setSelectedLieu(response.data);
-        setFormData(prev => ({
-          ...prev,
-          id_lieu: id,
-          latitude: response.data.latitude?.toString() || '',
-          longitude: response.data.longitude?.toString() || '',
-        }));
-      }
-    } catch (err) {
-      console.error('Erreur chargement lieu:', err);
-    }
-  };
-
-  // Rechercher des lieux
-  const searchLieux = useCallback(async () => {
-    if (!searchQuery || searchQuery.length < 2) {
-      setLieux([]);
-      return;
-    }
-
-    try {
-      setLoadingLieux(true);
-      const response = await patrimoineService.recherche({
-        q: searchQuery,
-        limit: 10,
-      });
-
-      if (response.success && response.data) {
-        const items = response.data.items || response.data.sites || response.data || [];
-        setLieux(Array.isArray(items) ? items : []);
-      }
-    } catch (err) {
-      console.error('Erreur recherche:', err);
-      setLieux([]);
-    } finally {
-      setLoadingLieux(false);
-    }
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(searchLieux, 300);
-    return () => clearTimeout(timer);
-  }, [searchLieux]);
-
-  // Obtenir le nom localisé
-  const getLocalizedName = (item: Record<string, unknown> | null, field: string = 'nom') => {
-    if (!item) return '';
-    const value = item[field];
-    if (!value) return '';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object' && value !== null) {
-      const obj = value as Record<string, string>;
-      return obj[currentLang] || obj.fr || '';
-    }
-    return '';
-  };
-
-  // Sélectionner un lieu
-  const handleSelectLieu = (lieu: Record<string, unknown>) => {
-    setSelectedLieu(lieu);
-    setFormData(prev => ({
-      ...prev,
-      id_lieu: lieu.id_lieu as number,
-      latitude: lieu.latitude != null ? String(lieu.latitude) : '',
-      longitude: lieu.longitude != null ? String(lieu.longitude) : '',
-    }));
-    setShowLieuSearch(false);
-    setSearchQuery('');
-    setLieux([]);
-  };
+    const lieuId = parseInt(searchParams.get('lieu') || '', 10);
+    if (!isEditMode && lieuId > 0) setFormData(prev => ({ ...prev, id_lieu: lieuId }));
+  }, [searchParams, isEditMode]);
 
   // Gérer le changement de photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -354,24 +260,8 @@ const AjouterServicePro: React.FC = () => {
       errs.type_service = t('service.errors.typeRequired', 'Le type de service est requis');
     }
 
-    // Validation selon le mode de lieu
-    if (lieuMode === 'existing') {
-      if (!formData.id_lieu) {
-        errs.id_lieu = t('service.errors.lieuRequired', 'Veuillez sélectionner un lieu existant');
-      }
-    } else if (lieuMode === 'new') {
-      if (!newLieu.nom.fr?.trim() && !newLieu.nom.ar?.trim()) {
-        errs.newLieuNom = t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis (au moins en français ou arabe)');
-      }
-      if (!newLieu.latitude || !newLieu.longitude) {
-        errs.newLieuGps = t('service.errors.newLieuGpsRequired', 'Les coordonnées GPS du nouveau lieu sont requises');
-      } else {
-        const lat = parseFloat(newLieu.latitude);
-        const lng = parseFloat(newLieu.longitude);
-        if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
-          errs.newLieuGps = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
-        }
-      }
+    if (!formData.id_lieu) {
+      errs.id_lieu = t('service.errors.lieuRequired', 'Veuillez choisir le lieu de votre service');
     }
     if (formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
       const tarifErr = t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum');
@@ -387,20 +277,6 @@ const AjouterServicePro: React.FC = () => {
     if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
       errs.telephone = t('service.errors.phoneInvalid', 'Numéro de téléphone invalide');
     }
-    // GPS validation on standalone service coordinates
-    if (formData.latitude) {
-      const sLat = parseFloat(formData.latitude);
-      if (isNaN(sLat) || sLat < -90 || sLat > 90) {
-        errs.latitude = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
-      }
-    }
-    if (formData.longitude) {
-      const sLng = parseFloat(formData.longitude);
-      if (isNaN(sLng) || sLng < -180 || sLng > 180) {
-        errs.longitude = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
-      }
-    }
-
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
       setError(Object.values(errs)[0]);
@@ -426,40 +302,12 @@ const AjouterServicePro: React.FC = () => {
       setSubmitting(true);
       setError(null);
 
-      let lieuId = formData.id_lieu;
-
-      // Si nouveau lieu, le créer d'abord
-      if (lieuMode === 'new') {
-        const lieuData = {
-          nom: newLieu.nom,
-          adresse: newLieu.adresse,
-          latitude: parseFloat(newLieu.latitude),
-          longitude: parseFloat(newLieu.longitude),
-          wilaya: newLieu.wilaya,
-          commune: newLieu.commune,
-          typeLieu: 'service', // Type par défaut pour les lieux créés par les pros
-        };
-
-        const lieuResult = await httpClient.post<{ id_lieu?: number; id?: number }>('/lieux', lieuData);
-
-        if (!lieuResult.success) {
-          throw new Error(lieuResult.error || 'Erreur lors de la création du lieu');
-        }
-
-        lieuId = lieuResult.data.id_lieu || lieuResult.data.id;
-        
-        toast({
-          title: t('service.lieuCreated', 'Lieu créé'),
-          description: t('service.lieuCreatedDesc', 'Le nouveau lieu a été créé avec succès.'),
-        });
-      }
-
       // Préparer les données du service
       const serviceData = {
         nom: formData.nom,
         description: formData.description,
         type_service: formData.type_service,
-        id_lieu: lieuId,
+        id_lieu: formData.id_lieu,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         adresse: formData.adresse,
@@ -488,6 +336,9 @@ const AjouterServicePro: React.FC = () => {
         }
 
         setIsDirty(false);
+        // Le tableau de bord affiche tout de suite le service (et son statut)
+        queryClient.invalidateQueries({ queryKey: ['dashboard-pro-services'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
         toast({
           title: isEditMode ? t('toasts.serviceStatusUpdated') : t('service.success.title', 'Service ajouté'),
           description: isEditMode ? t('toasts.actionSuccess') : t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
@@ -599,10 +450,8 @@ const AjouterServicePro: React.FC = () => {
                   <RequiredLabel required>{t('service.name', 'Nom du service')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
-                    label={t('service.name', 'Nom du service')}
                     value={formData.nom}
                     onChange={(value) => updateField('nom', value)}
-                    required
                     requiredLanguages={['fr']}
                     placeholder="Ex: Restaurant Le Casbah"
                     aria-invalid={!!fieldErrors.nom}
@@ -616,7 +465,7 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.description}
                     onChange={(value) => updateField('description', value)}
-                    placeholder={{ fr: 'Décrivez votre service...', ar: 'صف خدمتك...', en: 'Describe your service...' }}
+                    placeholder={t('service.descriptionPlaceholder', 'Décrivez votre service...')}
                     multiline
                     requiredLanguages={[]}
                   />
@@ -674,195 +523,25 @@ const AjouterServicePro: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Choix: Lieu existant ou nouveau */}
-                <div className="space-y-3">
-                  <Label>{t('service.lieuChoice', 'Où se trouve votre service ?')}</Label>
-                  <RadioGroup
-                    value={lieuMode}
-                    onValueChange={(v) => {
-                      setLieuMode(v as 'existing' | 'new');
-                      if (v === 'new') {
-                        setSelectedLieu(null);
-                        updateField('id_lieu', null);
-                      }
+                <div className="space-y-2">
+                  <RequiredLabel required>{t('service.placeLabel', 'Lieu du service')}</RequiredLabel>
+                  <p className="text-sm text-muted-foreground">
+                    {t('service.placeHint', 'Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte.')}
+                  </p>
+                  <LieuSelector
+                    value={formData.id_lieu ?? undefined}
+                    onChange={(lieuId, lieu) => {
+                      updateField('id_lieu', lieuId ?? null);
+                      setFormData(prev => ({
+                        ...prev,
+                        latitude: lieu?.latitude != null ? String(lieu.latitude) : '',
+                        longitude: lieu?.longitude != null ? String(lieu.longitude) : '',
+                      }));
                     }}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="existing" id="existing" />
-                      <Label htmlFor="existing" className="cursor-pointer">
-                        {t('service.existingPlace', 'Lieu existant')}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="new" id="new" />
-                      <Label htmlFor="new" className="cursor-pointer flex items-center gap-1">
-                        <Plus className="h-4 w-4" />
-                        {t('service.newPlace', 'Ajouter un nouveau lieu')}
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                    required
+                  />
+                  {fieldErrors.id_lieu && <p className="text-sm text-destructive" role="alert">{fieldErrors.id_lieu}</p>}
                 </div>
-
-                {/* Lieu existant */}
-                {lieuMode === 'existing' && (
-                  <div className="space-y-2">
-                    <Label>{t('service.nearbyPlace', 'Lieu patrimonial à proximité')}</Label>
-                    {selectedLieu ? (
-                    <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                      <div className="flex items-center gap-3">
-                        <MapPin className="h-5 w-5 text-emerald-600" />
-                        <div>
-                          <p className="font-medium">{getLocalizedName(selectedLieu)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedLieu.wilaya?.nom || selectedLieu.commune?.nom}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedLieu(null);
-                          updateField('id_lieu', null);
-                        }}
-                      >
-                        {t('common.change', 'Changer')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={t('service.searchPlace', 'Rechercher un lieu...')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="ps-10"
-                            onFocus={() => setShowLieuSearch(true)}
-                          />
-                        </div>
-                      </div>
-                      {showLieuSearch && lieux.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-auto">
-                          {loadingLieux ? (
-                            <div className="p-4 text-center">
-                              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-                            </div>
-                          ) : (
-                            lieux.map((lieu) => (
-                              <button
-                                key={lieu.id_lieu}
-                                type="button"
-                                onClick={() => handleSelectLieu(lieu)}
-                                className="w-full p-3 text-start hover:bg-muted flex items-center gap-3"
-                              >
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium">{getLocalizedName(lieu)}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {lieu.wilaya?.nom || lieu.commune?.nom}
-                                  </p>
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  </div>
-                )}
-
-                {/* Nouveau lieu */}
-                {lieuMode === 'new' && (
-                  <Card className="border-2 border-dashed border-accent/30 bg-accent/5">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2 text-accent-foreground">
-                        <Plus className="h-5 w-5" />
-                        {t('service.newPlaceTitle', 'Informations du nouveau lieu')}
-                      </CardTitle>
-                      <CardDescription>
-                        {t('service.newPlaceDesc', 'Ce lieu sera créé et associé à votre service')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Nom du lieu */}
-                      <div className="space-y-2">
-                        <RequiredLabel required>{t('service.placeName', 'Nom du lieu')}</RequiredLabel>
-                        <MultiLangInput
-                          value={newLieu.nom}
-                          onChange={(value) => setNewLieu(prev => ({ ...prev, nom: value }))}
-                          placeholder={{ fr: 'Ex: Place des Martyrs', ar: 'مثال: ساحة الشهداء', en: 'Ex: Martyrs Square' }}
-                          requiredLanguages={['fr']}
-                        />
-                      </div>
-
-                      {/* Adresse du lieu */}
-                      <div className="space-y-2">
-                        <RequiredLabel required>{t('service.placeAddress', 'Adresse du lieu')}</RequiredLabel>
-                        <MultiLangInput
-                          value={newLieu.adresse}
-                          onChange={(value) => setNewLieu(prev => ({ ...prev, adresse: value }))}
-                          placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
-                          requiredLanguages={['fr']}
-                        />
-                      </div>
-
-                      {/* Coordonnées GPS */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <RequiredLabel required>{t('service.latitude', 'Latitude')}</RequiredLabel>
-                          <Input
-                            type="number"
-                            step="any"
-                            min="-90"
-                            max="90"
-                            value={newLieu.latitude}
-                            onChange={(e) => setNewLieu(prev => ({ ...prev, latitude: e.target.value }))}
-                            placeholder="36.7538"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <RequiredLabel required>{t('service.longitude', 'Longitude')}</RequiredLabel>
-                          <Input
-                            type="number"
-                            step="any"
-                            min="-180"
-                            max="180"
-                            value={newLieu.longitude}
-                            onChange={(e) => setNewLieu(prev => ({ ...prev, longitude: e.target.value }))}
-                            placeholder="3.0588"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Wilaya / Commune */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t('service.wilaya', 'Wilaya')}</Label>
-                          <Input
-                            value={newLieu.wilaya}
-                            onChange={(e) => setNewLieu(prev => ({ ...prev, wilaya: e.target.value }))}
-                            placeholder="Ex: Alger"
-                            maxLength={100}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t('service.commune', 'Commune')}</Label>
-                          <Input
-                            value={newLieu.commune}
-                            onChange={(e) => setNewLieu(prev => ({ ...prev, commune: e.target.value }))}
-                            placeholder="Ex: Casbah"
-                            maxLength={100}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 <Separator />
 
@@ -872,40 +551,11 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.adresse}
                     onChange={(value) => updateField('adresse', value)}
-                    placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
+                    placeholder={t('service.addressPlaceholder', 'Adresse complète...')}
                     requiredLanguages={[]}
                   />
                 </div>
 
-                {/* Show standalone GPS fields only when NOT creating a new lieu and no existing lieu selected */}
-                {lieuMode !== 'new' && !selectedLieu && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('service.latitude', 'Latitude')}</Label>
-                    <Input
-                      type="number"
-                      step="any"
-                      min="-90"
-                      max="90"
-                      value={formData.latitude}
-                      onChange={(e) => updateField('latitude', e.target.value)}
-                      placeholder="36.7538"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('service.longitude', 'Longitude')}</Label>
-                    <Input
-                      type="number"
-                      step="any"
-                      min="-180"
-                      max="180"
-                      value={formData.longitude}
-                      onChange={(e) => updateField('longitude', e.target.value)}
-                      placeholder="3.0588"
-                    />
-                  </div>
-                </div>
-                )}
               </CardContent>
             </Card>
 
@@ -983,7 +633,7 @@ const AjouterServicePro: React.FC = () => {
                   <MultiLangInput
                     value={formData.horaires}
                     onChange={(value) => updateField('horaires', value)}
-                    placeholder={{ fr: 'Ex: Lun-Ven 9h-18h', ar: 'مثال: الاثنين-الجمعة 9-18', en: 'Ex: Mon-Fri 9am-6pm' }}
+                    placeholder={t('service.hoursPlaceholder', 'Ex : tous les jours, 9 h – 18 h')}
                     requiredLanguages={[]}
                   />
                 </div>

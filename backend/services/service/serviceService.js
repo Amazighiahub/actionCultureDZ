@@ -6,10 +6,15 @@
 const BaseService = require('../core/baseService');
 const ServiceDTO = require('../../dto/service/serviceDTO');
 const { mergeTranslations } = require('../../helpers/i18n');
+const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+
+/** Nom lisible d'un service (nom multilingue) pour les notifications */
+const nomLisible = (nom) => (typeof nom === 'object' && nom ? (nom.fr || nom.ar || Object.values(nom).find(Boolean)) : nom) || 'Service';
 
 class ServiceService extends BaseService {
   constructor(serviceRepository, options = {}) {
     super(serviceRepository, options);
+    this.notificationService = options.notificationService;
   }
 
   // ============================================================================
@@ -25,6 +30,39 @@ class ServiceService extends BaseService {
       data: ServiceDTO.fromEntities(result.data),
       pagination: result.pagination
     };
+  }
+
+  /**
+   * Annuaire des services aux visiteurs (page Patrimoine › Services aux visiteurs) :
+   * services validés, filtrés par type, wilaya et texte ; les wilayas proposées sont
+   * celles où il existe au moins un service (avant filtrage).
+   */
+  async annuaire({ type = null, wilaya = null, q = '' } = {}) {
+    const lignes = (await this.repository.findAnnuaire()).map(s => s.get({ plain: true }));
+    let services = lignes.map(s => {
+      const w = s.Lieu?.Commune?.Daira?.Wilaya || null;
+      const { Lieu, Professionnel, ...reste } = s;
+      return {
+        ...reste,
+        lieu: Lieu ? { id_lieu: Lieu.id_lieu, nom: Lieu.nom, commune: Lieu.Commune ? { id_commune: Lieu.Commune.id_commune, nom: Lieu.Commune.nom } : null } : null,
+        wilaya: w,
+        professionnel: Professionnel || null
+      };
+    });
+
+    const wilayas = [...new Map(services.filter(s => s.wilaya).map(s => [s.wilaya.id_wilaya, s.wilaya])).values()]
+      .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
+
+    if (type) services = services.filter(s => s.type_service === type);
+    if (wilaya) services = services.filter(s => s.wilaya?.id_wilaya === Number(wilaya));
+    const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const recherche = sansAccent(q).trim();
+    if (recherche) {
+      const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
+      services = services.filter(s => textes(s.nom).includes(recherche) || textes(s.description).includes(recherche)
+        || textes(s.lieu?.nom).includes(recherche));
+    }
+    return { services, wilayas };
   }
 
   /**
@@ -128,6 +166,7 @@ class ServiceService extends BaseService {
     const full = await this.repository.findWithFullDetails(service.id);
 
     this.logger.info(`Service créé: ${service.id} par user: ${userId}`);
+    await this._prevenirModeration(service.id, entityData.nom, userId);
     return ServiceDTO.fromEntity(full);
   }
 
@@ -179,8 +218,13 @@ class ServiceService extends BaseService {
         && PUBLIC_FIELDS.some(f => updateData[f] !== undefined)) {
       updateData.statut = 'en_attente';
     }
+    // Un service refusé, corrigé par son propriétaire, repart en validation
+    if (!isModerator && existing.statut === 'rejete') {
+      updateData.statut = 'en_attente';
+    }
 
     await this.repository.update(id, updateData);
+    if (updateData.statut === 'en_attente') await this._prevenirModeration(id, updateData.nom || existing.nom, userId);
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service modifié: ${id} par user: ${userId}`);
@@ -209,6 +253,28 @@ class ServiceService extends BaseService {
   // MODÉRATION
   // ============================================================================
 
+  /** Tous les services des professionnels, par statut (modération) */
+  async findForModeration(options = {}) {
+    const result = await this.repository.findForModeration(options);
+    return {
+      data: ServiceDTO.fromEntities(result.data),
+      pagination: result.pagination
+    };
+  }
+
+  /** Un service attend une validation : les administrateurs sont prévenus */
+  async _prevenirModeration(id, nom, auteurId) {
+    if (!this.models) return;
+    for (const idAdmin of await idsAdministrateurs(this.models)) {
+      if (idAdmin === auteurId) continue;
+      await notifier(this.notificationService, idAdmin, {
+        titre: 'Service à valider',
+        message: `« ${nomLisible(nom)} » attend votre validation avant d'être publié.`,
+        url_action: '/admin/dashboard?tab=services', metadata: { id_service: id }
+      });
+    }
+  }
+
   /**
    * En attente de validation
    */
@@ -235,6 +301,11 @@ class ServiceService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service validé: ${id} par admin: ${adminId}`);
+    await notifier(this.notificationService, service.id_user, {
+      titre: 'Service publié',
+      message: `« ${nomLisible(service.nom)} » est en ligne : les visiteurs le voient sur Tala DZ.`,
+      url_action: `/services/${id}`, metadata: { id_service: id }
+    });
     return ServiceDTO.fromEntity(updated);
   }
 
@@ -253,6 +324,11 @@ class ServiceService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.logger.info(`Service rejeté: ${id} par admin: ${adminId}, motif: ${motif}`);
+    await notifier(this.notificationService, service.id_user, {
+      titre: 'Service à corriger',
+      message: `« ${nomLisible(service.nom)} » n'a pas été publié : ${String(motif).trim().slice(0, 300)}. Modifiez-le : il repartira en validation.`,
+      url_action: `/modifier-service/${id}`, metadata: { id_service: id }
+    });
     return ServiceDTO.fromEntity(updated);
   }
 

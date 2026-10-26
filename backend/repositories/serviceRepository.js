@@ -58,6 +58,25 @@ class ServiceRepository extends BaseRepository {
   }
 
   /**
+   * Annuaire public : services validés, avec leur lieu et sa wilaya (Commune › Daïra › Wilaya)
+   */
+  async findAnnuaire() {
+    const { Lieu, Commune, Daira, Wilaya, User } = this.models;
+    const include = [];
+    if (Lieu) {
+      include.push({
+        model: Lieu, required: false, attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'communeId'],
+        include: Commune ? [{
+          model: Commune, required: false, attributes: ['id_commune', 'nom', 'commune_name_ascii', 'dairaId'],
+          include: [{ model: Daira, required: false, attributes: ['id_daira', 'wilayaId'], include: [{ model: Wilaya, required: false, attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii', 'codeW'] }] }]
+        }] : []
+      });
+    }
+    if (User) include.push({ model: User, as: 'Professionnel', attributes: PUBLIC_USER_ATTRIBUTES, required: false });
+    return this.model.findAll({ where: { statut: 'valide' }, include, order: [['createdAt', 'DESC']], limit: 500 });
+  }
+
+  /**
    * Détail complet d'un service
    */
   async findWithFullDetails(id) {
@@ -119,6 +138,20 @@ class ServiceRepository extends BaseRepository {
       ...options,
       additionalWhere: { ...options.additionalWhere, statut: 'valide' },
       include: this._defaultIncludes()
+    });
+  }
+
+  /**
+   * Services des professionnels pour la modération (équipements des sites exclus), par statut
+   */
+  async findForModeration({ statut, ...options } = {}) {
+    const where = { id_user: { [Op.ne]: null } };
+    if (['en_attente', 'valide', 'rejete'].includes(statut)) where.statut = statut;
+    return this.findAll({
+      ...options,
+      where,
+      include: this._defaultIncludes(),
+      order: [['createdAt', 'DESC']]
     });
   }
 

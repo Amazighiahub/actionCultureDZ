@@ -11,26 +11,25 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Utensils, Hotel, Navigation, Car, Palette, MapPin, Globe,
-  Phone, Mail, Clock, ChevronRight, Star, CheckCircle2, XCircle,
-  ExternalLink
+  MapPin, Globe, Phone, Mail, Clock, CheckCircle2, XCircle, ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { styleTypeService } from '@/components/services/typesService';
+import type { TFunction } from 'i18next';
 import { lieuService } from '@/services/lieu.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
 
-// Icônes et couleurs par type de service
-const SERVICE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  restaurant: { icon: Utensils, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-950/30', label: 'Restaurant' },
-  hotel: { icon: Hotel, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-950/30', label: 'Hébergement' },
-  guide: { icon: Navigation, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-950/30', label: 'Guide' },
-  transport: { icon: Car, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-950/30', label: 'Transport' },
-  artisanat: { icon: Palette, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-950/30', label: 'Artisanat' },
-  location: { icon: MapPin, color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-950/30', label: 'Location' },
-  autre: { icon: Star, color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-gray-950/30', label: 'Autre' },
+// Icône, couleurs et libellé traduit de chaque type de service
+const configType = (type: string | undefined, t: TFunction) => {
+  const style = styleTypeService(type);
+  return { ...style, label: String(t(`service.types.${type || 'autre'}`, type || 'autre')) };
 };
 
 interface ServiceItem {
   id: number;
+  /** Service d'un professionnel (a sa propre page une fois validé) ; null : équipement du site */
+  id_user?: number | null;
+  statut?: string;
   nom: string | { fr?: string; ar?: string; en?: string };
   description?: string | { fr?: string; ar?: string; en?: string };
   type_service?: string;
@@ -155,7 +154,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
         </CardHeader>
         <CardContent className="space-y-2">
           {displayServices.map((service, idx) => {
-            const config = SERVICE_CONFIG[service.type_service || 'autre'] || SERVICE_CONFIG.autre;
+            const config = configType(service.type_service, t);
             const Icon = config.icon;
             return (
               <div key={idx} className="flex items-center gap-2 text-sm">
@@ -192,7 +191,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
         )}
         <div className="grid gap-3 sm:grid-cols-2">
           {displayServices.map((service, idx) => {
-            const config = SERVICE_CONFIG[service.type_service || 'autre'] || SERVICE_CONFIG.autre;
+            const config = configType(service.type_service, t);
             const Icon = config.icon;
             return (
               <Card key={idx} className="hover:shadow-sm transition-shadow">
@@ -201,7 +200,11 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                     <Icon className={`h-5 w-5 ${config.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{translate(service.nom, lang)}</p>
+                    <p className="font-medium text-sm truncate">
+                      {service.id_user && service.statut === 'valide'
+                        ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{translate(service.nom, lang)}</Link>
+                        : translate(service.nom, lang)}
+                    </p>
                     <p className="text-xs text-muted-foreground">{config.label}</p>
                   </div>
                   {service.disponible !== undefined && (
@@ -242,7 +245,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
       {/* Types de services en badges */}
       <div className="flex flex-wrap gap-2">
         {Object.entries(grouped).map(([type, items]) => {
-          const config = SERVICE_CONFIG[type] || SERVICE_CONFIG.autre;
+          const config = configType(type, t);
           const Icon = config.icon;
           return (
             <Badge key={type} variant="outline" className="gap-1.5 py-1">
@@ -255,7 +258,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
 
       {/* Carte par type */}
       {Object.entries(grouped).map(([type, items]) => {
-        const config = SERVICE_CONFIG[type] || SERVICE_CONFIG.autre;
+        const config = configType(type, t);
         const Icon = config.icon;
         return (
           <div key={type} className="space-y-3">
@@ -273,7 +276,11 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                           <Icon className={`h-5 w-5 ${config.color}`} />
                         </div>
                         <div>
-                          <p className="font-medium">{translate(service.nom, lang)}</p>
+                          <p className="font-medium">
+                            {service.id_user && service.statut === 'valide'
+                              ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{translate(service.nom, lang)}</Link>
+                              : translate(service.nom, lang)}
+                          </p>
                           {service.disponible !== undefined && (
                             <span className={`text-xs ${service.disponible ? 'text-green-600' : 'text-red-500'}`}>
                               {service.disponible

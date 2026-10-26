@@ -1345,6 +1345,11 @@
       "publie": "Published",
       "rejete": "Declined",
       "archive": "Archived"
+    },
+    "serviceStatus": {
+      "en_attente": "Awaiting approval",
+      "valide": "Published",
+      "rejete": "Declined"
     }
   },
   "dashboardadmin": {
@@ -2758,7 +2763,14 @@
       },
       "count": "{{count}} service(s)",
       "noServicesDesc": "No services match your criteria",
-      "confirmDelete": "Delete this service?"
+      "confirmDelete": "Delete this service?",
+      "pendingCount": "{{count}} service(s) to review",
+      "view": "View",
+      "rejectTitle": "Decline this service?",
+      "rejectDesc": "The professional receives your reason. Once “{{nom}}” is corrected, it comes back for review.",
+      "rejectPlaceholder": "E.g. add a photo and the phone number.",
+      "published": "Service published: the professional has been notified.",
+      "rejected": "Service declined: the professional has received your reason."
     },
     "emailVerified": "Email verified successfully",
     "emailVerifyFailed": "Unable to verify the email",
@@ -3936,7 +3948,7 @@
     "errors": {
       "nomRequired": "Service name is required (at least in French or Arabic)",
       "typeRequired": "Service type is required",
-      "lieuRequired": "Please select an existing place",
+      "lieuRequired": "Please choose where your service is",
       "newLieuNomRequired": "New place name is required (at least in French or Arabic)",
       "newLieuGpsRequired": "GPS coordinates for the new place are required",
       "tarifMinMax": "Minimum rate cannot exceed maximum rate",
@@ -3948,13 +3960,18 @@
     "editTitle": "Edit my service",
     "types": {
       "restaurant": "Restaurant",
-      "hotel": "Hotel",
+      "hotel": "Accommodation",
       "guide": "Guide",
       "transport": "Transport",
       "artisanat": "Crafts",
       "location": "Rental",
       "autre": "Other"
-    }
+    },
+    "placeLabel": "Location of the service",
+    "placeHint": "Search for the place (site, district, village). Not found? “Create a new place”: name, address and a point on the map.",
+    "descriptionPlaceholder": "Describe your service...",
+    "addressPlaceholder": "Full address...",
+    "hoursPlaceholder": "E.g. every day, 9am – 6pm"
   },
   "organisations": {
     "create": {
@@ -4707,5 +4724,24 @@
     "raisonRequise": "Explain why the suggestion is declined",
     "acceptee": "Suggestion accepted: the article is updated",
     "refusee": "Suggestion declined"
+  },
+  "servicesVisiteurs": {
+    "menu": "Visitor services",
+    "title": "Visitor services",
+    "subtitle": "Where to eat, where to stay, who to visit with: professionals near Algeria’s heritage sites.",
+    "subtitleShort": "Where to eat, where to stay, who to visit with, near heritage sites",
+    "types": "Type of service",
+    "search": "Search for a service or a place…",
+    "aucun": "No services yet",
+    "aucunResultat": "No service matches your search",
+    "commentAjouter": "Do you run a restaurant or a guesthouse, or are you a guide? Offer your service from your professional dashboard.",
+    "guide": "Guide: offer a service",
+    "introuvable": "This service cannot be found or is not published yet.",
+    "refuse": "This service was declined: correct it from your dashboard and it will be reviewed again.",
+    "enAttente": "Awaiting approval: only you and the Tala DZ team can see this page for now.",
+    "ouTrouver": "Where to find it",
+    "contact": "Contact",
+    "pasDeContact": "No contact details yet.",
+    "proposePar": "Offered by"
   }
 }
