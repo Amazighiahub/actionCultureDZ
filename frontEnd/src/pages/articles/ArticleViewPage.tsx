@@ -71,6 +71,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'article_scientifique';data: ArticleScientifique;} |
 {type: 'none';data: null;};
 import Header from '@/components/Header';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
@@ -184,6 +185,7 @@ const ReadingProgress: React.FC = () => {
 const ArticleViewPage: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
+  const inviterConnexion = useInviterConnexion();
 
   // États
   const [oeuvre, setOeuvre] = useState<Oeuvre | null>(null);
@@ -314,7 +316,7 @@ const ArticleViewPage: React.FC = () => {
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
 
@@ -393,7 +395,7 @@ const ArticleViewPage: React.FC = () => {
 
   const openCommentModal = (parentId: number | null = null) => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
       return;
     }
 

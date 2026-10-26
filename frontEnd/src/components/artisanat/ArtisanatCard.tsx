@@ -4,7 +4,7 @@
  * (titre et images dans Oeuvre) comme une forme déjà simplifiée.
  */
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { favoriService } from '@/services/favori.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 
 // Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
@@ -32,7 +33,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const { t } = useTranslation();
   const { formatPrice, formatPriceRange } = useLocalizedNumber();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const inviterConnexion = useInviterConnexion();
   const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -54,7 +55,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      navigate('/auth');
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
     if (favLoading) return;
