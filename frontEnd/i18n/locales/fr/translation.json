@@ -19,7 +19,8 @@
       "createAccount": "Créer un compte"
     },
     "loginToComment": "Connectez-vous pour commenter",
-    "loginToFavorite": "Connectez-vous pour ajouter aux favoris",
+    "inviteTitle": "Connectez-vous, c’est gratuit",
+    "loginToFavorite": "Créez un compte gratuit ou connectez-vous pour garder vos favoris.",
     "loginToRegister": "Connectez-vous pour vous inscrire à l'événement",
     "title": "Connexion & Inscription",
     "subtitle": "Accédez à votre espace personnel ou créez votre compte",

@@ -3,7 +3,7 @@
  * Avec lazy loading des images et composants séparés
  */
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,6 +40,7 @@ import SEOHead from '@/components/SEOHead';
 import { useOeuvres } from '@/hooks/useOeuvres';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 // Icônes par type
 const TYPE_ICONS: Record<string, React.ElementType> = {
@@ -68,7 +69,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const { t } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const inviterConnexion = useInviterConnexion();
   const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -80,7 +81,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      navigate('/auth');
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
     if (favLoading) return;

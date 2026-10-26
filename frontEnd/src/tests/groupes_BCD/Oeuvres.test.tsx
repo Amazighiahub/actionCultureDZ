@@ -32,6 +32,7 @@ const { mockUseOeuvres, mockNavigate } = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/oeuvres', search: '' }),
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,
 }));

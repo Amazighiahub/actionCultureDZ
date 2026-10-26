@@ -14,6 +14,7 @@ import type { Evenement } from '@/types/models/evenement.types';
 import type { Organisation } from '@/types/models/organisation.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 interface EventDetailsOptions {
   enabled?: boolean;
@@ -52,6 +53,7 @@ interface Comment {
 export function useEventDetails(eventId: number, options: EventDetailsOptions = {}) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const inviterConnexion = useInviterConnexion();
   const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuth();
   const { enabled = true } = options;
@@ -177,11 +179,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
-      toast({
-        title: t('auth.required', 'Connexion requise'),
-        description: t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'),
-        variant: 'destructive',
-      });
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
     
@@ -334,11 +332,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
   const registerToEvent = async (data?: InscriptionPayload) => {
     if (!isAuthenticated) {
-      toast({
-        title: t('auth.required', 'Connexion requise'),
-        description: t('auth.loginToRegister', 'Connectez-vous pour vous inscrire'),
-        variant: 'destructive',
-      });
+      inviterConnexion(t('auth.loginToRegister', 'Connectez-vous pour vous inscrire'));
       return false;
     }
 
@@ -363,11 +357,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
   const addComment = async (contenu: string, note?: number) => {
     if (!isAuthenticated) {
-      toast({
-        title: t('auth.required', 'Connexion requise'),
-        description: t('auth.loginToComment', 'Connectez-vous pour commenter'),
-        variant: 'destructive',
-      });
+      inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
       return false;
     }
 

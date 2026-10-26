@@ -14,6 +14,7 @@ import { evenementService } from '@/services/evenement.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Media } from '@/types/models/media.types';
 import type { Evenement } from '@/types/models/evenement.types';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 interface UseOeuvreDetailsOptions {
   enabled?: boolean;
@@ -53,6 +54,7 @@ interface Comment {
 export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOptions = {}) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const inviterConnexion = useInviterConnexion();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const { enabled = true } = options;
@@ -151,11 +153,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
 
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
-      toast({
-        title: t('auth.required', 'Connexion requise'),
-        description: t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'),
-        variant: 'destructive',
-      });
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
     await toggleFavoriBase();
@@ -268,11 +266,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
 
   const addComment = async (contenu: string, note?: number) => {
     if (!isAuthenticated) {
-      toast({
-        title: t('auth.required', 'Connexion requise'),
-        description: t('auth.loginToComment', 'Connectez-vous pour commenter'),
-        variant: 'destructive',
-      });
+      inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
       return false;
     }
 

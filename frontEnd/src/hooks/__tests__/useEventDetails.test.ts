@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 // ─── Hoisted mocks ──────────────────────────────────────────────────────────
 const {
@@ -109,7 +110,9 @@ function createQueryClient() {
 function createWrapper() {
   const qc = createQueryClient();
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(QueryClientProvider, { client: qc }, children);
+    // Routeur : l'invitation à se connecter ramène sur la page après la connexion
+    return React.createElement(MemoryRouter, { initialEntries: ['/evenements/9'] },
+      React.createElement(QueryClientProvider, { client: qc }, children));
   };
 }
 
@@ -352,9 +355,7 @@ describe('useEventDetails', () => {
 
       expect(success).toBe(false);
       expect(mockInscription).not.toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'destructive' })
-      );
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ action: expect.anything() }));
     });
 
     it('unregisterFromEvent appelle desinscription', async () => {
@@ -428,7 +429,7 @@ describe('useEventDetails', () => {
       expect(mockToggleFavori).toHaveBeenCalled();
     });
 
-    it('toggleFavorite affiche un toast si non authentifié', async () => {
+    it('toggleFavorite invite à se connecter (sans message d’erreur) si non authentifié', async () => {
       mockIsAuthenticated.value = false;
 
       const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
@@ -438,9 +439,8 @@ describe('useEventDetails', () => {
       });
 
       expect(mockToggleFavori).not.toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'destructive' })
-      );
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ action: expect.anything() }));
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
     });
   });
 

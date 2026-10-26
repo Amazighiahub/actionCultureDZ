@@ -259,7 +259,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                   data-active={isFavorite}
                   size="lg"
                   onClick={onToggleFavorite}
-                  className={!isFavorite ? "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30" : undefined}
+                  className={!isFavorite ? "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 hover:text-white hover:border-white/60" : undefined}
                 >
                   <Heart className={`h-5 w-5 me-2 ${isFavorite ? 'fill-current' : ''}`} />
                   {isFavorite

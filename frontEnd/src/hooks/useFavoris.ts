@@ -94,7 +94,8 @@ export function useFavoris(options: UseFavorisOptions = {}) {
       entity_type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat'; 
       entity_id: number 
     }) => {
-      const response = await favoriService.add({ entity_type, entity_id });
+      // L'API attend type_entite / id_entite (entity_type était refusé : « Données invalides »)
+      const response = await favoriService.add({ type_entite: entity_type, id_entite: entity_id });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -107,7 +108,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
       const key = `${variables.entity_type}-${variables.entity_id}`;
       setFavoriChecks(prev => ({
         ...prev,
-        [key]: { isFavorite: true, favoriId: data?.id, loading: false }
+        [key]: { isFavorite: true, favoriId: data?.id_favori, loading: false }
       }));
       
       toast({
@@ -344,8 +345,12 @@ export function useFavoriCheck(
   }, [entityType, entityId, isAuthenticated]);
 
   const toggle = useCallback(async () => {
-    await toggleFavorite(entityType, entityId);
-    setIsFavorite(!isFavorite);
+    try {
+      await toggleFavorite(entityType, entityId);
+      setIsFavorite(!isFavorite);
+    } catch {
+      // Échec déjà signalé par le message d'erreur : le cœur garde son état
+    }
   }, [toggleFavorite, entityType, entityId, isFavorite]);
 
   return {

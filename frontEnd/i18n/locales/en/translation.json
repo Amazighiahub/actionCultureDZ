@@ -225,7 +225,8 @@
       "conditionsLien": "terms of use"
     },
     "loginToComment": "Log in to comment",
-    "loginToFavorite": "Log in to add to favorites",
+    "inviteTitle": "Log in, it’s free",
+    "loginToFavorite": "Create a free account or log in to keep your favourites.",
     "loginToRegister": "Log in to register for the event",
     "fields": {
       "email": "Email",

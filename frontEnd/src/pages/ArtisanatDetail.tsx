@@ -29,6 +29,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 interface ArtisanatData {
   id: number;
@@ -102,6 +103,7 @@ const ArtisanatDetail: React.FC = () => {
   const { formatPrice, formatPriceRange, formatNumber } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const inviterConnexion = useInviterConnexion();
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
@@ -180,7 +182,7 @@ const ArtisanatDetail: React.FC = () => {
 
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
       return;
     }
     if (!artisanat || favoriteLoading) return;
@@ -195,8 +197,8 @@ const ArtisanatDetail: React.FC = () => {
             ? t('favoris.added', 'Ajouté aux favoris')
             : t('favoris.removed', 'Retiré des favoris'),
           description: added
-            ? t('favoris.addedDesc', 'L\'œuvre a été ajoutée à vos favoris')
-            : t('favoris.removedDesc', 'L\'œuvre a été retirée de vos favoris')
+            ? t('toasts.addedToFavoritesDesc', 'L\'élément a été ajouté à vos favoris')
+            : t('toasts.removedFromFavoritesDesc', 'L\'élément a été retiré de vos favoris')
         });
       }
     } catch (err) {
