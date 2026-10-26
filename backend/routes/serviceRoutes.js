@@ -20,6 +20,8 @@ const initServiceRoutes = (models, authMiddleware) => {
 
   router.get('/', asyncHandler((req, res) => serviceController.list(req, res)));
   router.get('/search', asyncHandler((req, res) => serviceController.search(req, res)));
+  // Page « Services aux visiteurs » : services validés, filtres type / wilaya / texte
+  router.get('/annuaire', asyncHandler((req, res) => serviceController.annuaire(req, res)));
   router.get('/lieu/:lieuId', asyncHandler((req, res) => serviceController.getByLieu(req, res)));
 
   // ============================================================================

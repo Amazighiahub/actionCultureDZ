@@ -81,3 +81,38 @@ describe('Visibilité publique', () => {
     expect(whereServicesVisibles()).toEqual({ [Op.or]: [{ statut: 'valide' }, { id_user: null }] });
   });
 });
+
+describe('Annuaire des services aux visiteurs', () => {
+  const ligne = (id, type, nom, wilaya, lieu = 'Casbah') => ({
+    get: () => ({
+      id, type_service: type, nom: { fr: nom }, description: {}, statut: 'valide',
+      Lieu: { id_lieu: id, nom: { fr: lieu }, Commune: { id_commune: 1, nom: 'Casbah', Daira: { Wilaya: wilaya } } },
+      Professionnel: { id_user: 37 }
+    })
+  });
+  const alger = { id_wilaya: 16, nom: 'الجزائر', wilaya_name_ascii: 'Alger' };
+  const bejaia = { id_wilaya: 6, nom: 'بجاية', wilaya_name_ascii: 'Bejaia' };
+  const svc = () => {
+    const s = makeSvc();
+    s.repository.findAnnuaire = jest.fn().mockResolvedValue([
+      ligne(1, 'hotel', 'Gîte Dar Yemma', alger),
+      ligne(2, 'guide', 'Guide de la Casbah', alger),
+      ligne(3, 'restaurant', 'Le Gouraya', bejaia, 'Yemma Gouraya')
+    ]);
+    return s;
+  };
+
+  it('wilayas proposées triées, lieu et wilaya joints à chaque service', async () => {
+    const { services, wilayas } = await svc().annuaire();
+    expect(wilayas.map(w => w.id_wilaya)).toEqual([16, 6]);
+    expect(services[0]).toMatchObject({ lieu: { id_lieu: 1, nom: { fr: 'Casbah' } }, wilaya: { id_wilaya: 16 }, professionnel: { id_user: 37 } });
+    expect(services[0].Lieu).toBeUndefined();
+  });
+
+  it('filtres type, wilaya et texte (sans accents)', async () => {
+    expect((await svc().annuaire({ type: 'guide' })).services.map(s => s.id)).toEqual([2]);
+    expect((await svc().annuaire({ wilaya: 6 })).services.map(s => s.id)).toEqual([3]);
+    expect((await svc().annuaire({ q: 'gite' })).services.map(s => s.id)).toEqual([1]);
+    expect((await svc().annuaire({ q: 'gouraya' })).services.map(s => s.id)).toEqual([3]);
+  });
+});

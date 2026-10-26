@@ -36,6 +36,8 @@ const Oeuvres = React.lazy(() => import('./pages/Oeuvres'));
 const OeuvreDetail = React.lazy(() => import('./pages/oeuvreDetail/OeuvreDetailPage'));
 const Artisanat = React.lazy(() => import('./pages/Artisanat'));
 const Gastronomie = React.lazy(() => import('./pages/Gastronomie'));
+const ServicesVisiteurs = React.lazy(() => import('./pages/ServicesVisiteurs'));
+const ServiceDetail = React.lazy(() => import('./pages/ServiceDetail'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const APropos = React.lazy(() => import('./pages/APropos'));
@@ -181,7 +183,9 @@ const App = () => (
             {/* Routes publiques (canonical = lowercase) */}
             <Route path="/" element={<Index />} />
             <Route path="/patrimoine" element={<ErrorBoundary><Patrimoine /></ErrorBoundary>} />
+            <Route path="/patrimoine/services" element={<ErrorBoundary><ServicesVisiteurs /></ErrorBoundary>} />
             <Route path="/patrimoine/:id" element={<ErrorBoundary><PatrimoineDetail /></ErrorBoundary>} />
+            <Route path="/services/:id" element={<ErrorBoundary><ServiceDetail /></ErrorBoundary>} />
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/evenements/:id" element={<EventDetailsPage />} />
             <Route path="/oeuvres" element={<Oeuvres />} />

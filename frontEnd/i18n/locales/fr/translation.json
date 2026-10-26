@@ -4235,7 +4235,7 @@
     "editTitle": "Modifier mon service",
     "types": {
       "restaurant": "Restaurant",
-      "hotel": "Hôtel",
+      "hotel": "Hébergement",
       "guide": "Guide",
       "transport": "Transport",
       "artisanat": "Artisanat",
@@ -4721,5 +4721,24 @@
     "raisonRequise": "Expliquez pourquoi la proposition est refusée",
     "acceptee": "Proposition acceptée : l’article est mis à jour",
     "refusee": "Proposition refusée"
+  },
+  "servicesVisiteurs": {
+    "menu": "Services aux visiteurs",
+    "title": "Services aux visiteurs",
+    "subtitle": "Où manger, où dormir, avec qui visiter : les adresses des professionnels près des lieux du patrimoine algérien.",
+    "subtitleShort": "Où manger, où dormir, avec qui visiter, près des lieux du patrimoine",
+    "types": "Type de service",
+    "search": "Rechercher un service, un lieu…",
+    "aucun": "Aucun service pour l’instant",
+    "aucunResultat": "Aucun service ne correspond à votre recherche",
+    "commentAjouter": "Vous tenez un restaurant, un gîte, ou vous êtes guide ? Proposez votre service depuis votre tableau de bord professionnel.",
+    "guide": "Guide : proposer un service",
+    "introuvable": "Ce service est introuvable ou n’est pas encore publié.",
+    "refuse": "Ce service a été refusé : corrigez-le depuis votre tableau de bord, il repartira en validation.",
+    "enAttente": "En attente de validation : seuls vous et l’équipe Tala DZ voyez cette page pour l’instant.",
+    "ouTrouver": "Où le trouver",
+    "contact": "Contact",
+    "pasDeContact": "Pas de coordonnées pour l’instant.",
+    "proposePar": "Proposé par"
   }
 }

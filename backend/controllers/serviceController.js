@@ -31,6 +31,21 @@ class ServiceController extends BaseController {
     }
   }
 
+  /** GET /services/annuaire?type=&wilaya=&q= : services validés, avec les wilayas proposées */
+  async annuaire(req, res) {
+    try {
+      const { type, wilaya, q } = req.query;
+      const data = await this.serviceService.annuaire({
+        type: typeof type === 'string' && type ? type : null,
+        wilaya: wilaya && /^\d+$/.test(String(wilaya)) ? Number(wilaya) : null,
+        q: typeof q === 'string' ? q.slice(0, 100) : ''
+      });
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async search(req, res) {
     try {
       const { q } = req.query;

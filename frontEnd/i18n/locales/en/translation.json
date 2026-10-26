@@ -3960,7 +3960,7 @@
     "editTitle": "Edit my service",
     "types": {
       "restaurant": "Restaurant",
-      "hotel": "Hotel",
+      "hotel": "Accommodation",
       "guide": "Guide",
       "transport": "Transport",
       "artisanat": "Crafts",
@@ -4721,5 +4721,24 @@
     "raisonRequise": "Explain why the suggestion is declined",
     "acceptee": "Suggestion accepted: the article is updated",
     "refusee": "Suggestion declined"
+  },
+  "servicesVisiteurs": {
+    "menu": "Visitor services",
+    "title": "Visitor services",
+    "subtitle": "Where to eat, where to stay, who to visit with: professionals near Algeria’s heritage sites.",
+    "subtitleShort": "Where to eat, where to stay, who to visit with, near heritage sites",
+    "types": "Type of service",
+    "search": "Search for a service or a place…",
+    "aucun": "No services yet",
+    "aucunResultat": "No service matches your search",
+    "commentAjouter": "Do you run a restaurant or a guesthouse, or are you a guide? Offer your service from your professional dashboard.",
+    "guide": "Guide: offer a service",
+    "introuvable": "This service cannot be found or is not published yet.",
+    "refuse": "This service was declined: correct it from your dashboard and it will be reviewed again.",
+    "enAttente": "Awaiting approval: only you and the Tala DZ team can see this page for now.",
+    "ouTrouver": "Where to find it",
+    "contact": "Contact",
+    "pasDeContact": "No contact details yet.",
+    "proposePar": "Offered by"
   }
 }

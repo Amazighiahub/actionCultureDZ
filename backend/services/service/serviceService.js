@@ -33,6 +33,39 @@ class ServiceService extends BaseService {
   }
 
   /**
+   * Annuaire des services aux visiteurs (page Patrimoine › Services aux visiteurs) :
+   * services validés, filtrés par type, wilaya et texte ; les wilayas proposées sont
+   * celles où il existe au moins un service (avant filtrage).
+   */
+  async annuaire({ type = null, wilaya = null, q = '' } = {}) {
+    const lignes = (await this.repository.findAnnuaire()).map(s => s.get({ plain: true }));
+    let services = lignes.map(s => {
+      const w = s.Lieu?.Commune?.Daira?.Wilaya || null;
+      const { Lieu, Professionnel, ...reste } = s;
+      return {
+        ...reste,
+        lieu: Lieu ? { id_lieu: Lieu.id_lieu, nom: Lieu.nom, commune: Lieu.Commune ? { id_commune: Lieu.Commune.id_commune, nom: Lieu.Commune.nom } : null } : null,
+        wilaya: w,
+        professionnel: Professionnel || null
+      };
+    });
+
+    const wilayas = [...new Map(services.filter(s => s.wilaya).map(s => [s.wilaya.id_wilaya, s.wilaya])).values()]
+      .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
+
+    if (type) services = services.filter(s => s.type_service === type);
+    if (wilaya) services = services.filter(s => s.wilaya?.id_wilaya === Number(wilaya));
+    const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const recherche = sansAccent(q).trim();
+    if (recherche) {
+      const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
+      services = services.filter(s => textes(s.nom).includes(recherche) || textes(s.description).includes(recherche)
+        || textes(s.lieu?.nom).includes(recherche));
+    }
+    return { services, wilayas };
+  }
+
+  /**
    * Détail complet
    */
   async findWithFullDetails(id) {
