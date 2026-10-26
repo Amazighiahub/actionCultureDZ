@@ -3499,7 +3499,12 @@
         "bilanComptes": "{{n}} حساب أُنشئ",
         "bilanInvitations": "{{n}} دعوة أُرسلت",
         "erreurLecture": "تعذّرت قراءة الملف.",
-        "erreurImport": "فشل الاستيراد."
+        "erreurImport": "فشل الاستيراد.",
+        "profilAChoisir": "الصفة: اختاروها",
+        "metier": "المهنة: {{metier}}",
+        "profilDe": "صفة {{nom}}",
+        "choisir": "اختيار…",
+        "profilsManquants": "اختاروا صفة {{n}} شخص(أشخاص) محدَّدين قبل التسجيل."
       }
     }
   },

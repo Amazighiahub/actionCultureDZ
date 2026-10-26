@@ -3398,7 +3398,12 @@
         "bilanComptes": "{{n}} compte(s) créé(s)",
         "bilanInvitations": "{{n}} invitation(s) envoyée(s)",
         "erreurLecture": "Le fichier n’a pas pu être lu.",
-        "erreurImport": "L’import a échoué."
+        "erreurImport": "L’import a échoué.",
+        "profilAChoisir": "Profil à choisir",
+        "metier": "métier : {{metier}}",
+        "profilDe": "Profil de {{nom}}",
+        "choisir": "Choisir…",
+        "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire."
       }
     }
   },

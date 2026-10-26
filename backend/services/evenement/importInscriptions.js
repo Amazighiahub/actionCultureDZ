@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 const { listerChamps, verifierReponses } = require('./formulaireInscription');
-const { configAvecProfil, tarificationDe, montantInscription, PROFILS_PROFESSIONNELS } = require('./tarification');
+const { configAvecProfil, tarificationDe, montantInscription } = require('./tarification');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 const LIGNES_MAX = 500;
@@ -132,14 +132,15 @@ function lireDate(v) {
 
 /**
  * Une ligne → réponses au formulaire de l'événement, avec les remarques à montrer dans l'aperçu.
- * Un profil absent des choix (« Amateur du patrimoine ») devient « Autre », précisé ; sans choix
- * « Autre », il devient le profil professionnel (« Artisan ou professionnel »).
+ * Un profil absent des choix (« Amateur du patrimoine ») n'est pas deviné : l'organisateur choisit
+ * le vrai profil dans l'aperçu (`profilChoisi`) ; `profilInconnu` garde ce qui était écrit.
  */
-function convertirLigne(ligne, colonnes, config) {
+function convertirLigne(ligne, colonnes, config, profilChoisi = null) {
   const champs = listerChamps(config);
   const brutes = {};
   const compte = {};
   const remarques = [];
+  let profilInconnu = null;
   for (const [titre, cible] of Object.entries(colonnes)) {
     const valeur = ligne.valeurs[titre];
     if (valeur === '' || valeur === undefined || valeur === null) continue;
@@ -149,13 +150,11 @@ function convertirLigne(ligne, colonnes, config) {
     if (champ.type === 'choix') {
       const opt = optionProche(champ, v);
       if (opt) brutes[champ.cle] = opt.valeur;
-      else if (champ.cle === 'profil' && champs.some(c => c.cle === 'profil_autre') && optionProche(champ, 'Autre')) {
-        brutes.profil = optionProche(champ, 'Autre').valeur;
-        brutes.profil_autre = v;
-        remarques.push(`Profil « ${v} » → Autre (${v})`);
-      } else if (champ.cle === 'profil' && PROFILS_PROFESSIONNELS.some(p => optionProche(champ, p))) {
-        brutes.profil = PROFILS_PROFESSIONNELS.map(p => optionProche(champ, p)).find(Boolean).valeur;
-        remarques.push(`Profil « ${v} » → ${brutes.profil}`);
+      else if (champ.cle === 'profil') {
+        profilInconnu = v;
+        const choisi = profilChoisi && optionProche(champ, profilChoisi);
+        if (choisi) brutes.profil = choisi.valeur;
+        remarques.push(choisi ? `Profil « ${v} » → ${choisi.valeur}` : `« ${v} » n'est pas un profil : choisissez le sien`);
       } else remarques.push(`« ${v} » n'est pas un choix de « ${typeof champ.label === 'string' ? champ.label : champ.label?.fr} » : ignoré`);
     } else if (champ.type === 'choix_multiple') {
       const choisis = [];
@@ -176,9 +175,10 @@ function convertirLigne(ligne, colonnes, config) {
   }
   const { reponses, erreurs } = verifierReponses(config, brutes);
   for (const e of erreurs) {
+    if (e.cle === 'profil' && profilInconnu) continue; // déjà signalé : profil à choisir
     remarques.push(e.raison === 'requis' ? `Sans réponse : ${e.label}` : `Réponse non valable : ${e.label}`);
   }
-  return { compte, reponses, remarques };
+  return { compte, reponses, remarques, profilInconnu };
 }
 
 class ImportInscriptions {
@@ -201,8 +201,12 @@ class ImportInscriptions {
     return { evenement, config };
   }
 
-  /** Aperçu : une ligne par inscription, ce qui sera fait, et les remarques ; rien n'est écrit */
-  async apercu(buffer, idEvenement, utilisateur) {
+  /**
+   * Aperçu : une ligne par inscription, ce qui sera fait, et les remarques ; rien n'est écrit.
+   * `profils` : profil choisi par l'organisateur, par numéro de ligne, quand celui du classeur
+   * n'est pas un des choix du formulaire.
+   */
+  async apercu(buffer, idEvenement, utilisateur, { profils = {} } = {}) {
     const { evenement, config } = await this._evenement(idEvenement, utilisateur);
     const { titres, lignes } = await lireClasseur(buffer);
     const colonnes = associerColonnes(titres, listerChamps(config));
@@ -214,7 +218,7 @@ class ImportInscriptions {
     const emails = [];
     const resultat = [];
     for (const ligne of lignes) {
-      const { compte, reponses, remarques } = convertirLigne(ligne, colonnes, config);
+      const { compte, reponses, remarques, profilInconnu } = convertirLigne(ligne, colonnes, config, profils[ligne.numero]);
       const mail = lireEmail(compte.email);
       if (mail.corrige) remarques.unshift(`Email corrigé : ${mail.corrige} → ${mail.email}`);
       let action = 'creer';
@@ -229,7 +233,9 @@ class ImportInscriptions {
         reponses,
         montant: montantInscription(evenement, reponses),
         remarques,
-        action
+        action,
+        // Profil du classeur absent des choix : à choisir par l'organisateur avant l'import
+        profil_inconnu: profilInconnu
       });
     }
 
@@ -249,8 +255,10 @@ class ImportInscriptions {
       }
     }
 
+    const champProfil = listerChamps(config).find(c => c.cle === 'profil');
     return {
       evenement: { id: evenement.id_evenement, nom: evenement.nom_evenement },
+      profils: (champProfil?.options || []).map(o => ({ valeur: o.valeur, label: o.label })),
       colonnes: titres.map(t => ({ titre: t, cible: colonnes[t] ? (colonnes[t].compte || colonnes[t].champ) : null })),
       lignes: resultat
     };
@@ -260,11 +268,16 @@ class ImportInscriptions {
    * Import des lignes choisies (numéros de ligne du classeur) ; invitation envoyée aux comptes
    * créés si `inviter`. Retourne le bilan.
    */
-  async importer(buffer, idEvenement, utilisateur, { lignes: choisies, inviter = true } = {}) {
+  async importer(buffer, idEvenement, utilisateur, { lignes: choisies, inviter = true, profils = {} } = {}) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
-    const apercu = await this.apercu(buffer, idEvenement, utilisateur);
+    const apercu = await this.apercu(buffer, idEvenement, utilisateur, { profils });
     const aFaire = apercu.lignes.filter(l => (!choisies || choisies.includes(l.ligne)) && ['creer', 'inscrire'].includes(l.action));
     const bilan = { comptes_crees: 0, inscrits: 0, invitations: 0, erreurs: [] };
+    // Pas d'inscription sans vrai profil : la personne reste à inscrire une fois son profil choisi
+    for (const l of aFaire.filter(x => x.profil_inconnu && !x.reponses.profil)) {
+      bilan.erreurs.push(`Ligne ${l.ligne} (${l.nom || l.email}) : profil à choisir, non inscrite`);
+    }
+    aFaire.splice(0, aFaire.length, ...aFaire.filter(x => !(x.profil_inconnu && !x.reponses.profil)));
 
     for (const l of aFaire) {
       try {

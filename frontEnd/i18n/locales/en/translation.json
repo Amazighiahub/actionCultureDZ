@@ -3393,7 +3393,12 @@
         "bilanComptes": "{{n}} accounts created",
         "bilanInvitations": "{{n}} invitations sent",
         "erreurLecture": "The file could not be read.",
-        "erreurImport": "The import failed."
+        "erreurImport": "The import failed.",
+        "profilAChoisir": "Profile to choose",
+        "metier": "occupation: {{metier}}",
+        "profilDe": "Profile of {{nom}}",
+        "choisir": "Choose…",
+        "profilsManquants": "Choose the profile of {{n}} ticked person(s) before registering."
       }
     }
   },
