@@ -6,9 +6,9 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
-const logger = require('../utils/logger');
 const { mergeTranslations } = require('../helpers/i18n');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
+const historique = require('../services/patrimoine/historiqueLieu');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
@@ -286,7 +286,7 @@ class PatrimoineController extends BaseController {
         if (req.body[champ] !== undefined) donnees[champ] = req.body[champ];
       }
     }
-    const site = await this.patrimoineService.update(parseInt(req.params.id), donnees);
+    const site = await this.patrimoineService.update(parseInt(req.params.id), donnees, { idUser: req.user?.id_user });
     res.json({
       success: true,
       message: req.t('patrimoine.updated'),
@@ -389,34 +389,39 @@ class PatrimoineController extends BaseController {
         return res.status(400).json({ success: false, error: 'Aucun champ valide à mettre à jour' });
       }
 
-      if (!detail) {
-        detail = await models.DetailLieu.create({ id_lieu: lieuId, ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: 1 });
-      } else {
-        await detail.update({ ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: (detail.nb_contributions || 0) + 1 });
-      }
-
-      // Notifier le créateur du lieu
-      try {
-        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_createur', 'nom'] });
-        if (lieu?.id_createur && lieu.id_createur !== userId && models.Notification) {
-          const nomLieu = typeof lieu.nom === 'object' ? (lieu.nom.fr || lieu.nom.ar || '') : lieu.nom;
-          await models.Notification.create({
-            id_user: lieu.id_createur,
-            type_notification: 'autre',
-            titre: 'Nouvelle contribution',
-            message: `Un utilisateur a enrichi la section de "${nomLieu}"`,
-            url_action: `/patrimoine/${lieuId}`,
-            lu: false,
-          });
+      // Anciens textes gardés dans l'historique (l'administration peut revenir en arrière)
+      const avant = Object.fromEntries(Object.keys(updates).map(champ => [champ, detail?.[champ] ?? null]));
+      let champs = [];
+      await models.sequelize.transaction(async (transaction) => {
+        if (!detail) {
+          detail = await models.DetailLieu.create({ id_lieu: lieuId, ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: 1 }, { transaction });
+        } else {
+          await detail.update({ ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: (detail.nb_contributions || 0) + 1 }, { transaction });
         }
-      } catch (notifErr) {
-        logger.error('Erreur notification contribution:', { message: notifErr.message });
-      }
+        champs = await historique.enregistrerModifications(models, { idLieu: lieuId, idUser: userId, avant, apres: updates, transaction });
+      });
+
+      // Le créateur du lieu et l'administration sont prévenus : qui, quelle section
+      await historique.notifierTextes(models, container.notificationService, { idLieu: lieuId, idUser: userId, champs });
 
       res.json({ success: true, data: detail, message: 'Contribution enregistrée' });
     } catch (error) {
       this._handleError(res, error);
     }
+  }
+
+  /** Historique des textes du lieu (administration) */
+  async historique(req, res) {
+    res.json({ success: true, data: await this.patrimoineService.historique(parseInt(req.params.id, 10)) });
+  }
+
+  /** Revenir au texte d'avant une modification (administration) */
+  async restaurerVersion(req, res) {
+    const resultat = await this.patrimoineService.restaurerVersion(
+      parseInt(req.params.id, 10), parseInt(req.params.idHistorique, 10), req.user.id_user
+    );
+    if (!resultat) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    res.json({ success: true, data: resultat });
   }
 
   // ============================================================================

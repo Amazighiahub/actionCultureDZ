@@ -9,6 +9,7 @@ const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
 const { mergeTranslations } = require('../../helpers/i18n');
+const historique = require('./historiqueLieu');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
 
 /**
@@ -25,6 +26,7 @@ function isEmptyMultilang(value) {
 class PatrimoineService extends BaseService {
   constructor(patrimoineRepository, options = {}) {
     super(patrimoineRepository, options);
+    this.notificationService = options.notificationService;
   }
 
   // ============================================================================
@@ -703,9 +705,11 @@ class PatrimoineService extends BaseService {
   }
 
   /**
-   * Modifier un site patrimonial
+   * Modifier un site patrimonial. Les textes changés (nom, adresse, description, histoire…) sont
+   * gardés dans l'historique ; le créateur du lieu et l'administration sont prévenus.
+   * @param {object} [auteur] { idUser } : la personne qui modifie
    */
-  async update(id, data) {
+  async update(id, data, { idUser = null } = {}) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
@@ -715,8 +719,11 @@ class PatrimoineService extends BaseService {
     const plain = existing.get ? existing.get({ plain: true }) : existing;
     const lieuId = plain.id_lieu;
 
-    return this.repository.withTransaction(async (transaction) => {
+    let champsModifies = [];
+    const resultat = await this.repository.withTransaction(async (transaction) => {
       const updateData = {};
+      const avant = {};
+      const apres = {};
       // Champs multilingues fusionnés : envoyer le français seul n'efface plus l'arabe
       if (data.nom) updateData.nom = mergeTranslations(plain.nom, data.nom);
       if (data.adresse) updateData.adresse = mergeTranslations(plain.adresse, data.adresse);
@@ -741,6 +748,10 @@ class PatrimoineService extends BaseService {
       }
       if (data.repere !== undefined) updateData.repere = isEmptyMultilang(data.repere) ? null : data.repere;
 
+      for (const champ of historique.CHAMPS_LIEU) {
+        if (updateData[champ] !== undefined) { avant[champ] = plain[champ]; apres[champ] = updateData[champ]; }
+      }
+
       if (Object.keys(updateData).length > 0) {
         await existing.update(updateData, { transaction });
       }
@@ -752,12 +763,15 @@ class PatrimoineService extends BaseService {
         for (const champ of champsFiche) {
           if (data[champ] !== undefined) detailData[champ] = mergeTranslations(detail?.[champ], data[champ]);
         }
+        for (const champ of Object.keys(detailData)) { avant[champ] = detail?.[champ] ?? null; apres[champ] = detailData[champ]; }
         if (detail) {
           await detail.update(detailData, { transaction });
         } else if (DetailLieu && Object.keys(detailData).length > 0) {
           detail = await DetailLieu.create({ id_lieu: lieuId, ...detailData }, { transaction });
         }
       }
+
+      champsModifies = await historique.enregistrerModifications(this.models, { idLieu: lieuId, idUser, avant, apres, transaction });
 
       const detailId = detail?.id_detailLieu;
 
@@ -827,6 +841,18 @@ class PatrimoineService extends BaseService {
       this.logger.info(`Site patrimonial modifié: ${lieuId}`);
       return PatrimoineDTO.fromEntity(updated);
     });
+    await historique.notifierTextes(this.models, this.notificationService, { idLieu: lieuId, idUser, champs: champsModifies });
+    return resultat;
+  }
+
+  /** Historique des textes d'un lieu (administration) */
+  async historique(idLieu) {
+    return historique.listerHistorique(this.models, idLieu);
+  }
+
+  /** Revenir au texte d'avant une modification (administration) */
+  async restaurerVersion(idLieu, idHistorique, idUser) {
+    return historique.restaurer(this.models, { idLieu, idHistorique, idUser });
   }
 
   /**
