@@ -17,6 +17,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 interface TypeOrganisation {
   id_type_organisation: number;
@@ -76,8 +77,8 @@ const AjouterOrganisation = () => {
     e.preventDefault();
 
     const errs: Record<string, string> = {};
-    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
-      errs.nom = t('organisations.create.nameRequired', 'Le nom de l\'organisation est requis (au moins en français ou arabe)');
+    if (!aDuTexte(formData.nom)) {
+      errs.nom = t('organisations.create.nameRequired', 'Le nom de l\'organisation est requis, dans au moins une langue');
     }
     if (!formData.id_type_organisation) {
       errs.id_type_organisation = t('organisations.create.typeRequired', 'Le type d\'organisation est requis');

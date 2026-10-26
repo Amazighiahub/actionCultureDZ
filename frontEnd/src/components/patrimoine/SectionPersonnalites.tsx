@@ -19,6 +19,7 @@ import BlocsArticle from '@/components/patrimoine/BlocsArticle';
 import PagesDetaillees from '@/components/patrimoine/PagesDetaillees';
 import { useNavigate } from 'react-router-dom';
 import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock, type PagePatrimoine, lienEcrirePage, retirerPagePatrimoine } from '@/services/patrimoineArticles.service';
+import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 import {
   lieuIntervenantService,
   getIntervenantNom,
@@ -47,8 +48,7 @@ interface SectionPersonnalitesProps {
 
 const translate = (v: string | MultilingualField | null | undefined, lang: string): string => {
   if (!v) return '';
-  if (typeof v === 'string') return v;
-  return v[lang] || v.fr || v.ar || v.en || '';
+  return getLocalizedText(v, lang);
 };
 
 const sectionArticles: PatrimoineSection | null = (PATRIMOINE_SECTIONS as readonly string[]).includes('personnalites')
@@ -142,8 +142,8 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   };
 
   const handleSaveText = async () => {
-    if (!editValue.fr?.trim() && !editValue.ar?.trim()) {
-      toast({ title: t('common.error'), description: 'Veuillez saisir du contenu (au moins en français ou arabe)', variant: 'destructive' });
+    if (!aDuTexte(editValue)) {
+      toast({ title: t('common.error'), description: t('patrimoine.contribute.contentRequired', 'Veuillez saisir du contenu, dans au moins une langue'), variant: 'destructive' });
       return;
     }
     setSaving(true);

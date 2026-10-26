@@ -36,6 +36,7 @@ import MotsClesInput from '@/components/shared/MotsClesInput';
 import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
 import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
 import type { ConfigInscription } from '@/utils/formulaireInscription';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -288,8 +289,8 @@ const AjouterEvenement = () => {
   // Créer une organisation depuis le dialog
   const handleCreateOrg = async () => {
     const errs: Record<string, string> = {};
-    if (!orgForm.nom.fr?.trim() && !orgForm.nom.ar?.trim()) {
-      errs.nom = t('organisations.create.nameRequired', 'Le nom est requis (au moins en français ou arabe)');
+    if (!aDuTexte(orgForm.nom)) {
+      errs.nom = t('organisations.create.nameRequired', 'Le nom est requis, dans au moins une langue');
     }
     if (!orgForm.id_type_organisation) {
       errs.id_type_organisation = t('organisations.create.typeRequired', 'Le type d\'organisation est requis');
@@ -529,8 +530,8 @@ const AjouterEvenement = () => {
     const newErrors: Record<string, string> = {};
 
     // Validation: Nom requis — aligné sur le backend (fr OU ar)
-    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
-      newErrors.nom = t('events.create.nameRequired', 'Le nom de l\'événement est requis (au moins en français ou arabe)');
+    if (!aDuTexte(formData.nom)) {
+      newErrors.nom = t('events.create.nameRequired', 'Le nom de l\'événement est requis, dans au moins une langue');
     }
 
     // Validation: Type requis

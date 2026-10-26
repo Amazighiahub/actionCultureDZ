@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { patrimoineService } from '@/services/patrimoine.service';
 import type { PointCarte } from './PointsVisiteCarte';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 const PointsVisiteCarte = React.lazy(() => import('./PointsVisiteCarte'));
 
@@ -44,8 +45,7 @@ interface PointsVisiteProps {
 
 const texte = (value: Multilingual, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 // Même position que le site (à ~1 m près) : point intérieur, pas de marqueur à part

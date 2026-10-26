@@ -25,6 +25,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { programmeService, CreateProgrammeData, IntervenantData } from '@/services/programme.service';
 import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
 import { intervenantValide } from '@/utils/programmeIntervenants';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 export interface ProgrammeFormData {
   // Informations de base
@@ -328,8 +329,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     // Description requise (fr OU ar)
-    if (!formData.description.fr?.trim() && !formData.description.ar?.trim()) {
-      newErrors.description = t('programme.form.errors.descriptionRequired', 'La description est requise (au moins en français ou arabe)');
+    if (!aDuTexte(formData.description)) {
+      newErrors.description = t('programme.form.errors.descriptionRequired', 'La description est requise, dans au moins une langue');
     }
 
     // Date requise

@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRTL } from '@/hooks/useRTL';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -128,8 +129,8 @@ const ModifierPatrimoine: React.FC = () => {
     || (!!parent?.id_createur && isOwner(parent.id_createur)));
 
   const enregistrer = async () => {
-    if (!form.nom.fr?.trim() && !form.nom.ar?.trim()) {
-      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.edit.nameRequired', 'Le nom est requis (au moins en français ou en arabe)'), variant: 'destructive' });
+    if (!aDuTexte(form.nom)) {
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.edit.nameRequired', 'Le nom est requis, dans au moins une langue'), variant: 'destructive' });
       return;
     }
     setEnregistrement(true);

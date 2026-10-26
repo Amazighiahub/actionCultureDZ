@@ -21,6 +21,7 @@ import { patrimoineService } from '@/services/patrimoine.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SEOHead from '@/components/SEOHead';
 import { lienGuide } from '@/utils/lienGuide';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
@@ -30,8 +31,7 @@ const SITES_PAGE_SIZE = 12;
 // Helper pour traduire les champs multilingues
 const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang as keyof typeof value] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 // Composant de fallback pour la carte

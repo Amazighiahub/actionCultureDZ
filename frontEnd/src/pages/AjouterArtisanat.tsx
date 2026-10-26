@@ -24,6 +24,7 @@ import { metadataService } from '@/services/metadata.service';
 import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormPageHeader from '@/components/shared/FormPageHeader';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 type MultiLangText = {
   fr: string;
@@ -216,8 +217,8 @@ const AjouterArtisanat: React.FC = () => {
       errs.nom = t('ajouterArtisanat.errors.nomRequired', 'Le nom est requis');
     }
     // Description obligatoire : le serveur la refuse vide (comme pour toute œuvre)
-    if (!formData.description?.fr?.trim() && !formData.description?.ar?.trim()) {
-      errs.description = t('ajouterArtisanat.errors.descriptionRequired', 'La description est requise (au moins en français ou en arabe)');
+    if (!aDuTexte(formData.description)) {
+      errs.description = t('ajouterArtisanat.errors.descriptionRequired', 'La description est requise, dans au moins une langue');
     }
     if (!formData.id_materiau) {
       errs.id_materiau = t('ajouterArtisanat.errors.materiauRequired', 'Le matériau est requis');

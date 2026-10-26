@@ -35,6 +35,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { evenementPath } from '@/utils/slug';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -42,8 +43,7 @@ type MultilingualField = { fr?: string; ar?: string; en?: string };
 // Helper pour traduire les champs multilingues
 const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang as keyof typeof value] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 // ⚡ Types de patrimoine disponibles

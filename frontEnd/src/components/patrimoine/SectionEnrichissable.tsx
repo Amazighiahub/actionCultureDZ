@@ -21,6 +21,7 @@ import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
 import PagesDetaillees from '@/components/patrimoine/PagesDetaillees';
+import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 import {
   PATRIMOINE_SECTIONS,
   type PatrimoineSection,
@@ -60,8 +61,7 @@ interface SectionEnrichissableProps {
 
 const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value;
-  return value[lang as keyof typeof value] || value.fr || value.ar || value.en || '';
+  return getLocalizedText(value, lang);
 };
 
 const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
@@ -109,8 +109,8 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   };
 
   const handleSave = async () => {
-    if (!editValue.fr?.trim() && !editValue.ar?.trim()) {
-      toast({ title: t('common.error'), description: t('patrimoine.contribute.contentRequired', 'Veuillez saisir du contenu (au moins en français ou arabe)'), variant: 'destructive' });
+    if (!aDuTexte(editValue)) {
+      toast({ title: t('common.error'), description: t('patrimoine.contribute.contentRequired', 'Veuillez saisir du contenu, dans au moins une langue'), variant: 'destructive' });
       return;
     }
 

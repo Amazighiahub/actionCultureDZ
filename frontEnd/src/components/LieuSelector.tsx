@@ -22,6 +22,7 @@ import L from 'leaflet';
 // Fix pour les icônes Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { getLocalizedText as texteLocalise } from '@/utils/getLocalizedText';
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -35,8 +36,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 /** Extrait une chaîne depuis un champ multilingue (string ou { fr, ar, en }) */
 function getLocalizedLieuText(value: string | { fr?: string; ar?: string; en?: string } | null | undefined, fallback = ''): string {
   if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  return value.fr || value.ar || value.en || fallback;
+  return texteLocalise(value, 'fr', fallback);
 }
 
 interface LieuSelectorProps {
@@ -60,8 +60,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   /** Extrait une chaîne d'un champ multilingue (nom, adresse, etc.) */
   const getLocalizedText = (value: string | Record<string, string> | null | undefined): string => {
     if (value == null) return '';
-    if (typeof value === 'string') return value;
-    return (value[lang] || value.fr || value.ar || value.en || '') as string;
+    return texteLocalise(value, lang);
   };
 
   const [mode, setMode] = useState<'select' | 'create'>('select');
