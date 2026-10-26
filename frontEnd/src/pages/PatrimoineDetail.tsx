@@ -48,16 +48,16 @@ const translate = (value: string | MultilingualField | null | undefined, lang: s
 // ⚡ Types de patrimoine disponibles
 type TypePatrimoine = 'ville_village' | 'monument' | 'musee' | 'site_archeologique' | 'site_naturel' | 'edifice_religieux' | 'palais_forteresse' | 'autre';
 
-// ⚡ Configuration des onglets selon le type de patrimoine
+// ⚡ Configuration des onglets selon le type de patrimoine (l'histoire et ses références : tous les types)
 const TABS_CONFIG: Record<TypePatrimoine, string[]> = {
-  ville_village: ['a_visiter', 'services', 'parcours', 'programmes'],
+  ville_village: ['a_visiter', 'histoire', 'services', 'parcours', 'programmes'],
   monument: ['programmes', 'services', 'galerie', 'histoire'],
-  musee: ['programmes', 'collections', 'services', 'galerie'],
+  musee: ['programmes', 'collections', 'services', 'galerie', 'histoire'],
   site_archeologique: ['vestiges', 'programmes', 'services', 'histoire'],
-  site_naturel: ['parcours', 'services', 'faune_flore', 'galerie'],
+  site_naturel: ['parcours', 'services', 'faune_flore', 'galerie', 'histoire'],
   edifice_religieux: ['programmes', 'services', 'histoire', 'galerie'],
   palais_forteresse: ['monuments', 'programmes', 'services', 'histoire'],
-  autre: ['monuments', 'vestiges', 'services', 'programmes', 'parcours']
+  autre: ['monuments', 'vestiges', 'histoire', 'services', 'programmes', 'parcours']
 };
 
 // ⚡ Labels des types de patrimoine
