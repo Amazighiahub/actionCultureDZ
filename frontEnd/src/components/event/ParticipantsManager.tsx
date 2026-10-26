@@ -47,8 +47,10 @@ import {
   UserCheck,
   UserX,
   UserCog,
-  Download
+  Download,
+  FileSpreadsheet
 } from 'lucide-react';
+import ImportInscriptionsDialog from './ImportInscriptionsDialog';
 import { httpClient } from '@/services/httpClient';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
@@ -157,6 +159,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
+  const [importOuvert, setImportOuvert] = useState(false);
   const { td } = useTranslateData();
   const { formatDate } = useLocalizedDate();
   const { toast } = useToast();
@@ -406,7 +409,17 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               : <Download className="h-4 w-4 me-2" aria-hidden="true" />}
             {t('pro.participants.exportExcel', 'Télécharger en Excel')}
           </Button>
+          <Button variant="outline" onClick={() => setImportOuvert(true)}>
+            <FileSpreadsheet className="h-4 w-4 me-2" aria-hidden="true" />
+            {t('pro.participants.import.bouton', 'Importer une liste (Excel)')}
+          </Button>
         </div>
+        <ImportInscriptionsDialog
+          evenementId={evenementId}
+          ouvert={importOuvert}
+          onFermer={() => setImportOuvert(false)}
+          onImporte={() => loadParticipants()}
+        />
 
         {/* Statistiques rapides */}
         {stats && (

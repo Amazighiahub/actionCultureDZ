@@ -319,6 +319,12 @@ const ResetPassword = () => {
                   )}
                 </div>
 
+                {/* Compte ouvert pour la personne (liste d'inscription importée) : elle accepte ici les conditions */}
+                <p className="text-xs text-muted-foreground text-center">
+                  {t('auth.resetPassword.conditions', 'En choisissant votre mot de passe, vous acceptez les')}{' '}
+                  <Link to="/a-propos#conditions" className="underline underline-offset-2">{t('auth.resetPassword.conditionsLien', 'conditions d’utilisation')}</Link>.
+                </p>
+
                 <Button type="submit" size="lg" className="w-full" disabled={loading}>
                   {loading ? (
                     <>

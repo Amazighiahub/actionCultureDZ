@@ -215,6 +215,40 @@ class EmailService {
    * @param {object} user - L'objet utilisateur
    * @param {string} token - Le jeton de réinitialisation
    */
+  /**
+   * Invitation d'une personne inscrite par un organisateur (liste importée) : sa demande est
+   * reçue, son espace est prêt, elle choisit son mot de passe (lien valable 7 jours).
+   */
+  async sendInvitationInscription(user, token, evenement) {
+    try {
+      const lien = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+      const nomEvenement = (evenement?.nom_evenement && typeof evenement.nom_evenement === 'object')
+        ? (evenement.nom_evenement.fr || Object.values(evenement.nom_evenement).find(Boolean))
+        : evenement?.nom_evenement;
+      const nom = (user.nom && typeof user.nom === 'object') ? (user.nom.fr || '') : (user.nom || '');
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
+          <h2 style="color: #3A4224;">Votre demande d'inscription est bien reçue</h2>
+          <p>Bonjour ${this._escapeHtml(nom)},</p>
+          <p>Votre demande d'inscription à <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a bien été reçue par l'organisateur.
+          Elle est <b>en cours d'étude</b> : vous serez prévenu(e) de sa décision.</p>
+          <p>Pour suivre votre demande, l'organisateur a ouvert pour vous un espace sur <b>Tala DZ</b>, la plateforme de la culture algérienne.
+          Il ne vous reste qu'à choisir votre mot de passe :</p>
+          <p style="text-align: center; margin: 28px 0;">
+            <a href="${encodeURI(lien)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Choisir mon mot de passe</a>
+          </p>
+          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Votre identifiant est votre adresse email : ${this._escapeHtml(user.email)}.
+          En choisissant votre mot de passe, vous acceptez les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
+          <p>L'équipe Tala DZ</p>
+        </div>`;
+      return await this.sendEmail(user.email, `Votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
+    } catch (error) {
+      logger.error('Erreur dans sendInvitationInscription:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async sendPasswordResetEmail(user, token) {
     try {
       const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;

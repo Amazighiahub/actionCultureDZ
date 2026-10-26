@@ -220,7 +220,9 @@
       "invalidTokenTitle": "Invalid link",
       "invalidTokenDescription": "This reset link is invalid or has expired. Please request a new link.",
       "requestNewLink": "Request a new link",
-      "tokenExpired": "This link has expired. Please request a new reset link."
+      "tokenExpired": "This link has expired. Please request a new reset link.",
+      "conditions": "By choosing your password, you accept the",
+      "conditionsLien": "terms of use"
     },
     "loginToComment": "Log in to comment",
     "loginToFavorite": "Log in to add to favorites",
@@ -3369,7 +3371,30 @@
       "viewFullPage": "View full page",
       "answers": "Registration form answers",
       "exportExcel": "Download as Excel",
-      "partielle": "partial attendance"
+      "partielle": "partial attendance",
+      "import": {
+        "bouton": "Import a list (Excel)",
+        "titre": "Import a registration list",
+        "description": "The Excel file from your online form: one row per person, column titles on the first row. People are registered as “Pending”: you confirm afterwards.",
+        "fichier": "Excel file (.xlsx)",
+        "aide": "Nothing is saved at this step: you will see the list first.",
+        "voir": "See the list",
+        "resume": "{{n}} of {{total}} people selected.",
+        "colonnesIgnorees": "Columns not used:",
+        "creer": "New account",
+        "inscrire": "Existing account",
+        "dejaInscrit": "Already registered",
+        "doublon": "Duplicate email",
+        "invalide": "Invalid email",
+        "inviter": "Email each new account a link to choose a password (valid 7 days)",
+        "confirmer": "Register {{n}} people",
+        "termine": "Import complete",
+        "bilanInscrits": "{{n}} people registered as “Pending”",
+        "bilanComptes": "{{n}} accounts created",
+        "bilanInvitations": "{{n}} invitations sent",
+        "erreurLecture": "The file could not be read.",
+        "erreurImport": "The import failed."
+      }
     }
   },
   "programmePages": {

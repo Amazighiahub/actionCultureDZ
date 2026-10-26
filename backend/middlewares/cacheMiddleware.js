@@ -216,6 +216,7 @@ function createUserCacheMiddleware(ttl = 300) {
  * Vide les listes en cache dont l'adresse contient l'un des motifs (ex. '/dashboard/users'),
  * après une modification réussie, AVANT d'envoyer la réponse : la liste rechargée juste après
  * est donc à jour.
+ * Un motif peut être une fonction de la requête (ex. req => `/evenements/${req.params.id}/participants`).
  */
 function createInvalidateCacheMiddleware(patterns = []) {
   return (req, res, next) => {
@@ -223,7 +224,8 @@ function createInvalidateCacheMiddleware(patterns = []) {
     res.json = function(data) {
       // N'invalider que si la mutation a réussi
       if (res.statusCode >= 400) return originalJson(data);
-      Promise.all(patterns.map(pattern => store.invalidatePattern(pattern).catch(() => {})))
+      const motifs = patterns.map(pattern => (typeof pattern === 'function' ? pattern(req) : pattern));
+      Promise.all(motifs.map(pattern => store.invalidatePattern(pattern).catch(() => {})))
         .finally(() => originalJson(data));
       return res;
     };

@@ -193,6 +193,7 @@ const initProfessionnelRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     requireOwnership('Evenement', 'id', 'id_user'),
     rateLimitMiddleware.sensitiveActions,
+    cacheMiddleware.invalidateCache([req => `/evenements/${req.params.id}/participants`]),
     auditMiddleware.logAction('MANAGE_PARTICIPANT'),
     professionnelController.manageParticipants.bind(professionnelController)
   );

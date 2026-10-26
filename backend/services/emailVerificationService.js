@@ -244,11 +244,16 @@ class EmailVerificationService {
 
     // Nouveau mot de passe => toutes les sessions existantes sont coupées :
     // refresh token effacé (plus de renouvellement) et cache de session invalidé.
+    // Le lien est arrivé dans sa boîte : l'email est vérifié. Un compte créé pour lui (liste
+    // d'inscription importée) accepte ici les conditions d'utilisation, rappelées sur la page.
     await result.user.update({
       password: hashedPassword,
       password_changed_at: new Date(),
       refresh_token: null,
-      refresh_token_expires: null
+      refresh_token_expires: null,
+      email_verifie: true,
+      accepte_conditions: true,
+      ...(result.user.accepte_conditions ? {} : { date_acceptation_conditions: new Date() })
     });
     await invalidateUserSession(result.user.id_user);
 
