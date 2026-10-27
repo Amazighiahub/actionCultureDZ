@@ -14,6 +14,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { patrimoineService } from '@/services/patrimoine.service';
 import type { PointCarte } from './PointsVisiteCarte';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { useProcheEcran } from '@/hooks/useProcheEcran';
 
 const PointsVisiteCarte = React.lazy(() => import('./PointsVisiteCarte'));
 
@@ -58,6 +59,8 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [showMap, setShowMap] = useState(true);
+  // La carte (Leaflet + fonds de carte) n'est chargée que si le visiteur descend jusqu'à elle
+  const { ref: zoneCarte, proche: carteProche } = useProcheEcran<HTMLDivElement>();
 
   const pointsCarte: PointCarte[] = points
     .map((p, index) => ({ p, numero: index + 1 }))
@@ -110,12 +113,18 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
       </div>
 
       {showMap && pointsCarte.length > 0 && (
-        <React.Suspense fallback={<div className="h-[280px] bg-muted rounded-lg animate-pulse" />}>
-          <PointsVisiteCarte
-            site={{ nom: texte(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
-            points={pointsCarte}
-          />
-        </React.Suspense>
+        <div ref={zoneCarte}>
+          {carteProche ? (
+            <React.Suspense fallback={<div className="h-[280px] bg-muted rounded-lg animate-pulse" />}>
+              <PointsVisiteCarte
+                site={{ nom: texte(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
+                points={pointsCarte}
+              />
+            </React.Suspense>
+          ) : (
+            <div className="h-[280px] bg-muted rounded-lg" />
+          )}
+        </div>
       )}
 
       {points.length > 0 && (
@@ -131,7 +140,7 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
                   {index + 1}
                 </span>
                 {image ? (
-                  <img src={getAssetUrl(image.url)} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-md object-cover shrink-0" />
+                  <img src={getAssetUrl(image.url, { width: 168 })} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-md object-cover shrink-0" />
                 ) : (
                   <span className="w-14 h-14 rounded-md bg-muted flex items-center justify-center shrink-0" aria-hidden="true">
                     <MapPin className="h-5 w-5 text-muted-foreground" />

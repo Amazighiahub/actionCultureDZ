@@ -13,7 +13,7 @@
     "i18n:report": "node scripts/i18n/list-todos.js",
     "i18n:watch": "i18next-parser --watch",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/precompresser.mjs",
     "build:analyze": "vite build --mode analyze",
     "analyze": "npx vite-bundle-visualizer",
     "build:dev": "vite build --mode development",

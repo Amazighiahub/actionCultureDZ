@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { Skeleton } from '@/components/ui/skeleton';
 import { lienSommaireGuides } from '@/utils/lienGuide';
+import { HERO_PREMIERE_IMAGE } from './heroPremiereImage';
 
 interface PublicStats {
   sites_patrimoniaux: number;
@@ -45,9 +46,7 @@ const HeroSection: React.FC = () => {
   // télécharge la plus adaptée à l'écran (66 Ko sur mobile au lieu de 500 Ko)
   const heroImages = [
     {
-      url: '/images/hero/timgad-1280.webp',
-      srcSet: '/images/hero/timgad-768.webp 768w, /images/hero/timgad-1280.webp 1280w, /images/hero/timgad-1920.webp 1920w',
-      fallback: '/images/hero/timgad.jpg',
+      ...HERO_PREMIERE_IMAGE,
       title: t('home.hero.slides.timgad', 'Ruines romaines de Timgad'),
     },
     {
@@ -93,14 +92,17 @@ const HeroSection: React.FC = () => {
     return () => clearInterval(timer);
   }, [heroImages.length, paused, reduceMotion]);
 
-  // Monter l'image courante et précharger la suivante juste avant son tour
+  // Monter l'image courante et précharger la suivante juste avant son tour ; la deuxième attend
+  // que la première soit affichée (sinon elle partageait le réseau avec elle sur téléphone)
+  const courantePrete = imagesLoaded[currentSlide] === true;
   useEffect(() => {
     setMountedSlides((prev) => {
       const next = (currentSlide + 1) % heroImages.length;
-      if (prev.has(currentSlide) && prev.has(next)) return prev;
-      return new Set([...prev, currentSlide, next]);
+      const voulues = courantePrete ? [currentSlide, next] : [currentSlide];
+      if (voulues.every(i => prev.has(i))) return prev;
+      return new Set([...prev, ...voulues]);
     });
-  }, [currentSlide, heroImages.length]);
+  }, [currentSlide, heroImages.length, courantePrete]);
 
   const handleImageLoad = (index: number) => {
     setImagesLoaded(prev => {

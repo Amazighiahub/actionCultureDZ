@@ -19,9 +19,11 @@ import SEOHead, { buildEvenementJsonLd, buildBreadcrumbJsonLd } from '@/componen
 
 // Hook personnalisé
 import { useEventDetails } from '@/hooks/useEventDetails';
+// Haut de page (photo, titre) chargé avec la page : en chargement séparé, il ajoutait une attente
+// de 0,4 à 0,7 s sur téléphone avant l'affichage de la photo
+import EventHero from './event/EventHero';
 
 // ✅ LAZY LOADING des sections
-const EventHero = React.lazy(() => import('./event/EventHero'));
 const EventInfo = React.lazy(() => import('./event/EventInfo'));
 const EventProgram = React.lazy(() => import('./event/EventProgram'));
 const EventGallery = React.lazy(() => import('./event/EventGallery'));
@@ -154,13 +156,11 @@ const EventDetailsPage: React.FC = () => {
 
         {/* Hero Section */}
         <ErrorBoundary>
-          <Suspense fallback={<SectionFallback />}>
-            <EventHero
-              event={event}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
-            />
-          </Suspense>
+          <EventHero
+            event={event}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+          />
         </ErrorBoundary>
 
         {/* Contenu principal */}

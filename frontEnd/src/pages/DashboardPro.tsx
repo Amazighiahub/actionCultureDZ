@@ -58,7 +58,8 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import GestionEvenement from '@/components/event/GestionEvenement';
+// Gestion d'un événement (participants, programme…) : chargée à l'ouverture de « Gérer »
+const GestionEvenement = React.lazy(() => import('@/components/event/GestionEvenement'));
 import { oeuvreService } from '@/services/oeuvre.service';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
@@ -1042,11 +1043,13 @@ const DashboardPro = () => {
             {t('gestion.title', "Gestion de l'événement")}{gestionEvenement?.nom ? ` – ${gestionEvenement.nom}` : ''}
           </DialogTitle>
           {gestionEvenement && (
-            <GestionEvenement
-              evenementId={gestionEvenement.id}
-              evenementNom={gestionEvenement.nom}
-              onClose={() => setGestionEvenement(null)}
-            />
+            <React.Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-muted" />}>
+              <GestionEvenement
+                evenementId={gestionEvenement.id}
+                evenementNom={gestionEvenement.nom}
+                onClose={() => setGestionEvenement(null)}
+              />
+            </React.Suspense>
           )}
         </DialogContent>
       </Dialog>
