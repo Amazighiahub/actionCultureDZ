@@ -51,6 +51,15 @@ class FavoriController extends BaseController {
   /**
    * Vérifier si une entité est dans les favoris
    */
+  /** Identifiants des favoris d'un type : GET /favoris/ids/oeuvre → [12, 45] */
+  async getIdsFavoris(req, res) {
+    try {
+      this._sendSuccess(res, await this.favoriService.idsFavoris(req.user.id_user, req.params.type));
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async checkFavori(req, res) {
     try {
       const { type, id } = req.params;

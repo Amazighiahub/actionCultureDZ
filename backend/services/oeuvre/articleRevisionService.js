@@ -10,7 +10,7 @@
 const BaseService = require('../core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent } = require('../../utils/sanitizeArticle');
-const { mergeTranslations } = require('../../helpers/i18n');
+const { mergeTranslations, translate, lireMultiLang } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 
 const TYPES_BLOCS = ['text', 'heading', 'image', 'video', 'citation', 'list', 'table', 'code', 'separator', 'embed'];
@@ -100,8 +100,8 @@ class ArticleRevisionService extends BaseService {
 
     // Notifications : auteur de l'article et administration (une seule fois chacun)
     const proposant = await User.findByPk(userId, { attributes: ['prenom', 'nom'] });
-    const nom = [proposant?.prenom, proposant?.nom].filter(Boolean).join(' ') || 'Un contributeur';
-    const titre = typeof oeuvre.titre === 'object' && oeuvre.titre ? (oeuvre.titre.fr || Object.values(oeuvre.titre)[0]) : oeuvre.titre;
+    const nom = [proposant?.prenom, proposant?.nom].map(v => translate(lireMultiLang(v), 'fr')).filter(Boolean).join(' ') || 'Un contributeur';
+    const titre = translate(lireMultiLang(oeuvre.titre), 'fr');
     const destinataires = new Set([...(oeuvre.saisi_par ? [oeuvre.saisi_par] : []), ...(await this._administrateurs())]);
     destinataires.delete(userId);
     for (const id of destinataires) {

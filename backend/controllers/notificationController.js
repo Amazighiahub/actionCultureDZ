@@ -8,7 +8,7 @@
  */
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
-const { translate, translateDeep } = require('../helpers/i18n');
+const { translateDeep } = require('../helpers/i18n');
 
 class NotificationController extends BaseController {
   get notificationService() {
@@ -58,7 +58,8 @@ class NotificationController extends BaseController {
         success: true,
         data: {
           ...summary,
-          dernieres: translate(summary.dernieres, lang)
+          // translateDeep : translate() sur la liste entière renvoyait une chaîne vide (aucune « dernière »)
+          dernieres: translateDeep(summary.dernieres, lang)
         },
         lang
       });

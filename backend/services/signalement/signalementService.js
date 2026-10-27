@@ -4,7 +4,6 @@
  */
 
 const BaseService = require('../core/baseService');
-const uploadService = require('../uploadService');
 
 const VALID_TYPES = ['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat'];
 const VALID_MOTIFS = [
@@ -53,14 +52,9 @@ class SignalementService extends BaseService {
       throw this._conflictError('Vous avez deja signale cette entite');
     }
 
-    // Upload screenshot si fourni
-    let url_screenshot = null;
-    if (files?.screenshot) {
-      const uploadResult = await uploadService.uploadImage(files.screenshot);
-      if (uploadResult.success) {
-        url_screenshot = uploadResult.data.url;
-      }
-    }
+    // Pas d'envoi de capture d'écran : la route n'en reçoit pas (url_screenshot reste vide).
+    // L'ancien appel donnait un objet multer au lieu d'une image et n'enregistrait jamais rien.
+    const url_screenshot = null;
 
     // Creer le signalement
     const signalement = await this.repository.create({

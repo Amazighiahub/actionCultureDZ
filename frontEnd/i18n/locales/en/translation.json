@@ -705,6 +705,13 @@
     "menu": {
       "close": "Close menu",
       "open": "Open menu"
+    },
+    "notifications": {
+      "titre": "Notifications",
+      "nonLues": "{{n}} unread notification(s)",
+      "nouvelle": "New notification",
+      "nouvelles": "{{n}} new notifications",
+      "voir": "View"
     }
   },
   "home": {

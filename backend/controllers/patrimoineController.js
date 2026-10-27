@@ -202,9 +202,20 @@ class PatrimoineController extends BaseController {
     return ok;
   }
 
+  /**
+   * Toute contribution à un lieu prévient son créateur et l'administration (sauf l'auteur) :
+   * « Karim Bensaid a ajouté des photos à « Tkout » ». Une notification manquée n'annule rien.
+   */
+  _signalerContribution(req, action) {
+    return historique.notifierModification(container.patrimoineService.models, container.notificationService, {
+      idLieu: parseInt(req.params.id, 10), idUser: req.user?.id_user, action
+    });
+  }
+
   /** Nouvelle personnalité du site (fiche créée et rattachée) */
   async creerPersonnalite(req, res) {
     const lien = await this.patrimoineService.creerPersonnalite(parseInt(req.params.id, 10), req.body, { userId: req.user.id_user });
+    await this._signalerContribution(req, 'a ajouté une personnalité à');
     res.status(201).json({ success: true, data: lien });
   }
 
@@ -218,6 +229,7 @@ class PatrimoineController extends BaseController {
     if (resultat === 'interdit') {
       return res.status(403).json({ success: false, error: req.t('patrimoine.personnaliteForbidden', 'Seuls la personne qui l’a ajoutée, le créateur du site et la modération peuvent la retirer.') });
     }
+    await this._signalerContribution(req, 'a retiré une personnalité de');
     res.json({ success: true });
   }
 
@@ -252,6 +264,7 @@ class PatrimoineController extends BaseController {
     const lien = await this.patrimoineService.lierPage(parseInt(req.params.id, 10), {
       id_oeuvre: parseInt(req.body.id_oeuvre, 10), section_patrimoine: req.body.section_patrimoine
     }, { userId: req.user.id_user, isModerator: this._estModeration(req) });
+    await this._signalerContribution(req, 'a relié un article à');
     res.status(201).json({ success: true, data: lien });
   }
 
@@ -265,6 +278,7 @@ class PatrimoineController extends BaseController {
     if (resultat === 'interdit') {
       return res.status(403).json({ success: false, error: req.t('patrimoine.pageForbidden', 'Seuls la personne qui l’a ajoutée, le créateur du site et la modération peuvent la retirer.') });
     }
+    await this._signalerContribution(req, 'a retiré un article de');
     res.json({ success: true });
   }
 
@@ -524,6 +538,7 @@ class PatrimoineController extends BaseController {
     const siteId = parseInt(req.params.id);
     // langue : celle des enregistrements audio envoyés (champ texte du formulaire)
     const medias = await this.patrimoineService.uploadMedias(siteId, req.files, { langue: req.body?.langue || undefined });
+    if (medias?.length) await this._signalerContribution(req, 'a ajouté des photos ou des enregistrements à');
     res.json({ success: true, data: medias });
   }
 
@@ -552,6 +567,7 @@ class PatrimoineController extends BaseController {
     if (!(await this._verifierDroitModification(req, res))) return;
     const { id, mediaId } = req.params;
     await this.patrimoineService.deleteMedia(id, mediaId);
+    await this._signalerContribution(req, 'a supprimé une photo ou un enregistrement de');
     res.json({ success: true, message: req.t('common.deleted') });
   }
 

@@ -38,6 +38,13 @@ const initFavoriRoutes = (models) => {
     favoriController.getPopularFavorites.bind(favoriController)
   );
 
+  // Identifiants des favoris d'un type (cœurs pleins dans les listes d'œuvres, d'artisanat…)
+  router.get('/ids/:type',
+    (req, res, next) => (['oeuvre', 'evenement', 'lieu', 'artisanat'].includes(req.params.type)
+      ? next() : res.status(400).json({ success: false, error: req.t('validation.invalidEntityType') })),
+    favoriController.getIdsFavoris.bind(favoriController)
+  );
+
   // Vérifier si une entité est dans les favoris
   router.get('/check/:type/:id', 
     favoriController.checkFavori.bind(favoriController)

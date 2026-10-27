@@ -163,6 +163,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
           include: [{ model: models.Intervenant, as: 'Intervenant', attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites'] }]
         });
 
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: 'a rattaché une personnalité à'
+        });
         res.status(201).json({ success: true, data: result });
       } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -487,6 +490,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
           });
         }
 
+        await notifierModification(models, container.notificationService, {
+          idLieu: lieuId, idUser: req.user?.id_user, action: 'a ajouté un paragraphe à'
+        });
         res.status(201).json({ success: true, data: block });
       } catch (error) {
         logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });

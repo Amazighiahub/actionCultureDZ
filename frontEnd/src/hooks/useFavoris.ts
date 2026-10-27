@@ -303,6 +303,22 @@ export function useFavoris(options: UseFavorisOptions = {}) {
   };
 }
 
+/**
+ * Favoris d'un type pour les cartes d'une liste : une seule requête partagée par toutes les cartes,
+ * relue après chaque ajout ou retrait (clé ['favoris', …]). Sans elle, chaque carte démarrait
+ * « cœur vide », même pour un vrai favori, et un clic le retirait au lieu de l'ajouter.
+ */
+export function useFavorisIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat') {
+  const { isAuthenticated } = usePermissionsContext();
+  const { data } = useQuery({
+    queryKey: ['favoris', 'ids', type],
+    queryFn: () => favoriService.getIds(type),
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  });
+  return data;
+}
+
 // Hook spécialisé pour vérifier un seul favori
 export function useFavoriCheck(
   entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat',
