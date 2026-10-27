@@ -244,7 +244,7 @@ export interface ArticleBlock {
       metadata: {}
     }),
     [BlockType.HEADING]: () => ({
-      contenu: 'Nouveau titre',
+      contenu: '', // vide : l'indication du champ (traduite) guide la saisie
       metadata: { level: 2 }
     }),
     [BlockType.IMAGE]: () => ({
