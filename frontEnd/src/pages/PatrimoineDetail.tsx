@@ -25,7 +25,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePlanner'));
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
-import HistoriqueLieuDialog from '@/components/patrimoine/HistoriqueLieuDialog';
+// Historique (administration et modération seulement) : chargé à part, pas pour chaque visiteur
+const HistoriqueLieuDialog = React.lazy(() => import('@/components/patrimoine/HistoriqueLieuDialog'));
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
 import { patrimoineArticlesService, getPagesPatrimoine, type PatrimoineBlock, type PagePatrimoine } from '@/services/patrimoineArticles.service';
 import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
@@ -385,6 +386,7 @@ const PatrimoineDetail = () => {
           )}
           {/* Historique des textes et retour en arrière : administration */}
           {(isAdmin || hasRole('Moderateur')) && (
+            <React.Suspense fallback={null}>
             <HistoriqueLieuDialog
               lieuId={site.id_lieu}
               onRestaure={async () => {
@@ -392,6 +394,7 @@ const PatrimoineDetail = () => {
                 if (res.success && res.data) setSite(res.data as unknown as SitePatrimoineDetail);
               }}
             />
+            </React.Suspense>
           )}
           {/* Chemin d'un point de visite : Timgad › Musée de Timgad › Salle 3 */}
           <nav aria-label={t('patrimoine.points.breadcrumb', 'Emplacement dans le site')} className="flex flex-wrap items-center gap-2 min-w-0">
@@ -412,8 +415,11 @@ const PatrimoineDetail = () => {
         <div className={`relative mb-8 rounded-xl overflow-hidden ${mainImage ? '' : 'h-56 md:h-64 bg-gradient-to-br from-stone-700 via-stone-800 to-stone-900'}`}>
           {mainImage ? (
             <>
+              {/* Plusieurs largeurs : un téléphone télécharge ~85 Ko au lieu de ~200 Ko */}
               <img fetchPriority="high"
-                src={getAssetUrl(mainImage)}
+                src={getAssetUrl(mainImage, { width: 1280 })}
+                srcSet={[640, 960, 1280].map(w => `${getAssetUrl(mainImage, { width: w })} ${w}w`).join(', ')}
+                sizes="(min-width: 1280px) 1200px, 100vw"
                 alt={translate(site.nom, lang)}
                 className="w-full h-[280px] sm:h-[360px] md:h-[420px] object-cover"
               />
@@ -495,7 +501,7 @@ const PatrimoineDetail = () => {
                         </div>
                       ) : (
                         <img loading="lazy" decoding="async"
-                          src={getAssetUrl(media.url)}
+                          src={getAssetUrl(media.url, { width: 480 })}
                           alt={getMediaLabel(media, idx)}
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
@@ -827,7 +833,7 @@ const PatrimoineDetail = () => {
                                   <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
                                     {media.type === 'video'
                                       ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" aria-hidden="true" /></div>
-                                      : <img loading="lazy" decoding="async" src={getAssetUrl(media.url)} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
+                                      : <img loading="lazy" decoding="async" src={getAssetUrl(media.url, { width: 640 })} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
                                   </div>
                                 ))}
                               </div>

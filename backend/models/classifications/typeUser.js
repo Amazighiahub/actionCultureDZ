@@ -31,7 +31,9 @@ module.exports = (sequelize) => {
   TypeUser.associate = (models) => {
     TypeUser.hasMany(models.User, { 
       foreignKey: 'id_type_user',
-      as: 'Users'
+      as: 'Users',
+      // Valeur de référence : suppression interdite tant qu'elle est utilisée (plus de cascade)
+      onDelete: 'RESTRICT', onUpdate: 'CASCADE'
     });
     TypeUser.hasMany(models.OeuvreUser, { 
       foreignKey: 'id_type_user',

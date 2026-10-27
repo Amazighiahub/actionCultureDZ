@@ -235,6 +235,24 @@ async function cleanupEntity(entity, duplicates, transaction) {
       });
     }
 
+    // 1 bis. Toutes les autres colonnes qui pointent vers cette table (oeuvre.id_type_oeuvre,
+    // artisanat.id_materiau…) sont redirigées vers l'ID gardé. Sans cela, la suppression des
+    // doublons effaçait en cascade les œuvres et pièces d'artisanat qui les utilisaient.
+    const [references] = await sequelize.query(`
+      SELECT TABLE_NAME AS t, COLUMN_NAME AS c FROM information_schema.KEY_COLUMN_USAGE
+      WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = :table AND REFERENCED_COLUMN_NAME = :pk
+    `, { replacements: { table, pk }, transaction });
+    const dejaFaits = new Set(pivots.map(pv => `${pv.table}.${pv.fk}`));
+    for (const { t, c } of references) {
+      if (dejaFaits.has(`${t}.${c}`) || t === table) continue;
+      dejaFaits.add(`${t}.${c}`);
+      const [res] = await sequelize.query(
+        `UPDATE \`${t}\` SET \`${c}\` = :keepId WHERE \`${c}\` IN (:removeIds)`,
+        { replacements: { keepId, removeIds }, transaction }
+      );
+      totalReassigned += res.affectedRows || 0;
+    }
+
     // 2. Supprimer les enregistrements en doublon
     await sequelize.query(`
       DELETE FROM \`${table}\` WHERE \`${pk}\` IN (:removeIds)

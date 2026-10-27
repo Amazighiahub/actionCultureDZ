@@ -35,6 +35,8 @@ vi.mock('@/services/patrimoine.service', () => ({
 vi.mock('../PointsVisiteCarte', () => ({
   default: (props: any) => { carteProps.current = props; return <div data-testid="carte" />; },
 }));
+// La carte se charge quand elle approche de l'écran : ici, tout de suite
+vi.mock('@/hooks/useProcheEcran', () => ({ useProcheEcran: () => ({ ref: () => {}, proche: true }) }));
 // Select Radix remplacé par un <select> natif
 vi.mock('@/components/ui/select', () => ({
   Select: ({ value, onValueChange, children }: any) => (

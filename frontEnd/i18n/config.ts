@@ -158,9 +158,19 @@ const initialize = async () => {
   await loadLanguage(currentLang);
   await originalChangeLanguage(currentLang);
 
-  // Français = langue de secours (fallbackLng) : chargé ensuite, sans bloquer l'affichage
-  if (currentLang !== 'fr') {
+  // Français = langue de secours (fallbackLng). Indispensable en tamazight (traduction partielle) ;
+  // en arabe et en anglais (complets), chargé seulement une fois la page affichée et au repos, pour
+  // ne pas disputer le réseau à la page et à ses photos sur téléphone
+  if (currentLang.startsWith('tz')) {
     loadLanguage('fr').catch(() => undefined);
+  } else if (currentLang !== 'fr') {
+    const plusTard = () => {
+      const charger = () => loadLanguage('fr').catch(() => undefined);
+      if ('requestIdleCallback' in window) window.requestIdleCallback(charger, { timeout: 10000 });
+      else setTimeout(charger, 3000);
+    };
+    if (document.readyState === 'complete') plusTard();
+    else window.addEventListener('load', plusTard, { once: true });
   }
 };
 

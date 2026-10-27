@@ -31,7 +31,9 @@ module.exports = (sequelize) => {
   TypeOeuvre.associate = (models) => {
     TypeOeuvre.hasMany(models.Oeuvre, { 
       foreignKey: 'id_type_oeuvre',
-      as: 'oeuvres'
+      as: 'oeuvres',
+      // Valeur de référence : suppression interdite tant qu'elle est utilisée (plus de cascade)
+      onDelete: 'RESTRICT', onUpdate: 'CASCADE'
     });
     
     TypeOeuvre.belongsToMany(models.Genre, { 

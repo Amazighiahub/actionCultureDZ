@@ -12,8 +12,9 @@ const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireI
 const { configAvecProfil, tarificationDe } = require('./evenement/tarification');
 
 class ProfessionnelService {
-  constructor(models) {
+  constructor(models, { notificationService } = {}) {
     this.models = models;
+    this.notificationService = notificationService;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
   }
 
@@ -499,8 +500,8 @@ class ProfessionnelService {
     // Acceptation / refus : e-mail, notification, SMS/WhatsApp
     // (best effort, sans bloquer la réponse — comme evenementService.validateParticipation)
     if ((action === 'confirmer' || action === 'rejeter') && this.models.Notification) {
-      const NotificationService = require('./notificationService');
-      new NotificationService(this.models)
+      // Service partagé (avec ses repositories) ; instance locale seulement à défaut (tests)
+      (this.notificationService || new (require('./notificationService'))(this.models))
         .notifierValidationParticipation(evenementId, userId, action === 'confirmer' ? 'confirme' : 'refuse', notes || '')
         .catch(err => logger.error('Erreur notification validation participation:', err));
     }

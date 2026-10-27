@@ -139,16 +139,25 @@ class HttpError extends Error {
   }
 }
 
-// File d'attente améliorée pour les requêtes
+/**
+ * File des requêtes : jusqu'à 6 en même temps (comme un navigateur vers un même serveur), sans
+ * attente entre elles. Elle ne ralentit que si le serveur le demande (réponse 429, quota presque
+ * atteint) ou en mode « conservateur ».
+ * Avant, chaque requête attendait la réponse de la précédente, plus 0,1 à 2 s : sur une fiche
+ * qui charge 6 parties (programme, photos, commentaires…), la dernière arrivait 2 à 4 s plus tard.
+ */
 class ImprovedRequestQueue {
   private queue: QueuedRequest[] = [];
-  private processing = false;
+  private enCours = 0;
+  private readonly maxSimultanees = 6;
   private lastRequestTime = 0;
-  private minDelay = 100; // Délai minimum entre requêtes (ms)
-  
-  // Historique des requêtes pour le rate limiting adaptatif
+  private minDelay = 0; // Espacement minimal entre deux départs (ms) ; 0 = aucun
+  private relance: ReturnType<typeof setTimeout> | null = null;
+  private retourNormal: ReturnType<typeof setTimeout> | null = null;
+
+  // Historique des requêtes (statistiques et frein de sécurité)
   private requestHistory: { timestamp: number; url: string }[] = [];
-  
+
   // Compteurs pour ajustement dynamique
   private rateLimitHits = 0;
   private successfulRequests = 0;
@@ -167,33 +176,25 @@ class ImprovedRequestQueue {
     });
   }
 
-  private async process() {
-    if (this.processing || this.queue.length === 0) return;
-    
-    this.processing = true;
-    
-    while (this.queue.length > 0) {
-      // Ajustement dynamique du délai
-      const adaptiveDelay = this.calculateAdaptiveDelay();
-      
-      const now = Date.now();
-      const timeSinceLastRequest = now - this.lastRequestTime;
-      
-      if (timeSinceLastRequest < adaptiveDelay) {
-        await new Promise(resolve => setTimeout(resolve, adaptiveDelay - timeSinceLastRequest));
+  private process() {
+    while (this.enCours < this.maxSimultanees && this.queue.length > 0) {
+      const attente = this.calculateAdaptiveDelay() - (Date.now() - this.lastRequestTime);
+      if (attente > 0) {
+        if (!this.relance) {
+          this.relance = setTimeout(() => { this.relance = null; this.process(); }, attente);
+        }
+        return;
       }
-      
-      const item = this.queue.shift();
-      if (item) {
-        try {
-          const result = await item.request();
-          
-          // Enregistrer le succès
+
+      const item = this.queue.shift()!;
+      this.enCours++;
+      this.lastRequestTime = Date.now();
+      item.request()
+        .then((result) => {
           this.successfulRequests++;
           this.recordRequest(item.url || 'unknown');
-          
           item.resolve(result);
-        } catch (error: unknown) {
+        }, (error: unknown) => {
           // Détecter le rate limit
           const axiosErr = error as { response?: { status?: number } };
           if (axiosErr.response?.status === 429) {
@@ -201,12 +202,12 @@ class ImprovedRequestQueue {
             this.adjustDelayAfterRateLimit();
           }
           item.reject(error);
-        }
-        this.lastRequestTime = Date.now();
-      }
+        })
+        .finally(() => {
+          this.enCours--;
+          this.process();
+        });
     }
-    
-    this.processing = false;
   }
 
   // Calculer le délai adaptatif
@@ -214,39 +215,39 @@ class ImprovedRequestQueue {
     // Nettoyer l'historique (garder dernière minute)
     const oneMinuteAgo = Date.now() - 60000;
     this.requestHistory = this.requestHistory.filter(r => r.timestamp > oneMinuteAgo);
-    
-    const requestsLastMinute = this.requestHistory.length;
-    
-    // Si on a eu des rate limits récemment, augmenter le délai
+
+    // Si on a eu des rate limits récemment, espacer les départs
     if (this.rateLimitHits > 0) {
-      return Math.min(this.minDelay * Math.pow(2, this.rateLimitHits), 5000);
+      return Math.min(Math.max(this.minDelay, 100) * Math.pow(2, this.rateLimitHits), 5000);
     }
-    
-    // Si on approche de 30 requêtes/minute, ralentir
-    if (requestsLastMinute > 25) {
-      return 2000; // 2 secondes
-    } else if (requestsLastMinute > 20) {
-      return 1000; // 1 seconde
-    } else if (requestsLastMinute > 15) {
-      return 500; // 500ms
-    }
-    
+
+    // Frein de sécurité, bien sous la limite du serveur (1 000 requêtes / 15 min, ~66 / min)
+    if (this.requestHistory.length > 50) return Math.max(this.minDelay, 500);
+
     return this.minDelay;
   }
   
   // Ajuster après un rate limit
   private adjustDelayAfterRateLimit() {
-    this.minDelay = Math.min(this.minDelay * 2, 5000);
+    this.minDelay = Math.min(Math.max(this.minDelay * 2, 500), 5000);
     apiLogger.warn(`Rate limit détecté! Nouveau délai: ${this.minDelay}ms`);
 
-    // Réinitialiser après 5 minutes sans rate limit
+    // Retour à la normale après 5 minutes
     setTimeout(() => {
-      if (this.rateLimitHits === 0) {
-        this.minDelay = 100;
-        apiLogger.debug('Délai réinitialisé à 100ms');
-      }
       this.rateLimitHits = Math.max(0, this.rateLimitHits - 1);
+      if (this.rateLimitHits === 0) {
+        this.minDelay = 0;
+        apiLogger.debug('Délai réinitialisé');
+      }
     }, 5 * 60 * 1000);
+  }
+
+  /** Ralentir pendant un temps (quota presque atteint), puis revenir au délai précédent */
+  ralentirTemporairement(delai: number, dureeMs = 60 * 1000) {
+    const precedent = this.retourNormal ? 0 : this.minDelay;
+    this.minDelay = Math.max(this.minDelay, delai);
+    if (this.retourNormal) clearTimeout(this.retourNormal);
+    this.retourNormal = setTimeout(() => { this.retourNormal = null; this.minDelay = precedent; }, dureeMs);
   }
   
   private recordRequest(url: string) {
@@ -256,6 +257,7 @@ class ImprovedRequestQueue {
   getStats() {
     return {
       queueSize: this.queue.length,
+      enCours: this.enCours,
       requestsLastMinute: this.requestHistory.length,
       rateLimitHits: this.rateLimitHits,
       currentDelay: this.calculateAdaptiveDelay()
@@ -378,8 +380,8 @@ class HttpClient {
 
           if (percentUsed > 80) {
             apiLogger.warn(`Attention: ${percentUsed.toFixed(0)}% de la limite utilisée (${remaining}/${limit})`);
-            // Ralentir automatiquement
-            this.requestQueue.setMinDelay(1000);
+            // Ralentir pendant une minute
+            this.requestQueue.ralentirTemporairement(1000);
           }
 
           // Afficher dans la console en dev
@@ -812,7 +814,7 @@ class HttpClient {
 
   // Mode normal
   useNormalMode() {
-    this.requestQueue.setMinDelay(100);
+    this.requestQueue.setMinDelay(0);
     apiLogger.debug('Mode normal activé');
   }
 

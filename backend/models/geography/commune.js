@@ -33,7 +33,9 @@ module.exports = (sequelize) => {
   Commune.associate = (models) => {
     Commune.belongsTo(models.Daira, { foreignKey: 'dairaId' });
     Commune.hasMany(models.Localite, { foreignKey: 'id_commune' });
-    Commune.hasMany(models.Lieu, { foreignKey: 'communeId', as: 'Lieux' });
+    // Valeur de référence : interdit de la supprimer tant qu'elle est utilisée (sans cela,
+    // la suppression effaçait en cascade tout ce qui l'utilisait)
+    Commune.hasMany(models.Lieu, { foreignKey: 'communeId', as: 'Lieux', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
   return Commune;

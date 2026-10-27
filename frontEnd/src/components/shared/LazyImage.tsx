@@ -69,6 +69,12 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   const { t } = useTranslation();
   // Images Cloudinary : format et compression automatiques (+ largeur limitée si maxWidth)
   const imageSrc = optimizeImageUrl(src, maxWidth);
+  // Image Cloudinary avec maxWidth : plusieurs largeurs, le navigateur prend celle de l'écran
+  // (un téléphone ne télécharge plus la version 1 600 px d'une photo d'événement)
+  const srcSetAuto = !srcSet && maxWidth && imageSrc !== src
+    ? [480, 768, 1024, 1280].filter(w => w < maxWidth).concat(maxWidth)
+      .map(w => `${optimizeImageUrl(src, w)} ${w}w`).join(', ')
+    : undefined;
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -172,8 +178,8 @@ export const LazyImage: React.FC<LazyImageProps> = ({
             decoding="async"
             width={width}
             height={height}
-            srcSet={srcSet}
-            sizes={sizes}
+            srcSet={error ? undefined : (srcSet || srcSetAuto)}
+            sizes={sizes || (srcSetAuto ? '100vw' : undefined)}
             onLoad={handleLoad}
             onError={handleError}
             className={cn(

@@ -189,6 +189,20 @@ describe('DashboardUserManagementService', () => {
       expect(result.success).toEqual([1, 2]);
     });
 
+    it('suppression groupée : suppression complète une par une, administrateur protégé, erreurs rapportées', async () => {
+      mockUserRepo.findWithRoles.mockImplementation(async (id) => (
+        id === 3 ? { id_user: 3, id_type_user: 29, Roles: [] } : { id_user: id, id_type_user: 1, Roles: [], email: `membre${id}@example.com` }
+      ));
+      mockUserRepo.hardDeleteUser.mockResolvedValue({ files: [] });
+
+      const result = await service.bulkUserAction('delete', [1, 2, 3], {}, 10);
+
+      expect(mockUserRepo.hardDeleteUser).toHaveBeenCalledTimes(2);
+      expect(mockUserRepo.hardDeleteUser).toHaveBeenCalledWith(1, expect.objectContaining({ adminId: 10 }));
+      expect(result.success).toEqual([1, 2]);
+      expect(result.errors).toEqual([{ id: 3, error: 'CANNOT_DELETE_ADMIN' }]);
+    });
+
     it('should deactivate users in batch via updateMany', async () => {
       mockUserRepo.updateMany.mockResolvedValue(true);
 

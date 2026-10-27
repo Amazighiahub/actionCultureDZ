@@ -28,7 +28,9 @@ module.exports = (sequelize) => {
 
   // Associations
   Langue.associate = (models) => {
-    Langue.hasMany(models.Oeuvre, { foreignKey: 'id_langue' });
+    // Valeur de référence : interdit de la supprimer tant qu'elle est utilisée (sans cela,
+    // la suppression effaçait en cascade tout ce qui l'utilisait)
+    Langue.hasMany(models.Oeuvre, { foreignKey: 'id_langue', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N

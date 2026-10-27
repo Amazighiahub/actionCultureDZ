@@ -21,16 +21,8 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
-const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
-  if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj).find(v => typeof v === 'string' && v) || fallback);
-  }
-  return String(value);
-};
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Composant StatCard
 interface StatCardProps {

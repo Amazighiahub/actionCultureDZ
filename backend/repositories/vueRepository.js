@@ -46,8 +46,8 @@ class VueRepository extends BaseRepository {
     const entry = modelMap[type];
     if (!entry || !entry.model) return;
 
-    const attributes = await entry.model.describe();
-    if (attributes.nombre_vues) {
+    // Colonne lue dans la définition du modèle : describe() interrogeait la base à chaque vue
+    if (entry.model.rawAttributes?.nombre_vues) {
       await entry.model.increment('nombre_vues', {
         where: { [entry.idField]: id }
       });

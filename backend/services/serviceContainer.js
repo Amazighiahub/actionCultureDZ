@@ -385,7 +385,7 @@ class ServiceContainer {
 
     if (!this._services.has('professionnel')) {
       const ProfessionnelService = require('./professionnelService');
-      this._services.set('professionnel', new ProfessionnelService(this._models));
+      this._services.set('professionnel', new ProfessionnelService(this._models, { notificationService: this.notificationService }));
     }
 
     return this._services.get('professionnel');
