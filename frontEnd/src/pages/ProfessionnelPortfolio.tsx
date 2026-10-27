@@ -27,6 +27,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { idFromSlug, professionnelPath, evenementPath } from '@/utils/slug';
+import { ListeArticlesPresse, lireArticlesPresse } from '@/components/shared/ArticlesPresse';
 
 // Types d'œuvres « articles » (page /articles/:id)
 const ARTICLE_TYPES = [4, 5];
@@ -51,6 +52,7 @@ interface Portfolio {
     specialites?: string[] | string | null;
     site_web?: string | null;
     reseaux_sociaux?: SocialLinksValue;
+    articles_presse?: unknown;
     email?: string | null;
     telephone?: string | null;
     TypeUser?: { nom_type: string };
@@ -270,6 +272,14 @@ const ProfessionnelPortfolio: React.FC = () => {
           <section aria-labelledby="bio-titre" className="max-w-3xl">
             <h2 id="bio-titre" className="text-xl font-semibold mb-3">{t('portfolio.bio', 'Biographie')}</h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">{profil.biographie}</p>
+          </section>
+        )}
+
+        {/* Articles de presse (saisis dans le profil) */}
+        {lireArticlesPresse(profil.articles_presse).length > 0 && (
+          <section aria-labelledby="presse-titre" className="max-w-3xl">
+            <h2 id="presse-titre" className="text-xl font-semibold mb-3">{t('portfolio.presse', 'Dans la presse')}</h2>
+            <ListeArticlesPresse articles={lireArticlesPresse(profil.articles_presse)} siVide="" />
           </section>
         )}
 

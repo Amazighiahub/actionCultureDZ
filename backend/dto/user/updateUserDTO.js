@@ -52,6 +52,9 @@ class UpdateUserDTO extends BaseDTO {
     if (data.reseaux_sociaux !== undefined) {
       this.reseauxSociaux = UpdateUserDTO.normalizeSocialLinks(data.reseaux_sociaux);
     }
+    if (data.articles_presse !== undefined) {
+      this.articlesPresse = UpdateUserDTO.normalizeArticlesPresse(data.articles_presse);
+    }
     if (data.accepte_newsletter !== undefined || data.accepteNewsletter !== undefined) {
       this.accepteNewsletter = BaseDTO.toBool(data.accepte_newsletter ?? data.accepteNewsletter);
     }
@@ -85,6 +88,29 @@ class UpdateUserDTO extends BaseDTO {
     return out;
   }
 
+  /**
+   * Articles de presse : au plus 20, champs nettoyés et bornés ; une ligne sans lien est ignorée.
+   * Les adresses sont vérifiées par validate().
+   */
+  static normalizeArticlesPresse(value) {
+    let liste = value;
+    if (typeof liste === 'string') {
+      try { liste = JSON.parse(liste); } catch { liste = null; }
+    }
+    if (!Array.isArray(liste)) return [];
+    const texte = (v, max) => (BaseDTO.cleanString(typeof v === 'string' ? v : '') || '').slice(0, max);
+    return liste
+      .filter(a => a && typeof a === 'object')
+      .map(a => ({
+        titre: texte(a.titre, 200),
+        media: texte(a.media, 100),
+        url: texte(a.url, 500),
+        date: /^\d{4}-\d{2}-\d{2}$/.test(a.date || '') ? a.date : null
+      }))
+      .filter(a => a.url)
+      .slice(0, 20);
+  }
+
   static fromRequest(body, options = {}) {
     return new UpdateUserDTO(body);
   }
@@ -107,6 +133,7 @@ class UpdateUserDTO extends BaseDTO {
     if (this.idCommune !== undefined) entity.id_commune = this.idCommune;
     if (this.photoUrl !== undefined) entity.photo_url = this.photoUrl;
     if (this.reseauxSociaux !== undefined) entity.reseaux_sociaux = this.reseauxSociaux;
+    if (this.articlesPresse !== undefined) entity.articles_presse = this.articlesPresse;
     if (this.accepteNewsletter !== undefined) entity.accepte_newsletter = this.accepteNewsletter;
     if (this.languePreferee !== undefined) entity.langue_preferee = this.languePreferee;
     if (this.themePrefere !== undefined) entity.theme_prefere = this.themePrefere;
@@ -148,6 +175,13 @@ class UpdateUserDTO extends BaseDTO {
         errors.push({ field: `reseaux_sociaux.${network}`, message: 'Lien invalide pour ce réseau social' });
       }
     }
+
+    // Articles de presse : lien http(s) complet (pas de javascript:)
+    (this.articlesPresse || []).forEach((article, i) => {
+      if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(article.url)) {
+        errors.push({ field: `articles_presse.${i}.url`, message: `Lien de l'article ${i + 1} invalide (doit commencer par https://)` });
+      }
+    });
 
     // Photo : uniquement un média hébergé par la plateforme (null = suppression)
     if (this.photoUrl && !BaseDTO.isOwnMediaUrl(this.photoUrl)) {

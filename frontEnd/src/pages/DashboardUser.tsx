@@ -22,13 +22,17 @@ import {
   Bell,
   RefreshCw,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
+import { ListeArticlesPresse, lireArticlesPresse, type ArticlePresse } from '@/components/shared/ArticlesPresse';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -529,6 +533,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     biographie: '',
     site_web: '',
     reseaux_sociaux: {} as Record<string, string>,
+    articles_presse: [] as ArticlePresse[],
   });
   // Erreurs de saisie des liens (site web / réseaux), par champ
   const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
@@ -542,10 +547,14 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
       site_web: user?.site_web || '',
       reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
+      articles_presse: lireArticlesPresse((user as { articles_presse?: unknown })?.articles_presse),
     });
     setLinkErrors({});
     setEditing(true);
   }, [user]);
+
+  const modifierArticle = (index: number, changement: Partial<ArticlePresse>) =>
+    setForm(f => ({ ...f, articles_presse: f.articles_presse.map((a, i) => (i === index ? { ...a, ...changement } : a)) }));
 
   // Liens des professionnels : vérifiés avant l'envoi (le serveur refait la même vérification)
   const validateLinks = (): boolean => {
@@ -558,6 +567,11 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         errors[network.key] = t('profile.socialInvalid', 'Lien {{network}} invalide (ex. : {{example}})', { network: network.label, example: network.placeholder });
       }
     }
+    form.articles_presse.forEach((article, i) => {
+      if (article.url.trim() && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(article.url.trim())) {
+        errors[`presse-${i}`] = t('profile.presse.lienInvalide', 'Lien invalide (doit commencer par https://)');
+      }
+    });
     setLinkErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -571,7 +585,13 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         nom: form.nom,
         telephone: form.telephone,
         biographie: form.biographie,
-        ...(isProfessional ? { site_web: form.site_web.trim(), reseaux_sociaux: form.reseaux_sociaux } : {}),
+        ...(isProfessional ? {
+          site_web: form.site_web.trim(),
+          reseaux_sociaux: form.reseaux_sociaux,
+          articles_presse: form.articles_presse
+            .map(a => ({ titre: a.titre.trim(), media: a.media.trim(), url: a.url.trim(), date: a.date || null }))
+            .filter(a => a.url),
+        } : {}),
       });
       if (response.success) {
         toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
@@ -716,7 +736,16 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       {/* Site web et réseaux sociaux : affichés sur la fiche publique des professionnels */}
       {isProfessional && (
         <section className="mt-8 pt-6 border-t" aria-labelledby="profil-liens-titre">
-          <h3 id="profil-liens-titre" className="text-lg font-semibold">{t('profile.socialTitle', 'Site web et réseaux sociaux')}</h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="profil-liens-titre" className="text-lg font-semibold">{t('profile.socialTitle', 'Site web et réseaux sociaux')}</h3>
+            {/* Le bouton « Modifier le profil » est tout en bas de la page : il passait inaperçu */}
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={startEditing}>
+                <Pencil className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('profile.modifierLiens', 'Modifier mes liens')}
+              </Button>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mb-4">{t('profile.socialHint', 'Ces liens apparaissent sur votre fiche publique (événements que vous organisez, profil).')}</p>
           {editing ? (
             <div className="grid md:grid-cols-2 gap-4">
@@ -752,6 +781,66 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
             user?.site_web || Object.keys(parseSocialLinks(user?.reseaux_sociaux)).length > 0
               ? <SocialLinks links={user?.reseaux_sociaux} website={user?.site_web} />
               : <p className="text-sm text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</p>
+          )}
+        </section>
+      )}
+
+      {/* Articles de presse : affichés sur le portfolio public (« Dans la presse ») */}
+      {isProfessional && (
+        <section className="mt-8 pt-6 border-t" aria-labelledby="profil-presse-titre">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="profil-presse-titre" className="text-lg font-semibold">{t('profile.presse.titre', 'Articles de presse')}</h3>
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={startEditing}>
+                <Pencil className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('profile.presse.modifier', 'Ajouter ou modifier')}
+              </Button>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t('profile.presse.aide', 'Les articles qui parlent de vous ou de votre travail : ils apparaissent sur votre portfolio public.')}</p>
+          {editing ? (
+            <div className="space-y-4">
+              {form.articles_presse.map((article, i) => (
+                <div key={i} className="grid gap-3 rounded-lg border p-3 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label htmlFor={`presse-url-${i}`} className="block text-sm font-medium mb-1">{t('profile.presse.lien', 'Lien de l’article')}</label>
+                    <input id={`presse-url-${i}`} type="url" inputMode="url" className="w-full p-3 border rounded-lg" placeholder="https://…"
+                      value={article.url} aria-invalid={!!linkErrors[`presse-${i}`]}
+                      onChange={(e) => modifierArticle(i, { url: e.target.value })} />
+                    {linkErrors[`presse-${i}`] && <p role="alert" className="text-sm text-destructive mt-1">{linkErrors[`presse-${i}`]}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor={`presse-titre-${i}`} className="block text-sm font-medium mb-1">{t('profile.presse.titreArticle', 'Titre')}</label>
+                    <input id={`presse-titre-${i}`} dir="auto" maxLength={200} className="w-full p-3 border rounded-lg"
+                      value={article.titre} onChange={(e) => modifierArticle(i, { titre: e.target.value })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`presse-media-${i}`} className="block text-sm font-medium mb-1">{t('profile.presse.media', 'Journal ou média')}</label>
+                    <input id={`presse-media-${i}`} dir="auto" maxLength={100} className="w-full p-3 border rounded-lg" placeholder={t('profile.presse.mediaAide', 'Ex. : El Watan, APS, Radio Algérie')}
+                      value={article.media} onChange={(e) => modifierArticle(i, { media: e.target.value })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`presse-date-${i}`} className="block text-sm font-medium mb-1">{t('profile.presse.date', 'Date (facultatif)')}</label>
+                    <input id={`presse-date-${i}`} type="date" className="w-full p-3 border rounded-lg"
+                      value={article.date || ''} onChange={(e) => modifierArticle(i, { date: e.target.value })} />
+                  </div>
+                  <div className="flex items-end justify-end">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setForm(f => ({ ...f, articles_presse: f.articles_presse.filter((_, j) => j !== i) }))}>
+                      <Trash2 className="h-4 w-4 me-2" aria-hidden="true" />
+                      {t('profile.presse.retirer', 'Retirer')}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {form.articles_presse.length < 20 && (
+                <Button type="button" variant="outline" onClick={() => setForm(f => ({ ...f, articles_presse: [...f.articles_presse, { titre: '', media: '', url: '', date: '' }] }))}>
+                  <Plus className="h-4 w-4 me-2" aria-hidden="true" />
+                  {t('profile.presse.ajouter', 'Ajouter un article')}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <ListeArticlesPresse articles={lireArticlesPresse((user as { articles_presse?: unknown })?.articles_presse)} />
           )}
         </section>
       )}

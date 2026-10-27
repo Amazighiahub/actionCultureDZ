@@ -4746,7 +4746,21 @@
     "socialOf": "{{name}} on {{network}}",
     "socialInvalid": "Invalid {{network}} link (e.g. {{example}})",
     "socialTitle": "Website and social media",
-    "socialHint": "These links appear on your public page (events you organise, profile)."
+    "socialHint": "These links appear on your public page (events you organise, profile).",
+    "modifierLiens": "Edit my links",
+    "presse": {
+      "titre": "Press articles",
+      "modifier": "Add or edit",
+      "aide": "Articles about you or your work: they appear on your public portfolio.",
+      "lien": "Article link",
+      "titreArticle": "Title",
+      "media": "Newspaper or media",
+      "mediaAide": "E.g. El Watan, APS, Radio Algérie",
+      "date": "Date (optional)",
+      "retirer": "Remove",
+      "ajouter": "Add an article",
+      "lienInvalide": "Invalid link (must start with https://)"
+    }
   },
   "share": {
     "onMyPage": "Share on my page:",
@@ -4767,7 +4781,8 @@
     "edit": "Edit my profile",
     "bio": "Biography",
     "works": "Work",
-    "empty": "No published content yet."
+    "empty": "No published content yet.",
+    "presse": "In the press"
   },
   "publicPage": {
     "showEmail": "Show my email",
