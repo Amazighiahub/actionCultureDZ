@@ -170,318 +170,73 @@ class NotificationService {
       throw error;
     }
   }
-// Notifications manquantes à ajouter dans NotificationService.js
 
-// 1. RAPPEL D'ÉVÉNEMENT (24h avant)
-/**
- * Rappel « c'est demain » aux participants confirmés (email, SMS / WhatsApp, notification).
- * Appelé par la tâche du matin pour les événements du lendemain ; une erreur remonte, pour
- * que l'événement ne soit pas marqué « rappel envoyé ».
- * @returns {Promise<{ envoyes: number }>}
- */
-async envoyerRappelEvenement(evenementId) {
-  const evenement = await this.models.Evenement.findByPk(evenementId, {
-    include: [{ model: this.models.Lieu, as: 'Lieu', attributes: ['nom', 'adresse'] }]
-  });
-  if (!evenement) throw new Error(`Événement ${evenementId} introuvable`);
-
-  const nomEvenement = this._str(evenement.nom_evenement);
-  const debut = new Date(evenement.date_debut);
-  const enAlgerie = { timeZone: 'Africa/Algiers' };
-  const dateDebut = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long' });
-  const heureDebut = debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
-  const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
-
-  const participants = await this.models.EvenementUser.findAll({
-    where: { id_evenement: evenementId, statut_participation: 'confirme' },
-    include: [{
-      model: this.models.User,
-      as: 'User',
-      attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
-      where: { notifications_evenements: true }
-    }]
-  });
-
-  const redis = getRedisClient();
-  let envoyes = 0;
-  await this._sendBatch(participants, async (participant) => {
-    // Déduplication : éviter d'envoyer le rappel plusieurs fois si la tâche est relancée
-    if (redis) {
-      try {
-        const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
-        const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
-        if (!claimed) return; // rappel déjà envoyé à ce participant
-      } catch { /* si Redis indisponible, on continue sans déduplication */ }
-    }
-
-    await this.emailService.sendEventReminder({
-      email: participant.User.email,
-      prenom: this._str(participant.User.prenom),
-      nomEvenement,
-      dateDebut,
-      heureDebut,
-      lieu,
-      eventUrl: `${process.env.FRONTEND_URL}/evenements/${evenementId}`
+  /**
+   * Rappel « c'est demain » aux participants confirmés (email, SMS / WhatsApp, notification).
+   * Appelé par la tâche du matin pour les événements du lendemain ; une erreur remonte, pour
+   * que l'événement ne soit pas marqué « rappel envoyé ».
+   * @returns {Promise<{ envoyes: number }>}
+   */
+  async envoyerRappelEvenement(evenementId) {
+    const evenement = await this.models.Evenement.findByPk(evenementId, {
+      include: [{ model: this.models.Lieu, as: 'Lieu', attributes: ['nom', 'adresse'] }]
     });
+    if (!evenement) throw new Error(`Événement ${evenementId} introuvable`);
 
-    await this._envoyerSmsWhatsapp(participant.User, 'rappel', { nomEvenement, dateEvenement: dateDebut, heureDebut });
+    const nomEvenement = this._str(evenement.nom_evenement);
+    const debut = new Date(evenement.date_debut);
+    const enAlgerie = { timeZone: 'Africa/Algiers' };
+    const dateDebut = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long' });
+    const heureDebut = debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
+    const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
 
-    await this.enregistrerNotification({
-      id_user: participant.id_user,
-      type_notification: 'rappel_evenement',
-      titre: 'C’est demain !',
-      message: `« ${nomEvenement} » a lieu demain, ${dateDebut} à ${heureDebut}${lieu ? ` — ${lieu}` : ''}.`,
-      id_evenement: evenementId,
-      url_action: `/evenements/${evenementId}`
-    });
-    envoyes++;
-  });
-  return { envoyes };
-}
-
-// 2. NOTIFICATION NOUVEAU COMMENTAIRE
-async notifierNouveauCommentaire(commentaireId) {
-  try {
-    const commentaire = await this.models.Commentaire.findByPk(commentaireId, {
-      include: [
-        { model: this.models.User, as: 'Auteur' },
-        { model: this.models.Oeuvre, include: [{ model: this.models.User, as: 'Users' }] }
-      ]
-    });
-
-    // Notifier le créateur de l'œuvre
-    for (const createur of (commentaire.Oeuvre.Users || [])) {
-      if (createur.id_user !== commentaire.id_user && createur.notifications_commentaires) {
-        await this.enregistrerNotification({
-          id_user: createur.id_user,
-          type_notification: 'nouveau_commentaire',
-          titre: 'Nouveau commentaire',
-          message: `${commentaire.Auteur.prenom} a commenté votre œuvre "${commentaire.Oeuvre.titre}"`,
-          id_oeuvre: commentaire.id_oeuvre
-        });
-
-        // Email optionnel
-        if (createur.notifications_email) {
-          await this.emailService.sendEmail(
-            createur.email,
-            `💬 Nouveau commentaire sur votre œuvre`,
-            `${commentaire.Auteur.prenom} ${commentaire.Auteur.nom} a commenté : "${commentaire.contenu.substring(0, 100)}..."`
-          );
-        }
-      }
-    }
-  } catch (error) {
-    logger.error('Erreur notification commentaire:', error);
-  }
-}
-
-// 3. NOTIFICATION NOUVELLE ŒUVRE D'UN ARTISTE SUIVI
-async notifierNouvelleOeuvre(oeuvreId) {
-  try {
-    const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId, {
-      include: [
-        { model: this.models.User, as: 'Users' },
-        { model: this.models.TypeOeuvre }
-      ]
-    });
-
-    if (!oeuvre) return;
-
-    const titreStr = typeof oeuvre.titre === 'object' ? (oeuvre.titre.fr || oeuvre.titre.ar || '') : (oeuvre.titre || '');
-
-    // Notifier les utilisateurs qui ont mis en favori des œuvres de ces créateurs
-    const createurs = oeuvre.Users || [];
-    if (createurs.length === 0) return;
-
-    const createurIds = createurs.map(c => c.id_user);
-
-    // Une seule requête pour tous les créateurs (au lieu de N requêtes en boucle)
-    const favorisUtilisateurs = await this.models.Favori.findAll({
-      where: { type_favori: 'oeuvre' },
+    const participants = await this.models.EvenementUser.findAll({
+      where: { id_evenement: evenementId, statut_participation: 'confirme' },
       include: [{
-        model: this.models.Oeuvre,
-        where: {},
-        include: [{ model: this.models.User, as: 'Users', where: { id_user: { [Op.in]: createurIds } } }]
-      }],
-      attributes: ['id_user'],
-      group: ['id_user']
-    }).catch(() => []);
-
-    const userIds = [...new Set(favorisUtilisateurs.map(f => f.id_user))]
-      .filter(userId => !createurIds.includes(userId));
-
-    if (userIds.length > 0) {
-      const createur = createurs[0];
-      const prenomStr = typeof createur.prenom === 'object' ? (createur.prenom.fr || '') : (createur.prenom || '');
-      const nomStr = typeof createur.nom === 'object' ? (createur.nom.fr || '') : (createur.nom || '');
-
-      const notifications = userIds.map(userId => ({
-        id_user: userId,
-        type_notification: 'nouvelle_oeuvre',
-        titre: 'Nouvelle œuvre',
-        message: `${prenomStr} ${nomStr} a publié "${titreStr}"`,
-        id_oeuvre: oeuvreId
-      }));
-      await this.enregistrerNotificationsMultiples(notifications);
-    }
-  } catch (error) {
-    logger.error('Erreur notification nouvelle œuvre:', error);
-  }
-}
-
-// 4. NOTIFICATION DE MODÉRATION
-async notifierModeration(userId, type, raison) {
-  try {
-    const messages = {
-      'contenu_supprime': 'Un de vos contenus a été supprimé',
-      'compte_suspendu': 'Votre compte a été temporairement suspendu',
-      'avertissement': 'Vous avez reçu un avertissement'
-    };
-
-    await this.enregistrerNotification({
-      id_user: userId,
-      type_notification: 'message_admin',
-      titre: messages[type] || 'Message de modération',
-      message: raison,
-      priorite: 'haute'
+        model: this.models.User,
+        as: 'User',
+        attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
+        where: { notifications_evenements: true }
+      }]
     });
 
-    // Email obligatoire pour les notifications importantes
-    const user = await this.models.User.findByPk(userId);
-    if (!user?.email) {
-      logger.warn(`Impossible de notifier userId ${userId}: utilisateur introuvable`);
-      return;
-    }
-    await this.emailService.sendEmail(
-      user.email,
-      `⚠️ ${messages[type]}`,
-      `Bonjour,\n\n${raison}\n\nL'équipe de modération`
-    );
-  } catch (error) {
-    logger.error('Erreur notification modération:', error);
-  }
-}
-
-// 5. NOTIFICATION FAVORI AJOUTÉ
-async notifierFavoriAjoute(favoriId) {
-  try {
-    const favori = await this.models.Favori.findByPk(favoriId, {
-      include: [
-        { model: this.models.User },
-        { 
-          model: this.models.Oeuvre, 
-          include: [{ model: this.models.User, as: 'Users' }] 
-        }
-      ]
-    });
-
-    if (!favori || !favori.Oeuvre) return;
-
-    const titreStr = typeof favori.Oeuvre.titre === 'object' ? (favori.Oeuvre.titre.fr || '') : (favori.Oeuvre.titre || '');
-
-    // Notifier les créateurs
-    for (const createur of (favori.Oeuvre.Users || [])) {
-      if (createur.notifications_favoris) {
-        const prenomFavori = typeof favori.User?.prenom === 'object' ? (favori.User.prenom.fr || '') : (favori.User?.prenom || '');
-        await this.enregistrerNotification({
-          id_user: createur.id_user,
-          type_notification: 'autre',
-          titre: 'Œuvre ajoutée aux favoris',
-          message: `${prenomFavori} a ajouté "${titreStr}" à ses favoris`,
-          id_oeuvre: favori.id_oeuvre
-        });
+    const redis = getRedisClient();
+    let envoyes = 0;
+    await this._sendBatch(participants, async (participant) => {
+      // Déduplication : éviter d'envoyer le rappel plusieurs fois si la tâche est relancée
+      if (redis) {
+        try {
+          const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
+          const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
+          if (!claimed) return; // rappel déjà envoyé à ce participant
+        } catch { /* si Redis indisponible, on continue sans déduplication */ }
       }
-    }
-  } catch (error) {
-    logger.error('Erreur notification favori:', error);
-  }
-}
 
-// 6. CRON JOB POUR LES RAPPELS
-async planifierRappels() {
-  // À exécuter toutes les heures
-  const demain = new Date();
-  demain.setDate(demain.getDate() + 1);
-  
-  const debutDemain = new Date(demain);
-  debutDemain.setHours(0, 0, 0, 0);
-  const finDemain = new Date(demain);
-  finDemain.setHours(23, 59, 59, 999);
+      await this.emailService.sendEventReminder({
+        email: participant.User.email,
+        prenom: this._str(participant.User.prenom),
+        nomEvenement,
+        dateDebut,
+        heureDebut,
+        lieu,
+        eventUrl: `${process.env.FRONTEND_URL}/evenements/${evenementId}`
+      });
 
-  const evenements = await this.models.Evenement.findAll({
-    where: {
-      date_debut: {
-        [Op.between]: [debutDemain, finDemain]
-      },
-      statut: 'publie'
-    },
-    attributes: ['id_evenement', 'nom_evenement', 'date_debut']
-  });
+      await this._envoyerSmsWhatsapp(participant.User, 'rappel', { nomEvenement, dateEvenement: dateDebut, heureDebut });
 
-  await Promise.all(
-    evenements.map(evenement => this.envoyerRappelEvenement(evenement.id_evenement))
-  );
-}
-
-// 7. NOTIFICATION BATCH (Newsletter)
-async envoyerNewsletter(contenu, filtres = {}) {
-  try {
-    const whereClause = {
-      accepte_newsletter: true,
-      statut: 'actif',
-      email_verifie: true
-    };
-
-    if (filtres.wilaya) {
-      whereClause.wilaya_residence = filtres.wilaya;
-    }
-
-    if (filtres.type_user) {
-      whereClause.id_type_user = filtres.type_user;
-    }
-
-    const users = await this.models.User.findAll({
-      where: whereClause,
-      attributes: ['id_user', 'email', 'nom', 'prenom'],
-      limit: 1000 // Traiter par batch
+      await this.enregistrerNotification({
+        id_user: participant.id_user,
+        type_notification: 'rappel_evenement',
+        titre: 'C’est demain !',
+        message: `« ${nomEvenement} » a lieu demain, ${dateDebut} à ${heureDebut}${lieu ? ` — ${lieu}` : ''}.`,
+        id_evenement: evenementId,
+        url_action: `/evenements/${evenementId}`
+      });
+      envoyes++;
     });
-
-    // Envoyer par batch de 10 avec pause entre les batches
-    const BATCH_SIZE = 10;
-    const results = [];
-    for (let i = 0; i < users.length; i += BATCH_SIZE) {
-      const batch = users.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async (user) => {
-          // Ordre des arguments corrigé (html, pièces jointes, texte) + lien de désinscription signé
-          const unsubscribeUrl = buildUnsubscribeUrl(user.id_user);
-          const result = await this.emailService.sendEmail(
-            user.email,
-            contenu.sujet,
-            withUnsubscribeFooter(contenu.html || `<p>${contenu.texte || ''}</p>`, unsubscribeUrl),
-            null,
-            contenu.texte || null,
-            { headers: unsubscribeHeaders(unsubscribeUrl) }
-          );
-          return { userId: user.id_user, success: result.success };
-        })
-      );
-      results.push(...batchResults);
-      // Pause entre les batches pour éviter le spam
-      if (i + BATCH_SIZE < users.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-
-    return {
-      total: users.length,
-      success: results.filter(r => r.success).length
-    };
-  } catch (error) {
-    logger.error('Erreur newsletter:', error);
-    throw error;
+    return { envoyes };
   }
-}
+
   // Notifier l'annulation d'un événement
   async notifierAnnulationEvenement(evenementId, raison) {
     try {
@@ -658,16 +413,6 @@ async envoyerNewsletter(contenu, filtres = {}) {
     }
   }
 
-  // Notifier l'ajout d'un nouveau programme
-  async notifierNouveauProgramme(programmeId) {
-    return this.notifierModificationProgramme(programmeId, 'nouveau');
-  }
-
-  // Notifier l'annulation d'un programme
-  async notifierAnnulationProgramme(programmeId) {
-    return this.notifierModificationProgramme(programmeId, 'annule');
-  }
-
   // ========================================================================
   // NOTIFICATIONS UTILISATEURS
   // ========================================================================
@@ -798,91 +543,6 @@ async envoyerNewsletter(contenu, filtres = {}) {
     }
   }
 
-  // Récupérer les notifications d'un utilisateur
-  async getNotificationsUtilisateur(userId, options = {}) {
-    try {
-      const { limit = 20, offset = 0, nonLues = false } = options;
-      
-      const where = { id_user: userId };
-      if (nonLues) {
-        where.lu = false;
-      }
-
-      if (!this.models.Notification) {
-        return { notifications: [], total: 0 };
-      }
-
-      const notifications = await this.models.Notification.findAndCountAll({
-        where,
-        order: [['date_creation', 'DESC']],
-        limit,
-        offset,
-        include: [
-          { 
-            model: this.models.Evenement, 
-            attributes: ['id_evenement', 'nom_evenement'],
-            required: false 
-          }
-        ]
-      });
-
-      return {
-        notifications: notifications.rows,
-        total: notifications.count,
-        nonLues: await this.models.Notification.count({ where: { ...where, lu: false } })
-      };
-
-    } catch (error) {
-      logger.error('❌ Erreur récupération notifications:', error);
-      return { notifications: [], total: 0 };
-    }
-  }
-
-  // Marquer les notifications comme lues
-  async marquerNotificationsLues(userId, notificationIds = null) {
-    try {
-      if (!this.models.Notification) return;
-
-      const where = { id_user: userId };
-      if (notificationIds) {
-        where.id_notification = { [Op.in]: notificationIds };
-      }
-
-      await this.models.Notification.update(
-        { lu: true, date_lecture: new Date() },
-        { where }
-      );
-
-      logger.info(`✅ Notifications marquées comme lues pour user ${userId}`);
-
-    } catch (error) {
-      logger.error('❌ Erreur marquage notifications:', error);
-    }
-  }
-
-  // Obtenir les préférences de notification d'un utilisateur
-  async getPreferencesNotification(userId) {
-    try {
-      const user = await this.models.User.findByPk(userId, {
-        attributes: ['notifications_email', 'notifications_push', 'notifications_evenements', 'notifications_commentaires', 'notifications_favoris', 'notifications_newsletter']
-      });
-
-      return {
-        actives: true,
-        email: user?.notifications_email ?? true,
-        push: user?.notifications_push ?? true,
-        evenements: user?.notifications_evenements ?? true,
-        commentaires: user?.notifications_commentaires ?? true,
-        favoris: user?.notifications_favoris ?? true,
-        newsletter: user?.notifications_newsletter ?? true
-      };
-
-    } catch (error) {
-      logger.error('❌ Erreur récupération préférences:', error);
-      return { actives: true, email: true, push: true, evenements: true, commentaires: true, favoris: true, newsletter: true };
-    }
-  }
-
   // ========================================================================
   // NOTIFICATIONS ADMIN DASHBOARD
   // ========================================================================
@@ -922,22 +582,6 @@ async envoyerNewsletter(contenu, filtres = {}) {
         hasNext: parsedPage < pages, hasPrev: parsedPage > 1
       }
     };
-  }
-
-  /**
-   * Compte les utilisateurs cibles pour un broadcast (rapide, synchrone)
-   * @param {'all'|'professionals'|'visitors'} target
-   * @returns {number}
-   */
-  async countTargetUsers(target) {
-    const TYPE_USER_IDS = require('../constants/typeUserIds').TYPE_USER_IDS;
-    let whereClause = {};
-    switch (target) {
-      case 'professionals': whereClause = { id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR } }; break;
-      case 'visitors':      whereClause = { id_type_user: TYPE_USER_IDS.VISITEUR }; break;
-      default:              whereClause = {};
-    }
-    return this.models.User.count({ where: { ...whereClause, statut: 'actif' } });
   }
 
   /**

@@ -460,7 +460,7 @@ class App {
     this.app.use('/api/oeuvres', ...rateLimitMiddleware.creation);
     this.app.use('/api/evenements', ...rateLimitMiddleware.creation);
     this.app.use('/api/artisanat', ...rateLimitMiddleware.creation);
-    this.app.use('/api/patrimoine/sites', ...rateLimitMiddleware.creation);
+    // (la création d'un lieu, POST /api/patrimoine, a sa propre limite dans patrimoineRoutes)
     
     // Rate limiting pour les actions sensibles
     this.app.use('/api/dashboard/actions', ...rateLimitMiddleware.sensitiveActions);

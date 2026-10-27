@@ -44,6 +44,20 @@ class EmailService {
       .replace(/'/g, '&#x27;');
   }
 
+  /**
+   * Envoie à une liste par petits paquets (5 à la fois, courte pause entre deux) au lieu de tout
+   * d'un coup : la messagerie refusait une partie des envois groupés sans que personne ne le voie.
+   * Résultats dans l'ordre de la liste, comme Promise.all.
+   */
+  async _parPaquets(elements, envoyer, { taille = 5, pauseMs = 300 } = {}) {
+    const resultats = [];
+    for (let i = 0; i < elements.length; i += taille) {
+      resultats.push(...await Promise.all(elements.slice(i, i + taille).map(envoyer)));
+      if (pauseMs && i + taille < elements.length) await new Promise(r => setTimeout(r, pauseMs));
+    }
+    return resultats;
+  }
+
   /** Texte d'un champ multilingue (prénom, nom, nom d'événement…) : français, sinon la langue remplie */
   _texte(val) {
     return translate(lireMultiLang(val), 'fr');
@@ -656,7 +670,7 @@ class EmailService {
   async notifierAnnulationEvenement(participants, evenement, raison) {
     const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
 
-    const results = await Promise.all(participants.map(async (participant) => {
+    const results = await this._parPaquets(participants, async (participant) => {
       try {
         const user = participant.User;
         const prenomStr = this._prenom(user);
@@ -683,7 +697,7 @@ class EmailService {
         logger.error(`Erreur envoi annulation à ${maskEmail(participant.User?.email)}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
-    }));
+    });
 
     return results;
   }
@@ -708,7 +722,7 @@ class EmailService {
     };
     const sujet = titres[typeModification] || 'Programme modifié';
 
-    const results = await Promise.all(participants.map(async (participant) => {
+    const results = await this._parPaquets(participants, async (participant) => {
       try {
         const user = participant.User;
         const prenomStr = this._prenom(user);
@@ -735,7 +749,7 @@ class EmailService {
         logger.error(`Erreur envoi modification programme à ${maskEmail(participant.User?.email)}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
-    }));
+    });
 
     return results;
   }
@@ -751,7 +765,7 @@ class EmailService {
     const descriptionStr = typeof evenement.description === 'object' ? (evenement.description.fr || evenement.description.ar || '') : (evenement.description || '');
     const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
 
-    const results = await Promise.all(users.map(async (user) => {
+    const results = await this._parPaquets(users, async (user) => {
       try {
         const prenomStr = this._prenom(user);
 
@@ -779,7 +793,7 @@ class EmailService {
         logger.error(`Erreur envoi nouvel événement à ${maskEmail(user.email)}:`, error);
         return { email: user.email, result: { success: false, error: error.message } };
       }
-    }));
+    });
 
     return results;
   }

@@ -586,8 +586,8 @@ class EvenementService extends BaseService {
 
     // Notification (best effort, fire-and-forget — ne pas bloquer la réponse HTTP)
     if (this.models?.Notification) {
-      const NotificationService = require('../notificationService');
-      const notifService = new NotificationService(this.models);
+      // Service partagé (avec ses repositories) ; instance locale seulement à défaut (tests)
+      const notifService = this.notificationService || new (require('../notificationService'))(this.models);
       notifService.notifierValidationParticipation(
         evenementId, userId, validated ? 'confirme' : 'refuse', notes || ''
       ).catch(notifError => {
@@ -846,8 +846,7 @@ class EvenementService extends BaseService {
 
     // Notification annulation (best effort, fire-and-forget)
     if (this.models?.Notification) {
-      const NotificationService = require('../notificationService');
-      const notifService = new NotificationService(this.models);
+      const notifService = this.notificationService || new (require('../notificationService'))(this.models);
       notifService.notifierAnnulationEvenement(id, motif || 'Annulation par l\'organisateur')
         .catch(notifError => this.logger.error('Erreur notification annulation:', notifError));
     }
