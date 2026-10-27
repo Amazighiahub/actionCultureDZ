@@ -1832,7 +1832,7 @@
       "conservation": "4. Durée de conservation",
       "conservationCompte": "Données de compte : conservées tant que votre compte est actif",
       "conservationNotifs": "Notifications : supprimées automatiquement après 90 jours",
-      "conservationLogs": "Journaux de connexion : 90 jours maximum",
+      "conservationLogs": "Journaux de sécurité et de connexion : l'adresse IP et le navigateur sont effacés après 12 mois",
       "conservationSuppression": "En cas de suppression de compte : vos données personnelles sont effacées, vos contributions publiques sont anonymisées",
       "conservationSauvegardes": "Sauvegardes de sécurité : conservées 7 jours ; les données d'un compte supprimé en disparaissent dans ce délai",
       "droits": "5. Vos droits",

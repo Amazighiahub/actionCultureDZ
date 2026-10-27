@@ -1807,7 +1807,7 @@
       "conservation": "4. Retention period",
       "conservationCompte": "Account data: kept as long as your account is active",
       "conservationNotifs": "Notifications: automatically deleted after 90 days",
-      "conservationLogs": "Login logs: 90 days maximum",
+      "conservationLogs": "Security and login logs: IP address and browser details are erased after 12 months",
       "conservationSuppression": "If your account is deleted: your personal data is erased and your public contributions are anonymised",
       "conservationSauvegardes": "Security backups: kept for 7 days; data from a deleted account disappears from them within that period",
       "droits": "5. Your rights",

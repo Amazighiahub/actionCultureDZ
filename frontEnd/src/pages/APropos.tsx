@@ -252,7 +252,7 @@ const APropos = () => {
                 <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.conservationCompte", "Données de compte : conservées tant que votre compte est actif")}</li>
                   <li>{t("apropos.privacy.conservationNotifs", "Notifications : supprimées automatiquement après 90 jours")}</li>
-                  <li>{t("apropos.privacy.conservationLogs", "Journaux de connexion : 90 jours maximum")}</li>
+                  <li>{t("apropos.privacy.conservationLogs", "Journaux de sécurité et de connexion : l'adresse IP et le navigateur sont effacés après 12 mois")}</li>
                   <li>{t("apropos.privacy.conservationSuppression", "En cas de suppression de compte : vos données personnelles sont effacées, vos contributions publiques sont anonymisées")}</li>
                   <li>{t("apropos.privacy.conservationSauvegardes", "Sauvegardes de sécurité : conservées 7 jours ; les données d'un compte supprimé en disparaissent dans ce délai")}</li>
                 </ul>
