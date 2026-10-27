@@ -277,11 +277,11 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             <p className="text-sm text-muted-foreground mb-4">Cette section n'est pas encore documentée.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" onClick={openEditor}>
-                <Plus className="h-4 w-4 me-2" />Texte rapide
+                <Plus className="h-4 w-4 me-2" />{t('patrimoine.contribute.addQuick', 'Texte rapide')}
               </Button>
               {patrimoineSection && (
                 <Button variant="default" onClick={ecrireArticle}>
-                  <FileText className="h-4 w-4 me-2" />Écrire un article
+                  <FileText className="h-4 w-4 me-2" />{t('patrimoine.contribute.writeArticle', 'Écrire un article')}
                 </Button>
               )}
             </div>
@@ -296,14 +296,14 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
                 <User className="h-4 w-4 text-primary" />
-                Personnalités liées à ce site
+                {t('patrimoine.personnalites.liees', 'Personnalités liées à ce site')}
                 {intervenants.length > 0 && (
                   <span className="text-sm font-normal text-muted-foreground">({intervenants.length})</span>
                 )}
               </CardTitle>
               {isAuthenticated && (
                 <Button size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>
-                  <Plus className="h-4 w-4 me-1" />Ajouter
+                  <Plus className="h-4 w-4 me-1" />{t('patrimoine.elements.ajouter', 'Ajouter')}
                 </Button>
               )}
             </div>
@@ -386,7 +386,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               onChange={(val: any) => setEditValue(val)}
               type="textarea"
               rows={6}
-              requiredLanguages={['fr']}
+              requiredLanguages={[]}
               maxLength={5000}
               showCharCount
             />

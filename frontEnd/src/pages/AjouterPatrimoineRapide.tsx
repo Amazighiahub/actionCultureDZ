@@ -386,11 +386,11 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     setErrors(prev => { const { nom: _, ...rest } = prev; return rest; });
                   }}
                   required
-                  requiredLanguages={['fr']}
+                  requiredLanguages={[]}
                   placeholder={parentId ? t('patrimoine.points.nomPlaceholder', 'Ex : Arc de Trajan, salle des mosaïques…') : t('patrimoine.placeholders.nom', 'Ex: Casbah d\'Alger, Djemila...')}
                   maxLength={200}
                   showCharCount
-                  errors={errors.nom ? { fr: errors.nom } : {}}
+                  errors={errors.nom ? Object.fromEntries(['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'].map(l => [l, errors.nom])) : {}}
                 />
                 {/* La commune est choisie à l'étape 1 : « COMMUNE AIT SMAIL » avait été saisi ici pour un musée */}
                 {!parentId && (
