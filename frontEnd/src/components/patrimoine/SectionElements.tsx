@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Plus, Trash2, Pencil, Landmark, Building2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { cn } from '@/lib/Utils';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import MultiLangInput from '@/components/MultiLangInput';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 
-type MultilingualField = { fr?: string; ar?: string; en?: string };
+type MultilingualField = Record<string, string | undefined>;
 
 export interface PatrimoineElement {
   id: number;
@@ -50,54 +52,48 @@ const VESTIGE_TYPES = [
 ] as const;
 
 const CONFIG = {
-  monument: {
-    types: MONUMENT_TYPES,
-    icon: Landmark,
-    labelAdd: 'Ajouter un monument',
-    labelEdit: 'Modifier le monument',
-    labelEmpty: 'Aucun monument répertorié pour ce site.',
-    labelEmptyHint: 'Commencez par ajouter le premier monument.',
-    endpoint: 'monuments',
-  },
-  vestige: {
-    types: VESTIGE_TYPES,
-    icon: Building2,
-    labelAdd: 'Ajouter un vestige',
-    labelEdit: 'Modifier le vestige',
-    labelEmpty: 'Aucun vestige répertorié pour ce site.',
-    labelEmptyHint: 'Commencez par ajouter le premier vestige archéologique.',
-    endpoint: 'vestiges',
-  },
+  monument: { types: MONUMENT_TYPES, icon: Landmark, endpoint: 'monuments' },
+  vestige: { types: VESTIGE_TYPES, icon: Building2, endpoint: 'vestiges' },
 } as const;
 
-function translate(field: MultilingualField | string | undefined, lang: string): string {
-  if (!field) return '';
-  if (typeof field === 'string') return field;
-  return field[lang as keyof MultilingualField] || field.fr || field.ar || '';
-}
+/** Libellés selon le genre d'élément (traduits ; ils étaient écrits en français dans le code) */
+const libelles = (t: TFunction, kind: 'monument' | 'vestige') => (kind === 'monument' ? {
+  add: t('patrimoine.elements.monument.add', 'Ajouter un monument'),
+  edit: t('patrimoine.elements.monument.edit', 'Modifier le monument'),
+  empty: t('patrimoine.elements.monument.empty', 'Aucun monument répertorié pour ce site.'),
+  emptyHint: t('patrimoine.elements.monument.emptyHint', 'Commencez par ajouter le premier monument.'),
+  added: t('patrimoine.elements.monument.added', 'Monument ajouté'),
+} : {
+  add: t('patrimoine.elements.vestige.add', 'Ajouter un vestige'),
+  edit: t('patrimoine.elements.vestige.edit', 'Modifier le vestige'),
+  empty: t('patrimoine.elements.vestige.empty', 'Aucun vestige répertorié pour ce site.'),
+  emptyHint: t('patrimoine.elements.vestige.emptyHint', 'Commencez par ajouter le premier vestige archéologique.'),
+  added: t('patrimoine.elements.vestige.added', 'Vestige ajouté'),
+});
 
-function useElementForm(initial?: PatrimoineElement, lang = 'fr') {
-  const [nomFr, setNomFr] = useState(initial ? translate(initial.nom, 'fr') : '');
-  const [nomAr, setNomAr] = useState(initial ? translate(initial.nom, 'ar') : '');
-  const [type, setType] = useState(initial?.type ?? '');
-  const [descFr, setDescFr] = useState(initial ? translate(initial.description, 'fr') : '');
-  const [descAr, setDescAr] = useState(initial ? translate(initial.description, 'ar') : '');
+/** Nom d'un type (la valeur enregistrée reste la même dans toutes les langues) */
+const nomType = (t: TFunction, type: string) => t(`patrimoine.elements.types.${type}`, type);
 
-  function reset() { setNomFr(''); setNomAr(''); setType(''); setDescFr(''); setDescAr(''); }
+const texte = (field: MultilingualField | string | undefined, lang: string) => getLocalizedText(field, lang, '');
+
+const enObjet = (v: MultilingualField | string | undefined): MultilingualField =>
+  !v ? {} : typeof v === 'string' ? { fr: v } : { ...v };
+
+function useElementForm() {
+  const [nom, setNom] = useState<MultilingualField>({});
+  const [type, setType] = useState('');
+  const [description, setDescription] = useState<MultilingualField>({});
+
+  function reset() { setNom({}); setType(''); setDescription({}); }
   function load(item: PatrimoineElement) {
-    setNomFr(translate(item.nom, 'fr'));
-    setNomAr(translate(item.nom, 'ar'));
+    setNom(enObjet(item.nom));
     setType(item.type);
-    setDescFr(translate(item.description, 'fr'));
-    setDescAr(translate(item.description, 'ar'));
+    setDescription(enObjet(item.description));
   }
-  const payload = () => ({
-    nom: { fr: nomFr.trim(), ar: nomAr.trim(), en: '' },
-    type,
-    description: { fr: descFr.trim(), ar: descAr.trim(), en: '' },
-  });
+  // Toutes les langues sont envoyées : une traduction ajoutée ne retire pas les autres
+  const payload = () => ({ nom, type, description });
 
-  return { nomFr, setNomFr, nomAr, setNomAr, type, setType, descFr, setDescFr, descAr, setDescAr, reset, load, payload };
+  return { nom, setNom, type, setType, description, setDescription, reset, load, payload };
 }
 
 function ElementForm({
@@ -115,52 +111,43 @@ function ElementForm({
   onCancel: () => void;
   submitLabel: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4 pt-2">
+      {/* Nom et description dans les 5 langues : une seule suffit, chacun peut ajouter les autres */}
+      <MultiLangInput
+        name="element-nom"
+        label={t('patrimoine.elements.nom', 'Nom')}
+        value={form.nom}
+        onChange={(v) => form.setNom(v as MultilingualField)}
+        required
+        requiredLanguages={[]}
+        maxLength={200}
+      />
       <div className="space-y-1">
-        <Label>Nom (français) <span className="text-destructive">*</span></Label>
-        <Input value={form.nomFr} onChange={(e) => form.setNomFr(e.target.value)} placeholder="Nom en français" autoFocus />
-      </div>
-      <div className="space-y-1">
-        <Label>الاسم (عربي)</Label>
-        <Input value={form.nomAr} onChange={(e) => form.setNomAr(e.target.value)} placeholder="الاسم بالعربية" dir="rtl" />
-      </div>
-      <div className="space-y-1">
-        <Label>Type <span className="text-destructive">*</span></Label>
+        <Label>{t('patrimoine.elements.type', 'Type')} <span className="text-destructive">*</span></Label>
         <Select value={form.type} onValueChange={form.setType}>
           <SelectTrigger>
-            <SelectValue placeholder="Sélectionner un type" />
+            <SelectValue placeholder={t('patrimoine.elements.choisirType', 'Sélectionner un type')} />
           </SelectTrigger>
           <SelectContent>
-            {cfg.types.map((t) => (
-              <SelectItem key={t} value={t}>{t}</SelectItem>
+            {cfg.types.map((ty) => (
+              <SelectItem key={ty} value={ty}>{nomType(t, ty)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-1">
-        <Label>Description (français)</Label>
-        <Textarea
-          value={form.descFr}
-          onChange={(e) => form.setDescFr(e.target.value)}
-          placeholder="Décrivez ce lieu en quelques phrases…"
-          rows={3}
-          className="resize-none"
-        />
-      </div>
-      <div className="space-y-1">
-        <Label>الوصف (عربي)</Label>
-        <Textarea
-          value={form.descAr}
-          onChange={(e) => form.setDescAr(e.target.value)}
-          placeholder="وصف مختصر بالعربية"
-          dir="rtl"
-          rows={3}
-          className="resize-none"
-        />
-      </div>
+      <MultiLangInput
+        name="element-description"
+        label={t('patrimoine.elements.description', 'Description')}
+        value={form.description}
+        onChange={(v) => form.setDescription(v as MultilingualField)}
+        type="textarea"
+        rows={3}
+        placeholder={t('patrimoine.elements.descriptionPlaceholder', 'Décrivez ce lieu en quelques phrases…')}
+      />
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" className="flex-1" onClick={onCancel}>Annuler</Button>
+        <Button variant="outline" className="flex-1" onClick={onCancel}>{t('common.cancel', 'Annuler')}</Button>
         <Button className="flex-1" disabled={saving} onClick={onSubmit}>
           {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
           {submitLabel}
@@ -183,7 +170,21 @@ export default function SectionElements({
   // La suppression est réservée à la modération (contrôlée aussi côté API)
   const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const cfg = CONFIG[kind];
+  const lib = libelles(t, kind);
+  const langue = lang || i18n.language;
+  const champManquant = (f: ReturnType<typeof useElementForm>) => {
+    if (!aDuTexte(f.nom)) {
+      toast({ title: t('patrimoine.elements.champManquant', 'Champ manquant'), description: t('patrimoine.elements.nomRequis', 'Écrivez le nom, dans au moins une langue'), variant: 'destructive' });
+      return true;
+    }
+    if (!f.type) {
+      toast({ title: t('patrimoine.elements.champManquant', 'Champ manquant'), description: t('patrimoine.elements.typeRequis', 'Sélectionnez un type'), variant: 'destructive' });
+      return true;
+    }
+    return false;
+  };
   const Icon = cfg.icon;
 
   const [addOpen, setAddOpen] = useState(false);
@@ -197,14 +198,7 @@ export default function SectionElements({
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   async function handleAdd() {
-    if (!addForm.nomFr.trim()) {
-      toast({ title: 'Champ manquant', description: 'Le nom en français est requis', variant: 'destructive' });
-      return;
-    }
-    if (!addForm.type) {
-      toast({ title: 'Champ manquant', description: 'Sélectionnez un type', variant: 'destructive' });
-      return;
-    }
+    if (champManquant(addForm)) return;
     setAddSaving(true);
     try {
       const res = await httpClient.post<{ success: boolean; data: PatrimoineElement }>(
@@ -213,12 +207,12 @@ export default function SectionElements({
       );
       if (res.success && res.data) {
         onItemAdded(res.data);
-        toast({ title: '✓ Ajouté', description: `${kind === 'monument' ? 'Monument' : 'Vestige'} ajouté avec succès` });
+        toast({ title: lib.added });
         setAddOpen(false);
         addForm.reset();
       }
     } catch {
-      toast({ title: 'Erreur', description: 'Impossible d\'ajouter l\'élément', variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.elements.erreurAjout', 'Impossible d’ajouter l’élément'), variant: 'destructive' });
     } finally {
       setAddSaving(false);
     }
@@ -231,14 +225,7 @@ export default function SectionElements({
 
   async function handleEdit() {
     if (!editItem) return;
-    if (!editForm.nomFr.trim()) {
-      toast({ title: 'Champ manquant', description: 'Le nom en français est requis', variant: 'destructive' });
-      return;
-    }
-    if (!editForm.type) {
-      toast({ title: 'Champ manquant', description: 'Sélectionnez un type', variant: 'destructive' });
-      return;
-    }
+    if (champManquant(editForm)) return;
     setEditSaving(true);
     try {
       const res = await httpClient.patch<{ success: boolean; data: PatrimoineElement }>(
@@ -247,11 +234,11 @@ export default function SectionElements({
       );
       if (res.success && res.data) {
         onItemUpdated?.(res.data);
-        toast({ title: '✓ Modifié', description: 'Élément mis à jour' });
+        toast({ title: t('patrimoine.elements.modifie', 'Modification enregistrée') });
         setEditItem(null);
       }
     } catch {
-      toast({ title: 'Erreur', description: 'Impossible de modifier l\'élément', variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.elements.erreurModif', 'Impossible de modifier l’élément'), variant: 'destructive' });
     } finally {
       setEditSaving(false);
     }
@@ -262,9 +249,9 @@ export default function SectionElements({
     try {
       await httpClient.delete(`/patrimoine/${lieuId}/${cfg.endpoint}/${id}`);
       onItemDeleted(id);
-      toast({ title: '✓ Supprimé' });
+      toast({ title: t('patrimoine.elements.supprime', 'Supprimé') });
     } catch {
-      toast({ title: 'Erreur', description: 'Impossible de supprimer', variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.elements.erreurSuppr', 'Impossible de supprimer'), variant: 'destructive' });
     } finally {
       setDeletingId(null);
     }
@@ -279,8 +266,8 @@ export default function SectionElements({
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base leading-tight">{translate(item.nom, lang)}</CardTitle>
-                    <Badge variant="secondary" className="mt-1 text-xs">{item.type}</Badge>
+                    <CardTitle className="text-base leading-tight">{texte(item.nom, langue)}</CardTitle>
+                    <Badge variant="secondary" className="mt-1 text-xs">{nomType(t, item.type)}</Badge>
                   </div>
                   {isAuthenticated && (
                     <div className="flex gap-1 shrink-0">
@@ -289,8 +276,8 @@ export default function SectionElements({
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-primary"
                         onClick={() => openEdit(item)}
-                        title="Modifier"
-                        aria-label={`Modifier ${translate(item.nom, lang)}`}
+                        title={t('common.edit', 'Modifier')}
+                        aria-label={`${t('common.edit', 'Modifier')} ${texte(item.nom, langue)}`}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -301,8 +288,8 @@ export default function SectionElements({
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
                           disabled={deletingId === item.id}
                           onClick={() => handleDelete(item.id)}
-                          title="Supprimer"
-                          aria-label={`Supprimer ${translate(item.nom, lang)}`}
+                          title={t('common.delete', 'Supprimer')}
+                          aria-label={`${t('common.delete', 'Supprimer')} ${texte(item.nom, langue)}`}
                         >
                           {deletingId === item.id
                             ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -313,10 +300,10 @@ export default function SectionElements({
                   )}
                 </div>
               </CardHeader>
-              {translate(item.description, lang) && (
+              {texte(item.description, langue) && (
                 <CardContent className="pt-0">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {translate(item.description, lang)}
+                    {texte(item.description, langue)}
                   </p>
                 </CardContent>
               )}
@@ -326,9 +313,9 @@ export default function SectionElements({
       ) : (
         <div className="text-center py-10 border-2 border-dashed rounded-lg border-muted-foreground/20 bg-muted/20">
           <Icon className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">{cfg.labelEmpty}</p>
+          <p className="text-sm font-medium text-muted-foreground">{lib.empty}</p>
           {isAuthenticated && (
-            <p className="text-xs text-muted-foreground/70 mt-1">{cfg.labelEmptyHint}</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">{lib.emptyHint}</p>
           )}
         </div>
       )}
@@ -339,14 +326,14 @@ export default function SectionElements({
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="w-full border-dashed hover:border-solid hover:bg-primary/5">
               <Plus className="h-4 w-4 me-2" />
-              {cfg.labelAdd}
+              {lib.add}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{cfg.labelAdd}</DialogTitle>
+              <DialogTitle>{lib.add}</DialogTitle>
             </DialogHeader>
-            <ElementForm cfg={cfg} form={addForm} saving={addSaving} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} submitLabel="Ajouter" />
+            <ElementForm cfg={cfg} form={addForm} saving={addSaving} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} submitLabel={t('patrimoine.elements.ajouter', 'Ajouter')} />
           </DialogContent>
         </Dialog>
       )}
@@ -355,10 +342,10 @@ export default function SectionElements({
       <Dialog open={!!editItem} onOpenChange={(v) => { if (!v) setEditItem(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{cfg.labelEdit}</DialogTitle>
+            <DialogTitle>{lib.edit}</DialogTitle>
           </DialogHeader>
           {editItem && (
-            <ElementForm cfg={cfg} form={editForm} saving={editSaving} onSubmit={handleEdit} onCancel={() => setEditItem(null)} submitLabel="Enregistrer" />
+            <ElementForm cfg={cfg} form={editForm} saving={editSaving} onSubmit={handleEdit} onCancel={() => setEditItem(null)} submitLabel={t('common.save', 'Enregistrer')} />
           )}
         </DialogContent>
       </Dialog>

@@ -88,11 +88,15 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   maxLength,
   showCharCount = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Par défaut : le français si le champ est obligatoire, aucune langue sinon (l'ancien défaut,
   // les 5 langues, affichait des pastilles « obligatoire » sur des champs facultatifs)
   const requiredLanguages = requiredLanguagesProp ?? (required ? ['fr'] : []);
-  const [activeLang, setActiveLang] = useState<string>('fr');
+  // Onglet ouvert au départ : la langue du site (un visiteur en arabe écrit d'abord en arabe)
+  const [activeLang, setActiveLang] = useState<string>(() => {
+    const langue = (i18n.language || 'fr').toLowerCase();
+    return AVAILABLE_LANGUAGES.some(l => l.code === langue) ? langue : 'fr';
+  });
   const keyboardHelpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Gérer le changement de valeur pour une langue

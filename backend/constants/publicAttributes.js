@@ -16,7 +16,7 @@ const PUBLIC_ORGANIZER_ATTRIBUTES = [...PUBLIC_USER_ATTRIBUTES, 'site_web', 'res
 const PUBLIC_USER_PROFILE_ATTRIBUTES = [
   ...PUBLIC_USER_ATTRIBUTES,
   'id_type_user', 'entreprise', 'specialites', 'site_web', 'biographie',
-  'wilaya_residence', 'id_commune', 'reseaux_sociaux',
+  'wilaya_residence', 'id_commune', 'reseaux_sociaux', 'articles_presse',
   'email', 'telephone', 'email_public', 'telephone_public'
 ];
 

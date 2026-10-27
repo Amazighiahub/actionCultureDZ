@@ -5,6 +5,7 @@
 
 const BaseService = require('../core/baseService');
 const ParcoursDTO = require('../../dto/parcours/parcoursDTO');
+const { translate, lireMultiLang } = require('../../helpers/i18n');
 const { haversineKm, boundingBox, rayonParTransport, vitesseParTransport } = require('../utils/geoUtils');
 
 class ParcoursService extends BaseService {
@@ -270,7 +271,9 @@ class ParcoursService extends BaseService {
    * Génère un parcours personnalisé basé sur la géolocalisation
    * @param {Object} params - Paramètres métier (pas de req/res)
    */
-  async generatePersonnalise({ lat, lng, interests = [], duration = 240, transport = 'voiture', maxSites = 5, includeRestaurants = false, includeHotels = false }) {
+  async generatePersonnalise({ lat, lng, interests = [], duration = 240, transport = 'voiture', maxSites = 5, includeRestaurants = false, includeHotels = false, lang = 'fr' }) {
+    // Noms et descriptions dans la langue du visiteur (sinon français, puis la langue remplie)
+    const texte = (v) => translate(lireMultiLang(v), lang);
     const rayonKm = rayonParTransport(transport);
     const bbox = boundingBox(lat, lng, rayonKm);
     const vitesseKmH = vitesseParTransport(transport);
@@ -293,9 +296,8 @@ class ParcoursService extends BaseService {
     const etapes = lieuxAvecDist.map(({ raw, dist }) => {
       const dureeTrajet = Math.round((dist / vitesseKmH) * 60);
       const dureeVisite = 30;
-      const nom = typeof raw.nom === 'object' ? (raw.nom.fr || raw.nom.ar || raw.nom.en || '') : (raw.nom || '');
-      const desc = raw.DetailLieu?.description;
-      const description = typeof desc === 'object' ? (desc.fr || desc.ar || '') : (desc || '');
+      const nom = texte(raw.nom);
+      const description = texte(raw.DetailLieu?.description);
       const medias = raw.LieuMedias || raw.LieuMedia || [];
       const image = Array.isArray(medias) && medias.length > 0 ? medias[0].url : null;
 
@@ -328,8 +330,8 @@ class ParcoursService extends BaseService {
 
         services.forEach(s => {
           const raw = s.get({ plain: true });
-          const nom = typeof raw.nom === 'object' ? (raw.nom.fr || '') : (raw.nom || '');
-          const desc = typeof raw.description === 'object' ? (raw.description.fr || '') : (raw.description || '');
+          const nom = texte(raw.nom);
+          const desc = texte(raw.description);
           const sLat = parseFloat(raw.latitude) || raw.Lieu?.latitude;
           const sLng = parseFloat(raw.longitude) || raw.Lieu?.longitude;
 

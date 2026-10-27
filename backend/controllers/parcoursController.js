@@ -265,7 +265,7 @@ class ParcoursController extends BaseController {
   async personnalise(req, res) {
     try {
       const {
-        latitude, longitude, interests = [], duration = 240,
+        latitude, longitude, interests = [],
         transport = 'voiture', maxSites = 5,
         includeRestaurants = false, includeHotels = false
       } = req.body;
@@ -274,7 +274,10 @@ class ParcoursController extends BaseController {
         return res.status(400).json({ success: false, error: req.t('parcours.gpsRequired') });
       }
 
+      // L'écran envoie « dureeMaxParcours » : la durée choisie était ignorée (toujours 4 h)
+      const duration = req.body.duration ?? req.body.dureeMaxParcours ?? 240;
       const data = await this.parcoursService.generatePersonnalise({
+        lang: req.lang || 'fr',
         lat: parseFloat(latitude),
         lng: parseFloat(longitude),
         interests,

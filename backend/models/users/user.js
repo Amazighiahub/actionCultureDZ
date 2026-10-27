@@ -280,6 +280,11 @@ module.exports = (sequelize) => {
       defaultValue: {},
       comment: 'URLs des réseaux sociaux {facebook, instagram, twitter, linkedin, youtube}'
     },
+    articles_presse: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: 'Articles de presse [{titre, media, url, date}] affichés sur le portfolio public'
+    },
 
     // =============================================================================
     // VÉRIFICATIONS ET CERTIFICATIONS

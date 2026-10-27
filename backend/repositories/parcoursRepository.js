@@ -286,7 +286,7 @@ class ParcoursRepository extends BaseRepository {
       includes.push({ model: this.models.DetailLieu, attributes: ['description'], required: false });
     }
     if (this.models.LieuMedia) {
-      includes.push({ model: this.models.LieuMedia, attributes: ['url', 'type_media'], required: false });
+      includes.push({ model: this.models.LieuMedia, attributes: ['url', 'type'], required: false }); // colonne « type »
     }
 
     return this.models.Lieu.findAll({

@@ -577,7 +577,9 @@ class LieuService extends BaseService {
     if (this.models.LieuMedia) {
       include.push({
         model: this.models.LieuMedia,
-        attributes: ['url', 'type_media'],
+        // La colonne s'appelle « type » (pas « type_media ») : la requête échouait et le
+        // parcours de visite ne se générait jamais
+        attributes: ['url', 'type'],
         required: false
       });
     }

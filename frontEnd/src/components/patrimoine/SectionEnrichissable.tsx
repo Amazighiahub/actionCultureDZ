@@ -189,7 +189,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
                 onChange={(val: any) => setEditValue(val)}
                 type="textarea"
                 rows={6}
-                requiredLanguages={['fr']}
+                requiredLanguages={[]}
                 maxLength={5000}
                 showCharCount
               />
@@ -262,7 +262,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
               onChange={(val: any) => setEditValue(val)}
               type="textarea"
               rows={6}
-              requiredLanguages={['fr']}
+              requiredLanguages={[]}
               maxLength={5000}
               showCharCount
             />

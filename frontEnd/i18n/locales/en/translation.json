@@ -3867,6 +3867,76 @@
       "ajoutee": "Article saved: it will appear once validated by the Tala DZ team.",
       "lienEchec": "Article saved, but it could not be linked to the page.",
       "bandeau": "This article will be linked to the place page, in the “{{section}}” section. It will appear there once validated by the Tala DZ team."
+    },
+    "elements": {
+      "monument": {
+        "add": "Add a monument",
+        "edit": "Edit the monument",
+        "empty": "No monument listed for this site.",
+        "emptyHint": "Start by adding the first monument.",
+        "added": "Monument added"
+      },
+      "vestige": {
+        "add": "Add a remain",
+        "edit": "Edit the remain",
+        "empty": "No remains listed for this site.",
+        "emptyHint": "Start by adding the first archaeological remain.",
+        "added": "Remain added"
+      },
+      "nom": "Name",
+      "type": "Type",
+      "choisirType": "Choose a type",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this place in a few sentences…",
+      "champManquant": "Missing field",
+      "nomRequis": "Write the name in at least one language",
+      "typeRequis": "Choose a type",
+      "erreurAjout": "Could not add the item",
+      "modifie": "Change saved",
+      "erreurModif": "Could not edit the item",
+      "supprime": "Deleted",
+      "erreurSuppr": "Could not delete",
+      "ajouter": "Add",
+      "types": {
+        "Mosquée": "Mosque",
+        "Palais": "Palace",
+        "Casbah": "Casbah",
+        "Ksar": "Ksar",
+        "Fort": "Fort",
+        "Mausolée": "Mausoleum",
+        "Zaouia": "Zawiya",
+        "Hammam": "Hammam",
+        "Fontaine": "Fountain",
+        "Statue": "Statue",
+        "Tour": "Tower",
+        "Minaret": "Minaret",
+        "Musée": "Museum",
+        "Rempart": "Rampart",
+        "Borj": "Borj",
+        "Pont": "Bridge",
+        "Théâtre": "Theatre",
+        "Église": "Church",
+        "Marché": "Market",
+        "Grenier collectif": "Collective granary",
+        "Ancienne maison": "Old house",
+        "Autre": "Other",
+        "Ruines": "Ruins",
+        "Murailles": "Walls",
+        "Vestiges numides": "Numidian remains",
+        "Tombeau numide": "Numidian tomb",
+        "Inscriptions berbères": "Berber inscriptions",
+        "Gravures rupestres": "Rock engravings",
+        "Site archéologique": "Archaeological site",
+        "Dolmen": "Dolmen",
+        "Théâtre antique": "Ancient theatre",
+        "Thermes romains": "Roman baths",
+        "Mosaïque": "Mosaic",
+        "Aqueduc": "Aqueduct",
+        "Tombe": "Tomb"
+      }
+    },
+    "personnalites": {
+      "liees": "People linked to this site"
     }
   },
   "toasts": {
@@ -4746,7 +4816,21 @@
     "socialOf": "{{name}} on {{network}}",
     "socialInvalid": "Invalid {{network}} link (e.g. {{example}})",
     "socialTitle": "Website and social media",
-    "socialHint": "These links appear on your public page (events you organise, profile)."
+    "socialHint": "These links appear on your public page (events you organise, profile).",
+    "modifierLiens": "Edit my links",
+    "presse": {
+      "titre": "Press articles",
+      "modifier": "Add or edit",
+      "aide": "Articles about you or your work: they appear on your public portfolio.",
+      "lien": "Article link",
+      "titreArticle": "Title",
+      "media": "Newspaper or media",
+      "mediaAide": "E.g. El Watan, APS, Radio Algérie",
+      "date": "Date (optional)",
+      "retirer": "Remove",
+      "ajouter": "Add an article",
+      "lienInvalide": "Invalid link (must start with https://)"
+    }
   },
   "share": {
     "onMyPage": "Share on my page:",
@@ -4767,7 +4851,8 @@
     "edit": "Edit my profile",
     "bio": "Biography",
     "works": "Work",
-    "empty": "No published content yet."
+    "empty": "No published content yet.",
+    "presse": "In the press"
   },
   "publicPage": {
     "showEmail": "Show my email",
