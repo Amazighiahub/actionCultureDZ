@@ -49,7 +49,9 @@ module.exports = (sequelize) => {
 
   // Associations
   TypeEvenement.associate = (models) => {
-    TypeEvenement.hasMany(models.Evenement, { foreignKey: 'id_type_evenement' });
+    // Valeur de référence : interdit de la supprimer tant qu'elle est utilisée (sans cela,
+    // la suppression effaçait en cascade tout ce qui l'utilisait)
+    TypeEvenement.hasMany(models.Evenement, { foreignKey: 'id_type_evenement', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
   // ⚡ NOUVELLES MÉTHODES I18N

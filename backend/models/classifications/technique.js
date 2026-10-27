@@ -29,7 +29,9 @@ module.exports = (sequelize) => {
 
   // Associations
   Technique.associate = (models) => {
-    Technique.hasMany(models.Artisanat, { foreignKey: 'id_technique' });
+    // Valeur de référence : interdit de la supprimer tant qu'elle est utilisée (sans cela,
+    // la suppression effaçait en cascade tout ce qui l'utilisait)
+    Technique.hasMany(models.Artisanat, { foreignKey: 'id_technique', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
   // ⚡ NOUVELLES MÉTHODES I18N
