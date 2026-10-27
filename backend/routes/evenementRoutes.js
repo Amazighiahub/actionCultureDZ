@@ -114,6 +114,15 @@ const initEvenementRoutes = (models, authMiddleware) => {
     invalidateCache([req => `/evenements/${req.params.id}/participants`]),
     asyncHandler((req, res) => evenementController.changerProfilParticipant(req, res)));
 
+  // Messages de l'organisateur à ses participants (changement de programme, PDF, WhatsApp, Drive…)
+  router.get('/:id/participants/messages', authenticate, validateId(),
+    asyncHandler((req, res) => evenementController.listerMessagesParticipants(req, res)));
+  router.post('/:id/participants/messages', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+    asyncHandler((req, res) => evenementController.envoyerMessageParticipants(req, res)));
+  // Programme en PDF joint à un message (ouvert depuis l'email ou la notification, sans connexion)
+  router.get('/:id/messages/:idMessage/programme.pdf', validateId(), validateId('idMessage'),
+    asyncHandler((req, res) => evenementController.programmeMessage(req, res)));
+
   // Email « Choisir mon mot de passe » renvoyé à un participant qui ne l'a pas encore fait
   router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, createContentLimiter, validateId(), validateId('userId'),
     asyncHandler((req, res) => evenementController.renvoyerInvitation(req, res)));

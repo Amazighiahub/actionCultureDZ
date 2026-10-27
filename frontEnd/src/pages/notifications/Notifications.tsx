@@ -13,7 +13,8 @@ import {
   BellOff,
   Calendar,
   AlertCircle,
-  RefreshCw } from
+  RefreshCw,
+  Mail } from
 'lucide-react';
 import {
   Select,
@@ -35,6 +36,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui/button';
 type GroupedNotifications = Record<string, Notification[]>;
 
+/** Adresses du message cliquables (programme PDF, groupe WhatsApp, dossier Drive…) */
+const avecLiens = (texte: string): React.ReactNode[] =>
+  String(texte ?? '').split(/(https?:\/\/[^\s]+[^\s.,;:!?)])/g).map((morceau, i) =>
+    i % 2 === 1
+      ? <a key={i} href={morceau} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">{morceau}</a>
+      : morceau
+  );
+
 // Composant pour une notification individuelle
 const NotificationItem: React.FC<{
   notification: Notification;
@@ -53,6 +62,7 @@ const NotificationItem: React.FC<{
       'validation_compte': <Check className="w-5 h-5 text-green-600" />,
       'message_admin': <AlertCircle className="w-5 h-5 text-orange-600" />,
       'rappel_evenement': <Bell className="w-5 h-5 text-blue-600" />,
+      'message_evenement': <Mail className="w-5 h-5 text-primary" />,
       'autre': <Bell className="w-5 h-5 text-muted-foreground" />
     };
     return icons[type] || icons.autre;
@@ -82,7 +92,7 @@ const NotificationItem: React.FC<{
         {/* Contenu */}
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">{notification.titre}</h3>
-          <p className="text-muted-foreground mt-1">{notification.message}</p>
+          <p className="text-muted-foreground mt-1 whitespace-pre-line break-words" dir="auto">{avecLiens(notification.message)}</p>
 
           <div className="flex items-center gap-4 mt-3 text-sm">
             <span className="text-muted-foreground/60">

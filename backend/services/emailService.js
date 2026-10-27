@@ -249,6 +249,54 @@ class EmailService {
     }
   }
 
+  /**
+   * Message de l'organisateur à un participant : texte (liens cliquables), point de rencontre,
+   * boutons programme PDF / groupe WhatsApp / dossier Drive, lien vers la page de l'événement.
+   */
+  async sendMessageParticipant(user, { evenement, titre, message, point_rencontre, lien_programme, lien_whatsapp, lien_drive }) {
+    try {
+      const esc = (v) => this._escapeHtml(String(v ?? ''));
+      const avecLiens = (t) => esc(t).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#3A4224">${url}</a>`);
+      const nomEvenement = (evenement?.nom_evenement && typeof evenement.nom_evenement === 'object')
+        ? (evenement.nom_evenement.fr || Object.values(evenement.nom_evenement).find(Boolean))
+        : evenement?.nom_evenement;
+      const prenom = (user.prenom && typeof user.prenom === 'object') ? (user.prenom.fr || '') : (user.prenom || '');
+      const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+      const bouton = (lien, libelle, couleur) => lien
+        ? `<a href="${esc(lien)}" style="display:inline-block;margin:6px;background-color:${couleur};color:white;padding:12px 22px;text-decoration:none;border-radius:8px;font-weight:bold;">${libelle}</a>`
+        : '';
+      const boutons = [
+        bouton(lien_programme, '📄 Programme (PDF)', '#3A4224'),
+        bouton(lien_whatsapp, '💬 Groupe WhatsApp', '#1f8f4e'),
+        bouton(lien_drive, '📁 Dossier Drive', '#2f5f9e')
+      ].join('');
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
+          <p style="color: #6b6a63; font-size: 14px; margin-bottom: 4px;">${esc(nomEvenement || 'Votre événement')}</p>
+          <h2 style="color: #3A4224; margin-top: 0;">${esc(titre)}</h2>
+          ${prenom ? `<p>Bonjour ${esc(prenom)},</p>` : ''}
+          <p dir="auto" style="line-height: 1.6; white-space: pre-wrap;">${avecLiens(message)}</p>
+          ${point_rencontre ? `<p dir="auto" style="background: #f4efe3; border-radius: 8px; padding: 12px 16px;"><b>📍 Point de rencontre :</b> ${avecLiens(point_rencontre)}</p>` : ''}
+          ${boutons ? `<p style="text-align: center; margin: 24px 0;">${boutons}</p>` : ''}
+          <p style="font-size: 14px;"><a href="${encodeURI(pageEvenement)}" style="color: #3A4224;">Voir l'événement sur Tala DZ</a></p>
+          <p style="font-size: 13px; color: #6b6a63;">Message envoyé par l'organisateur aux participants inscrits, via Tala DZ.</p>
+        </div>`;
+      const texte = [
+        nomEvenement, titre, '', message,
+        point_rencontre ? `\nPoint de rencontre : ${point_rencontre}` : '',
+        lien_programme ? `Programme (PDF) : ${lien_programme}` : '',
+        lien_whatsapp ? `Groupe WhatsApp : ${lien_whatsapp}` : '',
+        lien_drive ? `Dossier Drive : ${lien_drive}` : '',
+        `\nL'événement : ${pageEvenement}`
+      ].filter(l => l !== '').join('\n');
+      const sujet = `${titre} — ${nomEvenement || 'Tala DZ'}`.replace(/[\r\n]+/g, ' ');
+      return await this.sendEmail(user.email, sujet, html, null, texte);
+    } catch (error) {
+      logger.error('Erreur dans sendMessageParticipant:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async sendPasswordResetEmail(user, token) {
     try {
       const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;

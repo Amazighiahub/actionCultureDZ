@@ -202,6 +202,9 @@ const loadModels = (sequelize) => {
   const parcoursModel = loadModelSafely('./events/parcours', 'Parcours', sequelize);
   if (parcoursModel) models.Parcours = parcoursModel;
 
+  const messageEvenementModel = loadModelSafely('./events/messageEvenement', 'MessageEvenement', sequelize);
+  if (messageEvenementModel) models.MessageEvenement = messageEvenementModel;
+
   // 10. Tables de liaison (apres tous les modeles principaux)
   const oeuvreUserModel = loadModelSafely('./associations/oeuvreUser', 'OeuvreUser', sequelize);
   if (oeuvreUserModel) models.OeuvreUser = oeuvreUserModel;

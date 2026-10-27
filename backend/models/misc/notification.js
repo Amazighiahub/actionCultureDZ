@@ -28,7 +28,8 @@ module.exports = (sequelize) => {
         'validation_compte',
         'message_admin',
         'rappel_evenement',
-        'autre'
+        'autre',
+        'message_evenement'
       ),
       allowNull: false
     },
