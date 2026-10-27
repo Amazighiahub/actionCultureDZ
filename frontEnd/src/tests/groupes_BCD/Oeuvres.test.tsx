@@ -64,6 +64,10 @@ vi.mock('@/services/favori.service', () => ({
   favoriService: { toggle: vi.fn() },
 }));
 
+// Cœurs des cartes : favoris de l'utilisateur (aucun ici) et cache relu après un clic
+vi.mock('@/hooks/useFavoris', () => ({ useFavorisIds: () => undefined }));
+vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: vi.fn() }) }));
+
 vi.mock('@/utils/getLocalizedText', () => ({
   getLocalizedText: (v: unknown) => (typeof v === 'string' ? v : String(v ?? '')),
 }));

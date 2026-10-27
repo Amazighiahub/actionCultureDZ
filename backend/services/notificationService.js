@@ -7,6 +7,7 @@ const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
 const { getClient: getRedisClient } = require('../utils/redisClient');
+const { translate, lireMultiLang } = require('../helpers/i18n');
 
 class NotificationService {
   constructor(models, options = {}) {
@@ -27,11 +28,9 @@ class NotificationService {
     return this.repositories.user;
   }
 
-  // Helper: extraire une string i18n
+  // Texte d'un champ multilingue (français, sinon la langue remplie : arabe, tamazight…)
   _str(val) {
-    if (!val) return '';
-    if (typeof val === 'object') return val.fr || val.ar || val.en || '';
-    return val;
+    return translate(lireMultiLang(val), 'fr');
   }
 
   /**
@@ -159,7 +158,7 @@ class NotificationService {
         id_user: userId,
         type_notification: 'validation_participation',
         titre: statut === 'confirme' ? 'Participation acceptée' : 'Participation refusée',
-        message: `Votre participation à "${evenement.nom_evenement}" a été ${statut === 'confirme' ? 'acceptée' : 'refusée'}`,
+        message: `Votre participation à « ${this._str(evenement.nom_evenement)} » a été ${statut === 'confirme' ? 'acceptée' : 'refusée'}`,
         id_evenement: evenementId,
         email_envoye: result.success
       });
@@ -174,73 +173,70 @@ class NotificationService {
 // Notifications manquantes à ajouter dans NotificationService.js
 
 // 1. RAPPEL D'ÉVÉNEMENT (24h avant)
+/**
+ * Rappel « c'est demain » aux participants confirmés (email, SMS / WhatsApp, notification).
+ * Appelé par la tâche du matin pour les événements du lendemain ; une erreur remonte, pour
+ * que l'événement ne soit pas marqué « rappel envoyé ».
+ * @returns {Promise<{ envoyes: number }>}
+ */
 async envoyerRappelEvenement(evenementId) {
-  try {
-    const evenement = await this.models.Evenement.findByPk(evenementId, {
-      include: [
-        { model: this.models.Lieu, as: 'Lieu' },
-        { model: this.models.TypeEvenement, as: 'TypeEvenement' }
-      ]
-    });
+  const evenement = await this.models.Evenement.findByPk(evenementId, {
+    include: [{ model: this.models.Lieu, as: 'Lieu', attributes: ['nom', 'adresse'] }]
+  });
+  if (!evenement) throw new Error(`Événement ${evenementId} introuvable`);
 
-    // Vérifier que l'événement est dans 24h
-    const maintenant = new Date();
-    const dateEvenement = new Date(evenement.date_debut);
-    const heuresAvant = (dateEvenement - maintenant) / (1000 * 60 * 60);
-    
-    if (heuresAvant < 23 || heuresAvant > 25) {
-      logger.info('Pas le bon moment pour le rappel');
-      return;
+  const nomEvenement = this._str(evenement.nom_evenement);
+  const debut = new Date(evenement.date_debut);
+  const enAlgerie = { timeZone: 'Africa/Algiers' };
+  const dateDebut = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long' });
+  const heureDebut = debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
+  const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
+
+  const participants = await this.models.EvenementUser.findAll({
+    where: { id_evenement: evenementId, statut_participation: 'confirme' },
+    include: [{
+      model: this.models.User,
+      as: 'User',
+      attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
+      where: { notifications_evenements: true }
+    }]
+  });
+
+  const redis = getRedisClient();
+  let envoyes = 0;
+  await this._sendBatch(participants, async (participant) => {
+    // Déduplication : éviter d'envoyer le rappel plusieurs fois si la tâche est relancée
+    if (redis) {
+      try {
+        const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
+        const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
+        if (!claimed) return; // rappel déjà envoyé à ce participant
+      } catch { /* si Redis indisponible, on continue sans déduplication */ }
     }
 
-    // Récupérer les participants confirmés
-    const participants = await this.models.EvenementUser.findAll({
-      where: {
-        id_evenement: evenementId,
-        statut_participation: 'confirme'
-      },
-      include: [{
-        model: this.models.User,
-        as: 'User',
-        attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
-        where: { notifications_evenements: true }
-      }]
+    await this.emailService.sendEventReminder({
+      email: participant.User.email,
+      prenom: this._str(participant.User.prenom),
+      nomEvenement,
+      dateDebut,
+      heureDebut,
+      lieu,
+      eventUrl: `${process.env.FRONTEND_URL}/evenements/${evenementId}`
     });
 
-    const redis = getRedisClient();
-    await this._sendBatch(participants, async (participant) => {
-      // Déduplication : éviter d'envoyer le rappel plusieurs fois si le cron est relancé
-      if (redis) {
-        try {
-          const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
-          const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
-          if (!claimed) return; // rappel déjà envoyé à ce participant
-        } catch { /* si Redis indisponible, on continue sans déduplication */ }
-      }
+    await this._envoyerSmsWhatsapp(participant.User, 'rappel', { nomEvenement, dateEvenement: dateDebut, heureDebut });
 
-      await this.emailService.sendEmail(
-        participant.User.email,
-        `🔔 Rappel : ${evenement.nom_evenement} demain !`,
-        `Rappel : L'événement "${evenement.nom_evenement}" aura lieu demain à ${dateEvenement.toLocaleTimeString()}.`
-      );
-
-      await this._envoyerSmsWhatsapp(participant.User, 'rappel', {
-        nomEvenement: this._str(evenement.nom_evenement),
-        dateEvenement: dateEvenement.toLocaleDateString('fr-FR'),
-        heureDebut: dateEvenement.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      });
-
-      await this.enregistrerNotification({
-        id_user: participant.id_user,
-        type_notification: 'rappel_evenement',
-        titre: 'Rappel d\'événement',
-        message: `L'événement "${evenement.nom_evenement}" est demain !`,
-        id_evenement: evenementId
-      });
+    await this.enregistrerNotification({
+      id_user: participant.id_user,
+      type_notification: 'rappel_evenement',
+      titre: 'C’est demain !',
+      message: `« ${nomEvenement} » a lieu demain, ${dateDebut} à ${heureDebut}${lieu ? ` — ${lieu}` : ''}.`,
+      id_evenement: evenementId,
+      url_action: `/evenements/${evenementId}`
     });
-  } catch (error) {
-    logger.error('Erreur rappel événement:', error);
-  }
+    envoyes++;
+  });
+  return { envoyes };
 }
 
 // 2. NOTIFICATION NOUVEAU COMMENTAIRE
@@ -546,7 +542,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         id_user: participant.id_user,
         type_notification: 'annulation_evenement',
         titre: 'Événement annulé',
-        message: `L'événement "${evenement.nom_evenement}" a été annulé`,
+        message: `L'événement « ${this._str(evenement.nom_evenement)} » a été annulé`,
         id_evenement: evenementId,
         email_envoye: results.find(r => r.email === participant.User.email)?.result.success || false
       }));
@@ -638,7 +634,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         id_user: participant.id_user,
         type_notification: 'modification_programme',
         titre: 'Programme modifié',
-        message: `Le programme de "${programme.Evenement.nom_evenement}" a été modifié`,
+        message: `Le programme de « ${this._str(programme.Evenement.nom_evenement)} » a été modifié`,
         id_evenement: programme.id_evenement,
         id_programme: programmeId,
         email_envoye: results.find(r => r.email === participant.User.email)?.result.success || false
@@ -735,7 +731,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         id_user: user.id_user,
         type_notification: 'nouvel_evenement',
         titre: 'Nouvel événement',
-        message: `Découvrez "${evenement.nom_evenement}"`,
+        message: `Découvrez « ${this._str(evenement.nom_evenement)} »`,
         id_evenement: evenementId,
         email_envoye: results.find(r => r.email === user.email)?.result.success || false
       }));

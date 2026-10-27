@@ -625,6 +625,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     stats: '/favoris/stats',
     popular: '/favoris/popular',
     check: (type: string, id: number) => `/favoris/check/${type}/${id}`,
+    ids: (type: string) => `/favoris/ids/${type}`,
     add: '/favoris',
     removeById: (id: number) => `/favoris/${id}`,
     removeByEntity: (type: string, id: number) => `/favoris/${type}/${id}`,

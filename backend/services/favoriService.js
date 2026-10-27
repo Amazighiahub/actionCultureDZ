@@ -39,6 +39,11 @@ class FavoriService extends BaseService {
     };
   }
 
+  /** Identifiants des favoris d'un type (cœurs pleins dans les listes) */
+  async idsFavoris(idUser, type) {
+    return this.repository.idsByUser(idUser, type);
+  }
+
   /**
    * Vérifie si une entité est dans les favoris d'un utilisateur
    * @param {number} idUser

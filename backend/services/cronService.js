@@ -4,6 +4,22 @@ const { maskEmail } = require('../utils/maskPII');
 const cron = require('node-cron');
 const { Op } = require('sequelize');
 const CronLock = require('../utils/cronLock');
+const { translate, lireMultiLang } = require('../helpers/i18n');
+
+const FUSEAU = 'Africa/Algiers';
+
+/**
+ * Début et fin de la journée de demain en Algérie (UTC+1, sans heure d'été), quel que soit
+ * le fuseau du serveur (UTC dans Docker)
+ */
+function journeeDeDemain(maintenant = new Date()) {
+  const [a, m, j] = new Intl.DateTimeFormat('en-CA', { timeZone: FUSEAU, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(maintenant).split('-').map(Number);
+  const UNE_HEURE = 60 * 60 * 1000;
+  const demain = new Date(Date.UTC(a, m - 1, j + 1) - UNE_HEURE);
+  const apresdemain = new Date(Date.UTC(a, m - 1, j + 2) - UNE_HEURE);
+  return { demain, apresdemain };
+}
 
 class CronService {
   constructor() {
@@ -38,62 +54,40 @@ class CronService {
    * Planifier toutes les tâches
    */
   scheduleJobs() {
-    // 1. Rappels d'événements - Toutes les heures
-    this.scheduleJob('event-reminders', '0 * * * *', () => {
-      this.sendEventReminders();
-    });
+    // 1. Rappels « c'est demain » - Tous les jours à 9 h, heure d'Algérie
+    this.scheduleJob('event-reminders', '0 9 * * *', () => this.sendEventReminders(), { timezone: FUSEAU });
 
     // 2. Nettoyage des tokens expirés - Tous les jours à 3h
-    this.scheduleJob('clean-expired-tokens', '0 3 * * *', () => {
-      this.cleanExpiredTokens();
-    });
+    this.scheduleJob('clean-expired-tokens', '0 3 * * *', () => this.cleanExpiredTokens());
 
     // 3. Nettoyage des vieilles notifications - Tous les dimanches à 2h
-    this.scheduleJob('clean-old-notifications', '0 2 * * 0', () => {
-      this.cleanOldNotifications();
-    });
+    this.scheduleJob('clean-old-notifications', '0 2 * * 0', () => this.cleanOldNotifications());
 
     // 4. Calcul des statistiques - Tous les jours à 1h
-    this.scheduleJob('calculate-stats', '0 1 * * *', () => {
-      this.calculateDailyStats();
-    });
+    this.scheduleJob('calculate-stats', '0 1 * * *', () => this.calculateDailyStats());
 
     // 5. Newsletter hebdomadaire - Tous les lundis à 9h
     if (process.env.ENABLE_NEWSLETTER === 'true') {
-      this.scheduleJob('weekly-newsletter', '0 9 * * 1', () => {
-        this.sendWeeklyNewsletter();
-      });
+      this.scheduleJob('weekly-newsletter', '0 9 * * 1', () => this.sendWeeklyNewsletter());
     }
 
     // 6. Vérification des événements à venir - Toutes les 30 minutes
-    this.scheduleJob('upcoming-events-check', '*/30 * * * *', () => {
-      this.checkUpcomingEvents();
-    });
+    this.scheduleJob('upcoming-events-check', '*/30 * * * *', () => this.checkUpcomingEvents());
 
     // 7. Nettoyage des fichiers temporaires - Tous les jours à 4h
-    this.scheduleJob('clean-temp-files', '0 4 * * *', () => {
-      this.cleanTempFiles();
-    });
+    this.scheduleJob('clean-temp-files', '0 4 * * *', () => this.cleanTempFiles());
 
     // 8. Mise à jour du statut des événements - Toutes les heures
-    this.scheduleJob('update-event-status', '0 * * * *', () => {
-      this.updateEventStatuses();
-    });
+    this.scheduleJob('update-event-status', '0 * * * *', () => this.updateEventStatuses());
 
     // 9. Rappel de vérification email - Tous les jours à 10h
-    this.scheduleJob('email-verification-reminder', '0 10 * * *', () => {
-      this.sendEmailVerificationReminders();
-    });
+    this.scheduleJob('email-verification-reminder', '0 10 * * *', () => this.sendEmailVerificationReminders());
 
     // 10. Archivage des anciens événements - Tous les mois le 1er à 2h
-    this.scheduleJob('archive-old-events', '0 2 1 * *', () => {
-      this.archiveOldEvents();
-    });
+    this.scheduleJob('archive-old-events', '0 2 1 * *', () => this.archiveOldEvents());
 
     // 11. RGPD : Purge des vues anciennes (>90 jours) - Tous les dimanches à 3h
-    this.scheduleJob('clean-old-views', '0 3 * * 0', () => {
-      this.cleanOldViews();
-    });
+    this.scheduleJob('clean-old-views', '0 3 * * 0', () => this.cleanOldViews());
 
     logger.info(`📅 ${this.jobs.size} tâches planifiées activées`);
   }
@@ -101,7 +95,7 @@ class CronService {
   /**
    * Planifier une tâche
    */
-  scheduleJob(name, cronExpression, taskFunction) {
+  scheduleJob(name, cronExpression, taskFunction, options = {}) {
     if (this.jobs.has(name)) {
       logger.warn(`⚠️ Tâche "${name}" déjà planifiée`);
       return;
@@ -116,14 +110,12 @@ class CronService {
           logger.info(`✅ Tâche "${name}" complétée`);
         } catch (error) {
           logger.error(`❌ Erreur dans la tâche "${name}":`, error);
-          if (this.models?.AuditLog) {
-            await this.models.AuditLog.create({
-              action: 'cron_error',
-              entity_type: 'cron_job',
-              entity_id: name,
-              details: { error: error.message, stack: error.stack }
-            });
-          }
+          // entity_id est un nombre : le nom de la tâche va dans details
+          await this.models?.AuditLog?.create({
+            action: 'cron_error',
+            entity_type: 'cron_job',
+            details: { tache: name, error: error.message, stack: error.stack }
+          }).catch(err => logger.error(`Journal d'audit de la tâche "${name}" :`, err.message));
         }
       };
 
@@ -133,7 +125,8 @@ class CronService {
         await runTask();
       }
     }, {
-      scheduled: false // Ne pas démarrer automatiquement
+      scheduled: false, // Ne pas démarrer automatiquement
+      ...options
     });
 
     this.jobs.set(name, job);
@@ -150,12 +143,7 @@ class CronService {
   async sendEventReminders() {
     if (!this.models || !this.services?.notificationService) return;
 
-    const demain = new Date();
-    demain.setDate(demain.getDate() + 1);
-    demain.setHours(0, 0, 0, 0);
-    
-    const apresdemain = new Date(demain);
-    apresdemain.setDate(apresdemain.getDate() + 1);
+    const { demain, apresdemain } = journeeDeDemain();
 
     // Trouver les événements de demain
     const evenements = await this.models.Evenement.findAll({
@@ -170,20 +158,23 @@ class CronService {
       attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'id_lieu'],
       include: [
         { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse'] },
-        { model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom'] }
+        { model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom_type'] }
       ]
     });
 
     logger.info(`📧 ${evenements.length} événements à rappeler`);
 
-    await Promise.all(evenements.map(async (evenement) => {
+    // Un événement après l'autre : chaque rappel envoie déjà ses emails par petits groupes
+    for (const evenement of evenements) {
       try {
-        await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
+        const { envoyes } = await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
         await evenement.update({ rappel_envoye: true });
+        logger.info(`📧 Rappel de l'événement ${evenement.id_evenement} : ${envoyes} participant(s) prévenu(s)`);
       } catch (error) {
+        // Pas marqué « envoyé » : la tâche réessaiera demain matin si l'événement est encore à venir
         logger.error(`Erreur rappel événement ${evenement.id_evenement}:`, error);
       }
-    }));
+    }
   }
 
   /**
@@ -430,7 +421,7 @@ class CronService {
           id_user: userId,
           type_notification: 'rappel_evenement',
           titre: 'Événement dans 1 heure !',
-          message: `L'événement "${event.nom_evenement}" commence dans 1 heure`,
+          message: `L'événement « ${translate(lireMultiLang(event.nom_evenement))} » commence dans 1 heure`,
           id_evenement: event.id_evenement,
           priorite: 'urgente'
         }));
@@ -505,13 +496,16 @@ class CronService {
   async sendEmailVerificationReminders() {
     if (!this.models || !this.services?.emailService) return;
 
-    // Utilisateurs non vérifiés depuis plus de 3 jours
+    // Utilisateurs non vérifiés depuis plus de 3 jours. Seulement les inscriptions faites sur le
+    // site (conditions acceptées) : un compte créé par l'import d'une liste attend son invitation
+    // « Choisir mon mot de passe » ; un lien « vérifiez votre email » lui ferait perdre cette invitation
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
     const unverifiedUsers = await this.models.User.findAll({
       where: {
         email_verifie: false,
+        accepte_conditions: true,
         date_creation: { [Op.lte]: threeDaysAgo },
         rappel_verification_envoye: { [Op.not]: true }
       },
@@ -519,21 +513,20 @@ class CronService {
       limit: 100
     });
 
-    await Promise.all(unverifiedUsers.map(async (user) => {
+    let envoyes = 0;
+    for (const user of unverifiedUsers) {
       try {
         const token = await this.models.EmailVerification.createVerificationToken(user.id_user);
-        await this.services.emailService.sendEmail(
-          user.email,
-          '🔔 Rappel : Vérifiez votre email',
-          `Bonjour ${user.prenom},\n\nN'oubliez pas de vérifier votre email pour profiter pleinement d'Action Culture.\n\nCliquez ici : ${process.env.BASE_URL}/verify-email/${token.token}`
-        );
+        const envoi = await this.services.emailService.sendVerificationEmail(user, token.token);
+        if (envoi?.success === false) throw new Error(envoi.error || 'envoi refusé');
         await user.update({ rappel_verification_envoye: true });
+        envoyes++;
       } catch (error) {
         logger.error(`Erreur rappel vérification pour ${maskEmail(user.email)}:`, error);
       }
-    }));
+    }
 
-    logger.info(`📧 ${unverifiedUsers.length} rappels de vérification envoyés`);
+    logger.info(`📧 ${envoyes}/${unverifiedUsers.length} rappels de vérification envoyés`);
   }
 
   /**
@@ -693,3 +686,4 @@ class CronService {
 const cronService = new CronService();
 
 module.exports = cronService;
+module.exports.journeeDeDemain = journeeDeDemain;

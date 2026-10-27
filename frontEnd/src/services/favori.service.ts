@@ -102,8 +102,13 @@ class FavoriService {
     });
   }
 
+  /** Identifiants des favoris d'un type (cœurs pleins dans les listes) */
+  async getIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat'): Promise<number[]> {
+    const res = await httpClient.get<number[]>(API_ENDPOINTS.favoris.ids(type));
+    return res.success && Array.isArray(res.data) ? res.data : [];
+  }
+
   // Vérification - retourne un type personnalisé
- // Vérification - retourne un type personnalisé
 async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
   try {
     // Vider le cache pour éviter les problèmes (temporaire)

@@ -3,6 +3,8 @@
  * Avec lazy loading des images et composants séparés
  */
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFavorisIds } from '@/hooks/useFavoris';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -71,12 +73,16 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const { toast } = useToast();
   const inviterConnexion = useInviterConnexion();
   const { isAuthenticated } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false);
+  // Cœur plein pour un vrai favori ; après un clic, le choix de la personne s'affiche aussitôt
+  const idsFavoris = useFavorisIds('oeuvre');
+  const queryClient = useQueryClient();
+  const [choixFavori, setIsFavorite] = useState<boolean | null>(null);
   const [favLoading, setFavLoading] = useState(false);
 
   const typeCode = oeuvre.TypeOeuvre?.code?.toLowerCase() || oeuvre.type?.toLowerCase() || 'default';
   const TypeIcon = TYPE_ICONS[typeCode] || TYPE_ICONS.default;
   const oeuvreUrl = `/oeuvres/${oeuvre.id_oeuvre}`;
+  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(oeuvre.id_oeuvre as number));
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,6 +97,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
       if (result.success) {
         const added = result.data?.added ?? !isFavorite;
         setIsFavorite(added);
+        queryClient.invalidateQueries({ queryKey: ['favoris'] });
         toast({
           title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
         });

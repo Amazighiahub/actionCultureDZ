@@ -730,6 +730,13 @@
     "menu": {
       "close": "Fermer le menu",
       "open": "Ouvrir le menu"
+    },
+    "notifications": {
+      "titre": "Notifications",
+      "nonLues": "{{n}} notification(s) non lue(s)",
+      "nouvelle": "Nouvelle notification",
+      "nouvelles": "{{n}} nouvelles notifications",
+      "voir": "Voir"
     }
   },
   "home": {

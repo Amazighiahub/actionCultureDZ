@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import i18n from 'i18next';
 
 /**
  * Client React Query unique de l'application (partagé avec useAuth pour vider
@@ -21,4 +22,10 @@ export const queryClient = new QueryClient({
       retryDelay: 1000,
     },
   },
+});
+
+// Les contenus sont traduits par le serveur selon la langue envoyée : au changement de langue,
+// les données en cache sont relues dans la nouvelle langue (sinon les noms restaient dans l'ancienne)
+i18n.on('languageChanged', () => {
+  queryClient.invalidateQueries();
 });

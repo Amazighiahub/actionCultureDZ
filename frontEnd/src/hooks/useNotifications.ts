@@ -5,6 +5,10 @@ import { socketService } from '../services/socketService';
 import type { SocketEvents } from '../services/socketService';
 import { notificationService } from '../services/notification.service';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
+import { queryClient } from '@/lib/queryClient';
+
+/** La cloche de l'en-tête relit son nombre de non lues après une lecture ou une suppression */
+const rafraichirCloche = () => queryClient.invalidateQueries({ queryKey: ['notifications', 'cloche'] });
 import type {
   Notification,
   NotificationSummary,
@@ -96,6 +100,7 @@ export function useNotifications(): UseNotificationsReturn {
   const markAsRead = useCallback(async (notificationId: number) => {
     await safeCall(async () => {
       await notificationService.markAsRead(notificationId);
+      rafraichirCloche();
       
       // Mettre à jour l'état local immédiatement
       if (isMountedRef.current) {
@@ -122,7 +127,8 @@ export function useNotifications(): UseNotificationsReturn {
   // Marquer tout comme lu
   const markAllAsRead = useCallback(async () => {
     await safeCall(async () => {
-      const result = await notificationService.markAllAsRead();
+      await notificationService.markAllAsRead();
+      rafraichirCloche();
       
       // Mettre à jour l'état local
       if (isMountedRef.current) {
@@ -144,6 +150,7 @@ export function useNotifications(): UseNotificationsReturn {
   const deleteNotification = useCallback(async (notificationId: number) => {
     await safeCall(async () => {
       await notificationService.deleteNotification(notificationId);
+      rafraichirCloche();
       
       // Mettre à jour l'état local
       if (isMountedRef.current) {
@@ -158,7 +165,8 @@ export function useNotifications(): UseNotificationsReturn {
   // Supprimer toutes les lues
   const deleteAllRead = useCallback(async () => {
     await safeCall(async () => {
-      const result = await notificationService.deleteAllRead();
+      await notificationService.deleteAllRead();
+      rafraichirCloche();
       
       // Mettre à jour l'état local
       if (isMountedRef.current) {
@@ -280,21 +288,20 @@ export function useNotifications(): UseNotificationsReturn {
     return () => {
       clearInterval(connectionCheckInterval);
       
-      // Essayer de se désinscrire des événements
-      if ('off' in socketService) {
-        Object.keys(handlers).forEach(event => {
-          socketService.off(event as keyof SocketEvents);
-        });
-      }
-      
-      socketService.disconnect();
+      // Retirer seulement les écouteurs de cette page : sans le handler, off() retirait aussi
+      // celui des alertes (NotificationToastListener), et disconnect() coupait le temps réel pour
+      // tout le site jusqu'au rechargement. La connexion se ferme à la déconnexion du compte.
+      Object.entries(handlers).forEach(([event, handler]) => {
+        socketService.off(event as keyof SocketEvents, handler as SocketEvents[keyof SocketEvents]);
+      });
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rafraîchir le résumé périodiquement
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!error && isConnected) {
+      // Pas de serveur temps réel : le résumé est relu chaque minute tant que la page est affichée
+      if (!error && document.visibilityState === 'visible') {
         refreshSummary();
       }
     }, 60000); // Toutes les minutes

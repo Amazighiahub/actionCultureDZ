@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { artisanatService, Artisanat, ArtisanatStatistics } from '@/services/artisanat.service';
 import { httpClient } from '@/services/httpClient';
+import { useChangementLangue } from '@/hooks/useChangementLangue';
 
 /** Extended Artisanat with optional `prix` field that may come from API responses */
 interface ArtisanatWithPrix extends Artisanat {
@@ -260,6 +261,13 @@ export function useArtisanat(): UseArtisanatReturn {
     loadStatistics();
     loadArtisanats();
   }, []);
+
+  // Changement de langue : matériaux, techniques et pièces relus dans la nouvelle langue
+  useChangementLangue(() => {
+    loadMateriaux();
+    loadTechniques();
+    loadArtisanats();
+  });
 
   return {
     artisanats,

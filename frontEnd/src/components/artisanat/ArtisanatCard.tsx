@@ -4,6 +4,8 @@
  * (titre et images dans Oeuvre) comme une forme déjà simplifiée.
  */
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFavorisIds } from '@/hooks/useFavoris';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,7 +37,10 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const { toast } = useToast();
   const inviterConnexion = useInviterConnexion();
   const { isAuthenticated } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false);
+  // Cœur plein pour un vrai favori ; après un clic, le choix de la personne s'affiche aussitôt
+  const idsFavoris = useFavorisIds('artisanat');
+  const queryClient = useQueryClient();
+  const [choixFavori, setIsFavorite] = useState<boolean | null>(null);
   const [favLoading, setFavLoading] = useState(false);
 
   // Extraire les données de l'artisanat (peut venir de Oeuvre ou directement)
@@ -50,6 +55,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const technique = getLocalizedText(artisanat.Technique?.nom) || '';
   const prix = artisanat.prix || artisanat.prix_min;
   const id = artisanat.id_artisanat || artisanat.id;
+  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(id as number));
   const artisanatUrl = `/artisanat/${id}`;
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -65,6 +71,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
       if (result.success) {
         const added = result.data?.added ?? !isFavorite;
         setIsFavorite(added);
+        queryClient.invalidateQueries({ queryKey: ['favoris'] });
         toast({
           title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
         });

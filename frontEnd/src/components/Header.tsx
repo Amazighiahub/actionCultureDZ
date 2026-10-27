@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRTL } from '@/utils/rtl';
 import LanguageSelector from '@/components/LanguageSelector';
+import NotificationBell from '@/components/NotificationBell';
 import { professionnelPath } from '@/utils/slug';
 
 const Header = () => {
@@ -244,6 +245,9 @@ const Header = () => {
                 variant="compact"
                 className="hover:bg-stone-100 dark:hover:bg-stone-800 min-w-[44px] min-h-[44px]"
               />
+
+              {/* Notifications d'un compte connecté (nombre de non lues) */}
+              {isAuthenticated && user && <NotificationBell />}
 
               {/* Utilisateur connecté */}
               {isAuthenticated && user ? (

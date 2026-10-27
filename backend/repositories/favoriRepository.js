@@ -27,6 +27,16 @@ class FavoriRepository extends BaseRepository {
     });
   }
 
+  /** Identifiants des entités favorites d'un utilisateur, pour un type (cœurs des listes) */
+  async idsByUser(idUser, type) {
+    const lignes = await this.model.findAll({
+      where: { id_user: idUser, type_entite: type },
+      attributes: ['id_entite'],
+      raw: true
+    });
+    return lignes.map(l => l.id_entite);
+  }
+
   /**
    * Vérifie si un favori existe pour un user/type/entité
    */

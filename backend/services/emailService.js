@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
 const handlebars = require('handlebars');
+const { translate, lireMultiLang } = require('../helpers/i18n');
 
 class EmailService {
   constructor() {
@@ -41,6 +42,16 @@ class EmailService {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;');
+  }
+
+  /** Texte d'un champ multilingue (prénom, nom, nom d'événement…) : français, sinon la langue remplie */
+  _texte(val) {
+    return translate(lireMultiLang(val), 'fr');
+  }
+
+  /** Prénom pour « Bonjour … » ; le nom quand le prénom est vide (comptes créés par import) */
+  _prenom(user) {
+    return this._texte(user?.prenom) || this._texte(user?.nom);
   }
 
   /**
@@ -180,7 +191,7 @@ class EmailService {
       
       const template = await this.getTemplate('user-verification');
       const html = template({
-        prenom: user.prenom,
+        prenom: this._prenom(user),
         verificationUrl: verificationUrl,
       });
 
@@ -199,7 +210,7 @@ class EmailService {
     try {
       const template = await this.getTemplate('password-change');
       const html = template({
-        prenom: user.prenom,
+        prenom: this._prenom(user),
         email: user.email,
       });
 
@@ -222,10 +233,8 @@ class EmailService {
   async sendInvitationInscription(user, token, evenement) {
     try {
       const lien = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-      const nomEvenement = (evenement?.nom_evenement && typeof evenement.nom_evenement === 'object')
-        ? (evenement.nom_evenement.fr || Object.values(evenement.nom_evenement).find(Boolean))
-        : evenement?.nom_evenement;
-      const nom = (user.nom && typeof user.nom === 'object') ? (user.nom.fr || '') : (user.nom || '');
+      const nomEvenement = this._texte(evenement?.nom_evenement);
+      const nom = this._prenom(user);
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
           <h2 style="color: #3A4224;">Votre demande d'inscription est bien reçue</h2>
@@ -257,10 +266,8 @@ class EmailService {
     try {
       const esc = (v) => this._escapeHtml(String(v ?? ''));
       const avecLiens = (t) => esc(t).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#3A4224">${url}</a>`);
-      const nomEvenement = (evenement?.nom_evenement && typeof evenement.nom_evenement === 'object')
-        ? (evenement.nom_evenement.fr || Object.values(evenement.nom_evenement).find(Boolean))
-        : evenement?.nom_evenement;
-      const prenom = (user.prenom && typeof user.prenom === 'object') ? (user.prenom.fr || '') : (user.prenom || '');
+      const nomEvenement = this._texte(evenement?.nom_evenement);
+      const prenom = this._prenom(user);
       const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
       const bouton = (lien, libelle, couleur) => lien
         ? `<a href="${esc(lien)}" style="display:inline-block;margin:6px;background-color:${couleur};color:white;padding:12px 22px;text-decoration:none;border-radius:8px;font-weight:bold;">${libelle}</a>`
@@ -306,7 +313,7 @@ class EmailService {
       try {
         const template = await this.getTemplate('password-reset');
         html = template({
-          prenom: user.prenom,
+          prenom: this._prenom(user),
           resetUrl: resetUrl,
         });
       } catch {
@@ -314,7 +321,7 @@ class EmailService {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Réinitialisation de mot de passe</h2>
-            <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
+            <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
             <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous :</p>
             <p><a href="${encodeURI(resetUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a></p>
             <p>Ce lien est valable pendant 2 heures.</p>
@@ -341,7 +348,7 @@ class EmailService {
       try {
         const template = await this.getTemplate('password-changed');
         html = template({
-          prenom: user.prenom,
+          prenom: this._prenom(user),
           email: user.email,
           date: new Date().toLocaleString('fr-FR')
         });
@@ -349,7 +356,7 @@ class EmailService {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Mot de passe modifié</h2>
-            <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
+            <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
             <p>Votre mot de passe a été modifié avec succès le ${new Date().toLocaleString('fr-FR')}.</p>
             <p>Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.</p>
             <p>L'équipe Tala DZ</p>
@@ -374,7 +381,7 @@ class EmailService {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Demande de changement d'email</h2>
-          <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
+          <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
           <p>Une demande de changement d'adresse email a été effectuée sur votre compte.</p>
           <p><strong>Ancien email :</strong> ${this._escapeHtml(user.email)}</p>
           <p><strong>Nouvel email demandé :</strong> ${this._escapeHtml(newEmail)}</p>
@@ -404,7 +411,7 @@ class EmailService {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Confirmez votre nouvelle adresse email</h2>
-          <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
+          <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
           <p>Pour confirmer que ${this._escapeHtml(newEmail)} est bien votre nouvelle adresse email, cliquez sur le lien ci-dessous :</p>
           <p><a href="${encodeURI(confirmUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Confirmer mon email</a></p>
           <p>Ce lien est valable pendant 24 heures.</p>
@@ -652,7 +659,7 @@ class EmailService {
     const results = await Promise.all(participants.map(async (participant) => {
       try {
         const user = participant.User;
-        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+        const prenomStr = this._prenom(user);
 
         const esc = this._escapeHtml.bind(this);
         const html = `
@@ -704,7 +711,7 @@ class EmailService {
     const results = await Promise.all(participants.map(async (participant) => {
       try {
         const user = participant.User;
-        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+        const prenomStr = this._prenom(user);
         const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
 
         const html = `
@@ -746,7 +753,7 @@ class EmailService {
 
     const results = await Promise.all(users.map(async (user) => {
       try {
-        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+        const prenomStr = this._prenom(user);
 
         const esc = this._escapeHtml.bind(this);
         const lieuNom = evenement.Lieu?.nom ? (typeof evenement.Lieu.nom === 'object' ? (evenement.Lieu.nom.fr || '') : evenement.Lieu.nom) : '';

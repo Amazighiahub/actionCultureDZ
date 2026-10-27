@@ -478,9 +478,12 @@ module.exports = (sequelize) => {
       as: 'Roles'
     });
     
+    // otherKey : sans lui, Sequelize joignait sur une colonne « OrganisationIdOrganisation »
+    // toujours vide, et la liste des organisations d'un membre restait vide
     User.belongsToMany(models.Organisation, { 
       through: models.UserOrganisation, 
       foreignKey: 'id_user',
+      otherKey: 'id_organisation',
       as: 'Organisations'
     });
     

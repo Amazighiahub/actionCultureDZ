@@ -30,6 +30,7 @@ import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+import { useChangementLangue } from '@/hooks/useChangementLangue';
 
 interface ArtisanatData {
   id: number;
@@ -124,6 +125,7 @@ const ArtisanatDetail: React.FC = () => {
       loadArtisanat(parseInt(id));
     }
   }, [id]);
+  useChangementLangue(() => { if (id) loadArtisanat(parseInt(id)); });
 
   const loadArtisanat = async (artisanatId: number) => {
     try {

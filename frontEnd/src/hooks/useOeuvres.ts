@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { httpClient } from '@/services/httpClient';
+import { useChangementLangue } from '@/hooks/useChangementLangue';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { TypeOeuvre } from '@/types/models/references.types';
 
@@ -305,6 +306,12 @@ export function useOeuvres(): UseOeuvresReturn {
   useEffect(() => {
     loadTypesOeuvres();
   }, []);
+
+  // Changement de langue : types relus dans la nouvelle langue, puis les œuvres (loadOeuvres
+  // dépend des types et se relance seul)
+  useChangementLangue(() => {
+    loadTypesOeuvres();
+  });
 
   // Charger les œuvres après avoir chargé les types
   useEffect(() => {
