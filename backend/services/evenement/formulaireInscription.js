@@ -7,6 +7,8 @@
  * ou une question masquée par sa condition n'est jamais enregistrée.
  */
 
+const { texteLisible } = require('../../helpers/i18n');
+
 const LONGUEUR_MAX = { texte: 500, texte_long: 3000, email: 254, tel: 30 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEL_RE = /^\+?[\d\s().-]{6,30}$/;
@@ -17,8 +19,7 @@ const texte = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ?
 
 const libelle = (label) => {
   if (!label) return '';
-  if (typeof label === 'string') return label;
-  return label.fr || label.ar || label.en || '';
+  return texteLisible(label);
 };
 
 /** Liste à plat des questions d'une configuration */

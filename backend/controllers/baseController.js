@@ -17,6 +17,8 @@
  *   // le try/catch dans list() peut alors être supprimé.
  */
 
+const { peutGerer, estModeration } = require('../utils/droits');
+
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -116,10 +118,17 @@ class BaseController {
    * @param {number|null|undefined} ownerId - id_user de l'auteur
    */
   _canSeeUnpublished(req, ownerId) {
-    const user = req.user;
-    if (!user) return false;
-    if (user.isAdmin || user.isModerateur) return true;
-    return ownerId != null && Number(ownerId) === Number(user.id_user);
+    return peutGerer(ownerId, this._droits(req));
+  }
+
+  /** Administration ou modération */
+  _estModeration(req) {
+    return estModeration(req.user);
+  }
+
+  /** Compte appelant, au format attendu par les services ({ userId, isModerator }) */
+  _droits(req) {
+    return { userId: req.user?.id_user || null, isModerator: this._estModeration(req) };
   }
 
   // ============================================================================

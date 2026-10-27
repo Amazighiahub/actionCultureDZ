@@ -2599,7 +2599,7 @@
       "visits": "{{count}} visits",
       "deleteDialog": {
         "title": "Delete heritage site",
-        "description": "Are you sure you want to delete \"{{name}}\"?"
+        "description": "Delete \"{{name}}\" and all its visit points? This cannot be undone. A site that hosts events cannot be deleted."
       },
       "deleted": "Site deleted successfully",
       "count": "{{count}} site(s)",

@@ -7,6 +7,7 @@ const BaseService = require('../core/baseService');
 const ArtisanatDTO = require('../../dto/artisanat/artisanatDTO');
 const BaseDTO = require('../../dto/baseDTO');
 const { mergeTranslations } = require('../../helpers/i18n');
+const { peutGerer } = require('../../utils/droits');
 
 class ArtisanatService extends BaseService {
   constructor(artisanatRepository, options = {}) {
@@ -90,7 +91,7 @@ class ArtisanatService extends BaseService {
     if (this.models?.Oeuvre) {
       const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId, { attributes: ['id_oeuvre', 'saisi_par'] });
       if (!oeuvre) throw this._notFoundError(oeuvreId);
-      if (!isAdmin && Number(oeuvre.saisi_par) !== Number(userId)) {
+      if (!peutGerer(oeuvre.saisi_par, { userId, isModerator: isAdmin })) {
         throw this._forbiddenError('Vous ne pouvez rattacher un artisanat qu\'à vos propres œuvres');
       }
     }
@@ -173,7 +174,7 @@ class ArtisanatService extends BaseService {
     }
 
     const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
-    if (ownerId !== userId && !isAdmin) {
+    if (!peutGerer(ownerId, { userId, isModerator: isAdmin })) {
       throw this._forbiddenError('Vous ne pouvez pas modifier cet artisanat');
     }
 
@@ -217,7 +218,7 @@ class ArtisanatService extends BaseService {
     const existing = await this.repository.findById(id);
     if (!existing) throw this._notFoundError(id);
     const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
-    if (ownerId !== userId && !isAdmin) {
+    if (!peutGerer(ownerId, { userId, isModerator: isAdmin })) {
       throw this._forbiddenError('Vous ne pouvez pas modifier cet artisanat');
     }
     return existing;
@@ -233,7 +234,7 @@ class ArtisanatService extends BaseService {
     }
 
     const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
-    if (ownerId !== userId && !isAdmin) {
+    if (!peutGerer(ownerId, { userId, isModerator: isAdmin })) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer cet artisanat');
     }
 

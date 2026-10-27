@@ -9,13 +9,11 @@ const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
-const { param, body } = require('express-validator');
+const { body } = require('express-validator');
+const { aUnTexte } = require('../helpers/i18n');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
-const logger = require('../utils/logger');
-const container = require('../services/serviceContainer');
-const { notifierModification } = require('../services/patrimoine/historiqueLieu');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -67,24 +65,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/:id/carte-visite', optionalAuth, validateId(), patrimoineController.wrap('getCarteVisite'));
   router.get('/:id/qrcode', validateId(), patrimoineController.wrap('getQRCode'));
 
-  router.get('/:id/intervenants', validateId(), async (req, res) => {
-    try {
-      const intervenants = await models.LieuIntervenant.findAll({
-        where: { id_lieu: parseInt(req.params.id) },
-        order: [['ordre', 'ASC'], ['date_creation', 'ASC']],
-        include: [{
-          model: models.Intervenant,
-          as: 'Intervenant',
-          attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites', 'biographie', 'wikipedia_url',
-            'date_naissance', 'lieu_naissance', 'date_deces', 'lieu_deces', 'id_user']
-        }]
-      });
-      res.json({ success: true, data: intervenants });
-    } catch (error) {
-      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-    }
-  });
+  router.get('/:id/intervenants', validateId(), patrimoineController.wrap('personnalites'));
 
   router.get('/:id', optionalAuth, validateId(), patrimoineController.wrap('getById'));
 
@@ -132,50 +113,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       body('ordre').optional().isInt({ min: 0 }).withMessage('ordre invalide'),
     ],
     handleValidationErrors,
-    async (req, res) => {
-      try {
-        const lieuId = parseInt(req.params.id);
-        const { id_intervenant, role_sur_site, periode, contexte, ordre } = req.body;
-
-        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
-        if (!lieu) return res.status(404).json({ success: false, error: 'Site patrimoine non trouvé' });
-
-        const intervenant = await models.Intervenant.findByPk(id_intervenant, { attributes: ['id_intervenant'] });
-        if (!intervenant) return res.status(404).json({ success: false, error: 'Intervenant non trouvé' });
-
-        let finalOrdre = ordre;
-        if (finalOrdre === undefined) {
-          const maxOrdre = await models.LieuIntervenant.max('ordre', { where: { id_lieu: lieuId } });
-          finalOrdre = (maxOrdre || 0) + 1;
-        }
-
-        const lien = await models.LieuIntervenant.create({
-          id_lieu: lieuId,
-          id_intervenant,
-          role_sur_site: role_sur_site || null,
-          periode: periode || null,
-          contexte: contexte || null,
-          ordre: finalOrdre,
-          id_contributeur: req.user?.id_user || null
-        });
-
-        const result = await models.LieuIntervenant.findByPk(lien.id_lieu_intervenant, {
-          include: [{ model: models.Intervenant, as: 'Intervenant', attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites'] }]
-        });
-
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: 'a rattaché une personnalité à'
-        });
-        res.status(201).json({ success: true, data: result });
-      } catch (error) {
-        if (error.name === 'SequelizeUniqueConstraintError') {
-          return res.status(409).json({ success: false, error: 'Cet intervenant est déjà associé à ce site' });
-        }
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
+    patrimoineController.wrap('rattacherPersonnalite'));
 
   // Retirer une personnalité : modération, contributeur qui l'a rattachée ou créateur du site
   router.delete('/:id/intervenants/:lieuIntervenantId', authenticate, validateId(), validateId('lieuIntervenantId'),
@@ -184,7 +122,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Nouvelle personnalité (fiche + rattachement) : professionnels validés et modération
   router.post('/:id/personnalites', authenticate, requireModerationOuPro, validateId(),
     [
-      body('nom').custom(v => (typeof v === 'string' ? v.trim().length > 0 : !!(v && (v.fr || v.ar)))).withMessage('Le nom est requis'),
+      body('nom').custom(v => aUnTexte(v)).withMessage('Le nom est requis'),
       body('titre_professionnel').optional({ values: 'falsy' }).isString().isLength({ max: 255 }),
       body('date_naissance').optional({ values: 'falsy' }).isISO8601(),
       body('date_deces').optional({ values: 'falsy' }).isISO8601(),
@@ -214,231 +152,29 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.delete('/:id/pages/:lieuOeuvreId', authenticate, validateId(), patrimoineController.wrap('retirerPage'));
 
   // ============================================================================
-  // MONUMENTS — ajout / suppression depuis la fiche enrichissement
+  // MONUMENTS ET VESTIGES — ajout / modification depuis la fiche enrichissement,
+  // suppression par la modération
   // ============================================================================
 
-  router.post('/:id/monuments', authenticate, validateId(),
-    [
-      body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(MONUMENT_TYPES).withMessage('Type de monument invalide'),
-      body('description').optional().isObject(),
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-      try {
-        const lieuId = parseInt(req.params.id);
-        const { nom, type, description } = req.body;
-
-        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
-        if (!lieu) return res.status(404).json({ success: false, error: 'Site non trouvé' });
-
-        let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
-        if (!detail) {
-          detail = await models.DetailLieu.create({
-            id_lieu: lieuId,
-            id_dernier_contributeur: req.user?.id_user || null,
-            date_derniere_contribution: new Date(),
-            nb_contributions: 1
-          });
-        }
-
-        const monument = await models.Monument.create({
-          id_detail_lieu: detail.id_detailLieu,
-          nom,
-          description: description || {},
-          type
-        });
-
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: `a ajouté le monument « ${nom?.fr || nom?.ar || ''} » à`
-        });
-        res.status(201).json({ success: true, data: monument });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
-
-  router.delete('/:id/monuments/:monumentId', authenticate, requireModeration, validateId(), async (req, res) => {
-    try {
-      const lieuId = parseInt(req.params.id);
-      const monumentId = parseInt(req.params.monumentId);
-      if (isNaN(monumentId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
-
-      const monument = await models.Monument.findOne({
-        where: { id: monumentId },
-        include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
-      });
-      if (!monument) return res.status(404).json({ success: false, error: 'Monument non trouvé' });
-
-      await monument.destroy();
-      res.json({ success: true, message: 'Monument supprimé' });
-    } catch (error) {
-      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-    }
-  });
-
-  router.patch('/:id/monuments/:monumentId', authenticate, validateId(),
-    [
-      body('nom').optional().isObject(),
-      body('type').optional().isIn(MONUMENT_TYPES),
-      body('description').optional().isObject(),
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-      try {
-        const lieuId = parseInt(req.params.id);
-        const monumentId = parseInt(req.params.monumentId);
-        if (isNaN(monumentId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
-
-        const monument = await models.Monument.findOne({
-          where: { id: monumentId },
-          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
-        });
-        if (!monument) return res.status(404).json({ success: false, error: 'Monument non trouvé' });
-
-        const { nom, type, description } = req.body;
-        if (nom !== undefined) monument.nom = nom;
-        if (type !== undefined) monument.type = type;
-        if (description !== undefined) monument.description = description;
-        await monument.save();
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: `a modifié le monument « ${monument.nom?.fr || monument.nom?.ar || ''} » de`
-        });
-
-        res.json({ success: true, data: monument });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
-
-  // ============================================================================
-  // VESTIGES — ajout / suppression depuis la fiche enrichissement
-  // ============================================================================
-
-  router.post('/:id/vestiges', authenticate, validateId(),
-    [
-      body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(VESTIGE_TYPES).withMessage('Type de vestige invalide'),
-      body('description').optional().isObject(),
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-      try {
-        const lieuId = parseInt(req.params.id);
-        const { nom, type, description } = req.body;
-
-        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
-        if (!lieu) return res.status(404).json({ success: false, error: 'Site non trouvé' });
-
-        let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
-        if (!detail) {
-          detail = await models.DetailLieu.create({
-            id_lieu: lieuId,
-            id_dernier_contributeur: req.user?.id_user || null,
-            date_derniere_contribution: new Date(),
-            nb_contributions: 1
-          });
-        }
-
-        const vestige = await models.Vestige.create({
-          id_detail_lieu: detail.id_detailLieu,
-          nom,
-          description: description || {},
-          type
-        });
-
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: `a ajouté le vestige « ${nom?.fr || nom?.ar || ''} » à`
-        });
-        res.status(201).json({ success: true, data: vestige });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
-
-  router.delete('/:id/vestiges/:vestigeId', authenticate, requireModeration, validateId(), async (req, res) => {
-    try {
-      const lieuId = parseInt(req.params.id);
-      const vestigeId = parseInt(req.params.vestigeId);
-      if (isNaN(vestigeId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
-
-      const vestige = await models.Vestige.findOne({
-        where: { id: vestigeId },
-        include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
-      });
-      if (!vestige) return res.status(404).json({ success: false, error: 'Vestige non trouvé' });
-
-      await vestige.destroy();
-      res.json({ success: true, message: 'Vestige supprimé' });
-    } catch (error) {
-      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-    }
-  });
-
-  router.patch('/:id/vestiges/:vestigeId', authenticate, validateId(),
-    [
-      body('nom').optional().isObject(),
-      body('type').optional().isIn(VESTIGE_TYPES),
-      body('description').optional().isObject(),
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-      try {
-        const lieuId = parseInt(req.params.id);
-        const vestigeId = parseInt(req.params.vestigeId);
-        if (isNaN(vestigeId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
-
-        const vestige = await models.Vestige.findOne({
-          where: { id: vestigeId },
-          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
-        });
-        if (!vestige) return res.status(404).json({ success: false, error: 'Vestige non trouvé' });
-
-        const { nom, type, description } = req.body;
-        if (nom !== undefined) vestige.nom = nom;
-        if (type !== undefined) vestige.type = type;
-        if (description !== undefined) vestige.description = description;
-        await vestige.save();
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: `a modifié le vestige « ${vestige.nom?.fr || vestige.nom?.ar || ''} » de`
-        });
-
-        res.json({ success: true, data: vestige });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
+  const champsElement = (types, creation) => [
+    creation
+      ? body('nom').isObject().custom(v => aUnTexte(v)).withMessage('Écrivez le nom, dans au moins une langue')
+      : body('nom').optional().isObject(),
+    creation ? body('type').isIn(types).withMessage('Type invalide') : body('type').optional().isIn(types),
+    body('description').optional().isObject(),
+  ];
+  for (const [chemin, genre, types] of [['monuments', 'monument', MONUMENT_TYPES], ['vestiges', 'vestige', VESTIGE_TYPES]]) {
+    const avecGenre = (req, res, next) => { req.genreElement = genre; next(); };
+    router.post(`/:id/${chemin}`, authenticate, validateId(), champsElement(types, true), handleValidationErrors,
+      avecGenre, patrimoineController.wrap('ajouterElement'));
+    router.patch(`/:id/${chemin}/:idElement`, authenticate, validateId(), validateId('idElement'), champsElement(types, false),
+      handleValidationErrors, avecGenre, patrimoineController.wrap('modifierElement'));
+    router.delete(`/:id/${chemin}/:idElement`, authenticate, requireModeration, validateId(), validateId('idElement'),
+      avecGenre, patrimoineController.wrap('supprimerElement'));
+  }
 
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
-  router.get('/:id/articles', validateId(), async (req, res) => {
-    try {
-      const { section } = req.query;
-      const where = { id_article: parseInt(req.params.id), article_type: 'patrimoine', visible: true };
-      if (section) where.section_patrimoine = section;
-
-      // models déjà disponible via initPatrimoineRoutes(models, ...)
-      const blocks = await models.ArticleBlock.findAll({
-        where,
-        order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC']],
-        include: [{ model: models.Media, as: 'media', required: false }]
-      });
-
-      res.json({ success: true, data: blocks });
-    } catch (error) {
-      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-    }
-  });
+  router.get('/:id/articles', validateId(), patrimoineController.wrap('blocs'));
 
   // Articles : modération et professionnels validés (comme la modification du site)
   router.post('/:id/articles', authenticate, requireModerationOuPro, validateId(),
@@ -448,83 +184,10 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       body('contenu').optional().isLength({ max: 10000 }).withMessage('Contenu trop long'),
     ],
     handleValidationErrors,
-    async (req, res) => {
-      try {
-        // models déjà disponible via initPatrimoineRoutes(models, ...)
-        const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+    patrimoineController.wrap('ajouterBloc'));
 
-        const lieuId = parseInt(req.params.id);
-        const { type_block, section_patrimoine, contenu, contenu_json, metadata } = req.body;
-
-        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
-        if (!lieu) return res.status(404).json({ success: false, error: 'Site patrimoine non trouvé' });
-
-        // Sanitiser le contenu
-        const sanitizedContenu = contenu ? sanitizeBlockContent(type_block, contenu) : null;
-
-        // Trouver le prochain ordre
-        const maxOrder = await models.ArticleBlock.max('ordre', {
-          where: { id_article: lieuId, article_type: 'patrimoine', section_patrimoine }
-        });
-
-        const block = await models.ArticleBlock.create({
-          id_article: lieuId,
-          article_type: 'patrimoine',
-          section_patrimoine,
-          type_block,
-          contenu: sanitizedContenu,
-          contenu_json: contenu_json || {},
-          metadata: metadata || {},
-          ordre: (maxOrder || 0) + 1,
-          visible: true
-        });
-
-        // Incrémenter nb_contributions sur DetailLieu
-        const DetailLieu = models.DetailLieu;
-        const detail = await DetailLieu.findOne({ where: { id_lieu: lieuId } });
-        if (detail) {
-          await detail.update({
-            id_dernier_contributeur: req.user?.id_user,
-            date_derniere_contribution: new Date(),
-            nb_contributions: (detail.nb_contributions || 0) + 1
-          });
-        }
-
-        await notifierModification(models, container.notificationService, {
-          idLieu: lieuId, idUser: req.user?.id_user, action: 'a ajouté un paragraphe à'
-        });
-        res.status(201).json({ success: true, data: block });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
-
-  router.delete('/:id/articles/:blockId', authenticate, requireModeration, validateId(),
-    async (req, res) => {
-      try {
-        // models déjà disponible via initPatrimoineRoutes(models, ...)
-        const block = await models.ArticleBlock.findOne({
-          where: {
-            id_block: parseInt(req.params.blockId),
-            id_article: parseInt(req.params.id),
-            article_type: 'patrimoine'
-          }
-        });
-
-        if (!block) {
-          return res.status(404).json({ success: false, error: 'Bloc non trouvé' });
-        }
-
-        await block.destroy();
-        res.json({ success: true, message: 'Bloc supprimé' });
-      } catch (error) {
-        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
-      res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    }
-  );
+  router.delete('/:id/articles/:blockId', authenticate, requireModeration, validateId(), validateId('blockId'),
+    patrimoineController.wrap('supprimerBloc'));
 
   // ============================================================================
   // ROUTES ADMIN

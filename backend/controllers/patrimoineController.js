@@ -6,9 +6,10 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
-const { mergeTranslations } = require('../helpers/i18n');
+const { mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const historique = require('../services/patrimoine/historiqueLieu');
+const elements = require('../services/patrimoine/elementsLieu');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
@@ -175,17 +176,12 @@ class PatrimoineController extends BaseController {
   async create(req, res) {
     // Ajouter l'id du créateur
     req.body.id_createur = req.user?.id_user;
-    const site = await this.patrimoineService.create(req.body, { isModerator: req.user?.isAdmin === true || req.user?.isModerateur === true });
+    const site = await this.patrimoineService.create(req.body, { isModerator: this._estModeration(req) });
     res.status(201).json({
       success: true,
       message: req.t('patrimoine.created'),
       data: site.toDetailJSON ? site.toDetailJSON(req.lang) : site
     });
-  }
-
-  /** Modération (administrateur ou modérateur) */
-  _estModeration(req) {
-    return req.user?.isAdmin === true || req.user?.isModerateur === true;
   }
 
   /** 403 si le compte ne peut pas modifier ce site (ni modération, ni créateur) ; true si autorisé */
@@ -210,6 +206,60 @@ class PatrimoineController extends BaseController {
     return historique.notifierModification(container.patrimoineService.models, container.notificationService, {
       idLieu: parseInt(req.params.id, 10), idUser: req.user?.id_user, action
     });
+  }
+
+  get _models() {
+    return this.patrimoineService.models;
+  }
+
+  /** Personnalités liées au site */
+  async personnalites(req, res) {
+    res.json({ success: true, data: await elements.personnalites(this._models, parseInt(req.params.id, 10)) });
+  }
+
+  /** Rattacher une personnalité existante au site */
+  async rattacherPersonnalite(req, res) {
+    const lien = await elements.rattacherPersonnalite(this._models, parseInt(req.params.id, 10), req.body, req.user?.id_user);
+    await this._signalerContribution(req, 'a rattaché une personnalité à');
+    res.status(201).json({ success: true, data: lien });
+  }
+
+  // Monuments et vestiges (req.genreElement posé par la route)
+  async ajouterElement(req, res) {
+    const genre = req.genreElement;
+    const element = await elements.ajouterElement(this._models, genre, parseInt(req.params.id, 10), req.body, req.user?.id_user);
+    await this._signalerContribution(req, `a ajouté le ${genre} « ${texteLisible(element.nom)} » à`);
+    res.status(201).json({ success: true, data: element });
+  }
+
+  async modifierElement(req, res) {
+    const genre = req.genreElement;
+    const element = await elements.modifierElement(this._models, genre, parseInt(req.params.id, 10),
+      parseInt(req.params.idElement, 10), req.body);
+    await this._signalerContribution(req, `a modifié le ${genre} « ${texteLisible(element.nom)} » de`);
+    res.json({ success: true, data: element });
+  }
+
+  async supprimerElement(req, res) {
+    const genre = req.genreElement;
+    await elements.supprimerElement(this._models, genre, parseInt(req.params.id, 10), parseInt(req.params.idElement, 10));
+    res.json({ success: true, message: genre === 'monument' ? 'Monument supprimé' : 'Vestige supprimé' });
+  }
+
+  // Blocs d'article du site (éditeur riche, par section)
+  async blocs(req, res) {
+    res.json({ success: true, data: await elements.blocs(this._models, parseInt(req.params.id, 10), req.query.section) });
+  }
+
+  async ajouterBloc(req, res) {
+    const bloc = await elements.ajouterBloc(this._models, parseInt(req.params.id, 10), req.body, req.user?.id_user);
+    await this._signalerContribution(req, 'a ajouté un paragraphe à');
+    res.status(201).json({ success: true, data: bloc });
+  }
+
+  async supprimerBloc(req, res) {
+    await elements.supprimerBloc(this._models, parseInt(req.params.id, 10), parseInt(req.params.blockId, 10));
+    res.json({ success: true, message: 'Bloc supprimé' });
   }
 
   /** Nouvelle personnalité du site (fiche créée et rattachée) */
@@ -309,7 +359,16 @@ class PatrimoineController extends BaseController {
   }
 
   async delete(req, res) {
-    await this.patrimoineService.delete(parseInt(req.params.id));
+    try {
+      await this.patrimoineService.delete(parseInt(req.params.id));
+    } catch (error) {
+      if (error.code !== 'LIEU_UTILISE') throw error;
+      return res.status(409).json({
+        success: false,
+        error: req.t('patrimoine.utiliseParEvenements', { count: error.data.evenements }),
+        code: error.code
+      });
+    }
     res.json({ success: true, message: req.t('patrimoine.deleted') });
   }
 
@@ -545,7 +604,7 @@ class PatrimoineController extends BaseController {
   async reordonnerPoints(req, res) {
     const points = await this.patrimoineService.reordonnerPoints(parseInt(req.params.id), req.body.ordre, {
       userId: req.user.id_user,
-      isModerator: req.user?.isAdmin === true || req.user?.isModerateur === true
+      isModerator: this._estModeration(req)
     });
     res.json({ success: true, data: points });
   }

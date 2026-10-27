@@ -3,6 +3,7 @@
  * Gestion des validations et de la modération du contenu
  */
 const { Op } = require('sequelize');
+const { texteLisible } = require('../../helpers/i18n');
 
 class DashboardModerationService {
   constructor(models) {
@@ -194,8 +195,8 @@ class DashboardModerationService {
         const user = await this.models.User.findByPk(oeuvre.saisi_par);
         if (user?.email) {
           const emailService = require('../emailService');
-          const titre = typeof oeuvre.titre === 'object' ? (oeuvre.titre.fr || oeuvre.titre.ar || Object.values(oeuvre.titre)[0]) : oeuvre.titre;
-          const prenom = typeof user.prenom === 'object' ? (user.prenom.fr || Object.values(user.prenom)[0]) : user.prenom;
+          const titre = texteLisible(oeuvre.titre);
+          const prenom = texteLisible(user.prenom);
 
           if (valide) {
             await emailService.sendEmail(user.email, 'Votre œuvre a été validée - Tala DZ', `

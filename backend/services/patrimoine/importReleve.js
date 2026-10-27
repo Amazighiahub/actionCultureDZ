@@ -17,6 +17,7 @@
  */
 const ExcelJS = require('exceljs');
 const { Op } = require('sequelize');
+const { texteLisible } = require('../../helpers/i18n');
 
 const TYPES = ['monument', 'musee', 'ville_village', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre'];
 // Précision du relevé (6 décimales ≈ 10 cm) : deux points à 1 m l'un de l'autre restent distincts
@@ -346,7 +347,7 @@ class ImportReleve {
 /** Plan résumé pour l'affichage (aperçu de l'admin, aperçu du script) */
 function resumerPlan(plan) {
   const lieu = plan.lieu
-    ? { id: plan.lieu.id_lieu, nom: plan.lieu.nom?.fr || plan.lieu.nom?.ar || '', existe: true }
+    ? { id: plan.lieu.id_lieu, nom: texteLisible(plan.lieu.nom), existe: true }
     : plan.siteACreer
       ? { id: null, nom: plan.siteACreer.nom || plan.siteACreer.nomAr || '', existe: false, commune: plan.siteACreer.communeNom }
       : null;

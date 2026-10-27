@@ -151,7 +151,8 @@
   "patrimoine": {
     "created": "Asit n yidles yettwarna akken iwata",
     "updated": "Asit yettwalqem",
-    "deleted": "Asit yettwakkes"
+    "deleted": "Asit yettwakkes",
+    "utiliseParEvenements": "Asit-a yesεa ${count} n tneḍḍurin: beddlet amkan-nsent qbel ad tekkset asit."
   },
   "artisanat": {
     "created": "Taceṛḍabt tettwasnulfu akken iwata",

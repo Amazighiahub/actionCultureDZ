@@ -11,6 +11,7 @@ const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLan
 const { sanitizeLike } = require('../utils/sanitize');
 const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../utils/carteArticle');
+const { peutGerer } = require('../utils/droits');
 
 class IntervenantService extends BaseService {
   constructor(repository, options = {}) {
@@ -116,7 +117,7 @@ class IntervenantService extends BaseService {
     const articles = await ajouterCouvertures(this.models, liensArticles
       .map(l => l.get({ plain: true }))
       .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
-      .map(l => versCarte(l.id_intervenant_article, l.Oeuvre, isModerator || (!!userId && l.id_contributeur === userId))));
+      .map(l => versCarte(l.id_intervenant_article, l.Oeuvre, peutGerer(l.id_contributeur, { userId, isModerator }))));
 
     return { intervenant, lieux, articles };
   }
@@ -141,7 +142,7 @@ class IntervenantService extends BaseService {
   async retirerArticle(id, lienId, { userId, isModerator = false } = {}) {
     const lien = await this.models.IntervenantArticle.findOne({ where: { id_intervenant_article: lienId, id_intervenant: id } });
     if (!lien) return 'introuvable';
-    if (!isModerator && !(userId && lien.id_contributeur === userId)) return 'interdit';
+    if (!peutGerer(lien.id_contributeur, { userId, isModerator })) return 'interdit';
     await lien.destroy();
     return 'ok';
   }

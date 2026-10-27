@@ -6,6 +6,7 @@
 
 const express = require('express');
 const logger = require('../utils/logger');
+const { texteLisible } = require('../helpers/i18n');
 const { professionnelPath, evenementPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
@@ -20,16 +21,7 @@ const escapeHtml = (str) => String(str)
 
 /** Texte d'un champ multilingue ({ fr, ar, ... }) : français, langue de référence du site */
 function text(value) {
-  if (!value) return '';
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object') return text(parsed);
-    } catch { /* texte simple */ }
-    return value;
-  }
-  if (typeof value === 'object') return value.fr || value.ar || value.en || Object.values(value).find(Boolean) || '';
-  return String(value);
+  return texteLisible(value);
 }
 
 /** Résumé d'une description (balises retirées, ~200 caractères, coupé sur un mot) */

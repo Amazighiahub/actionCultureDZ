@@ -5,11 +5,11 @@
 
 const BaseService = require('../core/baseService');
 const ServiceDTO = require('../../dto/service/serviceDTO');
-const { mergeTranslations } = require('../../helpers/i18n');
+const { mergeTranslations, texteLisible } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 
 /** Nom lisible d'un service (nom multilingue) pour les notifications */
-const nomLisible = (nom) => (typeof nom === 'object' && nom ? (nom.fr || nom.ar || Object.values(nom).find(Boolean)) : nom) || 'Service';
+const nomLisible = (nom) => texteLisible(nom) || 'Service';
 
 class ServiceService extends BaseService {
   constructor(serviceRepository, options = {}) {

@@ -119,8 +119,13 @@ const AdminPatrimoineTab: React.FC = () => {
         await adminService.deletePatrimoine(selectedItemId);
         toast({ title: t('admin.patrimoine.deleted', 'Site supprimé avec succès') });
         refreshAll();
-      } catch {
-        toast({ title: t('common.error', 'Une erreur est survenue'), variant: 'destructive' });
+      } catch (error) {
+        // Le serveur explique le refus (ex. site qui accueille des événements)
+        toast({
+          title: t('common.error', 'Une erreur est survenue'),
+          description: error instanceof Error ? error.message : undefined,
+          variant: 'destructive',
+        });
       } finally {
         setIsDeleting(false);
         setDeleteConfirmOpen(false);

@@ -11,6 +11,7 @@ const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
+const { supprimerLieu } = require('./patrimoine/suppressionLieu');
 
 const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
@@ -412,22 +413,11 @@ class LieuService extends BaseService {
   }
 
   /**
-   * Trouver un lieu par ID avec ses evenements (pour verification avant suppression)
-   * @returns {{ lieu: Object|null, hasEvents: boolean }}
+   * Supprimer un lieu et ses points de visite, sauf s'il accueille des événements
+   * @returns {Promise<{ trouve: boolean, evenements: number, supprime: boolean }>}
    */
   async deleteLieu(id) {
-    const lieu = await this.models.Lieu.findByPk(id, {
-      include: [{ model: this.models.Evenement }]
-    });
-
-    if (!lieu) return { lieu: null, hasEvents: false };
-
-    if (lieu.Evenements && lieu.Evenements.length > 0) {
-      return { lieu, hasEvents: true };
-    }
-
-    await lieu.destroy();
-    return { lieu, hasEvents: false };
+    return supprimerLieu(this.models, id);
   }
 
   // ========================================================================

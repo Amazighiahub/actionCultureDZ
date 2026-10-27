@@ -152,7 +152,8 @@
     "created": "Heritage site created successfully",
     "updated": "Site updated",
     "deleted": "Site deleted",
-    "editForbidden": "Only the creator of the site and the moderators can edit it."
+    "editForbidden": "Only the creator of the site and the moderators can edit it.",
+    "utiliseParEvenements": "This site hosts ${count} event(s): move them to another place first, then delete the site."
   },
   "artisanat": {
     "created": "Craft created successfully",

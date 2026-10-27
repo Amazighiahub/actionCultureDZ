@@ -14,6 +14,8 @@
  * le participant ne choisit pas son prix.
  */
 
+const { texteLisible } = require('../../helpers/i18n');
+
 const MODES = ['gratuit', 'payant', 'profil'];
 const PRIX_MAX = 10000000;
 const PROFILS_MAX = 20;
@@ -50,8 +52,7 @@ const nombre = (v) => {
 
 const texteLabel = (label) => {
   if (!label) return '';
-  if (typeof label === 'string') return label.trim();
-  return String(label.fr || label.ar || label.en || '').trim();
+  return texteLisible(label).trim();
 };
 
 const sansPrix = (prix) => prix === '' || prix === null || prix === undefined;

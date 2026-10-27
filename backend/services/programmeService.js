@@ -7,7 +7,7 @@
 const BaseService = require('./core/baseService');
 const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
-const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { csvCell } = require('../utils/csv');
 
 class ProgrammeService extends BaseService {
@@ -483,7 +483,7 @@ class ProgrammeService extends BaseService {
     }
 
     // Cas 3 : même prénom et même nom qu'un intervenant existant (sans e-mail) → le réutiliser
-    const texte = (v) => (typeof v === 'string' ? v : (v?.fr || Object.values(v || {}).find(Boolean) || '')).trim();
+    const texte = (v) => texteLisible(v).trim();
     const nom = texte(interv.nom);
     const prenom = texte(interv.prenom);
     if (!nom && !prenom) {

@@ -3,6 +3,8 @@
  * personnalité. Règles communes de visibilité et de présentation (image, résumé).
  */
 
+const { peutGerer } = require('./droits');
+
 const STATUTS_EN_COURS = ['brouillon', 'en_attente'];
 
 /** Œuvre de l'article, avec son résumé et ses images (pour l'include du lien) */
@@ -24,7 +26,7 @@ const includeOeuvreCarte = (models) => ({
 const estVisible = (oeuvre, idContributeur, { userId = null, isModerator = false } = {}) => {
   if (oeuvre.statut === 'publie') return true;
   if (!STATUTS_EN_COURS.includes(oeuvre.statut)) return isModerator;
-  return isModerator || (!!userId && (oeuvre.saisi_par === userId || idContributeur === userId));
+  return peutGerer([oeuvre.saisi_par, idContributeur], { userId, isModerator });
 };
 
 /** Carte affichée : titre, résumé, première image, état de validation */
@@ -74,7 +76,7 @@ const refusLien = (oeuvre, { userId, isModerator = false } = {}) => {
   if (!oeuvre) return { code: 400, message: 'Article introuvable' };
   if (![4, 5].includes(oeuvre.id_type_oeuvre)) return { code: 400, message: 'Seul un article peut être relié comme page détaillée' };
   if (oeuvre.statut !== 'publie' && !STATUTS_EN_COURS.includes(oeuvre.statut)) return { code: 400, message: 'Cet article n’est plus disponible' };
-  if (oeuvre.statut !== 'publie' && !isModerator && oeuvre.saisi_par !== userId) {
+  if (oeuvre.statut !== 'publie' && !peutGerer(oeuvre.saisi_par, { userId, isModerator })) {
     return { code: 403, message: 'Seul l’auteur peut relier un article qui n’est pas encore publié' };
   }
   return null;

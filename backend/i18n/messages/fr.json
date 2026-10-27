@@ -152,7 +152,8 @@
     "created": "Site patrimonial créé avec succès",
     "updated": "Site mis à jour",
     "deleted": "Site supprimé",
-    "editForbidden": "Seuls le créateur du site et la modération peuvent le modifier."
+    "editForbidden": "Seuls le créateur du site et la modération peuvent le modifier.",
+    "utiliseParEvenements": "Ce site accueille ${count} événement(s) : changez d'abord leur lieu, puis supprimez le site."
   },
   "artisanat": {
     "created": "Artisanat créé avec succès",

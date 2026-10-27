@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
 const handlebars = require('handlebars');
-const { translate, lireMultiLang } = require('../helpers/i18n');
+const { texteLisible } = require('../helpers/i18n');
 
 class EmailService {
   constructor() {
@@ -60,7 +60,7 @@ class EmailService {
 
   /** Texte d'un champ multilingue (prénom, nom, nom d'événement…) : français, sinon la langue remplie */
   _texte(val) {
-    return translate(lireMultiLang(val), 'fr');
+    return texteLisible(val);
   }
 
   /** Prénom pour « Bonjour … » ; le nom quand le prénom est vide (comptes créés par import) */
@@ -626,8 +626,8 @@ class EmailService {
    */
   async notifierValidationProfessionnel(professionnel, evenement, statut, notes = '') {
     try {
-      const prenomStr = typeof professionnel.prenom === 'object' ? (professionnel.prenom.fr || professionnel.prenom.ar || '') : (professionnel.prenom || '');
-      const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+      const prenomStr = texteLisible(professionnel.prenom);
+      const nomEvenementStr = texteLisible(evenement.nom_evenement);
       const statutText = statut === 'confirme' ? 'acceptée' : 'refusée';
       const statusColor = statut === 'confirme' ? '#27ae60' : '#e74c3c';
       const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
@@ -668,7 +668,7 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par participant
    */
   async notifierAnnulationEvenement(participants, evenement, raison) {
-    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+    const nomEvenementStr = texteLisible(evenement.nom_evenement);
 
     const results = await this._parPaquets(participants, async (participant) => {
       try {
@@ -711,8 +711,8 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par participant
    */
   async notifierModificationProgramme(participants, evenement, programme, typeModification = 'general') {
-    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
-    const titreProgramme = typeof programme.titre === 'object' ? (programme.titre.fr || programme.titre.ar || '') : (programme.titre || '');
+    const nomEvenementStr = texteLisible(evenement.nom_evenement);
+    const titreProgramme = texteLisible(programme.titre);
 
     const titres = {
       'general': 'Programme modifié',
@@ -761,8 +761,8 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par utilisateur
    */
   async notifierNouvelEvenement(users, evenement) {
-    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
-    const descriptionStr = typeof evenement.description === 'object' ? (evenement.description.fr || evenement.description.ar || '') : (evenement.description || '');
+    const nomEvenementStr = texteLisible(evenement.nom_evenement);
+    const descriptionStr = texteLisible(evenement.description);
     const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
 
     const results = await this._parPaquets(users, async (user) => {

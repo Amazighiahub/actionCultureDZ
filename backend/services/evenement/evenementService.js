@@ -9,12 +9,12 @@ const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
 const { lireTarification, tarificationDe, configAvecProfil, montantInscription } = require('./tarification');
-const { mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
+const { mergeTranslations, lireMultiLang, texteLisible } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { evenementPath } = require('../../utils/slug');
 
 /** Nom lisible d'un événement (nom multilingue) pour les notifications */
-const nomLisible = (nom) => (typeof nom === 'object' && nom ? (nom.fr || nom.ar || Object.values(nom).find(Boolean)) : nom) || 'Événement';
+const nomLisible = (nom) => texteLisible(nom) || 'Événement';
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {

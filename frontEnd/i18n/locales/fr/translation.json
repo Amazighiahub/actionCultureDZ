@@ -2762,7 +2762,7 @@
       "visits": "{{count}} visites",
       "deleteDialog": {
         "title": "Supprimer le site patrimonial",
-        "description": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?"
+        "description": "Supprimer « {{name}} » et tous ses points de visite ? Cette action est irréversible. Un site qui accueille des événements ne peut pas être supprimé."
       },
       "deleted": "Site supprimé avec succès",
       "count": "{{count}} site(s)",
