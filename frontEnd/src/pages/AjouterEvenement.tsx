@@ -773,7 +773,7 @@ const AjouterEvenement = () => {
                     value={formData.nom}
                     onChange={(value) => { clearFieldError('nom'); setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } })); }}
                     required
-                    requiredLanguages={['fr']}
+                    requiredLanguages={[]}
                     placeholder={t('events.create.eventNamePlaceholder')}
                     aria-invalid={!!fieldErrors.nom}
                   />
@@ -1160,7 +1160,7 @@ const AjouterEvenement = () => {
                   setOrgFormErrors(prev => { const next = { ...prev }; delete next.nom; return next; });
                 }}
                 required
-                requiredLanguages={['fr']}
+                requiredLanguages={[]}
                 placeholder={t('organisations.create.namePlaceholder', 'Ex: Association culturelle...')}
                 errors={orgFormErrors.nom ? { fr: orgFormErrors.nom } : undefined}
               />

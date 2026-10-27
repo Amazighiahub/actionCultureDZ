@@ -2462,7 +2462,21 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "Impact Factor",
     "placeholder_375": "Ex: 3.75",
-    "article_valu_par": "Article évalué par les pairs"
+    "article_valu_par": "Article évalué par les pairs",
+    "blocs": {
+      "text": "Paragraphe",
+      "heading": "Titre",
+      "image": "Image",
+      "video": "Vidéo",
+      "citation": "Citation",
+      "list": "Liste",
+      "table": "Tableau",
+      "code": "Code",
+      "separator": "Séparateur",
+      "embed": "Intégration"
+    },
+    "insererIci": "Insérer ici",
+    "choisirTypeBloc": "Choisir le type de bloc à insérer :"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",

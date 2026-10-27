@@ -700,21 +700,18 @@ describe('AjouterEvenement', () => {
       ]);
     });
 
-    test('seules les langues requises bloquent la validation', async () => {
+    test('aucune langue imposée : une seule suffit', async () => {
       render(<AjouterEvenement />);
       await waitForDataLoad();
 
       const nomContainer = screen.getByTestId('multilang-nom');
 
-      // seul fr est requise (requiredLanguages={['fr']})
-      expect(within(nomContainer).getByTestId('required-fr')).toBeInTheDocument();
+      // Aucune langue marquée obligatoire (requiredLanguages={[]})
+      for (const code of ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng']) {
+        expect(within(nomContainer).queryByTestId(`required-${code}`)).not.toBeInTheDocument();
+      }
 
-      // en, tz-ltn, tz-tfng ne sont PAS requises
-      expect(within(nomContainer).queryByTestId('required-en')).not.toBeInTheDocument();
-      expect(within(nomContainer).queryByTestId('required-tz-ltn')).not.toBeInTheDocument();
-      expect(within(nomContainer).queryByTestId('required-tz-tfng')).not.toBeInTheDocument();
-
-      // FR seul suffit (validation: !fr.trim() && !ar.trim())
+      // Une seule langue remplie suffit
       await user.type(screen.getByTestId('input-nom-fr'), 'Nom en francais seulement');
       await selectEventType(user);
       await user.type(document.getElementById('date-debut')!, '2026-06-15');

@@ -453,7 +453,7 @@ const AjouterServicePro: React.FC = () => {
                     name="nom"
                     value={formData.nom}
                     onChange={(value) => updateField('nom', value)}
-                    requiredLanguages={['fr']}
+                    requiredLanguages={[]}
                     placeholder="Ex: Restaurant Le Casbah"
                     aria-invalid={!!fieldErrors.nom}
                   />

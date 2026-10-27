@@ -2336,7 +2336,21 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "ⴰⴼⴰⴽⵜⵓⵔ ⵏ ⵜⵓⴷⵙⵉ",
     "placeholder_375": "ⴰⵎ: 3.75",
-    "article_valu_par": "ⴰⵎⴰⴳⵔⴰⴷ ⵉⵜⵜⵓⵙⵖⵏⵜⵏ ⵙⵖⵓⵔ ⵉⵎⴷⴷⵓⴽⴽⴰⵍ"
+    "article_valu_par": "ⴰⵎⴰⴳⵔⴰⴷ ⵉⵜⵜⵓⵙⵖⵏⵜⵏ ⵙⵖⵓⵔ ⵉⵎⴷⴷⵓⴽⴽⴰⵍ",
+    "blocs": {
+      "text": "ⵜⴰⵙⴻⴷⴷⴰⵔⵜ",
+      "heading": "ⴰⵣⵡⴻⵍ",
+      "image": "ⵜⵓⴳⵏⴰ",
+      "video": "ⵜⴰⴱⵉⴷⵢⵓⵜ",
+      "citation": "ⵜⴰⵏⴻⴱⴷⵓⵔⵜ",
+      "list": "ⵜⴰⴱⴷⴰⵔⵜ",
+      "table": "ⵜⴰⴼⴻⵍⵡⵉⵜ",
+      "code": "ⵜⴰⵏⴳⴰⵍⵜ",
+      "separator": "ⴰⵎⴻⴱⴹⴰⵢ",
+      "embed": "ⴰⵙⴻⴷⴷⵓ"
+    },
+    "insererIci": "ⵙⴻⴽⵛⴻⵎ ⴷⴰ",
+    "choisirTypeBloc": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ ⵏ ⵢⵉⵃⴷⴻⵔ ⴰⵔⴰ ⵜⵙⴻⴽⵛⵎⴻⴹ:"
   },
   "articles_editarticle": {
     "chargement_larticle": "ⴰⵙⵉⴷⵔ ⵏ ⵓⵎⴰⴳⵔⴰⴷ...",

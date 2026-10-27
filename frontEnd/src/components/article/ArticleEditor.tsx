@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import type { ArticleEditorProps } from '@/types/models/articles.types';
 
 import { PREVIEW_STYLES } from './articlePreview.styles';
-import { BLOCK_TEMPLATES, BLOCK_ICONS } from './articleEditor.constants';
+import { BLOCK_TEMPLATES, BLOCK_ICONS, nomBloc } from './articleEditor.constants';
 import InsertBlockBar from './InsertBlockBar';
 import ArticleBlockEditor from './ArticleBlockEditor';
 import ArticleMetadataTab from './ArticleMetadataTab';
@@ -214,7 +214,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                         return (
                           <Button key={template.id} variant="outline" size="sm" onClick={() => editor.addBlock(template.type_block)}>
                             {Icon && <Icon className="h-4 w-4 me-2" />}
-                            {template.name}
+                            {nomBloc(t, template)}
                           </Button>
                         );
                       })}

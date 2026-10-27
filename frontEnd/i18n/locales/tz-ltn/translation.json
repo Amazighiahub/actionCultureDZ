@@ -2336,7 +2336,21 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "Azal n usɣiwel",
     "placeholder_375": "Ex: 3.75",
-    "article_valu_par": "Umɣal yettwaqar s yimdukal"
+    "article_valu_par": "Umɣal yettwaqar s yimdukal",
+    "blocs": {
+      "text": "Taseddart",
+      "heading": "Azwel",
+      "image": "Tugna",
+      "video": "Tavidyut",
+      "citation": "Tanebdurt",
+      "list": "Tabdart",
+      "table": "Tafelwit",
+      "code": "Tangalt",
+      "separator": "Amebḍay",
+      "embed": "Aseddu"
+    },
+    "insererIci": "Sekcem da",
+    "choisirTypeBloc": "Fren anaw n yiḥder ara tsekcmeḍ:"
   },
   "articles_editarticle": {
     "chargement_larticle": "Asali n umɣal...",

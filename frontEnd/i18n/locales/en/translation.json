@@ -2437,7 +2437,21 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "Impact Factor",
     "placeholder_375": "E.g.: 3.75",
-    "article_valu_par": "Peer-reviewed article"
+    "article_valu_par": "Peer-reviewed article",
+    "blocs": {
+      "text": "Paragraph",
+      "heading": "Heading",
+      "image": "Image",
+      "video": "Video",
+      "citation": "Quote",
+      "list": "List",
+      "table": "Table",
+      "code": "Code",
+      "separator": "Separator",
+      "embed": "Embed"
+    },
+    "insererIci": "Insert here",
+    "choisirTypeBloc": "Choose the type of block to insert:"
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",

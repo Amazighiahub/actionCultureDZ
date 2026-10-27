@@ -2913,7 +2913,21 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "معامل التأثير",
     "placeholder_375": "مثال: 3.75",
-    "article_valu_par": "مقال محكّم من قبل الأقران"
+    "article_valu_par": "مقال محكّم من قبل الأقران",
+    "blocs": {
+      "text": "فقرة",
+      "heading": "عنوان",
+      "image": "صورة",
+      "video": "فيديو",
+      "citation": "اقتباس",
+      "list": "قائمة",
+      "table": "جدول",
+      "code": "شيفرة",
+      "separator": "فاصل",
+      "embed": "تضمين"
+    },
+    "insererIci": "أدرج هنا",
+    "choisirTypeBloc": "اختر نوع الكتلة المراد إدراجها:"
   },
   "articles": {
     "create": {

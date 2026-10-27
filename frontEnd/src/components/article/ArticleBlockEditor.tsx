@@ -21,7 +21,7 @@ import type {
 } from '@/types/models/articles.types';
 
 import { isListBlock, isTableBlock } from '@/types/models/articles.types';
-import { BLOCK_TEMPLATES } from './articleEditor.constants';
+import { BLOCK_TEMPLATES, nomBloc } from './articleEditor.constants';
 
 const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
   block, index, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate, canMoveUp, canMoveDown
@@ -338,7 +338,10 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <Badge variant="secondary">
-            {BLOCK_TEMPLATES.find((b) => b.type_block === block.type_block)?.name || block.type_block}
+            {(() => {
+              const modele = BLOCK_TEMPLATES.find((b) => b.type_block === block.type_block);
+              return modele ? nomBloc(t, modele) : block.type_block;
+            })()}
           </Badge>
           <div className="flex gap-1">
             <Button size="icon" variant="ghost" onClick={onMoveUp} disabled={!canMoveUp} title={t("article_articleeditor.title_monter")}>

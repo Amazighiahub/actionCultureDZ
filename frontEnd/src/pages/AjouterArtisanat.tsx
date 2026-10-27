@@ -378,7 +378,7 @@ const AjouterArtisanat: React.FC = () => {
                       setIsDirty(true);
                     }}
                     required
-                    requiredLanguages={['fr']}
+                    requiredLanguages={[]}
                     placeholder={t('ajouterArtisanat.nomPlaceholder', 'Ex: Tapis berbère traditionnel')}
                     errors={fieldErrors.nom ? { fr: fieldErrors.nom } : undefined}
                   />
@@ -395,7 +395,7 @@ const AjouterArtisanat: React.FC = () => {
                     type="textarea"
                     rows={4}
                     required
-                    requiredLanguages={['fr']}
+                    requiredLanguages={[]}
                     errors={fieldErrors.description ? { fr: fieldErrors.description } : undefined}
                     placeholder={t('ajouterArtisanat.descriptionPlaceholder', 'Décrivez votre produit, ses caractéristiques...')}
                   />
