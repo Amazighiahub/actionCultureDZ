@@ -150,6 +150,22 @@ const lireMultiLang = (value) => {
 };
 
 /**
+ * Texte affichable d'un champ multilingue (objet, texte JSON ou simple chaîne) :
+ * la langue demandée, sinon le français, sinon l'arabe, sinon la première langue remplie.
+ * Un texte écrit seulement en tamazight ou en anglais n'est donc jamais vide.
+ */
+const texteLisible = (value, lang = DEFAULT_LANGUAGE) => {
+  const v = lireMultiLang(value);
+  if (v == null) return '';
+  if (typeof v !== 'object') return String(v);
+  const rempli = (x) => (typeof x === 'string' && x.trim() ? x : '');
+  return rempli(v[lang]) || rempli(v.fr) || rempli(v.ar) || Object.values(v).map(rempli).find(Boolean) || '';
+};
+
+/** Vrai si au moins une langue est remplie */
+const aUnTexte = (value) => texteLisible(value).trim().length > 0;
+
+/**
  * Fusionne les traductions existantes avec de nouvelles
  * @param {Object} existing - Traductions existantes
  * @param {Object} updates - Nouvelles traductions
@@ -333,6 +349,8 @@ module.exports = {
   translateDeep,
   createMultiLang,
   lireMultiLang,
+  texteLisible,
+  aUnTexte,
   mergeTranslations,
   prepareMultiLangField,
   buildMultiLangSearch,

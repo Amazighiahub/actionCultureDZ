@@ -195,10 +195,6 @@ class IntervenantController extends BaseController {
     res.json({ success: true });
   }
 
-  _estModeration(req) {
-    return req.user?.isAdmin === true || req.user?.isModerateur === true;
-  }
-
   async getIntervenantEdition(req, res) {
     try {
       const { intervenant, peutModifier, raison } = await this.intervenantService.droitsEdition(req.params.id, req.user);

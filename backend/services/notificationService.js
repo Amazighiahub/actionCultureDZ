@@ -7,7 +7,7 @@ const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
 const { getClient: getRedisClient } = require('../utils/redisClient');
-const { translate, lireMultiLang } = require('../helpers/i18n');
+const { texteLisible } = require('../helpers/i18n');
 
 class NotificationService {
   constructor(models, options = {}) {
@@ -30,7 +30,7 @@ class NotificationService {
 
   // Texte d'un champ multilingue (français, sinon la langue remplie : arabe, tamazight…)
   _str(val) {
-    return translate(lireMultiLang(val), 'fr');
+    return texteLisible(val);
   }
 
   /**

@@ -10,6 +10,7 @@
 const BaseService = require('../core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent } = require('../../utils/sanitizeArticle');
+const { peutGerer } = require('../../utils/droits');
 const { mergeTranslations, translate, lireMultiLang } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 
@@ -38,7 +39,7 @@ class ArticleRevisionService extends BaseService {
     const { ArticleRevision, Oeuvre, User } = this.models;
     const oeuvre = await Oeuvre.findByPk(idOeuvre, { attributes: ['id_oeuvre', 'saisi_par'] });
     if (!oeuvre) throw this._notFoundError(idOeuvre);
-    const gestion = isModerator || (!!userId && oeuvre.saisi_par === userId);
+    const gestion = peutGerer(oeuvre.saisi_par, { userId, isModerator });
     const revisions = await ArticleRevision.findAll({
       where: gestion ? { id_oeuvre: idOeuvre } : {
         id_oeuvre: idOeuvre,
@@ -60,9 +61,9 @@ class ArticleRevisionService extends BaseService {
     });
     if (!revision) return null;
     const oeuvre = await Oeuvre.findByPk(idOeuvre, { attributes: ['saisi_par'] });
-    const autorise = isModerator || (!!userId && (revision.id_auteur === userId || oeuvre?.saisi_par === userId));
+    const autorise = peutGerer([revision.id_auteur, oeuvre?.saisi_par], { userId, isModerator });
     if (!autorise) throw this._forbiddenError('Cette proposition n’est visible que par son auteur, l’auteur de l’article et l’administration');
-    return { ...revision.get({ plain: true }), peut_decider: isModerator || oeuvre?.saisi_par === userId };
+    return { ...revision.get({ plain: true }), peut_decider: peutGerer(oeuvre?.saisi_par, { userId, isModerator }) };
   }
 
   // --------------------------------------------------------------------------
@@ -129,7 +130,7 @@ class ArticleRevisionService extends BaseService {
     if (!revision) throw this._notFoundError(idRevision);
     const oeuvre = await Oeuvre.findByPk(idOeuvre);
     if (!oeuvre) throw this._notFoundError(idOeuvre);
-    if (!isModerator && oeuvre.saisi_par !== userId) {
+    if (!peutGerer(oeuvre.saisi_par, { userId, isModerator })) {
       throw this._forbiddenError('Seuls l’auteur de l’article et l’administration peuvent décider');
     }
     if (revision.statut !== 'en_attente') throw this._validationError('Cette proposition a déjà été traitée');

@@ -8,6 +8,7 @@
  */
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const logger = require('../../utils/logger');
+const { texteLisible } = require('../../helpers/i18n');
 
 /** Textes suivis, avec leur nom dans les messages */
 const LIBELLES = {
@@ -32,11 +33,7 @@ const lireJson = (v) => {
   try { return JSON.parse(v); } catch { return v; }
 };
 const identiques = (a, b) => JSON.stringify(lireJson(a)) === JSON.stringify(lireJson(b));
-const texteDe = (v) => {
-  const val = lireJson(v);
-  if (val && typeof val === 'object') return String(val.fr || val.ar || Object.values(val).find(Boolean) || '');
-  return val ? String(val) : '';
-};
+const texteDe = (v) => texteLisible(v);
 const nomPersonne = (user) => [texteDe(user?.prenom), texteDe(user?.nom)].filter(Boolean).join(' ').trim() || 'Une personne';
 
 /** « l'histoire », « l'histoire et les références historiques », « a, b et c » */

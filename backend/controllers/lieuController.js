@@ -292,17 +292,18 @@ class LieuController extends BaseController {
 
       const result = await this.service.deleteLieu(id);
 
-      if (!result.lieu) {
+      if (!result.trouve) {
         return res.status(404).json({
           success: false,
           error: req.t('lieu.notFound')
         });
       }
 
-      if (result.hasEvents) {
-        return res.status(400).json({
+      if (result.evenements > 0) {
+        return res.status(409).json({
           success: false,
-          error: req.t('lieu.hasEvents')
+          error: req.t('lieu.hasEvents'),
+          code: 'LIEU_UTILISE'
         });
       }
 

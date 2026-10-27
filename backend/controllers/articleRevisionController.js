@@ -11,7 +11,7 @@ class ArticleRevisionController extends BaseController {
   }
 
   _compte(req) {
-    return { userId: req.user?.id_user || null, isModerator: req.user?.isAdmin === true || req.user?.isModerateur === true };
+    return this._droits(req);
   }
 
   /** Propositions visibles par le compte (toutes pour l'auteur et l'administration) */

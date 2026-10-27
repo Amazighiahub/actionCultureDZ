@@ -132,7 +132,7 @@ class ServiceController extends BaseController {
         parseInt(req.params.id),
         req.body,
         req.user.id_user,
-        req.user.isAdmin === true || req.user.isModerateur === true
+        this._estModeration(req)
       );
       res.json({
         success: true,
@@ -149,7 +149,7 @@ class ServiceController extends BaseController {
       await this.serviceService.delete(
         parseInt(req.params.id),
         req.user.id_user,
-        req.user.isAdmin === true || req.user.isModerateur === true
+        this._estModeration(req)
       );
       res.json({ success: true, message: req.t('service.deleted') });
     } catch (error) {

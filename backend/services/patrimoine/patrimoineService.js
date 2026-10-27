@@ -8,8 +8,10 @@ const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
-const { mergeTranslations } = require('../../helpers/i18n');
+const { mergeTranslations, texteLisible } = require('../../helpers/i18n');
 const historique = require('./historiqueLieu');
+const { supprimerLieu } = require('./suppressionLieu');
+const { memeUtilisateur, peutGerer } = require('../../utils/droits');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
 
 /**
@@ -420,10 +422,10 @@ class PatrimoineService extends BaseService {
     const { Lieu } = this.models || {};
     const site = await Lieu.findByPk(siteId, { attributes: ['id_lieu', 'id_createur', 'id_lieu_parent'] });
     if (!site) throw this._notFoundError(siteId);
-    if (userId && site.id_createur === userId) return true;
+    if (memeUtilisateur(site.id_createur, userId)) return true;
     if (userId && site.id_lieu_parent) {
       const parent = await Lieu.findByPk(site.id_lieu_parent, { attributes: ['id_createur'] });
-      return !!parent && parent.id_createur === userId;
+      return !!parent && memeUtilisateur(parent.id_createur, userId);
     }
     return false;
   }
@@ -438,7 +440,7 @@ class PatrimoineService extends BaseService {
     const { Lieu, Intervenant, LieuIntervenant } = this.models || {};
     const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
     if (!lieu) throw this._notFoundError(lieuId);
-    const texte = (v) => (typeof v === 'string' ? v : (v?.fr || v?.ar || '')).trim();
+    const texte = (v) => texteLisible(v).trim();
     const nom = texte(data.nom);
     const prenom = texte(data.prenom);
     if (!nom) throw this._validationError('Le nom de la personnalité est requis');
@@ -498,10 +500,10 @@ class PatrimoineService extends BaseService {
     const { LieuIntervenant, Lieu } = this.models || {};
     const lien = await LieuIntervenant.findOne({ where: { id_lieu_intervenant: lieuIntervenantId, id_lieu: lieuId } });
     if (!lien) return 'introuvable';
-    let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
+    let autorise = peutGerer(lien.id_contributeur, { userId, isModerator });
     if (!autorise && userId) {
       const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
-      autorise = !!lieu && lieu.id_createur === userId;
+      autorise = !!lieu && memeUtilisateur(lieu.id_createur, userId);
     }
     if (!autorise) return 'interdit';
     await lien.destroy();
@@ -527,7 +529,7 @@ class PatrimoineService extends BaseService {
       .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
       .map(l => ({
         ...versCarte(l.id_lieu_oeuvre, l.Oeuvre,
-          isModerator || (!!userId && (l.id_contributeur === userId || lieu.id_createur === userId))),
+          peutGerer([l.id_contributeur, lieu.id_createur], { userId, isModerator })),
         section_patrimoine: l.section_patrimoine
       })));
   }
@@ -694,10 +696,10 @@ class PatrimoineService extends BaseService {
     const { LieuOeuvre, Lieu } = this.models || {};
     const lien = await LieuOeuvre.findOne({ where: { id_lieu_oeuvre: lieuOeuvreId, id_lieu: lieuId } });
     if (!lien) return 'introuvable';
-    let autorise = isModerator || (!!userId && lien.id_contributeur === userId);
+    let autorise = peutGerer(lien.id_contributeur, { userId, isModerator });
     if (!autorise && userId) {
       const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
-      autorise = !!lieu && lieu.id_createur === userId;
+      autorise = !!lieu && memeUtilisateur(lieu.id_createur, userId);
     }
     if (!autorise) return 'interdit';
     await lien.destroy();
@@ -859,13 +861,18 @@ class PatrimoineService extends BaseService {
    * Supprimer un site
    */
   async delete(id) {
-    const existing = await this.repository.findById(id);
-    if (!existing) {
+    const resultat = await supprimerLieu(this.models, id);
+    if (!resultat.trouve) {
       throw this._notFoundError(id);
     }
-
-    await this.repository.delete(id);
-    this.logger.info(`Site patrimonial supprimé: ${id}`);
+    if (!resultat.supprime) {
+      const err = new Error(`Ce site accueille ${resultat.evenements} événement(s)`);
+      err.statusCode = 409;
+      err.code = 'LIEU_UTILISE';
+      err.data = { evenements: resultat.evenements };
+      throw err;
+    }
+    this.logger.info(`Site patrimonial supprimé: ${id} (${resultat.points} point(s) de visite)`);
     return true;
   }
 
@@ -1020,7 +1027,7 @@ class PatrimoineService extends BaseService {
     const { Lieu } = this.models || {};
     const site = await Lieu.findByPk(siteId, { attributes: ['id_lieu', 'id_createur'] });
     if (!site) throw this._notFoundError(siteId);
-    if (!isModerator && site.id_createur !== userId) {
+    if (!peutGerer(site.id_createur, { userId, isModerator })) {
       throw this._forbiddenError('Seuls le créateur du site et la modération peuvent changer l\'ordre de visite');
     }
     const ordre = Array.isArray(ids) ? ids.map(id => parseInt(id, 10)) : [];

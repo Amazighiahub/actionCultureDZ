@@ -2484,7 +2484,7 @@
       "visits": "{{count}} timerziwin",
       "deleteDialog": {
         "title": "Kkes amḍiq n uẓar",
-        "description": "Tebɣiḍ s tidet ad tekkseḍ \"{{name}}\"?"
+        "description": "Ad tekkseḍ « {{name}} » d akk tineqqiḍin-is n tirza? Ur yettuɣal ara. Asit yesεan tineḍḍurin ur yettwakkas ara."
       },
       "deleted": "Asmel yettwakkes akken iwata",
       "count": "{{count}} n usmel (ismal)",

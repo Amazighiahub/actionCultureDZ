@@ -1,4 +1,5 @@
 const BaseService = require('../core/baseService');
+const { texteLisible } = require('../../helpers/i18n');
 
 class OrganisationService extends BaseService {
   constructor(repository, options = {}) {
@@ -29,7 +30,7 @@ class OrganisationService extends BaseService {
 
     const nomI18n = typeof nom === 'string' ? { fr: nom } : nom;
     const descI18n = typeof description === 'string' ? { fr: description } : (description || {});
-    const searchStr = (typeof nom === 'string' ? nom : (nom?.fr || '')).trim();
+    const searchStr = texteLisible(nom).trim();
 
     if (searchStr) {
       const existing = await this.repository.findByName(searchStr);
