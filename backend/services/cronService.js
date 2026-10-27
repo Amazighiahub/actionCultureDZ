@@ -89,6 +89,10 @@ class CronService {
     // 11. RGPD : Purge des vues anciennes (>90 jours) - Tous les dimanches à 3h
     this.scheduleJob('clean-old-views', '0 3 * * 0', () => this.cleanOldViews());
 
+    // 12. RGPD : adresses IP et navigateurs des journaux de sécurité et des scans de QR codes
+    // effacés après 12 mois - Tous les dimanches à 4h
+    this.scheduleJob('anonymize-old-logs', '0 4 * * 0', () => this.anonymizeOldLogs());
+
     logger.info(`📅 ${this.jobs.size} tâches planifiées activées`);
   }
 
@@ -243,6 +247,34 @@ class CronService {
     });
 
     logger.info(`🧹 ${result} vues anciennes supprimées (RGPD rétention ${process.env.VIEW_RETENTION_DAYS || 90}j)`);
+  }
+
+  /**
+   * RGPD : après 12 mois (LOG_IP_RETENTION_MONTHS), l'adresse IP et le navigateur sont effacés des
+   * journaux de sécurité (audit_logs) et des scans de QR codes (qr_scans) ; les lignes restent pour
+   * l'historique et les statistiques. Par lots de 5 000 : pas de long verrou sur la table.
+   */
+  async anonymizeOldLogs() {
+    const sequelize = this.models?.sequelize;
+    if (!sequelize) return;
+    const mois = parseInt(process.env.LOG_IP_RETENTION_MONTHS) || 12;
+    const tables = [['audit_logs', 'date_action'], ['qr_scans', 'date_scan']];
+    for (const [table, colonneDate] of tables) {
+      let total = 0;
+      for (;;) {
+        const [res] = await sequelize.query(
+          `UPDATE \`${table}\` SET ip_address = NULL, user_agent = NULL
+           WHERE \`${colonneDate}\` < DATE_SUB(NOW(), INTERVAL :mois MONTH)
+             AND (ip_address IS NOT NULL OR user_agent IS NOT NULL)
+           LIMIT 5000`,
+          { replacements: { mois } }
+        );
+        const n = res?.affectedRows ?? 0;
+        total += n;
+        if (n < 5000) break;
+      }
+      logger.info(`🧹 ${table} : adresse IP effacée sur ${total} ligne(s) de plus de ${mois} mois`);
+    }
   }
 
   /**

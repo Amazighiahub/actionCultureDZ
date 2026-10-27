@@ -82,7 +82,7 @@
 | **Catégories de personnes** | Tous les visiteurs (inscrits et anonymes) |
 | **Données collectées** | IP anonymisée (dernier octet tronqué), user agent, page consultée, session anonyme |
 | **Destinataires** | Administrateurs (statistiques agrégées uniquement) |
-| **Durée de conservation** | 90 jours (purge automatique via cron hebdomadaire) |
+| **Durée de conservation** | Vues : 90 jours (purge automatique via cron hebdomadaire). Scans de QR codes : adresse IP et navigateur effacés après 12 mois |
 | **Mesures de sécurité** | IP anonymisée avant stockage (recommandation CNIL), aucun cookie de traçage tiers |
 
 ---
@@ -139,7 +139,7 @@
 | **Catégories de personnes** | Tous les visiteurs et utilisateurs |
 | **Données collectées** | IP (logs HTTP), user ID, action effectuée, horodatage. Emails et téléphones masqués dans les logs ; jetons retirés des URL journalisées ; données personnelles masquées dans le journal d'audit |
 | **Destinataires** | Administrateurs, Sentry (monitoring d'erreurs, optionnel) |
-| **Durée de conservation** | Logs fichiers : rotation automatique (max 10 Mo × 10 fichiers). Audit logs : 90 jours |
+| **Durée de conservation** | Logs fichiers : rotation automatique (max 10 Mo × 10 fichiers). Journal d'audit : adresse IP et navigateur effacés après 12 mois (tâche hebdomadaire `anonymize-old-logs`, décision du 27/10/2026), lignes gardées pour l'historique |
 | **Mesures de sécurité** | Logs structurés JSON, mots de passe et tokens jamais loggés, accès fichiers restreint |
 
 ---
