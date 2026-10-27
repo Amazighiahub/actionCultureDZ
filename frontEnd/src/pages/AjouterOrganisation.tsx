@@ -18,6 +18,8 @@ import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
 interface TypeOrganisation {
   id_type_organisation: number;
@@ -137,7 +139,7 @@ const AjouterOrganisation = () => {
 
   const getTypeName = (type: TypeOrganisation): string => {
     if (typeof type.nom === 'object') {
-      return type.nom.fr || type.nom.ar || type.nom.en || '';
+      return getLocalizedText(type.nom, i18n.language);
     }
     return type.nom;
   };

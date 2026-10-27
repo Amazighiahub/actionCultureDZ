@@ -2,6 +2,7 @@
 // Types communs pour le multilingue dans tout le projet
 
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
 export interface TranslatableValue {
   fr?: string;
@@ -92,5 +93,5 @@ export function hasRequiredTranslations(value: TranslatableValue): boolean {
 }
 
 export function getFirstAvailableTranslation(value: TranslatableValue): string {
-  return value.fr || value.ar || value.en || value['tz-ltn'] || value['tz-tfng'] || '';
+  return getLocalizedText(value, i18n.language);
 }

@@ -2350,7 +2350,13 @@
       "embed": "ⴰⵙⴻⴷⴷⵓ"
     },
     "insererIci": "ⵙⴻⴽⵛⴻⵎ ⴷⴰ",
-    "choisirTypeBloc": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ ⵏ ⵢⵉⵃⴷⴻⵔ ⴰⵔⴰ ⵜⵙⴻⴽⵛⵎⴻⴹ:"
+    "choisirTypeBloc": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ ⵏ ⵢⵉⵃⴷⴻⵔ ⴰⵔⴰ ⵜⵙⴻⴽⵛⵎⴻⴹ:",
+    "modifierArticle": "ⵥⵔⴻⴳ ⴰⵎⴰⴳⵔⴰⴷ",
+    "creerArticle": "ⵔⵏⵓ ⴰⵎⴰⴳⵔⴰⴷ",
+    "articleScientifique": "ⴰⵎⴰⴳⵔⴰⴷ ⵓⵙⵙⵏⴰⵏ",
+    "article": "ⴰⵎⴰⴳⵔⴰⴷ",
+    "editer": "ⵥⵔⴻⴳ",
+    "apercu": "ⵜⴰⵙⴽⴰⵏⵜ"
   },
   "articles_editarticle": {
     "chargement_larticle": "ⴰⵙⵉⴷⵔ ⵏ ⵓⵎⴰⴳⵔⴰⴷ...",

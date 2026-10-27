@@ -17,6 +17,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -503,7 +504,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     </p>
                     {duplicates.map((d) => (
                       <div key={d.id_lieu} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded border mb-1">
-                        <span className="text-sm">{typeof d.nom === 'object' ? d.nom.fr || d.nom.ar : d.nom} ({d.typePatrimoine})</span>
+                        <span className="text-sm">{getLocalizedText(d.nom, i18n.language)} ({d.typePatrimoine})</span>
                         <Button variant="outline" size="sm" onClick={() => navigate(`/patrimoine/${d.id_lieu}`)}>
                           {t('common.view', 'Voir')}
                         </Button>
@@ -603,14 +604,14 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   <h4 className="font-semibold flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t('patrimoine.create.summary', 'Récapitulatif')}</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="text-muted-foreground">{t('patrimoine.fields.nom', 'Nom')}</div>
-                    <div className="font-medium">{formData.nom.fr || formData.nom.ar || '—'}</div>
+                    <div className="font-medium">{getLocalizedText(formData.nom, i18n.language, '—')}</div>
                     <div className="text-muted-foreground">{t('patrimoine.fields.type', 'Type')}</div>
                     <div className="font-medium">{getTypeLabel(formData.typePatrimoine)}</div>
                     <div className="text-muted-foreground">{t('patrimoine.fields.adresse', 'Adresse')}</div>
-                    <div className="font-medium">{formData.adresse.fr || formData.adresse.ar || '—'}</div>
+                    <div className="font-medium">{getLocalizedText(formData.adresse, i18n.language, '—')}</div>
                     <div className="text-muted-foreground">{t('patrimoine.fields.position', 'GPS')}</div>
                     <div className="font-medium">{parentId && interieur
-                      ? `${t('patrimoine.points.indoor', 'À l\'intérieur du site')}${formData.repere.fr || formData.repere.ar ? ` — ${formData.repere.fr || formData.repere.ar}` : ''}`
+                      ? `${t('patrimoine.points.indoor', 'À l\'intérieur du site')}${aDuTexte(formData.repere) ? ` — ${getLocalizedText(formData.repere, i18n.language)}` : ''}`
                       : formData.latitude !== 0 ? `${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}` : t('patrimoine.create.noGPS', 'Non défini (centre Algérie)')}</div>
                     <div className="text-muted-foreground">{t('patrimoine.create.photos', 'Photos')}</div>
                     <div className="font-medium">{medias.length}</div>

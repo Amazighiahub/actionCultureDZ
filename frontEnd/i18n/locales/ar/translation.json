@@ -2927,7 +2927,13 @@
       "embed": "تضمين"
     },
     "insererIci": "أدرج هنا",
-    "choisirTypeBloc": "اختر نوع الكتلة المراد إدراجها:"
+    "choisirTypeBloc": "اختر نوع الكتلة المراد إدراجها:",
+    "modifierArticle": "تعديل المقال",
+    "creerArticle": "إنشاء مقال",
+    "articleScientifique": "مقال علمي",
+    "article": "مقال",
+    "editer": "تحرير",
+    "apercu": "معاينة"
   },
   "articles": {
     "create": {

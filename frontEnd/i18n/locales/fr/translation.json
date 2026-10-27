@@ -2476,7 +2476,13 @@
       "embed": "Intégration"
     },
     "insererIci": "Insérer ici",
-    "choisirTypeBloc": "Choisir le type de bloc à insérer :"
+    "choisirTypeBloc": "Choisir le type de bloc à insérer :",
+    "modifierArticle": "Modifier l'article",
+    "creerArticle": "Créer un article",
+    "articleScientifique": "Article scientifique",
+    "article": "Article",
+    "editer": "Éditer",
+    "apercu": "Aperçu"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",

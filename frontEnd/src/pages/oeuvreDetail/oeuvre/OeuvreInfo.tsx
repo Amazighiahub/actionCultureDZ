@@ -14,17 +14,11 @@ import {
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import { getLocalizedText as texteLocalise } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
-// Helper pour extraire le texte d'un champ multilingue
-const getLocalizedText = (value: unknown, fallback: string = ''): string => {
-  if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    return String(obj.fr || obj.ar || obj.en || Object.values(obj).find((v) => typeof v === 'string' && v) || fallback);
-  }
-  return String(value);
-};
+// Texte d'un champ multilingue, dans la langue du site d'abord
+const getLocalizedText = (value: unknown, fallback: string = ''): string => texteLocalise(value, i18n.language, fallback);
 
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;

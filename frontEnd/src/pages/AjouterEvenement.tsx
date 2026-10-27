@@ -36,7 +36,7 @@ import MotsClesInput from '@/components/shared/MotsClesInput';
 import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
 import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
 import type { ConfigInscription } from '@/utils/formulaireInscription';
-import { aDuTexte } from '@/utils/getLocalizedText';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -725,7 +725,7 @@ const AjouterEvenement = () => {
                           <SelectContent>
                             {organisations.map((org) => (
                               <SelectItem key={org.id_organisation as number} value={(org.id_organisation as number).toString()}>
-                                {typeof org.nom === 'object' ? (org.nom as Record<string, string>).fr || (org.nom as Record<string, string>).ar : org.nom as string}
+                                {getLocalizedText(org.nom, i18n.language)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -811,7 +811,7 @@ const AjouterEvenement = () => {
                       <SelectContent>
                         {typesEvenements.map((type) => (
                           <SelectItem key={type.id_type_evenement} value={type.id_type_evenement.toString()}>
-                            {typeof type.nom_type === 'object' ? type.nom_type.fr || type.nom_type.ar || '' : type.nom_type}
+                            {getLocalizedText(type.nom_type, i18n.language)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1184,7 +1184,7 @@ const AjouterEvenement = () => {
                 <SelectContent>
                   {orgTypes.map((type) => (
                     <SelectItem key={type.id_type_organisation} value={type.id_type_organisation.toString()}>
-                      {typeof type.nom === 'object' ? type.nom.fr || type.nom.ar || '' : type.nom}
+                      {getLocalizedText(type.nom, i18n.language)}
                     </SelectItem>
                   ))}
                 </SelectContent>

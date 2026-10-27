@@ -2451,7 +2451,13 @@
       "embed": "Embed"
     },
     "insererIci": "Insert here",
-    "choisirTypeBloc": "Choose the type of block to insert:"
+    "choisirTypeBloc": "Choose the type of block to insert:",
+    "modifierArticle": "Edit the article",
+    "creerArticle": "Create an article",
+    "articleScientifique": "Scientific article",
+    "article": "Article",
+    "editer": "Edit",
+    "apercu": "Preview"
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",

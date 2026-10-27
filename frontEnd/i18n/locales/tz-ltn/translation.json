@@ -2350,7 +2350,13 @@
       "embed": "Aseddu"
     },
     "insererIci": "Sekcem da",
-    "choisirTypeBloc": "Fren anaw n yiḥder ara tsekcmeḍ:"
+    "choisirTypeBloc": "Fren anaw n yiḥder ara tsekcmeḍ:",
+    "modifierArticle": "Ẓreg amagrad",
+    "creerArticle": "Rnu amagrad",
+    "articleScientifique": "Amagrad ussnan",
+    "article": "Amagrad",
+    "editer": "Ẓreg",
+    "apercu": "Taskant"
   },
   "articles_editarticle": {
     "chargement_larticle": "Asali n umɣal...",
