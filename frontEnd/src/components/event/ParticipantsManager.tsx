@@ -523,21 +523,31 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         {getRoleBadge(participant.role_participation)}
                       </div>
                       <p className="text-sm text-muted-foreground">{participant.User.email}</p>
-                      {participant.User.email_verifie === false && participant.statut_participation !== 'annule' && (
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="text-xs text-amber-700">{t('pro.participants.invitation.pasEncore', 'N’a pas encore choisi son mot de passe')}</span>
-                          <Button
-                            variant="outline" size="sm" className="h-7"
-                            onClick={() => renvoyerInvitation(participant.id_user)}
-                            disabled={renvoiEnCours === participant.id_user}
-                          >
-                            {renvoiEnCours === participant.id_user
-                              ? <Loader2 className="h-3 w-3 me-1 animate-spin" aria-hidden="true" />
-                              : <Mail className="h-3 w-3 me-1" aria-hidden="true" />}
-                            {t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
-                          </Button>
-                        </div>
-                      )}
+                      {/* Mot de passe : bouton pour tout participant ; grisé quand la personne a déjà choisi
+                          son mot de passe (l'email « Choisir mon mot de passe » ne servirait à rien) */}
+                      {participant.statut_participation !== 'annule' && (() => {
+                        const aSonMotDePasse = participant.User.email_verifie !== false;
+                        return (
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            {aSonMotDePasse
+                              ? <span className="text-xs text-muted-foreground">{t('pro.participants.invitation.dejaChoisi', 'Mot de passe déjà choisi')}</span>
+                              : <span className="text-xs text-amber-700">{t('pro.participants.invitation.pasEncore', 'N’a pas encore choisi son mot de passe')}</span>}
+                            <Button
+                              variant="outline" size="sm" className="h-7"
+                              onClick={() => renvoyerInvitation(participant.id_user)}
+                              disabled={aSonMotDePasse || renvoiEnCours === participant.id_user}
+                              title={aSonMotDePasse ? t('pro.participants.invitation.inutile', 'Cette personne a déjà choisi son mot de passe') : undefined}
+                            >
+                              {renvoiEnCours === participant.id_user
+                                ? <Loader2 className="h-3 w-3 me-1 animate-spin" aria-hidden="true" />
+                                : aSonMotDePasse
+                                  ? <CheckCircle className="h-3 w-3 me-1" aria-hidden="true" />
+                                  : <Mail className="h-3 w-3 me-1" aria-hidden="true" />}
+                              {t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
+                            </Button>
+                          </div>
+                        );
+                      })()}
                       <p className="text-xs text-muted-foreground mt-1">
                         <Calendar className="inline h-3 w-3 me-1" />
                         {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}

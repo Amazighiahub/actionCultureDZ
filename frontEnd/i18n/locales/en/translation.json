@@ -3384,7 +3384,9 @@
         "pasEncore": "Has not chosen a password yet",
         "renvoyer": "Resend the email",
         "envoyee": "Email sent",
-        "envoyeeDesc": "A new link to choose a password, valid for 7 days, was sent to {{email}}."
+        "envoyeeDesc": "A new link to choose a password, valid for 7 days, was sent to {{email}}.",
+        "dejaChoisi": "Password already chosen",
+        "inutile": "This person has already chosen their password"
       },
       "profil": {
         "label": "Profile:",

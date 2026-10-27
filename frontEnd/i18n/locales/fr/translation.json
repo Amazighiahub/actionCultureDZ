@@ -3389,7 +3389,9 @@
         "pasEncore": "N’a pas encore choisi son mot de passe",
         "renvoyer": "Renvoyer l’email",
         "envoyee": "Email envoyé",
-        "envoyeeDesc": "Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}."
+        "envoyeeDesc": "Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}.",
+        "dejaChoisi": "Mot de passe déjà choisi",
+        "inutile": "Cette personne a déjà choisi son mot de passe"
       },
       "profil": {
         "label": "Profil :",
