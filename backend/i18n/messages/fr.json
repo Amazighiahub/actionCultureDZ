@@ -517,5 +517,10 @@
   },
   "error": {
     "checkingEntity": "Erreur lors de la vérification de l'entité"
+  },
+  "organisation": {
+    "updated": "Page de l'organisation mise à jour",
+    "validated": "Organisation publiée",
+    "rejected": "Organisation refusée"
   }
 }

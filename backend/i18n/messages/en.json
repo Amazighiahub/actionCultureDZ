@@ -517,5 +517,10 @@
   },
   "error": {
     "checkingEntity": "Error while checking the entity"
+  },
+  "organisation": {
+    "updated": "Organisation page updated",
+    "validated": "Organisation published",
+    "rejected": "Organisation rejected"
   }
 }

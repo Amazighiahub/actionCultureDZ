@@ -515,5 +515,10 @@
   },
   "error": {
     "checkingEntity": "Tuccḍa deg usenqed n teɣbalut"
+  },
+  "organisation": {
+    "updated": "Asebter n tuddsa yettwaleqqem",
+    "validated": "Tuddsa teffeɣ-d",
+    "rejected": "Tuddsa tettwagi"
   }
 }

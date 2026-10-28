@@ -517,5 +517,10 @@
   },
   "error": {
     "checkingEntity": "خطأ أثناء التحقق من الكيان"
+  },
+  "organisation": {
+    "updated": "تم تحديث صفحة المنظمة",
+    "validated": "تم نشر المنظمة",
+    "rejected": "تم رفض المنظمة"
   }
 }

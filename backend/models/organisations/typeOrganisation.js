@@ -14,6 +14,11 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: { fr: '' },
       comment: 'Nom en plusieurs langues { fr: "Association", ar: "جمعية", en: "Association" }'
+    },
+    // Clé stable (association, maison_edition, musee…) : les identifiants diffèrent d'une base à l'autre
+    code: {
+      type: DataTypes.STRING(40),
+      allowNull: true
     }
   }, {
     tableName: 'typeorganisation',

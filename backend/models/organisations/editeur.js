@@ -50,6 +50,15 @@ module.exports = (sequelize) => {
     actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    // Organisation (page publique) de la maison d'édition
+    id_organisation: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'organisation',
+        key: 'id_organisation'
+      }
     }
   }, {
     tableName: 'editeur',
@@ -60,6 +69,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Editeur.associate = (models) => {
+    if (models.Organisation) Editeur.belongsTo(models.Organisation, { foreignKey: 'id_organisation', onDelete: 'SET NULL' });
     Editeur.belongsToMany(models.Oeuvre, { 
       through: models.OeuvreEditeur, 
       foreignKey: 'id_editeur' 

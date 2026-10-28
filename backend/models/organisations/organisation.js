@@ -32,6 +32,46 @@ module.exports = (sequelize) => {
     },
     site_web: {
       type: DataTypes.STRING(255)
+    },
+    // Page publique : visible une fois vérifiée par la modération
+    statut: {
+      type: DataTypes.ENUM('en_attente', 'valide', 'rejete'),
+      allowNull: false,
+      defaultValue: 'en_attente'
+    },
+    logo_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    id_wilaya: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'wilayas',
+        key: 'id_wilaya'
+      }
+    },
+    adresse: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    telephone: {
+      type: DataTypes.STRING(30),
+      allowNull: true
+    },
+    // { facebook, instagram, youtube, x, linkedin } : adresses des pages
+    reseaux: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    date_creation: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW
     }
   }, {
     tableName: 'organisation',
@@ -41,6 +81,7 @@ module.exports = (sequelize) => {
   // Associations
   Organisation.associate = (models) => {
     Organisation.belongsTo(models.TypeOrganisation, { foreignKey: 'id_type_organisation' });
+    if (models.Wilaya) Organisation.belongsTo(models.Wilaya, { foreignKey: 'id_wilaya', onDelete: 'SET NULL' });
     Organisation.belongsToMany(models.Evenement, { 
       through: models.EvenementOrganisation, 
       foreignKey: 'id_organisation' 

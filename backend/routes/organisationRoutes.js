@@ -3,10 +3,35 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 const container = require('../services/serviceContainer');
-const { handleValidationErrors } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
+const controller = require('../controllers/organisationController');
+
+// Champs de la page publique (création et modification)
+const champsVitrine = [
+  body('logo_url').optional({ values: 'null' }).isString().isLength({ max: 500 }),
+  body('id_wilaya').optional({ values: 'falsy' }).isInt({ min: 1 }),
+  body('adresse').optional({ values: 'null' }).isString().isLength({ max: 255 }),
+  body('email').optional({ values: 'falsy' }).isEmail().withMessage((_, { req }) => req.t('validation.invalidEmail')),
+  body('telephone').optional({ values: 'falsy' }).matches(/^[0-9+().\s-]{6,30}$/).withMessage((_, { req }) => req.t('validation.invalidPhone')),
+  body('reseaux').optional({ values: 'null' }).isObject()
+];
 
 module.exports = (_models, authMiddleware) => {
   const get = () => container.organisationService;
+  const { authenticate, optionalAuth, requireRole } = authMiddleware;
+  const moderation = requireRole(['Admin', 'Moderateur']);
+
+  /**
+   * GET /api/organisations?categorie=&wilaya=&q=
+   * Annuaire public des organisations vérifiées
+   */
+  router.get('/', (req, res) => controller.annuaire(req, res));
+
+  /**
+   * GET /api/organisations/admin/liste
+   * Toutes les organisations et leur statut (modération)
+   */
+  router.get('/admin/liste', authenticate, moderation, (req, res) => controller.listeModeration(req, res));
 
   /**
    * GET /api/organisations/me
@@ -44,7 +69,8 @@ module.exports = (_models, authMiddleware) => {
       body('nom').notEmpty().withMessage((_, { req }) => req.t('validation.invalidName')),
       body('id_type_organisation').isInt({ min: 1 }).withMessage((_, { req }) => req.t('validation.invalidType')),
       body('description').optional(),
-      body('site_web').optional().isURL().withMessage((_, { req }) => req.t('validation.invalidWebsite'))
+      body('site_web').optional({ values: 'falsy' }).isURL().withMessage((_, { req }) => req.t('validation.invalidWebsite')),
+      ...champsVitrine
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -58,6 +84,38 @@ module.exports = (_models, authMiddleware) => {
       }
     }
   );
+
+  /**
+   * GET /api/organisations/:id/vitrine
+   * Page publique : fiche, membres, événements, œuvres publiées
+   */
+  router.get('/:id/vitrine', optionalAuth, validateId(), (req, res) => controller.vitrine(req, res));
+
+  /**
+   * PUT /api/organisations/:id
+   * Modifier la page (responsables de l'organisation ou modération)
+   */
+  router.put('/:id', authenticate, validateId(),
+    [
+      body('nom').optional().notEmpty(),
+      body('id_type_organisation').optional().isInt({ min: 1 }),
+      body('site_web').optional({ values: 'falsy' }).isURL().withMessage((_, { req }) => req.t('validation.invalidWebsite')),
+      ...champsVitrine
+    ],
+    handleValidationErrors,
+    (req, res) => controller.modifier(req, res));
+
+  /**
+   * PATCH /api/organisations/:id/statut
+   * Vérification par l'équipe : publier, ou refuser avec un motif
+   */
+  router.patch('/:id/statut', authenticate, moderation, validateId(),
+    [
+      body('statut').isIn(['valide', 'rejete']),
+      body('motif').optional().isString().isLength({ max: 1000 })
+    ],
+    handleValidationErrors,
+    (req, res) => controller.changerStatut(req, res));
 
   /**
    * GET /api/organisations/:id
