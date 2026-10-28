@@ -4,6 +4,8 @@ const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration
 const { categorieDuType } = require('./categories');
 const fusion = require('./fusionOrganisations');
 const { ressemble } = require('./nomsRessemblants');
+const catalogue = require('./importCatalogue');
+const { executer } = require('./executionCatalogue');
 
 // Réseaux sociaux acceptés sur la page d'une organisation
 const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
@@ -229,6 +231,80 @@ class OrganisationService extends BaseService {
         id_organisation: o.id_organisation, nom: o.nom, statut: o.statut, logo_url: o.logo_url,
         TypeOrganisation: o.TypeOrganisation ? { nom: o.TypeOrganisation.nom, code: o.TypeOrganisation.code } : null
       }));
+  }
+
+  // ==========================================================================
+  // CATALOGUE D'UNE MAISON D'ÉDITION (import Excel)
+  // ==========================================================================
+
+  /** Maison d'édition vérifiée, dont le compte est responsable (ou modération) */
+  async _maisonPourCatalogue(id, { userId = null, isModerator = false } = {}) {
+    const org = await this.repository.findVitrine(id);
+    if (!org) throw this._notFoundError(id);
+    if (org.TypeOrganisation?.code !== 'maison_edition') {
+      throw this._validationError("L'import de catalogue est réservé aux maisons d'édition");
+    }
+    const role = userId ? await this.repository.roleMembre(id, userId) : null;
+    if (!isModerator && !ROLES_GESTION.includes(role)) {
+      throw this._forbiddenError("Seuls les responsables de la maison d'édition peuvent importer son catalogue");
+    }
+    if (!isModerator && org.statut !== 'valide') {
+      throw this._forbiddenError("La page de votre maison d'édition doit d'abord être vérifiée par l'équipe Tala DZ");
+    }
+    return org;
+  }
+
+  /** Langues et catégories des livres (pour le modèle et la vérification) */
+  async _referencesCatalogue() {
+    const container = require('../serviceContainer');
+    const groupes = await container.metadataService.getCategoriesForType(catalogue.TYPE_LIVRE);
+    return { groupes, refs: await catalogue.references(this.models, groupes) };
+  }
+
+  /** Modèle Excel à remplir (avec les listes de langues et de catégories du site) */
+  async modeleCatalogue(id, droits) {
+    await this._maisonPourCatalogue(id, droits);
+    const { groupes } = await this._referencesCatalogue();
+    const langues = (await this.models.Langue.findAll({ attributes: ['nom'], order: [['id_langue', 'ASC']] }))
+      .map(l => texteLisible(l.nom)).filter(Boolean);
+    const categories = [...new Set(groupes.flatMap(g => (g.categories || []).map(c => texteLisible(c.nom))).filter(Boolean))];
+    return catalogue.modeleCatalogue({ langues, categories });
+  }
+
+  /** Aperçu ligne par ligne, sans rien enregistrer */
+  async apercuCatalogue(id, buffer, nomsImages, droits) {
+    await this._maisonPourCatalogue(id, droits);
+    const { refs } = await this._referencesCatalogue();
+    const lu = await catalogue.lireCatalogue(buffer, nomsImages, refs);
+    return {
+      resume: lu.resume,
+      imagesSansLivre: lu.imagesSansLivre,
+      lignes: lu.lignes.map(l => ({
+        ligne: l.ligne, titre: texteLisible(l.titre), auteur: `${l.auteur.prenom} ${l.auteur.nom}`.trim(),
+        isbn: l.isbn, couverture: l.couverture, etat: l.etat, erreurs: l.erreurs
+      }))
+    };
+  }
+
+  /** Import : les lignes valides sont enregistrées, l'équipe est prévenue une seule fois */
+  async importerCatalogue(id, buffer, nomsImages, droits) {
+    const org = await this._maisonPourCatalogue(id, droits);
+    const { refs } = await this._referencesCatalogue();
+    const lu = await catalogue.lireCatalogue(buffer, nomsImages, refs);
+    const container = require('../serviceContainer');
+    const bilan = await executer({ models: this.models, oeuvreService: container.oeuvreService, logger: this.logger }, org, lu.lignes, droits.userId);
+    this.logger.info(`Catalogue ${id} : ${bilan.crees.length} livre(s) créé(s), ${bilan.lies.length} relié(s), ${bilan.echecs.length} échec(s)`);
+    if (bilan.crees.length && this.models) {
+      for (const idAdmin of await idsAdministrateurs(this.models)) {
+        if (idAdmin === droits.userId) continue;
+        await notifier(this.notificationService, idAdmin, {
+          titre: 'Catalogue à vérifier',
+          message: `« ${texteLisible(org.nom)} » a importé ${bilan.crees.length} livre(s) : ils attendent votre vérification.`,
+          url_action: '/admin/dashboard?tab=oeuvres', metadata: { id_organisation: Number(id) }
+        });
+      }
+    }
+    return bilan;
   }
 
   // ==========================================================================
