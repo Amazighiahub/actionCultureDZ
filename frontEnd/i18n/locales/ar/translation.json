@@ -5114,6 +5114,34 @@
     "ouTrouver": "أين تجده",
     "contact": "الاتصال",
     "pasDeContact": "لا توجد معلومات اتصال حاليًا.",
-    "proposePar": "يقدّمه"
+    "proposePar": "يقدّمه",
+    "avis": {
+      "titre": "آراء الزوار",
+      "nombreNotes_zero": "لا تقييم",
+      "nombreNotes_one": "تقييم واحد",
+      "nombreNotes_two": "تقييمان",
+      "nombreNotes_few": "{{count}} تقييمات",
+      "nombreNotes_many": "{{count}} تقييمًا",
+      "nombreNotes_other": "{{count}} تقييم",
+      "nombreAvis_zero": "لا رأي",
+      "nombreAvis_one": "رأي واحد",
+      "nombreAvis_two": "رأيان",
+      "nombreAvis_few": "{{count}} آراء",
+      "nombreAvis_many": "{{count}} رأيًا",
+      "nombreAvis_other": "{{count}} رأي",
+      "noteSur5_zero": "التقييم {{note}} من 5",
+      "noteSur5_one": "التقييم {{note}} من 5، رأي واحد",
+      "noteSur5_two": "التقييم {{note}} من 5، رأيان",
+      "noteSur5_few": "التقييم {{note}} من 5، {{count}} آراء",
+      "noteSur5_many": "التقييم {{note}} من 5، {{count}} رأيًا",
+      "noteSur5_other": "التقييم {{note}} من 5، {{count}} رأي",
+      "connexion": "سجّل الدخول لتقديم رأيك.",
+      "proprietaire": "هذه خدمتك: يمكنك الرد على الآراء، لكن لا يمكنك تقييمها.",
+      "dejaDonne": "شكرًا! لقد قدّمت رأيك في هذه الخدمة من قبل.",
+      "placeholder": "احكِ عن زيارتك: الاستقبال، الجودة، السعر…",
+      "placeholderReponse": "ردّك على هذا الزائر",
+      "reponsePro": "ردّ صاحب الخدمة",
+      "aucun": "لا توجد آراء بعد. كن أول من يقدّم رأيه!"
+    }
   }
 }

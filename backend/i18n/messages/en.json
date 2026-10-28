@@ -185,7 +185,9 @@
     "added": "Comment added successfully",
     "updated": "Comment updated successfully",
     "deleted": "Comment deleted successfully",
-    "statusUpdated": "Comment ${statut} successfully"
+    "statusUpdated": "Comment ${statut} successfully",
+    "ownService": "You cannot review your own service.",
+    "alreadyReviewed": "You have already reviewed this service."
   },
   "favori": {
     "notFound": "Favorite not found",

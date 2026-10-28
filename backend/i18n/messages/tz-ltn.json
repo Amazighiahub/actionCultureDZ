@@ -184,7 +184,9 @@
     "added": "Awennit yettwarnan akken iwata",
     "updated": "Awennit yettubeddel akken iwata",
     "deleted": "Awennit yettwakkes akken iwata",
-    "statusUpdated": "Awennit ${statut} akken iwata"
+    "statusUpdated": "Awennit ${statut} akken iwata",
+    "ownService": "Ur tezmireḍ ara ad d-tefkeḍ tamuɣli ɣef tenfa-inek.",
+    "alreadyReviewed": "Tefkiḍ yakan tamuɣli-inek ɣef tenfa-a."
   },
   "favori": {
     "notFound": "Inurar ur yettuwaf ara",

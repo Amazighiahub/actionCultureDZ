@@ -5000,6 +5000,22 @@
     "ouTrouver": "Where to find it",
     "contact": "Contact",
     "pasDeContact": "No contact details yet.",
-    "proposePar": "Offered by"
+    "proposePar": "Offered by",
+    "avis": {
+      "titre": "Visitor reviews",
+      "nombreNotes_one": "{{count}} rating",
+      "nombreNotes_other": "{{count}} ratings",
+      "nombreAvis_one": "{{count}} review",
+      "nombreAvis_other": "{{count}} reviews",
+      "noteSur5_one": "Rated {{note}} out of 5, {{count}} review",
+      "noteSur5_other": "Rated {{note}} out of 5, {{count}} reviews",
+      "connexion": "Log in to leave a review.",
+      "proprietaire": "This is your service: you can reply to reviews, but not rate it.",
+      "dejaDonne": "Thank you! You have already reviewed this service.",
+      "placeholder": "Tell us about your visit: welcome, quality, price…",
+      "placeholderReponse": "Your reply to this visitor",
+      "reponsePro": "Reply from the owner",
+      "aucun": "No reviews yet. Be the first!"
+    }
   }
 }

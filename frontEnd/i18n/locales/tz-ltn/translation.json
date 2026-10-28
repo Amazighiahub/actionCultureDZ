@@ -4480,5 +4480,23 @@
   "media": {
     "videoNotSupported": "Iminig-ik ur yessefrak ara taɣuri n tvidyut.",
     "audioNotSupported": "Iminig-ik ur yessefrak ara taɣuri n umeslaw."
+  },
+  "servicesVisiteurs": {
+    "avis": {
+      "titre": "Timuɣliwin n yimerza",
+      "nombreNotes_one": "{{count}} n tazmilt",
+      "nombreNotes_other": "{{count}} n tezmilin",
+      "nombreAvis_one": "{{count}} n tmuɣli",
+      "nombreAvis_other": "{{count}} n tmuɣliwin",
+      "noteSur5_one": "Tazmilt {{note}} ɣef 5, {{count}} n tmuɣli",
+      "noteSur5_other": "Tazmilt {{note}} ɣef 5, {{count}} n tmuɣliwin",
+      "connexion": "Qqen akken ad d-tefkeḍ tamuɣli-inek.",
+      "proprietaire": "D tanfa-inek: tzemreḍ ad d-terreḍ ɣef tmuɣliwin, maca ur tezmireḍ ara ad tt-tezmileḍ.",
+      "dejaDonne": "Tanemmirt! Tefkiḍ yakan tamuɣli-inek ɣef tenfa-a.",
+      "placeholder": "Ini-d tarzeft-ik: amager, taɣara, azal…",
+      "placeholderReponse": "Tiririt-ik i umerza-a",
+      "reponsePro": "Tiririt n bab n tenfa",
+      "aucun": "Ulac tamuɣli akka tura. Ili d amezwaru!"
+    }
   }
 }

@@ -13,6 +13,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
 import { styleTypeService, tarifAvecUnite } from './typesService';
+import NoteService from './NoteService';
 
 export interface ServiceAnnuaire {
   id: number;
@@ -23,6 +24,7 @@ export interface ServiceAnnuaire {
   photo_url?: string | null;
   tarif_min?: string | number | null;
   tarif_max?: string | number | null;
+  note?: { moyenne: number; nombre: number } | null;
   lieu?: { id_lieu: number; nom: unknown; commune?: { nom?: unknown } | null } | null;
   wilaya?: Wilaya | null;
 }
@@ -70,6 +72,7 @@ const ServiceCard: React.FC<{ service: ServiceAnnuaire }> = ({ service }) => {
             {[lieu, wilaya].filter(Boolean).join(' · ')}
           </p>
         )}
+        {service.note && <NoteService note={service.note} />}
         {aTarif && (
           <p className="text-sm font-medium text-primary">{tarifAvecUnite(t, service.type_service, formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined))}</p>
         )}

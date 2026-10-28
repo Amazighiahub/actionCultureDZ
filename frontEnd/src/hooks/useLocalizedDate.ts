@@ -253,9 +253,12 @@ export const useLocalizedDate = () => {
 
   // Obtenir le temps relatif
   const getRelativeTime = (date: Date): string => {
+    // Écart en jours de calendrier : un commentaire d'il y a 10 minutes est « aujourd'hui »
+    // (Math.floor sur l'écart brut donnait -1, donc « hier », pour tout instant passé de moins de 24 h)
     const now = new Date();
-    const diffInMillis = date.getTime() - now.getTime();
-    const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffInDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     const translations = RELATIVE_TIME_TRANSLATIONS[i18n.language] || RELATIVE_TIME_TRANSLATIONS['fr'];
 
     if (diffInDays === 0) return translations.today;

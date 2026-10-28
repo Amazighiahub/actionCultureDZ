@@ -22,6 +22,17 @@ interface Commentaire {
   Reponses?: Commentaire[];
 }
 
+/** Avis sur un service (réponses du professionnel dans Reponses) */
+interface AvisService {
+  id_commentaire: number;
+  id_user: number;
+  contenu: string;
+  note_qualite?: number | null;
+  date_creation: string;
+  User?: { nom: unknown; prenom: unknown };
+  Reponses?: AvisService[];
+}
+
 interface CreateCommentaireData {
   contenu: string;
   note_qualite?: number;
@@ -178,6 +189,25 @@ class CommentaireService {
   }
 
   /**
+   * Avis d'un service et note moyenne calculée par le serveur
+   */
+  async getAvisService(serviceId: number, page = 1, limit = 20) {
+    const response = await httpClient.get<{
+      commentaires: AvisService[];
+      note: { moyenne: number; nombre: number };
+      pagination: { total: number; page: number; pages: number; limit: number };
+    }>(`${this.endpoint}/service/${serviceId}`, { page, limit });
+    return response.data;
+  }
+
+  /**
+   * Publier un avis (ou une réponse) sur un service ; une erreur porte le message du serveur
+   */
+  async createAvisService(serviceId: number, data: CreateCommentaireData) {
+    return httpClient.post<AvisService>(`${this.endpoint}/service/${serviceId}`, data);
+  }
+
+  /**
    * Modifier un commentaire
    */
   async updateCommentaire(
@@ -236,4 +266,4 @@ class CommentaireService {
 }
 
 export const commentaireService = new CommentaireService();
-export type { Commentaire, CreateCommentaireData };
+export type { Commentaire, CreateCommentaireData, AvisService };

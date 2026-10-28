@@ -344,6 +344,9 @@ export const useLocalizedNumber = () => {
             formatted = compactDisplay === 'long' 
               ? formatters.compactLong.format(value)
               : formatters.compact.format(value);
+          } else if (minimumFractionDigits !== undefined || maximumFractionDigits !== undefined) {
+            // Décimales demandées (ex. note « 4,5 ») : le format par défaut les ignorait
+            formatted = new Intl.NumberFormat(locale, formatOptions).format(value);
           } else {
             formatted = formatters.decimal.format(value);
           }

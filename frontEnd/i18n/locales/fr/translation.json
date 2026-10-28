@@ -5000,6 +5000,22 @@
     "ouTrouver": "Où le trouver",
     "contact": "Contact",
     "pasDeContact": "Pas de coordonnées pour l’instant.",
-    "proposePar": "Proposé par"
+    "proposePar": "Proposé par",
+    "avis": {
+      "titre": "Avis des visiteurs",
+      "nombreNotes_one": "{{count}} note",
+      "nombreNotes_other": "{{count}} notes",
+      "nombreAvis_one": "{{count}} avis",
+      "nombreAvis_other": "{{count}} avis",
+      "noteSur5_one": "Note {{note}} sur 5, {{count}} avis",
+      "noteSur5_other": "Note {{note}} sur 5, {{count}} avis",
+      "connexion": "Connectez-vous pour donner votre avis.",
+      "proprietaire": "C’est votre service : vous pouvez répondre aux avis, mais pas le noter.",
+      "dejaDonne": "Merci ! Vous avez déjà donné votre avis sur ce service.",
+      "placeholder": "Racontez votre visite : accueil, qualité, prix…",
+      "placeholderReponse": "Votre réponse à ce visiteur",
+      "reponsePro": "Réponse du professionnel",
+      "aucun": "Aucun avis pour l’instant. Soyez le premier !"
+    }
   }
 }

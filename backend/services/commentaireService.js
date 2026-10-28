@@ -5,6 +5,7 @@
  * Délègue tous les accès Sequelize au CommentaireRepository.
  */
 const BaseService = require('./core/baseService');
+const AppError = require('../utils/appError');
 
 class CommentaireService extends BaseService {
   constructor(repository, options = {}) {
@@ -35,6 +36,22 @@ class CommentaireService extends BaseService {
     return this.repository.findByEvenement(evenementId, { limit, offset });
   }
 
+  /**
+   * Avis d'un service (pagine, avec reponses)
+   */
+  async getCommentairesService(serviceId, { limit, offset }) {
+    return this.repository.findByService(serviceId, { limit, offset });
+  }
+
+  /**
+   * Note moyenne et nombre de notes de chaque service
+   * @param {number[]} ids
+   * @returns {Promise<Map<number, { moyenne: number, nombre: number }>>}
+   */
+  async notesServices(ids) {
+    return this.repository.notesServices(ids.map(Number).filter(Boolean));
+  }
+
   // ========================================================================
   // CREATION
   // ========================================================================
@@ -57,6 +74,34 @@ class CommentaireService extends BaseService {
   async findEvenement(evenementId) {
     if (!this.models.Evenement) return null;
     return this.models.Evenement.findByPk(evenementId);
+  }
+
+  /**
+   * Publier un avis sur un service : service validé uniquement, pas sur son propre service,
+   * un seul avis par membre (les réponses passent par commentaire_parent_id).
+   */
+  async creerAvisService(serviceId, userId, { contenu, note_qualite, commentaire_parent_id }) {
+    const service = this.models.Service
+      ? await this.models.Service.findByPk(serviceId, { attributes: ['id', 'id_user', 'statut'] })
+      : null;
+    if (!service || service.statut !== 'valide') {
+      throw new AppError('service.notFound', 404, 'SERVICE_INTROUVABLE');
+    }
+    if (commentaire_parent_id) {
+      const parent = await this.repository.findById(commentaire_parent_id);
+      if (!parent || Number(parent.id_service) !== Number(serviceId)) {
+        throw new AppError('common.notFound', 404, 'AVIS_INTROUVABLE');
+      }
+      // Une réponse ne porte pas de note
+      return this.repository.createWithAuthor({ contenu, commentaire_parent_id, id_user: userId, id_service: serviceId });
+    }
+    if (Number(service.id_user) === Number(userId)) {
+      throw new AppError('comment.ownService', 403, 'AVIS_PROPRE_SERVICE');
+    }
+    if (await this.repository.findAvisServiceDuMembre(serviceId, userId)) {
+      throw new AppError('comment.alreadyReviewed', 409, 'AVIS_DEJA_DONNE');
+    }
+    return this.repository.createWithAuthor({ contenu, note_qualite, id_user: userId, id_service: serviceId });
   }
 
   /**

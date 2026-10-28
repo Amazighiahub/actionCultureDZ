@@ -23,6 +23,8 @@ import { safeExternalUrl } from '@/utils/safeUrl';
 import { professionnelPath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
+import ServiceAvis from '@/components/services/ServiceAvis';
+import NoteService from '@/components/services/NoteService';
 
 interface ServiceFiche {
   id: number;
@@ -44,6 +46,9 @@ interface ServiceFiche {
     Commune?: { nom?: unknown; Daira?: { Wilaya?: { nom?: string; wilaya_name_ascii?: string } } };
   } | null;
   Professionnel?: { id_user: number; prenom?: unknown; nom?: unknown; photo_url?: string | null } | null;
+  id_user?: number | null;
+  // Note moyenne des avis publiés (null : aucune note)
+  note?: { moyenne: number; nombre: number } | null;
 }
 
 const ServiceDetail: React.FC = () => {
@@ -143,7 +148,8 @@ const ServiceDetail: React.FC = () => {
             </span>
           )}
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold font-serif mb-4">{nom}</h1>
+        <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">{nom}</h1>
+        {service.note && <NoteService note={service.note} className="mb-4" />}
         {description && <p className="text-lg text-muted-foreground whitespace-pre-line mb-8">{description}</p>}
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -203,6 +209,10 @@ const ServiceDetail: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        {service.statut === 'valide' && (
+          <ServiceAvis serviceId={service.id} proprietaireId={service.Professionnel?.id_user ?? service.id_user} />
+        )}
 
         <div className="mt-8">
           <ShareButtons url={typeof window !== 'undefined' ? window.location.href : ''} title={nom} />
