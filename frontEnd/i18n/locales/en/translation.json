@@ -2872,6 +2872,15 @@
         "voirResume": "See the summary",
         "confirmer": "Merge",
         "faite": "Organisations merged"
+      },
+      "revendications": {
+        "titre_one": "Request to manage a page ({{count}})",
+        "titre_other": "Requests to manage a page ({{count}})",
+        "accepter": "Accept",
+        "acceptee": "Request accepted: they now manage the page",
+        "refusee": "Request rejected: the requester has been notified",
+        "refuserTitre": "Reject the request",
+        "refuserAide": "The reason is sent to the requester."
       }
     }
   },
@@ -4332,6 +4341,21 @@
       "verification": "You can use your organisation right away for your events. Its public page will appear in the directory after a check by the Tala DZ team.",
       "existePeutEtre": "It may already exist on Tala DZ:",
       "existeConseil": "If it is yours, do not create it again: ask its manager to add you as a member, or write to the Tala DZ team."
+    },
+    "revendication": {
+      "boutonEdition": "This is my publishing house",
+      "bouton": "This is my organisation",
+      "envoyee": "Request sent: the Tala DZ team will review it",
+      "enCours": "Your request to manage this page is being reviewed by the Tala DZ team.",
+      "titre": "No one manages this page yet.",
+      "refusee": "Your previous request was not accepted",
+      "aide": "Are you in charge of it? Ask to manage it: you will be able to edit the page and add your content.",
+      "connexion": "Log in to manage it",
+      "verification": "The Tala DZ team checks that you represent this organisation, then you become its manager.",
+      "message": "Who are you for this organisation? (optional)",
+      "exemple": "E.g. I am the director; contact: 0550 00 00 00",
+      "envoyer": "Send the request",
+      "suggestion": "no one manages it yet: open its page and tap “This is my organisation”"
     }
   },
   "validation": {

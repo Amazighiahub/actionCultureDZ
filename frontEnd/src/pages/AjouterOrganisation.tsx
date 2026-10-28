@@ -76,11 +76,11 @@ const AjouterOrganisation = () => {
 
   // Création : organisations au nom proche (« Voulez-vous dire… ? »), pour éviter les doublons
   const nomSaisi = useDebouncedValue(Object.values(formData.nom).find(v => v && v.trim().length >= 3) || '', 500);
-  const [ressemblantes, setRessemblantes] = useState<Array<{ id_organisation: number; nom: unknown; statut?: string }>>([]);
+  const [ressemblantes, setRessemblantes] = useState<Array<{ id_organisation: number; nom: unknown; statut?: string; sansResponsable?: boolean }>>([]);
   useEffect(() => {
     if (idModif || !nomSaisi) { setRessemblantes([]); return; }
     let actif = true;
-    httpClient.get<Array<{ id_organisation: number; nom: unknown; statut?: string }>>('/organisations/ressemblantes', { nom: nomSaisi })
+    httpClient.get<Array<{ id_organisation: number; nom: unknown; statut?: string; sansResponsable?: boolean }>>('/organisations/ressemblantes', { nom: nomSaisi })
       .then(res => { if (actif) setRessemblantes(res.success && res.data ? res.data : []); })
       .catch(() => { if (actif) setRessemblantes([]); });
     return () => { actif = false; };
@@ -326,6 +326,9 @@ const AjouterOrganisation = () => {
                               {o.statut === 'valide'
                                 ? <Link to={organisationPath(o.id_organisation, o.nom)} target="_blank" className="text-primary underline underline-offset-4">{getLocalizedText(o.nom, i18n.language)}</Link>
                                 : getLocalizedText(o.nom, i18n.language)}
+                              {o.sansResponsable && o.statut === 'valide' && (
+                                <span className="text-muted-foreground"> — {t('organisations.revendication.suggestion', 'personne ne la gère encore : ouvrez sa page et touchez « C’est mon organisation »')}</span>
+                              )}
                             </li>
                           ))}
                         </ul>

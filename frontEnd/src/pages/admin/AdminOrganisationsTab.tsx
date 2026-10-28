@@ -23,6 +23,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { organisationPath } from '@/utils/slug';
 import FusionOrganisationDialog from './FusionOrganisationDialog';
+import DemandesResponsable from './DemandesResponsable';
 
 interface OrganisationModeration {
   id_organisation: number;
@@ -101,6 +102,8 @@ const AdminOrganisationsTab: React.FC = () => {
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
+
+      <DemandesResponsable />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">

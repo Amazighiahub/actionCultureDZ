@@ -113,6 +113,35 @@ class OrganisationController extends BaseController {
     }
   }
 
+  /** POST /organisations/:id/revendication { message } : « C'est mon organisation » */
+  async demanderResponsabilite(req, res) {
+    try {
+      const data = await this.service.demanderResponsabilite(Number(req.params.id), req.user.id_user, req.body?.message);
+      res.status(201).json({ success: true, message: req.t('organisation.claimSent'), data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** GET /organisations/admin/revendications : demandes en attente (modération) */
+  async demandesResponsabilite(req, res) {
+    try {
+      res.json({ success: true, data: await this.service.demandesResponsabilite() });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** PATCH /organisations/revendications/:idDemande { decision, motif } (modération) */
+  async deciderResponsabilite(req, res) {
+    try {
+      const data = await this.service.deciderResponsabilite(Number(req.params.idDemande), req.body.decision, req.body.motif, req.user.id_user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** PUT /organisations/:id : responsables de l'organisation ou modération */
   async modifier(req, res) {
     try {

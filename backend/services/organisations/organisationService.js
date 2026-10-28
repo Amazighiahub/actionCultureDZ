@@ -6,6 +6,7 @@ const fusion = require('./fusionOrganisations');
 const { ressemble } = require('./nomsRessemblants');
 const catalogue = require('./importCatalogue');
 const { executer } = require('./executionCatalogue');
+const revendications = require('./revendications');
 
 // Réseaux sociaux acceptés sur la page d'une organisation
 const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
@@ -75,8 +76,12 @@ class OrganisationService extends BaseService {
       if (existing) {
         // Ne pas rattacher automatiquement : sinon il suffirait de connaître le nom
         // d'une organisation pour publier des événements en son nom.
-        throw this._conflictError(
-          'Cette organisation existe déjà. Demandez à son responsable de vous ajouter comme membre.'
+        const geree = this.models
+          ? (await revendications.organisationsGerees(this.models, [existing.id_organisation])).size > 0
+          : true;
+        throw this._conflictError(geree
+          ? 'Cette organisation existe déjà. Demandez à son responsable de vous ajouter comme membre.'
+          : "Cette organisation existe déjà sur Tala DZ, sans responsable : ouvrez sa page et touchez « C'est mon organisation »."
         );
       }
     }
@@ -144,10 +149,12 @@ class OrganisationService extends BaseService {
     const role = userId ? await this.repository.roleMembre(id, userId) : null;
     if (org.statut !== 'valide' && !role && !isModerator) throw this._notFoundError(id);
 
-    const [membres, evenements, oeuvres] = await Promise.all([
+    const [membres, evenements, oeuvres, gerees, demande] = await Promise.all([
       this.repository.membres(id),
       this.repository.evenements(id),
-      this.repository.oeuvres(id)
+      this.repository.oeuvres(id),
+      this.models ? revendications.organisationsGerees(this.models, [Number(id)]) : new Set([Number(id)]),
+      this.models ? revendications.maDemande(this.models, Number(id), userId) : null
     ]);
     const organisation = org.get({ plain: true });
     return {
@@ -156,7 +163,10 @@ class OrganisationService extends BaseService {
       membres,
       evenements,
       oeuvres,
-      peutModifier: isModerator || ROLES_GESTION.includes(role)
+      peutModifier: isModerator || ROLES_GESTION.includes(role),
+      // Personne ne gère la page : un professionnel peut demander à en devenir responsable
+      sansResponsable: !gerees.size,
+      maDemande: demande
     };
   }
 
@@ -224,13 +234,13 @@ class OrganisationService extends BaseService {
   async ressemblantes(nom, { exclure = null, limite = 5 } = {}) {
     if (!nom || (typeof nom === 'string' && !nom.trim())) return [];
     const toutes = (await this.repository.findPourModeration()).map(o => o.get({ plain: true }));
-    return toutes
-      .filter(o => o.id_organisation !== Number(exclure) && ressemble(nom, o.nom))
-      .slice(0, limite)
-      .map(o => ({
-        id_organisation: o.id_organisation, nom: o.nom, statut: o.statut, logo_url: o.logo_url,
-        TypeOrganisation: o.TypeOrganisation ? { nom: o.TypeOrganisation.nom, code: o.TypeOrganisation.code } : null
-      }));
+    const proches = toutes.filter(o => o.id_organisation !== Number(exclure) && ressemble(nom, o.nom)).slice(0, limite);
+    const gerees = await revendications.organisationsGerees(this.models, proches.map(o => o.id_organisation));
+    return proches.map(o => ({
+      id_organisation: o.id_organisation, nom: o.nom, statut: o.statut, logo_url: o.logo_url,
+      TypeOrganisation: o.TypeOrganisation ? { nom: o.TypeOrganisation.nom, code: o.TypeOrganisation.code } : null,
+      sansResponsable: !gerees.has(o.id_organisation)
+    }));
   }
 
   // ==========================================================================
@@ -305,6 +315,47 @@ class OrganisationService extends BaseService {
       }
     }
     return bilan;
+  }
+
+  // ==========================================================================
+  // « C'EST MON ORGANISATION » (organisation sans responsable)
+  // ==========================================================================
+
+  /** Un professionnel demande à devenir responsable ; l'équipe est prévenue */
+  async demanderResponsabilite(id, userId, message) {
+    const org = await revendications.demander(this.models, Number(id), userId, message);
+    for (const idAdmin of await idsAdministrateurs(this.models)) {
+      if (idAdmin === userId) continue;
+      await notifier(this.notificationService, idAdmin, {
+        titre: 'Demande de responsable',
+        message: `Un professionnel demande à gérer la page « ${texteLisible(org.nom)} ».`,
+        url_action: '/admin/dashboard?tab=organisations', metadata: { id_organisation: Number(id) }
+      });
+    }
+    return { statut: 'en_attente' };
+  }
+
+  async demandesResponsabilite() {
+    return revendications.enAttente(this.models);
+  }
+
+  /** Accepter (le demandeur devient responsable) ou refuser avec un motif ; les demandeurs sont prévenus */
+  async deciderResponsabilite(idDemande, decision, motif, adminId) {
+    const { demande, organisation, refusesAuto } = await revendications.decider(this.models, Number(idDemande), decision, motif);
+    const nomOrg = texteLisible(organisation?.nom);
+    this.logger.info(`Demande de responsable ${idDemande} (${nomOrg}) : ${decision} par admin: ${adminId}`);
+    await notifier(this.notificationService, demande.id_user, decision === 'acceptee'
+      ? { titre: 'Vous gérez maintenant votre page', message: `Vous êtes responsable de « ${nomOrg} » : modifiez sa page et ajoutez vos contenus.`,
+        url_action: `/organisations/${demande.id_organisation}`, metadata: { id_organisation: demande.id_organisation } }
+      : { titre: 'Demande non acceptée', message: `Votre demande pour « ${nomOrg} » n'a pas été acceptée : ${String(motif).trim().slice(0, 300)}`,
+        url_action: `/organisations/${demande.id_organisation}`, metadata: { id_organisation: demande.id_organisation } });
+    for (const idUser of refusesAuto) {
+      await notifier(this.notificationService, idUser, {
+        titre: 'Demande non acceptée', message: `« ${nomOrg} » a déjà un responsable : demandez-lui de vous ajouter comme membre.`,
+        url_action: `/organisations/${demande.id_organisation}`, metadata: { id_organisation: demande.id_organisation }
+      });
+    }
+    return { statut: decision };
   }
 
   // ==========================================================================

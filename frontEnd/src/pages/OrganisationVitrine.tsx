@@ -28,6 +28,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { idFromSlug, professionnelPath, evenementPath, organisationPath } from '@/utils/slug';
 import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { styleCategorie } from '@/components/organisations/categoriesOrganisation';
+import DemandeResponsable from '@/components/organisations/DemandeResponsable';
 
 interface Vitrine {
   id_organisation: number;
@@ -47,6 +48,9 @@ interface Vitrine {
   evenements: Array<{ id_evenement: number; nom_evenement: unknown; date_debut?: string; image_url?: string | null; role_organisation?: string }>;
   oeuvres: Array<{ id_oeuvre: number; titre: unknown; annee_creation?: number | null; Media?: MediaItem[] }>;
   peutModifier: boolean;
+  // Personne ne gère la page ; demande « C'est mon organisation » du visiteur connecté
+  sansResponsable?: boolean;
+  maDemande?: { statut: string; motif?: string | null } | null;
 }
 
 const OrganisationVitrine: React.FC = () => {
@@ -208,6 +212,10 @@ const OrganisationVitrine: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {org.sansResponsable && !org.peutModifier && (
+          <DemandeResponsable idOrganisation={org.id_organisation} maisonEdition={org.TypeOrganisation?.code === 'maison_edition'} maDemande={org.maDemande} />
+        )}
 
         {description && (
           <section aria-labelledby="presentation-titre" className="max-w-3xl">
