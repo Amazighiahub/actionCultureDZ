@@ -1373,7 +1373,8 @@
       "heritage": "التراث",
       "moderation": "الإشراف",
       "services": "الخدمات",
-      "notifications": "الإشعارات"
+      "notifications": "الإشعارات",
+      "organisations": "المنظمات"
     },
     "users": {
       "title": "إدارة المستخدمين",
@@ -1500,6 +1501,30 @@
     "realtime": {
       "connected": "الاتصال المباشر نشط",
       "reconnect": "انقطع الاتصال المباشر: إعادة الاتصال"
+    },
+    "organisations": {
+      "titre": "المنظمات",
+      "enAttente_zero": "لا صفحة للتحقق",
+      "enAttente_one": "صفحة واحدة للتحقق",
+      "enAttente_two": "صفحتان للتحقق",
+      "enAttente_few": "{{count}} صفحات للتحقق",
+      "enAttente_many": "{{count}} صفحة للتحقق",
+      "enAttente_other": "{{count}} صفحة للتحقق",
+      "statut": "الحالة",
+      "statuts": {
+        "en_attente": "للتحقق",
+        "valide": "منشورة",
+        "rejete": "مرفوضة"
+      },
+      "aucune": "لا توجد منظمة في هذه القائمة",
+      "voir": "عرض الصفحة",
+      "publier": "نشر الصفحة",
+      "refuser": "رفض",
+      "refuserTitre": "رفض «{{nom}}»",
+      "refuserAide": "يُرسل السبب إلى مسؤولي المنظمة: يمكنهم تصحيح الصفحة لتعود إلى التحقق.",
+      "motif": "السبب",
+      "publiee": "تم نشر الصفحة",
+      "refusee": "رُفضت الصفحة: تم إعلام المسؤولين"
     }
   },
   "works": {
@@ -4341,6 +4366,76 @@
       "urlInvalid": "رابط الموقع الإلكتروني غير صالح (يجب أن يبدأ بـ http:// أو https://)",
       "typeLoadError": "تعذّر تحميل الأنواع. يرجى تحديث الصفحة.",
       "submitting": "جارٍ الإنشاء..."
+    },
+    "title": "المنظمات الثقافية",
+    "subtitle": "جمعيات ودور نشر ومتاحف ومؤسسات تُحيي الثقافة الجزائرية.",
+    "famille": "نوع المنظمة",
+    "search": "ابحث عن منظمة…",
+    "aucunResultat": "لا توجد منظمة تطابق بحثك",
+    "aucune": "لا توجد منظمات حاليًا",
+    "invitation": "هل تمثّل جمعية أو دار نشر أو متحفًا؟",
+    "invitationDetail": "أنشئ صفحة منظمتك: ستُجمع فيها فعالياتك ومنشوراتك. تُنشر بعد تحقق فريق Tala DZ.",
+    "creer": "إنشاء صفحة منظمتي",
+    "nbEvenements_zero": "لا فعالية",
+    "nbEvenements_one": "فعالية واحدة",
+    "nbEvenements_two": "فعاليتان",
+    "nbEvenements_few": "{{count}} فعاليات",
+    "nbEvenements_many": "{{count}} فعالية",
+    "nbEvenements_other": "{{count}} فعالية",
+    "nbOeuvres_zero": "لا منشور",
+    "nbOeuvres_one": "منشور واحد",
+    "nbOeuvres_two": "منشوران",
+    "nbOeuvres_few": "{{count}} منشورات",
+    "nbOeuvres_many": "{{count}} منشورًا",
+    "nbOeuvres_other": "{{count}} منشور",
+    "categories": {
+      "associations": "جمعيات",
+      "edition": "دور النشر",
+      "culture": "متاحف ومكتبات",
+      "institutions": "مؤسسات",
+      "entreprises": "شركات",
+      "autres": "أخرى"
+    },
+    "introuvable": "المنظمة غير موجودة",
+    "introuvableDetail": "هذه المنظمة غير موجودة أو لم تُنشر صفحتها بعد.",
+    "voirToutes": "عرض كل المنظمات",
+    "refusee": "رُفضت هذه الصفحة: صحّحها وستعود إلى التحقق.",
+    "enAttente": "في انتظار التحقق: لا يرى هذه الصفحة حاليًا إلا أعضاء المنظمة وفريق Tala DZ.",
+    "logoDe": "شعار {{nom}}",
+    "modifier": "تعديل الصفحة",
+    "presentation": "تقديم",
+    "activites": "الأنشطة",
+    "publications": "المنشورات",
+    "membres": "الأعضاء",
+    "rolesMembre": {
+      "membre": "عضو",
+      "responsable": "مسؤول",
+      "directeur": "مدير",
+      "collaborateur": "متعاون"
+    },
+    "menu": {
+      "edition": "دور النشر",
+      "associations": "الجمعيات والمنظِّمون",
+      "toutes": "المنظمات"
+    },
+    "form": {
+      "logoInvalide": "اختر صورة أقل من 5 ميغابايت",
+      "emailInvalide": "بريد إلكتروني غير صالح",
+      "telephoneInvalide": "رقم هاتف غير صالح",
+      "reseauInvalide": "رابط {{reseau}} غير صالح (عنوان https:// للشبكة)",
+      "logoEchec": "تعذّر إرسال الشعار",
+      "enregistree": "تم تحديث صفحة المنظمة",
+      "creeeEnAttente": "تم إنشاء المنظمة. ستُنشر صفحتها بعد تحقق فريق Tala DZ.",
+      "titreModifier": "تعديل صفحة المنظمة",
+      "sousTitre": "جمعية، دار نشر، متحف…: صفحتك تجمع فعالياتك ومنشوراتك.",
+      "logo": "الشعار",
+      "choisirLogo": "اختيار صورة",
+      "coordonnees": "معلومات الاتصال",
+      "adresse": "العنوان",
+      "email": "البريد الإلكتروني",
+      "telephone": "الهاتف",
+      "reseaux": "شبكات التواصل الاجتماعي",
+      "verification": "يمكنك استعمال منظمتك فورًا في فعالياتك. ستظهر صفحتها العامة في الدليل بعد تحقق فريق Tala DZ."
     }
   },
   "validation": {

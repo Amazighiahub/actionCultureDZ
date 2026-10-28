@@ -20,6 +20,7 @@ const Footer = () => {
         { label: t('header.nav.heritage'), href: '/patrimoine' },
         { label: t('header.nav.works'), href: '/oeuvres' },
         { label: t('header.nav.crafts'), href: '/artisanat' },
+        { label: t('organisations.menu.toutes', 'Organisations'), href: '/organisations' },
       ]
     },
     {

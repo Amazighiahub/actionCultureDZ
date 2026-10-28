@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -151,6 +151,8 @@ const Header = () => {
       { to: '/oeuvres?type=4', label: t('header.nav.articles', 'Articles'), icon: FileText },
       { to: '/oeuvres?type=5', label: t('header.nav.scientific', 'Scientifiques'), icon: Beaker },
       { to: '/oeuvres?type=6', label: t('header.nav.art', 'Œuvres d\'art'), icon: Palette },
+      // Annuaire des organisations, filtré sur les maisons d'édition
+      { to: '/organisations?categorie=edition', label: t('organisations.menu.edition', 'Maisons d\'édition'), icon: Library },
     ],
     '/evenements': [
       { to: '/evenements', label: t('common.all', 'Tous') },
@@ -160,6 +162,8 @@ const Header = () => {
       { to: '/evenements?type=conference', label: t('events.types.conference', 'Conférences') },
       { to: '/evenements?type=atelier', label: t('events.types.atelier', 'Ateliers') },
       { to: '/evenements?type=spectacle', label: t('events.types.spectacle', 'Spectacles') },
+      // Annuaire des organisations, filtré sur les associations
+      { to: '/organisations?categorie=associations', label: t('organisations.menu.associations', 'Associations et organisateurs'), icon: Users },
     ],
     '/patrimoine': [
       { to: '/patrimoine', label: t('common.all', 'Tous') },

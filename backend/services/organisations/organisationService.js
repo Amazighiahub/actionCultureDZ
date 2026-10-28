@@ -7,6 +7,8 @@ const { categorieDuType } = require('./categories');
 const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
 // Rôles qui peuvent modifier la page
 const ROLES_GESTION = ['responsable', 'directeur'];
+// Éditeurs (liste des œuvres) qui reçoivent une page d'organisation « Maison d'édition »
+const TYPES_EDITEUR_PAGE = ['maison_edition', 'editeur_scientifique'];
 
 const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
@@ -178,6 +180,32 @@ class OrganisationService extends BaseService {
     await org.update(champs);
     if (champs.statut === 'en_attente') await this._prevenirModeration(org, userId);
     return this.repository.findVitrine(id);
+  }
+
+  /**
+   * Une maison d'édition ajoutée à la liste des éditeurs reçoit sa page : reliée à l'organisation
+   * du même nom si elle existe, sinon créée (sans membre, à vérifier par l'équipe).
+   */
+  async pagePourEditeur(editeur, auteurId = null) {
+    if (!editeur || editeur.id_organisation || !TYPES_EDITEUR_PAGE.includes(editeur.type_editeur)) return null;
+    const nom = typeof editeur.nom === 'string' ? { fr: editeur.nom } : editeur.nom;
+    let org = await this.repository.findByName(texteLisible(nom).trim());
+    if (!org) {
+      const type = await this.repository.findTypeParCode('maison_edition');
+      if (!type) return null;
+      org = await this.repository.create({
+        nom,
+        id_type_organisation: type.id_type_organisation,
+        description: editeur.description || {},
+        site_web: editeur.site_web || null,
+        email: editeur.email || null,
+        telephone: editeur.telephone || null,
+        statut: 'en_attente'
+      });
+      await this._prevenirModeration(org, auteurId);
+    }
+    await editeur.update({ id_organisation: org.id_organisation });
+    return org;
   }
 
   // ==========================================================================

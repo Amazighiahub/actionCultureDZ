@@ -2598,7 +2598,8 @@
       "heritage": "Aẓar",
       "moderation": "Asenqed",
       "services": "Tanefliwin",
-      "notifications": "Ilɣuten"
+      "notifications": "Ilɣuten",
+      "organisations": "Tuddsiwin"
     },
     "users": {
       "title": "Asefrek n yiseqdacen",
@@ -2689,6 +2690,26 @@
     "realtime": {
       "connected": "Tuqqna tusridt teddu",
       "reconnect": "Tuqqna tusridt tegzem: ales tuqqna"
+    },
+    "organisations": {
+      "titre": "Tuddsiwin",
+      "enAttente_one": "{{count}} n usebter ara yettwasenqden",
+      "enAttente_other": "{{count}} n isebtar ara yettwasenqden",
+      "statut": "Addad",
+      "statuts": {
+        "en_attente": "Ad yettwasenqed",
+        "valide": "Yeffeɣ-d",
+        "rejete": "Yettwagi"
+      },
+      "aucune": "Ulac tuddsa deg tebdart-a",
+      "voir": "Wali asebter",
+      "publier": "Suffeɣ-d asebter",
+      "refuser": "Agi",
+      "refuserTitre": "Agi « {{nom}} »",
+      "refuserAide": "Taɣẓint ad tettwazen i yimasayen n tuddsa.",
+      "motif": "Taɣẓint",
+      "publiee": "Asebter yeffeɣ-d",
+      "refusee": "Asebter yettwagi: imasayen ttwaselɣen"
     }
   },
   "wilayas": {
@@ -3852,6 +3873,68 @@
       "urlInvalid": "URL n usmel web ur yeɣdi ara (ilaq ad yebdu s http:// neɣ https://)",
       "typeLoadError": "D awezɣi asali n wanawen. Ttxil smiren asebter.",
       "submitting": "Asnulfu iteddu..."
+    },
+    "title": "Tuddsiwin tidelsanin",
+    "subtitle": "Tiddukliwin, ixxamen n teẓrigt, tisilmatin d tsuddsiwin yessidiren adlis azzayri.",
+    "famille": "Anaw n tuddsa",
+    "search": "Nadi tuddsa…",
+    "aucunResultat": "Ulac tuddsa yemṣadan d unadi-ik",
+    "aucune": "Ulac tuddsa akka tura",
+    "invitation": "Tettmeslayeḍ s yisem n tiddukla, axxam n teẓrigt, tasilmat?",
+    "invitationDetail": "Rnu asebter n tuddsa-ik: ad d-mlilent deg-s tedyanin d teẓrigin-ik. Ad d-yeffeɣ mi ara t-isenqed ugraw n Tala DZ.",
+    "creer": "Rnu asebter n tuddsa-w",
+    "nbEvenements_one": "{{count}} n tedyant",
+    "nbEvenements_other": "{{count}} n tedyanin",
+    "nbOeuvres_one": "{{count}} n teẓrigt",
+    "nbOeuvres_other": "{{count}} n teẓrigin",
+    "categories": {
+      "associations": "Tiddukliwin",
+      "edition": "Ixxamen n teẓrigt",
+      "culture": "Tisilmatin d temkarḍiyin",
+      "institutions": "Tisuddsiwin",
+      "entreprises": "Tikebbaniyin",
+      "autres": "Wiyaḍ"
+    },
+    "introuvable": "Ulac tuddsa-a",
+    "introuvableDetail": "Tuddsa-a ulac-itt neɣ asebter-is mazal ur d-yeffiɣ ara.",
+    "voirToutes": "Wali akk tuddsiwin",
+    "refusee": "Asebter-a yettwagi: seɣti-t, ad yuɣal ɣer usenqed.",
+    "enAttente": "Yettraǧu asenqed: ala imeslayen n tuddsa d ugraw n Tala DZ i yettwalin asebter-a akka tura.",
+    "logoDe": "Alugu n {{nom}}",
+    "modifier": "Ẓreg asebter",
+    "presentation": "Tazwert",
+    "activites": "Armud",
+    "publications": "Teẓrigin",
+    "membres": "Iεeggalen",
+    "rolesMembre": {
+      "membre": "Aεeggal",
+      "responsable": "Amasay",
+      "directeur": "Anemhal",
+      "collaborateur": "Amyallal"
+    },
+    "menu": {
+      "edition": "Ixxamen n teẓrigt",
+      "associations": "Tiddukliwin d yimsuddsen",
+      "toutes": "Tuddsiwin"
+    },
+    "form": {
+      "logoInvalide": "Fren tugna ddaw n 5 MB",
+      "emailInvalide": "Tansa imayl d tarameɣtut",
+      "telephoneInvalide": "Uṭṭun n tiliɣri d arameɣtu",
+      "reseauInvalide": "Aseɣwen {{reseau}} d arameɣtu (tansa https://)",
+      "logoEchec": "Alugu ur yettwazen ara",
+      "enregistree": "Asebter n tuddsa yettwaleqqem",
+      "creeeEnAttente": "Tuddsa tettwarna. Asebter-is ad d-yeffeɣ mi ara t-isenqed ugraw n Tala DZ.",
+      "titreModifier": "Ẓreg asebter n tuddsa",
+      "sousTitre": "Tiddukla, axxam n teẓrigt, tasilmat…: asebter-ik yesdukkul tidyanin d teẓrigin-ik.",
+      "logo": "Alugu",
+      "choisirLogo": "Fren tugna",
+      "coordonnees": "Isallen n unermas",
+      "adresse": "Tansa",
+      "email": "Imayl",
+      "telephone": "Tiliɣri",
+      "reseaux": "Iẓeḍwan inmettiyen",
+      "verification": "Tzemreḍ ad tesqedceḍ tuddsa-ik tura kan i tedyanin-ik. Asebter-is azayez ad d-iban deg ukaram mi ara t-isenqed ugraw n Tala DZ."
     }
   },
   "validation": {

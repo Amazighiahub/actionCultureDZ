@@ -28,11 +28,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { idFromSlug, professionnelPath, evenementPath } from '@/utils/slug';
 import { ListeArticlesPresse, lireArticlesPresse } from '@/components/shared/ArticlesPresse';
+import { ItemCard, ItemGrid as Grid, firstImage, type MediaItem } from '@/components/shared/ItemCard';
 
 // Types d'œuvres « articles » (page /articles/:id)
 const ARTICLE_TYPES = [4, 5];
 
-interface MediaItem { url: string; type_media?: string }
 interface PortfolioOeuvre {
   id_oeuvre: number;
   titre: string;
@@ -65,32 +65,6 @@ interface Portfolio {
   /** Vrai si le visiteur connecté est le professionnel lui-même */
   estProprietaire?: boolean;
 }
-
-const firstImage = (medias?: MediaItem[]) => medias?.find((m) => (m.type_media || 'image') === 'image')?.url;
-
-/** Carte d'un contenu (lien vers sa fiche) */
-const ItemCard: React.FC<{ to: string; title: string; image?: string | null; subtitle?: string; badge?: string }> = ({ to, title, image, subtitle, badge }) => (
-  <Link to={to} className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-    <Card className="h-full overflow-hidden transition-shadow group-hover:shadow-md">
-      <div className="aspect-[4/3] bg-muted">
-        {image ? (
-          <img src={getAssetUrl(image, { width: 480 })} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-        ) : (
-          <img src="/images/placeholder.svg" alt="" loading="lazy" className="h-full w-full object-contain p-8 opacity-40" />
-        )}
-      </div>
-      <CardContent className="p-4 space-y-1">
-        {badge && <Badge variant="secondary" className="text-xs">{badge}</Badge>}
-        <h3 className="font-semibold leading-snug line-clamp-2">{title}</h3>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-      </CardContent>
-    </Card>
-  </Link>
-);
-
-const Grid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>
-);
 
 const ProfessionnelPortfolio: React.FC = () => {
   const { t, i18n } = useTranslation();

@@ -2502,7 +2502,8 @@
       "heritage": "Patrimoine",
       "moderation": "Modération",
       "services": "Services",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "organisations": "Organisations"
     },
     "users": {
       "title": "Gestion des utilisateurs",
@@ -2865,6 +2866,26 @@
     "realtime": {
       "connected": "Temps réel connecté",
       "reconnect": "Temps réel déconnecté : reconnecter"
+    },
+    "organisations": {
+      "titre": "Organisations",
+      "enAttente_one": "{{count}} page à vérifier",
+      "enAttente_other": "{{count}} pages à vérifier",
+      "statut": "Statut",
+      "statuts": {
+        "en_attente": "À vérifier",
+        "valide": "Publiée",
+        "rejete": "Refusée"
+      },
+      "aucune": "Aucune organisation dans cette liste",
+      "voir": "Voir la page",
+      "publier": "Publier la page",
+      "refuser": "Refuser",
+      "refuserTitre": "Refuser « {{nom}} »",
+      "refuserAide": "Le motif est envoyé aux responsables de l’organisation : ils pourront corriger la page, qui repartira en vérification.",
+      "motif": "Motif",
+      "publiee": "Page publiée",
+      "refusee": "Page refusée : les responsables sont prévenus"
     }
   },
   "wilayas": {
@@ -4510,6 +4531,68 @@
       "urlInvalid": "URL du site web invalide (doit commencer par http:// ou https://)",
       "typeLoadError": "Impossible de charger les types. Veuillez rafraîchir la page.",
       "submitting": "Création en cours..."
+    },
+    "title": "Organisations culturelles",
+    "subtitle": "Associations, maisons d’édition, musées et institutions qui font vivre la culture algérienne.",
+    "famille": "Type d’organisation",
+    "search": "Rechercher une organisation…",
+    "aucunResultat": "Aucune organisation ne correspond à votre recherche",
+    "aucune": "Aucune organisation pour l’instant",
+    "invitation": "Vous représentez une association, une maison d’édition, un musée ?",
+    "invitationDetail": "Créez la page de votre organisation : vos événements et vos publications y seront réunis. Elle est publiée après vérification par l’équipe Tala DZ.",
+    "creer": "Créer la page de mon organisation",
+    "nbEvenements_one": "{{count}} événement",
+    "nbEvenements_other": "{{count}} événements",
+    "nbOeuvres_one": "{{count}} publication",
+    "nbOeuvres_other": "{{count}} publications",
+    "categories": {
+      "associations": "Associations",
+      "edition": "Maisons d’édition",
+      "culture": "Musées et bibliothèques",
+      "institutions": "Institutions",
+      "entreprises": "Entreprises",
+      "autres": "Autres"
+    },
+    "introuvable": "Organisation introuvable",
+    "introuvableDetail": "Cette organisation n’existe pas ou sa page n’est pas encore publiée.",
+    "voirToutes": "Voir toutes les organisations",
+    "refusee": "Cette page a été refusée : corrigez-la, elle repartira en vérification.",
+    "enAttente": "En attente de vérification : seuls les membres de l’organisation et l’équipe Tala DZ voient cette page pour l’instant.",
+    "logoDe": "Logo de {{nom}}",
+    "modifier": "Modifier la page",
+    "presentation": "Présentation",
+    "activites": "Activités",
+    "publications": "Publications",
+    "membres": "Membres",
+    "rolesMembre": {
+      "membre": "Membre",
+      "responsable": "Responsable",
+      "directeur": "Directeur",
+      "collaborateur": "Collaborateur"
+    },
+    "menu": {
+      "edition": "Maisons d’édition",
+      "associations": "Associations et organisateurs",
+      "toutes": "Organisations"
+    },
+    "form": {
+      "logoInvalide": "Choisissez une image de moins de 5 Mo",
+      "emailInvalide": "Adresse e-mail invalide",
+      "telephoneInvalide": "Numéro de téléphone invalide",
+      "reseauInvalide": "Lien {{reseau}} invalide (adresse https:// du réseau)",
+      "logoEchec": "Le logo n’a pas pu être envoyé",
+      "enregistree": "Page de l’organisation mise à jour",
+      "creeeEnAttente": "Organisation créée. Sa page sera publiée après vérification par l’équipe Tala DZ.",
+      "titreModifier": "Modifier la page de l’organisation",
+      "sousTitre": "Association, maison d’édition, musée… : votre page réunit vos événements et vos publications.",
+      "logo": "Logo",
+      "choisirLogo": "Choisir une image",
+      "coordonnees": "Coordonnées",
+      "adresse": "Adresse",
+      "email": "E-mail",
+      "telephone": "Téléphone",
+      "reseaux": "Réseaux sociaux",
+      "verification": "Vous pourrez utiliser votre organisation tout de suite pour vos événements. Sa page publique apparaîtra dans l’annuaire après vérification par l’équipe Tala DZ."
     }
   },
   "validation": {

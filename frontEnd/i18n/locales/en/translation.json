@@ -2713,7 +2713,8 @@
       "heritage": "Heritage",
       "moderation": "Moderation",
       "services": "Services",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "organisations": "Organisations"
     },
     "users": {
       "title": "User Management",
@@ -2840,6 +2841,26 @@
     "realtime": {
       "connected": "Real-time connected",
       "reconnect": "Real-time disconnected: reconnect"
+    },
+    "organisations": {
+      "titre": "Organisations",
+      "enAttente_one": "{{count}} page to review",
+      "enAttente_other": "{{count}} pages to review",
+      "statut": "Status",
+      "statuts": {
+        "en_attente": "To review",
+        "valide": "Published",
+        "rejete": "Rejected"
+      },
+      "aucune": "No organisation in this list",
+      "voir": "See the page",
+      "publier": "Publish the page",
+      "refuser": "Reject",
+      "refuserTitre": "Reject “{{nom}}”",
+      "refuserAide": "The reason is sent to the organisation’s managers: they can correct the page, which will be reviewed again.",
+      "motif": "Reason",
+      "publiee": "Page published",
+      "refusee": "Page rejected: the managers have been notified"
     }
   },
   "wilayas": {
@@ -4235,6 +4256,68 @@
       "urlInvalid": "Invalid website URL (must start with http:// or https://)",
       "typeLoadError": "Unable to load types. Please refresh the page.",
       "submitting": "Creating..."
+    },
+    "title": "Cultural organisations",
+    "subtitle": "Associations, publishing houses, museums and institutions that keep Algerian culture alive.",
+    "famille": "Type of organisation",
+    "search": "Search for an organisation…",
+    "aucunResultat": "No organisation matches your search",
+    "aucune": "No organisations yet",
+    "invitation": "Do you represent an association, a publishing house, a museum?",
+    "invitationDetail": "Create your organisation’s page: your events and publications are gathered there. It is published after a check by the Tala DZ team.",
+    "creer": "Create my organisation’s page",
+    "nbEvenements_one": "{{count}} event",
+    "nbEvenements_other": "{{count}} events",
+    "nbOeuvres_one": "{{count}} publication",
+    "nbOeuvres_other": "{{count}} publications",
+    "categories": {
+      "associations": "Associations",
+      "edition": "Publishing houses",
+      "culture": "Museums and libraries",
+      "institutions": "Institutions",
+      "entreprises": "Companies",
+      "autres": "Other"
+    },
+    "introuvable": "Organisation not found",
+    "introuvableDetail": "This organisation does not exist or its page is not published yet.",
+    "voirToutes": "See all organisations",
+    "refusee": "This page was rejected: correct it and it will be checked again.",
+    "enAttente": "Awaiting review: only the organisation’s members and the Tala DZ team can see this page for now.",
+    "logoDe": "Logo of {{nom}}",
+    "modifier": "Edit the page",
+    "presentation": "About",
+    "activites": "Activities",
+    "publications": "Publications",
+    "membres": "Members",
+    "rolesMembre": {
+      "membre": "Member",
+      "responsable": "Manager",
+      "directeur": "Director",
+      "collaborateur": "Collaborator"
+    },
+    "menu": {
+      "edition": "Publishing houses",
+      "associations": "Associations and organisers",
+      "toutes": "Organisations"
+    },
+    "form": {
+      "logoInvalide": "Choose an image under 5 MB",
+      "emailInvalide": "Invalid email address",
+      "telephoneInvalide": "Invalid phone number",
+      "reseauInvalide": "Invalid {{reseau}} link (https:// address of the network)",
+      "logoEchec": "The logo could not be uploaded",
+      "enregistree": "Organisation page updated",
+      "creeeEnAttente": "Organisation created. Its page will be published after a check by the Tala DZ team.",
+      "titreModifier": "Edit the organisation’s page",
+      "sousTitre": "Association, publishing house, museum…: your page gathers your events and publications.",
+      "logo": "Logo",
+      "choisirLogo": "Choose an image",
+      "coordonnees": "Contact details",
+      "adresse": "Address",
+      "email": "Email",
+      "telephone": "Phone",
+      "reseaux": "Social networks",
+      "verification": "You can use your organisation right away for your events. Its public page will appear in the directory after a check by the Tala DZ team."
     }
   },
   "validation": {

@@ -632,7 +632,7 @@ const AjouterEvenement = () => {
                         type="button"
                         size="sm"
                         className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => saveDraftAndNavigate('/ajouter-organisation')}
+                        onClick={() => saveDraftAndNavigate('/ajouter-organisation?retour=evenement')}
                       >
                         <Plus className="h-4 w-4 me-1" />
                         {t('events.create.createOrganisation', 'Créer une organisation')}

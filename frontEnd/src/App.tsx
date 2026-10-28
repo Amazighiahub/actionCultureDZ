@@ -40,6 +40,8 @@ const ServicesVisiteurs = React.lazy(() => import('./pages/ServicesVisiteurs'));
 const ServiceDetail = React.lazy(() => import('./pages/ServiceDetail'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
+const OrganisationsAnnuaire = React.lazy(() => import('./pages/OrganisationsAnnuaire'));
+const OrganisationVitrine = React.lazy(() => import('./pages/OrganisationVitrine'));
 const APropos = React.lazy(() => import('./pages/APropos'));
 const ArticleViewPage = React.lazy(() => import('./pages/articles/ArticleViewPage'));
 const PagePersonnalite = React.lazy(() => import('./pages/PagePersonnalite'));
@@ -194,6 +196,8 @@ const App = () => (
             <Route path="/artisanat/gastronomie" element={<ErrorBoundary><Gastronomie /></ErrorBoundary>} />
             <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
             <Route path="/professionnels/:id" element={<ErrorBoundary><ProfessionnelPortfolio /></ErrorBoundary>} />
+            <Route path="/organisations" element={<ErrorBoundary><OrganisationsAnnuaire /></ErrorBoundary>} />
+            <Route path="/organisations/:id" element={<ErrorBoundary><OrganisationVitrine /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
             <Route path="/auth" element={<Auth />} />
             {/* Redirects SEO : anciennes URLs PascalCase → lowercase */}
@@ -330,6 +334,15 @@ const App = () => (
                 <ProfessionalRoute>
                   <ErrorBoundary><AjouterEvenement /></ErrorBoundary>
                 </ProfessionalRoute>
+              }
+            />
+            {/* Page d'une organisation : ses responsables (contrôle par le serveur) */}
+            <Route
+              path="/organisations/:id/modifier"
+              element={
+                <ProtectedRoute>
+                  <AjouterOrganisation />
+                </ProtectedRoute>
               }
             />
             <Route

@@ -43,6 +43,12 @@ class OrganisationRepository extends BaseRepository {
     });
   }
 
+  async findTypeParCode(code) {
+    return this.models.TypeOrganisation
+      ? this.models.TypeOrganisation.findOne({ where: { code } })
+      : null;
+  }
+
   async findTypes() {
     return this.models.TypeOrganisation
       ? this.models.TypeOrganisation.findAll({ order: [['id_type_organisation', 'ASC']] })
