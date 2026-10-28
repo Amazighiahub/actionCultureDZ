@@ -71,6 +71,48 @@ class OrganisationController extends BaseController {
     }
   }
 
+  /** Noms des images de couverture choisies avec le fichier (champ « images », liste JSON) */
+  _nomsImages(req) {
+    try {
+      const noms = JSON.parse(req.body?.images || '[]');
+      return Array.isArray(noms) ? noms.filter(n => typeof n === 'string').map(n => n.slice(0, 200)).slice(0, 1000) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** GET /organisations/:id/catalogue/modele : modèle Excel à remplir */
+  async modeleCatalogue(req, res) {
+    try {
+      const buffer = await this.service.modeleCatalogue(Number(req.params.id), this._droits(req));
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="Modele_catalogue_TalaDZ.xlsx"');
+      res.send(Buffer.from(buffer));
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** POST /organisations/:id/catalogue/apercu (fichier + noms des images) : aperçu sans enregistrer */
+  async apercuCatalogue(req, res) {
+    try {
+      const data = await this.service.apercuCatalogue(Number(req.params.id), req.file.buffer, this._nomsImages(req), this._droits(req));
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** POST /organisations/:id/catalogue : import des lignes valides */
+  async importerCatalogue(req, res) {
+    try {
+      const data = await this.service.importerCatalogue(Number(req.params.id), req.file.buffer, this._nomsImages(req), this._droits(req));
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** PUT /organisations/:id : responsables de l'organisation ou modération */
   async modifier(req, res) {
     try {

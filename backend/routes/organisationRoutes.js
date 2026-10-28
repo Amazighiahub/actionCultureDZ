@@ -5,6 +5,8 @@ const { body, param } = require('express-validator');
 const container = require('../services/serviceContainer');
 const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
 const controller = require('../controllers/organisationController');
+const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // Champs de la page publique (création et modification)
 const champsVitrine = [
@@ -121,6 +123,14 @@ module.exports = (_models, authMiddleware) => {
     [body('doublons').isArray({ min: 1, max: 20 }), body('doublons.*').isInt({ min: 1 }).toInt()],
     handleValidationErrors,
     (req, res) => controller.fusionner(req, res));
+
+  /**
+   * Catalogue d'une maison d'édition (responsables) : modèle Excel, aperçu, import.
+   * Le fichier est lu en mémoire, jamais stocké ; les couvertures sont envoyées ensuite livre par livre.
+   */
+  router.get('/:id/catalogue/modele', authenticate, validateId(), (req, res) => controller.modeleCatalogue(req, res));
+  router.post('/:id/catalogue/apercu', authenticate, validateId(), ...uploadClasseurXlsx, (req, res) => controller.apercuCatalogue(req, res));
+  router.post('/:id/catalogue', authenticate, validateId(), createContentLimiter, ...uploadClasseurXlsx, (req, res) => controller.importerCatalogue(req, res));
 
   /**
    * PATCH /api/organisations/:id/statut

@@ -42,6 +42,7 @@ const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const OrganisationsAnnuaire = React.lazy(() => import('./pages/OrganisationsAnnuaire'));
 const OrganisationVitrine = React.lazy(() => import('./pages/OrganisationVitrine'));
+const ImportCatalogue = React.lazy(() => import('./pages/ImportCatalogue'));
 const APropos = React.lazy(() => import('./pages/APropos'));
 const ArticleViewPage = React.lazy(() => import('./pages/articles/ArticleViewPage'));
 const PagePersonnalite = React.lazy(() => import('./pages/PagePersonnalite'));
@@ -337,6 +338,15 @@ const App = () => (
               }
             />
             {/* Page d'une organisation : ses responsables (contrôle par le serveur) */}
+            {/* Catalogue d'une maison d'édition (Excel) : ses responsables (contrôle par le serveur) */}
+            <Route
+              path="/organisations/:id/catalogue"
+              element={
+                <ProtectedRoute>
+                  <ImportCatalogue />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/organisations/:id/modifier"
               element={

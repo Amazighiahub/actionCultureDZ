@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Mail, Phone, Pencil, BookOpen, CalendarDays, Users, Building, ArrowLeft } from 'lucide-react';
+import { MapPin, Mail, Phone, Pencil, BookOpen, CalendarDays, Users, Building, ArrowLeft, FileSpreadsheet } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead, { SITE_URL } from '@/components/SEOHead';
@@ -197,6 +197,12 @@ const OrganisationVitrine: React.FC = () => {
               {org.peutModifier && (
                 <Button asChild variant="secondary" size="sm">
                   <Link to={`/organisations/${org.id_organisation}/modifier`}><Pencil className="h-4 w-4 me-2" aria-hidden="true" />{t('organisations.modifier', 'Modifier la page')}</Link>
+                </Button>
+              )}
+              {/* Maison d'édition : tout son catalogue en une fois (Excel) */}
+              {org.peutModifier && org.TypeOrganisation?.code === 'maison_edition' && (
+                <Button asChild variant="secondary" size="sm">
+                  <Link to={`/organisations/${org.id_organisation}/catalogue`}><FileSpreadsheet className="h-4 w-4 me-2" aria-hidden="true" />{t('catalogue.bouton', 'Importer mon catalogue (Excel)')}</Link>
                 </Button>
               )}
             </div>

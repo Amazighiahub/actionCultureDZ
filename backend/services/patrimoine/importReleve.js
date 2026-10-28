@@ -366,4 +366,4 @@ function resumerPlan(plan) {
   };
 }
 
-module.exports = { lireReleve, ImportReleve, resumerPlan, typeTaladz };
+module.exports = { lireReleve, ImportReleve, resumerPlan, typeTaladz, texte };
