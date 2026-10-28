@@ -20,7 +20,7 @@ const champsVitrine = [
 
 module.exports = (_models, authMiddleware) => {
   const get = () => container.organisationService;
-  const { authenticate, optionalAuth, requireRole } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
   const moderation = requireRole(['Admin', 'Moderateur']);
 
   /**
@@ -40,6 +40,17 @@ module.exports = (_models, authMiddleware) => {
    * Toutes les organisations et leur statut (modération)
    */
   router.get('/admin/liste', authenticate, moderation, (req, res) => controller.listeModeration(req, res));
+
+  /**
+   * « C'est mon organisation » : demandes pour devenir responsable d'une organisation qui n'en a pas.
+   * GET  /api/organisations/admin/revendications            (modération)
+   * PATCH /api/organisations/revendications/:idDemande       (modération) { decision: acceptee|refusee, motif }
+   */
+  router.get('/admin/revendications', authenticate, moderation, (req, res) => controller.demandesResponsabilite(req, res));
+  router.patch('/revendications/:idDemande', authenticate, moderation, validateId('idDemande'),
+    [body('decision').isIn(['acceptee', 'refusee']), body('motif').optional().isString().isLength({ max: 1000 })],
+    handleValidationErrors,
+    (req, res) => controller.deciderResponsabilite(req, res));
 
   /**
    * GET /api/organisations/me
@@ -112,6 +123,14 @@ module.exports = (_models, authMiddleware) => {
     ],
     handleValidationErrors,
     (req, res) => controller.modifier(req, res));
+
+  /**
+   * POST /api/organisations/:id/revendication { message } : un professionnel demande à gérer la page
+   */
+  router.post('/:id/revendication', authenticate, requireValidatedProfessional, validateId(),
+    [body('message').optional().isString().isLength({ max: 1000 })],
+    handleValidationErrors,
+    (req, res) => controller.demanderResponsabilite(req, res));
 
   /**
    * GET /api/organisations/:id/fusion?doublons=7,9  (résumé)

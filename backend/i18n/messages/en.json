@@ -522,6 +522,7 @@
     "updated": "Organisation page updated",
     "validated": "Organisation published",
     "rejected": "Organisation rejected",
-    "merged": "Organisations merged"
+    "merged": "Organisations merged",
+    "claimSent": "Request sent: the Tala DZ team will review it"
   }
 }

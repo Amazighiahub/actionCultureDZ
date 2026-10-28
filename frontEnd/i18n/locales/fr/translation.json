@@ -2897,6 +2897,15 @@
         "voirResume": "Voir le résumé",
         "confirmer": "Fusionner",
         "faite": "Organisations regroupées"
+      },
+      "revendications": {
+        "titre_one": "Demande pour gérer une page ({{count}})",
+        "titre_other": "Demandes pour gérer une page ({{count}})",
+        "accepter": "Accepter",
+        "acceptee": "Demande acceptée : il gère maintenant la page",
+        "refusee": "Demande refusée : le demandeur est prévenu",
+        "refuserTitre": "Refuser la demande",
+        "refuserAide": "Le motif est envoyé au demandeur."
       }
     }
   },
@@ -4607,6 +4616,21 @@
       "verification": "Vous pourrez utiliser votre organisation tout de suite pour vos événements. Sa page publique apparaîtra dans l’annuaire après vérification par l’équipe Tala DZ.",
       "existePeutEtre": "Elle existe peut-être déjà sur Tala DZ :",
       "existeConseil": "Si c’est la vôtre, ne la recréez pas : demandez à son responsable de vous ajouter comme membre, ou écrivez à l’équipe Tala DZ."
+    },
+    "revendication": {
+      "boutonEdition": "C’est ma maison d’édition",
+      "bouton": "C’est mon organisation",
+      "envoyee": "Demande envoyée : l’équipe Tala DZ va la vérifier",
+      "enCours": "Votre demande pour gérer cette page est en cours de vérification par l’équipe Tala DZ.",
+      "titre": "Personne ne gère encore cette page.",
+      "refusee": "Votre précédente demande n’a pas été acceptée",
+      "aide": "Vous en êtes responsable ? Demandez à la gérer : vous pourrez modifier la page et ajouter vos contenus.",
+      "connexion": "Se connecter pour la gérer",
+      "verification": "L’équipe Tala DZ vérifie que vous représentez bien cette organisation, puis vous en devenez responsable.",
+      "message": "Qui êtes-vous pour cette organisation ? (facultatif)",
+      "exemple": "Ex. : je suis le directeur ; contact : 0550 00 00 00",
+      "envoyer": "Envoyer la demande",
+      "suggestion": "personne ne la gère encore : ouvrez sa page et touchez « C’est mon organisation »"
     }
   },
   "validation": {
