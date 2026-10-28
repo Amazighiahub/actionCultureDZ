@@ -14,7 +14,7 @@ import {
   MapPin, Globe, Phone, Mail, Clock, CheckCircle2, XCircle, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { styleTypeService } from '@/components/services/typesService';
+import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import type { TFunction } from 'i18next';
 import { lieuService } from '@/services/lieu.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
@@ -292,7 +292,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                       </div>
                       {service.tarif_min != null && (
                         <Badge variant="secondary" className="text-xs">
-                          {formatPriceRange(service.tarif_min, service.tarif_max)}
+                          {tarifAvecUnite(t, service.type_service, formatPriceRange(service.tarif_min, service.tarif_max))}
                         </Badge>
                       )}
                     </div>

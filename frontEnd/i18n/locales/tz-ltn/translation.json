@@ -448,7 +448,8 @@
     "loadMore": "Wali ugar",
     "yes": "Ih",
     "no": "Ala",
-    "contributorGuide": "Amnir n umttekki"
+    "contributorGuide": "Amnir n umttekki",
+    "lieu": "Adeg"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -3815,7 +3816,22 @@
       "artisanat": "Taẓuri n ufus",
       "location": "Akraḍ",
       "autre": "Nniḍen"
-    }
+    },
+    "uniteTarif": {
+      "restaurant": "i yal amdan",
+      "hotel": "i yal iḍ",
+      "guide": "i yal tarzeft",
+      "transport": "i yal abrid",
+      "location": "i yal ass"
+    },
+    "aideTarif": {
+      "restaurant": "Azal alemmas n yiwen n wučči, i yal amdan.",
+      "hotel": "Azal n yiwen n yiḍ.",
+      "guide": "Azal n yiwet n tarzeft s umnir.",
+      "transport": "Azal n yiwen n ubrid.",
+      "location": "Azal n ukari i yiwen n wass."
+    },
+    "prix": "Azal"
   },
   "organisations": {
     "create": {

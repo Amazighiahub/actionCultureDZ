@@ -457,7 +457,8 @@
     "yes": "Oui",
     "no": "Non",
     "contributorGuide": "Guide du contributeur",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "lieu": "Lieu"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -4473,7 +4474,22 @@
     "placeHint": "Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte.",
     "descriptionPlaceholder": "Décrivez votre service...",
     "addressPlaceholder": "Adresse complète...",
-    "hoursPlaceholder": "Ex : tous les jours, 9 h – 18 h"
+    "hoursPlaceholder": "Ex : tous les jours, 9 h – 18 h",
+    "uniteTarif": {
+      "restaurant": "par personne",
+      "hotel": "par nuit",
+      "guide": "par visite",
+      "transport": "par trajet",
+      "location": "par jour"
+    },
+    "aideTarif": {
+      "restaurant": "Prix moyen d'un repas, par personne. Il sera affiché « par personne ».",
+      "hotel": "Prix d'une nuit. Il sera affiché « par nuit ».",
+      "guide": "Prix d'une visite guidée. Il sera affiché « par visite ».",
+      "transport": "Prix d'un trajet. Il sera affiché « par trajet ».",
+      "location": "Prix de la location pour une journée. Il sera affiché « par jour »."
+    },
+    "prix": "Prix"
   },
   "organisations": {
     "create": {

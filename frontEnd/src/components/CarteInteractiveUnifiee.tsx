@@ -24,6 +24,8 @@ import 'leaflet/dist/leaflet.css';
 import '@/lib/leafletIcons';
 import { evenementPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { tarifAvecUnite } from '@/components/services/typesService';
 
 // Custom marker icons par catégorie
 const createIcon = (color: string, emoji: string) => {
@@ -68,7 +70,15 @@ interface MapMarker {
   badge?: string;
   link?: string;
   extra?: Record<string, string>;
+  // Formaté à l'affichage (dans la langue du visiteur, avec l'unité du type)
+  tarif?: { min?: number | string; max?: number | string; type?: string };
 }
+
+// Libellé traduit de chaque information complémentaire : [clé i18n, texte par défaut]
+const LIBELLES_EXTRA: Record<string, [string, string]> = {
+  telephone: ['service.phone', 'Téléphone'],
+  lieu: ['common.lieu', 'Lieu'],
+};
 
 // Filtre config
 const FILTER_CONFIG: Record<MarkerCategory, { label: string; icon: React.ElementType; color: string }> = {
@@ -113,6 +123,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'fr';
+  const { formatPriceRange } = useLocalizedNumber();
   const [carteOuverte, setCarteOuverte] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<MarkerCategory>>(
     new Set(['patrimoine', 'restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'evenement'])
@@ -165,11 +176,11 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           title: translate(service.nom, lang),
           subtitle: translate(service.adresse, lang),
           description: translate(service.description, lang),
-          badge: service.type_service,
+          badge: String(t(`service.types.${service.type_service || 'autre'}`, service.type_service || 'autre')),
           extra: {
             ...(service.telephone ? { telephone: service.telephone } : {}),
-            ...(service.tarif_min ? { tarif: `${service.tarif_min}${service.tarif_max ? '–' + service.tarif_max : ''} DA` } : {}),
           },
+          ...(service.tarif_min != null ? { tarif: { min: service.tarif_min, max: service.tarif_max, type: service.type_service } } : {}),
         });
       }
     });
@@ -196,7 +207,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
     });
 
     return result;
-  }, [lieux, services, evenements, lang]);
+  }, [lieux, services, evenements, lang, t]);
 
   // Filtrer
   const visibleMarkers = useMemo(() => {
@@ -264,9 +275,15 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
                 )}
                 {marker.extra && Object.entries(marker.extra).map(([key, val]) => (
                   <p key={key} className="text-xs text-gray-500">
-                    <strong>{key}:</strong> {val}
+                    <strong>{LIBELLES_EXTRA[key] ? t(...LIBELLES_EXTRA[key]) : key} :</strong> {val}
                   </p>
                 ))}
+                {marker.tarif && (
+                  <p className="text-xs text-gray-500">
+                    <strong>{t('service.prix', 'Prix')} :</strong>{' '}
+                    {tarifAvecUnite(t, marker.tarif.type, formatPriceRange(marker.tarif.min, marker.tarif.max))}
+                  </p>
+                )}
                 {marker.link && (
                   <a
                     href={marker.link}

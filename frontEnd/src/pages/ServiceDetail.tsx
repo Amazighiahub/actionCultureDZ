@@ -22,7 +22,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { professionnelPath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { styleTypeService } from '@/components/services/typesService';
+import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 
 interface ServiceFiche {
   id: number;
@@ -166,7 +166,7 @@ const ServiceDetail: React.FC = () => {
                 </p>
               )}
               {aTarif && (
-                <p className="font-medium text-primary">{formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined)}</p>
+                <p className="font-medium text-primary">{tarifAvecUnite(t, service.type_service, formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined))}</p>
               )}
             </CardContent>
           </Card>

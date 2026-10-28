@@ -452,7 +452,8 @@
     "yes": "Yes",
     "no": "No",
     "contributorGuide": "Contributor guide",
-    "continue": "Continue"
+    "continue": "Continue",
+    "lieu": "Place"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -4198,7 +4199,22 @@
     "placeHint": "Search for the place (site, district, village). Not found? “Create a new place”: name, address and a point on the map.",
     "descriptionPlaceholder": "Describe your service...",
     "addressPlaceholder": "Full address...",
-    "hoursPlaceholder": "E.g. every day, 9am – 6pm"
+    "hoursPlaceholder": "E.g. every day, 9am – 6pm",
+    "uniteTarif": {
+      "restaurant": "per person",
+      "hotel": "per night",
+      "guide": "per tour",
+      "transport": "per trip",
+      "location": "per day"
+    },
+    "aideTarif": {
+      "restaurant": "Average price of a meal, per person. It will be shown \"per person\".",
+      "hotel": "Price of one night. It will be shown \"per night\".",
+      "guide": "Price of one guided tour. It will be shown \"per tour\".",
+      "transport": "Price of one trip. It will be shown \"per trip\".",
+      "location": "Rental price for one day. It will be shown \"per day\"."
+    },
+    "prix": "Price"
   },
   "organisations": {
     "create": {

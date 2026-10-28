@@ -12,7 +12,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
-import { styleTypeService } from './typesService';
+import { styleTypeService, tarifAvecUnite } from './typesService';
 
 export interface ServiceAnnuaire {
   id: number;
@@ -71,7 +71,7 @@ const ServiceCard: React.FC<{ service: ServiceAnnuaire }> = ({ service }) => {
           </p>
         )}
         {aTarif && (
-          <p className="text-sm font-medium text-primary">{formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined)}</p>
+          <p className="text-sm font-medium text-primary">{tarifAvecUnite(t, service.type_service, formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined))}</p>
         )}
       </CardContent>
     </Card>

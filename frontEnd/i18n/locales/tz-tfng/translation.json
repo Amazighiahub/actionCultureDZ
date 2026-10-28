@@ -448,7 +448,8 @@
     "loadMore": "ⵡⴰⵍⵉ ⵓⴳⴰⵔ",
     "yes": "ⵉⵀ",
     "no": "ⴰⵍⴰ",
-    "contributorGuide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ"
+    "contributorGuide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ",
+    "lieu": "ⴰⴷⴻⴳ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -3815,7 +3816,22 @@
       "artisanat": "ⵜⴰⵥⵓⵔⵉ ⵏ ⵓⴼⵓⵙ",
       "location": "ⴰⴽⵔⴰⴹ",
       "autre": "ⵏⵏⵉⴹⴻⵏ"
-    }
+    },
+    "uniteTarif": {
+      "restaurant": "ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ",
+      "hotel": "ⵉ ⵢⴰⵍ ⵉⴹ",
+      "guide": "ⵉ ⵢⴰⵍ ⵜⴰⵔⵣⴼⵜ",
+      "transport": "ⵉ ⵢⴰⵍ ⴰⴱⵔⵉⴷ",
+      "location": "ⵉ ⵢⴰⵍ ⴰⵙⵙ"
+    },
+    "aideTarif": {
+      "restaurant": "ⴰⵣⴰⵍ ⴰⵍⴻⵎⵎⴰⵙ ⵏ ⵢⵉⵡⴻⵏ ⵏ ⵡⵓⵞⵞⵉ, ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ.",
+      "hotel": "ⴰⵣⴰⵍ ⵏ ⵢⵉⵡⴻⵏ ⵏ ⵢⵉⴹ.",
+      "guide": "ⴰⵣⴰⵍ ⵏ ⵢⵉⵡⴻⵜ ⵏ ⵜⴰⵔⵣⴼⵜ ⵙ ⵓⵎⵏⵉⵔ.",
+      "transport": "ⴰⵣⴰⵍ ⵏ ⵢⵉⵡⴻⵏ ⵏ ⵓⴱⵔⵉⴷ.",
+      "location": "ⴰⵣⴰⵍ ⵏ ⵓⴽⴰⵔⵉ ⵉ ⵢⵉⵡⴻⵏ ⵏ ⵡⴰⵙⵙ."
+    },
+    "prix": "ⴰⵣⴰⵍ"
   },
   "organisations": {
     "create": {
