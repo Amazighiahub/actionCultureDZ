@@ -457,7 +457,8 @@
     "yes": "Oui",
     "no": "Non",
     "contributorGuide": "Guide du contributeur",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "lieu": "Lieu"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -2462,7 +2463,27 @@
     "placeholder_xxxxxxxx": "XXXX-XXXX",
     "impact_factor": "Impact Factor",
     "placeholder_375": "Ex: 3.75",
-    "article_valu_par": "Article évalué par les pairs"
+    "article_valu_par": "Article évalué par les pairs",
+    "blocs": {
+      "text": "Paragraphe",
+      "heading": "Titre",
+      "image": "Image",
+      "video": "Vidéo",
+      "citation": "Citation",
+      "list": "Liste",
+      "table": "Tableau",
+      "code": "Code",
+      "separator": "Séparateur",
+      "embed": "Intégration"
+    },
+    "insererIci": "Insérer ici",
+    "choisirTypeBloc": "Choisir le type de bloc à insérer :",
+    "modifierArticle": "Modifier l'article",
+    "creerArticle": "Créer un article",
+    "articleScientifique": "Article scientifique",
+    "article": "Article",
+    "editer": "Éditer",
+    "apercu": "Aperçu"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",
@@ -2481,7 +2502,8 @@
       "heritage": "Patrimoine",
       "moderation": "Modération",
       "services": "Services",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "organisations": "Organisations"
     },
     "users": {
       "title": "Gestion des utilisateurs",
@@ -2844,6 +2866,26 @@
     "realtime": {
       "connected": "Temps réel connecté",
       "reconnect": "Temps réel déconnecté : reconnecter"
+    },
+    "organisations": {
+      "titre": "Organisations",
+      "enAttente_one": "{{count}} page à vérifier",
+      "enAttente_other": "{{count}} pages à vérifier",
+      "statut": "Statut",
+      "statuts": {
+        "en_attente": "À vérifier",
+        "valide": "Publiée",
+        "rejete": "Refusée"
+      },
+      "aucune": "Aucune organisation dans cette liste",
+      "voir": "Voir la page",
+      "publier": "Publier la page",
+      "refuser": "Refuser",
+      "refuserTitre": "Refuser « {{nom}} »",
+      "refuserAide": "Le motif est envoyé aux responsables de l’organisation : ils pourront corriger la page, qui repartira en vérification.",
+      "motif": "Motif",
+      "publiee": "Page publiée",
+      "refusee": "Page refusée : les responsables sont prévenus"
     }
   },
   "wilayas": {
@@ -4453,7 +4495,22 @@
     "placeHint": "Cherchez le lieu (site, quartier, village). Introuvable ? « Créer un nouveau lieu » : nom, adresse et point sur la carte.",
     "descriptionPlaceholder": "Décrivez votre service...",
     "addressPlaceholder": "Adresse complète...",
-    "hoursPlaceholder": "Ex : tous les jours, 9 h – 18 h"
+    "hoursPlaceholder": "Ex : tous les jours, 9 h – 18 h",
+    "uniteTarif": {
+      "restaurant": "par personne",
+      "hotel": "par nuit",
+      "guide": "par visite",
+      "transport": "par trajet",
+      "location": "par jour"
+    },
+    "aideTarif": {
+      "restaurant": "Prix moyen d'un repas, par personne. Il sera affiché « par personne ».",
+      "hotel": "Prix d'une nuit. Il sera affiché « par nuit ».",
+      "guide": "Prix d'une visite guidée. Il sera affiché « par visite ».",
+      "transport": "Prix d'un trajet. Il sera affiché « par trajet ».",
+      "location": "Prix de la location pour une journée. Il sera affiché « par jour »."
+    },
+    "prix": "Prix"
   },
   "organisations": {
     "create": {
@@ -4474,6 +4531,68 @@
       "urlInvalid": "URL du site web invalide (doit commencer par http:// ou https://)",
       "typeLoadError": "Impossible de charger les types. Veuillez rafraîchir la page.",
       "submitting": "Création en cours..."
+    },
+    "title": "Organisations culturelles",
+    "subtitle": "Associations, maisons d’édition, musées et institutions qui font vivre la culture algérienne.",
+    "famille": "Type d’organisation",
+    "search": "Rechercher une organisation…",
+    "aucunResultat": "Aucune organisation ne correspond à votre recherche",
+    "aucune": "Aucune organisation pour l’instant",
+    "invitation": "Vous représentez une association, une maison d’édition, un musée ?",
+    "invitationDetail": "Créez la page de votre organisation : vos événements et vos publications y seront réunis. Elle est publiée après vérification par l’équipe Tala DZ.",
+    "creer": "Créer la page de mon organisation",
+    "nbEvenements_one": "{{count}} événement",
+    "nbEvenements_other": "{{count}} événements",
+    "nbOeuvres_one": "{{count}} publication",
+    "nbOeuvres_other": "{{count}} publications",
+    "categories": {
+      "associations": "Associations",
+      "edition": "Maisons d’édition",
+      "culture": "Musées et bibliothèques",
+      "institutions": "Institutions",
+      "entreprises": "Entreprises",
+      "autres": "Autres"
+    },
+    "introuvable": "Organisation introuvable",
+    "introuvableDetail": "Cette organisation n’existe pas ou sa page n’est pas encore publiée.",
+    "voirToutes": "Voir toutes les organisations",
+    "refusee": "Cette page a été refusée : corrigez-la, elle repartira en vérification.",
+    "enAttente": "En attente de vérification : seuls les membres de l’organisation et l’équipe Tala DZ voient cette page pour l’instant.",
+    "logoDe": "Logo de {{nom}}",
+    "modifier": "Modifier la page",
+    "presentation": "Présentation",
+    "activites": "Activités",
+    "publications": "Publications",
+    "membres": "Membres",
+    "rolesMembre": {
+      "membre": "Membre",
+      "responsable": "Responsable",
+      "directeur": "Directeur",
+      "collaborateur": "Collaborateur"
+    },
+    "menu": {
+      "edition": "Maisons d’édition",
+      "associations": "Associations et organisateurs",
+      "toutes": "Organisations"
+    },
+    "form": {
+      "logoInvalide": "Choisissez une image de moins de 5 Mo",
+      "emailInvalide": "Adresse e-mail invalide",
+      "telephoneInvalide": "Numéro de téléphone invalide",
+      "reseauInvalide": "Lien {{reseau}} invalide (adresse https:// du réseau)",
+      "logoEchec": "Le logo n’a pas pu être envoyé",
+      "enregistree": "Page de l’organisation mise à jour",
+      "creeeEnAttente": "Organisation créée. Sa page sera publiée après vérification par l’équipe Tala DZ.",
+      "titreModifier": "Modifier la page de l’organisation",
+      "sousTitre": "Association, maison d’édition, musée… : votre page réunit vos événements et vos publications.",
+      "logo": "Logo",
+      "choisirLogo": "Choisir une image",
+      "coordonnees": "Coordonnées",
+      "adresse": "Adresse",
+      "email": "E-mail",
+      "telephone": "Téléphone",
+      "reseaux": "Réseaux sociaux",
+      "verification": "Vous pourrez utiliser votre organisation tout de suite pour vos événements. Sa page publique apparaîtra dans l’annuaire après vérification par l’équipe Tala DZ."
     }
   },
   "validation": {
@@ -4964,6 +5083,22 @@
     "ouTrouver": "Où le trouver",
     "contact": "Contact",
     "pasDeContact": "Pas de coordonnées pour l’instant.",
-    "proposePar": "Proposé par"
+    "proposePar": "Proposé par",
+    "avis": {
+      "titre": "Avis des visiteurs",
+      "nombreNotes_one": "{{count}} note",
+      "nombreNotes_other": "{{count}} notes",
+      "nombreAvis_one": "{{count}} avis",
+      "nombreAvis_other": "{{count}} avis",
+      "noteSur5_one": "Note {{note}} sur 5, {{count}} avis",
+      "noteSur5_other": "Note {{note}} sur 5, {{count}} avis",
+      "connexion": "Connectez-vous pour donner votre avis.",
+      "proprietaire": "C’est votre service : vous pouvez répondre aux avis, mais pas le noter.",
+      "dejaDonne": "Merci ! Vous avez déjà donné votre avis sur ce service.",
+      "placeholder": "Racontez votre visite : accueil, qualité, prix…",
+      "placeholderReponse": "Votre réponse à ce visiteur",
+      "reponsePro": "Réponse du professionnel",
+      "aucun": "Aucun avis pour l’instant. Soyez le premier !"
+    }
   }
 }

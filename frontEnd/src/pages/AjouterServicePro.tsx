@@ -45,6 +45,15 @@ const TYPES_SERVICE = [
   { value: 'autre', label: { fr: 'Autre service', ar: 'خدمة أخرى', en: 'Other service', 'tz-ltn': 'Tanbaḍt nniḍen', 'tz-tfng': 'ⵜⴰⵏⴱⴰⴹⵜ ⵏⵏⵉⴹⵏ' }, icon: Building2 },
 ];
 
+// Ce que le professionnel doit indiquer comme tarif, selon le type (même unité qu'à l'affichage)
+const AIDE_TARIF: Record<string, string> = {
+  restaurant: 'Prix moyen d\'un repas, par personne. Il sera affiché « par personne ».',
+  hotel: 'Prix d\'une nuit. Il sera affiché « par nuit ».',
+  guide: 'Prix d\'une visite guidée. Il sera affiché « par visite ».',
+  transport: 'Prix d\'un trajet. Il sera affiché « par trajet ».',
+  location: 'Prix de la location pour une journée. Il sera affiché « par jour ».',
+};
+
 interface MultiLangText {
   fr: string;
   ar: string;
@@ -453,7 +462,7 @@ const AjouterServicePro: React.FC = () => {
                     name="nom"
                     value={formData.nom}
                     onChange={(value) => updateField('nom', value)}
-                    requiredLanguages={['fr']}
+                    requiredLanguages={[]}
                     placeholder="Ex: Restaurant Le Casbah"
                     aria-invalid={!!fieldErrors.nom}
                   />
@@ -639,6 +648,12 @@ const AjouterServicePro: React.FC = () => {
                   />
                 </div>
 
+                {/* Ce que couvre le tarif, selon le type choisi (« par personne », « par nuit »…) */}
+                {AIDE_TARIF[formData.type_service] && (
+                  <p className="text-sm text-muted-foreground">
+                    {t(`service.aideTarif.${formData.type_service}`, AIDE_TARIF[formData.type_service])}
+                  </p>
+                )}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">

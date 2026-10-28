@@ -22,7 +22,27 @@ import {
 '@/components/ui/select';
 import { Loader2, Building2, Globe, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
-import type { Editeur } from '@/types/models/references.types';import { useTranslation } from "react-i18next";
+import type { Editeur } from '@/types/models/references.types';
+import { useTranslation } from "react-i18next";
+import type { TFunction } from 'i18next';
+
+// Types d'éditeurs (valeur enregistrée → libellé traduit)
+const TYPES_EDITEUR: Array<[string, string, string]> = [
+  ['maison_edition', 'maisonEdition', 'Maison d\'édition'],
+  ['label_musique', 'labelMusique', 'Label musical'],
+  ['studio_cinema', 'studioCinema', 'Studio cinéma'],
+  ['galerie_art', 'galerieArt', 'Galerie d\'art'],
+  ['editeur_scientifique', 'editeurScientifique', 'Éditeur scientifique'],
+  ['presse', 'presse', 'Presse'],
+  ['editeur_numerique', 'editeurNumerique', 'Éditeur numérique'],
+  ['autre', 'autre', 'Autre'],
+];
+
+/** Libellé traduit d'un type d'éditeur (« maison_edition » → « Maison d'édition ») */
+export const libelleTypeEditeur = (t: TFunction, type?: string | null): string => {
+  const ligne = TYPES_EDITEUR.find(([valeur]) => valeur === type);
+  return ligne ? String(t(`editeur.types.${ligne[1]}`, ligne[2])) : (type || '');
+};
 
 interface EditeurModalProps {
   isOpen: boolean;
@@ -53,16 +73,7 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
 
   // Types d'éditeurs disponibles
   const { t } = useTranslation();
-  const typesEditeurs = [
-    { value: 'maison_edition', label: t('editeur.types.maisonEdition', 'Maison d\'édition') },
-    { value: 'label_musique', label: t('editeur.types.labelMusique', 'Label musical') },
-    { value: 'studio_cinema', label: t('editeur.types.studioCinema', 'Studio cinéma') },
-    { value: 'galerie_art', label: t('editeur.types.galerieArt', 'Galerie d\'art') },
-    { value: 'editeur_scientifique', label: t('editeur.types.editeurScientifique', 'Éditeur scientifique') },
-    { value: 'presse', label: t('editeur.types.presse', 'Presse') },
-    { value: 'editeur_numerique', label: t('editeur.types.editeurNumerique', 'Éditeur numérique') },
-    { value: 'autre', label: t('editeur.types.autre', 'Autre') },
-  ];
+  const typesEditeurs = TYPES_EDITEUR.map(([value]) => ({ value, label: libelleTypeEditeur(t, value) }));
 
 
   // Réinitialiser le formulaire quand la modal s'ouvre

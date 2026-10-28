@@ -4,6 +4,7 @@
  * Le libellé se traduit avec t(`service.types.${type}`).
  */
 import type React from 'react';
+import type { TFunction } from 'i18next';
 import { Utensils, Hotel, Navigation, Car, Palette, MapPin, Star } from 'lucide-react';
 
 export const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'] as const;
@@ -20,3 +21,21 @@ export const STYLE_TYPE_SERVICE: Record<string, { icon: React.ElementType; color
 };
 
 export const styleTypeService = (type?: string | null) => STYLE_TYPE_SERVICE[type || 'autre'] || STYLE_TYPE_SERVICE.autre;
+
+// Ce que couvre le tarif selon le type (artisanat et autre : rien, les prix varient trop)
+const UNITE_TARIF: Record<string, string> = {
+  restaurant: 'par personne',
+  hotel: 'par nuit',
+  guide: 'par visite',
+  transport: 'par trajet',
+  location: 'par jour',
+};
+
+export const uniteTarif = (t: TFunction, type?: string | null): string =>
+  type && UNITE_TARIF[type] ? String(t(`service.uniteTarif.${type}`, UNITE_TARIF[type])) : '';
+
+/** « 500 – 2 000 DA par personne » : fourchette déjà formatée + unité du type */
+export const tarifAvecUnite = (t: TFunction, type: string | null | undefined, fourchette: string): string => {
+  const unite = uniteTarif(t, type);
+  return fourchette && unite ? `${fourchette} ${unite}` : fourchette;
+};

@@ -34,6 +34,8 @@ interface Organizer {
   site_web?: string;
   type_organisation?: string;
   reseaux_sociaux?: Record<string, string> | string;
+  // Organisation : page publique seulement si elle est vérifiée
+  statut?: string;
 }
 
 interface Comment {
@@ -314,6 +316,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
         type: 'organisation',
         nom: org.nom,
         logo_url: org.logo_url,
+        statut: org.statut,
         role,
         description: org.description,
         site_web: org.site_web,

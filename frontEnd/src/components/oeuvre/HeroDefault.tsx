@@ -13,6 +13,8 @@ import {
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
 const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
   const iconMap: Record<number, typeof BookOpen> = { 1: BookOpen, 2: Film, 3: Music, 6: Palette, 7: Sparkles };
@@ -21,16 +23,8 @@ const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
 };
 
 // Extrait une string lisible d'un champ qui peut être string OU objet multilingue {fr, ar, en, ...}
-const localizeText = (value: unknown): string => {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const found = obj.fr || obj.ar || obj.en || obj['tz-ltn'] || obj['tz-tfng'] || Object.values(obj).find(v => typeof v === 'string' && v);
-    return typeof found === 'string' ? found : '';
-  }
-  return String(value);
-};
+// (langue du site d'abord, puis les autres)
+const localizeText = (value: unknown): string => getLocalizedText(value, i18n.language);
 
 interface HeroDefaultProps {
   oeuvre: Oeuvre;

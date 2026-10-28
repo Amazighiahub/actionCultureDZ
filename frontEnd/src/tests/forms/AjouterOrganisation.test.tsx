@@ -22,11 +22,14 @@ const {
   mockToast,
   mockHttpGet,
   mockHttpPost,
+  routeur,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockToast: vi.fn(),
   mockHttpGet: vi.fn(),
   mockHttpPost: vi.fn(),
+  // Paramètres de l'adresse : /organisations/:id/modifier, ?retour=evenement
+  routeur: { params: {} as Record<string, string>, recherche: '' },
 }));
 
 // ---------------------------------------------------------------------------
@@ -44,7 +47,13 @@ const MOCK_TYPES = [
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useParams: () => routeur.params,
+  useSearchParams: () => [new URLSearchParams(routeur.recherche), vi.fn()],
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,
+}));
+
+vi.mock('@/services/metadata.service', () => ({
+  metadataService: { getWilayas: vi.fn().mockResolvedValue({ success: true, data: [] }) },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -205,6 +214,8 @@ describe('AjouterOrganisation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     user = userEvent.setup();
+    routeur.params = {};
+    routeur.recherche = '';
 
     mockHttpGet.mockResolvedValue({ success: true, data: MOCK_TYPES });
     mockHttpPost.mockResolvedValue({ success: true, data: { id_organisation: 42 } });
@@ -350,7 +361,24 @@ describe('AjouterOrganisation', () => {
       });
     });
 
-    test('redirige vers ajouter-evenement apres creation', async () => {
+    test('après création : ouvre la page de la nouvelle organisation', async () => {
+      render(<AjouterOrganisation />);
+      await waitForDataLoad();
+
+      await user.type(screen.getByTestId('input-nom-fr'), 'Mon Asso');
+      const options = screen.getAllByRole('option');
+      const assocOpt = options.find(o => o.textContent?.includes('Association'));
+      if (assocOpt) await user.click(assocOpt);
+
+      submitForm();
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/organisations/42-mon-asso');
+      });
+    });
+
+    test('venu du formulaire d événement : y revient après création', async () => {
+      routeur.recherche = 'retour=evenement';
       render(<AjouterOrganisation />);
       await waitForDataLoad();
 
@@ -407,16 +435,14 @@ describe('AjouterOrganisation', () => {
       ]);
     });
 
-    test('fr et ar sont marques comme requis', async () => {
+    test('aucune langue imposée : une seule suffit', async () => {
       render(<AjouterOrganisation />);
       await waitForDataLoad();
 
       const nomContainer = screen.getByTestId('multilang-nom');
 
-      // seul fr est requise (requiredLanguages={['fr']})
-      expect(within(nomContainer).getByTestId('required-nom-fr')).toBeInTheDocument();
-
-      // en, tz-ltn, tz-tfng ne sont PAS requises
+      expect(within(nomContainer).queryByTestId('required-nom-fr')).not.toBeInTheDocument();
+      expect(within(nomContainer).queryByTestId('required-nom-ar')).not.toBeInTheDocument();
       expect(within(nomContainer).queryByTestId('required-nom-en')).not.toBeInTheDocument();
       expect(within(nomContainer).queryByTestId('required-nom-tz-ltn')).not.toBeInTheDocument();
       expect(within(nomContainer).queryByTestId('required-nom-tz-tfng')).not.toBeInTheDocument();

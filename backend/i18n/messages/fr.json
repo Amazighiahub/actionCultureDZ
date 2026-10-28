@@ -185,7 +185,9 @@
     "added": "Commentaire ajouté avec succès",
     "updated": "Commentaire modifié avec succès",
     "deleted": "Commentaire supprimé avec succès",
-    "statusUpdated": "Commentaire ${statut} avec succès"
+    "statusUpdated": "Commentaire ${statut} avec succès",
+    "ownService": "Vous ne pouvez pas donner un avis sur votre propre service.",
+    "alreadyReviewed": "Vous avez déjà donné votre avis sur ce service."
   },
   "favori": {
     "notFound": "Favori non trouvé",
@@ -515,5 +517,10 @@
   },
   "error": {
     "checkingEntity": "Erreur lors de la vérification de l'entité"
+  },
+  "organisation": {
+    "updated": "Page de l'organisation mise à jour",
+    "validated": "Organisation publiée",
+    "rejected": "Organisation refusée"
   }
 }

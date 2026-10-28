@@ -17,6 +17,8 @@ import {
   Unlock
 } from 'lucide-react';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
 type StatusType =
   | 'actif' | 'inactif' | 'suspendu' | 'en_attente' | 'valide' | 'rejete'
@@ -55,8 +57,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       const keys = Object.keys(obj);
       if (keys.length === 0) return ''; // Objet vide
       // Chercher une valeur string
-      const value = obj.fr || obj.ar || obj.en || obj['tz-ltn'] || obj['tz-tfng'] || Object.values(obj).find(v => typeof v === 'string');
-      return typeof value === 'string' ? value : '';
+      return getLocalizedText(obj, i18n.language);
     }
     return String(s);
   };

@@ -11,6 +11,16 @@ class ServiceController extends BaseController {
     return container.serviceService;
   }
 
+  /** Note moyenne des avis : { moyenne, nombre } par identifiant de service (vide si indisponible : la fiche reste affichée) */
+  async _notes(ids) {
+    try {
+      return await container.commentaireService.notesServices(ids);
+    } catch (error) {
+      console.error('[ServiceController] notes des avis indisponibles :', error.message);
+      return new Map();
+    }
+  }
+
   // ============================================================================
   // ROUTES PUBLIQUES
   // ============================================================================
@@ -40,6 +50,8 @@ class ServiceController extends BaseController {
         wilaya: wilaya && /^\d+$/.test(String(wilaya)) ? Number(wilaya) : null,
         q: typeof q === 'string' ? q.slice(0, 100) : ''
       });
+      const notes = await this._notes(data.services.map(s => s.id));
+      data.services = data.services.map(s => ({ ...s, note: notes.get(Number(s.id)) || null }));
       res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
@@ -70,9 +82,10 @@ class ServiceController extends BaseController {
       if (raw && raw.statut !== 'valide' && !this._canSeeUnpublished(req, raw.id_user)) {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
+      const notes = await this._notes([raw.id]);
       res.json({
         success: true,
-        data: service.toDetailJSON(req.lang)
+        data: { ...service.toDetailJSON(req.lang), note: notes.get(Number(raw.id)) || null }
       });
     } catch (error) {
       this._handleError(res, error);

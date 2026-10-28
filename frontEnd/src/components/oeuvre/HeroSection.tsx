@@ -35,6 +35,8 @@ import { getMainImage } from '@/types/models/media-extended.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
 
 // ShareButton extracted to module scope to avoid re-creation on every render
 const ShareButton = ({
@@ -200,15 +202,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   // Helper pour extraire le texte d'un champ multilingue
-  const gt = (field: unknown): string => {
-    if (!field) return '';
-    if (typeof field === 'string') return field;
-    if (typeof field === 'object' && field !== null) {
-      const obj = field as Record<string, string>;
-      return obj.fr || obj.ar || obj.en || Object.values(obj).find(v => typeof v === 'string' && v) || '';
-    }
-    return String(field);
-  };
+  const gt = (field: unknown): string => getLocalizedText(field, i18n.language);
 
   const titre = gt(oeuvre.titre);
   const description = gt(oeuvre.description);

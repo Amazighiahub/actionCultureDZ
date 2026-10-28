@@ -14,17 +14,18 @@ import {
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import { getLocalizedText as texteLocalise } from '@/utils/getLocalizedText';
+import i18n from 'i18next';
+import { Link } from 'react-router-dom';
+import { organisationPath } from '@/utils/slug';
+import type { Editeur } from '@/types/models/references.types';
 
-// Helper pour extraire le texte d'un champ multilingue
-const getLocalizedText = (value: unknown, fallback: string = ''): string => {
-  if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    return String(obj.fr || obj.ar || obj.en || Object.values(obj).find((v) => typeof v === 'string' && v) || fallback);
-  }
-  return String(value);
-};
+/** Page publique de la maison d'édition, si elle est vérifiée */
+const pageEditeur = (editeur: Editeur): string | null =>
+  editeur.Organisation?.statut === 'valide' ? organisationPath(editeur.Organisation.id_organisation, editeur.nom) : null;
+
+// Texte d'un champ multilingue, dans la langue du site d'abord
+const getLocalizedText = (value: unknown, fallback: string = ''): string => texteLocalise(value, i18n.language, fallback);
 
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;
@@ -79,9 +80,15 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           {oeuvre.Editeurs && oeuvre.Editeurs.length > 0 && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.publisher', 'Éditeur')}</span>
-              <span className="font-medium truncate max-w-[150px]">
-                {getLocalizedText(oeuvre.Editeurs[0].nom)}
-              </span>
+              {pageEditeur(oeuvre.Editeurs[0]) ? (
+                <Link to={pageEditeur(oeuvre.Editeurs[0])!} className="font-medium truncate max-w-[150px] text-primary hover:underline underline-offset-4">
+                  {getLocalizedText(oeuvre.Editeurs[0].nom)}
+                </Link>
+              ) : (
+                <span className="font-medium truncate max-w-[150px]">
+                  {getLocalizedText(oeuvre.Editeurs[0].nom)}
+                </span>
+              )}
             </div>
           )}
 
@@ -525,11 +532,18 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.publishers', 'Éditeurs')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {oeuvre.Editeurs.map((editeur) => (
-                    <Badge key={editeur.id_editeur} variant="outline">
-                      {getLocalizedText(editeur.nom)}
-                    </Badge>
-                  ))}
+                  {oeuvre.Editeurs.map((editeur) => {
+                    const page = pageEditeur(editeur);
+                    return page ? (
+                      <Link key={editeur.id_editeur} to={page} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <Badge variant="outline" className="hover:bg-muted">{getLocalizedText(editeur.nom)}</Badge>
+                      </Link>
+                    ) : (
+                      <Badge key={editeur.id_editeur} variant="outline">
+                        {getLocalizedText(editeur.nom)}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
             </>

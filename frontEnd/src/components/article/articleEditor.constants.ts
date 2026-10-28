@@ -4,6 +4,7 @@ import {
   Grid3X3, Code, Minus, Link2
 } from 'lucide-react';
 
+import type { TFunction } from 'i18next';
 import type { BlockTemplate } from '@/types/models/articles.types';
 
 // Generateur d'ID unique pour les blocs (cote client uniquement)
@@ -23,6 +24,10 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
   { id: 'separator', name: 'Séparateur', type_block: 'separator', icon: 'Minus' },
   { id: 'embed', name: 'Intégration', type_block: 'embed', icon: 'Link2' },
 ];
+
+/** Nom du type de bloc dans la langue du site (le nom français sert de secours) */
+export const nomBloc = (t: TFunction, template: BlockTemplate) =>
+  t(`article_articleeditor.blocs.${template.id}`, template.name);
 
 // Mapping des icones
 export const BLOCK_ICONS: Record<string, any> = {

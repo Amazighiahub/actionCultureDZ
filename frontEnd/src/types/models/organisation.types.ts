@@ -10,7 +10,10 @@ export interface Organisation {
   id_type_organisation: number;
   description?: string;
   site_web?: string;
-  
+  // Page publique (annuaire) : visible une fois « valide »
+  statut?: 'en_attente' | 'valide' | 'rejete';
+  logo_url?: string | null;
+
   // Relations (optionnelles)
   TypeOrganisation?: TypeOrganisation;
   Users?: User[];

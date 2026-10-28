@@ -506,7 +506,7 @@ class ServiceContainer {
       const OrganisationService = require('./organisations/organisationService');
       this._services.set('organisation', new OrganisationService(
         this._repositories.organisation,
-        { models: this._models }
+        { models: this._models, notificationService: this.notificationService }
       ));
     }
 

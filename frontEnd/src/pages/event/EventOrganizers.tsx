@@ -19,7 +19,7 @@ import type { User } from '@/types/models/user.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 import { Link } from 'react-router-dom';
-import { professionnelPath } from '@/utils/slug';
+import { professionnelPath, organisationPath } from '@/utils/slug';
 
 // Type unifié pour les organisateurs (peut être User ou Organisation)
 interface Organizer {
@@ -35,6 +35,8 @@ interface Organizer {
   telephone?: string;
   site_web?: string;
   type_organisation?: string;
+  // Organisation : page publique seulement si elle est vérifiée
+  statut?: string;
   // Pour les users
   entreprise?: string;
   specialites?: string[];
@@ -153,6 +155,14 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
                     // Organisateur : son nom mène à son portfolio public
                     <Link
                       to={professionnelPath(organizer.id, td(organizer.prenom), td(organizer.nom))}
+                      className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    >
+                      {displayName}
+                    </Link>
+                  ) : organizer.statut === 'valide' ? (
+                    // Organisation vérifiée : son nom mène à sa page publique
+                    <Link
+                      to={organisationPath(organizer.id, organizer.nom)}
                       className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                     >
                       {displayName}

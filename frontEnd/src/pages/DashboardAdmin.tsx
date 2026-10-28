@@ -21,7 +21,7 @@ import ErrorBoundary from '@/components/shared/ErrorBoundary';
 // Icônes
 import {
   Users, BookOpen, Calendar, Shield, Activity,
-  MapPin, Package, Bell, Wifi, WifiOff
+  MapPin, Package, Bell, Wifi, WifiOff, Building
 } from 'lucide-react';
 
 // Hooks
@@ -36,6 +36,7 @@ const AdminOeuvresTab = React.lazy(() => import('./admin/AdminOeuvresTab'));
 const AdminEvenementsTab = React.lazy(() => import('./admin/AdminEvenementsTab'));
 const AdminPatrimoineTab = React.lazy(() => import('./admin/AdminPatrimoineTab'));
 const AdminServicesTab = React.lazy(() => import('./admin/AdminServicesTab'));
+const AdminOrganisationsTab = React.lazy(() => import('./admin/AdminOrganisationsTab'));
 const AdminModerationTab = React.lazy(() => import('./admin/AdminModerationTab'));
 const AdminNotificationsModal = React.lazy(() => import('./admin/AdminNotificationsModal'));
 
@@ -52,8 +53,8 @@ const DashboardAdmin: React.FC = () => {
   const navigate = useNavigate();
   
   // États — sync avec ?tab= dans l'URL (pour "Voir tout")
-  type AdminTabId = 'overview' | 'users' | 'oeuvres' | 'evenements' | 'patrimoine' | 'services' | 'moderation';
-  const VALID_TABS: AdminTabId[] = ['overview', 'users', 'oeuvres', 'evenements', 'patrimoine', 'services', 'moderation'];
+  type AdminTabId = 'overview' | 'users' | 'oeuvres' | 'evenements' | 'patrimoine' | 'services' | 'organisations' | 'moderation';
+  const VALID_TABS: AdminTabId[] = ['overview', 'users', 'oeuvres', 'evenements', 'patrimoine', 'services', 'organisations', 'moderation'];
 
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
@@ -106,6 +107,7 @@ const DashboardAdmin: React.FC = () => {
     { id: 'evenements', label: t('admin.tabs.events', 'Événements'), icon: Calendar },
     { id: 'patrimoine', label: t('admin.tabs.heritage', 'Patrimoine'), icon: MapPin },
     { id: 'services', label: t('admin.tabs.services', 'Services'), icon: Package },
+    { id: 'organisations', label: t('admin.tabs.organisations', 'Organisations'), icon: Building },
     { id: 'moderation', label: t('admin.tabs.moderation', 'Modération'), icon: Shield }
   ];
 
@@ -220,6 +222,12 @@ const DashboardAdmin: React.FC = () => {
             <TabsContent value="services">
               <Suspense fallback={<TabFallback />}>
                 <AdminServicesTab />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="organisations">
+              <Suspense fallback={<TabFallback />}>
+                <AdminOrganisationsTab />
               </Suspense>
             </TabsContent>
 

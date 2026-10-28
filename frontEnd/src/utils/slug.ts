@@ -27,6 +27,15 @@ export function professionnelPath(id: number, prenom?: string | null, nom?: stri
   return `/professionnels/${id}${slug ? `-${slug}` : ''}`;
 }
 
+/** Adresse publique d'une organisation : « /organisations/6-editions-barzakh » */
+export function organisationPath(id: number, nom?: unknown): string {
+  const texte = typeof nom === 'string' ? nom
+    : nom && typeof nom === 'object' ? ((nom as Record<string, string | undefined>).fr || Object.values(nom as Record<string, string | undefined>).find(Boolean) || '')
+    : '';
+  const slug = slugify(texte);
+  return `/organisations/${id}${slug ? `-${slug}` : ''}`;
+}
+
 /**
  * Adresse publique d'un événement : « /evenements/1-salon-de-la-poterie-traditionnelle-d-ait-smail ».
  * Le nom (français de préférence) rend le lien partagé lisible ; seul le numéro compte.

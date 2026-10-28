@@ -24,6 +24,7 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { cleSectionPatrimoine } from '@/services/patrimoineArticles.service';
+import i18n from 'i18next';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -281,7 +282,7 @@ const AjouterOeuvre: React.FC = () => {
                             <option value="">{t("ajouteroeuvre.choisirLangue", "-- Choisir la langue --")}</option>
                             {metadata.langues?.map((langue: any) => (
                               <option key={langue.id_langue} value={langue.id_langue}>
-                                {typeof langue.nom === 'object' ? langue.nom.fr || langue.nom.ar || Object.values(langue.nom)[0] : langue.nom}
+                                {getLocalizedText(langue.nom, i18n.language)}
                               </option>
                             ))}
                           </select>

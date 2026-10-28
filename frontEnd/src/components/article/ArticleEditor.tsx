@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import type { ArticleEditorProps } from '@/types/models/articles.types';
 
 import { PREVIEW_STYLES } from './articlePreview.styles';
-import { BLOCK_TEMPLATES, BLOCK_ICONS } from './articleEditor.constants';
+import { BLOCK_TEMPLATES, BLOCK_ICONS, nomBloc } from './articleEditor.constants';
 import InsertBlockBar from './InsertBlockBar';
 import ArticleBlockEditor from './ArticleBlockEditor';
 import ArticleMetadataTab from './ArticleMetadataTab';
@@ -63,17 +63,23 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               )}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">
-                  {titrePage || (articleId ? 'Modifier l\'article' : 'Créer un article')}
+                  {titrePage || (articleId
+                    ? t('article_articleeditor.modifierArticle', 'Modifier l\'article')
+                    : t('article_articleeditor.creerArticle', 'Créer un article'))}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {editor.formData.type === 'article_scientifique' ? 'Article scientifique' : 'Article'}
+                  {editor.formData.type === 'article_scientifique'
+                    ? t('article_articleeditor.articleScientifique', 'Article scientifique')
+                    : t('article_articleeditor.article', 'Article')}
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => editor.setActiveTab(editor.activeTab === 'preview' ? 'content' : 'preview')}>
                 <Eye className="h-4 w-4 me-2" />
-                {editor.activeTab === 'preview' ? 'Éditer' : 'Aperçu'}
+                {editor.activeTab === 'preview'
+                  ? t('article_articleeditor.editer', 'Éditer')
+                  : t('article_articleeditor.apercu', 'Aperçu')}
               </Button>
               <Button onClick={editor.handleSave} disabled={editor.saving}>
                 {editor.saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
@@ -214,7 +220,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                         return (
                           <Button key={template.id} variant="outline" size="sm" onClick={() => editor.addBlock(template.type_block)}>
                             {Icon && <Icon className="h-4 w-4 me-2" />}
-                            {template.name}
+                            {nomBloc(t, template)}
                           </Button>
                         );
                       })}

@@ -234,8 +234,12 @@ class OeuvreRepository extends BaseRepository {
     if (this.models.Editeur) {
       coreIncludes.push({
         model: this.models.Editeur,
-        attributes: ['id_editeur', 'nom', 'description'],
+        attributes: ['id_editeur', 'nom', 'description', 'id_organisation'],
         through: { attributes: ['role_editeur', 'date_edition'] },
+        // Page publique de la maison d'édition (lien « Publié par »), si elle est vérifiée
+        include: this.models.Organisation
+          ? [{ model: this.models.Organisation, attributes: ['id_organisation', 'statut'], required: false }]
+          : [],
         required: false
       });
     }

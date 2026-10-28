@@ -99,7 +99,10 @@ export interface Editeur {
   actif: boolean;
   date_creation: Date | string;
   date_modification: Date | string;
-  
+  // Maison d'édition : sa page d'organisation (lien « Publié par »)
+  id_organisation?: number | null;
+  Organisation?: { id_organisation: number; statut?: string } | null;
+
   // Relations optionnelles
   Oeuvres?: Oeuvre[];
 }

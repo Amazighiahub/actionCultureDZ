@@ -106,6 +106,33 @@ module.exports = (models, middlewares = {}) => {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
+  // ROUTES AVIS SERVICES (restaurant, hébergement, guide…)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /commentaires/service/:serviceId
+   * Avis d'un service et note moyenne (public)
+   */
+  router.get('/service/:serviceId', validateId('serviceId'), (req, res) => controller.getCommentairesService(req, res));
+
+  /**
+   * POST /commentaires/service/:serviceId
+   * Publier un avis (note de 1 à 5 facultative) ou une réponse (authentifié)
+   */
+  router.post('/service/:serviceId', authMiddleware, validateId('serviceId'),
+    commentLimiter,
+    validateStringLengths,
+    [
+      body('contenu').notEmpty().withMessage('Le contenu est requis')
+        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
+        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+      body('note_qualite').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5').toInt(),
+      body('commentaire_parent_id').optional({ values: 'null' }).isInt({ min: 1 }).toInt(),
+    ],
+    handleValidationErrors,
+    (req, res) => controller.createCommentaireService(req, res));
+
+  // ════════════════════════════════════════════════════════════════════════════
   // ROUTES GESTION COMMENTAIRES
   // ════════════════════════════════════════════════════════════════════════════
 

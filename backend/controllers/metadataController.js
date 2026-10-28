@@ -468,6 +468,12 @@ class MetadataController extends BaseController {
       const lang = req.lang || 'fr';
       const editeur = await this.metadataService.createEditeur(lang, req.body);
       if (!editeur) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      // Maison d'édition : sa page d'organisation (une erreur ici ne doit pas empêcher l'ajout)
+      try {
+        await container.organisationService.pagePourEditeur(editeur, req.user?.id_user);
+      } catch (error) {
+        console.error('[MetadataController] page de la maison d\'édition non créée :', error.message);
+      }
       this._sendCreated(res, translateDeep(editeur, lang), req.t('metadata.editeurCreated', 'Éditeur créé'));
     } catch (error) {
       this._handleError(res, error);

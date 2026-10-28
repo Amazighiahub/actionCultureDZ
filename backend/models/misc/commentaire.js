@@ -35,6 +35,15 @@ module.exports = (sequelize) => {
         key: 'id_evenement'
       }
     },
+    // Avis sur un service (restaurant, hébergement, guide…)
+    id_service: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'services',
+        key: 'id'
+      }
+    },
     commentaire_parent_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -60,14 +69,15 @@ module.exports = (sequelize) => {
       { fields: ['id_user'] },
       { fields: ['id_oeuvre'] },
       { fields: ['id_evenement'] },
+      { fields: ['id_service'] },
       { fields: ['statut'] },
       { fields: ['commentaire_parent_id'] },
       { fields: ['date_creation'] }
     ],
     hooks: {
       beforeValidate: (commentaire) => {
-        if (!commentaire.id_oeuvre && !commentaire.id_evenement) {
-          throw new Error('Un commentaire doit être associé à une œuvre ou un événement');
+        if (!commentaire.id_oeuvre && !commentaire.id_evenement && !commentaire.id_service) {
+          throw new Error('Un commentaire doit être associé à une œuvre, un événement ou un service');
         }
       }
     }
@@ -78,6 +88,7 @@ module.exports = (sequelize) => {
     Commentaire.belongsTo(models.User, { foreignKey: 'id_user', onDelete: 'CASCADE' });
     Commentaire.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
     Commentaire.belongsTo(models.Evenement, { foreignKey: 'id_evenement', onDelete: 'CASCADE' });
+    if (models.Service) Commentaire.belongsTo(models.Service, { foreignKey: 'id_service', onDelete: 'CASCADE' });
     Commentaire.belongsTo(models.Commentaire, { as: 'CommentaireParent', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
     Commentaire.hasMany(models.Commentaire, { as: 'Reponses', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
   };

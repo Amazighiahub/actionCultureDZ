@@ -77,9 +77,59 @@ class CommentaireController extends BaseController {
     }
   }
 
+  /**
+   * Recuperer les avis d'un service (pagine) + note moyenne
+   */
+  async getCommentairesService(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const serviceId = Number(req.params.serviceId);
+      const { page, limit, offset } = this._paginate(req, { limit: 10 });
+
+      const [commentaires, notes] = await Promise.all([
+        this.service.getCommentairesService(serviceId, { limit, offset }),
+        this.service.notesServices([serviceId])
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          commentaires: translateDeep(commentaires.rows, lang),
+          note: notes.get(serviceId) || { moyenne: 0, nombre: 0 },
+          pagination: {
+            total: commentaires.count,
+            page,
+            pages: Math.ceil(commentaires.count / limit),
+            limit
+          }
+        },
+        lang
+      });
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
+
   // ========================================================================
   // CREATION
   // ========================================================================
+
+  /**
+   * Publier un avis (ou une reponse) sur un service (authentifie)
+   */
+  async createCommentaireService(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { contenu, note_qualite, commentaire_parent_id } = req.body;
+      const avis = await this.service.creerAvisService(Number(req.params.serviceId), req.user.id_user,
+        { contenu, note_qualite, commentaire_parent_id });
+      return this._sendCreated(res, translateDeep(avis, lang), req.t('comment.added'));
+    } catch (error) {
+      // Les erreurs metier portent une cle de traduction
+      if (error.isOperational && error.statusCode < 500) error.message = req.t(error.message);
+      return this._handleError(res, error);
+    }
+  }
 
   /**
    * Creer un commentaire sur une oeuvre (authentifie)
