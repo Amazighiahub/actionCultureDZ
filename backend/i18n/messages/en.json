@@ -521,6 +521,7 @@
   "organisation": {
     "updated": "Organisation page updated",
     "validated": "Organisation published",
-    "rejected": "Organisation rejected"
+    "rejected": "Organisation rejected",
+    "merged": "Organisations merged"
   }
 }

@@ -2885,7 +2885,19 @@
       "refuserAide": "Le motif est envoyé aux responsables de l’organisation : ils pourront corriger la page, qui repartira en vérification.",
       "motif": "Motif",
       "publiee": "Page publiée",
-      "refusee": "Page refusée : les responsables sont prévenus"
+      "refusee": "Page refusée : les responsables sont prévenus",
+      "fusionner": "Fusionner…",
+      "fusion": {
+        "titre": "Regrouper dans « {{nom}} »",
+        "aide": "Cochez les pages en double. Leurs événements, membres et livres rejoindront cette page, puis elles seront supprimées ; leurs anciennes adresses mèneront ici.",
+        "suggestions": "Doublons probables",
+        "autre": "Autre organisation",
+        "probable": "doublon probable",
+        "resume": "{{doublons}} → « {{garde}} » : {{evenements}} événement(s), {{membres}} membre(s) et {{livres}} livre(s) déplacés. Les pages en double seront supprimées.",
+        "voirResume": "Voir le résumé",
+        "confirmer": "Fusionner",
+        "faite": "Organisations regroupées"
+      }
     }
   },
   "wilayas": {
@@ -4592,7 +4604,9 @@
       "email": "E-mail",
       "telephone": "Téléphone",
       "reseaux": "Réseaux sociaux",
-      "verification": "Vous pourrez utiliser votre organisation tout de suite pour vos événements. Sa page publique apparaîtra dans l’annuaire après vérification par l’équipe Tala DZ."
+      "verification": "Vous pourrez utiliser votre organisation tout de suite pour vos événements. Sa page publique apparaîtra dans l’annuaire après vérification par l’équipe Tala DZ.",
+      "existePeutEtre": "Elle existe peut-être déjà sur Tala DZ :",
+      "existeConseil": "Si c’est la vôtre, ne la recréez pas : demandez à son responsable de vous ajouter comme membre, ou écrivez à l’équipe Tala DZ."
     }
   },
   "validation": {
