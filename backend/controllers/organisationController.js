@@ -40,6 +40,37 @@ class OrganisationController extends BaseController {
     }
   }
 
+  /** GET /organisations/ressemblantes?nom=&exclure= : noms proches (doublons probables) */
+  async ressemblantes(req, res) {
+    try {
+      const nom = typeof req.query.nom === 'string' ? req.query.nom.slice(0, 200) : '';
+      const exclure = /^\d+$/.test(String(req.query.exclure || '')) ? Number(req.query.exclure) : null;
+      res.json({ success: true, data: await this.service.ressemblantes(nom, { exclure }) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** GET /organisations/:id/fusion?doublons=7,9 : résumé avant fusion */
+  async apercuFusion(req, res) {
+    try {
+      const doublons = String(req.query.doublons || '').split(',').filter(v => /^\d+$/.test(v)).map(Number);
+      res.json({ success: true, data: await this.service.apercuFusion(Number(req.params.id), doublons) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** POST /organisations/:id/fusion { doublons: [7, 9] } : fusion (modération) */
+  async fusionner(req, res) {
+    try {
+      const data = await this.service.fusionner(Number(req.params.id), req.body.doublons, req.user.id_user);
+      res.json({ success: true, message: req.t('organisation.merged'), data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** PUT /organisations/:id : responsables de l'organisation ou modération */
   async modifier(req, res) {
     try {

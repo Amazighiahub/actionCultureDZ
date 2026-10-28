@@ -2,6 +2,8 @@ const BaseService = require('../core/baseService');
 const { texteLisible } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { categorieDuType } = require('./categories');
+const fusion = require('./fusionOrganisations');
+const { ressemble } = require('./nomsRessemblants');
 
 // Réseaux sociaux acceptés sur la page d'une organisation
 const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
@@ -131,7 +133,12 @@ class OrganisationService extends BaseService {
    */
   async vitrine(id, { userId = null, isModerator = false } = {}) {
     const org = await this.repository.findVitrine(id);
-    if (!org) throw this._notFoundError(id);
+    if (!org) {
+      // Organisation fusionnée dans une autre : l'ancienne adresse mène à la page gardée
+      const garde = this.models ? await fusion.redirection(this.models, id) : null;
+      if (garde) return { redirection: garde };
+      throw this._notFoundError(id);
+    }
     const role = userId ? await this.repository.roleMembre(id, userId) : null;
     if (org.statut !== 'valide' && !role && !isModerator) throw this._notFoundError(id);
 
@@ -208,9 +215,45 @@ class OrganisationService extends BaseService {
     return org;
   }
 
+  /**
+   * Organisations au nom ressemblant (« Santa Cruz » / « Éditions Santa-Cruz ») :
+   * proposées avant d'en créer une nouvelle, et à la modération pour repérer les doublons.
+   */
+  async ressemblantes(nom, { exclure = null, limite = 5 } = {}) {
+    if (!nom || (typeof nom === 'string' && !nom.trim())) return [];
+    const toutes = (await this.repository.findPourModeration()).map(o => o.get({ plain: true }));
+    return toutes
+      .filter(o => o.id_organisation !== Number(exclure) && ressemble(nom, o.nom))
+      .slice(0, limite)
+      .map(o => ({
+        id_organisation: o.id_organisation, nom: o.nom, statut: o.statut, logo_url: o.logo_url,
+        TypeOrganisation: o.TypeOrganisation ? { nom: o.TypeOrganisation.nom, code: o.TypeOrganisation.code } : null
+      }));
+  }
+
   // ==========================================================================
   // MODÉRATION
   // ==========================================================================
+
+  /** Ce que la fusion va déplacer, pour le résumé affiché avant confirmation */
+  async apercuFusion(idGarde, idsDoublons) {
+    return fusion.apercu(this.models, idGarde, idsDoublons);
+  }
+
+  /** Fusionner des doublons dans l'organisation gardée ; ses responsables sont prévenus */
+  async fusionner(idGarde, idsDoublons, adminId) {
+    const resultat = await fusion.fusionner(this.models, idGarde, idsDoublons);
+    this.logger.info(`Organisations ${resultat.fusionnees.join(', ')} fusionnées dans ${idGarde} par admin: ${adminId}`);
+    for (const idUser of resultat.responsables) {
+      if (idUser === adminId) continue;
+      await notifier(this.notificationService, idUser, {
+        titre: 'Organisation regroupée',
+        message: `Les pages en double de votre organisation ont été regroupées dans « ${texteLisible(resultat.garde.nom)} ».`,
+        url_action: `/organisations/${idGarde}`, metadata: { id_organisation: Number(idGarde) }
+      });
+    }
+    return this.repository.findVitrine(idGarde);
+  }
 
   async listePourModeration() {
     return this.repository.findPourModeration();

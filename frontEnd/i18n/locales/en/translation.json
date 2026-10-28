@@ -2860,7 +2860,19 @@
       "refuserAide": "The reason is sent to the organisation’s managers: they can correct the page, which will be reviewed again.",
       "motif": "Reason",
       "publiee": "Page published",
-      "refusee": "Page rejected: the managers have been notified"
+      "refusee": "Page rejected: the managers have been notified",
+      "fusionner": "Merge…",
+      "fusion": {
+        "titre": "Merge into “{{nom}}”",
+        "aide": "Tick the duplicate pages. Their events, members and books will move to this page, then they will be deleted; their old addresses will lead here.",
+        "suggestions": "Likely duplicates",
+        "autre": "Other organisation",
+        "probable": "likely duplicate",
+        "resume": "{{doublons}} → “{{garde}}”: {{evenements}} event(s), {{membres}} member(s) and {{livres}} book(s) moved. The duplicate pages will be deleted.",
+        "voirResume": "See the summary",
+        "confirmer": "Merge",
+        "faite": "Organisations merged"
+      }
     }
   },
   "wilayas": {
@@ -4317,7 +4329,9 @@
       "email": "Email",
       "telephone": "Phone",
       "reseaux": "Social networks",
-      "verification": "You can use your organisation right away for your events. Its public page will appear in the directory after a check by the Tala DZ team."
+      "verification": "You can use your organisation right away for your events. Its public page will appear in the directory after a check by the Tala DZ team.",
+      "existePeutEtre": "It may already exist on Tala DZ:",
+      "existeConseil": "If it is yours, do not create it again: ask its manager to add you as a member, or write to the Tala DZ team."
     }
   },
   "validation": {

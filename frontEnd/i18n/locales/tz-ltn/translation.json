@@ -2709,7 +2709,19 @@
       "refuserAide": "Taɣẓint ad tettwazen i yimasayen n tuddsa.",
       "motif": "Taɣẓint",
       "publiee": "Asebter yeffeɣ-d",
-      "refusee": "Asebter yettwagi: imasayen ttwaselɣen"
+      "refusee": "Asebter yettwagi: imasayen ttwaselɣen",
+      "fusionner": "Sdukkel…",
+      "fusion": {
+        "titre": "Sdukkel deg « {{nom}} »",
+        "aide": "Mmeḍ isebtar yettwaɛawden. Tidyanin, iεeggalen d yedlisen-nsen ad εeddin ɣer usebter-a, sakin ad ttwakksen.",
+        "suggestions": "Isebtar yezmer ad ttwaɛawden",
+        "autre": "Tuddsa nniḍen",
+        "probable": "yezmer yettwaɛawed",
+        "resume": "{{doublons}} → « {{garde}} » : {{evenements}} n tedyanin, {{membres}} n iεeggalen, {{livres}} n yedlisen ad εeddin.",
+        "voirResume": "Wali agzul",
+        "confirmer": "Sdukkel",
+        "faite": "Tuddsiwin ttwasdukklent"
+      }
     }
   },
   "wilayas": {
@@ -3934,7 +3946,9 @@
       "email": "Imayl",
       "telephone": "Tiliɣri",
       "reseaux": "Iẓeḍwan inmettiyen",
-      "verification": "Tzemreḍ ad tesqedceḍ tuddsa-ik tura kan i tedyanin-ik. Asebter-is azayez ad d-iban deg ukaram mi ara t-isenqed ugraw n Tala DZ."
+      "verification": "Tzemreḍ ad tesqedceḍ tuddsa-ik tura kan i tedyanin-ik. Asebter-is azayez ad d-iban deg ukaram mi ara t-isenqed ugraw n Tala DZ.",
+      "existePeutEtre": "Ahat tella yakan deg Tala DZ :",
+      "existeConseil": "Ma d tinek, ur tt-xeddem ara tikkelt nniḍen : suter seg umasay-is ad k-yernu d aεeggal."
     }
   },
   "validation": {

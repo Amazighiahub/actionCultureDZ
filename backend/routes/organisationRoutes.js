@@ -28,6 +28,12 @@ module.exports = (_models, authMiddleware) => {
   router.get('/', (req, res) => controller.annuaire(req, res));
 
   /**
+   * GET /api/organisations/ressemblantes?nom=&exclure=
+   * Organisations au nom proche, avant d'en créer une (connecté)
+   */
+  router.get('/ressemblantes', authenticate, (req, res) => controller.ressemblantes(req, res));
+
+  /**
    * GET /api/organisations/admin/liste
    * Toutes les organisations et leur statut (modération)
    */
@@ -104,6 +110,17 @@ module.exports = (_models, authMiddleware) => {
     ],
     handleValidationErrors,
     (req, res) => controller.modifier(req, res));
+
+  /**
+   * GET /api/organisations/:id/fusion?doublons=7,9  (résumé)
+   * POST /api/organisations/:id/fusion { doublons: [7, 9] }
+   * Regrouper des doublons dans cette organisation (modération)
+   */
+  router.get('/:id/fusion', authenticate, moderation, validateId(), (req, res) => controller.apercuFusion(req, res));
+  router.post('/:id/fusion', authenticate, moderation, validateId(),
+    [body('doublons').isArray({ min: 1, max: 20 }), body('doublons.*').isInt({ min: 1 }).toInt()],
+    handleValidationErrors,
+    (req, res) => controller.fusionner(req, res));
 
   /**
    * PATCH /api/organisations/:id/statut

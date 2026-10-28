@@ -4,7 +4,7 @@
  * (?retour=evenement), on y revient après la création.
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Contact, Upload, X } from 'lucide-react';
+import { Building2, Contact, Upload, X, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
@@ -71,6 +73,18 @@ const AjouterOrganisation = () => {
   });
 
   useUnsavedChanges(isDirty);
+
+  // Création : organisations au nom proche (« Voulez-vous dire… ? »), pour éviter les doublons
+  const nomSaisi = useDebouncedValue(Object.values(formData.nom).find(v => v && v.trim().length >= 3) || '', 500);
+  const [ressemblantes, setRessemblantes] = useState<Array<{ id_organisation: number; nom: unknown; statut?: string }>>([]);
+  useEffect(() => {
+    if (idModif || !nomSaisi) { setRessemblantes([]); return; }
+    let actif = true;
+    httpClient.get<Array<{ id_organisation: number; nom: unknown; statut?: string }>>('/organisations/ressemblantes', { nom: nomSaisi })
+      .then(res => { if (actif) setRessemblantes(res.success && res.data ? res.data : []); })
+      .catch(() => { if (actif) setRessemblantes([]); });
+    return () => { actif = false; };
+  }, [nomSaisi, idModif]);
 
   const champ = <K extends keyof typeof formData>(cle: K, valeur: (typeof formData)[K]) => {
     setFormData(prev => ({ ...prev, [cle]: valeur }));
@@ -301,6 +315,24 @@ const AjouterOrganisation = () => {
                     placeholder={t('organisations.create.namePlaceholder', 'Ex: Association culturelle...')}
                     errors={fieldErrors.nom ? { fr: fieldErrors.nom } : undefined}
                   />
+                  {ressemblantes.length > 0 && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription className="space-y-1">
+                        <p className="font-medium">{t('organisations.form.existePeutEtre', 'Elle existe peut-être déjà sur Tala DZ :')}</p>
+                        <ul className="list-disc ps-5">
+                          {ressemblantes.map(o => (
+                            <li key={o.id_organisation}>
+                              {o.statut === 'valide'
+                                ? <Link to={organisationPath(o.id_organisation, o.nom)} target="_blank" className="text-primary underline underline-offset-4">{getLocalizedText(o.nom, i18n.language)}</Link>
+                                : getLocalizedText(o.nom, i18n.language)}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-sm">{t('organisations.form.existeConseil', 'Si c’est la vôtre, ne la recréez pas : demandez à son responsable de vous ajouter comme membre, ou écrivez à l’équipe Tala DZ.')}</p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
 
                 <div className="space-y-2">

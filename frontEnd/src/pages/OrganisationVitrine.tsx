@@ -3,8 +3,8 @@
  * Présentation, contacts, réseaux ; ses événements, ses publications (maison d'édition), ses membres.
  * Pas encore vérifiée : visible seulement de ses membres et de l'équipe, avec un bandeau.
  */
-import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Mail, Phone, Pencil, BookOpen, CalendarDays, Users, Building, ArrowLeft } from 'lucide-react';
@@ -56,16 +56,23 @@ const OrganisationVitrine: React.FC = () => {
   const lang = i18n.language;
   const { formatDate } = useFormatDate();
 
+  const navigate = useNavigate();
   const { data: org, isLoading, isError } = useQuery({
     queryKey: ['organisation-vitrine', id],
     queryFn: async () => {
-      const res = await httpClient.get<Vitrine>(`/organisations/${id}/vitrine`);
+      const res = await httpClient.get<Vitrine & { redirection?: number }>(`/organisations/${id}/vitrine`);
       if (!res.success || !res.data) throw new Error('introuvable');
       return res.data;
     },
     enabled: !!id,
     retry: false
   });
+
+  // Organisation regroupée dans une autre : son ancienne adresse mène à la page gardée
+  const redirection = org?.redirection;
+  useEffect(() => {
+    if (redirection) navigate(`/organisations/${redirection}`, { replace: true });
+  }, [redirection, navigate]);
 
   const retour = (
     <Button asChild variant="ghost" size="sm" className="mb-4 -ms-2">
@@ -88,7 +95,7 @@ const OrganisationVitrine: React.FC = () => {
     );
   }
 
-  if (isLoading || !org) {
+  if (isLoading || !org || org.redirection) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

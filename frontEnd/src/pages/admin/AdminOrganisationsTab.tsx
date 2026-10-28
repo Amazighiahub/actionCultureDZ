@@ -1,12 +1,13 @@
 /**
  * AdminOrganisationsTab - Vérification des pages d'organisations (associations, maisons d'édition…)
- * « Publier la page », ou « Refuser » avec un motif envoyé aux responsables de l'organisation.
+ * « Publier la page », ou « Refuser » avec un motif envoyé aux responsables de l'organisation ;
+ * « Fusionner » pour regrouper des pages en double.
  */
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building, CheckCircle, XCircle, Eye, RefreshCw, Search } from 'lucide-react';
+import { Building, CheckCircle, XCircle, Eye, RefreshCw, Search, Merge } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ import { httpClient } from '@/services/httpClient';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { organisationPath } from '@/utils/slug';
+import FusionOrganisationDialog from './FusionOrganisationDialog';
 
 interface OrganisationModeration {
   id_organisation: number;
@@ -45,6 +47,8 @@ const AdminOrganisationsTab: React.FC = () => {
   const [refus, setRefus] = useState<{ id: number; nom: string } | null>(null);
   const [motif, setMotif] = useState('');
   const [envoi, setEnvoi] = useState(false);
+  // Organisation gardée dans laquelle on regroupe des doublons
+  const [fusion, setFusion] = useState<OrganisationModeration | null>(null);
 
   const cle = ['admin-organisations'];
   const { data, isLoading, isError, refetch } = useQuery({
@@ -147,6 +151,9 @@ const AdminOrganisationsTab: React.FC = () => {
                         <CheckCircle className="h-4 w-4 me-1" />{t('admin.organisations.publier', 'Publier la page')}
                       </Button>
                     )}
+                    <Button size="sm" variant="ghost" onClick={() => setFusion(o)}>
+                      <Merge className="h-4 w-4 me-1" />{t('admin.organisations.fusionner', 'Fusionner…')}
+                    </Button>
                     {o.statut !== 'rejete' && (
                       <Button size="sm" variant="outline" disabled={envoi} onClick={() => { setRefus({ id: o.id_organisation, nom }); setMotif(''); }}>
                         <XCircle className="h-4 w-4 me-1" />{t('admin.organisations.refuser', 'Refuser')}
@@ -159,6 +166,17 @@ const AdminOrganisationsTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <FusionOrganisationDialog
+        garde={fusion}
+        toutes={toutes}
+        onClose={() => setFusion(null)}
+        onFusionnee={async () => {
+          setFusion(null);
+          toast({ title: t('admin.organisations.fusion.faite', 'Organisations regroupées') });
+          await queryClient.invalidateQueries({ queryKey: cle });
+        }}
+      />
 
       <Dialog open={!!refus} onOpenChange={(ouvert) => { if (!ouvert) setRefus(null); }}>
         <DialogContent>
