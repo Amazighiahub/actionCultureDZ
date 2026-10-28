@@ -29,7 +29,7 @@ import {
 import { oeuvreService } from '@/services/oeuvre.service';
 import { metadataService } from '@/services/metadata.service';
 import IntervenantModal from '@/components/modals/IntervenantModal';
-import EditeurModal from '@/components/modals/EditeurModal';
+import EditeurModal, { libelleTypeEditeur } from '@/components/modals/EditeurModal';
 import { useRTL } from '@/hooks/useRTL';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import type { 
@@ -526,7 +526,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                               <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
                               <p className="text-sm text-muted-foreground">
                                 {editeur.ville && `${editeur.ville} • `}
-                                {editeur.type_editeur}
+                                {libelleTypeEditeur(t, editeur.type_editeur)}
                               </p>
                             </div>
                           </div>
@@ -644,7 +644,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
                           <p className="text-sm text-muted-foreground">
                             {editeur.ville && `${editeur.ville} • `}
-                            {editeur.type_editeur}
+                            {libelleTypeEditeur(t, editeur.type_editeur)}
                           </p>
                         </div>
                         <Plus className="h-4 w-4" />
