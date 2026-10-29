@@ -24,6 +24,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 const PagePersonnalite: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -137,9 +138,9 @@ const PagePersonnalite: React.FC = () => {
                       <Pencil className="h-4 w-4 me-2" aria-hidden="true" />{t('personnalites.modifierFiche', 'Modifier la fiche')}
                     </Button>
                   )}
-                  {inv.wikipedia_url && (
+                  {safeExternalUrl(inv.wikipedia_url) && (
                     <Button variant="ghost" asChild>
-                      <a href={inv.wikipedia_url} target="_blank" rel="noopener noreferrer">{t('personnalites.wikipedia', 'Page Wikipédia')}<ExternalLink className="h-3 w-3 ms-1" aria-hidden="true" /></a>
+                      <a href={safeExternalUrl(inv.wikipedia_url)} target="_blank" rel="noopener noreferrer">{t('personnalites.wikipedia', 'Page Wikipédia')}<ExternalLink className="h-3 w-3 ms-1" aria-hidden="true" /></a>
                     </Button>
                   )}
                 </div>

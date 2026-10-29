@@ -615,6 +615,22 @@ class UserRepository extends BaseRepository {
       await destroy(m.Signalement, { id_user_signalant: userId });
       await destroy(m.Signalement, { type_entite: 'user', id_entite: userId });
 
+      // Avis sur un service déjà noté par « Utilisateur supprimé » : un seul avis par compte et
+      // par service (index unique, migration 20261114) → celui-ci est retiré au lieu d'être réattribué
+      if (m.Commentaire?.rawAttributes?.id_service) {
+        const AVIS_ACTIF = { commentaire_parent_id: null, statut: ['publie', 'en_attente'] };
+        const dejaNotes = (await m.Commentaire.findAll({
+          attributes: ['id_service'],
+          where: { id_user: SENTINEL_ID, id_service: { [Op.ne]: null }, ...AVIS_ACTIF },
+          ...tx
+        })).map(c => c.id_service);
+        if (dejaNotes.length) {
+          await m.Commentaire.update({ statut: 'supprime' }, {
+            where: { id_user: userId, id_service: dejaNotes, ...AVIS_ACTIF }, ...tx, ...UPDATE
+          });
+        }
+      }
+
       // 2. Contenus qui exigent un auteur : rattachés au compte « Utilisateur supprimé »
       await reassign(m.Evenement, 'id_user');
       await reassign(m.Commentaire, 'id_user');

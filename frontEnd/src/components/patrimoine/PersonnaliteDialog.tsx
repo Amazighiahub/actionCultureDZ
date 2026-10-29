@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import type { LieuIntervenant } from '@/services/lieuIntervenant.service';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 interface Props {
   lien: LieuIntervenant | null;
@@ -91,8 +92,8 @@ const PersonnaliteDialog: React.FC<Props> = ({ lien, lang, onClose, onModifiee }
                 <p className="text-sm leading-relaxed whitespace-pre-line">{biographie}</p>
               </div>
             )}
-            {inv.wikipedia_url && (
-              <a href={inv.wikipedia_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline">
+            {safeExternalUrl(inv.wikipedia_url) && (
+              <a href={safeExternalUrl(inv.wikipedia_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline">
                 {t('personnalites.wikipedia', 'Page Wikipédia')}<ExternalLink className="h-3 w-3" aria-hidden="true" />
               </a>
             )}
