@@ -101,8 +101,10 @@ export interface ArticleBlock {
     onDuplicate: () => void;
     canMoveUp: boolean;
     canMoveDown: boolean;
+    /** Langue dans laquelle on traduit le bloc (absente : on écrit le texte d'origine) */
+    langueTraduction?: string;
   }
-  
+
   export interface ArticlePreviewProps {
     formData: ArticleFormData;
     blocks: ArticleBlock[];

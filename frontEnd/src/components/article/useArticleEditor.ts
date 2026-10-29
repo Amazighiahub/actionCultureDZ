@@ -25,6 +25,7 @@ import type {
 } from '@/types/api/oeuvre-creation.types';
 
 import { generateBlockUid } from './articleEditor.constants';
+import { LANGUES_ARTICLE, langueOrigine } from '@/utils/traductionBlocs';
 
 // Template scientifique pour les nouveaux articles scientifiques
 const SCIENTIFIC_TEMPLATE: ArticleBlock[] = [
@@ -46,7 +47,7 @@ const SCIENTIFIC_TEMPLATE: ArticleBlock[] = [
 ];
 
 export function useArticleEditor({ articleId, initialData, onSave }: Pick<ArticleEditorProps, 'articleId' | 'initialData' | 'onSave'>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
 
   // State
@@ -74,7 +75,11 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   const [contributeurs, setContributeurs] = useState<ContributeurOeuvre[]>([]);
   const [editeurs, setEditeurs] = useState<EditeurOeuvre[]>([]);
 
-  const [editLang, setEditLang] = useState('fr');
+  // Langue dans laquelle le texte de l'article est écrit (les autres langues en sont des traductions) ;
+  // nouvel article : la langue du site
+  const langueSite = (LANGUES_ARTICLE as readonly string[]).includes(i18n.language) ? i18n.language : 'fr';
+  const [langueTexte, setLangueTexte] = useState(langueSite);
+  const [editLang, setEditLang] = useState(langueSite);
   const [translations, setTranslations] = useState<Record<string, { titre: string; description: string }>>(() => {
     const init: Record<string, { titre: string; description: string }> = {
       fr: { titre: '', description: '' },
@@ -185,6 +190,9 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
         if (blocksResponse.success && blocksResponse.data) {
           setBlocks(blocksResponse.data.map((b: any) => ({ ...b, _uid: generateBlockUid() })));
+          const origine = langueOrigine(blocksResponse.data, langueSite);
+          setLangueTexte(origine);
+          setEditLang(origine);
         }
       }
     } catch (error) {
@@ -340,7 +348,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
           id_oeuvre: articleId ? Number(articleId) : 0,
           titre: titreMultiLang.fr || Object.values(titreMultiLang)[0] || '',
           formData: saveFormData,
-          blocks,
+          // Chaque bloc garde la langue de son texte d'origine (pour la traduction)
+          blocks: blocks.map(b => ({ ...b, metadata: { ...b.metadata, langue_origine: langueTexte } })),
           contributeurs: {
             existants: intervenantsExistants,
             nouveaux: nouveauxIntervenants,
@@ -370,7 +379,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     // State
     loading, saving, error, fieldErrors, activeTab, setActiveTab,
     metadata, formData, setFormData,
-    blocks, editLang, setEditLang,
+    blocks, editLang, setEditLang, langueTexte, setLangueTexte,
     translations, setTranslations,
     newTag, setNewTag, expandedSections,
     intervenantsExistants, nouveauxIntervenants,

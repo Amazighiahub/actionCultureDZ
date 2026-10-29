@@ -1,5 +1,5 @@
 // pages/articles/ArticleViewPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,7 @@ import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components
 import { getContexteArticle, cleSectionPatrimoine, type ContexteArticle } from '@/services/patrimoineArticles.service';
 import { getAllowedEmbedUrl } from '@/utils/safeUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { blocDansLaLangue, langueOrigine, languesTraduites, LANGUES_ARTICLE } from '@/utils/traductionBlocs';
 import '@/styles/article-magazine.css';
 import PropositionsArticle from '@/components/article/PropositionsArticle';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,6 +73,9 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'none';data: null;};
 import Header from '@/components/Header';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+
+// Nom de chaque langue écrit dans cette langue
+const NOMS_LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
 
 function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
@@ -239,6 +243,15 @@ const ArticleViewPage: React.FC = () => {
     }
   }, [articleId]);
 
+  // Changement de langue : titre et chapeau rechargés dans la nouvelle langue (les blocs, eux,
+  // portent déjà toutes leurs traductions)
+  const langueChargee = useRef(i18n.language);
+  useEffect(() => {
+    if (!articleId || langueChargee.current === i18n.language) return;
+    langueChargee.current = i18n.language;
+    oeuvreService.getOeuvreById(articleId).then(res => { if (res.success && res.data) setOeuvre(res.data); });
+  }, [articleId, i18n.language]);
+
   // Vérifier le statut favori
   useEffect(() => {
     if (articleId && isAuthenticated) {
@@ -404,6 +417,15 @@ const ArticleViewPage: React.FC = () => {
     setCommentContent('');
   };
 
+  // Texte des blocs dans la langue du visiteur (texte d'origine là où la traduction manque)
+  const blocsLangue = useMemo(() => blocks.map(b => blocDansLaLangue(b, i18n.language)), [blocks, i18n.language]);
+  // Langues dans lesquelles l'article peut se lire (texte d'origine + traductions)
+  const languesLecture = useMemo(() => {
+    if (!blocks.length) return [];
+    const dispo = new Set([langueOrigine(blocks), ...languesTraduites(blocks)]);
+    return LANGUES_ARTICLE.filter(l => dispo.has(l));
+  }, [blocks]);
+
   // Calculer les statistiques
   const contentStats = {
     wordCount: blocks.reduce((acc, block) => {
@@ -468,9 +490,9 @@ const ArticleViewPage: React.FC = () => {
 
   // Photo d'ouverture : le premier bloc, s'il s'agit d'une image en pleine largeur
   // (une image « centrée » ou « flottante », un portrait par exemple, reste dans le texte)
-  const blocOuverture = blocks[0]?.type_block === 'image' && blocks[0].media
-    && ['full-width', 'full', undefined].includes(blocks[0].metadata?.layout) ? blocks[0] : null;
-  const blocsCorps = blocOuverture ? blocks.slice(1) : blocks;
+  const blocOuverture = blocsLangue[0]?.type_block === 'image' && blocsLangue[0].media
+    && ['full-width', 'full', undefined].includes(blocsLangue[0].metadata?.layout) ? blocsLangue[0] : null;
+  const blocsCorps = blocOuverture ? blocsLangue.slice(1) : blocsLangue;
   const premierTexte = blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
 
   // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante)
@@ -706,6 +728,18 @@ const ArticleViewPage: React.FC = () => {
         </div>
 
         <h1 className="mag-titre">{oeuvre.titre}</h1>
+
+        {languesLecture.length > 1 &&
+        <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm" aria-label={t('article.lireEn', 'Lire en')}>
+            <span className="text-muted-foreground">{t('article.lireEn', 'Lire en')} :</span>
+            {languesLecture.map(l =>
+          <Button key={l} type="button" size="sm" variant={l === i18n.language ? 'default' : 'outline'} className="h-7 px-2 text-xs"
+          aria-pressed={l === i18n.language} onClick={() => i18n.changeLanguage(l)}>
+                {NOMS_LANGUES[l]}
+              </Button>
+          )}
+          </nav>
+        }
 
         {articleHelpers.getSousTitre(articleData) &&
         <p className="mag-chapeau font-medium">{articleHelpers.getSousTitre(articleData)}</p>

@@ -453,7 +453,9 @@
     "no": "No",
     "contributorGuide": "Contributor guide",
     "continue": "Continue",
-    "lieu": "Place"
+    "lieu": "Place",
+    "errorOccurred": "An error occurred",
+    "notFound": "Not found"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -2458,7 +2460,20 @@
     "articleScientifique": "Scientific article",
     "article": "Article",
     "editer": "Edit",
-    "apercu": "Preview"
+    "apercu": "Preview",
+    "traduction": {
+      "origine": "Original text",
+      "origineCourt": "original",
+      "rien": "Nothing to translate in this block: it is shared by all languages.",
+      "votre": "Translation",
+      "auteur": "Quote author (translated)",
+      "liste": "Translation (one item per line, in the same order)",
+      "entetes": "Translated headers (comma-separated)",
+      "lignes": "Translated rows (one per line, cells separated by |)",
+      "legende": "Translated caption",
+      "ecritEn": "The article is written in",
+      "aide": "You are translating the article into {{langue}}. Translate the title, the lead and then each block: the original text ({{origine}}) is shown above. Images and layout are shared by all languages. To add, move or delete a block, go back to {{origine}}."
+    }
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",
@@ -3709,7 +3724,7 @@
       "photoRequired": "At least one photo is required",
       "createFailed": "Error during creation",
       "gpsRecommended": "GPS position not set.",
-      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
+      "invalidFiles": "Some files are invalid (images under 10 MB)",
       "gpsRequired": "Position the site on the map (click, search for an address or use geolocation)"
     },
     "success": {
@@ -4502,7 +4517,12 @@
           "moderateur": "Moderator",
           "animateur": "Host",
           "invite": "Guest"
-        }
+        },
+        "firstName": "First name",
+        "lastName": "Last name (or organisation name)",
+        "existingSpeaker": "Speaker already on Tala DZ",
+        "suggestions": "Existing speakers",
+        "suggestionsHint": "Already on Tala DZ — choose one to avoid a duplicate:"
       },
       "options": {
         "title": "Options and Equipment",
@@ -4520,7 +4540,7 @@
         "organizerNotesPlaceholder": "Internal notes for the organizer"
       },
       "languages": {
-        "fr": "Français",
+        "fr": "French",
         "ar": "العربية",
         "en": "English",
         "tz-ltn": "Tamazight (Latin)",
@@ -4689,7 +4709,10 @@
     "replyToComment": "Reply to comment",
     "addComment": "Add a comment",
     "updateSuccess": "Article updated successfully!",
-    "notFoundTitle": "Article not found"
+    "notFoundTitle": "Article not found",
+    "video": "Video",
+    "voirAussi": "See also",
+    "lireEn": "Read in"
   },
   "passwordStrength": {
     "minLength": "12+ characters",
@@ -4863,7 +4886,8 @@
     "fileTooLarge": "File too large (max 5 MB)",
     "uploadFailed": "Upload error",
     "imageOnly10": "Photos only, 10 MB maximum per file",
-    "fileTooLarge10": "File too large (max 10 MB)"
+    "fileTooLarge10": "File too large (max 10 MB)",
+    "error": "The photo could not be uploaded"
   },
   "gallery": {
     "empty": "No media available",
@@ -5051,7 +5075,14 @@
     "retirer": "Remove {{nom}} from this site",
     "voirFiche": "See {{nom}}’s profile",
     "wikipedia": "Wikipedia page",
-    "bandeauArticle": "This article will be published on this personality’s page once validated by the Tala DZ team."
+    "bandeauArticle": "This article will be published on this personality’s page once validated by the Tala DZ team.",
+    "voirPage": "See full page",
+    "introuvable": "Personality not found",
+    "surtitre": "Personality",
+    "ecrireArticle": "Write an article about this personality",
+    "articles": "Articles",
+    "aucunArticle": "No full article about this personality yet.",
+    "sesLieux": "Places"
   },
   "gastronomie": {
     "menu": "Gastronomy",

@@ -21,6 +21,7 @@ import ArticleBlockEditor from './ArticleBlockEditor';
 import ArticleMetadataTab from './ArticleMetadataTab';
 import ArticlePreview from './ArticlePreview';
 import { useArticleEditor } from './useArticleEditor';
+import { avancement, blocDansLaLangue } from '@/utils/traductionBlocs';
 
 const LANG_OPTIONS = [
   { code: 'fr', label: 'Français' },
@@ -34,6 +35,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   const { t } = useTranslation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
+  // Autre langue que celle du texte d'origine : on traduit les blocs existants
+  const enTraduction = editor.editLang !== editor.langueTexte;
+  const nomLangue = (code: string) => LANG_OPTIONS.find(l => l.code === code)?.label || code;
 
   if (editor.loading) {
     return (
@@ -122,11 +126,42 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                           onClick={() => editor.setEditLang(lang.code)}
                           className="text-xs px-2 py-1 h-7">
                           {lang.label}
-                          {editor.translations[lang.code]?.titre ? ' ✓' : ''}
+                          {lang.code === editor.langueTexte
+                            ? ` · ${t('article_articleeditor.traduction.origineCourt', 'origine')}`
+                            : (() => {
+                              const a = avancement(editor.blocks, lang.code);
+                              if (a.total && a.faits) return ` ${a.faits}/${a.total}`;
+                              return editor.translations[lang.code]?.titre ? ' ✓' : '';
+                            })()}
                         </Button>
                       ))}
                     </div>
                   </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Label htmlFor="langue-texte" className="text-muted-foreground">
+                      {t('article_articleeditor.traduction.ecritEn', 'Le texte de l’article est écrit en')}
+                    </Label>
+                    <select
+                      id="langue-texte"
+                      value={editor.langueTexte}
+                      onChange={(e) => { editor.setLangueTexte(e.target.value); editor.setEditLang(e.target.value); }}
+                      className="h-8 rounded-md border bg-background px-2 text-sm">
+                      {LANG_OPTIONS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </select>
+                  </div>
+
+                  {enTraduction && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {t('article_articleeditor.traduction.aide', {
+                          langue: nomLangue(editor.editLang), origine: nomLangue(editor.langueTexte),
+                          defaultValue: 'Vous traduisez l’article en {{langue}}. Traduisez le titre, le chapeau puis chaque bloc : le texte d’origine ({{origine}}) est affiché au-dessus. Les images et la mise en page sont communes à toutes les langues. Pour ajouter, déplacer ou supprimer un bloc, revenez à {{origine}}.'
+                        })}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="titre">{t("article_articleeditor.titre_3")} ({editor.editLang.toUpperCase()})</Label>
@@ -194,7 +229,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                   )}
 
                   <div className="space-y-1">
-                    {editor.blocks.length > 0 && <InsertBlockBar insertAt={0} onInsert={editor.addBlock} />}
+                    {editor.blocks.length > 0 && !enTraduction && <InsertBlockBar insertAt={0} onInsert={editor.addBlock} />}
                     {editor.blocks.map((block, index) => (
                       <React.Fragment key={(block as any)._uid || `block-${block.id_block || index}-${editor.blocks.length}`}>
                         <ArticleBlockEditor
@@ -206,13 +241,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                           onMoveDown={() => editor.moveBlock(index, 'down')}
                           onDuplicate={() => editor.duplicateBlock(index)}
                           canMoveUp={index > 0}
-                          canMoveDown={index < editor.blocks.length - 1} />
-                        <InsertBlockBar insertAt={index + 1} onInsert={editor.addBlock} />
+                          canMoveDown={index < editor.blocks.length - 1}
+                          langueTraduction={enTraduction ? editor.editLang : undefined} />
+                        {!enTraduction && <InsertBlockBar insertAt={index + 1} onInsert={editor.addBlock} />}
                       </React.Fragment>
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t">
+                  {!enTraduction && <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground mb-3">{t("article_articleeditor.ajouter_bloc")}</p>
                     <div className="flex flex-wrap gap-2">
                       {BLOCK_TEMPLATES.map((template) => {
@@ -225,7 +261,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                         );
                       })}
                     </div>
-                  </div>
+                  </div>}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -252,8 +288,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
             {/* Tab: Preview */}
             <TabsContent value="preview">
               <ArticlePreview
-                formData={editor.formData}
-                blocks={editor.blocks}
+                formData={enTraduction
+                  ? { ...editor.formData, titre: editor.translations[editor.editLang]?.titre || editor.formData.titre }
+                  : editor.formData}
+                blocks={enTraduction ? editor.blocks.map(b => blocDansLaLangue(b, editor.editLang)) : editor.blocks}
                 contributeurs={editor.contributeurs}
                 intervenantsExistants={editor.intervenantsExistants}
                 nouveauxIntervenants={editor.nouveauxIntervenants} />
