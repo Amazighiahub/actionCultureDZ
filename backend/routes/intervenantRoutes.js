@@ -218,6 +218,8 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     body('telephone').optional().trim().matches(/^[0-9+\-\s()]+$/),
     body('site_web').optional().trim().isURL(),
     body('photo_url').optional().trim().isURL(),
+    // Affiché en lien sur la page de la personnalité : http(s) seulement (pas de « javascript: »)
+    body('wikipedia_url').optional({ values: 'falsy' }).trim().isURL({ protocols: ['http', 'https'], require_protocol: true }),
     body('wilaya_id').optional().isInt({ min: 1 }),
     body('disponible').optional().isBoolean()
   ];

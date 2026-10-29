@@ -516,7 +516,8 @@ class EvenementRepository extends BaseRepository {
       include: [{
         model: this.models.User,
         as: 'User',
-        attributes: { exclude: ['password'] },
+        // Identité et e-mail seulement (pas de date de naissance, adresse, documents…)
+        attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'id_type_user', 'entreprise', 'email'],
         include: [
           { model: this.models.TypeUser, as: 'TypeUser', required: false }
         ]
@@ -527,11 +528,14 @@ class EvenementRepository extends BaseRepository {
   }
 
   /**
-   * Récupère le profil complet d'un participant
+   * Profil d'un participant, vu par l'organisateur : identité, présentation, e-mail (pour le
+   * contacter) ; le téléphone seulement s'il l'a rendu public (celui donné à l'inscription est
+   * dans ses réponses). Jamais la date de naissance, l'adresse, les documents ni l'état du compte.
    */
   async getParticipantProfile(userId) {
-    return this.models.User.findByPk(userId, {
-      attributes: { exclude: ['password'] },
+    const user = await this.models.User.findByPk(userId, {
+      attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'biographie', 'id_type_user', 'entreprise',
+        'specialites', 'site_web', 'reseaux_sociaux', 'wilaya_residence', 'email', 'telephone', 'telephone_public'],
       include: [
         { model: this.models.TypeUser, as: 'TypeUser', required: false },
         { model: this.models.Wilaya, as: 'Wilaya', required: false },
@@ -544,6 +548,8 @@ class EvenementRepository extends BaseRepository {
         }
       ]
     });
+    if (user && !user.telephone_public) user.setDataValue('telephone', null);
+    return user;
   }
 
   // ============================================================================

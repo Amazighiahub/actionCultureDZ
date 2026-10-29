@@ -169,15 +169,12 @@ class MetadataService {
       });
     }
 
-    // Avec recherche : recherche multilingue via JSON_EXTRACT, pas de cache
-    const where = {};
-    where[Op.or] = SUPPORTED_LANGUAGES.map(l => {
-      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-      return this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
-        { [Op.like]: `%${sanitizeLike(search)}%` }
-      );
-    });
+    // Avec recherche : dans toutes les langues, sans tenir compte des majuscules, pas de cache.
+    // JSON_SEARCH lit aussi les anciens tags enregistrés en texte simple ("oasis") et non par langue
+    const where = this.sequelize.where(
+      this.sequelize.fn('JSON_SEARCH', this.sequelize.fn('LOWER', this.sequelize.col('nom')), 'one', `%${sanitizeLike(search.toLowerCase())}%`),
+      { [Op.ne]: null }
+    );
 
     const queryOptions = { where, limit: parsedLimit };
 
@@ -185,7 +182,7 @@ class MetadataService {
     if (this.models.OeuvreTag) {
       queryOptions.attributes = {
         include: [[
-          this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretag WHERE oeuvretag.id_tag = TagMotCle.id_tag)'),
+          this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretags WHERE oeuvretags.id_tag = TagMotCle.id_tag)'),
           'usage_count'
         ]]
       };

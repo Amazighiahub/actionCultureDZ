@@ -126,8 +126,8 @@ interface ParticipantProfil {
     nom: string;
     prenom: string;
     email: string;
-    bio?: string;
-    photo_profil?: string;
+    biographie?: string;
+    photo_url?: string;
     site_web?: string;
     telephone?: string;
     reseaux_sociaux?: SocialLinksValue;
@@ -747,7 +747,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               {/* En-tête profil */}
               <div className="flex items-start gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profilData.profil.photo_profil} />
+                  <AvatarImage src={getAssetUrl(profilData.profil.photo_url)} />
                   <AvatarFallback className="text-xl">
                     {profilData.profil.prenom?.[0]}{profilData.profil.nom?.[0]}
                   </AvatarFallback>
@@ -761,8 +761,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       {td(profilData.profil.TypeUser.nom_type)}
                     </Badge>
                   )}
-                  {profilData.profil.bio && (
-                    <p className="text-sm text-muted-foreground mt-2">{td(profilData.profil.bio)}</p>
+                  {profilData.profil.biographie && (
+                    <p className="text-sm text-muted-foreground mt-2">{td(profilData.profil.biographie)}</p>
                   )}
                   
                   {/* Contact */}

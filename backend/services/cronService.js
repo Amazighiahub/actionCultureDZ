@@ -3,6 +3,10 @@ const logger = require('../utils/logger');
 const { maskEmail } = require('../utils/maskPII');
 const cron = require('node-cron');
 const { Op } = require('sequelize');
+
+// Événements publiés : « publie », ou « planifie » que le modèle pose à la publication d'un
+// événement à venir (hook beforeValidate de models/events/evenement.js)
+const STATUTS_PUBLIES = ['publie', 'planifie'];
 const CronLock = require('../utils/cronLock');
 const { translate, lireMultiLang } = require('../helpers/i18n');
 
@@ -156,7 +160,7 @@ class CronService {
           [Op.gte]: demain,
           [Op.lt]: apresdemain
         },
-        statut: 'publie',
+        statut: STATUTS_PUBLIES,
         rappel_envoye: { [Op.not]: true } // Éviter les doublons
       },
       attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'id_lieu'],
@@ -346,7 +350,7 @@ class CronService {
       this.models.Evenement.findAll({
         where: {
           date_creation: { [Op.gte]: lastWeek },
-          statut: 'publie'
+          statut: STATUTS_PUBLIES
         },
         attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_creation'],
         limit: 5,
@@ -419,7 +423,7 @@ class CronService {
         date_debut: {
           [Op.between]: [now, inOneHour]
         },
-        statut: 'publie',
+        statut: STATUTS_PUBLIES,
         rappel_derniere_minute: { [Op.not]: true }
       },
       attributes: ['id_evenement', 'nom_evenement', 'date_debut']
@@ -504,7 +508,7 @@ class CronService {
       {
         where: {
           date_fin: { [Op.lt]: now },
-          statut: 'publie'
+          statut: [...STATUTS_PUBLIES, 'en_cours']
         }
       }
     );
@@ -516,7 +520,7 @@ class CronService {
         where: {
           date_debut: { [Op.lte]: now },
           date_fin: { [Op.gte]: now },
-          statut: 'publie'
+          statut: STATUTS_PUBLIES
         }
       }
     );
