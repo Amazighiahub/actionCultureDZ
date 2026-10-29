@@ -21,6 +21,7 @@ import ArticleBlockEditor from './ArticleBlockEditor';
 import ArticleMetadataTab from './ArticleMetadataTab';
 import ArticlePreview from './ArticlePreview';
 import { useArticleEditor } from './useArticleEditor';
+import { useUnsavedChanges, confirmerSortie } from '@/hooks/useUnsavedChanges';
 import { avancement, blocDansLaLangue } from '@/utils/traductionBlocs';
 
 const LANG_OPTIONS = [
@@ -35,6 +36,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   const { t } = useTranslation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
+  // Un long article ne doit pas se perdre sur un clic « Retour », un lien ou la fermeture de l'onglet
+  useUnsavedChanges(editor.modifie && !editor.saving);
+  const retour = () => { if (onBack && (!editor.modifie || confirmerSortie())) onBack(); };
   // Autre langue que celle du texte d'origine : on traduit les blocs existants
   const enTraduction = editor.editLang !== editor.langueTexte;
   const nomLangue = (code: string) => LANG_OPTIONS.find(l => l.code === code)?.label || code;
@@ -61,7 +65,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               {onBack && (
-                <Button variant="outline" size="sm" onClick={onBack}>
+                <Button variant="outline" size="sm" onClick={retour}>
                   <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("article_articleeditor.retour")}
                 </Button>
               )}

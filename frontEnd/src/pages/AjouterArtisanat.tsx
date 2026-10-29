@@ -25,6 +25,7 @@ import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 type MultiLangText = {
   fr: string;
@@ -288,6 +289,7 @@ const AjouterArtisanat: React.FC = () => {
         }
 
         setSuccess(true);
+        rafraichirTableauDeBord();
         setTimeout(() => {
           navigate('/dashboard-pro');
         }, 2000);

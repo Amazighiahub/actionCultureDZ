@@ -3,7 +3,7 @@
  * Avec lazy loading des images et composants séparés
  */
 import React, { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFavorisIds } from '@/hooks/useFavoris';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +41,8 @@ import SEOHead from '@/components/SEOHead';
 // Hook personnalisé
 import { useOeuvres } from '@/hooks/useOeuvres';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { httpClient } from '@/services/httpClient';
+import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
@@ -232,6 +234,22 @@ const Oeuvres: React.FC = () => {
   }, [searchParams]);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  // Recherche faite par le serveur dans toutes les œuvres publiées (avant : seulement parmi celles
+  // déjà chargées à l'écran), à partir de 2 caractères
+  const recherche = debouncedSearch.trim().length >= 2 ? debouncedSearch.trim() : '';
+  const { i18n } = useTranslation();
+  const { data: resultatsRecherche, isFetching: rechercheEnCours } = useQuery({
+    queryKey: ['oeuvres', 'recherche', recherche, typeFilter, i18n.language],
+    enabled: !!recherche,
+    queryFn: async () => {
+      const res = await httpClient.get<{ oeuvres?: Oeuvre[] }>('/oeuvres/search', {
+        q: recherche, limit: 50, ...(typeFilter !== 'tous' ? { type: typeFilter } : {})
+      });
+      if (!res.success) throw new Error(res.error || 'recherche');
+      // Sans l'artisanat (type 7), qui a sa propre page
+      return (res.data?.oeuvres || []).filter(o => o.id_type_oeuvre !== 7);
+    }
+  });
 
   // Hook personnalisé
   const {
@@ -248,17 +266,7 @@ const Oeuvres: React.FC = () => {
 
   // Filtrage local supplémentaire
   const displayedOeuvres = React.useMemo(() => {
-    let result = [...(oeuvres || [])];
-
-    // Filtre par recherche
-    if (debouncedSearch) {
-      const search = debouncedSearch.toLowerCase();
-      result = result.filter((o) =>
-        o.titre?.toLowerCase().includes(search) ||
-        o.description?.toLowerCase().includes(search) ||
-        o.auteur?.toLowerCase().includes(search)
-      );
-    }
+    let result = [...((recherche ? resultatsRecherche : oeuvres) || [])];
 
     // Filtre par type
     if (typeFilter !== 'tous') {
@@ -285,7 +293,7 @@ const Oeuvres: React.FC = () => {
     }
 
     return result;
-  }, [oeuvres, debouncedSearch, typeFilter, sortBy]);
+  }, [oeuvres, recherche, resultatsRecherche, typeFilter, sortBy]);
 
   // Reset des filtres
   const resetFilters = () => {
@@ -404,7 +412,7 @@ const Oeuvres: React.FC = () => {
 
         {/* Contenu */}
         <ErrorBoundary>
-          {loading ? (
+          {loading || (recherche && rechercheEnCours && !resultatsRecherche) ? (
             <LoadingSkeleton type="card" count={8} />
           ) : error ? (
             <Card className="p-8 text-center">

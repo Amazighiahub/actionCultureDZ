@@ -97,6 +97,12 @@ vi.mock('@tanstack/react-query', () => ({
   QueryClientProvider: ({ children }: any) => children,
 }));
 
+vi.mock('@/lib/queryClient', () => ({
+  queryClient: {},
+  rafraichirTableauDeBord: vi.fn(),
+  rafraichirEvenement: vi.fn(),
+}));
+
 vi.mock('@/services/auth.service', () => ({
   authService: { isAuthenticated: (...args: any[]) => mockIsAuthenticated(...args) },
 }));

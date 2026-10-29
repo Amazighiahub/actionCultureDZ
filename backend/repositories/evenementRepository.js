@@ -423,10 +423,14 @@ class EvenementRepository extends BaseRepository {
   async unregisterParticipant(evenementId, userId) {
     if (!this.models.EvenementUser) return false;
 
+    // Un refus de l'organisateur (« annule ») est gardé : sans lui, se désinscrire puis se
+    // réinscrire effaçait le refus (registerParticipant ne le voyait plus)
+    const where = { id_evenement: evenementId, id_user: userId };
     const result = await this.models.EvenementUser.destroy({
-      where: { id_evenement: evenementId, id_user: userId }
+      where: { ...where, statut_participation: { [Op.ne]: 'annule' } }
     });
-    return result > 0;
+    if (result > 0) return true;
+    return !!(await this.models.EvenementUser.findOne({ where: { ...where, statut_participation: 'annule' }, attributes: ['id_evenement'] }));
   }
 
   /**

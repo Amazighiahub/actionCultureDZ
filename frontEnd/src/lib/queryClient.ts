@@ -29,3 +29,19 @@ export const queryClient = new QueryClient({
 i18n.on('languageChanged', () => {
   queryClient.invalidateQueries();
 });
+
+/**
+ * Après un enregistrement par un professionnel (œuvre, artisanat, site, article, événement,
+ * catalogue…) : ses tableaux de bord sont relus (sinon, gardés 5 min, ils montraient l'ancien
+ * état et poussaient à recréer ce qui venait d'être ajouté)
+ */
+export function rafraichirTableauDeBord() {
+  return queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('dashboard-pro') });
+}
+
+/** Fiche d'un événement relue (programme, médias, participants…) après une modification */
+export function rafraichirEvenement(idEvenement: number | string) {
+  return queryClient.invalidateQueries({
+    predicate: (q) => String(q.queryKey[0]).startsWith('event') && String(q.queryKey[1]) === String(idEvenement)
+  });
+}

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/hooks/use-toast';
+import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();
@@ -191,6 +192,7 @@ const EditArticle: React.FC = () => {
         }
       }
 
+      rafraichirTableauDeBord();
       toast({
         title: t('common.success', 'Succès'),
         description: t('article.updateSuccess', 'Article mis à jour avec succès !'),

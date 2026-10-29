@@ -455,7 +455,8 @@
     "lieu": "ⴰⴷⴻⴳ",
     "continue": "ⴽⴻⵎⵎⴻⵍ",
     "errorOccurred": "ⵜⴻⴹⵔⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ",
-    "notFound": "ⵓⵍⴰⵛ-ⵉⵜ"
+    "notFound": "ⵓⵍⴰⵛ-ⵉⵜ",
+    "quitterSansEnregistrer": "ⵜⴻⵙⵄⵉⴹ ⵉⴱⴻⴷⴷⵉⵍⴻⵏ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⴽⴻⵍⵙⴻⵏ ⴰⵔⴰ. ⴰⴷ ⵜⴻⴼⴼⵖⴻⴹ ⵖⴰⵙ ⴰⴽⴽⴻⵏ?"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -1407,7 +1408,8 @@
     },
     "submitOeuvre": "ⴰⵣⴻⵏ ⵉ ⵓⵙⴻⵏⵜⴻⵎ",
     "oeuvreSubmitted": "ⴰⵅⴻⴷⴷⵉⵎ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
-    "oeuvreSubmittedDesc": "ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ."
+    "oeuvreSubmittedDesc": "ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+    "resubmitOeuvre": "ⴰⵍⴻⵙ ⵜⵓⵣⵏⴰ ⴷⴻⴼⴼⵉⵔ ⵏ ⵓⵙⴻⵖⵜⵉ"
   },
   "dashboardadmin": {
     "label_validation": "ⴰⵙⵖⵏⵜ",

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { artisanatService, Artisanat, ArtisanatStatistics } from '@/services/artisanat.service';
 import { httpClient } from '@/services/httpClient';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 /** Extended Artisanat with optional `prix` field that may come from API responses */
 interface ArtisanatWithPrix extends Artisanat {
@@ -73,6 +74,23 @@ export function useArtisanat(): UseArtisanatReturn {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Recherche faite par le serveur dans tous les produits publiés (avant : seulement parmi ceux
+  // déjà chargés à l'écran), à partir de 2 caractères ; matériau et technique filtrent ensuite
+  const rechercheSaisie = useDebouncedValue(searchQuery, 300).trim();
+  const recherche = rechercheSaisie.length >= 2 ? rechercheSaisie : '';
+  const [resultatsRecherche, setResultatsRecherche] = useState<Artisanat[] | null>(null);
+  useEffect(() => {
+    if (!recherche) { setResultatsRecherche(null); return; }
+    let actuel = true;
+    artisanatService.search({ q: recherche, limit: 50 }).then((res) => {
+      if (!actuel) return;
+      const data = res.data as unknown;
+      const items = Array.isArray(data) ? data : ((data as ArtisanatResponseData)?.items || (data as ArtisanatResponseData)?.artisanats || []);
+      setResultatsRecherche(res.success ? (items as Artisanat[]) : []);
+    }).catch(() => { if (actuel) setResultatsRecherche([]); });
+    return () => { actuel = false; };
+  }, [recherche]);
 
   // Charger les matériaux
   const loadMateriaux = async () => {
@@ -202,10 +220,10 @@ export function useArtisanat(): UseArtisanatReturn {
 
   // Filtrer les artisanats
   const filteredArtisanats = useMemo(() => {
-    let filtered = [...artisanats];
+    let filtered = [...(recherche ? (resultatsRecherche ?? []) : artisanats)];
 
-    // Recherche textuelle
-    if (searchQuery.trim()) {
+    // Recherche textuelle (1 caractère : parmi les produits affichés ; au-delà, faite par le serveur)
+    if (!recherche && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(a => {
         if (a.nom?.toLowerCase().includes(query)) return true;
@@ -252,7 +270,7 @@ export function useArtisanat(): UseArtisanatReturn {
     }
 
     return filtered;
-  }, [artisanats, selectedMateriau, selectedTechnique, searchQuery, sortBy]);
+  }, [artisanats, recherche, resultatsRecherche, selectedMateriau, selectedTechnique, searchQuery, sortBy]);
 
   // Initialiser
   useEffect(() => {

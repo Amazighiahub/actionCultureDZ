@@ -16,6 +16,7 @@ import { lieuService } from '@/services/lieu.service';
 import { useTranslation } from 'react-i18next';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
@@ -100,6 +101,8 @@ const CreateProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
+        rafraichirEvenement(eventId);
+        rafraichirTableauDeBord();
 
         // Rediriger vers la page de l'événement après 2 secondes
         setTimeout(() => {

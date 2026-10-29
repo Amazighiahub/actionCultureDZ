@@ -28,6 +28,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -146,6 +147,7 @@ const ModifierPatrimoine: React.FC = () => {
           ? { id_lieu_parent: parentChoisi?.id ?? null } : {})
       });
       if (!res.success) throw new Error(res.error);
+      rafraichirTableauDeBord();
       toast({ title: t('patrimoine.edit.saved', 'Modifications enregistrées') });
       // Recharger : le rattachement change le titre de la page et la liste des points
       if (estModeration && (parentChoisi?.id ?? null) !== (site?.id_lieu_parent ?? null)) charger();

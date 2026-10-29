@@ -2,6 +2,17 @@
 const logger = require('../utils/logger');
 const { getClient: getRedisClient, isReady: isRedisReady } = require('../utils/redisClient');
 const { parcourirCles } = require('../utils/redisScan');
+const { SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+
+/**
+ * Langue de la clé de cache : une des langues du site (tz-ltn et tz-tfng comprises ; « all » pour
+ * les écrans qui reçoivent toutes les traductions), sinon le français. Avant, « tz-ltn » échouait
+ * au contrôle et partageait la clé du français : une page tamazight pouvait être servie en français.
+ */
+function langueDuCache(req) {
+  const brute = String(req.lang || req.headers?.['accept-language']?.split(',')[0] || 'fr').trim().toLowerCase();
+  return [...SUPPORTED_LANGUAGES, 'all'].includes(brute) ? brute : 'fr';
+}
 
 // ============================================================
 // LRU in-memory cache (fallback when Redis unavailable)
@@ -166,8 +177,7 @@ function createCacheMiddleware(ttl = 300) {
   return (req, res, next) => {
     if (req.method !== 'GET') return next();
 
-    const rawLang = req.lang || req.headers?.['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
-    const lang = /^[a-z]{2,4}$/.test(rawLang) ? rawLang : 'fr';
+    const lang = langueDuCache(req);
     const key = `${lang}:${req.originalUrl || req.url}`;
 
     store.get(key).then(cachedData => {
@@ -193,8 +203,7 @@ function createUserCacheMiddleware(ttl = 300) {
   return (req, res, next) => {
     if (req.method !== 'GET' || !req.user) return next();
 
-    const rawLang = req.lang || req.headers?.['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
-    const lang = /^[a-z]{2,4}$/.test(rawLang) ? rawLang : 'fr';
+    const lang = langueDuCache(req);
     const key = `user:${req.user.id_user}:${lang}:${req.originalUrl || req.url}`;
 
     store.get(key).then(cachedData => {

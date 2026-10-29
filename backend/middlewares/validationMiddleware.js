@@ -1,6 +1,17 @@
 const { validationResult } = require('express-validator');
 const { isValidLatitude, isValidLongitude } = require('../services/utils/geoUtils');
 
+/** Jour (AAAA-MM-JJ) d'une date en heure d'Algérie */
+const jourAlger = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Algiers' }).format(new Date(d));
+
+/** La date de début envoyée tombe-t-elle le même jour que celle déjà enregistrée ? */
+async function memeJourQueLeDebutActuel(id, dateDebut) {
+  if (!id) return false;
+  const { Evenement } = require('../models');
+  const actuel = await Evenement.findByPk(id, { attributes: ['date_debut'] });
+  return !!actuel?.date_debut && jourAlger(actuel.date_debut) === jourAlger(dateDebut);
+}
+
 const validationMiddleware = {
   // Gestionnaire des erreurs de validation
   handleValidationErrors: (req, res, next) => {
@@ -80,7 +91,12 @@ const validationMiddleware = {
     try {
       const { date_debut, date_fin, capacite_max } = req.body;
       
-      if (date_debut && new Date(date_debut) < new Date()) {
+      // Comparaison par jour, en heure d'Algérie : « 2026-10-29 » vaut minuit UTC, déjà passé le jour
+      // même ; un événement de ce soir doit pouvoir être créé. En modification (PUT), seule une date
+      // de début changée est contrôlée : un événement en cours doit rester modifiable (lieu, contact…)
+      const debutPasse = date_debut && jourAlger(date_debut) < jourAlger(new Date())
+        && !(req.method === 'PUT' && await memeJourQueLeDebutActuel(req.params.id, date_debut));
+      if (debutPasse) {
         return res.status(400).json({
           success: false,
           error: req.t ? req.t('validation.invalidStartDate') : 'Start date cannot be in the past'

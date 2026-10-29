@@ -88,7 +88,9 @@ class CronService {
     this.scheduleJob('email-verification-reminder', '0 10 * * *', () => this.sendEmailVerificationReminders());
 
     // 10. Archivage des anciens événements - Tous les mois le 1er à 2h
-    this.scheduleJob('archive-old-events', '0 2 1 * *', () => this.archiveOldEvents());
+    // (Plus d'archivage des événements terminés depuis 6 mois : il écrivait un statut « archive »
+    // absent des statuts d'événement et échouait chaque mois. Les événements passés restent
+    // consultables dans « événements passés ».)
 
     // 11. RGPD : Purge des vues anciennes (>90 jours) - Tous les dimanches à 3h
     this.scheduleJob('clean-old-views', '0 3 * * 0', () => this.cleanOldViews());
@@ -563,28 +565,6 @@ class CronService {
     }
 
     logger.info(`📧 ${envoyes}/${unverifiedUsers.length} rappels de vérification envoyés`);
-  }
-
-  /**
-   * 10. Archiver les anciens événements
-   */
-  async archiveOldEvents() {
-    if (!this.models?.Evenement) return;
-
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const result = await this.models.Evenement.update(
-      { statut: 'archive' },
-      {
-        where: {
-          date_fin: { [Op.lt]: sixMonthsAgo },
-          statut: 'termine'
-        }
-      }
-    );
-
-    logger.info(`📦 ${result[0]} événements archivés`);
   }
 
   // ========================================================================

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
+import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
@@ -159,6 +160,8 @@ const EditProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
+        rafraichirEvenement(eventId);
+        rafraichirTableauDeBord();
         // Rediriger vers la page de l'événement après 2 secondes
         setTimeout(() => {
           navigate(`/evenements/${eventId}`);

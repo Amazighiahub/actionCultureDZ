@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -108,6 +108,19 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     }
     return init;
   });
+
+  // Modifications non enregistrées : contenu comparé à celui de l'ouverture (ou du chargement)
+  const signature = JSON.stringify({ formData, translations, blocks: blocks.map(({ _uid, ...b }: any) => b) });
+  const signatureActuelle = useRef(signature);
+  signatureActuelle.current = signature;
+  const reference = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading) return;
+    // Après le chargement et le modèle d'article scientifique éventuel
+    const minuterie = setTimeout(() => { reference.current = signatureActuelle.current; }, 300);
+    return () => clearTimeout(minuterie);
+  }, [loading]);
+  const modifie = reference.current !== null && reference.current !== signature;
 
   const [newTag, setNewTag] = useState('');
   const [expandedSections, setExpandedSections] = useState({
@@ -377,7 +390,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
   return {
     // State
-    loading, saving, error, fieldErrors, activeTab, setActiveTab,
+    loading, saving, error, fieldErrors, activeTab, setActiveTab, modifie,
     metadata, formData, setFormData,
     blocks, editLang, setEditLang, langueTexte, setLangueTexte,
     translations, setTranslations,

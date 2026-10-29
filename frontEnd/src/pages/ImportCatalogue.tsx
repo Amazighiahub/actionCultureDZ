@@ -19,6 +19,7 @@ import { httpClient } from '@/services/httpClient';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { organisationPath } from '@/utils/slug';
+import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 interface LigneApercu { ligne: number; titre: string; auteur: string; isbn: string | null; couverture: string | null; etat: 'nouveau' | 'existe' | 'erreur'; erreurs: string[] }
 interface Apercu { resume: { total: number; nouveaux: number; existants: number; erreurs: number; sansCouverture: number }; imagesSansLivre: string[]; lignes: LigneApercu[] }
@@ -96,6 +97,7 @@ const ImportCatalogue: React.FC = () => {
       }
       setBilan(resultat);
       setEtape('fini');
+      rafraichirTableauDeBord();
     } catch (e) {
       setErreur(message(e, t('catalogue.erreurImport', 'L’import a échoué')));
       setEtape('choix');

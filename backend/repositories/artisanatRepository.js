@@ -135,18 +135,19 @@ class ArtisanatRepository extends BaseRepository {
     const { page = 1, limit = 20 } = options;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    const sanitized = this._sanitizeSearchQuery(query);
-    const pattern = `%${sanitized}%`;
+    const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
 
+    // Titre et description dans les 5 langues, sans accents ni majuscules (le JSON brut se
+    // comparait à l'identique : « tapis » ne trouvait pas « Tapis »)
     const includes = this._defaultIncludes();
     const oeuvreInc = includes.find(i => i.model === this.models.Oeuvre);
     if (oeuvreInc) {
+      const champs = ['titre', 'description'].flatMap(champ =>
+        ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
       oeuvreInc.where = {
         statut: 'publie',
-        [Op.or]: [
-          { titre: { [Op.like]: pattern } },
-          { description: { [Op.like]: pattern } }
-        ]
+        [Op.or]: champs.map(([champ, langue]) => this.model.sequelize.literal(
+          `JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
       };
     }
 
