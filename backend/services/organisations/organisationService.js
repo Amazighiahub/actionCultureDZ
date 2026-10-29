@@ -14,8 +14,16 @@ const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
 const ROLES_GESTION = ['responsable', 'directeur'];
 // Éditeurs (liste des œuvres) qui reçoivent une page d'organisation « Maison d'édition »
 const TYPES_EDITEUR_PAGE = ['maison_edition', 'editeur_scientifique'];
+// Maisons dont le catalogue est en cours d'import (un seul à la fois par maison)
+const importsEnCours = new Set();
 
 const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+// Même nom dans chaque langue (espaces de début et de fin ignorés)
+function memesTextes(a, b) {
+  const objet = (v) => (v && typeof v === 'object' ? v : { fr: v });
+  const x = objet(a); const y = objet(b);
+  return [...new Set([...Object.keys(x), ...Object.keys(y)])].every(k => String(x[k] || '').trim() === String(y[k] || '').trim());
+}
 const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
 
 /** Champs de la vitrine envoyés par le formulaire (les autres sont ignorés) */
@@ -172,7 +180,8 @@ class OrganisationService extends BaseService {
 
   /**
    * Modifier la page : responsables de l'organisation ou modération.
-   * Une page refusée repart en vérification après correction.
+   * Une page refusée repart en vérification après correction ; une page publiée aussi si son nom
+   * ou son type change (sinon une page vérifiée pourrait prendre le nom d'une autre organisation).
    */
   async modifier(id, data, { userId = null, isModerator = false } = {}) {
     const org = await this.repository.findById(id);
@@ -194,7 +203,11 @@ class OrganisationService extends BaseService {
     if (data.id_type_organisation !== undefined && Number(data.id_type_organisation) > 0) {
       champs.id_type_organisation = Number(data.id_type_organisation);
     }
-    if (org.statut === 'rejete' && !isModerator) champs.statut = 'en_attente';
+    if (!isModerator) {
+      const identiteChangee = (champs.nom !== undefined && !memesTextes(champs.nom, org.nom))
+        || (champs.id_type_organisation !== undefined && champs.id_type_organisation !== Number(org.id_type_organisation));
+      if (org.statut === 'rejete' || (org.statut === 'valide' && identiteChangee)) champs.statut = 'en_attente';
+    }
 
     await org.update(champs);
     if (champs.statut === 'en_attente') await this._prevenirModeration(org, userId);
@@ -296,21 +309,48 @@ class OrganisationService extends BaseService {
     };
   }
 
-  /** Import : les lignes valides sont enregistrées, l'équipe est prévenue une seule fois */
+  /**
+   * Import : les lignes valides sont enregistrées, l'équipe est prévenue une seule fois.
+   * Un seul import à la fois par maison (double clic, deux onglets) : sinon les mêmes livres
+   * seraient créés deux fois.
+   */
   async importerCatalogue(id, buffer, nomsImages, droits) {
     const org = await this._maisonPourCatalogue(id, droits);
+    const cle = Number(id);
+    if (importsEnCours.has(cle)) {
+      throw this._conflictError('Un import de ce catalogue est déjà en cours : attendez qu’il se termine.');
+    }
+    importsEnCours.add(cle);
+    try {
+      return await this._importer(org, buffer, nomsImages, droits);
+    } finally {
+      importsEnCours.delete(cle);
+    }
+  }
+
+  async _importer(org, buffer, nomsImages, droits) {
+    const id = org.id_organisation;
     const { refs } = await this._referencesCatalogue();
     const lu = await catalogue.lireCatalogue(buffer, nomsImages, refs);
     const container = require('../serviceContainer');
-    const bilan = await executer({ models: this.models, oeuvreService: container.oeuvreService, logger: this.logger }, org, lu.lignes, droits.userId);
-    this.logger.info(`Catalogue ${id} : ${bilan.crees.length} livre(s) créé(s), ${bilan.lies.length} relié(s), ${bilan.echecs.length} échec(s)`);
-    if (bilan.crees.length && this.models) {
+    const bilan = await executer({ models: this.models, oeuvreService: container.oeuvreService, logger: this.logger },
+      org, lu.lignes, droits.userId, { direct: !!droits.isModerator });
+    this.logger.info(`Catalogue ${id} : ${bilan.crees.length} livre(s) créé(s), ${bilan.lies.length} relié(s), `
+      + `${bilan.aVerifier.length} à vérifier, ${bilan.dejaPresents.length} déjà présent(s), ${bilan.echecs.length} échec(s)`);
+    if ((bilan.crees.length || bilan.aVerifier.length) && this.models) {
+      const parties = [];
+      if (bilan.crees.length) parties.push(`a importé ${bilan.crees.length} livre(s) : ils attendent votre vérification`);
+      if (bilan.aVerifier.length) {
+        const isbn = bilan.aVerifier.map(l => l.isbn).filter(Boolean).slice(0, 10).join(', ');
+        parties.push(`se dit éditeur de ${bilan.aVerifier.length} livre(s) déjà sur le site (ISBN ${isbn}) : reliez-les à la maison si c'est exact`);
+      }
       for (const idAdmin of await idsAdministrateurs(this.models)) {
         if (idAdmin === droits.userId) continue;
         await notifier(this.notificationService, idAdmin, {
           titre: 'Catalogue à vérifier',
-          message: `« ${texteLisible(org.nom)} » a importé ${bilan.crees.length} livre(s) : ils attendent votre vérification.`,
-          url_action: '/admin/dashboard?tab=oeuvres', metadata: { id_organisation: Number(id) }
+          message: `« ${texteLisible(org.nom)} » ${parties.join(' ; ')}.`,
+          url_action: '/admin/dashboard?tab=oeuvres',
+          metadata: { id_organisation: Number(id), livres_a_relier: bilan.aVerifier.map(l => l.id_oeuvre) }
         });
       }
     }

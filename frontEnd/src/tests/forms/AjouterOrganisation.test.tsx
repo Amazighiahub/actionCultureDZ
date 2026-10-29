@@ -22,12 +22,16 @@ const {
   mockToast,
   mockHttpGet,
   mockHttpPost,
+  mockHttpPut,
+  mockInvalidateQueries,
   routeur,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockToast: vi.fn(),
   mockHttpGet: vi.fn(),
   mockHttpPost: vi.fn(),
+  mockHttpPut: vi.fn(),
+  mockInvalidateQueries: vi.fn(),
   // Paramètres de l'adresse : /organisations/:id/modifier, ?retour=evenement
   routeur: { params: {} as Record<string, string>, recherche: '' },
 }));
@@ -50,6 +54,10 @@ vi.mock('react-router-dom', () => ({
   useParams: () => routeur.params,
   useSearchParams: () => [new URLSearchParams(routeur.recherche), vi.fn()],
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,
+}));
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
 }));
 
 vi.mock('@/services/metadata.service', () => ({
@@ -80,7 +88,7 @@ vi.mock('@/services/httpClient', () => ({
   httpClient: {
     get: (...args: any[]) => mockHttpGet(...args),
     post: (...args: any[]) => mockHttpPost(...args),
-    put: vi.fn(),
+    put: (...args: any[]) => mockHttpPut(...args),
     delete: vi.fn(),
     postFormData: vi.fn(),
   },
@@ -414,6 +422,34 @@ describe('AjouterOrganisation', () => {
           expect.objectContaining({ variant: 'destructive' })
         );
       });
+    });
+  });
+
+  // =========================================================================
+  // MODIFICATION D'UNE PAGE PUBLIÉE
+  // =========================================================================
+
+  describe('Modification d une page publiée', () => {
+    beforeEach(() => {
+      routeur.params = { id: '7' };
+      mockHttpGet.mockImplementation(async (url: string) => (url.includes('/vitrine')
+        ? { success: true, data: { nom: { fr: 'Association Adrar' }, id_type_organisation: 1, peutModifier: true, statut: 'valide' } }
+        : { success: true, data: MOCK_TYPES }));
+      mockHttpPut.mockResolvedValue({ success: true, data: { id_organisation: 7 } });
+    });
+
+    test('changer le nom affiche l avertissement ; à l enregistrement la page est rafraîchie et le message le rappelle', async () => {
+      render(<AjouterOrganisation />);
+      await waitFor(() => expect(screen.getByTestId('input-nom-fr')).toHaveValue('Association Adrar'));
+      expect(screen.queryByText(/sera masquée/)).not.toBeInTheDocument();
+
+      await user.type(screen.getByTestId('input-nom-fr'), ' Tazmalt');
+      expect(screen.getByText(/sera masquée/)).toBeInTheDocument();
+
+      submitForm();
+      await waitFor(() => expect(mockHttpPut).toHaveBeenCalledWith('/organisations/7', expect.anything()));
+      await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ description: expect.stringMatching(/vérification/) })));
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['organisation-vitrine'] });
     });
   });
 

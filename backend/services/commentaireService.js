@@ -101,7 +101,13 @@ class CommentaireService extends BaseService {
     if (await this.repository.findAvisServiceDuMembre(serviceId, userId)) {
       throw new AppError('comment.alreadyReviewed', 409, 'AVIS_DEJA_DONNE');
     }
-    return this.repository.createWithAuthor({ contenu, note_qualite, id_user: userId, id_service: serviceId });
+    try {
+      return await this.repository.createWithAuthor({ contenu, note_qualite, id_user: userId, id_service: serviceId });
+    } catch (error) {
+      // Deux envois simultanés : l'index unique de la base (migration 20261114) refuse le second
+      if (error?.name === 'SequelizeUniqueConstraintError') throw new AppError('comment.alreadyReviewed', 409, 'AVIS_DEJA_DONNE');
+      throw error;
+    }
   }
 
   /**

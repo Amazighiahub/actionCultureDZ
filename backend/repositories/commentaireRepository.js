@@ -45,6 +45,8 @@ class CommentaireRepository extends BaseRepository {
         commentaire_parent_id: null
       },
       include: [this._userInclude(), this._reponsesInclude()],
+      distinct: true,
+      col: 'id_commentaire',
       limit,
       offset,
       order: [['date_creation', 'DESC']]
@@ -62,6 +64,8 @@ class CommentaireRepository extends BaseRepository {
         commentaire_parent_id: null
       },
       include: [this._userInclude(), this._reponsesInclude()],
+      distinct: true,
+      col: 'id_commentaire',
       limit,
       offset,
       order: [['date_creation', 'DESC']]
@@ -79,6 +83,9 @@ class CommentaireRepository extends BaseRepository {
         commentaire_parent_id: null
       },
       include: [this._userInclude(), this._reponsesInclude()],
+      // Compter les avis, pas les lignes jointes (un avis avec deux réponses comptait trois)
+      distinct: true,
+      col: 'id_commentaire',
       limit,
       offset,
       order: [['date_creation', 'DESC']]

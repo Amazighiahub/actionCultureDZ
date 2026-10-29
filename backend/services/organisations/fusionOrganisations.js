@@ -108,8 +108,9 @@ async function fusionner(models, idGarde, idsDoublons) {
         }
         if (OeuvreEditeur) {
           for (const livre of await OeuvreEditeur.findAll({ where: { id_editeur: editeur.id_editeur }, transaction })) {
+            // Clé unique de la table : (id_oeuvre, id_editeur), quel que soit le rôle
             const deja = await OeuvreEditeur.findOne({
-              where: { id_editeur: principal.id_editeur, id_oeuvre: livre.id_oeuvre, role_editeur: livre.role_editeur }, transaction
+              where: { id_editeur: principal.id_editeur, id_oeuvre: livre.id_oeuvre }, transaction
             });
             if (deja) await livre.destroy({ transaction });
             else await livre.update({ id_editeur: principal.id_editeur }, { transaction });

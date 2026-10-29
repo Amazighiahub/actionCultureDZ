@@ -77,6 +77,26 @@ describe('Organisation : page publique', () => {
     await svc.modifier(3, { adresse: 'Tizi Ouzou' }, { userId: 10 });
     expect(enBase[3].statut).toBe('en_attente');
   });
+
+  test('page publiée : changer le nom ou le type la renvoie en vérification', async () => {
+    const renommee = makeService();
+    await renommee.svc.modifier(1, { nom: { fr: 'Ministère de la Culture' } }, { userId: 10 });
+    expect(renommee.enBase[1].statut).toBe('en_attente');
+
+    const retypee = makeService();
+    retypee.enBase[1].id_type_organisation = 4;
+    await retypee.svc.modifier(1, { id_type_organisation: 7 }, { userId: 10 });
+    expect(retypee.enBase[1].statut).toBe('en_attente');
+  });
+
+  test('page publiée : même nom (espaces en plus), autres champs ou modération → reste publiée', async () => {
+    const { svc, enBase } = makeService();
+    enBase[1].id_type_organisation = 4;
+    await svc.modifier(1, { nom: { fr: ' Éditions Barzakh ', ar: '' }, id_type_organisation: 4, adresse: 'Alger' }, { userId: 10 });
+    expect(enBase[1].statut).toBe('valide');
+    await svc.modifier(1, { nom: { fr: 'Éditions Barzakh (Alger)' } }, { isModerator: true });
+    expect(enBase[1].statut).toBe('valide');
+  });
 });
 
 describe('Organisation : vérification par l’équipe', () => {

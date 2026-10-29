@@ -22,7 +22,7 @@ import { organisationPath } from '@/utils/slug';
 
 interface LigneApercu { ligne: number; titre: string; auteur: string; isbn: string | null; couverture: string | null; etat: 'nouveau' | 'existe' | 'erreur'; erreurs: string[] }
 interface Apercu { resume: { total: number; nouveaux: number; existants: number; erreurs: number; sansCouverture: number }; imagesSansLivre: string[]; lignes: LigneApercu[] }
-interface Bilan { crees: Array<{ ligne: number; id_oeuvre: number; couverture: string | null }>; lies: Array<{ ligne: number }>; echecs: Array<{ ligne: number; erreur: string }>; ignorees: number }
+interface Bilan { crees: Array<{ ligne: number; id_oeuvre: number; couverture: string | null }>; lies: Array<{ ligne: number }>; aVerifier?: Array<{ ligne: number }>; dejaPresents?: Array<{ ligne: number }>; echecs: Array<{ ligne: number; erreur: string }>; ignorees: number }
 
 const message = (e: unknown, defaut: string) => (e instanceof Error && e.message ? e.message : defaut);
 
@@ -127,6 +127,8 @@ const ImportCatalogue: React.FC = () => {
                 <ul className="space-y-1 text-sm">
                   <li>{t('catalogue.bilanCrees', { count: bilan.crees.length, defaultValue: '{{count}} livre(s) envoyé(s) à l’équipe Tala DZ pour vérification' })}</li>
                   {bilan.lies.length > 0 && <li>{t('catalogue.bilanLies', { count: bilan.lies.length, defaultValue: '{{count}} livre(s) déjà sur le site, relié(s) à votre maison' })}</li>}
+                  {(bilan.aVerifier?.length ?? 0) > 0 && <li>{t('catalogue.bilanAVerifier', { count: bilan.aVerifier!.length, defaultValue: '{{count}} livre(s) déjà sur le site, ajouté(s) par un autre compte : l’équipe Tala DZ vérifiera avant de les relier à votre maison' })}</li>}
+                  {(bilan.dejaPresents?.length ?? 0) > 0 && <li>{t('catalogue.bilanDejaPresents', { count: bilan.dejaPresents!.length, defaultValue: '{{count}} livre(s) déjà dans votre catalogue, non recréé(s)' })}</li>}
                   {couvertures.total > 0 && <li>{t('catalogue.bilanCouvertures', { faites: couvertures.faites - couvertures.echecs, total: couvertures.total, defaultValue: '{{faites}} couverture(s) sur {{total}} ajoutée(s)' })}</li>}
                   {bilan.ignorees > 0 && <li className="text-destructive">{t('catalogue.bilanIgnorees', { count: bilan.ignorees, defaultValue: '{{count}} ligne(s) en erreur non importée(s) : corrigez-les et importez-les à nouveau' })}</li>}
                   {bilan.echecs.map(e => <li key={e.ligne} className="text-destructive">{t('catalogue.ligne', { n: e.ligne, defaultValue: 'Ligne {{n}}' })} : {e.erreur}</li>)}

@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +51,7 @@ const AjouterOrganisation = () => {
   const { t } = useTranslation();
   const { direction } = useRTL();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [types, setTypes] = useState<TypeOrganisation[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
@@ -73,6 +75,12 @@ const AjouterOrganisation = () => {
   });
 
   useUnsavedChanges(isDirty);
+
+  // Modification d'une page publiée : nom et type d'origine (les changer la renvoie en vérification)
+  const [origine, setOrigine] = useState<{ statut?: string; nom: Textes; type: string } | null>(null);
+  const identiteChangee = !!origine && origine.statut === 'valide' && (
+    formData.id_type_organisation !== origine.type
+    || (Object.keys(VIDE) as Array<keyof Textes>).some(k => formData.nom[k].trim() !== origine.nom[k].trim()));
 
   // Création : organisations au nom proche (« Voulez-vous dire… ? »), pour éviter les doublons
   const nomSaisi = useDebouncedValue(Object.values(formData.nom).find(v => v && v.trim().length >= 3) || '', 500);
@@ -103,7 +111,7 @@ const AjouterOrganisation = () => {
     httpClient.get<{
       nom: unknown; description?: unknown; id_type_organisation?: number; site_web?: string | null; logo_url?: string | null;
       id_wilaya?: number | null; adresse?: string | null; email?: string | null; telephone?: string | null;
-      reseaux?: Record<string, string> | null; peutModifier?: boolean;
+      reseaux?: Record<string, string> | null; peutModifier?: boolean; statut?: string;
     }>(`/organisations/${idModif}/vitrine`).then(res => {
       const o = res.data;
       if (!res.success || !o) return;
@@ -121,6 +129,7 @@ const AjouterOrganisation = () => {
         telephone: o.telephone || '',
         reseaux: o.reseaux || {},
       });
+      setOrigine({ statut: o.statut, nom: textes(o.nom), type: o.id_type_organisation ? String(o.id_type_organisation) : '' });
       if (o.logo_url) setLogoApercu(getAssetUrl(o.logo_url, { width: 224 }));
     }).catch(() => {});
   }, [idModif, navigate]);
@@ -239,10 +248,13 @@ const AjouterOrganisation = () => {
 
       if (response.success) {
         setIsDirty(false);
+        if (idModif) await queryClient.invalidateQueries({ queryKey: ['organisation-vitrine'] });
         toast({
           title: t('common.success', 'Succès'),
           description: idModif
-            ? t('organisations.form.enregistree', 'Page de l’organisation mise à jour')
+            ? (identiteChangee
+              ? t('organisations.form.renvoyeeVerification', 'Page mise à jour. Le nom ou le type a changé : la page sera de nouveau publiée après vérification par l’équipe Tala DZ.')
+              : t('organisations.form.enregistree', 'Page de l’organisation mise à jour'))
             : t('organisations.form.creeeEnAttente', 'Organisation créée. Sa page sera publiée après vérification par l’équipe Tala DZ.'),
         });
         const id = idModif || Number(response.data?.id_organisation);
@@ -361,6 +373,15 @@ const AjouterOrganisation = () => {
                     <p className="text-sm text-destructive">{t('organisations.create.typeLoadError', 'Impossible de charger les types. Veuillez rafraîchir la page.')}</p>
                   )}
                 </div>
+
+                {identiteChangee && (
+                  <Alert>
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                    <AlertDescription>
+                      {t('organisations.form.avertissementVerification', 'Vous changez le nom ou le type de l’organisation : après l’enregistrement, la page sera masquée le temps que l’équipe Tala DZ la vérifie à nouveau.')}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 <div className="space-y-2">
                   <Label>{t('common.description', 'Description')} {facultatif}</Label>
