@@ -460,7 +460,8 @@
     "continue": "Continuer",
     "lieu": "Lieu",
     "errorOccurred": "Une erreur est survenue",
-    "notFound": "Introuvable"
+    "notFound": "Introuvable",
+    "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -1420,7 +1421,8 @@
       "en_attente": "En attente de validation",
       "valide": "Publié",
       "rejete": "Refusé"
-    }
+    },
+    "resubmitOeuvre": "Renvoyer après correction"
   },
   "dashboardadmin": {
     "label_validation": "Validation",

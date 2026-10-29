@@ -125,7 +125,8 @@ class LieuService extends BaseService {
   async getAllLieux({ lang = 'fr', page = 1, limit = 10, wilaya, daira, commune, type_lieu, search, with_events = false } = {}) {
     limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
     const offset = (page - 1) * limit;
-    const where = {};
+    // Liste publique : sans les brouillons (points de relevé sans nom) ni les lieux archivés
+    const where = { statut: 'publie' };
     const include = [];
 
     // Commune -> Daira -> Wilaya
@@ -149,12 +150,13 @@ class LieuService extends BaseService {
       });
     }
 
-    // Service et LieuMedia (seulement si pas trop de donnees)
+    // Service et LieuMedia (seulement si pas trop de donnees). Lus à part (separate) : joints à la
+    // requête principale, leurs lignes comptaient dans le LIMIT (un lieu à 3 services = 3 lignes)
     if (this.models.Service && parseInt(limit) <= 50) {
-      include.push({ model: this.models.Service, required: false });
+      include.push({ model: this.models.Service, required: false, separate: true });
     }
     if (this.models.LieuMedia && parseInt(limit) <= 50) {
-      include.push({ model: this.models.LieuMedia, required: false });
+      include.push({ model: this.models.LieuMedia, required: false, separate: true });
     }
 
     if (type_lieu) where.typeLieu = type_lieu;
@@ -171,9 +173,10 @@ class LieuService extends BaseService {
     if (with_events === 'true' && this.models.Evenement) {
       include.push({
         model: this.models.Evenement,
-        attributes: ['nom_evenement', 'date_debut', 'date_fin'],
-        where: { date_fin: { [Op.gte]: new Date() } },
-        required: false
+        attributes: ['id_evenement', 'id_lieu', 'nom_evenement', 'date_debut', 'date_fin'],
+        where: { date_fin: { [Op.gte]: new Date() }, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } },
+        required: false,
+        separate: true
       });
     }
 
@@ -218,6 +221,7 @@ class LieuService extends BaseService {
     if (!wilaya) return { wilaya: null, rows: [], count: 0 };
 
     const lieux = await this.models.Lieu.findAndCountAll({
+      where: { statut: 'publie' },
       limit: parseInt(limit),
       offset: parseInt(offset),
       include: [
@@ -239,8 +243,8 @@ class LieuService extends BaseService {
           ]
         },
         { model: this.models.DetailLieu },
-        { model: this.models.Service },
-        { model: this.models.LieuMedia }
+        { model: this.models.Service, separate: true },
+        { model: this.models.LieuMedia, separate: true }
       ],
       order: this._orderByName(lang),
       distinct: true

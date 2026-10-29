@@ -37,6 +37,7 @@ import TarifEvenementFields, { type ValeurTarif } from '@/components/event/Tarif
 import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
 import type { ConfigInscription } from '@/utils/formulaireInscription';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -491,6 +492,8 @@ const AjouterEvenement = () => {
         queryClient.invalidateQueries({ queryKey: ['evenements'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
         queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });
+        rafraichirTableauDeBord();
+        if (id) rafraichirEvenement(id);
         // Événement d'un professionnel envoyé à l'équipe : publié après validation
         const envoye = statut === 'publie' && (response.data as { statut?: string } | undefined)?.statut === 'en_attente'
           && statutActuel !== 'en_attente';

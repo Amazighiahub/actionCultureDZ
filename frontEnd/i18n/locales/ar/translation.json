@@ -456,7 +456,8 @@
     "continue": "متابعة",
     "lieu": "المكان",
     "errorOccurred": "حدث خطأ",
-    "notFound": "غير موجود"
+    "notFound": "غير موجود",
+    "quitterSansEnregistrer": "لديك تعديلات غير محفوظة. هل تريد المغادرة رغم ذلك؟"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -1921,7 +1922,8 @@
       "en_attente": "في انتظار المصادقة",
       "valide": "منشور",
       "rejete": "مرفوض"
-    }
+    },
+    "resubmitOeuvre": "إعادة الإرسال بعد التصحيح"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",

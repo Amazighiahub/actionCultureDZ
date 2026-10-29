@@ -455,7 +455,8 @@
     "continue": "Continue",
     "lieu": "Place",
     "errorOccurred": "An error occurred",
-    "notFound": "Not found"
+    "notFound": "Not found",
+    "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -1395,7 +1396,8 @@
       "en_attente": "Awaiting approval",
       "valide": "Published",
       "rejete": "Declined"
-    }
+    },
+    "resubmitOeuvre": "Resubmit after corrections"
   },
   "dashboardadmin": {
     "label_validation": "Validation",

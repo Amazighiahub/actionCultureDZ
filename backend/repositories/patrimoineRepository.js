@@ -319,7 +319,7 @@ class PatrimoineRepository extends BaseRepository {
    * Recherche multilingue
    */
   async searchSites(query, options = {}) {
-    const { page = 1, limit = 20 } = options;
+    const { page = 1, limit = 20, typePatrimoine } = options;
     const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
     // Texte extrait (JSON_UNQUOTE) comparé sans tenir compte des accents ni des majuscules :
     // « ait smail » trouve « Aït Smaïl » (la valeur JSON brute se comparait à l'identique)
@@ -330,6 +330,7 @@ class PatrimoineRepository extends BaseRepository {
 
     const where = {
       statut: 'publie',
+      ...(typePatrimoine ? { typePatrimoine: String(typePatrimoine) } : {}),
       [Op.or]: champs.map(([champ, langue]) =>
         literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
     };

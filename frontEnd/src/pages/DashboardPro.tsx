@@ -373,14 +373,16 @@ const DashboardPro = () => {
           
           <div className="flex flex-wrap justify-end gap-2 ms-4">
             {/* Brouillon d'œuvre : l'envoyer à la validation de l'équipe */}
-            {type === 'oeuvre' && item.statut === 'brouillon' && item.id_oeuvre &&
+            {type === 'oeuvre' && (item.statut === 'brouillon' || item.statut === 'rejete') && item.id_oeuvre &&
             <Button
               variant="outline"
               size="sm"
               onClick={() => envoyerOeuvre(item.id_oeuvre as number)}>
 
               <Send className="h-4 w-4 me-1" />
-              {t('dashboardpro.submitOeuvre', 'Envoyer pour validation')}
+              {item.statut === 'rejete'
+                ? t('dashboardpro.resubmitOeuvre', 'Renvoyer après correction')
+                : t('dashboardpro.submitOeuvre', 'Envoyer pour validation')}
             </Button>
             }
             <Button

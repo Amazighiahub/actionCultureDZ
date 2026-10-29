@@ -33,6 +33,7 @@ import type {
 } from './types';
 import { INITIAL_FORM_DATA } from './types';
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
+import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -823,6 +824,7 @@ export function useAjouterOeuvre() {
             variant: 'destructive',
           });
         }
+        rafraichirTableauDeBord();
         navigate('/dashboard-pro');
 
       } catch (error: unknown) {

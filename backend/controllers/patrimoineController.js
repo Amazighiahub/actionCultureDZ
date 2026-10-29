@@ -57,9 +57,9 @@ class PatrimoineController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q } = req.query;
+      const { q, typePatrimoine } = req.query;
       const { page, limit } = this._paginate(req);
-      const result = await this.patrimoineService.search(q, { page, limit });
+      const result = await this.patrimoineService.search(q, { page, limit, typePatrimoine });
       res.json({
         success: true,
         data: result.data.map(s => s.toCardJSON(req.lang)),

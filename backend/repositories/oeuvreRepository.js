@@ -3,7 +3,7 @@
  * Optimise les requêtes et évite les problèmes N+1
  */
 const BaseRepository = require('./baseRepository');
-const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
+const { Op, fn, col, literal } = require('sequelize');
 const subtypeRegistry = require('../services/oeuvre/subtypes/subtypeRegistry');
 
 /**
@@ -158,13 +158,13 @@ class OeuvreRepository extends BaseRepository {
 
     // Recherche texte
     if (query) {
-      const likePattern = `%${this._sanitizeSearchQuery(query)}%`;
-      where[Op.or] = [
-        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.fr'")), { [Op.like]: likePattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.ar'")), { [Op.like]: likePattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.en'")), { [Op.like]: likePattern }),
-        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.description'), literal("'$.fr'")), { [Op.like]: likePattern })
-      ];
+      // Texte extrait (JSON_UNQUOTE) comparé sans accents ni majuscules, dans les 5 langues
+      // (la valeur JSON brute se comparait à l'identique : « nedjma » ne trouvait pas « Nedjma »)
+      const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
+      const champs = ['titre', 'description'].flatMap(champ =>
+        ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
+      where[Op.or] = champs.map(([champ, langue]) =>
+        literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`));
     }
 
     // Filtres
@@ -175,10 +175,12 @@ class OeuvreRepository extends BaseRepository {
       if (anneeMin) where.annee_creation[Op.gte] = anneeMin;
       if (anneeMax) where.annee_creation[Op.lte] = anneeMax;
     }
-    if (prixMin !== undefined || prixMax !== undefined) {
+    // != null : le contrôleur passe null quand le prix n'est pas demandé ; « prix >= NULL »
+    // excluait alors toutes les œuvres (la recherche ne trouvait jamais rien)
+    if (prixMin != null || prixMax != null) {
       where.prix = {};
-      if (prixMin !== undefined) where.prix[Op.gte] = prixMin;
-      if (prixMax !== undefined) where.prix[Op.lte] = prixMax;
+      if (prixMin != null) where.prix[Op.gte] = prixMin;
+      if (prixMax != null) where.prix[Op.lte] = prixMax;
     }
 
     // Filtre par catégories

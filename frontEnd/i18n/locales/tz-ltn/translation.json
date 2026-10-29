@@ -455,7 +455,8 @@
     "lieu": "Adeg",
     "continue": "Kemmel",
     "errorOccurred": "Teḍra-d tuccḍa",
-    "notFound": "Ulac-it"
+    "notFound": "Ulac-it",
+    "quitterSansEnregistrer": "Tesεiḍ ibeddilen ur yettwaskelsen ara. Ad teffɣeḍ ɣas akken?"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -1407,7 +1408,8 @@
     },
     "submitOeuvre": "Azen i usentem",
     "oeuvreSubmitted": "Axeddim yettwazen",
-    "oeuvreSubmittedDesc": "Ad d-iban deffir asentem n ugraw n Tala DZ."
+    "oeuvreSubmittedDesc": "Ad d-iban deffir asentem n ugraw n Tala DZ.",
+    "resubmitOeuvre": "Ales tuzna deffir n useɣti"
   },
   "dashboardadmin": {
     "label_validation": "Tasisna",

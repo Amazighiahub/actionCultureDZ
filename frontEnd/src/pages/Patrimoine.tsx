@@ -107,6 +107,8 @@ const Patrimoine = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  // Recherche envoyée au serveur à partir de 2 caractères
+  const recherche = debouncedSearch.trim().length >= 2 ? debouncedSearch.trim() : '';
   const [filterType, setFilterType] = useState<string | null>(null);
 
   // Lire le query param ?type=X (depuis la sous-nav du Header)
@@ -130,13 +132,15 @@ const Patrimoine = () => {
     data: sitesPages, isLoading: loading, error: queryError, refetch,
     fetchNextPage, hasNextPage, isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['patrimoine', 'sites', filterType],
+    queryKey: ['patrimoine', 'sites', filterType, recherche, lang],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
-      const res = await httpClient.get<SitePatrimoine[]>(API_ENDPOINTS.patrimoine.sites, {
+      // Recherche faite par le serveur, dans tous les sites (avant : seulement parmi ceux déjà affichés)
+      const res = await httpClient.get<SitePatrimoine[]>(recherche ? `${API_ENDPOINTS.patrimoine.sites}/search` : API_ENDPOINTS.patrimoine.sites, {
         page: pageParam,
         limit: SITES_PAGE_SIZE,
         ...(filterType ? { typePatrimoine: filterType } : {}),
+        ...(recherche ? { q: recherche } : {}),
       });
       if (!res.success) throw new Error(t('sections.heritage.loadError', 'Impossible de charger les sites patrimoniaux'));
       return { items: (res.data || []) as SitePatrimoine[], total: res.pagination?.total ?? 0 };
@@ -151,15 +155,8 @@ const Patrimoine = () => {
 
   const error = queryError ? (queryError as Error).message : null;
 
-  // Filtrer les sites (recherche locale uniquement, le type est filtré côté serveur)
-  const filteredSites = useMemo(() => sites.filter(site => {
-    const nom = translate(site.nom, lang);
-    const matchSearch = !debouncedSearch ||
-      nom.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      site.wilaya?.nom?.toLowerCase().includes(debouncedSearch.toLowerCase());
-
-    return matchSearch;
-  }), [sites, debouncedSearch, lang]);
+  // Type et recherche sont appliqués par le serveur
+  const filteredSites = sites;
 
   // Obtenir l'image principale d'un site
   const getMainImage = (site: SitePatrimoine): string => {
@@ -310,7 +307,7 @@ const Patrimoine = () => {
               {t('sections.heritage.otherSites', 'Sites patrimoniaux')}
             </h2>
             <Badge variant="secondary">
-              {debouncedSearch ? filteredSites.length : totalSites} {t('common.results', 'résultats')}
+              {totalSites} {t('common.results', 'résultats')}
             </Badge>
           </div>
 

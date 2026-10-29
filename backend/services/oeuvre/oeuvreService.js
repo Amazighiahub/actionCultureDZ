@@ -450,8 +450,9 @@ class OeuvreService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez pas soumettre cette œuvre');
     }
 
-    if (oeuvre.statut !== 'brouillon') {
-      throw this._conflictError('Seules les œuvres en brouillon peuvent être soumises');
+    // Une œuvre refusée, corrigée par son auteur, peut être renvoyée (l'email de refus l'annonce)
+    if (!['brouillon', 'rejete'].includes(oeuvre.statut)) {
+      throw this._conflictError('Seules les œuvres en brouillon ou refusées peuvent être soumises');
     }
 
     const updated = await this.repository.update(id, {
