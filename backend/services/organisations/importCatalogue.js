@@ -9,7 +9,8 @@
  * - une ligne vide, ou marquée « Exemple » dans la colonne N°, est ignorée ;
  * - obligatoires : un titre, un résumé, le nom de l'auteur, une langue connue, au moins une catégorie connue ;
  * - ISBN de 10 ou 13 chiffres ; un ISBN déjà présent sur le site → le livre n'est pas recréé,
- *   il est seulement relié à la maison d'édition ; deux fois le même ISBN dans le fichier → erreur ;
+ *   il est relié à la maison d'édition (après vérification de l'équipe s'il a été ajouté par un autre
+ *   compte, voir executionCatalogue.js) ; deux fois le même ISBN dans le fichier → erreur ;
  * - couverture : la colonne « Fichier couverture », sinon une image nommée par l'ISBN (9789947….jpg) ;
  * - au plus MAX_LIGNES livres par fichier.
  * Les livres créés sont envoyés à l'équipe (statut « en attente »), comme depuis le formulaire.
@@ -243,7 +244,8 @@ async function modeleCatalogue({ langues, categories }) {
     '1. Une ligne par livre, dans la feuille « Livres ». La ligne « Exemple » est ignorée : vous pouvez la laisser.',
     '2. Obligatoire : un titre, un résumé, le nom de l’auteur, la langue et au moins une catégorie.',
     '3. Langue et catégories : choisissez dans la liste (feuille « Listes »). Plusieurs catégories : séparez-les par « ; ».',
-    '4. ISBN : 10 ou 13 chiffres (les tirets sont acceptés). Un livre déjà présent sur Tala DZ est seulement relié à votre maison.',
+    '4. ISBN : 10 ou 13 chiffres (les tirets sont acceptés). Un livre déjà présent sur Tala DZ n’est pas recréé :',
+    '   il est relié à votre maison (après vérification de l’équipe s’il a été ajouté par un autre compte).',
     '5. Couvertures : choisissez les images en même temps que ce fichier. Nommez-les par l’ISBN (9789947055213.jpg)',
     '   ou écrivez le nom de l’image dans la colonne « Fichier couverture ».',
     `6. Au plus ${MAX_LIGNES} livres par fichier.`,

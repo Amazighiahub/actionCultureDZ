@@ -27,6 +27,14 @@ const makeService = ({ dejaDonne = false } = {}) => {
 const echec = (promesse) => promesse.then(() => { throw new Error('aurait dû échouer'); }, (e) => e);
 
 describe('CommentaireService.creerAvisService', () => {
+  test('deux envois simultanés : la base refuse le second, message « avis déjà donné » (409)', async () => {
+    const svc = makeService();
+    svc.repository.createWithAuthor.mockRejectedValueOnce(Object.assign(new Error('Validation error'), { name: 'SequelizeUniqueConstraintError' }));
+    const err = await echec(svc.creerAvisService(4, 8, { contenu: 'Très bon accueil', note_qualite: 5 }));
+    expect(err.statusCode).toBe(409);
+    expect(err.code).toBe('AVIS_DEJA_DONNE');
+  });
+
   test('un visiteur publie un avis noté sur un service validé', async () => {
     const svc = makeService();
     const avis = await svc.creerAvisService(4, 8, { contenu: 'Très bon accueil', note_qualite: 5 });
