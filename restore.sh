@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================
 # 🔁 SCRIPT DE RESTAURATION
-# Réimporte le dump dans le conteneur MySQL
+# Réimporte un dump dans le conteneur MySQL de DÉVELOPPEMENT (production : scripts/restaurer-sauvegarde.sh)
 # Usage : ./restore.sh [fichier.sql]
 # ============================================
 
