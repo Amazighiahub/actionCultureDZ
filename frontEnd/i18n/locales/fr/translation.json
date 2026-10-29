@@ -458,7 +458,9 @@
     "no": "Non",
     "contributorGuide": "Guide du contributeur",
     "continue": "Continuer",
-    "lieu": "Lieu"
+    "lieu": "Lieu",
+    "errorOccurred": "Une erreur est survenue",
+    "notFound": "Introuvable"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -2483,7 +2485,20 @@
     "articleScientifique": "Article scientifique",
     "article": "Article",
     "editer": "Éditer",
-    "apercu": "Aperçu"
+    "apercu": "Aperçu",
+    "traduction": {
+      "origine": "Texte d’origine",
+      "origineCourt": "origine",
+      "rien": "Rien à traduire dans ce bloc : il est commun à toutes les langues.",
+      "votre": "Traduction",
+      "auteur": "Auteur de la citation (traduit)",
+      "liste": "Traduction (un élément par ligne, dans le même ordre)",
+      "entetes": "En-têtes traduits (séparés par des virgules)",
+      "lignes": "Lignes traduites (une par ligne, cellules séparées par |)",
+      "legende": "Légende traduite",
+      "ecritEn": "Le texte de l’article est écrit en",
+      "aide": "Vous traduisez l’article en {{langue}}. Traduisez le titre, le chapeau puis chaque bloc : le texte d’origine ({{origine}}) est affiché au-dessus. Les images et la mise en page sont communes à toutes les langues. Pour ajouter, déplacer ou supprimer un bloc, revenez à {{origine}}."
+    }
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",
@@ -4259,7 +4274,12 @@
           "moderateur": "Modérateur",
           "animateur": "Animateur",
           "invite": "Invité"
-        }
+        },
+        "firstName": "Prénom",
+        "lastName": "Nom (ou nom de l’organisme)",
+        "existingSpeaker": "Intervenant déjà connu sur Tala DZ",
+        "suggestions": "Intervenants existants",
+        "suggestionsHint": "Déjà sur Tala DZ — choisissez pour éviter un doublon :"
       },
       "options": {
         "title": "Options et matériel",
@@ -4689,7 +4709,10 @@
     "replyToComment": "Répondre au commentaire",
     "addComment": "Ajouter un commentaire",
     "updateSuccess": "Article mis à jour avec succès !",
-    "notFoundTitle": "Article introuvable"
+    "notFoundTitle": "Article introuvable",
+    "video": "Vidéo",
+    "voirAussi": "Voir aussi",
+    "lireEn": "Lire en"
   },
   "passwordStrength": {
     "minLength": "12 caractères minimum",
@@ -4863,7 +4886,8 @@
     "fileTooLarge": "Fichier trop volumineux (max 5 MB)",
     "uploadFailed": "Erreur upload",
     "imageOnly10": "Photos uniquement, 10 Mo maximum par fichier",
-    "fileTooLarge10": "Fichier trop volumineux (max 10 Mo)"
+    "fileTooLarge10": "Fichier trop volumineux (max 10 Mo)",
+    "error": "Échec de l’envoi de la photo"
   },
   "gallery": {
     "empty": "Aucun média disponible",
@@ -5051,7 +5075,14 @@
     "retirer": "Retirer {{nom}} de ce site",
     "voirFiche": "Voir la fiche de {{nom}}",
     "wikipedia": "Page Wikipédia",
-    "bandeauArticle": "Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ."
+    "bandeauArticle": "Cet article sera publié sur la page de cette personnalité, après validation par l’équipe Tala DZ.",
+    "voirPage": "Voir sa page complète",
+    "introuvable": "Personnalité introuvable",
+    "surtitre": "Personnalité",
+    "ecrireArticle": "Écrire un article sur cette personnalité",
+    "articles": "Articles",
+    "aucunArticle": "Aucun article complet sur cette personnalité pour l’instant.",
+    "sesLieux": "Ses lieux"
   },
   "gastronomie": {
     "menu": "Gastronomie",

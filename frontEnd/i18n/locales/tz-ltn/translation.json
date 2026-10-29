@@ -235,7 +235,9 @@
       "invalidTokenTitle": "Aseγwen arameγtu",
       "invalidTokenDescription": "Aseγwen-agi n uɛawed n usbeddi d arameγtu neγ yemmet. Suter aseγwen amaynut.",
       "requestNewLink": "Suter aseγwen amaynut",
-      "tokenExpired": "Aseɣwen-a yemmut. Ttxil-k suter aseɣwen amaynut n wallus n usbeddi."
+      "tokenExpired": "Aseɣwen-a yemmut. Ttxil-k suter aseɣwen amaynut n wallus n usbeddi.",
+      "conditions": "Mi ara tferneḍ awal-ik uffir, ad tqebleḍ",
+      "conditionsLien": "tiwtilin n useqdec"
     },
     "idleWarning": "Tiɣimit ad tfak qrib",
     "idleWarningDesc": "Ad tettwasufɣeḍ deg 2 n tesdatin acku ur txeddmeḍ acemma.",
@@ -256,7 +258,8 @@
     "backToLogin": "Uɣal ɣer unekcum",
     "sessionExpired": "Tiɣimit temmut",
     "pleaseReconnect": "Ttxil-k ales tuqqna",
-    "seoTitle": "Tuqqna d ujerred"
+    "seoTitle": "Tuqqna d ujerred",
+    "inviteTitle": "Qqen, d baṭel"
   },
   "categories": {
     "heritageTypes": {
@@ -449,7 +452,10 @@
     "yes": "Ih",
     "no": "Ala",
     "contributorGuide": "Amnir n umttekki",
-    "lieu": "Adeg"
+    "lieu": "Adeg",
+    "continue": "Kemmel",
+    "errorOccurred": "Teḍra-d tuccḍa",
+    "notFound": "Ulac-it"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -557,7 +563,9 @@
       "tagsPlaceholder": "Amedya: afexxar, tamacahut, Bgayet (Entrée i tmerna)",
       "addTag": "Rnu awal agejdan",
       "removeTag": "Kkes awal agejdan {{tag}}",
-      "saveChanges": "Sekles ibeddilen"
+      "saveChanges": "Sekles ibeddilen",
+      "sentTitle": "Yettwazen i usentem",
+      "sentDesc": "Agraw n Tala DZ ad yeɣṛ tadyant-ik. Ad k-d-yawed ulɣu mi ara teffeɣ."
     },
     "types": {
       "concert": "Aḥebbi",
@@ -583,7 +591,8 @@
       "upcoming": "Ad d-yas",
       "ongoing": "Yetteddu",
       "finished": "Yekfa",
-      "cancelled": "Yettwasefsex"
+      "cancelled": "Yettwasefsex",
+      "pending": "Yettraju asentem"
     },
     "cancel": "Sefsex tadyant",
     "almostFull": "Qrib yeččur",
@@ -605,6 +614,42 @@
       "a_venir": "Ad d-yas",
       "en_cours": "Itteddu",
       "termine": "Yekfa"
+    },
+    "tarif": {
+      "aConvenir": "ad yettwamyefham",
+      "gratuit": "Baṭel",
+      "gratuitDesc": "Ulac axelleṣ",
+      "payant": "S lexlaṣ",
+      "payantDesc": "Yiwet n ssuma, i yal amdan",
+      "profil": "Almend n umaɣnu",
+      "profilDesc": "Yiwet n ssuma i yal amaɣnu (anelmad, ameslay…), i tedyant akk",
+      "titre": "Azal",
+      "prixParPersonne": "Ssuma i yal amdan (DA)",
+      "profilsFormulaire": "Imuɣna d wid n tferkit n ujerred : sbeddet ssuma n yal yiwen, i tedyant akk.",
+      "profilsLibres": "Sbeddet ssuma n yal amaɣnu, i tedyant akk. Tzemreḍ ad tbeddleḍ isem, ad tekkseḍ neɣ ad ternuḍ imuɣna.",
+      "nomProfil": "Isem n umaɣnu",
+      "prixDe": "Ssuma i « {{profil}} » (DA)",
+      "retirer": "Kkes amaɣnu-a",
+      "ajouterProfil": "Rnu amaɣnu",
+      "partiel": "Tilin tamecṭuḥt : ad yettwaxelles",
+      "partielPourcent": "Aḥric seg ssuma i tilin tamecṭuḥt (%)",
+      "duPrix": "% seg ssuma",
+      "autreProfessionnel": "Ssuma n « Wayeḍ » d tafrayant : ma tella d tilemt neɣ tadda, amdan ad ixelles ssuma n umeslay.",
+      "profilVisiteur": "Deg usebter n tedyant, anmili ad yeɣer « Azal almend n umaɣnu-ik » ; ad iwali ssuma-s mi ara yeččur ajerred.",
+      "choisir": "Fren azal: baṭel, s lexlaṣ neɣ ɣef wamek yella umaɣnu",
+      "prixRequis": "Sekcem ssuma i yal amdan",
+      "profilsRequis": "Sekcem isem d ssuma n yal amaɣnu (0 i baṭel)",
+      "selonProfil": "Azal ɣef wamek yella umaɣnu-ik",
+      "prixALInscription": "Ssuma-k ad d-tban mi ara d-tiniḍ amaɣnu-ik.",
+      "prixAConvenir": "Ssuma ad tettwaqbel akked umsuddes.",
+      "indiquezProfil": "Sekcem amaɣnu-ik akken ad twaliḍ ssuma-k.",
+      "votreParticipation": "Attekki-k:",
+      "toutLEvenement": "i tedyant meṛṛa",
+      "partielInfo": "(tilin s uḥric, {{pourcent}} % seg ssuma)"
+    },
+    "edit": {
+      "title": "Senfel tadyant",
+      "subtitle": "Ibeddilen ad d-banen akken kan ara ttwaseklsen."
     }
   },
   "footer": {
@@ -622,7 +667,8 @@
       "download": "Sider QR code",
       "title": "QR code — taladz.com"
     },
-    "resources": "Tiɣbula"
+    "resources": "Tiɣbula",
+    "creditLogo": "Alugu : Madghacen, tawlaft n Bernard Gagnon"
   },
   "header": {
     "badges": {
@@ -663,6 +709,13 @@
     "menu": {
       "close": "Mdel umuɣ",
       "open": "Ldi umuɣ"
+    },
+    "notifications": {
+      "nouvelles": "{{n}} yilɣan imaynuten",
+      "nouvelle": "Ulɣu amaynut",
+      "voir": "Wali",
+      "nonLues": "{{n}} ulɣu (yilɣan) ur yettwaɣran ara",
+      "titre": "Yilɣan"
     }
   },
   "home": {
@@ -724,6 +777,52 @@
       "play": "Kemmel askan",
       "pause": "Seḥbes askan",
       "guide": "Amek ara tttekkiḍ? Ɣer amnir"
+    },
+    "aLaUne": {
+      "enCours": "Tura",
+      "aujourdhui": "Ass-a",
+      "demain": "Azekka",
+      "dansJours_one": "Deg {{count}} wass",
+      "dansJours_other": "Deg {{count}} wussan",
+      "surtitre": "Di tlemmast",
+      "titre": "Tedyanin i d-iteddun",
+      "tous": "Awitay akk",
+      "programme": "Wali ahil",
+      "organiser": "Tessuddsaḍ tadyant ?",
+      "organiserTexte": "Asalun, afestival, asikel, asarag : suffeɣ-it deg Tala DZ s uhil-is d yimsiwlen-is.",
+      "publier": "Suffeɣ tadyant"
+    },
+    "aLire": {
+      "surtitre": "I tɣuri",
+      "titre": "Timucuha n ugla",
+      "accroche": "Isalayen, imensiyen d yimdanen imeqqranen, ttwawehmen s telqay sɣur wid i ten-yessnen."
+    },
+    "artisanat": {
+      "surtitre": "S ufus",
+      "titre": "Tiḥuna",
+      "accroche": "Akufi, zzerbi, iqeccuḍen, aglim : tussniwin i d-yettwaɛeddayen seg tsuta ɣer tayeḍ.",
+      "tous": "Tiḥuna akk"
+    },
+    "saveurs": {
+      "surtitre": "Tasewwit",
+      "titre": "Ifawen n Lezzayer",
+      "accroche": "Imensiyen n tmura-nneɣ, amezruy-nsen d lfuṛaṛ anda ttwafkan.",
+      "tous": "Imensiyen akk"
+    },
+    "patrimoine": {
+      "surtitre": "Tadelsa",
+      "titre": "Imukan ara d-tissineḍ",
+      "accroche": "Tudrin, timdinin tiqburin, ismal n zik d yisalayen, s yimukan-nsen ara twaliḍ d yimezruyen-nsen.",
+      "tous": "Akk imukan",
+      "carte": "Snirem ɣef tkarḍa"
+    },
+    "contribuer": {
+      "section": "Tuɣdaṭ-nneɣ d wamek ara tettekkiḍ",
+      "titre": "Ttekki",
+      "texte": "Tiddukla, inaẓuren, imenzaɣ: rnu adeg, aru amagrad, suffeɣ-d tidyanin-ik.",
+      "guide": "Amnir n umttekki",
+      "article": "Aru amagrad",
+      "agenda": "Ahil adelsan"
     }
   },
   "notifications": {
@@ -1298,7 +1397,17 @@
     "loadServicesFailed": "Tuccḍa deg usali n yimeẓla",
     "loadArtisanatsFailed": "Tuccḍa deg usali n taẓuri tameɣradt",
     "loadPatrimoinesFailed": "Tuccḍa deg usali n yismal n tdelsa",
-    "registered": "yettwajerden"
+    "registered": "yettwajerden",
+    "oeuvreStatus": {
+      "brouillon": "Arewway",
+      "en_attente": "Yettraju asentem",
+      "publie": "Yeffeɣ-d",
+      "rejete": "Yettwagi",
+      "archive": "Yettwaḥrez"
+    },
+    "submitOeuvre": "Azen i usentem",
+    "oeuvreSubmitted": "Axeddim yettwazen",
+    "oeuvreSubmittedDesc": "Ad d-iban deffir asentem n ugraw n Tala DZ."
   },
   "dashboardadmin": {
     "label_validation": "Tasisna",
@@ -1899,7 +2008,9 @@
     "article_cree_succes": "Amagrad-ik yettwazen akken iwata. Ad d-iban i medden mbeɛd ma yettwaqbel sɣur anedbal.",
     "uploadingMediaN": "Tuzna n yimidyaten ({{current}}/{{total}}): {{percent}} %",
     "mediasFailedTitle": "Imidyaten ur ttwaznen ara",
-    "mediasFailed": "{{count}} n ifuyla ur ttwaznen ara. Rnu-ten seg tfelwit n usenqed."
+    "mediasFailed": "{{count}} n ifuyla ur ttwaznen ara. Rnu-ten seg tfelwit n usenqed.",
+    "editTitle": "Senfel axeddim",
+    "editSubtitle": "Seɣti neɣ smed axeddim-ik, syin sekles."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Tadist n uzal tettwakrez d tadelsa n umaḍal n UNESCO",
@@ -2048,7 +2159,11 @@
     "emailEnabled": "✓ Ilɣa s yimayl remden",
     "emailDisabled": "✗ Ilɣa s yimayl nsan",
     "smsEnabled": "✓ Ilɣa SMS remden",
-    "smsDisabled": "✗ Ilɣa SMS nsan"
+    "smsDisabled": "✗ Ilɣa SMS nsan",
+    "annonces": "Ilɣa n tedyanin",
+    "annoncesDesc": "Tidyanin timaynutin d yilɣa n Tala DZ, ɣef usmel d s imayl. Asmekti d yibeddilen n tedyanin anda tettwajerdeḍ ttwaznen yal tikkelt.",
+    "newsletter": "Tabrat n yisallen",
+    "newsletterDesc": "Tabrat n yisallen tadelsant n Tala DZ, s imayl."
   },
   "notifications_notifications": {
     "voir_plus": "Wali plus →",
@@ -2357,7 +2472,20 @@
     "articleScientifique": "Amagrad ussnan",
     "article": "Amagrad",
     "editer": "Ẓreg",
-    "apercu": "Taskant"
+    "apercu": "Taskant",
+    "traduction": {
+      "origine": "Aḍris aneṣli",
+      "origineCourt": "aneṣli",
+      "rien": "Ulac ayen ara yettwasuqlen deg uḥric-a : yezdukel gar tutlayin akk.",
+      "votre": "Tasuqilt",
+      "auteur": "Bab n wawal (yettwasuqlen)",
+      "liste": "Tasuqilt (yiwen uferdis deg yal izirig, s yiwet n tlugna)",
+      "entetes": "Izwal n tgejda yettwasuqlen (gar-asen tiqqar)",
+      "lignes": "Izirigen yettwasuqlen (yiwen deg yal izirig, tixxamin gar-asent |)",
+      "legende": "Aglam n tugna yettwasuqlen",
+      "ecritEn": "Aḍris n umagrad yura s",
+      "aide": "Tessuqulḍ amagrad ɣer {{langue}}. Suqel azwel, tazwart syin yal aḥric : aḍris aneṣli ({{origine}}) yettban nnig-s. Tugniwin d tseddast zdukelent gar tutlayin akk. Akken ad ternuḍ, ad tesmuttiḍ neɣ ad tekkseḍ aḥric, uɣal ɣer {{origine}}."
+    }
   },
   "articles_editarticle": {
     "chargement_larticle": "Asali n umɣal...",
@@ -2438,7 +2566,17 @@
       "sendError": "Tuccḍa deg tuzna n ulɣu",
       "titleRequired": "Azwel yettwasra",
       "messageRequired": "Izen yettwasra",
-      "noRecipient": "Fren yiwen n umeṭṭaf"
+      "noRecipient": "Fren yiwen n umeṭṭaf",
+      "emailSentTitle": "Imayl yettwazen",
+      "emailSentDesc": "Aqeddac n tuzna yeqbel-it. Ma ur d-yewwiḍ ara, wali deg yispamen.",
+      "emailFailedTitle": "Imayl ur yettwazen ara",
+      "emailRefused": "Amdan-a yefren ur d-yettawi ara imaylen.",
+      "emailMissing": "Amiḍan-a ur yesεi ara tansa imayl.",
+      "emailError": "Yettwagi sɣur uqeddac n tuzna: {{erreur}}",
+      "emailOffTitle": "Ulac imayl i yettwazen",
+      "emailPaused": "Tuzna n yimaylen teḥbes i kra n wakud ɣef uqeddac (EMAIL_PAUSED). Ilɣa ɣef usmel, nutni, ttwaznen.",
+      "emailNotConfigured": "Tuzna n yimaylen ur tettwaswel ara ɣef uqeddac (tansa neɣ awal uffir SMTP). Ilɣa ɣef usmel, nutni, ttwaznen.",
+      "emailsQueued": "{{n}} n yimayl(en) ttwaznen akka tura (kra n tesdatin)."
     },
     "moderation": {
       "title": "Asenqed",
@@ -2669,7 +2807,17 @@
         "brouillon": "Arewway",
         "annule": "Yettwasefsex",
         "termine": "Yekfa"
-      }
+      },
+      "rejected": "Tadyant tettwagi: amsuddes yewweḍ-it-id ssebba-k.",
+      "published": "Tadyant teffeɣ-d: amsuddes yettwasselɣen.",
+      "pendingCount": "{{count}} n tedyant (tidyanin) ara yettwasentmen",
+      "pendingShow": "Sken",
+      "publish": "Sentem syin suffeɣ-d",
+      "reject": "Agi",
+      "rejectTitle": "Agi tadyant-a?",
+      "rejectDesc": "« {{nom}} » ad tuɣal d arewway. Amsuddes ad yawi ssebba-k, ad yesseɣti tadyant, yezmer ad tt-yales tuzna.",
+      "rejectReason": "Ssebba n tugin",
+      "rejectPlaceholder": "Amedya: txuṣṣ tansa tusdidt d usrag n tazwara."
     },
     "services": {
       "title": "Asefrek n tenefliwin",
@@ -2683,7 +2831,14 @@
       },
       "count": "{{count}} n umeẓlu (imeẓla)",
       "noServicesDesc": "Ulac ameẓlu yemṣadan d tiwtilin-ik",
-      "confirmDelete": "Ad tekkseḍ ameẓlu-a?"
+      "confirmDelete": "Ad tekkseḍ ameẓlu-a?",
+      "published": "Ameẓlu yeffeɣ-d: amahil yettwasselɣen.",
+      "rejected": "Ameẓlu yettwagi: amahil yewweḍ-it-id ssebba-k.",
+      "pendingCount": "{{count}} n umeẓlu (imeẓla) ara yettwasentmen",
+      "view": "Wali asebter",
+      "rejectTitle": "Agi ameẓlu-a?",
+      "rejectDesc": "Amahil ad yawi ssebba-k. Mi ara yesseɣti « {{nom}} », ameẓlu ad yuɣal ɣer usentem.",
+      "rejectPlaceholder": "Amedya: rnu tugna d wuṭṭun n tilifun."
     },
     "emailVerified": "Imayl yettwasenqed akken iwata",
     "emailVerifyFailed": "D awezɣi asenqed n yimayl",
@@ -2723,13 +2878,13 @@
         "faite": "Tuddsiwin ttwasdukklent"
       },
       "revendications": {
-        "titre_one": "Demande pour gérer une page ({{count}})",
-        "titre_other": "Demandes pour gérer une page ({{count}})",
+        "titre_one": "Asuter i usefrek n usebter ({{count}})",
+        "titre_other": "Isuturen i usefrek n usebter ({{count}})",
         "accepter": "Qbel",
-        "acceptee": "Demande acceptée : il gère maintenant la page",
-        "refusee": "Demande refusée : le demandeur est prévenu",
-        "refuserTitre": "Refuser la demande",
-        "refuserAide": "Le motif est envoyé au demandeur."
+        "acceptee": "Asuter yettwaqbel: tura d netta i yessefraken asebter",
+        "refusee": "Asuter yettwagi: amsuter yettwasselɣen",
+        "refuserTitre": "Agi asuter",
+        "refuserAide": "Ssebba ad tettwazen i umsuter."
       }
     }
   },
@@ -3022,16 +3177,16 @@
       "contactByEmail": "Nermes amsuddes s imayl",
       "contactByPhone": "Siwel i umsuddes",
       "refused": "Ur tettwaqbel ara",
-      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
-      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
-      "sentTitle": "Demande d'inscription envoyée",
-      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "refusedDesc": "Ajerred-ik ur yettwaqbel ara sɣur umsuddes",
+      "pendingDesc": "Asuter yettwazen: yettraju asentem n umsuddes",
+      "sentTitle": "Asuter n ujerred yettwazen",
+      "sentDesc": "Amsuddes ad yesnqed asuter-ik. Ad tettwasselɣeḍ s imayl.",
       "form": {
-        "required": "Réponse obligatoire",
+        "required": "Tiririt tettwasra",
         "mustAccept": "Veuillez cocher cette case",
-        "invalid": "Réponse invalide",
-        "between": "Entre {{min}} et {{max}}",
-        "incomplete": "Certaines réponses sont manquantes ou invalides."
+        "invalid": "Tiririt d tarameɣtut",
+        "between": "Gar {{min}} d {{max}}",
+        "incomplete": "Kra n tririyin xuṣṣent neɣ d tirameɣtutin."
       }
     },
     "registrationDeadline": "Talast tagejdant n ujerred",
@@ -3182,8 +3337,86 @@
       "author": "Ameskar / Anaẓur",
       "presentationDesc": "Tazmilt i tedyant-a",
       "viewFullPage": "Wali asebter meṛṛa",
-      "answers": "Réponses au formulaire d'inscription",
-      "exportExcel": "Télécharger en Excel"
+      "answers": "Tiririyin ɣef tferkit n ujerred",
+      "exportExcel": "Sader s Excel",
+      "import": {
+        "erreurLecture": "Afaylu ur yettwaɣri ara.",
+        "erreurImport": "Aktar ur yeddi ara.",
+        "creer": "Amiḍan amaynut",
+        "inscrire": "Amiḍan yellan",
+        "dejaInscrit": "Yettwajerred yakan",
+        "doublon": "Imayl yuɣal snat n tikkal",
+        "invalide": "Imayl ur yeɣbel ara",
+        "titre": "Kter tabdart n yijerriden",
+        "description": "Asmiḍen Excel n tferkit-ik n srid : yiwen yizirig i yal amdan, izwal n tgejda deg yizirig amezwaru. Imdanen ad ttwajerden « Yettṛaǧu » : ad tesnetmeḍ syin.",
+        "fichier": "Asmiḍen Excel (.xlsx)",
+        "aide": "Ulac ayen ara yettwaskelsen deg tseddart-a : ad twaliḍ tabdart di tazwara.",
+        "resume": "{{n}} umdan (imdanen) yettwafernen seg {{total}}.",
+        "colonnesIgnorees": "Tigejda ur nettwaṭṭef ara :",
+        "profilAChoisir": "Amaɣnu ara yettwafernen",
+        "metier": "axeddim : {{metier}}",
+        "profilDe": "Amaɣnu n {{nom}}",
+        "choisir": "Fren…",
+        "profilsManquants": "Fren amaɣnu n {{n}} umdan (imdanen) yettwafernen send ajerred.",
+        "inviter": "Azen i yal amiḍan amaynut imayl akken ad yefren awal-is uffir (aseɣwen yeɣbel 7 wussan)",
+        "termine": "Aktar yemmed",
+        "bilanInscrits": "{{n}} umdan (imdanen) yettwajerden « Yettṛaǧu »",
+        "bilanComptes": "{{n}} umiḍan (imiḍanen) yettwarnan",
+        "bilanInvitations": "{{n}} tinubga yettwaznen",
+        "confirmer": "Jerred {{n}} umdan (imdanen)",
+        "voir": "Wali tabdart",
+        "bouton": "Kter tabdart (Excel)"
+      },
+      "messages": {
+        "pdfSeulement": "Fren afaylu PDF.",
+        "pdfTropGros": "PDF meqqer aṭas (50 Mo ugar ur ilaq ara).",
+        "pdfEchec": "PDF ur yettwazen ara, ɛreḍ tikkelt-nniḍen.",
+        "envoye": "Izen yettwazen",
+        "envoyeSansEmail": "{{n}} umdan (imdanen) ṭṭfen-t deg usmel. Imaylen ḥebsen di tallit-a deg unḍel.",
+        "envoyeDesc": "{{n}} umdan (imdanen) ad t-ṭṭfen deg usmel d imayl.",
+        "cibleTous": "Akk wid yettwajerden",
+        "cibleConfirme": "Ala wid yettwasentmen",
+        "cibleAttente": "Ala wid yettṛaǧun",
+        "sujetProgramme": "Abeddel n uhil",
+        "sujetPratique": "Isallen n yal ass",
+        "sujetRappel": "Asmekti",
+        "titre": "Aru i yimttekkiyen",
+        "description": "Yal amdan ad yeṭṭef ulɣu deg usmel d imayl, ula ma ur yefri ara mazal awal-is uffir.",
+        "aQui": "I wumi ?",
+        "objet": "Asentel",
+        "message": "Izen",
+        "messageAide": "Amedya : leqdic ad yebdu ass n sebt ɣef 8 n tsaɛtin deg wadeg n ass n lḥed. Ur tettuḍ ara ad d-tawiḍ iḍebbalen d tqelleḥt n waman.",
+        "pointRencontre": "Adeg n temlilit",
+        "pointRencontreAide": "Amedya : zdat n tɣiwant, ass n sebt ɣef 8 n tsaɛtin (neɣ aseɣwen Google Maps)",
+        "programme": "Ahil s PDF",
+        "retirerPdf": "Kkes PDF",
+        "whatsapp": "Aseɣwen n ugraw WhatsApp",
+        "drive": "Aseɣwen n ukaram Drive",
+        "envoyer": "Azen i {{n}} umdan (imdanen)",
+        "dejaEnvoyes": "Iznan yettwaznen yakan",
+        "programmeCourt": "Ahil (PDF)",
+        "bilan": "{{n}} umdan (imdanen)",
+        "emailsEnCours": "imaylen la ttwaznen",
+        "emailsBilan": "{{ok}} imayl (imaylen) yettwaznen",
+        "emailsEchecs": "{{n}} ur yettwazen ara",
+        "bouton": "Aru i yimttekkiyen"
+      },
+      "invitation": {
+        "envoyee": "Imayl yettwazen",
+        "envoyeeDesc": "Aseɣwen amaynut akken ad yefren awal-is uffir, yeɣbel 7 wussan, yettwazen ɣer {{email}}.",
+        "dejaChoisi": "Awal uffir yettwafren yakan",
+        "pasEncore": "Mazal ur yefri awal-is uffir",
+        "inutile": "Amdan-a yefra yakan awal-is uffir",
+        "renvoyer": "Ales tuzna n imayl"
+      },
+      "profil": {
+        "modifie": "Amaɣnu yettwaẓreg",
+        "modifieDesc": "Ssuma tettwaḥseb tikkelt-nniḍen. Ulac izen i yettwaznen.",
+        "label": "Amaɣnu :",
+        "de": "Amaɣnu n {{nom}}",
+        "choisir": "Ara yettwafernen"
+      },
+      "partielle": "tilin tamecṭuḥt"
     }
   },
   "gestion": {
@@ -3216,7 +3449,9 @@
     "closed": "Yemdel",
     "unknown": "Arussin",
     "present": "Yella",
-    "absent": "Ulac-it"
+    "absent": "Ulac-it",
+    "pendingValidation": "Yettraju asentem",
+    "banned": "Yettwagdel"
   },
   "ajouterService": {
     "title": "Rnu ameẓlu n tẓuri tafessast",
@@ -3434,7 +3669,12 @@
       "adresse": "Tansa / Adeg izedgen",
       "position": "Adeg ɣef tkarḍa",
       "myPosition": "Adeg-iw",
-      "clickMap": "Sit ɣef tkarḍa neɣ seqdec \"Adeg-iw\""
+      "clickMap": "Sit ɣef tkarḍa neɣ seqdec \"Adeg-iw\"",
+      "nomHint": "Isem n wadeg s yiman-is (asalay, amḍiq n tmeɣra, tala, taddart…), mačči win n tɣiwant i tferneḍ yakan. Amedya: Asalay n tlaxt n Tergregt.",
+      "description": "Aglam",
+      "history": "Amezruy",
+      "openingHours": "Isragen n tirza",
+      "references": "Tiɣbula n umezruy"
     },
     "types": {
       "monument": "Agemmaḍ",
@@ -3454,7 +3694,7 @@
       "photoRequired": "Ma drus yiwet n twlaft tettwasra",
       "createFailed": "Tuccḍa deg urmay",
       "gpsRecommended": "Adeg GPS ur yettwasbadu ara.",
-      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
+      "invalidFiles": "Kra n yifuyla d irameɣtuten (tugniwin < 10 Mo)",
       "gpsRequired": "Sers asmel ɣef tefrit (sit, nadi tansa neɣ seqdec asideg awurman)"
     },
     "success": {
@@ -3490,7 +3730,8 @@
       "contentRequired": "Ttxil-k sekcem agbur (ma drus s tefransist neɣ s taɛrabt)",
       "addArticle": "Amagrad",
       "addQuick": "Aḍris arurad",
-      "writeArticle": "Aru amagrad"
+      "writeArticle": "Aru amagrad",
+      "anciensBlocs": "Iḥedren"
     },
     "gps": {
       "found": "Adeg yettwaf",
@@ -3622,10 +3863,109 @@
       "tooLarge": "Afaylu d azayan aṭas (50 Mo s wugar)",
       "notAudio": "Afaylu-a ur yettwassen ara d asekles n imesli",
       "added": "Asekles yettwarna",
-      "uploadError": "Asekles ur yettwazen ara"
+      "uploadError": "Asekles ur yettwazen ara",
+      "delete": "Kkes asekles {{n}}"
     },
     "sectionEmpty": "ad yettwakemmel",
-    "directions": "Abrid"
+    "directions": "Abrid",
+    "historique": {
+      "restaure": "Lqem yezrin yuɣal-d",
+      "restaureDesc": "Aḍris n zik yettwaskan tikkelt-nniḍen.",
+      "bouton": "Amazray",
+      "titre": "Amazray n yisnifal",
+      "description": "Yal asnifel n yiḍrisen n wadeg-a, amaynut akk d amezwaru. « Uɣal ɣer lqem-a » ad d-yerr aḍris n zik, deg tutlayin akk.",
+      "vide": "Ulac asnifel yettwaskelsen akka tura.",
+      "ligne": "{{auteur}} yeẓreg {{quoi}}",
+      "inconnu": "Yiwen umdan",
+      "retour": "tuɣalin ɣer deffir",
+      "avant": "Send",
+      "videTexte": "(ilem)",
+      "apres": "Seld",
+      "revenir": "Uɣal ɣer lqem-a",
+      "confirmerTitre": "Uɣal ɣer lqem yezrin ?",
+      "confirmerTexte": "{{quoi}} ad yeṭṭef aḍris « Send », deg tutlayin akk. Aḍris n tura ad yeqqim deg umazray."
+    },
+    "pages": {
+      "confirmRetrait": "Kkes amagrad-a seg usebter n wadeg ? Amagrad s yiman-is ur yettwakkes ara.",
+      "enSavoirPlus": "Issin ugar",
+      "enAttente": "Yettṛaǧu aseɣbel",
+      "lire": "Ɣer amagrad",
+      "retirer": "Kkes seg usebter n wadeg",
+      "bandeau": "Amagrad-a ad yeqqen ɣer usebter n wadeg, deg uḥric « {{section}} ». Ad d-iban dinna deffir asentem n ugraw n Tala DZ.",
+      "ajoutee": "Amagrad yettwasekles: ad d-iban deffir asentem n ugraw n Tala DZ.",
+      "lienEchec": "Amagrad yettwasekles, maca ur yeqqin ara ɣer usebter."
+    },
+    "elements": {
+      "monument": {
+        "add": "Rnu asalay",
+        "edit": "Ẓreg asalay",
+        "empty": "Ulac asalay yettwabedren i wadeg-a.",
+        "emptyHint": "Bdu s tmerna n usalay amezwaru.",
+        "added": "Asalay yettwarna"
+      },
+      "vestige": {
+        "add": "Rnu latar",
+        "edit": "Senfel latar",
+        "empty": "Ulac latar yettwabedren i usmel-a.",
+        "emptyHint": "Bdu s tmerna n latar amezwaru n tesnaqdimt.",
+        "added": "Latar yettwarna"
+      },
+      "nom": "Isem",
+      "type": "Anaw",
+      "choisirType": "Fren anaw",
+      "description": "Aglam",
+      "descriptionPlaceholder": "Glem adeg-a s kra n tefyar…",
+      "champManquant": "Urti ixuṣṣ",
+      "nomRequis": "Aru isem, ma drus deg yiwet n tutlayt",
+      "typeRequis": "Fren anaw",
+      "erreurAjout": "D awezɣi ad yettwarnu uferdis",
+      "modifie": "Asnifel yettwasekles",
+      "erreurModif": "D awezɣi ad yettwasnifel uferdis",
+      "supprime": "Yettwakkes",
+      "erreurSuppr": "D awezɣi tukksa",
+      "ajouter": "Rnu"
+    },
+    "personnalites": {
+      "liees": "Imdanen imeqqranen yeqqnen ɣer usmel-a"
+    },
+    "edit": {
+      "nameRequired": "Isem yettwasra, ma drus deg yiwet n tutlayt",
+      "saved": "Ibeddilen ttwaseklsen",
+      "saveError": "Ibeddilen ur ttwaseklsen ara",
+      "photosAdded": "Tugniwin ttwarnant",
+      "uploadError": "Tuzna ur teddi ara",
+      "mediaDeleted": "Yettwakkes",
+      "deleteError": "Tukksa ur teddi ara",
+      "titlePoint": "Senfel tanqiḍt n tirza",
+      "title": "Senfel asmel",
+      "viewPage": "Wali asebter",
+      "forbidden": "D amdan i yesnulfan asmel-a d tseddayt kan i izemren ad t-snfelen. Tzemreḍ ad as-ternuḍ asekles n imesli neɣ tanqiḍt n tirza seg usebter-is.",
+      "general": "Talɣut",
+      "details": "Asebter n usmel",
+      "detailsHint": "Yettban-d ɣef usebter n usmel. Tutlayt yeqqimen d tilemt ad teǧǧ aḍris yettwaseklsen yakan.",
+      "position": "Adeg ɣef tkarḍa",
+      "positionHint": "Sit ɣef tkarḍa akken ad tesmuttiḍ tacreḍt.",
+      "parentTitle": "D aḥric n usmel",
+      "parentHint": "Akken ad terreḍ adeg-a d tanqiḍt n tirza n usmel-nniḍen (amedya: asalay deg tɣiwant-is). Ad yeffeɣ seg tebdart n yismal, ad d-iban deg tenqiḍin n usmel yettwafernen.",
+      "pointOf": "Tanqiḍt n tirza n:",
+      "detach": "Fru (ad yuɣal d asmel agejdan)",
+      "noParent": "Asmel agejdan (mačči d aḥric n usmel-nniḍen).",
+      "searchSite": "Nadi asmel (amedya: Aït Smaïl)",
+      "parentPending": "Sit ɣef « Sekles ibeddilen » akken ad tesnasseḍ tuqqna-a.",
+      "save": "Sekles ibeddilen",
+      "photos": "Tugniwin d tvidyutin",
+      "photosHint": "Ttwarnant neɣ ttwakksent imir-a. Tugna tamezwarut d tugna tagejdant.",
+      "photoN": "Tugna {{n}}",
+      "mainPhoto": "Tagejdant",
+      "deletePhoto": "Kkes tugna {{n}}",
+      "noPhoto": "Ulac tugna i tura.",
+      "addPhotos": "Rnu tugniwin",
+      "audio": "Amnir s imesli",
+      "confirmDeleteAudio": "Kkes asekles-a?",
+      "confirmDeletePhoto": "Kkes tugna-a?",
+      "confirmDeleteDesc": "Ad tettwakkes seg usebter n usmel. Tigawt-a ur tettuɣal ara.",
+      "button": "Senfel"
+    }
   },
   "toasts": {
     "error": "Tuccḍa",
@@ -3748,7 +4088,8 @@
     "serviceValidationFailed": "Tuccḍa deg usentem",
     "imageUploadFailed": "Tuzna n tugna ur teddi ara (iḥder {{index}})",
     "notFoundDesc": "Aɣbalu i d-tsutreḍ ur yettwaf ara.",
-    "notFound": "Aɣbalu ur yettwaf ara"
+    "notFound": "Aɣbalu ur yettwaf ara",
+    "rateLimitWait": "Ɛreḍ tikkelt-nniḍen deg {{minutes}} n tesdat (tisdatin)."
   },
   "ajouterArtisanat": {
     "title": "Rnu amẓun asnufri",
@@ -3791,7 +4132,9 @@
     "addTag": "Rnu tabzimt",
     "removeTag": "Kkes tabzimt {{tag}}",
     "mediasFailedTitle": "Tiwlafin ur ttwaznent ara",
-    "mediasFailed": "Axeddim-ik yettwasekles, maca tiwlafin ur ttwaznent ara. Rnu-tent seg tfelwit n usenqed."
+    "mediasFailed": "Axeddim-ik yettwasekles, maca tiwlafin ur ttwaznent ara. Rnu-tent seg tfelwit n usenqed.",
+    "editTitle": "Senfel tiḥuna",
+    "editSubtitle": "Seɣti neɣ smed afaris-ik, syin sekles."
   },
   "service": {
     "addTitle": "Rnu ameẓlu-w",
@@ -3873,7 +4216,12 @@
       "transport": "Azal n yiwen n ubrid.",
       "location": "Azal n ukari i yiwen n wass."
     },
-    "prix": "Azal"
+    "prix": "Azal",
+    "descriptionPlaceholder": "Glem ameẓlu-ik...",
+    "placeLabel": "Adeg n umeẓlu",
+    "placeHint": "Nadi adeg (asmel, taɣlamt, taddart). Ur yettwaf ara? « Rnu adeg amaynut »: isem, tansa d tenqiḍt ɣef tkarḍa.",
+    "addressPlaceholder": "Tansa tummidt...",
+    "hoursPlaceholder": "Amedya: yal ass, 9 h – 18 h"
   },
   "organisations": {
     "create": {
@@ -3945,8 +4293,8 @@
       "reseauInvalide": "Aseɣwen {{reseau}} d arameɣtu (tansa https://)",
       "logoEchec": "Alugu ur yettwazen ara",
       "enregistree": "Asebter n tuddsa yettwaleqqem",
-      "renvoyeeVerification": "Page mise à jour. Le nom ou le type a changé : la page sera de nouveau publiée après vérification par l’équipe Tala DZ.",
-      "avertissementVerification": "Vous changez le nom ou le type de l’organisation : après l’enregistrement, la page sera masquée le temps que l’équipe Tala DZ la vérifie à nouveau.",
+      "renvoyeeVerification": "Asebter yettwaleqqem. Isem neɣ anaw ibeddel: asebter ad d-yeffeɣ tikkelt-nniḍen deffir asenqed n ugraw n Tala DZ.",
+      "avertissementVerification": "Tbeddleḍ isem neɣ anaw n tuddsa: deffir asekles, asebter ad yeffer alamma yesneqd-it ugraw n Tala DZ tikkelt-nniḍen.",
       "creeeEnAttente": "Tuddsa tettwarna. Asebter-is ad d-yeffeɣ mi ara t-isenqed ugraw n Tala DZ.",
       "titreModifier": "Ẓreg asebter n tuddsa",
       "sousTitre": "Tiddukla, axxam n teẓrigt, tasilmat…: asebter-ik yesdukkul tidyanin d teẓrigin-ik.",
@@ -3964,17 +4312,17 @@
     "revendication": {
       "boutonEdition": "D axxam-iw n teẓrigt",
       "bouton": "D tuddsa-w",
-      "envoyee": "Demande envoyée : l’équipe Tala DZ va la vérifier",
-      "enCours": "Votre demande pour gérer cette page est en cours de vérification par l’équipe Tala DZ.",
-      "titre": "Ulac win yettsefraken asebter-a akka tura.",
-      "refusee": "Votre précédente demande n’a pas été acceptée",
-      "aide": "Vous en êtes responsable ? Demandez à la gérer : vous pourrez modifier la page et ajouter vos contenus.",
-      "connexion": "Se connecter pour la gérer",
-      "verification": "L’équipe Tala DZ vérifie que vous représentez bien cette organisation, puis vous en devenez responsable.",
-      "message": "Qui êtes-vous pour cette organisation ? (facultatif)",
-      "exemple": "Ex. : je suis le directeur ; contact : 0550 00 00 00",
+      "envoyee": "Asuter yettwazen: agraw n Tala DZ ad t-isenqed",
+      "enCours": "Asuter-ik i usefrek n usebter-a ittwasenqad akka tura sɣur ugraw n Tala DZ.",
+      "titre": "Ulac win i yessefraken asebter-a yakan.",
+      "refusee": "Asuter-ik yezrin ur yettwaqbel ara",
+      "aide": "D kečč i d amasul-is? Suter ad t-tesferkeḍ: ad tizmireḍ ad tesnifleḍ asebter, ad ternuḍ igburen-ik.",
+      "connexion": "Qqen akken ad t-tesferkeḍ",
+      "verification": "Agraw n Tala DZ ad isenqed ma d kečč s tidet i d-yemmeslayen ɣef tuddsa-a, syin ad tuɣaleḍ d amasul-is.",
+      "message": "Anwa-k deg tuddsa-a? (d afrayan)",
+      "exemple": "Amedya: d nekk i d anemhal; anermis: 0550 00 00 00",
       "envoyer": "Azen asuter",
-      "suggestion": "personne ne la gère encore : ouvrez sa page et touchez « C’est mon organisation »"
+      "suggestion": "ulac win i tt-yessefraken yakan: ldi asebter-is, sit ɣef « D tuddsa-inu »"
     }
   },
   "validation": {
@@ -4082,7 +4430,7 @@
       },
       "statuses": {
         "planifie": "Yettwaɣawes",
-        "en_cours": "En cours",
+        "en_cours": "Iteddu",
         "termine": "Yekfa",
         "annule": "Yettwasefsex",
         "reporte": "Yettwaɛeṭṭel"
@@ -4092,7 +4440,7 @@
         "description": "Azemz, isragen d wadeg n urmud",
         "activityDate": "Azemz n urmud",
         "selectDate": "Fren azemz",
-        "noDateAvailable": "Aucune date disponible",
+        "noDateAvailable": "Ulac azemz yellan",
         "startTime": "Asrag n tazwara",
         "endTime": "Asrag n taggara",
         "selectTime": "Fren asrag",
@@ -4119,7 +4467,12 @@
           "moderateur": "Amaswaḍ",
           "animateur": "Animateur",
           "invite": "Inebgi"
-        }
+        },
+        "firstName": "Isem",
+        "lastName": "Isem n tmagit (neɣ isem n tuddsa)",
+        "existingSpeaker": "Amdakel yellan yakan deg Tala DZ",
+        "suggestions": "Imdakal yellan",
+        "suggestionsHint": "Yella yakan deg Tala DZ — fren akken ur d-yettales ara :"
       },
       "options": {
         "title": "Tixtiṛiyin d yibenkan",
@@ -4129,7 +4482,7 @@
         "optionsLabel": "Options",
         "translationAvailable": "Traduction disponible",
         "recordingAllowed": "Asekles yettwasireg",
-        "liveBroadcast": "Diffusion en direct",
+        "liveBroadcast": "Asiweḍ srid",
         "digitalSupport": "Asebter umḍin",
         "requiredMaterial": "Ibenkan yettwasran",
         "addMaterial": "Rnu ibenk",
@@ -4166,7 +4519,9 @@
         "endTimeRequired": "Asrag n taggara yettwasra",
         "endTimeAfterStart": "Asrag n taggara ilaq ad yili deffir n usrag n tazwara",
         "descriptionRequired": "Aglam yettwasra (ma drus s tefransist neɣ s taɛrabt)",
-        "intervenantUserRequired": "Yal amessawal ilaq ad yesɛu aseqdac yettwafernen"
+        "intervenantUserRequired": "Yal amessawal ilaq ad yesɛu aseqdac yettwafernen",
+        "intervenantNameRequired": "Sbeddet isem n yal amsiwel (neɣ kkes izirig ilem)",
+        "summary": "Tafeṛkit ur temmid ara :"
       }
     },
     "loadError": "Tuccḍa deg usali n yihilen",
@@ -4211,6 +4566,24 @@
       "confirme": "Yettwasentem",
       "decline": "Yugi",
       "annule": "Yettwasefsex"
+    },
+    "editActivity": "Ẓreg armud",
+    "deleteActivity": "Kkes armud",
+    "confirmDeleteTitle": "Kkes « {{titre}} » ?",
+    "confirmDeleteDesc": "Armud d tebdart n yimsiwlen-is ad ttwakksen seg uhil. Tigawt-a ur tettuɣal ara ɣer deffir.",
+    "speakerCard": {
+      "title": "Tafelwit n umsiwel",
+      "description": "Asissen ara d-yettwaskanen deg usebter n tedyant.",
+      "hasAccount": "Amsiwel-a ɣur-s amiḍan-is deg Tala DZ : d netta i yettsefraken amaɣnu-s.",
+      "shared": "Amsiwel-a yella daɣen deg tedyant n umesɣiwan-nniḍen : ala tadbelt i yezmren ad tẓreg tafelwit-is.",
+      "shortBioHint": "Tzemreḍ yal tikkelt ad tačareḍ « tameddurt tawezlant » n urmud-ik.",
+      "photo": "Beddel tawlaft",
+      "jobTitle": "Azwel neɣ axeddim",
+      "jobTitlePlaceholder": "Amedya : tafexxaṛt, anaẓur asunag",
+      "organisation": "Tuddsa",
+      "website": "Asmel web",
+      "biography": "Tameddurt",
+      "edit": "Tafelwit n umsiwel (tawlaft, tameddurt…)"
     }
   },
   "emailChange": {
@@ -4218,7 +4591,7 @@
     "emailUpdatedSuccess": "Tansa-k n yimayl tettwaleqqem akken iwata.",
     "tokenInvalidOrExpired": "Ajiṭun ur yeɣri ara neɣ yemmut.",
     "confirmationFailed": "D awezɣi asentem n usnifel n yimayl.",
-    "confirming": "Confirmation en cours...",
+    "confirming": "Asentem iteddu...",
     "emailUpdated": "Imayl yettwaleqqem",
     "newEmail": "Imayl-ik amaynut :",
     "reconnect": "Se reconnecter",
@@ -4230,7 +4603,7 @@
     "editProgramme": "Ẓreg ahil",
     "createProgramme": "Snulfu-d ahil",
     "fillProgrammeInfo": "Ččar talɣut n wahil",
-    "noProgramme": "Aucun programme",
+    "noProgramme": "Ulac ahil",
     "startByAddingProgramme": "Bdu s tmerna n wahil i tedyant-a",
     "confirmDeleteProgramme": "D tidet tebɣiḍ ad tekkseḍ ahil-a ?",
     "loadProgrammesError": "Tuccḍa deg usali n yihilen",
@@ -4263,7 +4636,10 @@
     "replyToComment": "Err ɣef uwennit",
     "addComment": "Rnu awennit",
     "updateSuccess": "Amagrad yettwaleqqem akken iwata!",
-    "notFoundTitle": "Amagrad ulac-it"
+    "notFoundTitle": "Amagrad ulac-it",
+    "video": "Tavidyut",
+    "voirAussi": "Wali daɣen",
+    "lireEn": "Ɣer s"
   },
   "passwordStrength": {
     "minLength": "12+ n yisekkilen",
@@ -4437,7 +4813,8 @@
     "fileTooLarge": "Afaylu meqqer aṭas (5 MB ma ugar)",
     "uploadFailed": "Tuccḍa deg usali",
     "imageOnly10": "Tiwlafin kan, 10 Mo s afellay i yal afaylu",
-    "fileTooLarge10": "Afaylu meqqer aṭas (10 Mo s afellay)"
+    "fileTooLarge10": "Afaylu meqqer aṭas (10 Mo s afellay)",
+    "error": "Ur yeddi ara usiweḍ n tewlaft"
   },
   "gallery": {
     "empty": "Ulac amidya yellan",
@@ -4568,7 +4945,21 @@
     "socialOf": "{{network}} n {{name}}",
     "socialInvalid": "Aseɣwen {{network}} ur ɣbin ara (amedya: {{example}})",
     "socialTitle": "Asmel web d iẓeḍwan inmettiyen",
-    "socialHint": "Iseɣwan-a ad d-banen deg usebter-ik azayez (tidyanin i tessuddseḍ, amaɣnu)."
+    "socialHint": "Iseɣwan-a ad d-banen deg usebter-ik azayez (tidyanin i tessuddseḍ, amaɣnu).",
+    "presse": {
+      "lienInvalide": "Aseɣwen arameɣtu (ilaq ad ibdu s https://)",
+      "titre": "Imagraden n tesɣunt",
+      "modifier": "Rnu neɣ senfel",
+      "aide": "Imagraden i d-yettmeslayen fell-ak neɣ ɣef leqdic-ik: ad d-banen deg portfolio-ik azayez.",
+      "lien": "Aseɣwen n umagrad",
+      "titreArticle": "Azwel",
+      "media": "Ajurnal neɣ allal n teywalt",
+      "mediaAide": "Amedya: El Watan, APS, Radio Algérie",
+      "date": "Azemz (d afrayan)",
+      "retirer": "Kkes",
+      "ajouter": "Rnu amagrad"
+    },
+    "modifierLiens": "Senfel iseɣwan-iw"
   },
   "share": {
     "onMyPage": "Bḍu deg usebter-iw:",
@@ -4589,7 +4980,8 @@
     "edit": "Ẓreg amaɣnu-iw",
     "bio": "Tameddurt",
     "works": "Ixeddimen-is",
-    "empty": "Ulac agbur yettwasuffɣen akka tura."
+    "empty": "Ulac agbur yettwasuffɣen akka tura.",
+    "presse": "Deg tesɣunt"
   },
   "publicPage": {
     "showEmail": "Sken imayl-iw",
@@ -4620,57 +5012,161 @@
       "placeholderReponse": "Tiririt-ik i umerza-a",
       "reponsePro": "Tiririt n bab n tenfa",
       "aucun": "Ulac tamuɣli akka tura. Ili d amezwaru!"
-    }
+    },
+    "menu": "Imeẓla i yinmilen",
+    "title": "Imeẓla i yimerzawen",
+    "introuvable": "Ameẓlu-a ur yettwaf ara neɣ ur d-yeffiɣ ara yakan.",
+    "subtitleShort": "Anda ara teččeḍ, anda ara teṭṭseḍ, anwa ara k-yemmnen, qrib n yimukan n tdelsa",
+    "refuse": "Ameẓlu-a yettwagi: seɣti-t seg tfelwit-ik, ad yuɣal ɣer usentem.",
+    "enAttente": "Yettraju asentem: d kečč d ugraw n Tala DZ kan i yettwalin asebter-a i tura.",
+    "ouTrouver": "Anda ara t-taf",
+    "contact": "Anermis",
+    "pasDeContact": "Ulac tansiwin n unermis i tura.",
+    "proposePar": "Yettwasumer sɣur",
+    "subtitle": "Anda ara teččeḍ, anda ara teṭṭseḍ, anwa ara k-yemmnen: tansiwin n yimahilen qrib n yimukan n tdelsa tazzayrit.",
+    "types": "Anaw n umeẓlu",
+    "search": "Nadi ameẓlu, adeg…",
+    "aucunResultat": "Ulac ameẓlu yemṣadan d unadi-ik",
+    "aucun": "Ulac ameẓlu i tura",
+    "commentAjouter": "Tesεiḍ taneḥnut n učči, axxam n yinebgawen, neɣ d amnir i telliḍ? Sumer ameẓlu-ik seg tfelwit-ik tamahalt.",
+    "guide": "Amnir: sumer ameẓlu"
   },
   "catalogue": {
     "bouton": "Kter akatalug-iw (Excel)",
     "titre": "Kter akatalug-ik",
-    "sousTitre": "Tous vos livres en une seule fois, avec un fichier Excel et leurs couvertures.",
-    "etape1": "1. Téléchargez le modèle",
-    "etape1Aide": "Une ligne par livre : titre, résumé, auteur, année, langue, ISBN, nombre de pages, catégories, prix. La feuille « Aide » explique chaque colonne.",
+    "sousTitre": "Akk idlisen-ik yiwet n tikkelt, s ufaylu Excel d tɣulaf-nsen.",
+    "etape1": "1. Sader tamudemt",
+    "etape1Aide": "Yiwen yizirig i yal adlis: azwel, agzul, amaru, aseggas, tutlayt, ISBN, amḍan n yisebtar, taggayin, ssuma. Asebter « Aide » yessefhamay yal tigejdit.",
     "modele": "Sader tamudemt Excel",
-    "etape2": "2. Déposez votre fichier et vos couvertures",
-    "fichier": "Votre fichier Excel (.xlsx)",
-    "couvertures": "Vos couvertures (facultatif) : sélectionnez toutes les images d’un coup",
+    "etape2": "2. Sers afaylu-ik d tɣulaf-ik",
+    "fichier": "Afaylu-ik Excel (.xlsx)",
+    "couvertures": "Taɣulaf-ik (d afrayan): fren akk tugniwin yiwet n tikkelt",
     "nbImages_one": "{{count}} image choisie",
     "nbImages_other": "{{count}} images choisies",
-    "couverturesAide": "Nommez chaque image par l’ISBN du livre (9789947055213.jpg), ou écrivez son nom dans la colonne « Fichier couverture ».",
+    "couverturesAide": "Semmi yal tugna s ISBN n udlis (9789947055213.jpg), neɣ aru isem-is deg tgejdit « Fichier couverture ».",
     "verifier": "Senqed afaylu",
-    "rienEnregistre": "La vérification n’enregistre rien : vous voyez d’abord le résultat, ligne par ligne.",
-    "etape3": "3. Vérifiez, puis importez",
+    "rienEnregistre": "Asenqed ur yessekles acemma: ad twaliḍ qbel agmuḍ, izirig s yizirig.",
+    "etape3": "3. Senqed, syin kter",
     "nbNouveaux_one": "{{count}} nouveau livre",
     "nbNouveaux_other": "{{count}} nouveaux livres",
-    "nbExistants_one": "{{count}} déjà sur le site",
-    "nbExistants_other": "{{count}} déjà sur le site",
-    "nbErreurs_one": "{{count}} ligne à corriger",
-    "nbErreurs_other": "{{count}} lignes à corriger",
+    "nbExistants_one": "{{count}} yella yakan deg usmel",
+    "nbExistants_other": "{{count}} llan yakan deg usmel",
+    "nbErreurs_one": "{{count}} n yizirig ara yettwaseɣtin",
+    "nbErreurs_other": "{{count}} n yizurag ara yettwaseɣtin",
     "nbSansCouverture_one": "{{count}} sans couverture",
     "nbSansCouverture_other": "{{count}} sans couverture",
-    "imagesSansLivre": "Images qui ne correspondent à aucun livre :",
+    "imagesSansLivre": "Tugniwin ur nemṣada d ula d yiwen n udlis:",
     "ligne": "Izirig {{n}}",
     "etatNouveau": "Amaynut",
     "etatExiste": "Yella yakan",
     "etatErreur": "Ad yettwaseɣti",
-    "envoiCouvertures": "Envoi des couvertures : {{faites}} / {{total}}",
-    "importEnCours": "Import en cours…",
+    "envoiCouvertures": "Tuzna n tɣulaf: {{faites}} / {{total}}",
+    "importEnCours": "Aktar iteddu…",
     "importer_one": "Importer {{count}} livre",
     "importer_other": "Importer {{count}} livres",
-    "erreursIgnorees": "Les lignes à corriger ne sont pas importées : corrigez le fichier et vérifiez-le à nouveau, ou importez-les plus tard.",
+    "erreursIgnorees": "Izurag ara yettwaseɣtin ur ttwakteren ara: seɣti afaylu, senqed-it tikkelt-nniḍen, neɣ kter-iten ticki.",
     "termine": "Aktar yemmed",
-    "bilanCrees_one": "{{count}} livre envoyé à l’équipe Tala DZ pour vérification",
-    "bilanCrees_other": "{{count}} livres envoyés à l’équipe Tala DZ pour vérification",
-    "bilanLies_one": "{{count}} livre déjà sur le site, relié à votre maison",
-    "bilanLies_other": "{{count}} livres déjà sur le site, reliés à votre maison",
-    "bilanAVerifier_one": "{{count}} livre déjà sur le site, ajouté par un autre compte : l’équipe Tala DZ vérifiera avant de le relier à votre maison",
-    "bilanAVerifier_other": "{{count}} livres déjà sur le site, ajoutés par un autre compte : l’équipe Tala DZ vérifiera avant de les relier à votre maison",
-    "bilanDejaPresents_one": "{{count}} livre déjà dans votre catalogue, non recréé",
-    "bilanDejaPresents_other": "{{count}} livres déjà dans votre catalogue, non recréés",
-    "bilanCouvertures": "{{faites}} couverture(s) sur {{total}} ajoutée(s)",
-    "bilanIgnorees_one": "{{count}} ligne en erreur non importée : corrigez-la et importez-la à nouveau",
-    "bilanIgnorees_other": "{{count}} lignes en erreur non importées : corrigez-les et importez-les à nouveau",
-    "voirPage": "Voir la page de la maison d’édition",
+    "bilanCrees_one": "{{count}} n udlis yettwazen i ugraw n Tala DZ i usenqed",
+    "bilanCrees_other": "{{count}} n yidlisen ttwaznen i ugraw n Tala DZ i usenqed",
+    "bilanLies_one": "{{count}} n udlis yella yakan deg usmel, yeqqen ɣer uxxam-ik",
+    "bilanLies_other": "{{count}} n yidlisen llan yakan deg usmel, qqnen ɣer uxxam-ik",
+    "bilanAVerifier_one": "{{count}} n udlis yella yakan deg usmel, yerna-t umiḍan-nniḍen: agraw n Tala DZ ad isenqed send ad t-iqqen ɣer uxxam-ik",
+    "bilanAVerifier_other": "{{count}} n yidlisen llan yakan deg usmel, rnan-ten imiḍanen-nniḍen: agraw n Tala DZ ad isenqed send ad ten-iqqen ɣer uxxam-ik",
+    "bilanDejaPresents_one": "{{count}} n udlis yella yakan deg ukatalug-ik, ur yettwales ara",
+    "bilanDejaPresents_other": "{{count}} n yidlisen llan yakan deg ukatalug-ik, ur ttwalsen ara",
+    "bilanCouvertures": "{{faites}} n tɣulaft (tɣulaf) seg {{total}} ttwarnant",
+    "bilanIgnorees_one": "{{count}} n yizirig s tuccḍa ur yettwakter ara: seɣti-t, syin kter-it tikkelt-nniḍen",
+    "bilanIgnorees_other": "{{count}} n yizurag s tuccḍa ur ttwakteren ara: seɣti-ten, syin kter-iten tikkelt-nniḍen",
+    "voirPage": "Wali asebter n uxxam n usiẓreg",
     "autreFichier": "Importer un autre fichier",
-    "erreurLecture": "Le fichier n’a pas pu être lu",
-    "erreurImport": "L’import a échoué"
+    "erreurLecture": "Afaylu ur yettwaɣri ara",
+    "erreurImport": "Aktar ur yeddi ara"
+  },
+  "gastronomie": {
+    "menu": "Tasewwit",
+    "voirTous": "Wali akk imensiwen n Lezzayer",
+    "wilaya": "Tawilayt",
+    "title": "Učči azzayri",
+    "subtitle": "Imensiwen imensayen n Lezzayer, s yimeslayen n wid i ten-yesseɣrayen: amezruy-nsen, iferdisen-nsen, d tmeɣriwin anda ttwaqedmen.",
+    "subtitleShort": "Imensiwen imensayen, amezruy-nsen d tmeɣriwin anda ttwaqedmen",
+    "search": "Nadi amensi, adeg…",
+    "toutesWilayas": "Akk tiwilayin",
+    "aucunResultat": "Ulac amensi yemṣadan d unadi-ik",
+    "aucun": "Ulac amensi i tura",
+    "commentAjouter": "Imensiwen ttwarnan-d seg usebter n wadeg: aḥric « Učči adigan », taqeffalt « Aru amagrad ».",
+    "guide": "Amnir: aru amagrad",
+    "compte_one": "{{count}} n umensi",
+    "compte_other": "{{count}} n yimensiwen",
+    "liste": "Tabdart n yimensiwen"
+  },
+  "revisions": {
+    "raisonRequise": "Ini-d ayɣer yettwagi usumer",
+    "acceptee": "Asumer yettwaqbel : amagrad yettwaleqqem",
+    "refusee": "Asumer yettwagi",
+    "section": "Attekki deg umagrad",
+    "enAttente_one": "{{count}} usumer n usnifel yettṛaǧu",
+    "enAttente_other": "{{count}} yisumar n usnifel ttṛaǧun",
+    "examiner": "Ssenqed",
+    "mesPropositions": "Isumar-ik",
+    "statutRefusee": "Yettwagi",
+    "statutAttente": "Yettṛaǧu aseɣbel",
+    "raison": "Sebba",
+    "historique": "Attekki",
+    "examen": "Asumer n usnifel",
+    "motif": "Sebba n usnifel",
+    "titreModifie": "Azwel",
+    "chapeauModifie": "Tazwart",
+    "contenu": "Ayen ibeddlen deg ugbur",
+    "legendeAjout": "yettwarnan",
+    "legendeRetrait": "yettwakksen",
+    "legendeIdentique": "ur ibeddel ara",
+    "pourquoiRefus": "Ayɣer tugiḍ ? (amdan ad yeṭṭef izen-a)",
+    "confirmerRefus": "Sentem tigtin",
+    "refuser": "Agi",
+    "accepter": "Qbel u suffeɣ",
+    "titre": "Sumer asnifel",
+    "court": "Senfel",
+    "invitation": "Tessneḍ asentel-a? Smed neɣ seɣti amagrad-a: ameskar-is ad yesentem asumer-ik.",
+    "motifRequis": "Segzi-d s kra n wawalen ayen ara ternuḍ neɣ ara tesseɣtiḍ (ssebba).",
+    "envoiEchec": "Asumer ur yettwazen ara",
+    "envoyee": "Asumer yettwazen",
+    "envoyeeDetail": "Ameskar n umagrad d tedbelt ad t-sneqden. Ad tettwasselɣeḍ s tgatut-nsen.",
+    "explication": "Smed neɣ seɣti amagrad ddaw-a. Lqem-ik ad yeqqim d arewway: amagrad yeffɣen ur ibeddel ara alamma yeqbel-it umeskar-is neɣ tadbelt.",
+    "motifExemple": "Amedya: « Tarnawt n tṛuǧit n jida », « Aseɣti n uzemz n tebna », « Tugna tamaynut n umrah »",
+    "envoyer": "Azen asumer"
+  },
+  "personnalites": {
+    "nomRequis": "Isem yettwasra",
+    "birthDate": "Azemz n tlalit",
+    "birthPlace": "Adeg n tlalit",
+    "deathDate": "Azemz n tmettant",
+    "deathPlace": "Adeg n tmettant",
+    "wikipedia": "Asebter Wikipédia",
+    "oeuvres": "Ixeddimen-is",
+    "aucuneOeuvre": "Ulac axeddim deg Tala DZ akka tura.",
+    "ajouterOeuvre": "Rnu yiwen seg yixeddimen-is",
+    "ajouterOeuvreAide": "Deg tferkit, rnu amdan-a ameqqran gar yimsiwlen n uxeddim (anadi s yisem) : axeddim ad d-iban da mi ara yeffeɣ.",
+    "naissance": "Tlalit",
+    "deces": "Tamettant",
+    "lienSite": "Assaɣ-is d wadeg-a",
+    "biographie": "Tameddurt",
+    "modifierFiche": "Ẓreg tafelwit",
+    "ficheDescription": "Asissen ara d-yettwaskanen deg usebter n wadeg.",
+    "ajoutee": "Amdan ameqqran yettwarna",
+    "voirFiche": "Wali asebter n {{nom}}",
+    "retirer": "Kkes {{nom}} seg usmel-a",
+    "aucunResultat": "Ulac yiwen s yisem-a ɣef Tala DZ.",
+    "creerFiche": "Ulac-it deg tebdart? Rnu asebter-is",
+    "nouvelleFiche": "Asebter amaynut, yettwasekles s tuqqna",
+    "lienSitePlaceholder": "Amedya: tlul deg taddart, tesselmed dinna tiḥuna n tlaxt i yiwet n tsuta meṛṛa…",
+    "nouvelle": "Amdan ameqqran amaynut",
+    "bandeauArticle": "Amagrad-a ad d-yeffeɣ ɣef usebter n umdan-a ameqqran, deffir asentem n ugraw n Tala DZ.",
+    "voirPage": "Wali asebter-is akk",
+    "introuvable": "Ulac tadwalt-agi",
+    "surtitre": "Tadwalt",
+    "ecrireArticle": "Aru amagrad ɣef tdwalt-agi",
+    "articles": "Imagraden",
+    "aucunArticle": "Ulac akka tura amagrad ummid ɣef tdwalt-agi.",
+    "sesLieux": "Imukan-is"
   }
 }

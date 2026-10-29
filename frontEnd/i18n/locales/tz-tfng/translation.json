@@ -235,7 +235,9 @@
       "invalidTokenTitle": "ⴰⵙⴻⵖⵡⴻⵏ ⴰⵔⴰⵎⴻⵖⵜⵓ",
       "invalidTokenDescription": "ⴰⵙⴻⵖⵡⴻⵏ-ⴰⴳⵉ ⵏ ⵓⵄⴰⵡⴻⴷ ⵏ ⵓⵙⴱⴻⴷⴷⵉ ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ ⵏⴻⵖ ⵢⴻⵎⵎⴻⵜ. ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ.",
       "requestNewLink": "ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ",
-      "tokenExpired": "ⴰⵙⴻⵖⵡⴻⵏ-ⴰ ⵢⴻⵎⵎⵓⵜ. ⵜⵜⵅⵉⵍ-ⴽ ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ ⵏ ⵡⴰⵍⵍⵓⵙ ⵏ ⵓⵙⴱⴻⴷⴷⵉ."
+      "tokenExpired": "ⴰⵙⴻⵖⵡⴻⵏ-ⴰ ⵢⴻⵎⵎⵓⵜ. ⵜⵜⵅⵉⵍ-ⴽ ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ ⵏ ⵡⴰⵍⵍⵓⵙ ⵏ ⵓⵙⴱⴻⴷⴷⵉ.",
+      "conditions": "ⵎⵉ ⴰⵔⴰ ⵜⴼⴻⵔⵏⴻⴹ ⴰⵡⴰⵍ-ⵉⴽ ⵓⴼⴼⵉⵔ, ⴰⴷ ⵜⵇⴻⴱⵍⴻⴹ",
+      "conditionsLien": "ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵙⴻⵇⴷⴻⵛ"
     },
     "idleWarning": "ⵜⵉⵖⵉⵎⵉⵜ ⴰⴷ ⵜⴼⴰⴽ ⵇⵔⵉⴱ",
     "idleWarningDesc": "ⴰⴷ ⵜⴻⵜⵜⵡⴰⵙⵓⴼⵖⴻⴹ ⴷⴻⴳ 2 ⵏ ⵜⴻⵙⴷⴰⵜⵉⵏ ⴰⵛⴽⵓ ⵓⵔ ⵜⵅⴻⴷⴷⵎⴻⴹ ⴰⵛⴻⵎⵎⴰ.",
@@ -256,7 +258,8 @@
     "backToLogin": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵏⴻⴽⵛⵓⵎ",
     "sessionExpired": "ⵜⵉⵖⵉⵎⵉⵜ ⵜⴻⵎⵎⵓⵜ",
     "pleaseReconnect": "ⵜⵜⵅⵉⵍ-ⴽ ⴰⵍⴻⵙ ⵜⵓⵇⵇⵏⴰ",
-    "seoTitle": "ⵜⵓⵇⵇⵏⴰ ⴷ ⵓⵊⴻⵔⵔⴻⴷ"
+    "seoTitle": "ⵜⵓⵇⵇⵏⴰ ⴷ ⵓⵊⴻⵔⵔⴻⴷ",
+    "inviteTitle": "ⵇⵇⴻⵏ, ⴷ ⴱⴰⵟⴻⵍ"
   },
   "categories": {
     "heritageTypes": {
@@ -449,7 +452,10 @@
     "yes": "ⵉⵀ",
     "no": "ⴰⵍⴰ",
     "contributorGuide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ",
-    "lieu": "ⴰⴷⴻⴳ"
+    "lieu": "ⴰⴷⴻⴳ",
+    "continue": "ⴽⴻⵎⵎⴻⵍ",
+    "errorOccurred": "ⵜⴻⴹⵔⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ",
+    "notFound": "ⵓⵍⴰⵛ-ⵉⵜ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -557,7 +563,9 @@
       "tagsPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⴰⴼⴻⵅⵅⴰⵔ, ⵜⴰⵎⴰⵛⴰⵀⵓⵜ, ⴱⴳⴰⵢⴻⵜ (Entrée)",
       "addTag": "ⵔⵏⵓ ⴰⵡⴰⵍ ⴰⴳⴻⵊⴷⴰⵏ",
       "removeTag": "ⴽⴽⴻⵙ ⴰⵡⴰⵍ ⴰⴳⴻⵊⴷⴰⵏ {{tag}}",
-      "saveChanges": "ⵙⴻⴽⵍⴻⵙ ⵉⴱⴻⴷⴷⵉⵍⴻⵏ"
+      "saveChanges": "ⵙⴻⴽⵍⴻⵙ ⵉⴱⴻⴷⴷⵉⵍⴻⵏ",
+      "sentTitle": "ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⵉ ⵓⵙⴻⵏⵜⴻⵎ",
+      "sentDesc": "ⴰⴳⵔⴰⵡ ⵏ Tala DZ ⴰⴷ ⵢⴻⵖⵕ ⵜⴰⴷⵢⴰⵏⵜ-ⵉⴽ. ⴰⴷ ⴽ-ⴷ-ⵢⴰⵡⴻⴷ ⵓⵍⵖⵓ ⵎⵉ ⴰⵔⴰ ⵜⴻⴼⴼⴻⵖ."
     },
     "types": {
       "concert": "ⴰⵎⴰⵔⴳ",
@@ -583,7 +591,8 @@
       "upcoming": "ⴰⴷ ⴷ-ⵢⴰⵙ",
       "ongoing": "ⵢⴻⵜⵜⴻⴷⴷⵓ",
       "finished": "ⵢⴻⴽⴼⴰ",
-      "cancelled": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ"
+      "cancelled": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
+      "pending": "ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵜⴻⵎ"
     },
     "cancel": "ⵙⴻⴼⵙⴻⵅ ⵜⴰⴷⵢⴰⵏⵜ",
     "almostFull": "ⵇⵔⵉⴱ ⵢⴻⵞⵞⵓⵔ",
@@ -605,6 +614,42 @@
       "a_venir": "ⴰⴷ ⴷ-ⵢⴰⵙ",
       "en_cours": "ⵉⵜⵜⴻⴷⴷⵓ",
       "termine": "ⵢⴻⴽⴼⴰ"
+    },
+    "tarif": {
+      "aConvenir": "ⴰⴷ ⵢⴻⵜⵜⵡⴰⵎⵢⴻⴼⵀⴰⵎ",
+      "gratuit": "ⴱⴰⵟⴻⵍ",
+      "gratuitDesc": "ⵓⵍⴰⵛ ⴰⵅⴻⵍⵍⴻⵚ",
+      "payant": "ⵙ ⵍⴻⵅⵍⴰⵚ",
+      "payantDesc": "ⵢⵉⵡⴻⵜ ⵏ ⵙⵙⵓⵎⴰ, ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ",
+      "profil": "ⴰⵍⵎⴻⵏⴷ ⵏ ⵓⵎⴰⵖⵏⵓ",
+      "profilDesc": "ⵢⵉⵡⴻⵜ ⵏ ⵙⵙⵓⵎⴰ ⵉ ⵢⴰⵍ ⴰⵎⴰⵖⵏⵓ (ⴰⵏⴻⵍⵎⴰⴷ, ⴰⵎⴻⵙⵍⴰⵢ…), ⵉ ⵜⴻⴷⵢⴰⵏⵜ ⴰⴽⴽ",
+      "titre": "ⴰⵣⴰⵍ",
+      "prixParPersonne": "ⵙⵙⵓⵎⴰ ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ (DA)",
+      "profilsFormulaire": "ⵉⵎⵓⵖⵏⴰ ⴷ ⵡⵉⴷ ⵏ ⵜⴼⴻⵔⴽⵉⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ : ⵙⴱⴻⴷⴷⴻⵜ ⵙⵙⵓⵎⴰ ⵏ ⵢⴰⵍ ⵢⵉⵡⴻⵏ, ⵉ ⵜⴻⴷⵢⴰⵏⵜ ⴰⴽⴽ.",
+      "profilsLibres": "ⵙⴱⴻⴷⴷⴻⵜ ⵙⵙⵓⵎⴰ ⵏ ⵢⴰⵍ ⴰⵎⴰⵖⵏⵓ, ⵉ ⵜⴻⴷⵢⴰⵏⵜ ⴰⴽⴽ. ⵜⵣⴻⵎⵔⴻⴹ ⴰⴷ ⵜⴱⴻⴷⴷⵍⴻⴹ ⵉⵙⴻⵎ, ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⵏⴻⵖ ⴰⴷ ⵜⴻⵔⵏⵓⴹ ⵉⵎⵓⵖⵏⴰ.",
+      "nomProfil": "ⵉⵙⴻⵎ ⵏ ⵓⵎⴰⵖⵏⵓ",
+      "prixDe": "ⵙⵙⵓⵎⴰ ⵉ « {{profil}} » (DA)",
+      "retirer": "ⴽⴽⴻⵙ ⴰⵎⴰⵖⵏⵓ-ⴰ",
+      "ajouterProfil": "ⵔⵏⵓ ⴰⵎⴰⵖⵏⵓ",
+      "partiel": "ⵜⵉⵍⵉⵏ ⵜⴰⵎⴻⵛⵟⵓⵃⵜ : ⴰⴷ ⵢⴻⵜⵜⵡⴰⵅⴻⵍⵍⴻⵙ",
+      "partielPourcent": "ⴰⵃⵔⵉⵛ ⵙⴻⴳ ⵙⵙⵓⵎⴰ ⵉ ⵜⵉⵍⵉⵏ ⵜⴰⵎⴻⵛⵟⵓⵃⵜ (%)",
+      "duPrix": "% ⵙⴻⴳ ⵙⵙⵓⵎⴰ",
+      "autreProfessionnel": "ⵙⵙⵓⵎⴰ ⵏ « ⵡⴰⵢⴻⴹ » ⴷ ⵜⴰⴼⵔⴰⵢⴰⵏⵜ : ⵎⴰ ⵜⴻⵍⵍⴰ ⴷ ⵜⵉⵍⴻⵎⵜ ⵏⴻⵖ ⵜⴰⴷⴷⴰ, ⴰⵎⴷⴰⵏ ⴰⴷ ⵉⵅⴻⵍⵍⴻⵙ ⵙⵙⵓⵎⴰ ⵏ ⵓⵎⴻⵙⵍⴰⵢ.",
+      "profilVisiteur": "ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵜⴻⴷⵢⴰⵏⵜ, ⴰⵏⵎⵉⵍⵉ ⴰⴷ ⵢⴻⵖⴻⵔ « ⴰⵣⴰⵍ ⴰⵍⵎⴻⵏⴷ ⵏ ⵓⵎⴰⵖⵏⵓ-ⵉⴽ » ; ⴰⴷ ⵉⵡⴰⵍⵉ ⵙⵙⵓⵎⴰ-ⵙ ⵎⵉ ⴰⵔⴰ ⵢⴻⵞⵞⵓⵔ ⴰⵊⴻⵔⵔⴻⴷ.",
+      "choisir": "ⴼⵔⴻⵏ ⴰⵣⴰⵍ: ⴱⴰⵟⴻⵍ, ⵙ ⵍⴻⵅⵍⴰⵚ ⵏⴻⵖ ⵖⴻⴼ ⵡⴰⵎⴻⴽ ⵢⴻⵍⵍⴰ ⵓⵎⴰⵖⵏⵓ",
+      "prixRequis": "ⵙⴻⴽⵛⴻⵎ ⵙⵙⵓⵎⴰ ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ",
+      "profilsRequis": "ⵙⴻⴽⵛⴻⵎ ⵉⵙⴻⵎ ⴷ ⵙⵙⵓⵎⴰ ⵏ ⵢⴰⵍ ⴰⵎⴰⵖⵏⵓ (0 ⵉ ⴱⴰⵟⴻⵍ)",
+      "selonProfil": "ⴰⵣⴰⵍ ⵖⴻⴼ ⵡⴰⵎⴻⴽ ⵢⴻⵍⵍⴰ ⵓⵎⴰⵖⵏⵓ-ⵉⴽ",
+      "prixALInscription": "ⵙⵙⵓⵎⴰ-ⴽ ⴰⴷ ⴷ-ⵜⴱⴰⵏ ⵎⵉ ⴰⵔⴰ ⴷ-ⵜⵉⵏⵉⴹ ⴰⵎⴰⵖⵏⵓ-ⵉⴽ.",
+      "prixAConvenir": "ⵙⵙⵓⵎⴰ ⴰⴷ ⵜⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⴰⴽⴽⴻⴷ ⵓⵎⵙⵓⴷⴷⴻⵙ.",
+      "indiquezProfil": "ⵙⴻⴽⵛⴻⵎ ⴰⵎⴰⵖⵏⵓ-ⵉⴽ ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⵡⴰⵍⵉⴹ ⵙⵙⵓⵎⴰ-ⴽ.",
+      "votreParticipation": "ⴰⵜⵜⴻⴽⴽⵉ-ⴽ:",
+      "toutLEvenement": "ⵉ ⵜⴻⴷⵢⴰⵏⵜ ⵎⴻⵕⵕⴰ",
+      "partielInfo": "(ⵜⵉⵍⵉⵏ ⵙ ⵓⵃⵔⵉⵛ, {{pourcent}} % ⵙⴻⴳ ⵙⵙⵓⵎⴰ)"
+    },
+    "edit": {
+      "title": "ⵙⴻⵏⴼⴻⵍ ⵜⴰⴷⵢⴰⵏⵜ",
+      "subtitle": "ⵉⴱⴻⴷⴷⵉⵍⴻⵏ ⴰⴷ ⴷ-ⴱⴰⵏⴻⵏ ⴰⴽⴽⴻⵏ ⴽⴰⵏ ⴰⵔⴰ ⵜⵜⵡⴰⵙⴻⴽⵍⵙⴻⵏ."
     }
   },
   "footer": {
@@ -622,7 +667,8 @@
       "download": "ⵙⵉⴷⵔ QR code",
       "title": "QR ⵛⵓⴷⴻ — taladz.com"
     },
-    "resources": "ⵜⵉⵖⴱⵓⵍⴰ"
+    "resources": "ⵜⵉⵖⴱⵓⵍⴰ",
+    "creditLogo": "ⴰⵍⵓⴳⵓ : ⵎⴰⴷⴳⵀⴰⵛⴻⵏ, ⵜⴰⵡⵍⴰⴼⵜ ⵏ ⴱⴻⵔⵏⴰⵔⴷ ⴳⴰⴳⵏⵓⵏ"
   },
   "header": {
     "badges": {
@@ -663,6 +709,13 @@
     "menu": {
       "close": "ⵎⴷⴻⵍ ⵓⵎⵓⵖ",
       "open": "ⵍⴷⵉ ⵓⵎⵓⵖ"
+    },
+    "notifications": {
+      "nouvelles": "{{n}} ⵢⵉⵍⵖⴰⵏ ⵉⵎⴰⵢⵏⵓⵜⴻⵏ",
+      "nouvelle": "ⵓⵍⵖⵓ ⴰⵎⴰⵢⵏⵓⵜ",
+      "voir": "ⵡⴰⵍⵉ",
+      "nonLues": "{{n}} ⵓⵍⵖⵓ (ⵢⵉⵍⵖⴰⵏ) ⵓⵔ ⵢⴻⵜⵜⵡⴰⵖⵔⴰⵏ ⴰⵔⴰ",
+      "titre": "ⵢⵉⵍⵖⴰⵏ"
     }
   },
   "home": {
@@ -724,6 +777,52 @@
       "play": "ⴽⴻⵎⵎⴻⵍ ⴰⵙⴽⴰⵏ",
       "pause": "ⵙⴻⵃⴱⴻⵙ ⴰⵙⴽⴰⵏ",
       "guide": "ⴰⵎⴻⴽ ⴰⵔⴰ ⵜⵜⵜⴻⴽⴽⵉⴹ? ⵖⴻⵔ ⴰⵎⵏⵉⵔ"
+    },
+    "aLaUne": {
+      "enCours": "ⵜⵓⵔⴰ",
+      "aujourdhui": "ⴰⵙⵙ-ⴰ",
+      "demain": "ⴰⵣⴻⴽⴽⴰ",
+      "dansJours_one": "ⴷⴻⴳ {{count}} ⵡⴰⵙⵙ",
+      "dansJours_other": "ⴷⴻⴳ {{count}} ⵡⵓⵙⵙⴰⵏ",
+      "surtitre": "ⴷⵉ ⵜⵍⴻⵎⵎⴰⵙⵜ",
+      "titre": "ⵜⴻⴷⵢⴰⵏⵉⵏ ⵉ ⴷ-ⵉⵜⴻⴷⴷⵓⵏ",
+      "tous": "ⴰⵡⵉⵜⴰⵢ ⴰⴽⴽ",
+      "programme": "ⵡⴰⵍⵉ ⴰⵀⵉⵍ",
+      "organiser": "ⵜⴻⵙⵙⵓⴷⴷⵙⴰⴹ ⵜⴰⴷⵢⴰⵏⵜ ?",
+      "organiserTexte": "ⴰⵙⴰⵍⵓⵏ, ⴰⴼⴻⵙⵜⵉⵠⴰⵍ, ⴰⵙⵉⴽⴻⵍ, ⴰⵙⴰⵔⴰⴳ : ⵙⵓⴼⴼⴻⵖ-ⵉⵜ ⴷⴻⴳ Tala DZ ⵙ ⵓⵀⵉⵍ-ⵉⵙ ⴷ ⵢⵉⵎⵙⵉⵡⵍⴻⵏ-ⵉⵙ.",
+      "publier": "ⵙⵓⴼⴼⴻⵖ ⵜⴰⴷⵢⴰⵏⵜ"
+    },
+    "aLire": {
+      "surtitre": "ⵉ ⵜⵖⵓⵔⵉ",
+      "titre": "ⵜⵉⵎⵓⵛⵓⵀⴰ ⵏ ⵓⴳⵍⴰ",
+      "accroche": "ⵉⵙⴰⵍⴰⵢⴻⵏ, ⵉⵎⴻⵏⵙⵉⵢⴻⵏ ⴷ ⵢⵉⵎⴷⴰⵏⴻⵏ ⵉⵎⴻⵇⵇⵔⴰⵏⴻⵏ, ⵜⵜⵡⴰⵡⴻⵀⵎⴻⵏ ⵙ ⵜⴻⵍⵇⴰⵢ ⵙⵖⵓⵔ ⵡⵉⴷ ⵉ ⵜⴻⵏ-ⵢⴻⵙⵙⵏⴻⵏ."
+    },
+    "artisanat": {
+      "surtitre": "ⵙ ⵓⴼⵓⵙ",
+      "titre": "ⵜⵉⵃⵓⵏⴰ",
+      "accroche": "ⴰⴽⵓⴼⵉ, ⵣⵣⴻⵔⴱⵉ, ⵉⵇⴻⵛⵛⵓⴹⴻⵏ, ⴰⴳⵍⵉⵎ : ⵜⵓⵙⵙⵏⵉⵡⵉⵏ ⵉ ⴷ-ⵢⴻⵜⵜⵡⴰⵄⴻⴷⴷⴰⵢⴻⵏ ⵙⴻⴳ ⵜⵙⵓⵜⴰ ⵖⴻⵔ ⵜⴰⵢⴻⴹ.",
+      "tous": "ⵜⵉⵃⵓⵏⴰ ⴰⴽⴽ"
+    },
+    "saveurs": {
+      "surtitre": "ⵜⴰⵙⴻⵡⵡⵉⵜ",
+      "titre": "ⵉⴼⴰⵡⴻⵏ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ",
+      "accroche": "ⵉⵎⴻⵏⵙⵉⵢⴻⵏ ⵏ ⵜⵎⵓⵔⴰ-ⵏⵏⴻⵖ, ⴰⵎⴻⵣⵔⵓⵢ-ⵏⵙⴻⵏ ⴷ ⵍⴼⵓⵕⴰⵕ ⴰⵏⴷⴰ ⵜⵜⵡⴰⴼⴽⴰⵏ.",
+      "tous": "ⵉⵎⴻⵏⵙⵉⵢⴻⵏ ⴰⴽⴽ"
+    },
+    "patrimoine": {
+      "surtitre": "ⵜⴰⴷⴻⵍⵙⴰ",
+      "titre": "ⵉⵎⵓⴽⴰⵏ ⴰⵔⴰ ⴷ-ⵜⵉⵙⵙⵉⵏⴻⴹ",
+      "accroche": "ⵜⵓⴷⵔⵉⵏ, ⵜⵉⵎⴷⵉⵏⵉⵏ ⵜⵉⵇⴱⵓⵔⵉⵏ, ⵉⵙⵎⴰⵍ ⵏ ⵣⵉⴽ ⴷ ⵢⵉⵙⴰⵍⴰⵢⴻⵏ, ⵙ ⵢⵉⵎⵓⴽⴰⵏ-ⵏⵙⴻⵏ ⴰⵔⴰ ⵜⵡⴰⵍⵉⴹ ⴷ ⵢⵉⵎⴻⵣⵔⵓⵢⴻⵏ-ⵏⵙⴻⵏ.",
+      "tous": "ⴰⴽⴽ ⵉⵎⵓⴽⴰⵏ",
+      "carte": "ⵙⵏⵉⵔⴻⵎ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ"
+    },
+    "contribuer": {
+      "section": "ⵜⵓⵖⴷⴰⵟ-ⵏⵏⴻⵖ ⴷ ⵡⴰⵎⴻⴽ ⴰⵔⴰ ⵜⴻⵜⵜⴻⴽⴽⵉⴹ",
+      "titre": "ⵜⵜⴻⴽⴽⵉ",
+      "texte": "ⵜⵉⴷⴷⵓⴽⵍⴰ, ⵉⵏⴰⵥⵓⵔⴻⵏ, ⵉⵎⴻⵏⵣⴰⵖ: ⵔⵏⵓ ⴰⴷⴻⴳ, ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ, ⵙⵓⴼⴼⴻⵖ-ⴷ ⵜⵉⴷⵢⴰⵏⵉⵏ-ⵉⴽ.",
+      "guide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ",
+      "article": "ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ",
+      "agenda": "ⴰⵀⵉⵍ ⴰⴷⴻⵍⵙⴰⵏ"
     }
   },
   "notifications": {
@@ -1298,7 +1397,17 @@
     "loadServicesFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵎⴻⵥⵍⴰ",
     "loadArtisanatsFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⴰⵥⵓⵔⵉ ⵜⴰⵎⴻⵖⵔⴰⴷⵜ",
     "loadPatrimoinesFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵙⵎⴰⵍ ⵏ ⵜⴷⴻⵍⵙⴰ",
-    "registered": "ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ"
+    "registered": "ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ",
+    "oeuvreStatus": {
+      "brouillon": "ⴰⵔⴻⵡⵡⴰⵢ",
+      "en_attente": "ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵜⴻⵎ",
+      "publie": "ⵢⴻⴼⴼⴻⵖ-ⴷ",
+      "rejete": "ⵢⴻⵜⵜⵡⴰⴳⵉ",
+      "archive": "ⵢⴻⵜⵜⵡⴰⵃⵔⴻⵣ"
+    },
+    "submitOeuvre": "ⴰⵣⴻⵏ ⵉ ⵓⵙⴻⵏⵜⴻⵎ",
+    "oeuvreSubmitted": "ⴰⵅⴻⴷⴷⵉⵎ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+    "oeuvreSubmittedDesc": "ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ."
   },
   "dashboardadmin": {
     "label_validation": "ⴰⵙⵖⵏⵜ",
@@ -1899,7 +2008,9 @@
     "article_cree_succes": "ⴰⵎⴰⴳⵔⴰⴷ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ. ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⵉ ⵎⴻⴷⴷⴻⵏ ⵎⴱⴻⵄⴷ ⵎⴰ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⵙⵖⵓⵔ ⴰⵏⴻⴷⴱⴰⵍ.",
     "uploadingMediaN": "ⵜⵓⵣⵏⴰ ⵏ ⵢⵉⵎⵉⴷⵢⴰⵜⴻⵏ ({{current}}/{{total}}): {{percent}} %",
     "mediasFailedTitle": "ⵉⵎⵉⴷⵢⴰⵜⴻⵏ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏ ⴰⵔⴰ",
-    "mediasFailed": "{{count}} ⵏ ⵉⴼⵓⵢⵍⴰ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏ ⴰⵔⴰ. ⵔⵏⵓ-ⵜⴻⵏ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵙⴻⵏⵇⴻⴷ."
+    "mediasFailed": "{{count}} ⵏ ⵉⴼⵓⵢⵍⴰ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏ ⴰⵔⴰ. ⵔⵏⵓ-ⵜⴻⵏ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵙⴻⵏⵇⴻⴷ.",
+    "editTitle": "ⵙⴻⵏⴼⴻⵍ ⴰⵅⴻⴷⴷⵉⵎ",
+    "editSubtitle": "ⵙⴻⵖⵜⵉ ⵏⴻⵖ ⵙⵎⴻⴷ ⴰⵅⴻⴷⴷⵉⵎ-ⵉⴽ, ⵙⵢⵉⵏ ⵙⴻⴽⵍⴻⵙ."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "ⵜⴰⵖⵔⵎⵜ ⵏ ⵓⵎⵣⵔⵓⵢ ⵉⵜⵜⵓⵙⵎⵍⵏ ⴷⴳ ⵜⴳⵎⵎⵉ ⵏ ⵓⵎⴰⴹⴰⵍ ⵏ ⵢⵓⵏⵉⵙⴽⵓ",
@@ -2048,7 +2159,11 @@
     "emailEnabled": "✓ ⵉⵍⵖⴰ ⵙ ⵢⵉⵎⴰⵢⵍ ⵔⴻⵎⴷⴻⵏ",
     "emailDisabled": "✗ ⵉⵍⵖⴰ ⵙ ⵢⵉⵎⴰⵢⵍ ⵏⵙⴰⵏ",
     "smsEnabled": "✓ ⵉⵍⵖⴰ SMS ⵔⴻⵎⴷⴻⵏ",
-    "smsDisabled": "✗ ⵉⵍⵖⴰ SMS ⵏⵙⴰⵏ"
+    "smsDisabled": "✗ ⵉⵍⵖⴰ SMS ⵏⵙⴰⵏ",
+    "annonces": "ⵉⵍⵖⴰ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ",
+    "annoncesDesc": "ⵜⵉⴷⵢⴰⵏⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ ⴷ ⵢⵉⵍⵖⴰ ⵏ Tala DZ, ⵖⴻⴼ ⵓⵙⵎⴻⵍ ⴷ ⵙ ⵉⵎⴰⵢⵍ. ⴰⵙⵎⴻⴽⵜⵉ ⴷ ⵢⵉⴱⴻⴷⴷⵉⵍⴻⵏ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ ⴰⵏⴷⴰ ⵜⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⴹ ⵜⵜⵡⴰⵣⵏⴻⵏ ⵢⴰⵍ ⵜⵉⴽⴽⴻⵍⵜ.",
+    "newsletter": "ⵜⴰⴱⵔⴰⵜ ⵏ ⵢⵉⵙⴰⵍⵍⴻⵏ",
+    "newsletterDesc": "ⵜⴰⴱⵔⴰⵜ ⵏ ⵢⵉⵙⴰⵍⵍⴻⵏ ⵜⴰⴷⴻⵍⵙⴰⵏⵜ ⵏ Tala DZ, ⵙ ⵉⵎⴰⵢⵍ."
   },
   "notifications_notifications": {
     "voir_plus": "ⵥⵕ ⵓⴳⴳⴰⵔ →",
@@ -2357,7 +2472,20 @@
     "articleScientifique": "ⴰⵎⴰⴳⵔⴰⴷ ⵓⵙⵙⵏⴰⵏ",
     "article": "ⴰⵎⴰⴳⵔⴰⴷ",
     "editer": "ⵥⵔⴻⴳ",
-    "apercu": "ⵜⴰⵙⴽⴰⵏⵜ"
+    "apercu": "ⵜⴰⵙⴽⴰⵏⵜ",
+    "traduction": {
+      "origine": "ⴰⴹⵔⵉⵙ ⴰⵏⴻⵚⵍⵉ",
+      "origineCourt": "ⴰⵏⴻⵚⵍⵉ",
+      "rien": "ⵓⵍⴰⵛ ⴰⵢⴻⵏ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⵓⵇⵍⴻⵏ ⴷⴻⴳ ⵓⵃⵔⵉⵛ-ⴰ : ⵢⴻⵣⴷⵓⴽⴻⵍ ⴳⴰⵔ ⵜⵓⵜⵍⴰⵢⵉⵏ ⴰⴽⴽ.",
+      "votre": "ⵜⴰⵙⵓⵇⵉⵍⵜ",
+      "auteur": "ⴱⴰⴱ ⵏ ⵡⴰⵡⴰⵍ (ⵢⴻⵜⵜⵡⴰⵙⵓⵇⵍⴻⵏ)",
+      "liste": "ⵜⴰⵙⵓⵇⵉⵍⵜ (ⵢⵉⵡⴻⵏ ⵓⴼⴻⵔⴷⵉⵙ ⴷⴻⴳ ⵢⴰⵍ ⵉⵣⵉⵔⵉⴳ, ⵙ ⵢⵉⵡⴻⵜ ⵏ ⵜⵍⵓⴳⵏⴰ)",
+      "entetes": "ⵉⵣⵡⴰⵍ ⵏ ⵜⴳⴻⵊⴷⴰ ⵢⴻⵜⵜⵡⴰⵙⵓⵇⵍⴻⵏ (ⴳⴰⵔ-ⴰⵙⴻⵏ ⵜⵉⵇⵇⴰⵔ)",
+      "lignes": "ⵉⵣⵉⵔⵉⴳⴻⵏ ⵢⴻⵜⵜⵡⴰⵙⵓⵇⵍⴻⵏ (ⵢⵉⵡⴻⵏ ⴷⴻⴳ ⵢⴰⵍ ⵉⵣⵉⵔⵉⴳ, ⵜⵉⵅⵅⴰⵎⵉⵏ ⴳⴰⵔ-ⴰⵙⴻⵏⵜ |)",
+      "legende": "ⴰⴳⵍⴰⵎ ⵏ ⵜⵓⴳⵏⴰ ⵢⴻⵜⵜⵡⴰⵙⵓⵇⵍⴻⵏ",
+      "ecritEn": "ⴰⴹⵔⵉⵙ ⵏ ⵓⵎⴰⴳⵔⴰⴷ ⵢⵓⵔⴰ ⵙ",
+      "aide": "ⵜⴻⵙⵙⵓⵇⵓⵍⴹ ⴰⵎⴰⴳⵔⴰⴷ ⵖⴻⵔ {{langue}}. ⵙⵓⵇⴻⵍ ⴰⵣⵡⴻⵍ, ⵜⴰⵣⵡⴰⵔⵜ ⵙⵢⵉⵏ ⵢⴰⵍ ⴰⵃⵔⵉⵛ : ⴰⴹⵔⵉⵙ ⴰⵏⴻⵚⵍⵉ ({{origine}}) ⵢⴻⵜⵜⴱⴰⵏ ⵏⵏⵉⴳ-ⵙ. ⵜⵓⴳⵏⵉⵡⵉⵏ ⴷ ⵜⵙⴻⴷⴷⴰⵙⵜ ⵣⴷⵓⴽⴻⵍⴻⵏⵜ ⴳⴰⵔ ⵜⵓⵜⵍⴰⵢⵉⵏ ⴰⴽⴽ. ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⴻⵔⵏⵓⴹ, ⴰⴷ ⵜⴻⵙⵎⵓⵜⵜⵉⴹ ⵏⴻⵖ ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵃⵔⵉⵛ, ⵓⵖⴰⵍ ⵖⴻⵔ {{origine}}."
+    }
   },
   "articles_editarticle": {
     "chargement_larticle": "ⴰⵙⵉⴷⵔ ⵏ ⵓⵎⴰⴳⵔⴰⴷ...",
@@ -2438,7 +2566,17 @@
       "sendError": "ⵜⵓⵛⵛⴹⴰ ⴷⴳ ⵜⵓⵣⵏⴰ ⵏ ⵓⵍⵖⵓ",
       "titleRequired": "ⴰⵣⵡⴻⵍ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ",
       "messageRequired": "ⵉⵣⴻⵏ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ",
-      "noRecipient": "ⴼⵔⴻⵏ ⵢⵉⵡⴻⵏ ⵏ ⵓⵎⴻⵟⵟⴰⴼ"
+      "noRecipient": "ⴼⵔⴻⵏ ⵢⵉⵡⴻⵏ ⵏ ⵓⵎⴻⵟⵟⴰⴼ",
+      "emailSentTitle": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+      "emailSentDesc": "ⴰⵇⴻⴷⴷⴰⵛ ⵏ ⵜⵓⵣⵏⴰ ⵢⴻⵇⴱⴻⵍ-ⵉⵜ. ⵎⴰ ⵓⵔ ⴷ-ⵢⴻⵡⵡⵉⴹ ⴰⵔⴰ, ⵡⴰⵍⵉ ⴷⴻⴳ ⵢⵉⵙⵒⴰⵎⴻⵏ.",
+      "emailFailedTitle": "ⵉⵎⴰⵢⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ",
+      "emailRefused": "ⴰⵎⴷⴰⵏ-ⴰ ⵢⴻⴼⵔⴻⵏ ⵓⵔ ⴷ-ⵢⴻⵜⵜⴰⵡⵉ ⴰⵔⴰ ⵉⵎⴰⵢⵍⴻⵏ.",
+      "emailMissing": "ⴰⵎⵉⴹⴰⵏ-ⴰ ⵓⵔ ⵢⴻⵙⵄⵉ ⴰⵔⴰ ⵜⴰⵏⵙⴰ ⵉⵎⴰⵢⵍ.",
+      "emailError": "ⵢⴻⵜⵜⵡⴰⴳⵉ ⵙⵖⵓⵔ ⵓⵇⴻⴷⴷⴰⵛ ⵏ ⵜⵓⵣⵏⴰ: {{erreur}}",
+      "emailOffTitle": "ⵓⵍⴰⵛ ⵉⵎⴰⵢⵍ ⵉ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+      "emailPaused": "ⵜⵓⵣⵏⴰ ⵏ ⵢⵉⵎⴰⵢⵍⴻⵏ ⵜⴻⵃⴱⴻⵙ ⵉ ⴽⵔⴰ ⵏ ⵡⴰⴽⵓⴷ ⵖⴻⴼ ⵓⵇⴻⴷⴷⴰⵛ (EMAIL_PAUSED). ⵉⵍⵖⴰ ⵖⴻⴼ ⵓⵙⵎⴻⵍ, ⵏⵓⵜⵏⵉ, ⵜⵜⵡⴰⵣⵏⴻⵏ.",
+      "emailNotConfigured": "ⵜⵓⵣⵏⴰ ⵏ ⵢⵉⵎⴰⵢⵍⴻⵏ ⵓⵔ ⵜⴻⵜⵜⵡⴰⵙⵡⴻⵍ ⴰⵔⴰ ⵖⴻⴼ ⵓⵇⴻⴷⴷⴰⵛ (ⵜⴰⵏⵙⴰ ⵏⴻⵖ ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ SMTP). ⵉⵍⵖⴰ ⵖⴻⴼ ⵓⵙⵎⴻⵍ, ⵏⵓⵜⵏⵉ, ⵜⵜⵡⴰⵣⵏⴻⵏ.",
+      "emailsQueued": "{{n}} ⵏ ⵢⵉⵎⴰⵢⵍ(ⴻⵏ) ⵜⵜⵡⴰⵣⵏⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ (ⴽⵔⴰ ⵏ ⵜⴻⵙⴷⴰⵜⵉⵏ)."
     },
     "moderation": {
       "title": "ⴰⵙⵏⵇⴷ",
@@ -2669,7 +2807,17 @@
         "brouillon": "ⴰⵔⴻⵡⵡⴰⵢ",
         "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
         "termine": "ⵢⴻⴽⴼⴰ"
-      }
+      },
+      "rejected": "ⵜⴰⴷⵢⴰⵏⵜ ⵜⴻⵜⵜⵡⴰⴳⵉ: ⴰⵎⵙⵓⴷⴷⴻⵙ ⵢⴻⵡⵡⴻⴹ-ⵉⵜ-ⵉⴷ ⵙⵙⴻⴱⴱⴰ-ⴽ.",
+      "published": "ⵜⴰⴷⵢⴰⵏⵜ ⵜⴻⴼⴼⴻⵖ-ⴷ: ⴰⵎⵙⵓⴷⴷⴻⵙ ⵢⴻⵜⵜⵡⴰⵙⵙⴻⵍⵖⴻⵏ.",
+      "pendingCount": "{{count}} ⵏ ⵜⴻⴷⵢⴰⵏⵜ (ⵜⵉⴷⵢⴰⵏⵉⵏ) ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⵎⴻⵏ",
+      "pendingShow": "ⵙⴽⴻⵏ",
+      "publish": "ⵙⴻⵏⵜⴻⵎ ⵙⵢⵉⵏ ⵙⵓⴼⴼⴻⵖ-ⴷ",
+      "reject": "ⴰⴳⵉ",
+      "rejectTitle": "ⴰⴳⵉ ⵜⴰⴷⵢⴰⵏⵜ-ⴰ?",
+      "rejectDesc": "« {{nom}} » ⴰⴷ ⵜⵓⵖⴰⵍ ⴷ ⴰⵔⴻⵡⵡⴰⵢ. ⴰⵎⵙⵓⴷⴷⴻⵙ ⴰⴷ ⵢⴰⵡⵉ ⵙⵙⴻⴱⴱⴰ-ⴽ, ⴰⴷ ⵢⴻⵙⵙⴻⵖⵜⵉ ⵜⴰⴷⵢⴰⵏⵜ, ⵢⴻⵣⵎⴻⵔ ⴰⴷ ⵜⵜ-ⵢⴰⵍⴻⵙ ⵜⵓⵣⵏⴰ.",
+      "rejectReason": "ⵙⵙⴻⴱⴱⴰ ⵏ ⵜⵓⴳⵉⵏ",
+      "rejectPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵜⵅⵓⵚⵚ ⵜⴰⵏⵙⴰ ⵜⵓⵙⴷⵉⴷⵜ ⴷ ⵓⵙⵔⴰⴳ ⵏ ⵜⴰⵣⵡⴰⵔⴰ."
     },
     "services": {
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⵏⴼⵍⵉⵡⵉⵏ",
@@ -2683,7 +2831,14 @@
       },
       "count": "{{count}} ⵏ ⵓⵎⴻⵥⵍⵓ (ⵉⵎⴻⵥⵍⴰ)",
       "noServicesDesc": "ⵓⵍⴰⵛ ⴰⵎⴻⵥⵍⵓ ⵢⴻⵎⵚⴰⴷⴰⵏ ⴷ ⵜⵉⵡⵜⵉⵍⵉⵏ-ⵉⴽ",
-      "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵎⴻⵥⵍⵓ-ⴰ?"
+      "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵎⴻⵥⵍⵓ-ⴰ?",
+      "published": "ⴰⵎⴻⵥⵍⵓ ⵢⴻⴼⴼⴻⵖ-ⴷ: ⴰⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵡⴰⵙⵙⴻⵍⵖⴻⵏ.",
+      "rejected": "ⴰⵎⴻⵥⵍⵓ ⵢⴻⵜⵜⵡⴰⴳⵉ: ⴰⵎⴰⵀⵉⵍ ⵢⴻⵡⵡⴻⴹ-ⵉⵜ-ⵉⴷ ⵙⵙⴻⴱⴱⴰ-ⴽ.",
+      "pendingCount": "{{count}} ⵏ ⵓⵎⴻⵥⵍⵓ (ⵉⵎⴻⵥⵍⴰ) ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⵎⴻⵏ",
+      "view": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ",
+      "rejectTitle": "ⴰⴳⵉ ⴰⵎⴻⵥⵍⵓ-ⴰ?",
+      "rejectDesc": "ⴰⵎⴰⵀⵉⵍ ⴰⴷ ⵢⴰⵡⵉ ⵙⵙⴻⴱⴱⴰ-ⴽ. ⵎⵉ ⴰⵔⴰ ⵢⴻⵙⵙⴻⵖⵜⵉ « {{nom}} », ⴰⵎⴻⵥⵍⵓ ⴰⴷ ⵢⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⵏⵜⴻⵎ.",
+      "rejectPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵔⵏⵓ ⵜⵓⴳⵏⴰ ⴷ ⵡⵓⵟⵟⵓⵏ ⵏ ⵜⵉⵍⵉⴼⵓⵏ."
     },
     "emailVerified": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵇⴻⴷ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ",
     "emailVerifyFailed": "ⴷ ⴰⵡⴻⵣⵖⵉ ⴰⵙⴻⵏⵇⴻⴷ ⵏ ⵢⵉⵎⴰⵢⵍ",
@@ -2723,13 +2878,13 @@
         "faite": "ⵜⵓⴷⴷⵙⵉⵡⵉⵏ ⵜⵜⵡⴰⵙⴷⵓⴽⴽⵍⴻⵏⵜ"
       },
       "revendications": {
-        "titre_one": "Demande pour gérer une page ({{count}})",
-        "titre_other": "Demandes pour gérer une page ({{count}})",
+        "titre_one": "ⴰⵙⵓⵜⴻⵔ ⵉ ⵓⵙⴻⴼⵔⴻⴽ ⵏ ⵓⵙⴻⴱⵜⴻⵔ ({{count}})",
+        "titre_other": "ⵉⵙⵓⵜⵓⵔⴻⵏ ⵉ ⵓⵙⴻⴼⵔⴻⴽ ⵏ ⵓⵙⴻⴱⵜⴻⵔ ({{count}})",
         "accepter": "ⵇⴱⴻⵍ",
-        "acceptee": "Demande acceptée : il gère maintenant la page",
-        "refusee": "Demande refusée : le demandeur est prévenu",
-        "refuserTitre": "Refuser la demande",
-        "refuserAide": "Le motif est envoyé au demandeur."
+        "acceptee": "ⴰⵙⵓⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ: ⵜⵓⵔⴰ ⴷ ⵏⴻⵜⵜⴰ ⵉ ⵢⴻⵙⵙⴻⴼⵔⴰⴽⴻⵏ ⴰⵙⴻⴱⵜⴻⵔ",
+        "refusee": "ⴰⵙⵓⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⴳⵉ: ⴰⵎⵙⵓⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⵙⵙⴻⵍⵖⴻⵏ",
+        "refuserTitre": "ⴰⴳⵉ ⴰⵙⵓⵜⴻⵔ",
+        "refuserAide": "ⵙⵙⴻⴱⴱⴰ ⴰⴷ ⵜⴻⵜⵜⵡⴰⵣⴻⵏ ⵉ ⵓⵎⵙⵓⵜⴻⵔ."
       }
     }
   },
@@ -3022,16 +3177,16 @@
       "contactByEmail": "ⵏⴻⵔⵎⴻⵙ ⴰⵎⵙⵓⴷⴷⴻⵙ ⵙ ⵉⵎⴰⵢⵍ",
       "contactByPhone": "ⵙⵉⵡⴻⵍ ⵉ ⵓⵎⵙⵓⴷⴷⴻⵙ",
       "refused": "ⵓⵔ ⵜⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⴰⵔⴰ",
-      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
-      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
-      "sentTitle": "Demande d'inscription envoyée",
-      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "refusedDesc": "ⴰⵊⴻⵔⵔⴻⴷ-ⵉⴽ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⴰⵔⴰ ⵙⵖⵓⵔ ⵓⵎⵙⵓⴷⴷⴻⵙ",
+      "pendingDesc": "ⴰⵙⵓⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ: ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⵎⵙⵓⴷⴷⴻⵙ",
+      "sentTitle": "ⴰⵙⵓⵜⴻⵔ ⵏ ⵓⵊⴻⵔⵔⴻⴷ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+      "sentDesc": "ⴰⵎⵙⵓⴷⴷⴻⵙ ⴰⴷ ⵢⴻⵙⵏⵇⴻⴷ ⴰⵙⵓⵜⴻⵔ-ⵉⴽ. ⴰⴷ ⵜⴻⵜⵜⵡⴰⵙⵙⴻⵍⵖⴻⴹ ⵙ ⵉⵎⴰⵢⵍ.",
       "form": {
-        "required": "Réponse obligatoire",
+        "required": "ⵜⵉⵔⵉⵔⵉⵜ ⵜⴻⵜⵜⵡⴰⵙⵔⴰ",
         "mustAccept": "Veuillez cocher cette case",
-        "invalid": "Réponse invalide",
-        "between": "Entre {{min}} et {{max}}",
-        "incomplete": "Certaines réponses sont manquantes ou invalides."
+        "invalid": "ⵜⵉⵔⵉⵔⵉⵜ ⴷ ⵜⴰⵔⴰⵎⴻⵖⵜⵓⵜ",
+        "between": "ⴳⴰⵔ {{min}} ⴷ {{max}}",
+        "incomplete": "ⴽⵔⴰ ⵏ ⵜⵔⵉⵔⵉⵢⵉⵏ ⵅⵓⵚⵚⴻⵏⵜ ⵏⴻⵖ ⴷ ⵜⵉⵔⴰⵎⴻⵖⵜⵓⵜⵉⵏ."
       }
     },
     "registrationDeadline": "ⵜⴰⵍⴰⵙⵜ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ",
@@ -3182,8 +3337,86 @@
       "author": "ⴰⵎⴻⵙⴽⴰⵔ / ⴰⵏⴰⵥⵓⵔ",
       "presentationDesc": "ⵜⴰⵣⵎⵉⵍⵜ ⵉ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ",
       "viewFullPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ ⵎⴻⵕⵕⴰ",
-      "answers": "Réponses au formulaire d'inscription",
-      "exportExcel": "Télécharger en Excel"
+      "answers": "ⵜⵉⵔⵉⵔⵉⵢⵉⵏ ⵖⴻⴼ ⵜⴼⴻⵔⴽⵉⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ",
+      "exportExcel": "ⵙⴰⴷⴻⵔ ⵙ Excel",
+      "import": {
+        "erreurLecture": "ⴰⴼⴰⵢⵍⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵖⵔⵉ ⴰⵔⴰ.",
+        "erreurImport": "ⴰⴽⵜⴰⵔ ⵓⵔ ⵢⴻⴷⴷⵉ ⴰⵔⴰ.",
+        "creer": "ⴰⵎⵉⴹⴰⵏ ⴰⵎⴰⵢⵏⵓⵜ",
+        "inscrire": "ⴰⵎⵉⴹⴰⵏ ⵢⴻⵍⵍⴰⵏ",
+        "dejaInscrit": "ⵢⴻⵜⵜⵡⴰⵊⴻⵔⵔⴻⴷ ⵢⴰⴽⴰⵏ",
+        "doublon": "ⵉⵎⴰⵢⵍ ⵢⵓⵖⴰⵍ ⵙⵏⴰⵜ ⵏ ⵜⵉⴽⴽⴰⵍ",
+        "invalide": "ⵉⵎⴰⵢⵍ ⵓⵔ ⵢⴻⵖⴱⴻⵍ ⴰⵔⴰ",
+        "titre": "ⴽⵜⴻⵔ ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵢⵉⵊⴻⵔⵔⵉⴷⴻⵏ",
+        "description": "ⴰⵙⵎⵉⴹⴻⵏ Excel ⵏ ⵜⴼⴻⵔⴽⵉⵜ-ⵉⴽ ⵏ ⵙⵔⵉⴷ : ⵢⵉⵡⴻⵏ ⵢⵉⵣⵉⵔⵉⴳ ⵉ ⵢⴰⵍ ⴰⵎⴷⴰⵏ, ⵉⵣⵡⴰⵍ ⵏ ⵜⴳⴻⵊⴷⴰ ⴷⴻⴳ ⵢⵉⵣⵉⵔⵉⴳ ⴰⵎⴻⵣⵡⴰⵔⵓ. ⵉⵎⴷⴰⵏⴻⵏ ⴰⴷ ⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ « ⵢⴻⵜⵜⵕⴰⴵⵓ » : ⴰⴷ ⵜⴻⵙⵏⴻⵜⵎⴻⴹ ⵙⵢⵉⵏ.",
+        "fichier": "ⴰⵙⵎⵉⴹⴻⵏ Excel (.xlsx)",
+        "aide": "ⵓⵍⴰⵛ ⴰⵢⴻⵏ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴽⴻⵍⵙⴻⵏ ⴷⴻⴳ ⵜⵙⴻⴷⴷⴰⵔⵜ-ⴰ : ⴰⴷ ⵜⵡⴰⵍⵉⴹ ⵜⴰⴱⴷⴰⵔⵜ ⴷⵉ ⵜⴰⵣⵡⴰⵔⴰ.",
+        "resume": "{{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ) ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ ⵙⴻⴳ {{total}}.",
+        "colonnesIgnorees": "ⵜⵉⴳⴻⵊⴷⴰ ⵓⵔ ⵏⴻⵜⵜⵡⴰⵟⵟⴻⴼ ⴰⵔⴰ :",
+        "profilAChoisir": "ⴰⵎⴰⵖⵏⵓ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ",
+        "metier": "ⴰⵅⴻⴷⴷⵉⵎ : {{metier}}",
+        "profilDe": "ⴰⵎⴰⵖⵏⵓ ⵏ {{nom}}",
+        "choisir": "ⴼⵔⴻⵏ…",
+        "profilsManquants": "ⴼⵔⴻⵏ ⴰⵎⴰⵖⵏⵓ ⵏ {{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ) ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ ⵙⴻⵏⴷ ⴰⵊⴻⵔⵔⴻⴷ.",
+        "inviter": "ⴰⵣⴻⵏ ⵉ ⵢⴰⵍ ⴰⵎⵉⴹⴰⵏ ⴰⵎⴰⵢⵏⵓⵜ ⵉⵎⴰⵢⵍ ⴰⴽⴽⴻⵏ ⴰⴷ ⵢⴻⴼⵔⴻⵏ ⴰⵡⴰⵍ-ⵉⵙ ⵓⴼⴼⵉⵔ (ⴰⵙⴻⵖⵡⴻⵏ ⵢⴻⵖⴱⴻⵍ 7 ⵡⵓⵙⵙⴰⵏ)",
+        "termine": "ⴰⴽⵜⴰⵔ ⵢⴻⵎⵎⴻⴷ",
+        "bilanInscrits": "{{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ) ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ « ⵢⴻⵜⵜⵕⴰⴵⵓ »",
+        "bilanComptes": "{{n}} ⵓⵎⵉⴹⴰⵏ (ⵉⵎⵉⴹⴰⵏⴻⵏ) ⵢⴻⵜⵜⵡⴰⵔⵏⴰⵏ",
+        "bilanInvitations": "{{n}} ⵜⵉⵏⵓⴱⴳⴰ ⵢⴻⵜⵜⵡⴰⵣⵏⴻⵏ",
+        "confirmer": "ⵊⴻⵔⵔⴻⴷ {{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ)",
+        "voir": "ⵡⴰⵍⵉ ⵜⴰⴱⴷⴰⵔⵜ",
+        "bouton": "ⴽⵜⴻⵔ ⵜⴰⴱⴷⴰⵔⵜ (Excel)"
+      },
+      "messages": {
+        "pdfSeulement": "ⴼⵔⴻⵏ ⴰⴼⴰⵢⵍⵓ PDF.",
+        "pdfTropGros": "PDF ⵎⴻⵇⵇⴻⵔ ⴰⵟⴰⵙ (50 Mo ⵓⴳⴰⵔ ⵓⵔ ⵉⵍⴰⵇ ⴰⵔⴰ).",
+        "pdfEchec": "PDF ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ, ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
+        "envoye": "ⵉⵣⴻⵏ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+        "envoyeSansEmail": "{{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ) ⵟⵟⴼⴻⵏ-ⵜ ⴷⴻⴳ ⵓⵙⵎⴻⵍ. ⵉⵎⴰⵢⵍⴻⵏ ⵃⴻⴱⵙⴻⵏ ⴷⵉ ⵜⴰⵍⵍⵉⵜ-ⴰ ⴷⴻⴳ ⵓⵏⴹⴻⵍ.",
+        "envoyeDesc": "{{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ) ⴰⴷ ⵜ-ⵟⵟⴼⴻⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ ⴷ ⵉⵎⴰⵢⵍ.",
+        "cibleTous": "ⴰⴽⴽ ⵡⵉⴷ ⵢⴻⵜⵜⵡⴰⵊⴻⵔⴷⴻⵏ",
+        "cibleConfirme": "ⴰⵍⴰ ⵡⵉⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⵎⴻⵏ",
+        "cibleAttente": "ⴰⵍⴰ ⵡⵉⴷ ⵢⴻⵜⵜⵕⴰⴵⵓⵏ",
+        "sujetProgramme": "ⴰⴱⴻⴷⴷⴻⵍ ⵏ ⵓⵀⵉⵍ",
+        "sujetPratique": "ⵉⵙⴰⵍⵍⴻⵏ ⵏ ⵢⴰⵍ ⴰⵙⵙ",
+        "sujetRappel": "ⴰⵙⵎⴻⴽⵜⵉ",
+        "titre": "ⴰⵔⵓ ⵉ ⵢⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+        "description": "ⵢⴰⵍ ⴰⵎⴷⴰⵏ ⴰⴷ ⵢⴻⵟⵟⴻⴼ ⵓⵍⵖⵓ ⴷⴻⴳ ⵓⵙⵎⴻⵍ ⴷ ⵉⵎⴰⵢⵍ, ⵓⵍⴰ ⵎⴰ ⵓⵔ ⵢⴻⴼⵔⵉ ⴰⵔⴰ ⵎⴰⵣⴰⵍ ⴰⵡⴰⵍ-ⵉⵙ ⵓⴼⴼⵉⵔ.",
+        "aQui": "ⵉ ⵡⵓⵎⵉ ?",
+        "objet": "ⴰⵙⴻⵏⵜⴻⵍ",
+        "message": "ⵉⵣⴻⵏ",
+        "messageAide": "ⴰⵎⴻⴷⵢⴰ : ⵍⴻⵇⴷⵉⵛ ⴰⴷ ⵢⴻⴱⴷⵓ ⴰⵙⵙ ⵏ ⵙⴻⴱⵜ ⵖⴻⴼ 8 ⵏ ⵜⵙⴰⵄⵜⵉⵏ ⴷⴻⴳ ⵡⴰⴷⴻⴳ ⵏ ⴰⵙⵙ ⵏ ⵍⵃⴻⴷ. ⵓⵔ ⵜⴻⵜⵜⵓⴹ ⴰⵔⴰ ⴰⴷ ⴷ-ⵜⴰⵡⵉⴹ ⵉⴹⴻⴱⴱⴰⵍⴻⵏ ⴷ ⵜⵇⴻⵍⵍⴻⵃⵜ ⵏ ⵡⴰⵎⴰⵏ.",
+        "pointRencontre": "ⴰⴷⴻⴳ ⵏ ⵜⴻⵎⵍⵉⵍⵉⵜ",
+        "pointRencontreAide": "ⴰⵎⴻⴷⵢⴰ : ⵣⴷⴰⵜ ⵏ ⵜⵖⵉⵡⴰⵏⵜ, ⴰⵙⵙ ⵏ ⵙⴻⴱⵜ ⵖⴻⴼ 8 ⵏ ⵜⵙⴰⵄⵜⵉⵏ (ⵏⴻⵖ ⴰⵙⴻⵖⵡⴻⵏ ⴳⵓⵓⴳⵍⴻ ⵎⴰⵒⵙ)",
+        "programme": "ⴰⵀⵉⵍ ⵙ PDF",
+        "retirerPdf": "ⴽⴽⴻⵙ PDF",
+        "whatsapp": "ⴰⵙⴻⵖⵡⴻⵏ ⵏ ⵓⴳⵔⴰⵡ WhatsApp",
+        "drive": "ⴰⵙⴻⵖⵡⴻⵏ ⵏ ⵓⴽⴰⵔⴰⵎ ⴷⵔⵉⵠⴻ",
+        "envoyer": "ⴰⵣⴻⵏ ⵉ {{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ)",
+        "dejaEnvoyes": "ⵉⵣⵏⴰⵏ ⵢⴻⵜⵜⵡⴰⵣⵏⴻⵏ ⵢⴰⴽⴰⵏ",
+        "programmeCourt": "ⴰⵀⵉⵍ (PDF)",
+        "bilan": "{{n}} ⵓⵎⴷⴰⵏ (ⵉⵎⴷⴰⵏⴻⵏ)",
+        "emailsEnCours": "ⵉⵎⴰⵢⵍⴻⵏ ⵍⴰ ⵜⵜⵡⴰⵣⵏⴻⵏ",
+        "emailsBilan": "{{ok}} ⵉⵎⴰⵢⵍ (ⵉⵎⴰⵢⵍⴻⵏ) ⵢⴻⵜⵜⵡⴰⵣⵏⴻⵏ",
+        "emailsEchecs": "{{n}} ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ",
+        "bouton": "ⴰⵔⵓ ⵉ ⵢⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ"
+      },
+      "invitation": {
+        "envoyee": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+        "envoyeeDesc": "ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ ⴰⴽⴽⴻⵏ ⴰⴷ ⵢⴻⴼⵔⴻⵏ ⴰⵡⴰⵍ-ⵉⵙ ⵓⴼⴼⵉⵔ, ⵢⴻⵖⴱⴻⵍ 7 ⵡⵓⵙⵙⴰⵏ, ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⵖⴻⵔ {{email}}.",
+        "dejaChoisi": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵢⴻⵜⵜⵡⴰⴼⵔⴻⵏ ⵢⴰⴽⴰⵏ",
+        "pasEncore": "ⵎⴰⵣⴰⵍ ⵓⵔ ⵢⴻⴼⵔⵉ ⴰⵡⴰⵍ-ⵉⵙ ⵓⴼⴼⵉⵔ",
+        "inutile": "ⴰⵎⴷⴰⵏ-ⴰ ⵢⴻⴼⵔⴰ ⵢⴰⴽⴰⵏ ⴰⵡⴰⵍ-ⵉⵙ ⵓⴼⴼⵉⵔ",
+        "renvoyer": "ⴰⵍⴻⵙ ⵜⵓⵣⵏⴰ ⵏ ⵉⵎⴰⵢⵍ"
+      },
+      "profil": {
+        "modifie": "ⴰⵎⴰⵖⵏⵓ ⵢⴻⵜⵜⵡⴰⵥⵔⴻⴳ",
+        "modifieDesc": "ⵙⵙⵓⵎⴰ ⵜⴻⵜⵜⵡⴰⵃⵙⴻⴱ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ. ⵓⵍⴰⵛ ⵉⵣⴻⵏ ⵉ ⵢⴻⵜⵜⵡⴰⵣⵏⴻⵏ.",
+        "label": "ⴰⵎⴰⵖⵏⵓ :",
+        "de": "ⴰⵎⴰⵖⵏⵓ ⵏ {{nom}}",
+        "choisir": "ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ"
+      },
+      "partielle": "ⵜⵉⵍⵉⵏ ⵜⴰⵎⴻⵛⵟⵓⵃⵜ"
     }
   },
   "gestion": {
@@ -3216,7 +3449,9 @@
     "closed": "ⵢⴻⵎⴷⴻⵍ",
     "unknown": "ⴰⵔⵓⵙⵙⵉⵏ",
     "present": "ⵢⴻⵍⵍⴰ",
-    "absent": "ⵓⵍⴰⵛ-ⵉⵜ"
+    "absent": "ⵓⵍⴰⵛ-ⵉⵜ",
+    "pendingValidation": "ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵜⴻⵎ",
+    "banned": "ⵢⴻⵜⵜⵡⴰⴳⴷⴻⵍ"
   },
   "ajouterService": {
     "title": "ⵔⵏⵓ ⴰⵎⴻⵥⵍⵓ ⵏ ⵜⵥⵓⵔⵉ ⵜⴰⴼⴻⵙⵙⴰⵙⵜ",
@@ -3434,7 +3669,12 @@
       "adresse": "ⵜⴰⵏⵙⴰ / ⴰⴷⴻⴳ ⵉⵣⴻⴷⴳⴻⵏ",
       "position": "ⴰⴷⴻⴳ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ",
       "myPosition": "ⴰⴷⴻⴳ-ⵉⵡ",
-      "clickMap": "ⵙⵉⵜ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ ⵏⴻⵖ ⵙⴻⵇⴷⴻⵛ \"ⴰⴷⴻⴳ-ⵉⵡ\""
+      "clickMap": "ⵙⵉⵜ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ ⵏⴻⵖ ⵙⴻⵇⴷⴻⵛ \"ⴰⴷⴻⴳ-ⵉⵡ\"",
+      "nomHint": "ⵉⵙⴻⵎ ⵏ ⵡⴰⴷⴻⴳ ⵙ ⵢⵉⵎⴰⵏ-ⵉⵙ (ⴰⵙⴰⵍⴰⵢ, ⴰⵎⴹⵉⵇ ⵏ ⵜⵎⴻⵖⵔⴰ, tala, ⵜⴰⴷⴷⴰⵔⵜ…), ⵎⴰⵞⵞⵉ ⵡⵉⵏ ⵏ ⵜⵖⵉⵡⴰⵏⵜ ⵉ ⵜⴼⴻⵔⵏⴻⴹ ⵢⴰⴽⴰⵏ. ⴰⵎⴻⴷⵢⴰ: ⴰⵙⴰⵍⴰⵢ ⵏ ⵜⵍⴰⵅⵜ ⵏ ⵜⴻⵔⴳⵔⴻⴳⵜ.",
+      "description": "ⴰⴳⵍⴰⵎ",
+      "history": "ⴰⵎⴻⵣⵔⵓⵢ",
+      "openingHours": "ⵉⵙⵔⴰⴳⴻⵏ ⵏ ⵜⵉⵔⵣⴰ",
+      "references": "ⵜⵉⵖⴱⵓⵍⴰ ⵏ ⵓⵎⴻⵣⵔⵓⵢ"
     },
     "types": {
       "monument": "ⴰⴳⴻⵎⵎⴰⴹ",
@@ -3454,7 +3694,7 @@
       "photoRequired": "ⵎⴰ ⴷⵔⵓⵙ ⵢⵉⵡⴻⵜ ⵏ ⵜⵡⵍⴰⴼⵜ",
       "createFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵔⵎⴰⵢ",
       "gpsRecommended": "ⴰⴷⴻⴳ GPS ⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⴱⴰⴷⵓ ⴰⵔⴰ.",
-      "invalidFiles": "ⵛⴻⵔⵜⴰⵉⵏⵙ ⴼⵉⵛⵀⵉⴻⵔⵙ ⵙⵓⵏⵜ ⵉⵏⵠⴰⵍⵉⴷⴻⵙ (ⵉⵎⴰⴳⴻⵙ < 10 ⵎⵓ)",
+      "invalidFiles": "ⴽⵔⴰ ⵏ ⵢⵉⴼⵓⵢⵍⴰ ⴷ ⵉⵔⴰⵎⴻⵖⵜⵓⵜⴻⵏ (ⵜⵓⴳⵏⵉⵡⵉⵏ < 10 Mo)",
       "gpsRequired": "ⵙⴻⵔⵙ ⴰⵙⵎⴻⵍ ⵖⴻⴼ ⵜⴻⴼⵔⵉⵜ (ⵙⵉⵜ, ⵏⴰⴷⵉ ⵜⴰⵏⵙⴰ ⵏⴻⵖ ⵙⴻⵇⴷⴻⵛ ⴰⵙⵉⴷⴻⴳ ⴰⵡⵓⵔⵎⴰⵏ)"
     },
     "success": {
@@ -3490,7 +3730,8 @@
       "contentRequired": "ⵜⵜⵅⵉⵍ-ⴽ ⵙⴻⴽⵛⴻⵎ ⴰⴳⴱⵓⵔ (ⵎⴰ ⴷⵔⵓⵙ ⵙ ⵜⴻⴼⵔⴰⵏⵙⵉⵙⵜ ⵏⴻⵖ ⵙ ⵜⴰⵄⵔⴰⴱⵜ)",
       "addArticle": "ⴰⵎⴰⴳⵔⴰⴷ",
       "addQuick": "ⴰⴹⵔⵉⵙ ⴰⵔⵓⵔⴰⴷ",
-      "writeArticle": "ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ"
+      "writeArticle": "ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ",
+      "anciensBlocs": "ⵉⵃⴻⴷⵔⴻⵏ"
     },
     "gps": {
       "found": "ⴰⴷⴻⴳ ⵢⴻⵜⵜⵡⴰⴼ",
@@ -3622,10 +3863,109 @@
       "tooLarge": "ⴰⴼⴰⵢⵍⵓ ⴷ ⴰⵣⴰⵢⴰⵏ ⴰⵟⴰⵙ (50 Mo ⵙ ⵡⵓⴳⴰⵔ)",
       "notAudio": "ⴰⴼⴰⵢⵍⵓ-ⴰ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵙⴻⵏ ⴰⵔⴰ ⴷ ⴰⵙⴻⴽⵍⴻⵙ ⵏ ⵉⵎⴻⵙⵍⵉ",
       "added": "ⴰⵙⴻⴽⵍⴻⵙ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ",
-      "uploadError": "ⴰⵙⴻⴽⵍⴻⵙ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ"
+      "uploadError": "ⴰⵙⴻⴽⵍⴻⵙ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ",
+      "delete": "ⴽⴽⴻⵙ ⴰⵙⴻⴽⵍⴻⵙ {{n}}"
     },
     "sectionEmpty": "ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴻⵎⵎⴻⵍ",
-    "directions": "ⴰⴱⵔⵉⴷ"
+    "directions": "ⴰⴱⵔⵉⴷ",
+    "historique": {
+      "restaure": "ⵍⵇⴻⵎ ⵢⴻⵣⵔⵉⵏ ⵢⵓⵖⴰⵍ-ⴷ",
+      "restaureDesc": "ⴰⴹⵔⵉⵙ ⵏ ⵣⵉⴽ ⵢⴻⵜⵜⵡⴰⵙⴽⴰⵏ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
+      "bouton": "ⴰⵎⴰⵣⵔⴰⵢ",
+      "titre": "ⴰⵎⴰⵣⵔⴰⵢ ⵏ ⵢⵉⵙⵏⵉⴼⴰⵍ",
+      "description": "ⵢⴰⵍ ⴰⵙⵏⵉⴼⴻⵍ ⵏ ⵢⵉⴹⵔⵉⵙⴻⵏ ⵏ ⵡⴰⴷⴻⴳ-ⴰ, ⴰⵎⴰⵢⵏⵓⵜ ⴰⴽⴽ ⴷ ⴰⵎⴻⵣⵡⴰⵔⵓ. « ⵓⵖⴰⵍ ⵖⴻⵔ ⵍⵇⴻⵎ-ⴰ » ⴰⴷ ⴷ-ⵢⴻⵔⵔ ⴰⴹⵔⵉⵙ ⵏ ⵣⵉⴽ, ⴷⴻⴳ ⵜⵓⵜⵍⴰⵢⵉⵏ ⴰⴽⴽ.",
+      "vide": "ⵓⵍⴰⵛ ⴰⵙⵏⵉⴼⴻⵍ ⵢⴻⵜⵜⵡⴰⵙⴽⴻⵍⵙⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ.",
+      "ligne": "{{auteur}} ⵢⴻⵥⵔⴻⴳ {{quoi}}",
+      "inconnu": "ⵢⵉⵡⴻⵏ ⵓⵎⴷⴰⵏ",
+      "retour": "ⵜⵓⵖⴰⵍⵉⵏ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ",
+      "avant": "ⵙⴻⵏⴷ",
+      "videTexte": "(ⵉⵍⴻⵎ)",
+      "apres": "ⵙⴻⵍⴷ",
+      "revenir": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵍⵇⴻⵎ-ⴰ",
+      "confirmerTitre": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵍⵇⴻⵎ ⵢⴻⵣⵔⵉⵏ ?",
+      "confirmerTexte": "{{quoi}} ⴰⴷ ⵢⴻⵟⵟⴻⴼ ⴰⴹⵔⵉⵙ « ⵙⴻⵏⴷ », ⴷⴻⴳ ⵜⵓⵜⵍⴰⵢⵉⵏ ⴰⴽⴽ. ⴰⴹⵔⵉⵙ ⵏ ⵜⵓⵔⴰ ⴰⴷ ⵢⴻⵇⵇⵉⵎ ⴷⴻⴳ ⵓⵎⴰⵣⵔⴰⵢ."
+    },
+    "pages": {
+      "confirmRetrait": "ⴽⴽⴻⵙ ⴰⵎⴰⴳⵔⴰⴷ-ⴰ ⵙⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵡⴰⴷⴻⴳ ? ⴰⵎⴰⴳⵔⴰⴷ ⵙ ⵢⵉⵎⴰⵏ-ⵉⵙ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⴰⵔⴰ.",
+      "enSavoirPlus": "ⵉⵙⵙⵉⵏ ⵓⴳⴰⵔ",
+      "enAttente": "ⵢⴻⵜⵜⵕⴰⴵⵓ ⴰⵙⴻⵖⴱⴻⵍ",
+      "lire": "Ɣⴻⵔ ⴰⵎⴰⴳⵔⴰⴷ",
+      "retirer": "ⴽⴽⴻⵙ ⵙⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵡⴰⴷⴻⴳ",
+      "bandeau": "ⴰⵎⴰⴳⵔⴰⴷ-ⴰ ⴰⴷ ⵢⴻⵇⵇⴻⵏ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵡⴰⴷⴻⴳ, ⴷⴻⴳ ⵓⵃⵔⵉⵛ « {{section}} ». ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⵉⵏⵏⴰ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+      "ajoutee": "ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ: ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+      "lienEchec": "ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ, ⵎⴰⵛⴰ ⵓⵔ ⵢⴻⵇⵇⵉⵏ ⴰⵔⴰ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ."
+    },
+    "elements": {
+      "monument": {
+        "add": "ⵔⵏⵓ ⴰⵙⴰⵍⴰⵢ",
+        "edit": "Ẓⵔⴻⴳ ⴰⵙⴰⵍⴰⵢ",
+        "empty": "ⵓⵍⴰⵛ ⴰⵙⴰⵍⴰⵢ ⵢⴻⵜⵜⵡⴰⴱⴻⴷⵔⴻⵏ ⵉ ⵡⴰⴷⴻⴳ-ⴰ.",
+        "emptyHint": "ⴱⴷⵓ ⵙ ⵜⵎⴻⵔⵏⴰ ⵏ ⵓⵙⴰⵍⴰⵢ ⴰⵎⴻⵣⵡⴰⵔⵓ.",
+        "added": "ⴰⵙⴰⵍⴰⵢ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ"
+      },
+      "vestige": {
+        "add": "ⵔⵏⵓ ⵍⴰⵜⴰⵔ",
+        "edit": "ⵙⴻⵏⴼⴻⵍ ⵍⴰⵜⴰⵔ",
+        "empty": "ⵓⵍⴰⵛ ⵍⴰⵜⴰⵔ ⵢⴻⵜⵜⵡⴰⴱⴻⴷⵔⴻⵏ ⵉ ⵓⵙⵎⴻⵍ-ⴰ.",
+        "emptyHint": "ⴱⴷⵓ ⵙ ⵜⵎⴻⵔⵏⴰ ⵏ ⵍⴰⵜⴰⵔ ⴰⵎⴻⵣⵡⴰⵔⵓ ⵏ ⵜⴻⵙⵏⴰⵇⴷⵉⵎⵜ.",
+        "added": "ⵍⴰⵜⴰⵔ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ"
+      },
+      "nom": "ⵉⵙⴻⵎ",
+      "type": "ⴰⵏⴰⵡ",
+      "choisirType": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+      "description": "ⴰⴳⵍⴰⵎ",
+      "descriptionPlaceholder": "ⴳⵍⴻⵎ ⴰⴷⴻⴳ-ⴰ ⵙ ⴽⵔⴰ ⵏ ⵜⴻⴼⵢⴰⵔ…",
+      "champManquant": "ⵓⵔⵜⵉ ⵉⵅⵓⵚⵚ",
+      "nomRequis": "ⴰⵔⵓ ⵉⵙⴻⵎ, ⵎⴰ ⴷⵔⵓⵙ ⴷⴻⴳ ⵢⵉⵡⴻⵜ ⵏ ⵜⵓⵜⵍⴰⵢⵜ",
+      "typeRequis": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+      "erreurAjout": "ⴷ ⴰⵡⴻⵣⵖⵉ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵔⵏⵓ ⵓⴼⴻⵔⴷⵉⵙ",
+      "modifie": "ⴰⵙⵏⵉⴼⴻⵍ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ",
+      "erreurModif": "ⴷ ⴰⵡⴻⵣⵖⵉ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⵏⵉⴼⴻⵍ ⵓⴼⴻⵔⴷⵉⵙ",
+      "supprime": "ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+      "erreurSuppr": "ⴷ ⴰⵡⴻⵣⵖⵉ ⵜⵓⴽⴽⵙⴰ",
+      "ajouter": "ⵔⵏⵓ"
+    },
+    "personnalites": {
+      "liees": "ⵉⵎⴷⴰⵏⴻⵏ ⵉⵎⴻⵇⵇⵔⴰⵏⴻⵏ ⵢⴻⵇⵇⵏⴻⵏ ⵖⴻⵔ ⵓⵙⵎⴻⵍ-ⴰ"
+    },
+    "edit": {
+      "nameRequired": "ⵉⵙⴻⵎ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ, ⵎⴰ ⴷⵔⵓⵙ ⴷⴻⴳ ⵢⵉⵡⴻⵜ ⵏ ⵜⵓⵜⵍⴰⵢⵜ",
+      "saved": "ⵉⴱⴻⴷⴷⵉⵍⴻⵏ ⵜⵜⵡⴰⵙⴻⴽⵍⵙⴻⵏ",
+      "saveError": "ⵉⴱⴻⴷⴷⵉⵍⴻⵏ ⵓⵔ ⵜⵜⵡⴰⵙⴻⴽⵍⵙⴻⵏ ⴰⵔⴰ",
+      "photosAdded": "ⵜⵓⴳⵏⵉⵡⵉⵏ ⵜⵜⵡⴰⵔⵏⴰⵏⵜ",
+      "uploadError": "ⵜⵓⵣⵏⴰ ⵓⵔ ⵜⴻⴷⴷⵉ ⴰⵔⴰ",
+      "mediaDeleted": "ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+      "deleteError": "ⵜⵓⴽⴽⵙⴰ ⵓⵔ ⵜⴻⴷⴷⵉ ⴰⵔⴰ",
+      "titlePoint": "ⵙⴻⵏⴼⴻⵍ ⵜⴰⵏⵇⵉⴹⵜ ⵏ ⵜⵉⵔⵣⴰ",
+      "title": "ⵙⴻⵏⴼⴻⵍ ⴰⵙⵎⴻⵍ",
+      "viewPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ",
+      "forbidden": "ⴷ ⴰⵎⴷⴰⵏ ⵉ ⵢⴻⵙⵏⵓⵍⴼⴰⵏ ⴰⵙⵎⴻⵍ-ⴰ ⴷ ⵜⵙⴻⴷⴷⴰⵢⵜ ⴽⴰⵏ ⵉ ⵉⵣⴻⵎⵔⴻⵏ ⴰⴷ ⵜ-ⵙⵏⴼⴻⵍⴻⵏ. ⵜⵣⴻⵎⵔⴻⴹ ⴰⴷ ⴰⵙ-ⵜⴻⵔⵏⵓⴹ ⴰⵙⴻⴽⵍⴻⵙ ⵏ ⵉⵎⴻⵙⵍⵉ ⵏⴻⵖ ⵜⴰⵏⵇⵉⴹⵜ ⵏ ⵜⵉⵔⵣⴰ ⵙⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⵙ.",
+      "general": "ⵜⴰⵍⵖⵓⵜ",
+      "details": "ⴰⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵙⵎⴻⵍ",
+      "detailsHint": "ⵢⴻⵜⵜⴱⴰⵏ-ⴷ ⵖⴻⴼ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵙⵎⴻⵍ. ⵜⵓⵜⵍⴰⵢⵜ ⵢⴻⵇⵇⵉⵎⴻⵏ ⴷ ⵜⵉⵍⴻⵎⵜ ⴰⴷ ⵜⴻⴵⴵ ⴰⴹⵔⵉⵙ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⵙⴻⵏ ⵢⴰⴽⴰⵏ.",
+      "position": "ⴰⴷⴻⴳ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ",
+      "positionHint": "ⵙⵉⵜ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⴻⵙⵎⵓⵜⵜⵉⴹ ⵜⴰⵛⵔⴻⴹⵜ.",
+      "parentTitle": "ⴷ ⴰⵃⵔⵉⵛ ⵏ ⵓⵙⵎⴻⵍ",
+      "parentHint": "ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⴻⵔⵔⴻⴹ ⴰⴷⴻⴳ-ⴰ ⴷ ⵜⴰⵏⵇⵉⴹⵜ ⵏ ⵜⵉⵔⵣⴰ ⵏ ⵓⵙⵎⴻⵍ-ⵏⵏⵉⴹⴻⵏ (ⴰⵎⴻⴷⵢⴰ: ⴰⵙⴰⵍⴰⵢ ⴷⴻⴳ ⵜⵖⵉⵡⴰⵏⵜ-ⵉⵙ). ⴰⴷ ⵢⴻⴼⴼⴻⵖ ⵙⴻⴳ ⵜⴻⴱⴷⴰⵔⵜ ⵏ ⵢⵉⵙⵎⴰⵍ, ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴻⴳ ⵜⴻⵏⵇⵉⴹⵉⵏ ⵏ ⵓⵙⵎⴻⵍ ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ.",
+      "pointOf": "ⵜⴰⵏⵇⵉⴹⵜ ⵏ ⵜⵉⵔⵣⴰ ⵏ:",
+      "detach": "ⴼⵔⵓ (ⴰⴷ ⵢⵓⵖⴰⵍ ⴷ ⴰⵙⵎⴻⵍ ⴰⴳⴻⵊⴷⴰⵏ)",
+      "noParent": "ⴰⵙⵎⴻⵍ ⴰⴳⴻⵊⴷⴰⵏ (ⵎⴰⵞⵞⵉ ⴷ ⴰⵃⵔⵉⵛ ⵏ ⵓⵙⵎⴻⵍ-ⵏⵏⵉⴹⴻⵏ).",
+      "searchSite": "ⵏⴰⴷⵉ ⴰⵙⵎⴻⵍ (ⴰⵎⴻⴷⵢⴰ: ⴰïⵜ ⵙⵎⴰïⵍ)",
+      "parentPending": "ⵙⵉⵜ ⵖⴻⴼ « ⵙⴻⴽⵍⴻⵙ ⵉⴱⴻⴷⴷⵉⵍⴻⵏ » ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⴻⵙⵏⴰⵙⵙⴻⴹ ⵜⵓⵇⵇⵏⴰ-ⴰ.",
+      "save": "ⵙⴻⴽⵍⴻⵙ ⵉⴱⴻⴷⴷⵉⵍⴻⵏ",
+      "photos": "ⵜⵓⴳⵏⵉⵡⵉⵏ ⴷ ⵜⵠⵉⴷⵢⵓⵜⵉⵏ",
+      "photosHint": "ⵜⵜⵡⴰⵔⵏⴰⵏⵜ ⵏⴻⵖ ⵜⵜⵡⴰⴽⴽⵙⴻⵏⵜ ⵉⵎⵉⵔ-ⴰ. ⵜⵓⴳⵏⴰ ⵜⴰⵎⴻⵣⵡⴰⵔⵓⵜ ⴷ ⵜⵓⴳⵏⴰ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ.",
+      "photoN": "ⵜⵓⴳⵏⴰ {{n}}",
+      "mainPhoto": "ⵜⴰⴳⴻⵊⴷⴰⵏⵜ",
+      "deletePhoto": "ⴽⴽⴻⵙ ⵜⵓⴳⵏⴰ {{n}}",
+      "noPhoto": "ⵓⵍⴰⵛ ⵜⵓⴳⵏⴰ ⵉ ⵜⵓⵔⴰ.",
+      "addPhotos": "ⵔⵏⵓ ⵜⵓⴳⵏⵉⵡⵉⵏ",
+      "audio": "ⴰⵎⵏⵉⵔ ⵙ ⵉⵎⴻⵙⵍⵉ",
+      "confirmDeleteAudio": "ⴽⴽⴻⵙ ⴰⵙⴻⴽⵍⴻⵙ-ⴰ?",
+      "confirmDeletePhoto": "ⴽⴽⴻⵙ ⵜⵓⴳⵏⴰ-ⴰ?",
+      "confirmDeleteDesc": "ⴰⴷ ⵜⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵙⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵙⵎⴻⵍ. ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ.",
+      "button": "ⵙⴻⵏⴼⴻⵍ"
+    }
   },
   "toasts": {
     "error": "ⵜⵓⵛⵛⴹⴰ",
@@ -3748,7 +4088,8 @@
     "serviceValidationFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴻⵏⵜⴻⵎ",
     "imageUploadFailed": "ⵜⵓⵣⵏⴰ ⵏ ⵜⵓⴳⵏⴰ ⵓⵔ ⵜⴻⴷⴷⵉ ⴰⵔⴰ (ⵉⵃⴷⴻⵔ {{index}})",
     "notFoundDesc": "ⴰⵖⴱⴰⵍⵓ ⵉ ⴷ-ⵜⵙⵓⵜⵔⴻⴹ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ.",
-    "notFound": "ⴰⵖⴱⴰⵍⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ"
+    "notFound": "ⴰⵖⴱⴰⵍⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ",
+    "rateLimitWait": "Ɛⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ ⴷⴻⴳ {{minutes}} ⵏ ⵜⴻⵙⴷⴰⵜ (ⵜⵉⵙⴷⴰⵜⵉⵏ)."
   },
   "ajouterArtisanat": {
     "title": "ⵔⵏⵓ ⴰⵎⵥⵓⵏ ⴰⵙⵏⵓⴼⵔⵉ",
@@ -3791,7 +4132,9 @@
     "addTag": "ⵔⵏⵓ ⵜⴰⴱⵣⵉⵎⵜ",
     "removeTag": "ⴽⴽⴻⵙ ⵜⴰⴱⵣⵉⵎⵜ {{tag}}",
     "mediasFailedTitle": "ⵜⵉⵡⵍⴰⴼⵉⵏ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏⵜ ⴰⵔⴰ",
-    "mediasFailed": "ⴰⵅⴻⴷⴷⵉⵎ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ, ⵎⴰⵛⴰ ⵜⵉⵡⵍⴰⴼⵉⵏ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏⵜ ⴰⵔⴰ. ⵔⵏⵓ-ⵜⴻⵏⵜ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵙⴻⵏⵇⴻⴷ."
+    "mediasFailed": "ⴰⵅⴻⴷⴷⵉⵎ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ, ⵎⴰⵛⴰ ⵜⵉⵡⵍⴰⴼⵉⵏ ⵓⵔ ⵜⵜⵡⴰⵣⵏⴻⵏⵜ ⴰⵔⴰ. ⵔⵏⵓ-ⵜⴻⵏⵜ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵙⴻⵏⵇⴻⴷ.",
+    "editTitle": "ⵙⴻⵏⴼⴻⵍ ⵜⵉⵃⵓⵏⴰ",
+    "editSubtitle": "ⵙⴻⵖⵜⵉ ⵏⴻⵖ ⵙⵎⴻⴷ ⴰⴼⴰⵔⵉⵙ-ⵉⴽ, ⵙⵢⵉⵏ ⵙⴻⴽⵍⴻⵙ."
   },
   "service": {
     "addTitle": "ⵔⵏⵓ ⴰⵎⴻⵥⵍⵓ-ⵡ",
@@ -3873,7 +4216,12 @@
       "transport": "ⴰⵣⴰⵍ ⵏ ⵢⵉⵡⴻⵏ ⵏ ⵓⴱⵔⵉⴷ.",
       "location": "ⴰⵣⴰⵍ ⵏ ⵓⴽⴰⵔⵉ ⵉ ⵢⵉⵡⴻⵏ ⵏ ⵡⴰⵙⵙ."
     },
-    "prix": "ⴰⵣⴰⵍ"
+    "prix": "ⴰⵣⴰⵍ",
+    "descriptionPlaceholder": "ⴳⵍⴻⵎ ⴰⵎⴻⵥⵍⵓ-ⵉⴽ...",
+    "placeLabel": "ⴰⴷⴻⴳ ⵏ ⵓⵎⴻⵥⵍⵓ",
+    "placeHint": "ⵏⴰⴷⵉ ⴰⴷⴻⴳ (ⴰⵙⵎⴻⵍ, ⵜⴰⵖⵍⴰⵎⵜ, ⵜⴰⴷⴷⴰⵔⵜ). ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ? « ⵔⵏⵓ ⴰⴷⴻⴳ ⴰⵎⴰⵢⵏⵓⵜ »: ⵉⵙⴻⵎ, ⵜⴰⵏⵙⴰ ⴷ ⵜⴻⵏⵇⵉⴹⵜ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ.",
+    "addressPlaceholder": "ⵜⴰⵏⵙⴰ ⵜⵓⵎⵎⵉⴷⵜ...",
+    "hoursPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵢⴰⵍ ⴰⵙⵙ, 9 ⵀ – 18 ⵀ"
   },
   "organisations": {
     "create": {
@@ -3945,8 +4293,8 @@
       "reseauInvalide": "ⴰⵙⴻⵖⵡⴻⵏ {{reseau}} ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ",
       "logoEchec": "ⴰⵍⵓⴳⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ",
       "enregistree": "ⴰⵙⴻⴱⵜⴻⵔ ⵏ ⵜⵓⴷⴷⵙⴰ ⵢⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ",
-      "renvoyeeVerification": "Page mise à jour. Le nom ou le type a changé : la page sera de nouveau publiée après vérification par l’équipe Tala DZ.",
-      "avertissementVerification": "Vous changez le nom ou le type de l’organisation : après l’enregistrement, la page sera masquée le temps que l’équipe Tala DZ la vérifie à nouveau.",
+      "renvoyeeVerification": "ⴰⵙⴻⴱⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ. ⵉⵙⴻⵎ ⵏⴻⵖ ⴰⵏⴰⵡ ⵉⴱⴻⴷⴷⴻⵍ: ⴰⵙⴻⴱⵜⴻⵔ ⴰⴷ ⴷ-ⵢⴻⴼⴼⴻⵖ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵇⴻⴷ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+      "avertissementVerification": "ⵜⴱⴻⴷⴷⵍⴻⴹ ⵉⵙⴻⵎ ⵏⴻⵖ ⴰⵏⴰⵡ ⵏ ⵜⵓⴷⴷⵙⴰ: ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⴽⵍⴻⵙ, ⴰⵙⴻⴱⵜⴻⵔ ⴰⴷ ⵢⴻⴼⴼⴻⵔ ⴰⵍⴰⵎⵎⴰ ⵢⴻⵙⵏⴻⵇⴷ-ⵉⵜ ⵓⴳⵔⴰⵡ ⵏ Tala DZ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
       "creeeEnAttente": "ⵜⵓⴷⴷⵙⴰ ⵜⴻⵜⵜⵡⴰⵔⵏⴰ. ⴰⵙⴻⴱⵜⴻⵔ-ⵉⵙ ⴰⴷ ⴷ-ⵢⴻⴼⴼⴻⵖ ⵎⵉ ⴰⵔⴰ ⵜ-ⵉⵙⴻⵏⵇⴻⴷ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
       "titreModifier": "ⵥⵔⴻⴳ ⴰⵙⴻⴱⵜⴻⵔ ⵏ ⵜⵓⴷⴷⵙⴰ",
       "sousTitre": "ⵜⵉⴷⴷⵓⴽⵍⴰ, ⴰⵅⵅⴰⵎ ⵏ ⵜⴻⵥⵔⵉⴳⵜ, ⵜⴰⵙⵉⵍⵎⴰⵜ…",
@@ -3964,17 +4312,17 @@
     "revendication": {
       "boutonEdition": "ⴷ ⴰⵅⵅⴰⵎ-ⵉⵡ ⵏ ⵜⴻⵥⵔⵉⴳⵜ",
       "bouton": "ⴷ ⵜⵓⴷⴷⵙⴰ-ⵡ",
-      "envoyee": "Demande envoyée : l’équipe Tala DZ va la vérifier",
-      "enCours": "Votre demande pour gérer cette page est en cours de vérification par l’équipe Tala DZ.",
-      "titre": "Personne ne gère encore cette page.",
-      "refusee": "Votre précédente demande n’a pas été acceptée",
-      "aide": "Vous en êtes responsable ? Demandez à la gérer : vous pourrez modifier la page et ajouter vos contenus.",
-      "connexion": "Se connecter pour la gérer",
-      "verification": "L’équipe Tala DZ vérifie que vous représentez bien cette organisation, puis vous en devenez responsable.",
-      "message": "Qui êtes-vous pour cette organisation ? (facultatif)",
-      "exemple": "Ex. : je suis le directeur ; contact : 0550 00 00 00",
+      "envoyee": "ⴰⵙⵓⵜⴻⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ: ⴰⴳⵔⴰⵡ ⵏ Tala DZ ⴰⴷ ⵜ-ⵉⵙⴻⵏⵇⴻⴷ",
+      "enCours": "ⴰⵙⵓⵜⴻⵔ-ⵉⴽ ⵉ ⵓⵙⴻⴼⵔⴻⴽ ⵏ ⵓⵙⴻⴱⵜⴻⵔ-ⴰ ⵉⵜⵜⵡⴰⵙⴻⵏⵇⴰⴷ ⴰⴽⴽⴰ ⵜⵓⵔⴰ ⵙⵖⵓⵔ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+      "titre": "ⵓⵍⴰⵛ ⵡⵉⵏ ⵉ ⵢⴻⵙⵙⴻⴼⵔⴰⴽⴻⵏ ⴰⵙⴻⴱⵜⴻⵔ-ⴰ ⵢⴰⴽⴰⵏ.",
+      "refusee": "ⴰⵙⵓⵜⴻⵔ-ⵉⴽ ⵢⴻⵣⵔⵉⵏ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⴰⵔⴰ",
+      "aide": "ⴷ ⴽⴻⵞⵞ ⵉ ⴷ ⴰⵎⴰⵙⵓⵍ-ⵉⵙ? ⵙⵓⵜⴻⵔ ⴰⴷ ⵜ-ⵜⴻⵙⴼⴻⵔⴽⴻⴹ: ⴰⴷ ⵜⵉⵣⵎⵉⵔⴻⴹ ⴰⴷ ⵜⴻⵙⵏⵉⴼⵍⴻⴹ ⴰⵙⴻⴱⵜⴻⵔ, ⴰⴷ ⵜⴻⵔⵏⵓⴹ ⵉⴳⴱⵓⵔⴻⵏ-ⵉⴽ.",
+      "connexion": "ⵇⵇⴻⵏ ⴰⴽⴽⴻⵏ ⴰⴷ ⵜ-ⵜⴻⵙⴼⴻⵔⴽⴻⴹ",
+      "verification": "ⴰⴳⵔⴰⵡ ⵏ Tala DZ ⴰⴷ ⵉⵙⴻⵏⵇⴻⴷ ⵎⴰ ⴷ ⴽⴻⵞⵞ ⵙ ⵜⵉⴷⴻⵜ ⵉ ⴷ-ⵢⴻⵎⵎⴻⵙⵍⴰⵢⴻⵏ ⵖⴻⴼ ⵜⵓⴷⴷⵙⴰ-ⴰ, ⵙⵢⵉⵏ ⴰⴷ ⵜⵓⵖⴰⵍⴻⴹ ⴷ ⴰⵎⴰⵙⵓⵍ-ⵉⵙ.",
+      "message": "ⴰⵏⵡⴰ-ⴽ ⴷⴻⴳ ⵜⵓⴷⴷⵙⴰ-ⴰ? (ⴷ ⴰⴼⵔⴰⵢⴰⵏ)",
+      "exemple": "ⴰⵎⴻⴷⵢⴰ: ⴷ ⵏⴻⴽⴽ ⵉ ⴷ ⴰⵏⴻⵎⵀⴰⵍ; ⴰⵏⴻⵔⵎⵉⵙ: 0550 00 00 00",
       "envoyer": "ⴰⵣⴻⵏ ⴰⵙⵓⵜⴻⵔ",
-      "suggestion": "personne ne la gère encore : ouvrez sa page et touchez « C’est mon organisation »"
+      "suggestion": "ⵓⵍⴰⵛ ⵡⵉⵏ ⵉ ⵜⵜ-ⵢⴻⵙⵙⴻⴼⵔⴰⴽⴻⵏ ⵢⴰⴽⴰⵏ: ⵍⴷⵉ ⴰⵙⴻⴱⵜⴻⵔ-ⵉⵙ, ⵙⵉⵜ ⵖⴻⴼ « ⴷ ⵜⵓⴷⴷⵙⴰ-ⵉⵏⵓ »"
     }
   },
   "validation": {
@@ -4082,7 +4430,7 @@
       },
       "statuses": {
         "planifie": "ⵢⴻⵜⵜⵡⴰⵖⴰⵡⴻⵙ",
-        "en_cours": "ⴻⵏ ⵛⵓⵓⵔⵙ",
+        "en_cours": "ⵉⵜⴻⴷⴷⵓ",
         "termine": "ⵢⴻⴽⴼⴰ",
         "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ",
         "reporte": "ⵢⴻⵜⵜⵡⴰⵄⴻⵟⵟⴻⵍ"
@@ -4092,7 +4440,7 @@
         "description": "ⴰⵣⴻⵎⵣ, ⵉⵙⵔⴰⴳⴻⵏ ⴷ ⵡⴰⴷⴻⴳ ⵏ ⵓⵔⵎⵓⴷ",
         "activityDate": "ⴰⵣⴻⵎⵣ ⵏ ⵓⵔⵎⵓⴷ",
         "selectDate": "ⴼⵔⴻⵏ ⴰⵣⴻⵎⵣ",
-        "noDateAvailable": "ⴰⵓⵛⵓⵏⴻ ⴷⴰⵜⴻ ⴷⵉⵙⵒⵓⵏⵉⴱⵍⴻ",
+        "noDateAvailable": "ⵓⵍⴰⵛ ⴰⵣⴻⵎⵣ ⵢⴻⵍⵍⴰⵏ",
         "startTime": "ⴰⵙⵔⴰⴳ ⵏ ⵜⴰⵣⵡⴰⵔⴰ",
         "endTime": "ⴰⵙⵔⴰⴳ ⵏ ⵜⴰⴳⴳⴰⵔⴰ",
         "selectTime": "ⴼⵔⴻⵏ ⴰⵙⵔⴰⴳ",
@@ -4119,7 +4467,12 @@
           "moderateur": "ⴰⵎⴰⵙⵡⴰⴹ",
           "animateur": "ⴰⵏⵉⵎⴰⵜⴻⵓⵔ",
           "invite": "ⵉⵏⴻⴱⴳⵉ"
-        }
+        },
+        "firstName": "ⵉⵙⴻⵎ",
+        "lastName": "ⵉⵙⴻⵎ ⵏ ⵜⵎⴰⴳⵉⵜ (ⵏⴻⵖ ⵉⵙⴻⵎ ⵏ ⵜⵓⴷⴷⵙⴰ)",
+        "existingSpeaker": "ⴰⵎⴷⴰⴽⴻⵍ ⵢⴻⵍⵍⴰⵏ ⵢⴰⴽⴰⵏ ⴷⴻⴳ Tala DZ",
+        "suggestions": "ⵉⵎⴷⴰⴽⴰⵍ ⵢⴻⵍⵍⴰⵏ",
+        "suggestionsHint": "ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⴷⴻⴳ Tala DZ — ⴼⵔⴻⵏ ⴰⴽⴽⴻⵏ ⵓⵔ ⴷ-ⵢⴻⵜⵜⴰⵍⴻⵙ ⴰⵔⴰ :"
       },
       "options": {
         "title": "ⵜⵉⵅⵜⵉⵕⵉⵢⵉⵏ ⴷ ⵢⵉⴱⴻⵏⴽⴰⵏ",
@@ -4129,7 +4482,7 @@
         "optionsLabel": "ⵓⵒⵜⵉⵓⵏⵙ",
         "translationAvailable": "ⵜⵔⴰⴷⵓⵛⵜⵉⵓⵏ ⴷⵉⵙⵒⵓⵏⵉⴱⵍⴻ",
         "recordingAllowed": "ⴰⵙⴻⴽⵍⴻⵙ ⵢⴻⵜⵜⵡⴰⵙⵉⵔⴻⴳ",
-        "liveBroadcast": "ⴷⵉⴼⴼⵓⵙⵉⵓⵏ ⴻⵏ ⴷⵉⵔⴻⵛⵜ",
+        "liveBroadcast": "ⴰⵙⵉⵡⴻⴹ ⵙⵔⵉⴷ",
         "digitalSupport": "ⴰⵙⴻⴱⵜⴻⵔ ⵓⵎⴹⵉⵏ",
         "requiredMaterial": "ⵉⴱⴻⵏⴽⴰⵏ ⵢⴻⵜⵜⵡⴰⵙⵔⴰⵏ",
         "addMaterial": "ⵔⵏⵓ ⵉⴱⴻⵏⴽ",
@@ -4166,7 +4519,9 @@
         "endTimeRequired": "ⴰⵙⵔⴰⴳ ⵏ ⵜⴰⴳⴳⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ",
         "endTimeAfterStart": "ⴰⵙⵔⴰⴳ ⵏ ⵜⴰⴳⴳⴰⵔⴰ ⵉⵍⴰⵇ ⴰⴷ ⵢⵉⵍⵉ ⴷⴻⴼⴼⵉⵔ ⵏ ⵓⵙⵔⴰⴳ ⵏ ⵜⴰⵣⵡⴰⵔⴰ",
         "descriptionRequired": "ⴰⴳⵍⴰⵎ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ (ⵎⴰ ⴷⵔⵓⵙ ⵙ ⵜⴻⴼⵔⴰⵏⵙⵉⵙⵜ ⵏⴻⵖ ⵙ ⵜⴰⵄⵔⴰⴱⵜ)",
-        "intervenantUserRequired": "ⵢⴰⵍ ⴰⵎⴻⵙⵙⴰⵡⴰⵍ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ"
+        "intervenantUserRequired": "ⵢⴰⵍ ⴰⵎⴻⵙⵙⴰⵡⴰⵍ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⴼⴻⵔⵏⴻⵏ",
+        "intervenantNameRequired": "ⵙⴱⴻⴷⴷⴻⵜ ⵉⵙⴻⵎ ⵏ ⵢⴰⵍ ⴰⵎⵙⵉⵡⴻⵍ (ⵏⴻⵖ ⴽⴽⴻⵙ ⵉⵣⵉⵔⵉⴳ ⵉⵍⴻⵎ)",
+        "summary": "ⵜⴰⴼⴻⵕⴽⵉⵜ ⵓⵔ ⵜⴻⵎⵎⵉⴷ ⴰⵔⴰ :"
       }
     },
     "loadError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵀⵉⵍⴻⵏ",
@@ -4211,6 +4566,24 @@
       "confirme": "ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
       "decline": "ⵢⵓⴳⵉ",
       "annule": "ⵢⴻⵜⵜⵡⴰⵙⴻⴼⵙⴻⵅ"
+    },
+    "editActivity": "Ẓⵔⴻⴳ ⴰⵔⵎⵓⴷ",
+    "deleteActivity": "ⴽⴽⴻⵙ ⴰⵔⵎⵓⴷ",
+    "confirmDeleteTitle": "ⴽⴽⴻⵙ « {{titre}} » ?",
+    "confirmDeleteDesc": "ⴰⵔⵎⵓⴷ ⴷ ⵜⴻⴱⴷⴰⵔⵜ ⵏ ⵢⵉⵎⵙⵉⵡⵍⴻⵏ-ⵉⵙ ⴰⴷ ⵜⵜⵡⴰⴽⴽⵙⴻⵏ ⵙⴻⴳ ⵓⵀⵉⵍ. ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
+    "speakerCard": {
+      "title": "ⵜⴰⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵎⵙⵉⵡⴻⵍ",
+      "description": "ⴰⵙⵉⵙⵙⴻⵏ ⴰⵔⴰ ⴷ-ⵢⴻⵜⵜⵡⴰⵙⴽⴰⵏⴻⵏ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵜⴻⴷⵢⴰⵏⵜ.",
+      "hasAccount": "ⴰⵎⵙⵉⵡⴻⵍ-ⴰ ⵖⵓⵔ-ⵙ ⴰⵎⵉⴹⴰⵏ-ⵉⵙ ⴷⴻⴳ Tala DZ : ⴷ ⵏⴻⵜⵜⴰ ⵉ ⵢⴻⵜⵜⵙⴻⴼⵔⴰⴽⴻⵏ ⴰⵎⴰⵖⵏⵓ-ⵙ.",
+      "shared": "ⴰⵎⵙⵉⵡⴻⵍ-ⴰ ⵢⴻⵍⵍⴰ ⴷⴰⵖⴻⵏ ⴷⴻⴳ ⵜⴻⴷⵢⴰⵏⵜ ⵏ ⵓⵎⴻⵙⵖⵉⵡⴰⵏ-ⵏⵏⵉⴹⴻⵏ : ⴰⵍⴰ ⵜⴰⴷⴱⴻⵍⵜ ⵉ ⵢⴻⵣⵎⵔⴻⵏ ⴰⴷ ⵜⵥⵔⴻⴳ ⵜⴰⴼⴻⵍⵡⵉⵜ-ⵉⵙ.",
+      "shortBioHint": "ⵜⵣⴻⵎⵔⴻⴹ ⵢⴰⵍ ⵜⵉⴽⴽⴻⵍⵜ ⴰⴷ ⵜⴰⵞⴰⵔⴻⴹ « ⵜⴰⵎⴻⴷⴷⵓⵔⵜ ⵜⴰⵡⴻⵣⵍⴰⵏⵜ » ⵏ ⵓⵔⵎⵓⴷ-ⵉⴽ.",
+      "photo": "ⴱⴻⴷⴷⴻⵍ ⵜⴰⵡⵍⴰⴼⵜ",
+      "jobTitle": "ⴰⵣⵡⴻⵍ ⵏⴻⵖ ⴰⵅⴻⴷⴷⵉⵎ",
+      "jobTitlePlaceholder": "ⴰⵎⴻⴷⵢⴰ : ⵜⴰⴼⴻⵅⵅⴰⵕⵜ, ⴰⵏⴰⵥⵓⵔ ⴰⵙⵓⵏⴰⴳ",
+      "organisation": "ⵜⵓⴷⴷⵙⴰ",
+      "website": "ⴰⵙⵎⴻⵍ ⵡⴻⴱ",
+      "biography": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ",
+      "edit": "ⵜⴰⴼⴻⵍⵡⵉⵜ ⵏ ⵓⵎⵙⵉⵡⴻⵍ (ⵜⴰⵡⵍⴰⴼⵜ, ⵜⴰⵎⴻⴷⴷⵓⵔⵜ…)"
     }
   },
   "emailChange": {
@@ -4218,7 +4591,7 @@
     "emailUpdatedSuccess": "ⵜⴰⵏⵙⴰ-ⴽ ⵏ ⵢⵉⵎⴰⵢⵍ ⵜⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ.",
     "tokenInvalidOrExpired": "ⴰⵊⵉⵟⵓⵏ ⵓⵔ ⵢⴻⵖⵔⵉ ⴰⵔⴰ ⵏⴻⵖ ⵢⴻⵎⵎⵓⵜ.",
     "confirmationFailed": "ⴷ ⴰⵡⴻⵣⵖⵉ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⵙⵏⵉⴼⴻⵍ ⵏ ⵢⵉⵎⴰⵢⵍ.",
-    "confirming": "ⵛⵓⵏⴼⵉⵔⵎⴰⵜⵉⵓⵏ ⴻⵏ ⵛⵓⵓⵔⵙ...",
+    "confirming": "ⴰⵙⴻⵏⵜⴻⵎ ⵉⵜⴻⴷⴷⵓ...",
     "emailUpdated": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ",
     "newEmail": "ⵉⵎⴰⵢⵍ-ⵉⴽ ⴰⵎⴰⵢⵏⵓⵜ :",
     "reconnect": "ⵙⴻ ⵔⴻⵛⵓⵏⵏⴻⵛⵜⴻⵔ",
@@ -4230,7 +4603,7 @@
     "editProgramme": "ⵥⵔⴻⴳ ⴰⵀⵉⵍ",
     "createProgramme": "ⵙⵏⵓⵍⴼⵓ-ⴷ ⴰⵀⵉⵍ",
     "fillProgrammeInfo": "ⵞⵞⴰⵔ ⵜⴰⵍⵖⵓⵜ ⵏ ⵡⴰⵀⵉⵍ",
-    "noProgramme": "ⴰⵓⵛⵓⵏ ⵒⵔⵓⴳⵔⴰⵎⵎⴻ",
+    "noProgramme": "ⵓⵍⴰⵛ ⴰⵀⵉⵍ",
     "startByAddingProgramme": "ⴱⴷⵓ ⵙ ⵜⵎⴻⵔⵏⴰ ⵏ ⵡⴰⵀⵉⵍ ⵉ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ",
     "confirmDeleteProgramme": "ⴷ ⵜⵉⴷⴻⵜ ⵜⴻⴱⵖⵉⴹ ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵀⵉⵍ-ⴰ ?",
     "loadProgrammesError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵢⵉⵀⵉⵍⴻⵏ",
@@ -4263,7 +4636,10 @@
     "replyToComment": "ⴻⵔⵔ ⵖⴻⴼ ⵓⵡⴻⵏⵏⵉⵜ",
     "addComment": "ⵔⵏⵓ ⴰⵡⴻⵏⵏⵉⵜ",
     "updateSuccess": "ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ!",
-    "notFoundTitle": "ⴰⵎⴰⴳⵔⴰⴷ ⵓⵍⴰⵛ-ⵉⵜ"
+    "notFoundTitle": "ⴰⵎⴰⴳⵔⴰⴷ ⵓⵍⴰⵛ-ⵉⵜ",
+    "video": "ⵜⴰⵠⵉⴷⵢⵓⵜ",
+    "voirAussi": "ⵡⴰⵍⵉ ⴷⴰⵖⴻⵏ",
+    "lireEn": "Ɣⴻⵔ ⵙ"
   },
   "passwordStrength": {
     "minLength": "12+ ⵏ ⵢⵉⵙⴻⴽⴽⵉⵍⴻⵏ",
@@ -4437,7 +4813,8 @@
     "fileTooLarge": "ⴰⴼⴰⵢⵍⵓ ⵎⴻⵇⵇⴻⵔ ⴰⵟⴰⵙ (5 MB ⵎⴰ ⵓⴳⴰⵔ)",
     "uploadFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ",
     "imageOnly10": "ⵜⵉⵡⵍⴰⴼⵉⵏ ⴽⴰⵏ, 10 ⵎⵓ ⵙ ⴰⴼⴻⵍⵍⴰⵢ ⵉ ⵢⴰⵍ ⴰⴼⴰⵢⵍⵓ",
-    "fileTooLarge10": "ⴰⴼⴰⵢⵍⵓ ⵎⴻⵇⵇⴻⵔ ⴰⵟⴰⵙ (10 ⵎⵓ ⵙ ⴰⴼⴻⵍⵍⴰⵢ)"
+    "fileTooLarge10": "ⴰⴼⴰⵢⵍⵓ ⵎⴻⵇⵇⴻⵔ ⴰⵟⴰⵙ (10 ⵎⵓ ⵙ ⴰⴼⴻⵍⵍⴰⵢ)",
+    "error": "ⵓⵔ ⵢⴻⴷⴷⵉ ⴰⵔⴰ ⵓⵙⵉⵡⴻⴹ ⵏ ⵜⴻⵡⵍⴰⴼⵜ"
   },
   "gallery": {
     "empty": "ⵓⵍⴰⵛ ⴰⵎⵉⴷⵢⴰ ⵢⴻⵍⵍⴰⵏ",
@@ -4568,7 +4945,21 @@
     "socialOf": "{{network}} ⵏ {{name}}",
     "socialInvalid": "ⴰⵙⴻⵖⵡⴻⵏ {{network}} ⵓⵔ ⵖⴱⵉⵏ ⴰⵔⴰ (ⴰⵎⴻⴷⵢⴰ: {{example}})",
     "socialTitle": "ⴰⵙⵎⴻⵍ ⵡⴻⴱ ⴷ ⵉⵥⴻⴹⵡⴰⵏ ⵉⵏⵎⴻⵜⵜⵉⵢⴻⵏ",
-    "socialHint": "ⵉⵙⴻⵖⵡⴰⵏ-ⴰ ⴰⴷ ⴷ-ⴱⴰⵏⴻⵏ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⴽ ⴰⵣⴰⵢⴻⵣ (ⵜⵉⴷⵢⴰⵏⵉⵏ ⵉ ⵜⴻⵙⵙⵓⴷⴷⵙⴻⴹ, ⴰⵎⴰⵖⵏⵓ)."
+    "socialHint": "ⵉⵙⴻⵖⵡⴰⵏ-ⴰ ⴰⴷ ⴷ-ⴱⴰⵏⴻⵏ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⴽ ⴰⵣⴰⵢⴻⵣ (ⵜⵉⴷⵢⴰⵏⵉⵏ ⵉ ⵜⴻⵙⵙⵓⴷⴷⵙⴻⴹ, ⴰⵎⴰⵖⵏⵓ).",
+    "presse": {
+      "lienInvalide": "ⴰⵙⴻⵖⵡⴻⵏ ⴰⵔⴰⵎⴻⵖⵜⵓ (ⵉⵍⴰⵇ ⴰⴷ ⵉⴱⴷⵓ ⵙ https://)",
+      "titre": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ ⵏ ⵜⴻⵙⵖⵓⵏⵜ",
+      "modifier": "ⵔⵏⵓ ⵏⴻⵖ ⵙⴻⵏⴼⴻⵍ",
+      "aide": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ ⵉ ⴷ-ⵢⴻⵜⵜⵎⴻⵙⵍⴰⵢⴻⵏ ⴼⴻⵍⵍ-ⴰⴽ ⵏⴻⵖ ⵖⴻⴼ ⵍⴻⵇⴷⵉⵛ-ⵉⴽ: ⴰⴷ ⴷ-ⴱⴰⵏⴻⵏ ⴷⴻⴳ ⵒⵓⵔⵜⴼⵓⵍⵉⵓ-ⵉⴽ ⴰⵣⴰⵢⴻⵣ.",
+      "lien": "ⴰⵙⴻⵖⵡⴻⵏ ⵏ ⵓⵎⴰⴳⵔⴰⴷ",
+      "titreArticle": "ⴰⵣⵡⴻⵍ",
+      "media": "ⴰⵊⵓⵔⵏⴰⵍ ⵏⴻⵖ ⴰⵍⵍⴰⵍ ⵏ ⵜⴻⵢⵡⴰⵍⵜ",
+      "mediaAide": "ⴰⵎⴻⴷⵢⴰ: ⴻⵍ ⵡⴰⵜⴰⵏ, APS, ⵔⴰⴷⵉⵓ ⴰⵍⴳⴻⵔⵉⴻ",
+      "date": "ⴰⵣⴻⵎⵣ (ⴷ ⴰⴼⵔⴰⵢⴰⵏ)",
+      "retirer": "ⴽⴽⴻⵙ",
+      "ajouter": "ⵔⵏⵓ ⴰⵎⴰⴳⵔⴰⴷ"
+    },
+    "modifierLiens": "ⵙⴻⵏⴼⴻⵍ ⵉⵙⴻⵖⵡⴰⵏ-ⵉⵡ"
   },
   "share": {
     "onMyPage": "ⴱⴹⵓ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⵡ:",
@@ -4589,7 +4980,8 @@
     "edit": "ⵥⵔⴻⴳ ⴰⵎⴰⵖⵏⵓ-ⵉⵡ",
     "bio": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ",
     "works": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵉⵙ",
-    "empty": "ⵓⵍⴰⵛ ⴰⴳⴱⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵓⴼⴼⵖⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ."
+    "empty": "ⵓⵍⴰⵛ ⴰⴳⴱⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵓⴼⴼⵖⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ.",
+    "presse": "ⴷⴻⴳ ⵜⴻⵙⵖⵓⵏⵜ"
   },
   "publicPage": {
     "showEmail": "ⵙⴽⴻⵏ ⵉⵎⴰⵢⵍ-ⵉⵡ",
@@ -4620,57 +5012,161 @@
       "placeholderReponse": "ⵜⵉⵔⵉⵔⵉⵜ-ⵉⴽ ⵉ ⵓⵎⴻⵔⵣⴰ-ⴰ",
       "reponsePro": "ⵜⵉⵔⵉⵔⵉⵜ ⵏ ⴱⴰⴱ ⵏ ⵜⴻⵏⴼⴰ",
       "aucun": "ⵓⵍⴰⵛ ⵜⴰⵎⵓⵖⵍⵉ ⴰⴽⴽⴰ ⵜⵓⵔⴰ. ⵉⵍⵉ ⴷ ⴰⵎⴻⵣⵡⴰⵔⵓ!"
-    }
+    },
+    "menu": "ⵉⵎⴻⵥⵍⴰ ⵉ ⵢⵉⵏⵎⵉⵍⴻⵏ",
+    "title": "ⵉⵎⴻⵥⵍⴰ ⵉ ⵢⵉⵎⴻⵔⵣⴰⵡⴻⵏ",
+    "introuvable": "ⴰⵎⴻⵥⵍⵓ-ⴰ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ ⵏⴻⵖ ⵓⵔ ⴷ-ⵢⴻⴼⴼⵉⵖ ⴰⵔⴰ ⵢⴰⴽⴰⵏ.",
+    "subtitleShort": "ⴰⵏⴷⴰ ⴰⵔⴰ ⵜⴻⵞⵞⴻⴹ, ⴰⵏⴷⴰ ⴰⵔⴰ ⵜⴻⵟⵟⵙⴻⴹ, ⴰⵏⵡⴰ ⴰⵔⴰ ⴽ-ⵢⴻⵎⵎⵏⴻⵏ, ⵇⵔⵉⴱ ⵏ ⵢⵉⵎⵓⴽⴰⵏ ⵏ ⵜⴷⴻⵍⵙⴰ",
+    "refuse": "ⴰⵎⴻⵥⵍⵓ-ⴰ ⵢⴻⵜⵜⵡⴰⴳⵉ: ⵙⴻⵖⵜⵉ-ⵜ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ-ⵉⴽ, ⴰⴷ ⵢⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⵏⵜⴻⵎ.",
+    "enAttente": "ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵜⴻⵎ: ⴷ ⴽⴻⵞⵞ ⴷ ⵓⴳⵔⴰⵡ ⵏ Tala DZ ⴽⴰⵏ ⵉ ⵢⴻⵜⵜⵡⴰⵍⵉⵏ ⴰⵙⴻⴱⵜⴻⵔ-ⴰ ⵉ ⵜⵓⵔⴰ.",
+    "ouTrouver": "ⴰⵏⴷⴰ ⴰⵔⴰ ⵜ-ⵜⴰⴼ",
+    "contact": "ⴰⵏⴻⵔⵎⵉⵙ",
+    "pasDeContact": "ⵓⵍⴰⵛ ⵜⴰⵏⵙⵉⵡⵉⵏ ⵏ ⵓⵏⴻⵔⵎⵉⵙ ⵉ ⵜⵓⵔⴰ.",
+    "proposePar": "ⵢⴻⵜⵜⵡⴰⵙⵓⵎⴻⵔ ⵙⵖⵓⵔ",
+    "subtitle": "ⴰⵏⴷⴰ ⴰⵔⴰ ⵜⴻⵞⵞⴻⴹ, ⴰⵏⴷⴰ ⴰⵔⴰ ⵜⴻⵟⵟⵙⴻⴹ, ⴰⵏⵡⴰ ⴰⵔⴰ ⴽ-ⵢⴻⵎⵎⵏⴻⵏ: ⵜⴰⵏⵙⵉⵡⵉⵏ ⵏ ⵢⵉⵎⴰⵀⵉⵍⴻⵏ ⵇⵔⵉⴱ ⵏ ⵢⵉⵎⵓⴽⴰⵏ ⵏ ⵜⴷⴻⵍⵙⴰ ⵜⴰⵣⵣⴰⵢⵔⵉⵜ.",
+    "types": "ⴰⵏⴰⵡ ⵏ ⵓⵎⴻⵥⵍⵓ",
+    "search": "ⵏⴰⴷⵉ ⴰⵎⴻⵥⵍⵓ, ⴰⴷⴻⴳ…",
+    "aucunResultat": "ⵓⵍⴰⵛ ⴰⵎⴻⵥⵍⵓ ⵢⴻⵎⵚⴰⴷⴰⵏ ⴷ ⵓⵏⴰⴷⵉ-ⵉⴽ",
+    "aucun": "ⵓⵍⴰⵛ ⴰⵎⴻⵥⵍⵓ ⵉ ⵜⵓⵔⴰ",
+    "commentAjouter": "ⵜⴻⵙⵄⵉⴹ ⵜⴰⵏⴻⵃⵏⵓⵜ ⵏ ⵓⵞⵞⵉ, ⴰⵅⵅⴰⵎ ⵏ ⵢⵉⵏⴻⴱⴳⴰⵡⴻⵏ, ⵏⴻⵖ ⴷ ⴰⵎⵏⵉⵔ ⵉ ⵜⴻⵍⵍⵉⴹ? ⵙⵓⵎⴻⵔ ⴰⵎⴻⵥⵍⵓ-ⵉⴽ ⵙⴻⴳ ⵜⴼⴻⵍⵡⵉⵜ-ⵉⴽ ⵜⴰⵎⴰⵀⴰⵍⵜ.",
+    "guide": "ⴰⵎⵏⵉⵔ: ⵙⵓⵎⴻⵔ ⴰⵎⴻⵥⵍⵓ"
   },
   "catalogue": {
     "bouton": "ⴽⵜⴻⵔ ⴰⴽⴰⵜⴰⵍⵓⴳ-ⵉⵡ (Excel)",
     "titre": "ⴽⵜⴻⵔ ⴰⴽⴰⵜⴰⵍⵓⴳ-ⵉⴽ",
-    "sousTitre": "Tous vos livres en une seule fois, avec un fichier Excel et leurs couvertures.",
-    "etape1": "1. Téléchargez le modèle",
-    "etape1Aide": "Une ligne par livre : titre, résumé, auteur, année, langue, ISBN, nombre de pages, catégories, prix. La feuille « Aide » explique chaque colonne.",
+    "sousTitre": "ⴰⴽⴽ ⵉⴷⵍⵉⵙⴻⵏ-ⵉⴽ ⵢⵉⵡⴻⵜ ⵏ ⵜⵉⴽⴽⴻⵍⵜ, ⵙ ⵓⴼⴰⵢⵍⵓ Excel ⴷ ⵜⵖⵓⵍⴰⴼ-ⵏⵙⴻⵏ.",
+    "etape1": "1. ⵙⴰⴷⴻⵔ ⵜⴰⵎⵓⴷⴻⵎⵜ",
+    "etape1Aide": "ⵢⵉⵡⴻⵏ ⵢⵉⵣⵉⵔⵉⴳ ⵉ ⵢⴰⵍ ⴰⴷⵍⵉⵙ: ⴰⵣⵡⴻⵍ, ⴰⴳⵣⵓⵍ, ⴰⵎⴰⵔⵓ, ⴰⵙⴻⴳⴳⴰⵙ, ⵜⵓⵜⵍⴰⵢⵜ, ISBN, ⴰⵎⴹⴰⵏ ⵏ ⵢⵉⵙⴻⴱⵜⴰⵔ, ⵜⴰⴳⴳⴰⵢⵉⵏ, ⵙⵙⵓⵎⴰ. ⴰⵙⴻⴱⵜⴻⵔ « ⴰⵉⴷⴻ » ⵢⴻⵙⵙⴻⴼⵀⴰⵎⴰⵢ ⵢⴰⵍ ⵜⵉⴳⴻⵊⴷⵉⵜ.",
     "modele": "ⵙⴰⴷⴻⵔ ⵜⴰⵎⵓⴷⴻⵎⵜ Excel",
-    "etape2": "2. Déposez votre fichier et vos couvertures",
-    "fichier": "Votre fichier Excel (.xlsx)",
-    "couvertures": "Vos couvertures (facultatif) : sélectionnez toutes les images d’un coup",
+    "etape2": "2. ⵙⴻⵔⵙ ⴰⴼⴰⵢⵍⵓ-ⵉⴽ ⴷ ⵜⵖⵓⵍⴰⴼ-ⵉⴽ",
+    "fichier": "ⴰⴼⴰⵢⵍⵓ-ⵉⴽ Excel (.xlsx)",
+    "couvertures": "ⵜⴰⵖⵓⵍⴰⴼ-ⵉⴽ (ⴷ ⴰⴼⵔⴰⵢⴰⵏ): ⴼⵔⴻⵏ ⴰⴽⴽ ⵜⵓⴳⵏⵉⵡⵉⵏ ⵢⵉⵡⴻⵜ ⵏ ⵜⵉⴽⴽⴻⵍⵜ",
     "nbImages_one": "{{count}} image choisie",
     "nbImages_other": "{{count}} images choisies",
-    "couverturesAide": "Nommez chaque image par l’ISBN du livre (9789947055213.jpg), ou écrivez son nom dans la colonne « Fichier couverture ».",
+    "couverturesAide": "ⵙⴻⵎⵎⵉ ⵢⴰⵍ ⵜⵓⴳⵏⴰ ⵙ ISBN ⵏ ⵓⴷⵍⵉⵙ (9789947055213.jpg), ⵏⴻⵖ ⴰⵔⵓ ⵉⵙⴻⵎ-ⵉⵙ ⴷⴻⴳ ⵜⴳⴻⵊⴷⵉⵜ « ⴼⵉⵛⵀⵉⴻⵔ ⵛⵓⵓⵠⴻⵔⵜⵓⵔⴻ ».",
     "verifier": "ⵙⴻⵏⵇⴻⴷ ⴰⴼⴰⵢⵍⵓ",
-    "rienEnregistre": "La vérification n’enregistre rien : vous voyez d’abord le résultat, ligne par ligne.",
-    "etape3": "3. Vérifiez, puis importez",
+    "rienEnregistre": "ⴰⵙⴻⵏⵇⴻⴷ ⵓⵔ ⵢⴻⵙⵙⴻⴽⵍⴻⵙ ⴰⵛⴻⵎⵎⴰ: ⴰⴷ ⵜⵡⴰⵍⵉⴹ ⵇⴱⴻⵍ ⴰⴳⵎⵓⴹ, ⵉⵣⵉⵔⵉⴳ ⵙ ⵢⵉⵣⵉⵔⵉⴳ.",
+    "etape3": "3. ⵙⴻⵏⵇⴻⴷ, ⵙⵢⵉⵏ ⴽⵜⴻⵔ",
     "nbNouveaux_one": "{{count}} nouveau livre",
     "nbNouveaux_other": "{{count}} nouveaux livres",
-    "nbExistants_one": "{{count}} déjà sur le site",
-    "nbExistants_other": "{{count}} déjà sur le site",
-    "nbErreurs_one": "{{count}} ligne à corriger",
-    "nbErreurs_other": "{{count}} lignes à corriger",
+    "nbExistants_one": "{{count}} ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ",
+    "nbExistants_other": "{{count}} ⵍⵍⴰⵏ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ",
+    "nbErreurs_one": "{{count}} ⵏ ⵢⵉⵣⵉⵔⵉⴳ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴻⵖⵜⵉⵏ",
+    "nbErreurs_other": "{{count}} ⵏ ⵢⵉⵣⵓⵔⴰⴳ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴻⵖⵜⵉⵏ",
     "nbSansCouverture_one": "{{count}} sans couverture",
     "nbSansCouverture_other": "{{count}} sans couverture",
-    "imagesSansLivre": "Images qui ne correspondent à aucun livre :",
+    "imagesSansLivre": "ⵜⵓⴳⵏⵉⵡⵉⵏ ⵓⵔ ⵏⴻⵎⵚⴰⴷⴰ ⴷ ⵓⵍⴰ ⴷ ⵢⵉⵡⴻⵏ ⵏ ⵓⴷⵍⵉⵙ:",
     "ligne": "ⵉⵣⵉⵔⵉⴳ {{n}}",
     "etatNouveau": "ⴰⵎⴰⵢⵏⵓⵜ",
     "etatExiste": "ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ",
     "etatErreur": "ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵖⵜⵉ",
-    "envoiCouvertures": "Envoi des couvertures : {{faites}} / {{total}}",
-    "importEnCours": "Import en cours…",
+    "envoiCouvertures": "ⵜⵓⵣⵏⴰ ⵏ ⵜⵖⵓⵍⴰⴼ: {{faites}} / {{total}}",
+    "importEnCours": "ⴰⴽⵜⴰⵔ ⵉⵜⴻⴷⴷⵓ…",
     "importer_one": "Importer {{count}} livre",
     "importer_other": "Importer {{count}} livres",
-    "erreursIgnorees": "Les lignes à corriger ne sont pas importées : corrigez le fichier et vérifiez-le à nouveau, ou importez-les plus tard.",
+    "erreursIgnorees": "ⵉⵣⵓⵔⴰⴳ ⴰⵔⴰ ⵢⴻⵜⵜⵡⴰⵙⴻⵖⵜⵉⵏ ⵓⵔ ⵜⵜⵡⴰⴽⵜⴻⵔⴻⵏ ⴰⵔⴰ: ⵙⴻⵖⵜⵉ ⴰⴼⴰⵢⵍⵓ, ⵙⴻⵏⵇⴻⴷ-ⵉⵜ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ, ⵏⴻⵖ ⴽⵜⴻⵔ-ⵉⵜⴻⵏ ⵜⵉⵛⴽⵉ.",
     "termine": "ⴰⴽⵜⴰⵔ ⵢⴻⵎⵎⴻⴷ",
-    "bilanCrees_one": "{{count}} livre envoyé à l’équipe Tala DZ pour vérification",
-    "bilanCrees_other": "{{count}} livres envoyés à l’équipe Tala DZ pour vérification",
-    "bilanLies_one": "{{count}} livre déjà sur le site, relié à votre maison",
-    "bilanLies_other": "{{count}} livres déjà sur le site, reliés à votre maison",
-    "bilanAVerifier_one": "{{count}} livre déjà sur le site, ajouté par un autre compte : l’équipe Tala DZ vérifiera avant de le relier à votre maison",
-    "bilanAVerifier_other": "{{count}} livres déjà sur le site, ajoutés par un autre compte : l’équipe Tala DZ vérifiera avant de les relier à votre maison",
-    "bilanDejaPresents_one": "{{count}} livre déjà dans votre catalogue, non recréé",
-    "bilanDejaPresents_other": "{{count}} livres déjà dans votre catalogue, non recréés",
-    "bilanCouvertures": "{{faites}} couverture(s) sur {{total}} ajoutée(s)",
-    "bilanIgnorees_one": "{{count}} ligne en erreur non importée : corrigez-la et importez-la à nouveau",
-    "bilanIgnorees_other": "{{count}} lignes en erreur non importées : corrigez-les et importez-les à nouveau",
-    "voirPage": "Voir la page de la maison d’édition",
+    "bilanCrees_one": "{{count}} ⵏ ⵓⴷⵍⵉⵙ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⵉ ⵓⴳⵔⴰⵡ ⵏ Tala DZ ⵉ ⵓⵙⴻⵏⵇⴻⴷ",
+    "bilanCrees_other": "{{count}} ⵏ ⵢⵉⴷⵍⵉⵙⴻⵏ ⵜⵜⵡⴰⵣⵏⴻⵏ ⵉ ⵓⴳⵔⴰⵡ ⵏ Tala DZ ⵉ ⵓⵙⴻⵏⵇⴻⴷ",
+    "bilanLies_one": "{{count}} ⵏ ⵓⴷⵍⵉⵙ ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ, ⵢⴻⵇⵇⴻⵏ ⵖⴻⵔ ⵓⵅⵅⴰⵎ-ⵉⴽ",
+    "bilanLies_other": "{{count}} ⵏ ⵢⵉⴷⵍⵉⵙⴻⵏ ⵍⵍⴰⵏ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ, ⵇⵇⵏⴻⵏ ⵖⴻⵔ ⵓⵅⵅⴰⵎ-ⵉⴽ",
+    "bilanAVerifier_one": "{{count}} ⵏ ⵓⴷⵍⵉⵙ ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ, ⵢⴻⵔⵏⴰ-ⵜ ⵓⵎⵉⴹⴰⵏ-ⵏⵏⵉⴹⴻⵏ: ⴰⴳⵔⴰⵡ ⵏ Tala DZ ⴰⴷ ⵉⵙⴻⵏⵇⴻⴷ ⵙⴻⵏⴷ ⴰⴷ ⵜ-ⵉⵇⵇⴻⵏ ⵖⴻⵔ ⵓⵅⵅⴰⵎ-ⵉⴽ",
+    "bilanAVerifier_other": "{{count}} ⵏ ⵢⵉⴷⵍⵉⵙⴻⵏ ⵍⵍⴰⵏ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⵙⵎⴻⵍ, ⵔⵏⴰⵏ-ⵜⴻⵏ ⵉⵎⵉⴹⴰⵏⴻⵏ-ⵏⵏⵉⴹⴻⵏ: ⴰⴳⵔⴰⵡ ⵏ Tala DZ ⴰⴷ ⵉⵙⴻⵏⵇⴻⴷ ⵙⴻⵏⴷ ⴰⴷ ⵜⴻⵏ-ⵉⵇⵇⴻⵏ ⵖⴻⵔ ⵓⵅⵅⴰⵎ-ⵉⴽ",
+    "bilanDejaPresents_one": "{{count}} ⵏ ⵓⴷⵍⵉⵙ ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⴽⴰⵜⴰⵍⵓⴳ-ⵉⴽ, ⵓⵔ ⵢⴻⵜⵜⵡⴰⵍⴻⵙ ⴰⵔⴰ",
+    "bilanDejaPresents_other": "{{count}} ⵏ ⵢⵉⴷⵍⵉⵙⴻⵏ ⵍⵍⴰⵏ ⵢⴰⴽⴰⵏ ⴷⴻⴳ ⵓⴽⴰⵜⴰⵍⵓⴳ-ⵉⴽ, ⵓⵔ ⵜⵜⵡⴰⵍⵙⴻⵏ ⴰⵔⴰ",
+    "bilanCouvertures": "{{faites}} ⵏ ⵜⵖⵓⵍⴰⴼⵜ (ⵜⵖⵓⵍⴰⴼ) ⵙⴻⴳ {{total}} ⵜⵜⵡⴰⵔⵏⴰⵏⵜ",
+    "bilanIgnorees_one": "{{count}} ⵏ ⵢⵉⵣⵉⵔⵉⴳ ⵙ ⵜⵓⵛⵛⴹⴰ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴽⵜⴻⵔ ⴰⵔⴰ: ⵙⴻⵖⵜⵉ-ⵜ, ⵙⵢⵉⵏ ⴽⵜⴻⵔ-ⵉⵜ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ",
+    "bilanIgnorees_other": "{{count}} ⵏ ⵢⵉⵣⵓⵔⴰⴳ ⵙ ⵜⵓⵛⵛⴹⴰ ⵓⵔ ⵜⵜⵡⴰⴽⵜⴻⵔⴻⵏ ⴰⵔⴰ: ⵙⴻⵖⵜⵉ-ⵜⴻⵏ, ⵙⵢⵉⵏ ⴽⵜⴻⵔ-ⵉⵜⴻⵏ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ",
+    "voirPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵅⵅⴰⵎ ⵏ ⵓⵙⵉⵥⵔⴻⴳ",
     "autreFichier": "Importer un autre fichier",
-    "erreurLecture": "Le fichier n’a pas pu être lu",
-    "erreurImport": "L’import a échoué"
+    "erreurLecture": "ⴰⴼⴰⵢⵍⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵖⵔⵉ ⴰⵔⴰ",
+    "erreurImport": "ⴰⴽⵜⴰⵔ ⵓⵔ ⵢⴻⴷⴷⵉ ⴰⵔⴰ"
+  },
+  "gastronomie": {
+    "menu": "ⵜⴰⵙⴻⵡⵡⵉⵜ",
+    "voirTous": "ⵡⴰⵍⵉ ⴰⴽⴽ ⵉⵎⴻⵏⵙⵉⵡⴻⵏ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ",
+    "wilaya": "ⵜⴰⵡⵉⵍⴰⵢⵜ",
+    "title": "ⵓⵞⵞⵉ ⴰⵣⵣⴰⵢⵔⵉ",
+    "subtitle": "ⵉⵎⴻⵏⵙⵉⵡⴻⵏ ⵉⵎⴻⵏⵙⴰⵢⴻⵏ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ, ⵙ ⵢⵉⵎⴻⵙⵍⴰⵢⴻⵏ ⵏ ⵡⵉⴷ ⵉ ⵜⴻⵏ-ⵢⴻⵙⵙⴻⵖⵔⴰⵢⴻⵏ: ⴰⵎⴻⵣⵔⵓⵢ-ⵏⵙⴻⵏ, ⵉⴼⴻⵔⴷⵉⵙⴻⵏ-ⵏⵙⴻⵏ, ⴷ ⵜⵎⴻⵖⵔⵉⵡⵉⵏ ⴰⵏⴷⴰ ⵜⵜⵡⴰⵇⴻⴷⵎⴻⵏ.",
+    "subtitleShort": "ⵉⵎⴻⵏⵙⵉⵡⴻⵏ ⵉⵎⴻⵏⵙⴰⵢⴻⵏ, ⴰⵎⴻⵣⵔⵓⵢ-ⵏⵙⴻⵏ ⴷ ⵜⵎⴻⵖⵔⵉⵡⵉⵏ ⴰⵏⴷⴰ ⵜⵜⵡⴰⵇⴻⴷⵎⴻⵏ",
+    "search": "ⵏⴰⴷⵉ ⴰⵎⴻⵏⵙⵉ, ⴰⴷⴻⴳ…",
+    "toutesWilayas": "ⴰⴽⴽ ⵜⵉⵡⵉⵍⴰⵢⵉⵏ",
+    "aucunResultat": "ⵓⵍⴰⵛ ⴰⵎⴻⵏⵙⵉ ⵢⴻⵎⵚⴰⴷⴰⵏ ⴷ ⵓⵏⴰⴷⵉ-ⵉⴽ",
+    "aucun": "ⵓⵍⴰⵛ ⴰⵎⴻⵏⵙⵉ ⵉ ⵜⵓⵔⴰ",
+    "commentAjouter": "ⵉⵎⴻⵏⵙⵉⵡⴻⵏ ⵜⵜⵡⴰⵔⵏⴰⵏ-ⴷ ⵙⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵡⴰⴷⴻⴳ: ⴰⵃⵔⵉⵛ « ⵓⵞⵞⵉ ⴰⴷⵉⴳⴰⵏ », ⵜⴰⵇⴻⴼⴼⴰⵍⵜ « ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ ».",
+    "guide": "ⴰⵎⵏⵉⵔ: ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ",
+    "compte_one": "{{count}} ⵏ ⵓⵎⴻⵏⵙⵉ",
+    "compte_other": "{{count}} ⵏ ⵢⵉⵎⴻⵏⵙⵉⵡⴻⵏ",
+    "liste": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵢⵉⵎⴻⵏⵙⵉⵡⴻⵏ"
+  },
+  "revisions": {
+    "raisonRequise": "ⵉⵏⵉ-ⴷ ⴰⵢⵖⴻⵔ ⵢⴻⵜⵜⵡⴰⴳⵉ ⵓⵙⵓⵎⴻⵔ",
+    "acceptee": "ⴰⵙⵓⵎⴻⵔ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ : ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⴻⵇⵇⴻⵎ",
+    "refusee": "ⴰⵙⵓⵎⴻⵔ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "section": "ⴰⵜⵜⴻⴽⴽⵉ ⴷⴻⴳ ⵓⵎⴰⴳⵔⴰⴷ",
+    "enAttente_one": "{{count}} ⵓⵙⵓⵎⴻⵔ ⵏ ⵓⵙⵏⵉⴼⴻⵍ ⵢⴻⵜⵜⵕⴰⴵⵓ",
+    "enAttente_other": "{{count}} ⵢⵉⵙⵓⵎⴰⵔ ⵏ ⵓⵙⵏⵉⴼⴻⵍ ⵜⵜⵕⴰⴵⵓⵏ",
+    "examiner": "ⵙⵙⴻⵏⵇⴻⴷ",
+    "mesPropositions": "ⵉⵙⵓⵎⴰⵔ-ⵉⴽ",
+    "statutRefusee": "ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "statutAttente": "ⵢⴻⵜⵜⵕⴰⴵⵓ ⴰⵙⴻⵖⴱⴻⵍ",
+    "raison": "ⵙⴻⴱⴱⴰ",
+    "historique": "ⴰⵜⵜⴻⴽⴽⵉ",
+    "examen": "ⴰⵙⵓⵎⴻⵔ ⵏ ⵓⵙⵏⵉⴼⴻⵍ",
+    "motif": "ⵙⴻⴱⴱⴰ ⵏ ⵓⵙⵏⵉⴼⴻⵍ",
+    "titreModifie": "ⴰⵣⵡⴻⵍ",
+    "chapeauModifie": "ⵜⴰⵣⵡⴰⵔⵜ",
+    "contenu": "ⴰⵢⴻⵏ ⵉⴱⴻⴷⴷⵍⴻⵏ ⴷⴻⴳ ⵓⴳⴱⵓⵔ",
+    "legendeAjout": "ⵢⴻⵜⵜⵡⴰⵔⵏⴰⵏ",
+    "legendeRetrait": "ⵢⴻⵜⵜⵡⴰⴽⴽⵙⴻⵏ",
+    "legendeIdentique": "ⵓⵔ ⵉⴱⴻⴷⴷⴻⵍ ⴰⵔⴰ",
+    "pourquoiRefus": "ⴰⵢⵖⴻⵔ ⵜⵓⴳⵉⴹ ? (ⴰⵎⴷⴰⵏ ⴰⴷ ⵢⴻⵟⵟⴻⴼ ⵉⵣⴻⵏ-ⴰ)",
+    "confirmerRefus": "ⵙⴻⵏⵜⴻⵎ ⵜⵉⴳⵜⵉⵏ",
+    "refuser": "ⴰⴳⵉ",
+    "accepter": "ⵇⴱⴻⵍ ⵓ ⵙⵓⴼⴼⴻⵖ",
+    "titre": "ⵙⵓⵎⴻⵔ ⴰⵙⵏⵉⴼⴻⵍ",
+    "court": "ⵙⴻⵏⴼⴻⵍ",
+    "invitation": "ⵜⴻⵙⵙⵏⴻⴹ ⴰⵙⴻⵏⵜⴻⵍ-ⴰ? ⵙⵎⴻⴷ ⵏⴻⵖ ⵙⴻⵖⵜⵉ ⴰⵎⴰⴳⵔⴰⴷ-ⴰ: ⴰⵎⴻⵙⴽⴰⵔ-ⵉⵙ ⴰⴷ ⵢⴻⵙⴻⵏⵜⴻⵎ ⴰⵙⵓⵎⴻⵔ-ⵉⴽ.",
+    "motifRequis": "ⵙⴻⴳⵣⵉ-ⴷ ⵙ ⴽⵔⴰ ⵏ ⵡⴰⵡⴰⵍⴻⵏ ⴰⵢⴻⵏ ⴰⵔⴰ ⵜⴻⵔⵏⵓⴹ ⵏⴻⵖ ⴰⵔⴰ ⵜⴻⵙⵙⴻⵖⵜⵉⴹ (ⵙⵙⴻⴱⴱⴰ).",
+    "envoiEchec": "ⴰⵙⵓⵎⴻⵔ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ ⴰⵔⴰ",
+    "envoyee": "ⴰⵙⵓⵎⴻⵔ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+    "envoyeeDetail": "ⴰⵎⴻⵙⴽⴰⵔ ⵏ ⵓⵎⴰⴳⵔⴰⴷ ⴷ ⵜⴻⴷⴱⴻⵍⵜ ⴰⴷ ⵜ-ⵙⵏⴻⵇⴷⴻⵏ. ⴰⴷ ⵜⴻⵜⵜⵡⴰⵙⵙⴻⵍⵖⴻⴹ ⵙ ⵜⴳⴰⵜⵓⵜ-ⵏⵙⴻⵏ.",
+    "explication": "ⵙⵎⴻⴷ ⵏⴻⵖ ⵙⴻⵖⵜⵉ ⴰⵎⴰⴳⵔⴰⴷ ⴷⴷⴰⵡ-ⴰ. ⵍⵇⴻⵎ-ⵉⴽ ⴰⴷ ⵢⴻⵇⵇⵉⵎ ⴷ ⴰⵔⴻⵡⵡⴰⵢ: ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⴼⴼⵖⴻⵏ ⵓⵔ ⵉⴱⴻⴷⴷⴻⵍ ⴰⵔⴰ ⴰⵍⴰⵎⵎⴰ ⵢⴻⵇⴱⴻⵍ-ⵉⵜ ⵓⵎⴻⵙⴽⴰⵔ-ⵉⵙ ⵏⴻⵖ ⵜⴰⴷⴱⴻⵍⵜ.",
+    "motifExemple": "ⴰⵎⴻⴷⵢⴰ: « ⵜⴰⵔⵏⴰⵡⵜ ⵏ ⵜⵕⵓⴵⵉⵜ ⵏ ⵊⵉⴷⴰ », « ⴰⵙⴻⵖⵜⵉ ⵏ ⵓⵣⴻⵎⵣ ⵏ ⵜⴻⴱⵏⴰ », « ⵜⵓⴳⵏⴰ ⵜⴰⵎⴰⵢⵏⵓⵜ ⵏ ⵓⵎⵔⴰⵀ »",
+    "envoyer": "ⴰⵣⴻⵏ ⴰⵙⵓⵎⴻⵔ"
+  },
+  "personnalites": {
+    "nomRequis": "ⵉⵙⴻⵎ ⵢⴻⵜⵜⵡⴰⵙⵔⴰ",
+    "birthDate": "ⴰⵣⴻⵎⵣ ⵏ ⵜⵍⴰⵍⵉⵜ",
+    "birthPlace": "ⴰⴷⴻⴳ ⵏ ⵜⵍⴰⵍⵉⵜ",
+    "deathDate": "ⴰⵣⴻⵎⵣ ⵏ ⵜⵎⴻⵜⵜⴰⵏⵜ",
+    "deathPlace": "ⴰⴷⴻⴳ ⵏ ⵜⵎⴻⵜⵜⴰⵏⵜ",
+    "wikipedia": "ⴰⵙⴻⴱⵜⴻⵔ ⵡⵉⴽⵉⵒⴻⴷⵉⴰ",
+    "oeuvres": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵉⵙ",
+    "aucuneOeuvre": "ⵓⵍⴰⵛ ⴰⵅⴻⴷⴷⵉⵎ ⴷⴻⴳ Tala DZ ⴰⴽⴽⴰ ⵜⵓⵔⴰ.",
+    "ajouterOeuvre": "ⵔⵏⵓ ⵢⵉⵡⴻⵏ ⵙⴻⴳ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵉⵙ",
+    "ajouterOeuvreAide": "ⴷⴻⴳ ⵜⴼⴻⵔⴽⵉⵜ, ⵔⵏⵓ ⴰⵎⴷⴰⵏ-ⴰ ⴰⵎⴻⵇⵇⵔⴰⵏ ⴳⴰⵔ ⵢⵉⵎⵙⵉⵡⵍⴻⵏ ⵏ ⵓⵅⴻⴷⴷⵉⵎ (ⴰⵏⴰⴷⵉ ⵙ ⵢⵉⵙⴻⵎ) : ⴰⵅⴻⴷⴷⵉⵎ ⴰⴷ ⴷ-ⵉⴱⴰⵏ ⴷⴰ ⵎⵉ ⴰⵔⴰ ⵢⴻⴼⴼⴻⵖ.",
+    "naissance": "ⵜⵍⴰⵍⵉⵜ",
+    "deces": "ⵜⴰⵎⴻⵜⵜⴰⵏⵜ",
+    "lienSite": "ⴰⵙⵙⴰⵖ-ⵉⵙ ⴷ ⵡⴰⴷⴻⴳ-ⴰ",
+    "biographie": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ",
+    "modifierFiche": "Ẓⵔⴻⴳ ⵜⴰⴼⴻⵍⵡⵉⵜ",
+    "ficheDescription": "ⴰⵙⵉⵙⵙⴻⵏ ⴰⵔⴰ ⴷ-ⵢⴻⵜⵜⵡⴰⵙⴽⴰⵏⴻⵏ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵡⴰⴷⴻⴳ.",
+    "ajoutee": "ⴰⵎⴷⴰⵏ ⴰⵎⴻⵇⵇⵔⴰⵏ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ",
+    "voirFiche": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ ⵏ {{nom}}",
+    "retirer": "ⴽⴽⴻⵙ {{nom}} ⵙⴻⴳ ⵓⵙⵎⴻⵍ-ⴰ",
+    "aucunResultat": "ⵓⵍⴰⵛ ⵢⵉⵡⴻⵏ ⵙ ⵢⵉⵙⴻⵎ-ⴰ ⵖⴻⴼ Tala DZ.",
+    "creerFiche": "ⵓⵍⴰⵛ-ⵉⵜ ⴷⴻⴳ ⵜⴻⴱⴷⴰⵔⵜ? ⵔⵏⵓ ⴰⵙⴻⴱⵜⴻⵔ-ⵉⵙ",
+    "nouvelleFiche": "ⴰⵙⴻⴱⵜⴻⵔ ⴰⵎⴰⵢⵏⵓⵜ, ⵢⴻⵜⵜⵡⴰⵙⴻⴽⵍⴻⵙ ⵙ ⵜⵓⵇⵇⵏⴰ",
+    "lienSitePlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵜⵍⵓⵍ ⴷⴻⴳ ⵜⴰⴷⴷⴰⵔⵜ, ⵜⴻⵙⵙⴻⵍⵎⴻⴷ ⴷⵉⵏⵏⴰ ⵜⵉⵃⵓⵏⴰ ⵏ ⵜⵍⴰⵅⵜ ⵉ ⵢⵉⵡⴻⵜ ⵏ ⵜⵙⵓⵜⴰ ⵎⴻⵕⵕⴰ…",
+    "nouvelle": "ⴰⵎⴷⴰⵏ ⴰⵎⴻⵇⵇⵔⴰⵏ ⴰⵎⴰⵢⵏⵓⵜ",
+    "bandeauArticle": "ⴰⵎⴰⴳⵔⴰⴷ-ⴰ ⴰⴷ ⴷ-ⵢⴻⴼⴼⴻⵖ ⵖⴻⴼ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵎⴷⴰⵏ-ⴰ ⴰⵎⴻⵇⵇⵔⴰⵏ, ⴷⴻⴼⴼⵉⵔ ⴰⵙⴻⵏⵜⴻⵎ ⵏ ⵓⴳⵔⴰⵡ ⵏ Tala DZ.",
+    "voirPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ-ⵉⵙ ⴰⴽⴽ",
+    "introuvable": "ⵓⵍⴰⵛ ⵜⴰⴷⵡⴰⵍⵜ-ⴰⴳⵉ",
+    "surtitre": "ⵜⴰⴷⵡⴰⵍⵜ",
+    "ecrireArticle": "ⴰⵔⵓ ⴰⵎⴰⴳⵔⴰⴷ ⵖⴻⴼ ⵜⴷⵡⴰⵍⵜ-ⴰⴳⵉ",
+    "articles": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ",
+    "aucunArticle": "ⵓⵍⴰⵛ ⴰⴽⴽⴰ ⵜⵓⵔⴰ ⴰⵎⴰⴳⵔⴰⴷ ⵓⵎⵎⵉⴷ ⵖⴻⴼ ⵜⴷⵡⴰⵍⵜ-ⴰⴳⵉ.",
+    "sesLieux": "ⵉⵎⵓⴽⴰⵏ-ⵉⵙ"
   }
 }

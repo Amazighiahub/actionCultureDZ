@@ -22,9 +22,10 @@ import type {
 
 import { isListBlock, isTableBlock } from '@/types/models/articles.types';
 import { BLOCK_TEMPLATES, nomBloc } from './articleEditor.constants';
+import ArticleBlockTraduction from './ArticleBlockTraduction';
 
 const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
-  block, index, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate, canMoveUp, canMoveDown
+  block, index, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate, canMoveUp, canMoveDown, langueTraduction
 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -347,7 +348,8 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
               return modele ? nomBloc(t, modele) : block.type_block;
             })()}
           </Badge>
-          <div className="flex gap-1">
+          {/* En traduction, l'ordre et la liste des blocs ne changent pas (communs à toutes les langues) */}
+          {!langueTraduction && <div className="flex gap-1">
             <Button size="icon" variant="ghost" onClick={onMoveUp} disabled={!canMoveUp} title={t("article_articleeditor.title_monter")}>
               <MoveUp className="h-4 w-4" />
             </Button>
@@ -360,9 +362,11 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             <Button size="icon" variant="ghost" onClick={() => onDelete(index)} title={t("article_articleeditor.title_supprimer")} className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4" />
             </Button>
-          </div>
+          </div>}
         </div>
-        {renderBlockContent()}
+        {langueTraduction
+          ? <ArticleBlockTraduction key={langueTraduction} block={block} index={index} langue={langueTraduction} onUpdate={onUpdate} />
+          : renderBlockContent()}
       </CardContent>
     </Card>
   );
