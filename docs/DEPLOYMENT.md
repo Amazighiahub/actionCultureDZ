@@ -235,25 +235,55 @@ docker compose exec backend npm run db:migrate
 ./scripts/deploy.sh
 ```
 
-### Backup
+### Sauvegardes (production)
+
+Les sauvegardes sont dans le **volume Docker `backup_data`** du service `backup`
+(conteneur `eventculture-backup`, dossier `/backups`), pas dans un dossier du projet.
+Script : `scripts/backup.sh <catégorie>`, une rotation par catégorie :
+
+| Catégorie | Quand | Contenu | Gardées |
+|---|---|---|---|
+| `nuit` | chaque nuit à 3h (service `backup`) | base + uploads | 14 (`db_nuit_…`), uploads 7 |
+| mensuelle | la nuit du 1er du mois (copie de `nuit`) | base | 6 (`db_mois_…`) |
+| `deploiement` | avant chaque mise en ligne (`deploy-ci.sh`) | base | 10 (`db_deploiement_…`) |
+| `manuel` | à la main, et avant une restauration | base | 5 (`db_manuel_…`) |
+
+Nombres modifiables : `BACKUP_KEEP_NUIT`, `BACKUP_KEEP_MOIS`, `BACKUP_KEEP_DEPLOIEMENT`,
+`BACKUP_KEEP_MANUEL`, `BACKUP_KEEP_UPLOADS`. Copie chiffrée hors du serveur (base + uploads de
+la nuit) : `scripts/backup-offsite.sh`, par le cron de l'hôte (voir l'en-tête du script).
 
 ```bash
-# Backup manuel
-./scripts/deploy.sh --backup
+# Sauvegarde manuelle
+docker compose -f docker-compose.prod.yml run --rm --no-deps -T --entrypoint /bin/bash backup /backup.sh manuel
 
-# Le fichier est sauvé dans : backups/db_YYYY-MM-DD_HH-MM-SS.sql.gz
-# Les 30 derniers backups sont conservés automatiquement
+# Lister les sauvegardes
+scripts/restaurer-sauvegarde.sh --liste
 ```
 
-### Restauration
+### Restauration (production)
+
+`scripts/restaurer-sauvegarde.sh` vérifie l'archive (complète, bonne base), sauvegarde d'abord
+l'état actuel (catégorie `manuel`), demande de taper le nom de la base, importe, puis affiche le
+nombre de tables. Testé le 2026-10-29 : restauration dans une base MySQL vide, 76 tables et
+3 599 lignes identiques à l'original, textes arabes intacts.
 
 ```bash
-# 1. Décompresser le backup
-gunzip backups/db_2026-03-14_10-30-00.sql.gz
+cd /chemin/du/projet                      # là où se trouve .env
+scripts/restaurer-sauvegarde.sh --liste
+scripts/restaurer-sauvegarde.sh db_nuit_2026-10-29_03-00.sql.gz
+docker compose -f docker-compose.prod.yml restart backend    # vider les caches
 
-# 2. Restaurer dans MySQL
-docker compose exec -T mysql mysql -u root -p"$MYSQL_ROOT_PASSWORD" actionculture < backups/db_2026-03-14_10-30-00.sql
+# Depuis une copie hors serveur (chiffrée avec age) :
+age -d -i backup-key.txt db_nuit_….sql.gz.age > /tmp/db.sql.gz
+scripts/restaurer-sauvegarde.sh /tmp/db.sql.gz
+
+# Uploads (archive de la nuit) : à extraire dans le volume du backend
+docker compose -f docker-compose.prod.yml run --rm --no-deps -T -v "$PWD/uploads_….tar.gz:/u.tar.gz:ro"   --entrypoint sh backend -c 'tar -xzf /u.tar.gz -C /app'
+docker compose -f docker-compose.prod.yml restart backend    # remet les fichiers au compte node (docker-entrypoint.sh)
 ```
+
+`./restore.sh` et `./dump.sh` (racine) servent au **développement local** (fichier
+`backend/database/init.sql`), pas à la production.
 
 ### Reset complet (dev uniquement)
 
@@ -412,14 +442,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 ### Restaurer la base de données
 
-```bash
-# Lister les backups disponibles
-ls -la backups/
-
-# Restaurer
-gunzip backups/db_YYYY-MM-DD_HH-MM-SS.sql.gz
-docker compose exec -T mysql mysql -u root -p"$MYSQL_ROOT_PASSWORD" actionculture < backups/db_YYYY-MM-DD_HH-MM-SS.sql
-```
+Voir « Restauration (production) » plus haut : `scripts/restaurer-sauvegarde.sh`.
 
 ### En cas d'urgence
 

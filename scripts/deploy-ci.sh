@@ -42,6 +42,9 @@ wait_healthy() {
 # conteneur en marche ne voit pas. Si elle change, le conteneur nginx doit être recréé.
 NGINX_CHANGED=0
 git diff --quiet "$PREV" "$SHA" -- nginx/ docker-compose.prod.yml || NGINX_CHANGED=1
+# Même chose pour le script de sauvegarde monté dans le service « backup » (sauvegardes de nuit)
+BACKUP_CHANGED=0
+git diff --quiet "$PREV" "$SHA" -- scripts/backup.sh docker-compose.prod.yml || BACKUP_CHANGED=1
 
 rollback() {
   warn "echec du deploiement de $SHA -> retour aux images precedentes ($PREV)"
@@ -94,7 +97,7 @@ log "migrations a appliquer : $(grep -cE '^down ' <<<"$MIG_STATUS" || true)"
 log "sauvegarde de la base"
 # Conteneur neuf avec la configuration à jour : ne dépend pas de l'état du conteneur
 # "backup" en service (qui n'est pas recréé par le déploiement)
-if ! BACKUP_OUT="$($C run --rm --no-deps -T --entrypoint /bin/bash backup /backup.sh 2>&1)"; then
+if ! BACKUP_OUT="$($C run --rm --no-deps -T --entrypoint /bin/bash backup /backup.sh deploiement 2>&1)"; then
   echo "$BACKUP_OUT" | tail -n 20
   annotate "sauvegarde impossible, deploiement arrete, prod inchangee : $(echo "$BACKUP_OUT" | tail -n 4 | paste -sd ' ')"
   exit 1
@@ -137,6 +140,13 @@ curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/heal
 curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q 'id="root"'
 
 trap - ERR
+
+# 10. Script de sauvegarde modifié : le service de nuit est recréé pour l'utiliser
+#     (non bloquant : le site est déjà à jour)
+if [ "$BACKUP_CHANGED" = 1 ]; then
+  log "script de sauvegarde modifie : recreation du service backup"
+  $C up -d --no-deps --force-recreate backup || warn "service backup non recree : le relancer a la main"
+fi
 
 if ! curl -fsS -o /dev/null --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health"; then
   warn "certificat HTTPS invalide ou expire pour $DOMAIN : verifier le conteneur certbot (docs/DEPLOYMENT.md)"
