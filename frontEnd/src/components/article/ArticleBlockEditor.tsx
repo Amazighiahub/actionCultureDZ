@@ -28,6 +28,9 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  // Texte de la liste tel que tapé : sans lui, la ligne vide créée par « Entrée » était
+  // filtrée aussitôt et on ne pouvait pas passer à l'élément suivant
+  const [texteListe, setTexteListe] = React.useState(() => (isListBlock(block) ? block.contenu_json.join('\n') : ''));
 
   const handleContentChange = (value: string) => {
     onUpdate(index, { contenu: value });
@@ -244,10 +247,11 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
               </SelectContent>
             </Select>
             <Textarea
-              value={isListBlock(block) ? block.contenu_json.join('\n') : ''}
-              onChange={(e) => onUpdate(index, {
-                contenu_json: e.target.value.split('\n').filter((line) => line.trim())
-              })}
+              value={texteListe}
+              onChange={(e) => {
+                setTexteListe(e.target.value);
+                onUpdate(index, { contenu_json: e.target.value.split('\n').filter((line) => line.trim()) });
+              }}
               placeholder={t("article_articleeditor.placeholder_lment_par_ligne")}
               className="min-h-[100px]" />
           </div>
