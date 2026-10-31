@@ -78,7 +78,9 @@ const initProgrammeRoutes = (models) => {
   // ========================================================================
 
   // Export du programme d'un événement
-  router.get('/evenement/:evenementId/export', 
+  // optionalAuth : l'organisateur voit aussi le programme d'un événement pas encore publié
+  router.get('/evenement/:evenementId/export',
+    authMiddleware.optionalAuth,
     param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     query('format').optional().isIn(['json', 'csv', 'pdf']),
     validationMiddleware.handleValidationErrors,
@@ -86,7 +88,8 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Liste des programmes d'un événement
-  router.get('/evenement/:evenementId', 
+  router.get('/evenement/:evenementId',
+    authMiddleware.optionalAuth,
     param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     query('date').optional().isISO8601(),
     query('type_activite').optional().isString(),

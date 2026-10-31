@@ -5,6 +5,7 @@
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+const { peutGerer, estModeration } = require('../utils/droits');
 
 // Types d'articles gérés par ce service (les blocs patrimoine ont leurs propres routes)
 const EDITABLE_ARTICLE_TYPES = ['article', 'article_scientifique'];
@@ -30,6 +31,30 @@ class ArticleBlockService extends BaseService {
    */
   async getBlocksByArticle(articleId, articleType = 'article') {
     return this.repository.findByArticle(articleId, articleType);
+  }
+
+  /**
+   * Blocs d'un article tels que le demandeur peut les voir : un article non publié (brouillon,
+   * en attente, refusé) seulement par son auteur et la modération, comme la fiche de l'œuvre ;
+   * les blocs masqués (visible: false) aussi. Les blocs « patrimoine » restent publics.
+   * @returns {Promise<{ data?: Array, error?: string }>}
+   */
+  async getBlocksVisibles(articleId, articleType = 'article', user = null) {
+    if (!EDITABLE_ARTICLE_TYPES.includes(articleType)) {
+      return { data: await this.repository.findByArticle(articleId, articleType) };
+    }
+    const isScientifique = articleType === 'article_scientifique';
+    const Model = isScientifique ? this.models?.ArticleScientifique : this.models?.Article;
+    if (!Model || !this.models?.Oeuvre) return { data: await this.repository.findByArticle(articleId, articleType) };
+    const parent = await Model.findByPk(articleId, {
+      attributes: [isScientifique ? 'id_article_scientifique' : 'id_article', 'id_oeuvre'],
+      include: [{ model: this.models.Oeuvre, attributes: ['saisi_par', 'statut'] }]
+    });
+    if (!parent) return { error: 'notFound' };
+    const gere = peutGerer(parent.Oeuvre?.saisi_par, { userId: user?.id_user ?? null, isModerator: estModeration(user) });
+    if (parent.Oeuvre?.statut !== 'publie' && !gere) return { error: 'notFound' };
+    const blocks = await this.repository.findByArticle(articleId, articleType);
+    return { data: gere ? blocks : blocks.filter(b => b.visible !== false) };
   }
 
   /**

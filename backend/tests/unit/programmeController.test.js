@@ -4,6 +4,8 @@
  */
 
 const mockProgrammeService = {
+  // Événement publié par défaut ; un brouillon d'un autre organisateur renvoie false
+  evenementVisible: jest.fn().mockResolvedValue(true),
   getProgrammesByEvenement: jest.fn(),
   getProgrammeById: jest.fn(),
   getExportData: jest.fn(),
@@ -65,6 +67,16 @@ describe('ProgrammeController', () => {
   // ========================================================================
 
   describe('getProgrammesByEvenement', () => {
+    it('événement non publié et visiteur non autorisé : 404, programme non lu', async () => {
+      mockProgrammeService.evenementVisible.mockResolvedValueOnce(false);
+      req.params = { evenementId: '9' };
+
+      await controller.getProgrammesByEvenement(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(mockProgrammeService.getProgrammesByEvenement).not.toHaveBeenCalled();
+    });
+
     it('doit retourner les programmes avec byDay', async () => {
       mockProgrammeService.getProgrammesByEvenement.mockResolvedValue({
         programmes: [mockProgramme],

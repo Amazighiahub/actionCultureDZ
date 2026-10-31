@@ -4141,7 +4141,8 @@
     "imageUploadFailed": "Image upload failed (block {{index}})",
     "notFoundDesc": "The requested resource could not be found.",
     "notFound": "Resource not found",
-    "rateLimitWait": "Try again in {{minutes}} minute(s)."
+    "rateLimitWait": "Try again in {{minutes}} minute(s).",
+    "passwordResetLink": "Password reset: the person has received an email link to choose a new one."
   },
   "ajouterArtisanat": {
     "title": "Add a craft product",

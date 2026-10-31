@@ -125,7 +125,7 @@ const usersMethods = {
       const result = await container.userManagementService.resetUserPassword(id);
       res.json({
         success: true, message: req.t('admin.passwordReset'),
-        data: { temporaryPassword: result.tempPassword, note: 'L\'utilisateur devra changer ce mot de passe à sa prochaine connexion' }
+        data: { lienEnvoye: result.lienEnvoye }
       });
     } catch (error) {
       if (error.message === 'Utilisateur non trouvé') {

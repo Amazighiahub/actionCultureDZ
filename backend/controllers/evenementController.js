@@ -73,14 +73,23 @@ class EvenementController extends BaseController {
     }
   }
 
+  /**
+   * Brouillon ou en attente de validation : visible seulement par l'organisateur et la modération
+   * (fiche, médias, données de partage)
+   */
+  _cache(req, evenement) {
+    const raw = evenement?._raw || evenement;
+    return !!raw && ['brouillon', 'en_attente'].includes(raw.statut) && !this._canSeeUnpublished(req, raw.id_user);
+  }
+
+  _introuvable(req, res) {
+    return res.status(404).json({ success: false, error: req.t('common.notFound') });
+  }
+
   async getById(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
-      // Brouillon ou en attente de validation : visible seulement par l'organisateur et la modération
-      const raw = evenement._raw || evenement;
-      if (['brouillon', 'en_attente'].includes(raw.statut) && !this._canSeeUnpublished(req, raw.id_user)) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
+      if (this._cache(req, evenement)) return this._introuvable(req, res);
       res.json({
         success: true,
         data: this._serialize(evenement, 'toDetailJSON', req.lang)
@@ -339,6 +348,7 @@ class EvenementController extends BaseController {
   async getMedias(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      if (this._cache(req, evenement)) return this._introuvable(req, res);
       const data = this._serialize(evenement, 'toJSON', req.lang);
       res.json({
         success: true,
@@ -393,8 +403,9 @@ class EvenementController extends BaseController {
   async getShareData(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      if (this._cache(req, evenement)) return this._introuvable(req, res);
       const data = this._serialize(evenement, 'toDetailJSON', req.lang);
-      
+
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const eventUrl = `${baseUrl}${evenementPath(parseInt(req.params.id), data?.nom_evenement ?? evenement?.nom_evenement)}`;
 

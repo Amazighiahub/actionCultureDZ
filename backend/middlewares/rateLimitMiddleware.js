@@ -303,9 +303,17 @@ const endpointLimiters = {
 // 9. RATE LIMITING PAR COMPTE (Protection brute force distribué)
 // ============================================================================
 
+/**
+ * Verrouillage temporaire après des mots de passe erronés, compté :
+ * - par couple (e-mail, IP) : 5 échecs → verrouillé pour cette IP seulement ; un tiers qui tape
+ *   de faux mots de passe ailleurs ne bloque plus le vrai titulaire du compte ;
+ * - par e-mail, toutes IP confondues : plafond plus haut (30) contre une attaque répartie.
+ * Seuls les mauvais mots de passe comptent (pas un compte suspendu ou un e-mail non vérifié).
+ */
 class AccountRateLimiter {
   constructor(options = {}) {
     this.maxAttempts = options.maxAttempts || 5;
+    this.maxAttemptsGlobal = options.maxAttemptsGlobal || 30;
     this.lockoutDuration = options.lockoutDuration || 15 * 60 * 1000;
     this.cleanupInterval = options.cleanupInterval || 5 * 60 * 1000;
     this.redis = options.redis || null;
@@ -353,12 +361,21 @@ class AccountRateLimiter {
     }
   }
 
+  /** Clés de comptage : (e-mail, IP) et e-mail seul */
+  _cles(email, ip) {
+    const e = String(email).toLowerCase();
+    return { parIp: `${e}|${ip || 'inconnue'}`, global: e };
+  }
+
   checkAccountLock = (req, res, next) => {
     const email = req.body?.email?.toLowerCase();
     if (!email) return next();
+    const { parIp, global } = this._cles(email, req.ip);
 
-    this._getAttempts(email).then(attempts => {
-      if (attempts && Date.now() < attempts.lockoutUntil) {
+    Promise.all([this._getAttempts(parIp), this._getAttempts(global)]).then(([a, b]) => {
+      const verrous = [a, b].filter(x => x && Date.now() < x.lockoutUntil);
+      const attempts = verrous.sort((x, y) => y.lockoutUntil - x.lockoutUntil)[0];
+      if (attempts) {
         const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
         return res.status(429).json({
           success: false,
@@ -372,10 +389,17 @@ class AccountRateLimiter {
     }).catch(() => next());
   };
 
-  recordFailedAttempt = async (email) => {
+  recordFailedAttempt = async (email, ip) => {
     if (!email) return;
-    email = email.toLowerCase();
+    const { parIp, global } = this._cles(email, ip);
+    const [attempts] = await Promise.all([
+      this._compterEchec(parIp, this.maxAttempts),
+      this._compterEchec(global, this.maxAttemptsGlobal)
+    ]);
+    return attempts;
+  };
 
+  async _compterEchec(email, maxAttempts) {
     const now = Date.now();
 
     if (this.redis) {
@@ -398,13 +422,13 @@ return cjson.encode(d)
         const result = await this.redis.eval(LUA_INCR, {
           keys: [`lockout:${email}`],
           arguments: [
-            String(this.maxAttempts),
+            String(maxAttempts),
             String(this.lockoutDuration),
             String(now)
           ]
         });
         const attempts = JSON.parse(result);
-        if (attempts.count >= this.maxAttempts && attempts.lockoutUntil > 0) {
+        if (attempts.count >= maxAttempts && attempts.lockoutUntil > 0) {
           logger.warn(`Compte bloqué: ${maskEmail(email)} après ${attempts.count} tentatives échouées`);
         }
         return attempts;
@@ -415,22 +439,23 @@ return cjson.encode(d)
     const attempts = this.localStore.get(email) || { count: 0, lastAttempt: now, lockoutUntil: 0 };
     attempts.count++;
     attempts.lastAttempt = now;
-    if (attempts.count >= this.maxAttempts) {
+    if (attempts.count >= maxAttempts) {
       attempts.lockoutUntil = now + this.lockoutDuration;
       logger.warn(`Compte bloqué: ${maskEmail(email)} après ${attempts.count} tentatives échouées`);
     }
     this.localStore.set(email, attempts);
     return attempts;
-  };
+  }
 
-  resetAttempts = async (email) => {
+  /** Connexion réussie : compteur de cette IP remis à zéro (le compteur global expire seul) */
+  resetAttempts = async (email, ip) => {
     if (!email) return;
-    await this._deleteAttempts(email.toLowerCase());
+    await this._deleteAttempts(this._cles(email, ip).parIp);
   };
 
-  getAttemptStatus = async (email) => {
+  getAttemptStatus = async (email, ip) => {
     if (!email) return null;
-    return await this._getAttempts(email.toLowerCase());
+    return await this._getAttempts(this._cles(email, ip).parIp);
   };
 }
 

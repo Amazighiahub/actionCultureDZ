@@ -84,6 +84,7 @@ module.exports = (_models, authMiddleware) => {
    */
   router.post('/',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     [
       body('nom').notEmpty().withMessage((_, { req }) => req.t('validation.invalidName')),
       body('id_type_organisation').isInt({ min: 1 }).withMessage((_, { req }) => req.t('validation.invalidType')),

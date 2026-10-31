@@ -316,8 +316,9 @@ class AdminService {
     return httpClient.post<PendingUser>(`/dashboard/users/${userId}/reactivate`, {});
   }
 
-  async resetUserPassword(userId: number): Promise<ApiResponse<{ temporaryPassword: string }>> {
-    return httpClient.post<{ temporaryPassword: string }>(`/dashboard/users/${userId}/reset-password`, {});
+  /** La personne reçoit par e-mail un lien pour choisir son nouveau mot de passe */
+  async resetUserPassword(userId: number): Promise<ApiResponse<{ lienEnvoye: boolean }>> {
+    return httpClient.post<{ lienEnvoye: boolean }>(`/dashboard/users/${userId}/reset-password`, {});
   }
 
   async verifyEmailManually(userId: number): Promise<ApiResponse<void>> {

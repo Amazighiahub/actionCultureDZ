@@ -228,13 +228,16 @@ class DashboardUserManagementService {
   }
 
   /**
-   * Reset mot de passe
+   * Réinitialisation demandée par l'administration : le mot de passe actuel est remplacé par un
+   * mot de passe aléatoire que personne ne connaît (sessions coupées), et la personne reçoit par
+   * e-mail le lien « Choisir un nouveau mot de passe » (le même que « mot de passe oublié »).
+   * Aucun mot de passe n'est renvoyé à l'administrateur : il ne peut pas se connecter à sa place.
    */
   async resetUserPassword(userId) {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new Error('Utilisateur non trouvé');
 
-    const tempPassword = crypto.randomBytes(8).toString('hex');
+    const tempPassword = crypto.randomBytes(24).toString('hex');
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     const hashedPassword = await bcrypt.hash(tempPassword, rounds);
 
@@ -249,7 +252,11 @@ class DashboardUserManagementService {
     });
 
     await this._invalidateUserCache(userId);
-    return { success: true, tempPassword };
+    // Injectable pour les tests ; sinon le service de l'application
+    const verification = this.emailVerificationService || require('../serviceContainer').emailVerificationService;
+    const envoi = await verification.requestPasswordReset(user.email, null);
+    // rateLimited : un lien encore valide (2 h) a déjà été envoyé
+    return { success: true, lienEnvoye: !envoi?.userNotFound };
   }
 
   /**

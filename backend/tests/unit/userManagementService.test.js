@@ -143,17 +143,19 @@ describe('DashboardUserManagementService', () => {
       await expect(service.resetUserPassword(99)).rejects.toThrow('Utilisateur non trouvé');
     });
 
-    it('should generate temp password and hash it', async () => {
-      mockUserRepo.findById.mockResolvedValue({ id_user: 1 });
+    it('aucun mot de passe renvoyé à l’administrateur ; lien envoyé par e-mail ; sessions coupées', async () => {
+      const demande = jest.fn().mockResolvedValue({ expiresIn: '2 heures' });
+      service.emailVerificationService = { requestPasswordReset: demande };
+      mockUserRepo.findById.mockResolvedValue({ id_user: 1, email: 'personne@example.com' });
       mockUserRepo.update.mockResolvedValue(true);
 
       const result = await service.resetUserPassword(1);
 
-      expect(result.success).toBe(true);
-      expect(result.tempPassword).toBeDefined();
-      expect(result.tempPassword.length).toBe(16); // 8 bytes hex = 16 chars
+      expect(result).toEqual({ success: true, lienEnvoye: true });
+      expect(JSON.stringify(result)).not.toMatch(/password|mdp/i);
+      expect(demande).toHaveBeenCalledWith('personne@example.com', null);
       expect(mockUserRepo.update).toHaveBeenCalledWith(1, expect.objectContaining({
-        doit_changer_mdp: true
+        refresh_token: null, password_changed_at: expect.any(Date)
       }));
     });
   });

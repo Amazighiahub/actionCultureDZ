@@ -77,7 +77,7 @@ class AuthController extends BaseController {
 
       const result = await this.userService.login(email, password);
 
-      await accountRateLimiter.resetAttempts(email);
+      await accountRateLimiter.resetAttempts(email, req.ip);
 
       authCookies.setAuthCookies(res, {
         token: result.token,
@@ -93,9 +93,11 @@ class AuthController extends BaseController {
         }
       });
     } catch (error) {
-      if (req.body?.email) {
+      // Seul un mauvais mot de passe (401) compte : un compte suspendu, en attente ou à
+      // l'e-mail non vérifié ne doit pas se verrouiller (ni servir à verrouiller)
+      if (req.body?.email && error?.statusCode === 401) {
         try {
-          await accountRateLimiter.recordFailedAttempt(req.body.email);
+          await accountRateLimiter.recordFailedAttempt(req.body.email, req.ip);
         } catch (limiterError) {
           // Ne masque jamais l'erreur d'origine si le limiter echoue.
           logger.warn('accountRateLimiter.recordFailedAttempt failed', {

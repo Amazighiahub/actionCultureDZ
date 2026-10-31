@@ -28,6 +28,9 @@ class ProgrammeController extends BaseController {
       const { evenementId } = req.params;
       const { date, type_activite } = req.query;
 
+      if (!(await this.programmeService.evenementVisible(evenementId, req.user))) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       const result = await this.programmeService.getProgrammesByEvenement(evenementId, { date, type_activite });
 
       res.json({
@@ -65,6 +68,9 @@ class ProgrammeController extends BaseController {
       const { evenementId } = req.params;
       const { format = 'json' } = req.query;
 
+      if (!(await this.programmeService.evenementVisible(evenementId, req.user))) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       const programmes = await this.programmeService.getExportData(evenementId);
 
       if (programmes.length === 0) {

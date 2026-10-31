@@ -4255,7 +4255,8 @@
     "imageUploadFailed": "فشل رفع الصورة (الكتلة {{index}})",
     "notFoundDesc": "المورد المطلوب غير موجود.",
     "notFound": "المورد غير موجود",
-    "rateLimitWait": "أعد المحاولة بعد {{minutes}} دقيقة."
+    "rateLimitWait": "أعد المحاولة بعد {{minutes}} دقيقة.",
+    "passwordResetLink": "تمت إعادة تعيين كلمة المرور: تلقّى الشخص عبر البريد الإلكتروني رابطًا لاختيار كلمة مرور جديدة."
   },
   "ajouterArtisanat": {
     "title": "إضافة منتج حرفي",

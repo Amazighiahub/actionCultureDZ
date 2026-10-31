@@ -122,7 +122,9 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   );
 
   // Récupérer les blocs d'un article
+  // optionalAuth : l'auteur (et la modération) voient aussi un article non publié
   router.get('/article/:articleId/:articleType?',
+    authMiddleware.optionalAuth,
     validateId('articleId'),
     (req, res) => articleBlockController.getBlocksByArticle(req, res)
   );

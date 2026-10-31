@@ -11,6 +11,9 @@ module.exports = (models, middlewares = {}) => {
   // Middleware d'authentification — fail-closed si non fourni
   const authMiddleware = middlewares.auth || ((req, res) => res.status(401).json({ success: false, error: 'Authentication required' }));
   const optionalAuth = middlewares.optionalAuth || ((req, res, next) => next());
+  // Écrire un commentaire ou un avis : adresse e-mail vérifiée (sinon des comptes jetables, ou
+  // créés avec l'adresse d'un tiers, notaient et commentaient sans limite)
+  const emailVerifie = middlewares.requireVerifiedEmail || ((req, res, next) => next());
   const requireRole = middlewares.requireRole || (() => (req, res) => res.status(503).json({ success: false, error: 'Auth service unavailable' }));
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -37,7 +40,7 @@ module.exports = (models, middlewares = {}) => {
    * POST /commentaires/oeuvre/:oeuvreId
    * Créer un commentaire sur une œuvre (authentifié)
    */
-  router.post('/oeuvre/:oeuvreId', authMiddleware, validateId('oeuvreId'),
+  router.post('/oeuvre/:oeuvreId', authMiddleware, emailVerifie, validateId('oeuvreId'),
     commentLimiter,
     validateStringLengths,
     [
@@ -83,7 +86,7 @@ module.exports = (models, middlewares = {}) => {
    * POST /commentaires/evenement/:evenementId
    * Créer un commentaire sur un événement (authentifié)
    */
-  router.post('/evenement/:evenementId', authMiddleware, validateId('evenementId'),
+  router.post('/evenement/:evenementId', authMiddleware, emailVerifie, validateId('evenementId'),
     commentLimiter,
     validateStringLengths,
     [
@@ -119,7 +122,7 @@ module.exports = (models, middlewares = {}) => {
    * POST /commentaires/service/:serviceId
    * Publier un avis (note de 1 à 5 facultative) ou une réponse (authentifié)
    */
-  router.post('/service/:serviceId', authMiddleware, validateId('serviceId'),
+  router.post('/service/:serviceId', authMiddleware, emailVerifie, validateId('serviceId'),
     commentLimiter,
     validateStringLengths,
     [
@@ -140,7 +143,7 @@ module.exports = (models, middlewares = {}) => {
    * PUT /commentaires/:id
    * Modifier un commentaire (propriétaire uniquement)
    */
-  router.put('/:id', authMiddleware, validateId(),
+  router.put('/:id', authMiddleware, emailVerifie, validateId(),
     validateStringLengths,
     [
       body('contenu').optional()

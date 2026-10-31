@@ -53,8 +53,8 @@ const initEvenementRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/:id/qrcode', cachePublic, validateId(), asyncHandler((req, res) => evenementController.getQRCode(req, res)));
-  router.get('/:id/medias', validateId(), asyncHandler((req, res) => evenementController.getMedias(req, res)));
-  router.get('/:id/share-data', validateId(), asyncHandler((req, res) => evenementController.getShareData(req, res)));
+  router.get('/:id/medias', optionalAuth, validateId(), asyncHandler((req, res) => evenementController.getMedias(req, res)));
+  router.get('/:id/share-data', optionalAuth, validateId(), asyncHandler((req, res) => evenementController.getShareData(req, res)));
   router.get('/:id/participants/public', cachePublic, validateId(), asyncHandler((req, res) => evenementController.getPublicParticipants(req, res)));
   router.get('/:id/participants', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
   router.get('/:id/professionnels/en-attente', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));

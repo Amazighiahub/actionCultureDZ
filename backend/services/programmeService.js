@@ -9,6 +9,7 @@ const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { csvCell } = require('../utils/csv');
+const { peutGerer, estModeration } = require('../utils/droits');
 
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
@@ -23,6 +24,17 @@ class ProgrammeService extends BaseService {
   // ========================================================================
   // LECTURE
   // ========================================================================
+
+  /**
+   * Le programme d'un événement en brouillon ou en attente n'est visible que de son
+   * organisateur et de la modération (comme la fiche de l'événement)
+   */
+  async evenementVisible(evenementId, user = null) {
+    const evenement = await this.models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user', 'statut'] });
+    if (!evenement) return false;
+    if (!['brouillon', 'en_attente'].includes(evenement.statut)) return true;
+    return peutGerer(evenement.id_user, { userId: user?.id_user ?? null, isModerator: estModeration(user) });
+  }
 
   async getProgrammesByEvenement(evenementId, filters = {}) {
     const programmes = await this.repository.findByEvenement(evenementId, filters);
@@ -499,15 +511,22 @@ class ProgrammeService extends BaseService {
     const meme = memes.find(i => texte(i.prenom).toLowerCase() === prenom.toLowerCase());
     if (meme) return meme.id_intervenant;
 
-    // Cas 4 : Créer un nouvel Intervenant
-    // Vérifier si un User existe avec cet email pour lier id_user
-    let userId = interv.id_user || null;
-    if (!userId && interv.email) {
+    // Cas 4 : Créer un nouvel Intervenant, relié au compte qui a cet e-mail s'il existe.
+    // interv.id_user n'est jamais lu : choisir librement le compte lié est réservé à
+    // l'administration (intervenantService) — sinon un organisateur rattachait la fiche au
+    // compte d'un tiers. Un compte déjà relié à une autre fiche ne l'est pas une 2e fois
+    // (index unique : la création du programme échouait).
+    let userId = null;
+    if (interv.email) {
       const user = await this.models.User.findOne({
         where: { email: interv.email },
+        attributes: ['id_user'],
         transaction
       });
-      if (user) userId = user.id_user;
+      const dejaRelie = user && await this.models.Intervenant.findOne({
+        where: { id_user: user.id_user }, attributes: ['id_intervenant'], transaction
+      });
+      if (user && !dejaRelie) userId = user.id_user;
     }
 
     const newIntervenant = await this.models.Intervenant.create({

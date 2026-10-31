@@ -246,6 +246,26 @@ describe('AccountRateLimiter', () => {
   // =========================================================================
   // getAttemptStatus
   // =========================================================================
+  describe('verrouillage par couple e-mail + IP', () => {
+    const appelVerrou = (lim, email, ip) => new Promise((resolve) => {
+      const res = { status: jest.fn(() => ({ json: () => resolve('verrouille') })) };
+      lim.checkAccountLock({ body: { email }, ip }, res, () => resolve('libre'));
+    });
+
+    it('5 échecs depuis une IP : verrouillé pour cette IP, pas pour le titulaire ailleurs', async () => {
+      const lim = new AccountRateLimiter({ maxAttempts: 5, maxAttemptsGlobal: 30 });
+      for (let i = 0; i < 5; i++) await lim.recordFailedAttempt('admin@test.com', '198.51.100.1');
+      expect(await appelVerrou(lim, 'admin@test.com', '198.51.100.1')).toBe('verrouille');
+      expect(await appelVerrou(lim, 'admin@test.com', '203.0.113.9')).toBe('libre');
+    });
+
+    it('attaque répartie sur plusieurs IP : plafond global par e-mail', async () => {
+      const lim = new AccountRateLimiter({ maxAttempts: 5, maxAttemptsGlobal: 8 });
+      for (let i = 0; i < 8; i++) await lim.recordFailedAttempt('cible@test.com', `198.51.100.${i}`);
+      expect(await appelVerrou(lim, 'cible@test.com', '203.0.113.9')).toBe('verrouille');
+    });
+  });
+
   describe('getAttemptStatus', () => {
     it('should return null for unknown email', async () => {
       const status = await limiter.getAttemptStatus('unknown@test.com');

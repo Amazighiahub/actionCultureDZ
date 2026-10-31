@@ -29,7 +29,6 @@ const initEmailVerificationRoutes = require('./emailVerificationRoutes');
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
 const initMultilingualRoutes = require('./multilingualRoutes');
-const initSearchRoutes = require('./searchRoutes');
 const initStatsRoutes = require('./statsRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
@@ -490,7 +489,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/multilingual', init: initMultilingualRoutes, args: [models, authMiddleware] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },
     { path: '/artisanat', init: initArtisanatRoutes, args: [models, authMiddleware] },
-    { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth }] },
+    { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth, requireVerifiedEmail: authMiddleware.requireVerifiedEmail }] },
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
     
     { path: '/notifications', init: initNotificationRoutes, args: [models] },
@@ -501,7 +500,6 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
-    { path: '/search', init: initSearchRoutes, args: [models, authMiddleware] },
     { path: '/stats', init: initStatsRoutes, args: [models, authMiddleware] },
     { path: '/contact', init: require('./contactRoutes'), args: [] },
     // ========================================================================
