@@ -69,7 +69,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     handleValidationErrors,
     articleRevisionController.wrap('decider'));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
-  router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
+  router.get('/:id/medias', optionalAuth, validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
   router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,

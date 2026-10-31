@@ -4146,7 +4146,8 @@
     "imageUploadFailed": "Échec de l'envoi de l'image (bloc {{index}})",
     "notFoundDesc": "La ressource demandée est introuvable.",
     "notFound": "Ressource introuvable",
-    "rateLimitWait": "Réessayez dans {{minutes}} minute(s)."
+    "rateLimitWait": "Réessayez dans {{minutes}} minute(s).",
+    "passwordResetLink": "Mot de passe réinitialisé : la personne a reçu par e-mail un lien pour en choisir un nouveau."
   },
   "visit": {
     "title": "Planifier votre visite",

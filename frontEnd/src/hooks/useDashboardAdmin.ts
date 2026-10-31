@@ -384,7 +384,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       if (response.success) {
         toast({
           title: t('toasts.success'),
-          description: t('toasts.passwordReset')
+          description: t('toasts.passwordResetLink', 'Mot de passe réinitialisé : la personne a reçu par e-mail un lien pour en choisir un nouveau.')
         });
       }
     } catch (error) {

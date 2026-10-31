@@ -4091,7 +4091,8 @@
     "imageUploadFailed": "Tuzna n tugna ur teddi ara (iḥder {{index}})",
     "notFoundDesc": "Aɣbalu i d-tsutreḍ ur yettwaf ara.",
     "notFound": "Aɣbalu ur yettwaf ara",
-    "rateLimitWait": "Ɛreḍ tikkelt-nniḍen deg {{minutes}} n tesdat (tisdatin)."
+    "rateLimitWait": "Ɛreḍ tikkelt-nniḍen deg {{minutes}} n tesdat (tisdatin).",
+    "passwordResetLink": "Awal uffir yettwales-d : amdan yeṭṭef-d s imayl aseɣwen akken ad yefren wayeḍ."
   },
   "ajouterArtisanat": {
     "title": "Rnu amẓun asnufri",

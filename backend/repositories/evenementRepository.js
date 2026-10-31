@@ -456,19 +456,28 @@ class EvenementRepository extends BaseRepository {
    * Liste publique des participants confirmés (données limitées, pas d'email)
    */
   async getPublicParticipants(evenementId) {
-    return this.models.EvenementUser.findAll({
-      where: {
-        id_evenement: evenementId,
-        statut_participation: { [Op.in]: ['confirme', 'present'] }
-      },
-      attributes: ['role_participation', 'date_inscription'],
-      include: [{
-        model: this.models.User,
-        as: 'User',
-        attributes: ['id_user', 'nom', 'prenom', 'photo_url']
-      }],
-      order: [['date_inscription', 'ASC']]
-    });
+    const where = {
+      id_evenement: evenementId,
+      statut_participation: { [Op.in]: ['confirme', 'present'] }
+    };
+    // Nommés publiquement : seulement les personnes au profil public qui ont accepté les
+    // conditions (pas un compte créé par l'import d'une liste, jamais ouvert par son titulaire)
+    const [participants, total] = await Promise.all([
+      this.models.EvenementUser.findAll({
+        where,
+        attributes: ['role_participation', 'date_inscription'],
+        include: [{
+          model: this.models.User,
+          as: 'User',
+          attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
+          where: { profil_public: true, accepte_conditions: true },
+          required: true
+        }],
+        order: [['date_inscription', 'ASC']]
+      }),
+      this.models.EvenementUser.count({ where })
+    ]);
+    return { participants, total };
   }
 
   /**

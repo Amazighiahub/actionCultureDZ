@@ -30,12 +30,14 @@ class ArticleBlockController extends BaseController {
     try {
       const { articleId, articleType } = req.params;
 
-      const blocks = await this.articleBlockService.getBlocksByArticle(
+      const result = await this.articleBlockService.getBlocksVisibles(
         articleId,
-        articleType || 'article'
+        articleType || 'article',
+        req.user
       );
+      if (this._sendServiceError(req, res, result)) return;
 
-      this._sendSuccess(res, blocks);
+      this._sendSuccess(res, result.data);
 
     } catch (error) {
       this._handleError(res, error);

@@ -95,7 +95,7 @@ describe('UserController — Authentification', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true })
       );
-      expect(accountRateLimiter.resetAttempts).toHaveBeenCalledWith('test@test.com');
+      expect(accountRateLimiter.resetAttempts).toHaveBeenCalledWith('test@test.com', req.ip);
     });
 
     it('doit retourner 400 si email ou password manquant', async () => {
@@ -106,13 +106,23 @@ describe('UserController — Authentification', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    it('doit enregistrer un échec si le login échoue', async () => {
-      mockUserService.login.mockRejectedValue(new Error('Invalid credentials'));
+    it('doit enregistrer un échec si le mot de passe est faux (401), pour cette IP', async () => {
+      mockUserService.login.mockRejectedValue(Object.assign(new Error('Invalid credentials'), { statusCode: 401 }));
       req.body = { email: 'test@test.com', password: 'wrong' };
+      req.ip = '203.0.113.7';
 
       await controller.login(req, res);
 
-      expect(accountRateLimiter.recordFailedAttempt).toHaveBeenCalledWith('test@test.com');
+      expect(accountRateLimiter.recordFailedAttempt).toHaveBeenCalledWith('test@test.com', '203.0.113.7');
+    });
+
+    it('un compte suspendu ou non vérifié (403) ne compte pas comme un échec', async () => {
+      mockUserService.login.mockRejectedValue(Object.assign(new Error('Compte suspendu'), { statusCode: 403 }));
+      req.body = { email: 'test@test.com', password: 'BonMotDePasse1!' };
+
+      await controller.login(req, res);
+
+      expect(accountRateLimiter.recordFailedAttempt).not.toHaveBeenCalled();
     });
   });
 

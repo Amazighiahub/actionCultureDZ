@@ -512,6 +512,11 @@ class OeuvreController extends BaseController {
   async getMedias(req, res) {
     try {
       const oeuvre = await this.oeuvreService.findWithFullDetails(parseInt(req.params.id));
+      // Même règle que la fiche : œuvre non publiée visible par son auteur et la modération
+      const raw = oeuvre?._raw || oeuvre;
+      if (raw && raw.statut !== 'publie' && !this._canSeeUnpublished(req, raw.saisi_par)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       const data = oeuvre.toJSON(req.lang);
       res.json({
         success: true,

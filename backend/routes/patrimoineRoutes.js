@@ -17,7 +17,7 @@ const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
   // Actions destructives sur un site (partagé) : réservées à la modération
   const requireModeration = requireRole('Administrateur', 'Moderateur');
   // Modification d'un site : modération, ou professionnel validé (le contrôleur vérifie qu'il en est le créateur)
@@ -73,7 +73,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // ROUTES AUTHENTIFIÉES
   // ============================================================================
 
-  router.post('/:id/noter', authenticate, validateId(),
+  router.post('/:id/noter', authenticate, requireVerifiedEmail, validateId(),
     [body('note').isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')],
     handleValidationErrors,
     patrimoineController.wrap('noter'));

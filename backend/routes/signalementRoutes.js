@@ -13,7 +13,8 @@ const initSignalementRoutes = (models, authMiddleware) => {
   const {
     authenticate,
     requireAdmin,
-    isAuthenticated
+    isAuthenticated,
+    requireVerifiedEmail
   } = authMiddleware;
 
   // Middleware pour vérifier la propriété d'un signalement
@@ -99,6 +100,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // Créer un signalement (sans upload de screenshot)
   router.post('/',
     authenticate,
+    requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
     [

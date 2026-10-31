@@ -509,11 +509,13 @@ class EvenementService extends BaseService {
    * Liste publique des participants confirmés (données limitées pour la confidentialité)
    */
   async getPublicParticipants(evenementId) {
-    const participants = await this.repository.getPublicParticipants(evenementId);
-    return {
-      participants,
-      total: participants.length
-    };
+    // Événement pas encore publié : personne n'y est encore « attendu » publiquement
+    const evenement = await this.repository.findById(evenementId, { attributes: ['id_evenement', 'statut'] });
+    if (!evenement || ['brouillon', 'en_attente'].includes(evenement.statut)) {
+      return { participants: [], total: 0 };
+    }
+    // total : toutes les personnes confirmées, y compris celles qui ne sont pas nommées
+    return this.repository.getPublicParticipants(evenementId);
   }
 
   /**
