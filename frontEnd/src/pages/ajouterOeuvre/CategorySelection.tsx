@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.service';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface CategorySelectionProps {
   typeOeuvreId: number;
@@ -20,7 +21,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
   selectedCategories,
   onCategoriesChange
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [categoriesGrouped, setCategoriesGrouped] = useState<CategoryGroupedByGenre[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +145,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
             <div key={genre.id_genre} className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">
-                  {genre.nom}
+                  {getLocalizedText(genre.nom, i18n.language)}
                   {selectedCount > 0 &&
                   <Badge variant="secondary" className="ms-2">
                       {selectedCount}/{genre.categories.length}
@@ -162,8 +163,9 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                 }
               </div>
               
-              {genre.description &&
-              <p className="text-sm text-muted-foreground">{genre.description}</p>
+              {/* Description vide en base = {} : n'afficher que du texte */}
+              {getLocalizedText(genre.description, i18n.language) &&
+              <p className="text-sm text-muted-foreground">{getLocalizedText(genre.description, i18n.language)}</p>
               }
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ps-4">
@@ -177,10 +179,10 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                     <Label
                     htmlFor={`cat-${category.id_categorie}`}
                     className="text-sm font-normal cursor-pointer hover:text-primary flex-1">
-                      <span className="font-medium">{category.nom}</span>
-                      {category.description &&
+                      <span className="font-medium">{getLocalizedText(category.nom, i18n.language)}</span>
+                      {getLocalizedText(category.description, i18n.language) &&
                     <span className="block text-xs text-muted-foreground mt-1">
-                          {category.description}
+                          {getLocalizedText(category.description, i18n.language)}
                         </span>
                     }
                     </Label>

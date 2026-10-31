@@ -499,25 +499,77 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.albumDetails', 'Détails de l\'album')}
                 </h4>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.AlbumMusical.format && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('musique.format', 'Format')}</p>
+                      <p className="font-medium text-sm">{t(`musique.formats.${oeuvre.AlbumMusical.format}`, { defaultValue: oeuvre.AlbumMusical.format })}</p>
+                    </div>
+                  )}
                   {oeuvre.AlbumMusical.duree && (
                     <div>
                       <p className="text-xs text-muted-foreground">{t('oeuvre.duration', 'Durée')}</p>
-                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.duree}</p>
+                      <p className="font-medium text-sm">{t('musique.minutes', { count: Number(oeuvre.AlbumMusical.duree), defaultValue: '{{count}} min' })}</p>
                     </div>
                   )}
                   {oeuvre.AlbumMusical.nb_pistes && (
                     <div>
                       <p className="text-xs text-muted-foreground">{t('oeuvre.tracks', 'Pistes')}</p>
-                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.nb_pistes} pistes</p>
+                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.nb_pistes}</p>
                     </div>
                   )}
                   {oeuvre.AlbumMusical.label && (
                     <div>
                       <p className="text-xs text-muted-foreground">{t('oeuvre.label', 'Label')}</p>
-                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.label}</p>
+                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.label === 'Indépendant' ? t('musique.independant', 'Indépendant') : oeuvre.AlbumMusical.label}</p>
                     </div>
                   )}
                 </div>
+
+                {(oeuvre.AlbumMusical.liens_ecoute || []).some((l) => safeExternalUrl(l.url)) && (
+                  <div className="mt-4">
+                    <p className="text-xs text-muted-foreground mb-2">{t('musique.ecouter', 'Écouter')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(oeuvre.AlbumMusical.liens_ecoute || []).map(({ url }) => {
+                        const sur = safeExternalUrl(url);
+                        if (!sur) return null;
+                        return (
+                          <a key={url} href={sur} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm hover:bg-muted">
+                            <ExternalLink className="h-3 w-3" />{new URL(sur).hostname.replace(/^www\./, '')}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {oeuvre.AlbumMusical.pistes && oeuvre.AlbumMusical.pistes.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs text-muted-foreground mb-2">{t('musique.pistes', 'Liste des titres')}</p>
+                    <ol className="divide-y rounded-lg border text-sm">
+                      {oeuvre.AlbumMusical.pistes.map((piste, index) => (
+                        <li key={index} className="flex items-baseline gap-3 px-3 py-2">
+                          <span className="w-6 text-muted-foreground tabular-nums">{index + 1}</span>
+                          <span className="flex-1 font-medium">{piste.titre}
+                            {piste.compositeur && <span className="ms-2 font-normal text-muted-foreground">— {piste.compositeur}</span>}
+                          </span>
+                          {piste.duree && <span className="text-muted-foreground tabular-nums">{piste.duree}</span>}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {oeuvre.AlbumMusical.instruments && oeuvre.AlbumMusical.instruments.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs text-muted-foreground mb-2">{t('musique.instruments', 'Instruments')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {oeuvre.AlbumMusical.instruments.map((code) => (
+                        <Badge key={code} variant="secondary">{t(`instruments.${code}`, { defaultValue: code })}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

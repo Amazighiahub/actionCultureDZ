@@ -43,6 +43,7 @@ import type {
 import type { Editeur } from '@/types/models/references.types';
 import type { TypeUser } from '@/types/models/type-user.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { rolesPourTypeOeuvre, libelleRole } from '@/utils/rolesOeuvre';
 
 interface IntervenantEditeurManagerProps {
   typeOeuvreId: number;
@@ -359,7 +360,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           {intervenant.display.prenom} {intervenant.display.nom}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {intervenant.role}
+                          {libelleRole(t, intervenant.role)}
                           {intervenant.display.organisation && ` • ${intervenant.display.organisation}`}
                           {intervenant.display.email && ` • ${intervenant.display.email}`}
                         </p>
@@ -454,9 +455,9 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                               <SelectValue placeholder={t('contributors.selectRole')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {typesUsers.map((type) => (
+                              {rolesPourTypeOeuvre(typeOeuvreId, typesUsers).map((type) => (
                                 <SelectItem key={type.id_type_user} value={type.id_type_user.toString()}>
-                                  {type.nom_type}
+                                  {libelleRole(t, type.nom_type)}
                                   {type.description && (
                                     <span className={`text-xs text-muted-foreground ${rtlClasses.marginStart(1)}`}>
                                       ({type.description})

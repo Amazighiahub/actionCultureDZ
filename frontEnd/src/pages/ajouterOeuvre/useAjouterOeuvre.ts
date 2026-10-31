@@ -30,6 +30,7 @@ import type {
   ArticleEditorSavePayload,
   MediaUploadResult,
   ArticleBlockToSave,
+  PisteAlbum,
 } from './types';
 import { INITIAL_FORM_DATA } from './types';
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
@@ -201,6 +202,12 @@ export function useAjouterOeuvre() {
           duree_album: (albumData['duree'] ?? oeuvre['duree_album']) as string | undefined,
           label: (albumData['label'] ?? oeuvre['label']) as string | undefined,
           nb_pistes: (albumData['nb_pistes'] ?? oeuvre['nb_pistes']) as number | undefined,
+          format_album: (albumData['format'] ?? undefined) as string | undefined,
+          pistes: Array.isArray(albumData['pistes']) ? albumData['pistes'] as PisteAlbum[] : undefined,
+          liens_ecoute: Array.isArray(albumData['liens_ecoute'])
+            ? (albumData['liens_ecoute'] as Array<{ url?: string } | string>).map((l) => (typeof l === 'string' ? l : l?.url || '')).filter(Boolean)
+            : undefined,
+          instruments: Array.isArray(albumData['instruments']) ? albumData['instruments'] as string[] : undefined,
           // Article
           auteur: (articleData['auteur'] ?? oeuvre['auteur']) as string | undefined,
           source: (articleData['source'] ?? oeuvre['source']) as string | undefined,
@@ -290,6 +297,7 @@ export function useAjouterOeuvre() {
       const typeTags: Record<number, string[]> = {
         1: ['littérature', 'lecture', 'roman'],        // Livre
         2: ['cinéma', 'audiovisuel', 'réalisation'],   // Film
+        3: ['musique', 'chanson', 'patrimoine musical'], // Musique
         7: ['fait-main', 'artisanal', 'traditionnel'], // Artisanat
         5: ['recherche', 'science', 'académique']      // Article Scientifique
       };
@@ -667,7 +675,15 @@ export function useAjouterOeuvre() {
         details.film = { duree_minutes: formData.duree_minutes, realisateur: formData.realisateur };
         break;
       case 3: // Album Musical
-        details.album_musical = { duree: formData.duree_album, label: formData.label, nb_pistes: formData.nb_pistes };
+        details.album_musical = {
+          duree: formData.duree_album,
+          label: formData.label,
+          nb_pistes: formData.nb_pistes,
+          format: formData.format_album || undefined,
+          pistes: (formData.pistes || []).filter((p) => p.titre.trim()),
+          liens_ecoute: (formData.liens_ecoute || []).map((url) => url.trim()).filter(Boolean).map((url) => ({ url })),
+          instruments: formData.instruments || []
+        };
         break;
       case 4: // Article
         details.article = { auteur: formData.auteur, source: formData.source, resume: formData.resume_article, url_source: formData.url_source };
@@ -737,11 +753,18 @@ export function useAjouterOeuvre() {
           errors.url_source = t('oeuvre.errors.invalidUrl', 'URL invalide — utilisez le format https://exemple.com');
         }
       }
+      // Liens d'écoute (musique) : https seulement, comme le vérifie le serveur
+      if (formData.id_type_oeuvre === 3 && (formData.liens_ecoute || []).some((lien) => {
+        if (!lien.trim()) return false;
+        try { return new URL(lien.trim()).protocol !== 'https:'; } catch { return true; }
+      })) {
+        errors.liens_ecoute = t('musique.lienInvalide', 'Chaque lien doit commencer par https://');
+      }
 
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
-        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'categories'];
+        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'liens_ecoute', 'categories'];
         const firstErrorField = fieldOrder.find((f) => errors[f]);
         if (firstErrorField) {
           const elementId = firstErrorField === 'titre' ? 'titre-fr'

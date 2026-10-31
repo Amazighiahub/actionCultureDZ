@@ -5,11 +5,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TypeOeuvre, Materiau, Technique } from '@/types/models/references.types';
-import type { ExtendedMetadata, FormData } from './types';
-import { TECHNIQUES_ART, SUPPORTS_ART } from './types';
+import type { ExtendedMetadata, FormData, PisteAlbum } from './types';
+import { TECHNIQUES_ART, SUPPORTS_ART, FORMATS_MUSIQUE, INSTRUMENTS_MUSIQUE } from './types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -91,6 +91,161 @@ const ArtFields: React.FC<{ formData: FormData; handleInputChange: (field: strin
   );
 };
 
+// Champs Musique : format, titres, liens d'écoute, instruments
+const MusiqueFields: React.FC<{
+  formData: FormData;
+  fieldErrors: Record<string, string>;
+  handleInputChange: (field: keyof FormData, value: FormData[keyof FormData]) => void;
+  t: any;
+}> = ({ formData, fieldErrors, handleInputChange, t }) => {
+  const [autreInstrument, setAutreInstrument] = React.useState('');
+  const pistes = formData.pistes || [];
+  const liens = formData.liens_ecoute || [];
+  const instruments = formData.instruments || [];
+
+  const changerPiste = (index: number, champ: keyof PisteAlbum, valeur: string) =>
+    handleInputChange('pistes', pistes.map((p, i) => (i === index ? { ...p, [champ]: valeur } : p)));
+  const basculerInstrument = (code: string) =>
+    handleInputChange('instruments', instruments.includes(code) ? instruments.filter((i) => i !== code) : [...instruments, code]);
+  const ajouterAutreInstrument = () => {
+    const nom = autreInstrument.trim();
+    if (nom && !instruments.includes(nom) && instruments.length < 20) handleInputChange('instruments', [...instruments, nom]);
+    setAutreInstrument('');
+  };
+  const libelleInstrument = (code: string) => t(`instruments.${code}`, { defaultValue: code });
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="format_album">{t('musique.format', 'Format')}</Label>
+          <select
+            id="format_album"
+            className="w-full p-3 border rounded-lg hover:border-primary focus:border-primary"
+            value={formData.format_album || ''}
+            onChange={(e) => handleInputChange('format_album', e.target.value || undefined)}>
+            <option value="">{t('musique.choisirFormat', '-- Choisir --')}</option>
+            {FORMATS_MUSIQUE.map((f) => <option key={f} value={f}>{t(`musique.formats.${f}`)}</option>)}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="duree_album">{t("ajouteroeuvre.dure_totale")}</Label>
+          <Input
+            id="duree_album"
+            placeholder={t("ajouteroeuvre.placeholder_4530")}
+            maxLength={10}
+            value={formData.duree_album || ''}
+            onChange={(e) => handleInputChange('duree_album', e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="label">{t("ajouteroeuvre.label_maison_production")}</Label>
+          <Input
+            id="label"
+            placeholder={t("ajouteroeuvre.placeholder_nom_label")}
+            maxLength={100}
+            value={formData.label || ''}
+            onChange={(e) => handleInputChange('label', e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="nb_pistes">{t("ajouteroeuvre.nb_pistes", "Nombre de pistes")}</Label>
+          <Input
+            id="nb_pistes"
+            type="number"
+            min={1}
+            max={500}
+            placeholder={t("ajouteroeuvre.placeholder_nb_pistes", "Ex: 12")}
+            value={formData.nb_pistes || ''}
+            onChange={(e) => handleInputChange('nb_pistes', parseInt(e.target.value) || undefined)} />
+        </div>
+      </div>
+
+      {/* Titres */}
+      <div className="space-y-3">
+        <div>
+          <Label>{t('musique.pistes', 'Liste des titres')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <p className="text-xs text-muted-foreground mt-1">{t('musique.pistesAide', 'Le nom de chaque morceau, sa durée et son compositeur si vous les connaissez.')}</p>
+        </div>
+        {pistes.map((piste, index) => (
+          <div key={index} className="grid grid-cols-[2rem_1fr_6rem_auto] md:grid-cols-[2rem_2fr_6rem_1.5fr_auto] gap-2 items-center">
+            <span className="text-sm text-muted-foreground text-center">{index + 1}</span>
+            <Input aria-label={t('musique.titreMorceau', 'Titre du morceau')} placeholder={t('musique.titreMorceau', 'Titre du morceau')}
+              maxLength={200} value={piste.titre} onChange={(e) => changerPiste(index, 'titre', e.target.value)} />
+            <Input aria-label={t('musique.dureeMorceau', 'Durée')} placeholder="3:45" maxLength={10}
+              value={piste.duree || ''} onChange={(e) => changerPiste(index, 'duree', e.target.value)} />
+            <Input aria-label={t('musique.compositeurMorceau', 'Compositeur')} placeholder={t('musique.compositeurMorceau', 'Compositeur')}
+              className="hidden md:block" maxLength={200} value={piste.compositeur || ''} onChange={(e) => changerPiste(index, 'compositeur', e.target.value)} />
+            <Button type="button" variant="ghost" size="sm" aria-label={t('musique.retirer', 'Retirer')}
+              onClick={() => handleInputChange('pistes', pistes.filter((_, i) => i !== index))}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        {pistes.length < 100 && (
+          <Button type="button" variant="outline" size="sm" onClick={() => handleInputChange('pistes', [...pistes, { titre: '' }])}>
+            <Plus className="h-4 w-4 me-1" />{t('musique.ajouterPiste', 'Ajouter un titre')}
+          </Button>
+        )}
+      </div>
+
+      {/* Liens d'écoute */}
+      <div className="space-y-3">
+        <div>
+          <Label>{t('musique.liens', "Liens d'écoute")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <p className="text-xs text-muted-foreground mt-1">{t('musique.liensAide', 'YouTube, Spotify, Deezer, SoundCloud, Anghami… L’adresse doit commencer par https://')}</p>
+        </div>
+        {liens.map((lien, index) => (
+          <div key={index} className="flex gap-2">
+            <Input type="url" inputMode="url" autoComplete="url" maxLength={500} placeholder="https://"
+              aria-label={t('musique.liens', "Liens d'écoute")} aria-invalid={!!fieldErrors.liens_ecoute || undefined}
+              value={lien} onChange={(e) => handleInputChange('liens_ecoute', liens.map((l, i) => (i === index ? e.target.value : l)))} />
+            <Button type="button" variant="ghost" size="sm" aria-label={t('musique.retirer', 'Retirer')}
+              onClick={() => handleInputChange('liens_ecoute', liens.filter((_, i) => i !== index))}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        {fieldErrors.liens_ecoute && <p id="liens_ecoute-error" role="alert" className="text-sm text-destructive">{fieldErrors.liens_ecoute}</p>}
+        {liens.length < 10 && (
+          <Button type="button" variant="outline" size="sm" onClick={() => handleInputChange('liens_ecoute', [...liens, ''])}>
+            <Plus className="h-4 w-4 me-1" />{t('musique.ajouterLien', 'Ajouter un lien')}
+          </Button>
+        )}
+      </div>
+
+      {/* Instruments */}
+      <div className="space-y-3">
+        <div>
+          <Label>{t('musique.instruments', 'Instruments')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <p className="text-xs text-muted-foreground mt-1">{t('musique.instrumentsAide', 'Cliquez sur les instruments joués, ou ajoutez-en un autre.')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {INSTRUMENTS_MUSIQUE.map((code) => (
+            <Button key={code} type="button" size="sm" aria-pressed={instruments.includes(code)}
+              variant={instruments.includes(code) ? 'default' : 'outline'} onClick={() => basculerInstrument(code)}>
+              {libelleInstrument(code)}
+            </Button>
+          ))}
+          {instruments.filter((i) => !(INSTRUMENTS_MUSIQUE as readonly string[]).includes(i)).map((nom) => (
+            <Button key={nom} type="button" size="sm" variant="default" aria-pressed onClick={() => basculerInstrument(nom)}>
+              {nom}<X className="h-3 w-3 ms-1" />
+            </Button>
+          ))}
+        </div>
+        <div className="flex gap-2 max-w-sm">
+          <Input maxLength={50} placeholder={t('musique.autreInstrument', 'Autre instrument…')} value={autreInstrument}
+            aria-label={t('musique.autreInstrument', 'Autre instrument…')}
+            onChange={(e) => setAutreInstrument(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); ajouterAutreInstrument(); } }} />
+          <Button type="button" size="sm" variant="outline" disabled={!autreInstrument.trim()} onClick={ajouterAutreInstrument}
+            aria-label={t('musique.ajouterInstrument', 'Ajouter cet instrument')}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Composant principal des champs spécifiques
 interface OeuvreSpecificFieldsProps {
   metadata: ExtendedMetadata;
@@ -164,36 +319,8 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    3: /* Album Musical */
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="duree_album">{t("ajouteroeuvre.dure_totale")}</Label>
-          <Input
-          id="duree_album"
-          placeholder={t("ajouteroeuvre.placeholder_4530")}
-          maxLength={10}
-          value={formData.duree_album || ''}
-          onChange={(e) => handleInputChange('duree_album', e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="label">{t("ajouteroeuvre.label_maison_production")}</Label>
-          <Input
-          id="label"
-          placeholder={t("ajouteroeuvre.placeholder_nom_label")}
-          maxLength={200}
-          value={formData.label || ''}
-          onChange={(e) => handleInputChange('label', e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="nb_pistes">{t("ajouteroeuvre.nb_pistes", "Nombre de pistes")}</Label>
-          <Input
-          id="nb_pistes"
-          type="number"
-          placeholder={t("ajouteroeuvre.placeholder_nb_pistes", "Ex: 12")}
-          value={formData.nb_pistes || ''}
-          onChange={(e) => handleInputChange('nb_pistes', parseInt(e.target.value) || undefined)} />
-        </div>
-      </div>,
+    3: /* Musique (album, EP, chanson, concert) */
+    <MusiqueFields formData={formData} fieldErrors={fieldErrors} handleInputChange={handleInputChange} t={t} />,
 
     4: /* Article */
     <div className="space-y-6">
