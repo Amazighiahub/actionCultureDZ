@@ -133,6 +133,10 @@ export interface DetailsAlbumMusical {
   duree?: string;
   label?: string;
   nb_pistes?: number;
+  format?: string; // album, ep, single, live, compilation
+  pistes?: Array<{ titre: string; duree?: string; compositeur?: string }>;
+  liens_ecoute?: Array<{ url: string }>; // https seulement
+  instruments?: string[];
 }
 
 /**

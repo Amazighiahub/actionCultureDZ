@@ -30,16 +30,19 @@ export interface EvenementMedia extends MediaExtended {
  * Helper pour déterminer l'image principale
  */
 export function getMainImage(medias: MediaExtended[]): string | undefined {
+  // Seulement des images : un extrait audio ou une vidéo n'est pas une couverture (image cassée sinon)
+  const images = medias.filter(m => !m.type_media || m.type_media === 'image');
+
   // Priorité 1: Image marquée comme principale
-  const principal = medias.find(m => m.is_Principale);
+  const principal = images.find(m => m.is_Principale);
   if (principal) return principal.url;
-  
+
   // Priorité 2: Image avec ordre = 1
-  const firstOrder = medias.find(m => m.ordre === 1);
+  const firstOrder = images.find(m => m.ordre === 1);
   if (firstOrder) return firstOrder.url;
-  
+
   // Priorité 3: Première image
-  return medias[0]?.url;
+  return images[0]?.url;
 }
 
 /**

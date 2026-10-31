@@ -29,6 +29,30 @@ module.exports = (sequelize) => {
     label: {
       type: DataTypes.STRING(100),
       allowNull: false
+    },
+    // album, ep, single, live, compilation
+    format: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    nb_pistes: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    // [{ titre, duree: "3:45", compositeur }]
+    pistes: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    // [{ url: "https://..." }]
+    liens_ecoute: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    // codes connus (« mandole », « imzad »…) ou texte libre
+    instruments: {
+      type: DataTypes.JSON,
+      allowNull: true
     }
   }, {
     tableName: 'albummusical',

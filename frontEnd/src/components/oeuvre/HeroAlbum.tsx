@@ -61,7 +61,6 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
   const [showZoom, setShowZoom] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
 
-  const videoMedia = medias.find(m => m.type_media === 'video');
 
   return (
     <div className="relative bg-gradient-to-br from-emerald-50/50 via-background to-teal-50/30 dark:from-emerald-950/20 dark:via-background dark:to-teal-950/10 min-h-[500px]">
@@ -253,7 +252,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                           {oeuvre.AlbumMusical?.label && (
                             <div className="flex items-center justify-between text-emerald-200/80">
                               <span>Label</span>
-                              <span className="font-medium">{oeuvre.AlbumMusical.label}</span>
+                              <span className="font-medium">{oeuvre.AlbumMusical.label === 'Indépendant' ? t('musique.independant', 'Indépendant') : oeuvre.AlbumMusical.label}</span>
                             </div>
                           )}
                           {oeuvre.AlbumMusical?.duree && (
@@ -363,7 +362,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
 
             {/* Actions principales */}
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
-              <Button size="lg" className="shadow-lg" onClick={handlePlay}>
+              <Button size="lg" className="shadow-lg" onClick={() => (playableMedia ? setShowPlayer(true) : handlePlay())}>
                 <Headphones className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />
                 {t('works.actions.listenNow', 'Écouter')}
               </Button>
@@ -429,7 +428,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                         </div>
                       )}
                     </div>
-                    {playableMedia && videoMedia ? (
+                    {playableMedia?.type_media === 'video' ? (
                       <video src={playableMedia.url} controls autoPlay playsInline className="w-full rounded-lg" style={{ maxHeight: '50vh' }} />
                     ) : playableMedia ? (
                       <audio src={playableMedia.url} controls autoPlay className="w-full max-w-md" />

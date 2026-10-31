@@ -37,6 +37,7 @@ import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import type { TypeUser } from '@/types/models/type-user.types';
 import type { NouvelIntervenant } from '@/types/api/oeuvre-creation.types';import { useTranslation } from "react-i18next";
+import { rolesPourTypeOeuvre, libelleRole } from '@/utils/rolesOeuvre';
 
 interface IntervenantModalProps {
   isOpen: boolean;
@@ -80,16 +81,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
   const [emailExists, setEmailExists] = useState<{exists: boolean;user?: any;} | null>(null);
   const [newSpecialite, setNewSpecialite] = useState('');
 
-  // Mapping des types d'œuvres vers les types d'intervenants pertinents
-  const { t } = useTranslation();const TYPE_MAPPING: Record<number, string[]> = {
-    1: ['ecrivain', 'journaliste', 'autre'], // Livre
-    2: ['realisateur', 'artiste', 'autre'], // Film
-    3: ['musicien', 'danseur', 'artiste', 'autre'], // Album Musical
-    4: ['journaliste', 'ecrivain', 'autre'], // Article
-    5: ['scientifique', 'ecrivain', 'autre'], // Article Scientifique
-    6: ['artiste', 'sculpteur', 'autre'], // Artisanat
-    7: ['artiste', 'sculpteur', 'photographe', 'autre'] // Œuvre d'Art
-  };
+  const { t } = useTranslation();
 
   // Charger les types users depuis l'API si non fournis
   useEffect(() => {
@@ -173,35 +165,8 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
     return () => clearTimeout(debounceTimer);
   }, [formData.email]);
 
-  // Obtenir les types pertinents selon le type d'œuvre
-  const getRelevantTypes = (): TypeUser[] => {
-    if (!typesUsers || typesUsers.length === 0) {
-      return [];
-    }
-
-    // Si pas de type d'œuvre spécifié, retourner tous les types
-    if (!typeOeuvreId) {
-      return typesUsers;
-    }
-
-    // Récupérer les types autorisés
-    const allowedTypes = TYPE_MAPPING[typeOeuvreId];
-
-    // Si pas de mapping, retourner tous les types
-    if (!allowedTypes || allowedTypes.length === 0) {
-      return typesUsers;
-    }
-
-    // Filtrer les types
-    const filtered = typesUsers.filter((type) =>
-    allowedTypes.includes(type.nom_type.toLowerCase())
-    );
-
-    // Si aucun type ne correspond, retourner tous les types
-    return filtered.length > 0 ? filtered : typesUsers;
-  };
-
-  const relevantTypes = getRelevantTypes();
+  // Rôles pertinents selon le type d'œuvre
+  const relevantTypes = rolesPourTypeOeuvre(typeOeuvreId, typesUsers);
 
   // Gestion des spécialités
   const handleAddSpecialite = () => {
@@ -488,7 +453,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                     key={type.id_type_user}
                     value={type.id_type_user.toString()}>
 
-                        <span className="capitalize">{type.nom_type}</span>
+                        <span>{libelleRole(t, type.nom_type)}</span>
                         {type.description &&
                     <span className="text-sm text-muted-foreground ms-2">
                             - {type.description}

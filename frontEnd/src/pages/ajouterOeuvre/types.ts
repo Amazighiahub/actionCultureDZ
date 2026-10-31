@@ -32,6 +32,13 @@ export interface ExtendedMetadata {
   types_users?: TypeUser[];
 }
 
+// Un titre de l'album (musique)
+export interface PisteAlbum {
+  titre: string;
+  duree?: string;
+  compositeur?: string;
+}
+
 // Type pour le formulaire
 export interface FormData {
   // Champs généraux
@@ -60,6 +67,10 @@ export interface FormData {
   duree_album?: string;
   label?: string;
   nb_pistes?: number;
+  format_album?: string;
+  pistes?: PisteAlbum[];
+  liens_ecoute?: string[];
+  instruments?: string[];
   auteur?: string;
   source?: string;
   resume_article?: string;
@@ -133,6 +144,15 @@ export const TECHNIQUES_ART = [
   "Sculpture", "Céramique", "Mosaïque", "Calligraphie",
   "Art numérique", "Photographie", "Art mixte"
 ];
+
+// Musique : formats et instruments proposés (codes traduits par `musique.formats.*` et `instruments.*` ;
+// un instrument hors liste est enregistré tel que saisi)
+export const FORMATS_MUSIQUE = ['album', 'ep', 'single', 'live', 'compilation'] as const;
+
+export const INSTRUMENTS_MUSIQUE = [
+  'mandole', 'oud', 'guembri', 'imzad', 'kouitra', 'rbab', 'qanoun', 'violon', 'tar', 'bendir',
+  'derbouka', 'tbel', 'karkabou', 'gasba', 'ghaita', 'zorna', 'nay', 'guitare', 'piano', 'synthetiseur'
+] as const;
 
 export const SUPPORTS_ART = [
   "Toile", "Papier", "Bois", "Métal", "Verre",

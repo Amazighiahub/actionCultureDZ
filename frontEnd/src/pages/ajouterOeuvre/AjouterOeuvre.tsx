@@ -351,7 +351,7 @@ const AjouterOeuvre: React.FC = () => {
                     {/* Champs spécifiques */}
                     <Card className="shadow-cultural">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_spcifiques")}
+                        <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_spcifiques")}{' '}
                           {getLocalizedText(metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type)}
                         </CardTitle>
                       </CardHeader>

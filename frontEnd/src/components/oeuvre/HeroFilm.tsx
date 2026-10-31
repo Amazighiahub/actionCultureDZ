@@ -387,7 +387,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
 
             {/* Actions principales */}
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
-              <Button size="lg" className="shadow-lg" onClick={handlePlay}>
+              <Button size="lg" className="shadow-lg" onClick={() => (playableMedia ? setShowPlayer(true) : handlePlay())}>
                 <Play className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />
                 {t('works.actions.watchTrailer', 'Voir la bande-annonce')}
               </Button>

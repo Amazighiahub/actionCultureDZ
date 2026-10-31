@@ -567,7 +567,10 @@ class OeuvreService extends BaseService {
       if (this.models?.Media) {
         const media = await this.models.Media.create({
           id_oeuvre: oeuvreId,
-          type_media: file.mimetype?.startsWith('image') ? 'image' : file.mimetype?.startsWith('video') ? 'video' : 'document',
+          // « audio » : sans lui, un extrait MP3 était rangé en document et le lecteur ne le trouvait jamais
+          type_media: file.mimetype?.startsWith('image') ? 'image'
+            : file.mimetype?.startsWith('video') ? 'video'
+            : file.mimetype?.startsWith('audio') ? 'audio' : 'document',
           url: file.path || file.location || file.url,
           mime_type: file.mimetype,
           taille_fichier: file.size,

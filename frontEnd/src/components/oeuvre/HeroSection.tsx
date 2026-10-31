@@ -270,7 +270,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         isFavorite={isFavorite} favoriteLoading={favoriteLoading}
         onToggleFavorite={onToggleFavorite}
         shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
-        playableMedia={playableMedia}
+        playableMedia={audioMedia || videoMedia}
         handlePlay={handlePlay} noMediaMsg={noMediaMsg}
       />
     );

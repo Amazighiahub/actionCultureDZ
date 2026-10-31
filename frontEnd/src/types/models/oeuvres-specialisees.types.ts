@@ -40,7 +40,11 @@ export interface AlbumMusical {
   nb_pistes?: number;
   id_genre: number;
   label: string;
-  
+  format?: string | null; // album, ep, single, live, compilation
+  pistes?: Array<{ titre: string; duree?: string; compositeur?: string }> | null;
+  liens_ecoute?: Array<{ url: string }> | null;
+  instruments?: string[] | null;
+
   // Relations (optionnelles)
   Oeuvre?: Oeuvre;
   Genre?: Genre;
