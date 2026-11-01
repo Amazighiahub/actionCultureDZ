@@ -193,9 +193,18 @@ class PatrimoineRepository extends BaseRepository {
       });
     }
 
+    // Le total doit appliquer le même filtre de wilaya que la liste (sinon il comptait tous les sites)
+    const filtreWilaya = wilayaId && this.models.Commune ? [{
+      model: this.models.Commune, attributes: [], required: true,
+      include: [{
+        model: this.models.Daira, attributes: [], required: true,
+        include: [{ model: this.models.Wilaya, attributes: [], where: { id_wilaya: wilayaId }, required: true }]
+      }]
+    }] : [];
+
     // Séparer count + findAll pour éviter le hang de findAndCountAll avec includes
     const [total, rows] = await Promise.all([
-      this.model.count({ where }),
+      this.model.count({ where, include: filtreWilaya, distinct: true, col: 'id_lieu' }),
       this.model.findAll({
         where,
         include,

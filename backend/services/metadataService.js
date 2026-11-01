@@ -510,7 +510,16 @@ class MetadataService {
     if (existing) return existing;
 
     this.clearCache('tag');
-    return this.models.TagMotCle.create({ nom: prepareMultiLangField(nom, lang) });
+    try {
+      return await this.models.TagMotCle.create({ nom: prepareMultiLangField(nom, lang) });
+    } catch (error) {
+      // Index unique sur le nom (sans casse ni accents) : on renvoie le mot-clé déjà présent
+      if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+      const cle = String(typeof nom === 'object' ? (nom.fr || Object.values(nom)[0] || '') : nom).trim().toLowerCase();
+      const deja = await this.models.TagMotCle.findOne({ where: this.sequelize.where(this.sequelize.col('cle'), cle) });
+      if (deja) return deja;
+      throw error;
+    }
   }
 
   async createMateriau(lang, { nom, description }) {

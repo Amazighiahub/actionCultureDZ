@@ -37,7 +37,7 @@ module.exports = (sequelize) => {
   // Associations
   Livre.associate = (models) => {
     Livre.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-    Livre.belongsTo(models.Genre, { foreignKey: 'id_genre' });
+    Livre.belongsTo(models.Genre, { foreignKey: 'id_genre', onDelete: 'SET NULL' });
   };
 
   return Livre;

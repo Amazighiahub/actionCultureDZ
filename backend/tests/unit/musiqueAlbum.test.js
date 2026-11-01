@@ -114,3 +114,38 @@ describe('AlbumMusicalSubService — genre et nouveaux champs', () => {
     expect(existant.update).toHaveBeenCalledWith({ id_genre: 38, instruments: ['imzad'] }, { transaction: {} });
   });
 });
+
+describe('AlbumMusicalSubService — genre envoyé par le client (audit V7)', () => {
+  const modeles = (liensValides) => ({
+    AlbumMusical: { create: jest.fn(async (d) => d), findOne: jest.fn() },
+    OeuvreCategorie: { findAll: jest.fn(async () => []) },
+    GenreCategorie: { findAll: jest.fn(async () => []) },
+    TypeOeuvreGenre: {
+      findAll: jest.fn(async () => []),
+      findOne: jest.fn(async ({ where, order }) => {
+        if (where.id_genre !== undefined) return liensValides.includes(where.id_genre) ? { id_genre: where.id_genre } : null;
+        return order ? { id_genre: 40 } : { id_genre: 26 };
+      })
+    }
+  });
+
+  test('un genre musical valide est gardé', async () => {
+    const m = modeles([38]);
+    await new AlbumMusicalSubService(m).createForOeuvre(7, { id_genre: '38' }, {});
+    expect(m.AlbumMusical.create).toHaveBeenCalledWith(expect.objectContaining({ id_genre: 38 }), { transaction: {} });
+  });
+
+  test('un genre inconnu est ignoré : repli sur le premier genre dans l’ordre d’affichage', async () => {
+    const m = modeles([38]);
+    await new AlbumMusicalSubService(m).createForOeuvre(7, { id_genre: 99999 }, {});
+    expect(m.AlbumMusical.create).toHaveBeenCalledWith(expect.objectContaining({ id_genre: 40 }), { transaction: {} });
+  });
+
+  test('modification : un genre inconnu ne remplace pas le genre en place', async () => {
+    const existant = { update: jest.fn() };
+    const m = modeles([]);
+    m.AlbumMusical.findOne.mockResolvedValue(existant);
+    await new AlbumMusicalSubService(m).updateForOeuvre(7, { id_genre: 99999, label: 'X' }, {});
+    expect(existant.update).toHaveBeenCalledWith({ label: 'X' }, { transaction: {} });
+  });
+});

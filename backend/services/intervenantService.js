@@ -131,11 +131,19 @@ class IntervenantService extends BaseService {
     const refus = refusLien(oeuvre, { userId, isModerator });
     if (refus) throw refus.code === 403 ? this._forbiddenError(refus.message) : this._validationError(refus.message);
     const ordre = ((await IntervenantArticle.max('ordre', { where: { id_intervenant: id } })) || 0) + 1;
-    const [lien] = await IntervenantArticle.findOrCreate({
-      where: { id_intervenant: id, id_oeuvre },
-      defaults: { ordre, id_contributeur: userId || null }
-    });
-    return lien;
+    try {
+      const [lien] = await IntervenantArticle.findOrCreate({
+        where: { id_intervenant: id, id_oeuvre },
+        defaults: { ordre, id_contributeur: userId || null }
+      });
+      return lien;
+    } catch (error) {
+      // Double clic : le lien vient d'être créé par l'autre requête
+      if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+      const lien = await IntervenantArticle.findOne({ where: { id_intervenant: id, id_oeuvre } });
+      if (!lien) throw error;
+      return lien;
+    }
   }
 
   /** Retirer un article de la page d'une personnalité (modération ou la personne qui l'a relié) */
@@ -240,12 +248,8 @@ class IntervenantService extends BaseService {
 
     // 1. Vérifier par email (si fourni) — comparaison insensible à la casse
     if (normalizedEmail) {
-      const existing = await this.models.Intervenant.findOne({
-        where: Sequelize.where(
-          Sequelize.fn('LOWER', Sequelize.col('email')),
-          normalizedEmail
-        )
-      });
+      // La colonne est en collation insensible à la casse : l'égalité suffit et utilise l'index unique
+      const existing = await this.models.Intervenant.findOne({ where: { email: normalizedEmail } });
       if (existing) return existing;
     }
 
@@ -376,10 +380,7 @@ class IntervenantService extends BaseService {
             where: {
               [Op.and]: [
                 { id_intervenant: { [Op.ne]: id } },
-                Sequelize.where(
-                  Sequelize.fn('LOWER', Sequelize.col('email')),
-                  normalizedNew
-                )
+                { email: normalizedNew }
               ]
             }
           });
@@ -561,10 +562,7 @@ class IntervenantService extends BaseService {
   async _findUserByEmailNormalized(normalizedEmail) {
     if (!normalizedEmail) return null;
     return this.models.User.findOne({
-      where: Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.col('email')),
-        normalizedEmail
-      ),
+      where: { email: normalizedEmail }, // collation insensible à la casse : index utilisé
       attributes: ['id_user', 'email']
     });
   }

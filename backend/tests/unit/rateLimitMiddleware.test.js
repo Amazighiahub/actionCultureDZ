@@ -325,8 +325,8 @@ describe('AccountRateLimiter', () => {
   });
 });
 
-describe('globalLimiter : limite générale', () => {
-  it('1 000 requêtes / 15 min par adresse en production (visiteurs partageant un Wi-Fi ou un opérateur)', () => {
+describe('limites en production (adresses mobiles partagées)', () => {
+  const configsProduction = () => {
     const avant = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
     let configs;
@@ -337,9 +337,32 @@ describe('globalLimiter : limite générale', () => {
       configs = rateLimit.mock.calls.map(c => c[0]);
     });
     process.env.NODE_ENV = avant;
-    const globale = configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 1000);
-    expect(globale).toBeDefined();
-    // La connexion reste strictement limitée
-    expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 15)).toBe(true);
+    return configs;
+  };
+
+  it('3 000 requêtes / 15 min par adresse ; connexion et inscription toujours limitées', () => {
+    const configs = configsProduction();
+    expect(configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 3000)).toBeDefined();
+    expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 50 && c.skipSuccessfulRequests)).toBe(true);
+    expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 30 && c.skipSuccessfulRequests === false)).toBe(true);
+  });
+
+  it("actions d'administration et sensibles : comptées par personne connectée, pas par adresse", () => {
+    const configs = configsProduction();
+    const strict = configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 5);
+    const actions = configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 300);
+    for (const c of [strict, actions]) {
+      expect(c.keyGenerator({ user: { id_user: 7 }, ip: '1.2.3.4' })).toBe('u:7');
+      expect(c.keyGenerator({ ip: '1.2.3.4' })).toBe('1.2.3.4');
+    }
+  });
+
+  it("renouvellement de session : compté par session (deux abonnés d'une même adresse séparés)", () => {
+    const refresh = configsProduction().find(c => c.windowMs === 15 * 60 * 1000 && c.max === 30);
+    const a = refresh.keyGenerator({ ip: '1.2.3.4', cookies: { refresh_token: 'jeton-a' } });
+    const b = refresh.keyGenerator({ ip: '1.2.3.4', cookies: { refresh_token: 'jeton-b' } });
+    expect(a).not.toBe(b);
+    expect(a).not.toContain('jeton-a');
+    expect(refresh.keyGenerator({ ip: '1.2.3.4' })).toBe('1.2.3.4');
   });
 });

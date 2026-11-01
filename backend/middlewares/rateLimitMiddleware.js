@@ -5,6 +5,11 @@ const RedisStore = rateLimitRedis?.RedisStore || rateLimitRedis?.default || rate
 const { getClient: getRedisClient } = require('../utils/redisClient');
 const logger = require('../utils/logger');
 const { maskEmail } = require('../utils/maskPII');
+const crypto = require('crypto');
+
+// Compté par personne connectée, sinon par adresse internet (une adresse d'opérateur mobile est
+// partagée par de nombreux abonnés : compter par adresse bloquait des inconnus les uns par les autres)
+const parPersonne = (req) => (req.user?.id_user ? `u:${req.user.id_user}` : req.ip);
 
 // ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -84,7 +89,9 @@ const globalLimiter = rateLimit(withStore('global', {
   // de nombreux abonnés) regroupe beaucoup de visiteurs. Une page en demande 2 à 5 : à 100, un
   // groupe qui scannait les QR codes d'un salon était bloqué en quelques minutes. Les limites
   // strictes (connexion, inscription, créations, envois) restent à part.
-  max: 1000, // 15 minutes, par adresse internet
+  // 3 000 (au lieu de 1 000) : une adresse mobile partagée (Mobilis, Djezzy, Ooredoo) regroupe des
+  // centaines de visiteurs pendant une campagne. Les rafales restent freinées par nginx (30/s par adresse).
+  max: 3000, // 15 minutes, par adresse internet
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -99,10 +106,29 @@ const globalLimiter = rateLimit(withStore('global', {
 }));
 
 // 2. Rate limiter strict pour les endpoints sensibles
+// (changement de mot de passe, suppression du compte, changement d'e-mail, vérification d'un e-mail)
 const strictLimiter = rateLimit(withStore('strict', {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: IS_PRODUCTION ? 5 : 100, // 5 en prod, 100 en dev
+  keyGenerator: parPersonne,
   skipSuccessfulRequests: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+    });
+  },
+}));
+
+// 2 bis. Actions d'administration et de gestion (valider une œuvre ou un compte, traiter un signalement,
+// gérer les participants, exports…). Avant : la limite stricte (5 par 15 min, par adresse, toutes
+// actions confondues) — un administrateur ne pouvait valider que 5 contenus par quart d'heure.
+const actionsLimiter = rateLimit(withStore('actions', {
+  windowMs: 15 * 60 * 1000,
+  max: IS_PRODUCTION ? 300 : 1000,
+  keyGenerator: parPersonne,
+  standardHeaders: true,
+  legacyHeaders: false,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -252,7 +278,9 @@ const authRateLimitHandler = (req, res) => {
 const endpointLimiters = {
   login: rateLimit(withStore('login', {
     windowMs: 60 * 60 * 1000,          // 1 heure
-    max: IS_PRODUCTION ? 15 : 100,      // 15 tentatives/h en prod
+    // 50 échecs/h par adresse (comptés une seule fois depuis 2026-11) : une adresse mobile est partagée ;
+    // chaque compte reste protégé à part (5 échecs par compte et par adresse, accountRateLimiter)
+    max: IS_PRODUCTION ? 50 : 100,
     skipSuccessfulRequests: true,        // Ne compter que les échecs (brute force)
     standardHeaders: true,
     legacyHeaders: false,
@@ -261,7 +289,9 @@ const endpointLimiters = {
 
   register: rateLimit(withStore('register', {
     windowMs: 60 * 60 * 1000,           // 1 heure
-    max: IS_PRODUCTION ? 5 : 50,         // 5 inscriptions/h par IP en prod
+    // 30 inscriptions/h par adresse : une adresse mobile partagée regroupe de nombreux visiteurs
+    // (avant : 5, comptées deux fois — 2 inscriptions par heure et par adresse)
+    max: IS_PRODUCTION ? 30 : 50,
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
@@ -270,7 +300,7 @@ const endpointLimiters = {
 
   forgotPassword: rateLimit(withStore('forgot', {
     windowMs: 60 * 60 * 1000,           // 1 heure
-    max: IS_PRODUCTION ? 10 : 50,        // 10 demandes/h en prod
+    max: IS_PRODUCTION ? 30 : 50,        // 30 demandes/h par adresse (adresses mobiles partagées)
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
@@ -280,10 +310,15 @@ const endpointLimiters = {
   // Rafraîchissement de session : un client normal en fait quelques-uns par
   // heure (rotation de JWT). Une fréquence élevée indique soit un bug côté
   // client (boucle de refresh), soit une tentative de bruteforce du cookie
-  // refresh_token. On limite par IP pour contenir les deux cas.
+  // refresh_token (impossible à deviner). Compté par session (empreinte du cookie) : par adresse, une
+  // adresse mobile partagée bloquait tous ses abonnés connectés au-delà de 30 renouvellements.
   refreshToken: rateLimit(withStore('refresh', {
     windowMs: 15 * 60 * 1000,           // 15 min
-    max: IS_PRODUCTION ? 30 : 200,       // 30 refresh / 15 min en prod (2/min)
+    max: IS_PRODUCTION ? 30 : 200,       // 30 refresh / 15 min par session en prod (2/min)
+    keyGenerator: (req) => {
+      const jeton = req.cookies?.refresh_token;
+      return jeton ? `s:${crypto.createHash('sha256').update(String(jeton)).digest('hex').slice(0, 32)}` : req.ip;
+    },
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
@@ -474,6 +509,7 @@ async function logRateLimitViolation(userId, endpoint, ip) {
 module.exports = {
   globalLimiter,
   strictLimiter,
+  actionsLimiter,
   createContentLimiter,
   commentLimiter,
   uploadLimiter,
@@ -493,6 +529,6 @@ module.exports = {
   creation: [createContentLimiter],
   upload: [uploadLimiter],
   publicUpload: [publicUploadLimiter],
-  sensitiveActions: [strictLimiter],
+  sensitiveActions: [actionsLimiter],
   general: [globalLimiter]
 };

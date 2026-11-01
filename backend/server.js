@@ -24,7 +24,12 @@ async function startServer() {
     
     // Créer le serveur HTTP
     const server = http.createServer(app);
-    
+    // nginx garde ses connexions vers Node ouvertes 60 s (upstream keepalive) ; Node les fermait après
+    // 5 s d'inactivité : une requête envoyée sur une connexion en train de se fermer finissait en 502.
+    // Node doit attendre plus longtemps que nginx.
+    server.keepAliveTimeout = 65 * 1000;
+    server.headersTimeout = 66 * 1000;
+
     // Gérer les connexions WebSocket si nécessaire
     server.on('upgrade', (request, socket, head) => {
       logger.info('WebSocket connection attempt');

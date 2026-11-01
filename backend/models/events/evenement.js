@@ -1,5 +1,6 @@
 // models/Evenement.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes, Op, fn, col } = require('sequelize');
+const { finEffective } = require('../../helpers/finEvenement');
 
 module.exports = (sequelize) => {
   const Evenement = sequelize.define('Evenement', {
@@ -38,7 +39,8 @@ module.exports = (sequelize) => {
       allowNull: true,
       validate: {
         isAfterDateDebut(value) {
-          if (value && this.date_debut && value < this.date_debut) {
+          // Un jour de fin sans heure vaut pour toute la journée : « le 5 à 10 h » → « le 5 » est valide
+          if (value && this.date_debut && finEffective(this.date_debut, value) < new Date(this.date_debut)) {
             throw new Error('La date de fin doit être après la date de début');
           }
         }
@@ -205,12 +207,15 @@ module.exports = (sequelize) => {
         if (manualStatuses.includes(evenement.statut)) return;
 
         const now = new Date();
-        if (evenement.date_debut && evenement.date_fin) {
+        // Fin réelle (jour sans heure = toute la journée) : un événement modifié le jour de sa fin
+        // n'est plus classé terminé dès le matin
+        const fin = finEffective(evenement.date_debut, evenement.date_fin);
+        if (evenement.date_debut && evenement.date_fin && fin) {
           if (now < new Date(evenement.date_debut)) {
             evenement.statut = 'planifie';
-          } else if (now >= new Date(evenement.date_debut) && now <= new Date(evenement.date_fin)) {
+          } else if (now < fin) {
             evenement.statut = 'en_cours';
-          } else if (now > new Date(evenement.date_fin)) {
+          } else {
             evenement.statut = 'termine';
           }
         }

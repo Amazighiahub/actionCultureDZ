@@ -216,11 +216,15 @@ class ParcoursRepository extends BaseRepository {
 
     const transaction = await this.model.sequelize.transaction();
     try {
-      for (let i = 0; i < orderedEtapeIds.length; i++) {
-        await this.models.ParcoursLieu.update(
-          { ordre: i + 1 },
-          { where: { id_parcours_lieu: orderedEtapeIds[i], id_parcours: parcoursId }, transaction }
-        );
+      // Deux passes : l'index unique (id_parcours, ordre) refusait l'échange direct de deux positions.
+      // 1) ordres provisoires hors de portée, 2) ordres définitifs.
+      for (const passe of [100000, 0]) {
+        for (let i = 0; i < orderedEtapeIds.length; i++) {
+          await this.models.ParcoursLieu.update(
+            { ordre: passe + i + 1 },
+            { where: { id_parcours_lieu: orderedEtapeIds[i], id_parcours: parcoursId }, transaction }
+          );
+        }
       }
       await transaction.commit();
       return true;

@@ -5,6 +5,7 @@
 const { Op } = require('sequelize');
 const { attributsComptes } = require('../utils/comptesEvenement');
 const { mergeTranslations } = require('../helpers/i18n');
+const { pasTermine, termine } = require('../helpers/finEvenement');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const logger = require('../utils/logger');
@@ -286,10 +287,10 @@ class ProfessionnelService {
     if (statut === 'avenir') {
       where.date_debut = { [Op.gte]: new Date() };
     } else if (statut === 'passe') {
-      where.date_fin = { [Op.lt]: new Date() };
+      where[Op.and] = [termine(new Date(), 'Evenement')];
     } else if (statut === 'en_cours') {
       where.date_debut = { [Op.lte]: new Date() };
-      where.date_fin = { [Op.gte]: new Date() };
+      where[Op.and] = [pasTermine(new Date(), 'Evenement')];
     }
 
     const { rows, count } = await this.models.Evenement.findAndCountAll({
@@ -343,7 +344,7 @@ class ProfessionnelService {
       this.models.Evenement.count({ where: { id_user: userId } }),
       this.models.Oeuvre.count({ where: { saisi_par: userId, statut: 'publie' } }),
       this.models.Evenement.count({
-        where: { id_user: userId, date_fin: { [Op.gte]: new Date() } }
+        where: { id_user: userId, [Op.and]: [pasTermine(new Date(), 'Evenement')] }
       })
     ]);
 

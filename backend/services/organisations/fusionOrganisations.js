@@ -137,6 +137,10 @@ async function fusionner(models, idGarde, idsDoublons) {
         ON DUPLICATE KEY UPDATE id_organisation = VALUES(id_organisation)`,
         { replacements: { garde: idGarde, autre: idAutre }, transaction });
 
+      // 6. Demandes « C'est mon organisation » : reportées sur la page gardée (la cascade les effaçait)
+      await sequelize.query('UPDATE organisation_revendication SET id_organisation = :garde WHERE id_organisation = :autre',
+        { replacements: { garde: idGarde, autre: idAutre }, transaction });
+
       await autre.destroy({ transaction });
     }
 

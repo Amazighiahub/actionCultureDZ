@@ -11,6 +11,7 @@ const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../cons
 const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
 const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
 const { attributsComptes, STATUTS_PLACE_PRISE } = require('../utils/comptesEvenement');
+const { pasTermine, termine } = require('../helpers/finEvenement');
 
 class EvenementRepository extends BaseRepository {
   constructor(models) {
@@ -116,14 +117,14 @@ class EvenementRepository extends BaseRepository {
       and.push({
         [Op.or]: [
           { statut: 'en_cours' },
-          { statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.lte]: now }, date_fin: { [Op.gte]: now } }
+          { statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.lte]: now }, [Op.and]: [pasTermine(now, this.model.name)] }
         ]
       });
     } else if (statut === 'termine') {
       and.push({
         [Op.or]: [
           { statut: 'termine' },
-          { statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] }, date_fin: { [Op.lt]: now } }
+          { statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] }, [Op.and]: [termine(now, this.model.name)] }
         ]
       });
     }
@@ -618,10 +619,18 @@ class EvenementRepository extends BaseRepository {
       where: { id_evenement: data.id_evenement }
     });
 
-    const association = await this.models.EvenementOeuvre.create({
-      ...data,
-      ordre_presentation: (maxOrdre || 0) + 1
-    });
+    let association;
+    try {
+      association = await this.models.EvenementOeuvre.create({
+        ...data,
+        ordre_presentation: (maxOrdre || 0) + 1
+      });
+    } catch (error) {
+      // Double clic : l'œuvre vient d'être ajoutée par l'autre requête, on renvoie ce lien
+      if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+      association = await this.models.EvenementOeuvre.findOne({ where: { id_evenement: data.id_evenement, id_oeuvre: data.id_oeuvre } });
+      if (!association) throw error;
+    }
 
     return this.models.EvenementOeuvre.findByPk(association.id_EventOeuvre, {
       include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }]

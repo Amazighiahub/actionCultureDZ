@@ -39,6 +39,7 @@ function buildService(titreStored) {
     TypeOeuvre: { findByPk: jest.fn().mockResolvedValue({ id_type_oeuvre: 1 }) },
     OeuvreCategorie: { bulkCreate: jest.fn().mockResolvedValue([]) },
     TagMotCle: {
+      findOne: jest.fn().mockResolvedValue(null),
       findAll: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id_tag: 1, nom: { fr: "nouveau-tag" } }),
       bulkCreate: jest.fn().mockResolvedValue([{ id_tag: 1, nom: { fr: "nouveau-tag" } }]),
@@ -398,12 +399,9 @@ describe("OeuvreService.create() — multilingue end-to-end", function() {
     });
     await ctx.service.create(payload, 99);
 
-    // patrimoine et culture existent => bulkCreate pour nouveau-tag uniquement
-    expect(ctx.models.TagMotCle.bulkCreate).toHaveBeenCalledTimes(1);
-    expect(ctx.models.TagMotCle.bulkCreate).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ nom: { fr: "nouveau-tag" } })]),
-      expect.any(Object)
-    );
+    // patrimoine et culture existent => création de nouveau-tag uniquement
+    expect(ctx.models.TagMotCle.create).toHaveBeenCalledTimes(1);
+    expect(ctx.models.TagMotCle.create).toHaveBeenCalledWith({ nom: { fr: "nouveau-tag" } }, expect.any(Object));
     expect(ctx.models.OeuvreTag.bulkCreate).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ id_tag: 5 }),

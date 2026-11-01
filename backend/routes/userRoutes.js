@@ -31,8 +31,8 @@ const initUserRoutes = (models, authMiddleware) => {
   // ROUTES PUBLIQUES (authController)
   // ============================================================================
 
+  // Limites d'inscription et de connexion : posées dans app.js (ici, elles comptaient chaque essai deux fois)
   router.post('/register',
-    endpointLimiters.register,
     validateStringLengths,
     [
       body('email').isEmail().withMessage('Email invalide'),
@@ -58,7 +58,6 @@ const initUserRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => authController.register(req, res)));
 
   router.post('/login',
-    endpointLimiters.login,
     accountRateLimiter.checkAccountLock,
     [
       body('email').isEmail().withMessage('Email invalide'),

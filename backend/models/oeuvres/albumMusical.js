@@ -20,7 +20,7 @@ module.exports = (sequelize) => {
     },
     id_genre: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // un genre supprimé ne doit pas effacer la fiche (migration 20261117)
       references: {
         model: 'genre',
         key: 'id_genre'
@@ -62,7 +62,7 @@ module.exports = (sequelize) => {
   // Associations
   AlbumMusical.associate = (models) => {
     AlbumMusical.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-    AlbumMusical.belongsTo(models.Genre, { foreignKey: 'id_genre' });
+    AlbumMusical.belongsTo(models.Genre, { foreignKey: 'id_genre', onDelete: 'SET NULL' });
   };
 
   return AlbumMusical;
