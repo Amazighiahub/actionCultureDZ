@@ -55,15 +55,14 @@ module.exports = (models, authMiddleware) => {
   router.get('/verify/:token',
     tokenValidation,
     validationMiddleware.handleValidationErrors,
-    rateLimitMiddleware.general[0],
     (req, res) => controller.verifyEmail(req, res)
   );
 
-  // Demander un reset de mot de passe
+  // Demander un reset de mot de passe (limite : app.js, endpointLimiters.forgotPassword — ici, elle
+  // s'ajoutait aux limites de connexion et d'inscription, consommées sans rapport)
   router.post('/request-password-reset',
     emailValidation,
     validationMiddleware.handleValidationErrors,
-    ...rateLimitMiddleware.auth,
     (req, res) => controller.requestPasswordReset(req, res)
   );
 
@@ -71,7 +70,6 @@ module.exports = (models, authMiddleware) => {
   router.post('/reset-password',
     passwordResetValidation,
     validationMiddleware.handleValidationErrors,
-    ...rateLimitMiddleware.auth,
     (req, res) => controller.resetPassword(req, res)
   );
 
@@ -79,7 +77,6 @@ module.exports = (models, authMiddleware) => {
   router.get('/confirm-email-change/:token',
     tokenValidation,
     validationMiddleware.handleValidationErrors,
-    rateLimitMiddleware.general[0],
     (req, res) => controller.confirmEmailChange(req, res)
   );
 
@@ -90,7 +87,7 @@ module.exports = (models, authMiddleware) => {
   // Renvoyer l'email de vérification
   router.post('/resend',
     authMiddleware.authenticate,
-    ...rateLimitMiddleware.auth,
+    rateLimitMiddleware.endpointLimiters.forgotPassword,
     (req, res) => controller.sendVerificationEmail(req, res)
   );
 
@@ -99,7 +96,7 @@ module.exports = (models, authMiddleware) => {
     authMiddleware.authenticate,
     emailChangeValidation,
     validationMiddleware.handleValidationErrors,
-    ...rateLimitMiddleware.sensitiveActions,
+    rateLimitMiddleware.strictLimiter,
     (req, res) => controller.requestEmailChange(req, res)
   );
 

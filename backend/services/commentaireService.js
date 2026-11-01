@@ -168,7 +168,15 @@ class CommentaireService extends BaseService {
    * @returns {object|null} Commentaire mis a jour ou null si introuvable
    */
   async moderateCommentaire(id, statut) {
-    return this.repository.updateStatut(id, statut);
+    try {
+      return await this.repository.updateStatut(id, statut);
+    } catch (error) {
+      // Rétablir un avis alors que le membre a déjà un avis actif sur ce service : l'index unique refuse
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw this._conflictError('Ce membre a déjà un avis publié sur ce service : retirez-le avant de rétablir celui-ci.');
+      }
+      throw error;
+    }
   }
 }
 

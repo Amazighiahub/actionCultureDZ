@@ -20,6 +20,18 @@ describe('statutAffiche', () => {
     expect(statutAffiche('annule', '2026-02-15', '2026-02-17', maintenant)).toBe('annule');
     expect(statutAffiche('reporte', '2026-02-15', '2026-02-17', maintenant)).toBe('reporte');
   });
+  test('jour de fin sans heure renvoyé par le serveur (minuit UTC) : en cours toute la journée', () => {
+    const a = new Date('2026-10-20T21:30:00Z'); // 22 h 30 en Algérie, le 20
+    expect(statutAffiche('publie', '2026-10-18T00:00:00.000Z', '2026-10-20T00:00:00.000Z', a)).toBe('publie');
+    expect(statutAffiche('publie', '2026-10-18T00:00:00.000Z', '2026-10-20T00:00:00.000Z', new Date('2026-10-20T23:00:00Z'))).toBe('termine');
+  });
+  test('début à 19 h sans date de fin : pas terminé avant minuit (Algérie)', () => {
+    expect(statutAffiche('publie', '2026-10-20T18:00:00.000Z', null, new Date('2026-10-20T20:00:00Z'))).toBe('publie');
+    expect(statutAffiche('publie', '2026-10-20T18:00:00.000Z', null, new Date('2026-10-21T08:00:00Z'))).toBe('termine');
+  });
+  test('fin avec heure : terminé juste après', () => {
+    expect(statutAffiche('publie', '2026-10-20T08:00:00.000Z', '2026-10-20T16:00:00.000Z', new Date('2026-10-20T16:01:00Z'))).toBe('termine');
+  });
   test('statut absent : brouillon', () => {
     expect(statutAffiche(undefined, null, null, maintenant)).toBe('brouillon');
   });

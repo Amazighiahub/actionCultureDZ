@@ -158,13 +158,10 @@ class OeuvreRepository extends BaseRepository {
 
     // Recherche texte
     if (query) {
-      // Texte extrait (JSON_UNQUOTE) comparé sans accents ni majuscules, dans les 5 langues
-      // (la valeur JSON brute se comparait à l'identique : « nedjma » ne trouvait pas « Nedjma »)
+      // Colonne texte_recherche (migration 20261120) : titres et descriptions dans les 5 langues,
+      // comparés sans accents ni majuscules, calculés à l'écriture (plus 10 JSON_EXTRACT par œuvre et par recherche)
       const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
-      const champs = ['titre', 'description'].flatMap(champ =>
-        ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
-      where[Op.or] = champs.map(([champ, langue]) =>
-        literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`));
+      where[Op.and] = [...(where[Op.and] || []), literal(`\`Oeuvre\`.\`texte_recherche\` LIKE ${pattern}`)];
     }
 
     // Filtres
@@ -199,7 +196,10 @@ class OeuvreRepository extends BaseRepository {
       limit,
       where,
       include,
-      order: [[sortBy, sortOrder]]
+      // Titre : colonne titre_tri (première langue remplie, indexée) ; le JSON brut se triait dans un ordre faux.
+      // Elle est ajoutée aux colonnes lues pour que la requête englobante (pagination) puisse trier dessus.
+      ...(sortBy === 'titre' ? { attributes: { include: [[literal('`Oeuvre`.`titre_tri`'), 'titre_tri']] } } : {}),
+      order: [[sortBy === 'titre' ? literal('`titre_tri`') : sortBy, sortOrder]]
     });
   }
 

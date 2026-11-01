@@ -45,6 +45,7 @@ function buildModels(typeId) {
     },
     OeuvreCategorie: { bulkCreate: jest.fn().mockResolvedValue([]) },
     TagMotCle: {
+      findOne: jest.fn().mockResolvedValue(null),
       findAll: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id_tag: 1, nom: { fr: "tag" } }),
       bulkCreate: jest.fn().mockResolvedValue([{ id_tag: 1, nom: { fr: "tag" } }]),
@@ -190,10 +191,15 @@ describe("OeuvreService — Album Musical (type 3)", function() {
     );
   });
 
-  test("album avec id_genre => TypeOeuvreGenre non appele", async function() {
+  test("album avec id_genre => genre controle (genre musical actif), pas de repli", async function() {
     const payload = basePayload(3, { album_musical: { id_genre: 5, duree: "30" } });
     await ctx.service.create(payload, 99);
-    expect(ctx.models.TypeOeuvreGenre.findOne).not.toHaveBeenCalled();
+    expect(ctx.models.TypeOeuvreGenre.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id_type_oeuvre: 3, id_genre: 5, actif: 1 } })
+    );
+    expect(ctx.models.TypeOeuvreGenre.findOne).not.toHaveBeenCalledWith(
+      expect.objectContaining({ order: [["ordre_affichage", "ASC"]] })
+    );
   });
 
   test("label par defaut = Independant si absent", async function() {
@@ -424,10 +430,7 @@ describe("OeuvreService — Options communes (tous types)", function() {
       const payload = basePayload(typeId, DETAILS[typeId], { tags: ["culture", "nouveau"] });
       await ctx.service.create(payload, 99);
       expect(ctx.models.OeuvreTag.bulkCreate).toHaveBeenCalled();
-      expect(ctx.models.TagMotCle.bulkCreate).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ nom: { fr: "nouveau" } })]),
-        expect.any(Object)
-      );
+      expect(ctx.models.TagMotCle.create).toHaveBeenCalledWith({ nom: { fr: "nouveau" } }, expect.any(Object));
     });
 
     test("type " + typeId + " : je_suis_auteur ajoute dans OeuvreUser", async function() {

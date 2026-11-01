@@ -462,11 +462,9 @@ class App {
     this.app.use('/api/artisanat', ...rateLimitMiddleware.creation);
     // (la création d'un lieu, POST /api/patrimoine, a sa propre limite dans patrimoineRoutes)
     
-    // Rate limiting pour les actions sensibles
-    this.app.use('/api/dashboard/actions', ...rateLimitMiddleware.sensitiveActions);
-    this.app.use('/api/users/change-password', ...rateLimitMiddleware.sensitiveActions);
-    this.app.use('/api/professionnel/export', ...rateLimitMiddleware.sensitiveActions);
-    
+    // Actions sensibles : limites posées sur chaque route (dashboardRoutes, professionnelRoutes,
+    // userRoutes) ; ici, elles comptaient chaque action deux fois.
+
     // Rate limiting général
     this.app.use('/api/', ...rateLimitMiddleware.general);
 
@@ -544,7 +542,9 @@ class App {
           await redis.ping();
           checks.redis = true;
         } else {
-          checks.redis = 'not_configured';
+          // Client créé mais Redis injoignable : panne signalée (avant, « non configuré » et 200)
+          const { etat } = require('./utils/redisClient');
+          checks.redis = etat() === 'reconnexion' ? false : 'not_configured';
         }
       } catch (e) {
         checks.redis = false;

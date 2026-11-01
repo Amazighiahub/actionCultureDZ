@@ -13,11 +13,25 @@ export function statutAffiche(
 ): string {
   const s = statut || 'brouillon';
   if (!STATUTS_ACTIFS.includes(s)) return s;
-  const fin = dateFin || dateDebut;
+  const fin = finEffective(dateDebut, dateFin);
   if (!fin) return s;
-  const finDate = new Date(fin);
-  if (Number.isNaN(finDate.getTime())) return s;
-  // Une date sans heure vaut pour toute la journée
-  if (typeof fin === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fin)) finDate.setHours(23, 59, 59, 999);
-  return finDate < maintenant ? 'termine' : s;
+  return fin <= maintenant ? 'termine' : s;
+}
+
+const UNE_HEURE = 60 * 60 * 1000;
+
+/**
+ * Fin réelle, à l'heure de l'Algérie (UTC+1, sans heure d'été) — même règle que le serveur
+ * (backend/helpers/finEvenement.js) : un jour enregistré sans heure (minuit UTC, ou « 2026-10-20 »)
+ * vaut pour toute la journée ; sans date de fin, l'événement dure jusqu'au soir de son premier jour.
+ */
+export function finEffective(dateDebut?: string | Date | null, dateFin?: string | Date | null): Date | null {
+  const fin = dateFin ? new Date(dateFin) : null;
+  const finValide = fin !== null && !Number.isNaN(fin.getTime());
+  const sansHeure = (d: Date) => d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0;
+  if (finValide && !sansHeure(fin)) return fin;
+  const ref = finValide ? fin : (dateDebut ? new Date(dateDebut) : null);
+  if (!ref || Number.isNaN(ref.getTime())) return null;
+  const local = new Date(ref.getTime() + UNE_HEURE);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1) - UNE_HEURE);
 }

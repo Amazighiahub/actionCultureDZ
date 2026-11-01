@@ -26,7 +26,7 @@ module.exports = (sequelize) => {
     },
     ip_address: {
       type: DataTypes.STRING(45),
-      allowNull: false
+      allowNull: true // anonymisée (NULL) après 12 mois par la purge RGPD
     },
     user_agent: {
       type: DataTypes.STRING(500),

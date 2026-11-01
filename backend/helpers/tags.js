@@ -1,7 +1,9 @@
 /**
  * Mots-clés (table tagmotcle), partagés par les œuvres et les événements.
  */
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
+
+const LANGUES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
 /**
  * Liste de mots-clés envoyée par un formulaire : tableau, ou texte JSON (FormData).
@@ -25,7 +27,8 @@ function lireTags(valeur) {
 
 /**
  * Résout des tags envoyés sous forme d'IDs ou de noms ; crée les noms inconnus.
- * Un nom est retrouvé dans n'importe quelle langue du mot-clé (« Poterie », « فخار »…).
+ * Un nom est retrouvé par la clé unique (sans casse ni accents), sinon dans n'importe quelle langue du
+ * mot-clé (« فخار » → « poterie »). Création protégée par l'index unique (pas de doublon).
  * @returns {Promise<number[]|null>} null si `tags` est null/undefined
  */
 async function resolveTagIds(models, tags, transaction) {
@@ -47,40 +50,55 @@ async function resolveTagIds(models, tags, transaction) {
 
   if (stringTags.length === 0) return [...new Set(resolvedIds)];
 
-  // Chercher uniquement les tags demandés (pas un full scan)
-  const existing = await models.TagMotCle.findAll({
-    where: {
-      [Op.or]: stringTags.map(name => ({
-        nom: { [Op.like]: `%"${name.toLowerCase()}"%` }
-      }))
-    },
-    transaction
-  });
+  // Colonne `cle` (nom en minuscules, index unique, migration 20261119) : recherche par l'index.
+  // La clé d'un mot-clé lu est recalculée depuis son nom, comme le fait la base (première langue remplie).
+  const cle = (n) => n.trim().toLowerCase().slice(0, 191);
+  const cleDuNom = (nom) => {
+    const objet = typeof nom === 'string' ? { fr: nom } : (nom || {});
+    const premier = LANGUES.map((l) => objet[l]).find((v) => typeof v === 'string' && v.trim());
+    return premier ? cle(premier) : null;
+  };
+  const parCle = new Map();
+  // Comparer comme la base, sans majuscules ni accents (« Bejaia » = « Béjaïa »)
+  const memeCle = (n) => [...parCle.keys()].find((k) => k.localeCompare(cle(n), 'fr', { sensitivity: 'base' }) === 0);
+  const trouver = async (noms) => {
+    const lignes = await models.TagMotCle.findAll({
+      where: Sequelize.where(Sequelize.col('cle'), { [Op.in]: noms.map(cle) }),
+      attributes: ['id_tag', 'nom'],
+      transaction
+    });
+    for (const t of lignes) {
+      const k = cleDuNom(t.nom);
+      if (k) parCle.set(k, t.id_tag);
+    }
+    // Noms non trouvés : recherche exacte dans toutes les langues du mot-clé (« فخار » → « poterie »)
+    for (const n of noms) {
+      if (memeCle(n)) continue;
+      const autre = await models.TagMotCle.findOne({
+        where: Sequelize.where(Sequelize.fn('JSON_SEARCH', Sequelize.fn('LOWER', Sequelize.col('nom')), 'one', cle(n)), { [Op.ne]: null }),
+        attributes: ['id_tag'],
+        transaction
+      });
+      if (autre) parCle.set(cle(n), autre.id_tag);
+    }
+  };
+  await trouver(stringTags);
 
-  const existingNames = new Map();
-  for (const t of existing) {
-    const names = Object.values(t.nom || {})
-      .filter(v => typeof v === 'string')
-      .map(v => v.trim().toLowerCase());
-    for (const n of names) existingNames.set(n, t.id_tag);
-  }
-
-  const toCreate = stringTags.filter(n => !existingNames.has(n.toLowerCase()));
-
-  if (toCreate.length > 0) {
-    const created = await models.TagMotCle.bulkCreate(
-      toCreate.map(n => ({ nom: { fr: n } })),
-      { ignoreDuplicates: true, transaction, returning: true }
-    );
-    for (const t of created) {
-      const frName = t.nom?.fr?.trim()?.toLowerCase();
-      if (frName) existingNames.set(frName, t.id_tag);
+  for (const name of stringTags) {
+    if (memeCle(name)) continue;
+    try {
+      const cree = await models.TagMotCle.create({ nom: { fr: name } }, { transaction });
+      parCle.set(cle(name), cree.id_tag);
+    } catch (error) {
+      // Créé entre-temps (autre requête) : l'index unique refuse le doublon, on reprend le mot-clé existant
+      if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+      await trouver([name]);
     }
   }
 
   for (const name of stringTags) {
-    const id = existingNames.get(name.toLowerCase());
-    if (id) resolvedIds.push(id);
+    const k = memeCle(name);
+    if (k) resolvedIds.push(parCle.get(k));
   }
 
   return [...new Set(resolvedIds)];

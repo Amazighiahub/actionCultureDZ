@@ -5,6 +5,7 @@
  * Architecture: Controller → Service → Repository → Database
  * Délègue tous les accès Sequelize au FavoriRepository.
  */
+const { Op } = require('sequelize');
 const BaseService = require('./core/baseService');
 
 const TYPES_VALIDES = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
@@ -169,81 +170,72 @@ class FavoriService extends BaseService {
   }
 
   /**
-   * Vérifie qu'une entité existe dans la base
+   * Vérifie que l'entité existe et est visible du public (un brouillon, un contenu en attente ou
+   * refusé ne peut pas être mis en favori : son numéro suffisait pour en lire tout le contenu)
    * @private
    */
   async _verifierEntiteExiste(type, id) {
-    try {
-      let entite;
-      switch (type) {
-        case 'oeuvre':
-          entite = await this.models.Oeuvre.findByPk(id);
-          break;
-        case 'evenement':
-          entite = await this.models.Evenement.findByPk(id);
-          break;
-        case 'lieu':
-          entite = await this.models.Lieu.findByPk(id);
-          break;
-        case 'artisanat':
-          entite = await this.models.Artisanat.findByPk(id);
-          break;
-      }
-      return !!entite;
-    } catch (error) {
-      this.logger.error('Erreur vérification entité:', error);
-      return false;
-    }
+    return !!(await this._getEntiteDetails(type, id));
   }
 
   /**
-   * Récupère les détails complets d'une entité avec ses includes
+   * Détails d'une entité pour les cartes de favoris : contenu publié seulement (mêmes règles que les
+   * pages publiques), champs publics seulement (avant : toutes les colonnes, dont celles de modération
+   * et les coordonnées de contact d'un événement en brouillon). null si absent ou non publié.
    * @private
    */
   async _getEntiteDetails(type, id) {
+    const m = this.models;
+    const image = (model) => ({
+      model, attributes: ['url', 'thumbnail_url'], where: { visible_public: true, type_media: 'image' },
+      separate: true, limit: 1, order: [['ordre', 'ASC']]
+    });
     try {
-      let entite;
       switch (type) {
         case 'oeuvre':
-          entite = await this.models.Oeuvre.findByPk(id, {
-            include: [
-              { model: this.models.TypeOeuvre, attributes: ['nom_type'] },
-              { model: this.models.Media, attributes: ['url'], limit: 1 }
-            ]
+          return await m.Oeuvre.findOne({
+            where: { id_oeuvre: id, statut: 'publie' },
+            attributes: ['id_oeuvre', 'titre', 'description', 'id_type_oeuvre', 'annee_creation', 'statut'],
+            include: [{ model: m.TypeOeuvre, attributes: ['nom_type'] }, image(m.Media)]
           });
-          break;
         case 'evenement':
-          entite = await this.models.Evenement.findByPk(id, {
+          return await m.Evenement.findOne({
+            where: { id_evenement: id, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+            attributes: ['id_evenement', 'nom_evenement', 'description', 'date_debut', 'date_fin', 'image_url', 'statut', 'tarif'],
             include: [
-              { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-              { model: this.models.Lieu, attributes: ['nom'] }
+              { model: m.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] },
+              { model: m.Lieu, as: 'Lieu', attributes: ['nom'] }
             ]
           });
-          break;
         case 'lieu':
-          entite = await this.models.Lieu.findByPk(id, {
-            include: [
-              { model: this.models.Wilaya, attributes: ['nom'] },
-              { model: this.models.LieuMedia, attributes: ['url'], limit: 1 }
-            ]
-          });
-          break;
-        case 'artisanat':
-          entite = await this.models.Artisanat.findByPk(id, {
+          return await m.Lieu.findOne({
+            where: { id_lieu: id, statut: 'publie' },
+            attributes: ['id_lieu', 'nom', 'adresse', 'typeLieu', 'typePatrimoine', 'latitude', 'longitude', 'statut'],
             include: [
               {
-                model: this.models.Oeuvre,
-                include: [
-                  { model: this.models.Media, attributes: ['url'], limit: 1 }
-                ]
+                model: m.Commune, attributes: ['nom'],
+                include: [{ model: m.Daira, attributes: ['nom'], include: [{ model: m.Wilaya, attributes: ['nom'] }] }]
               },
-              { model: this.models.Materiau, attributes: ['nom'] },
-              { model: this.models.Technique, attributes: ['nom'] }
+              { model: m.LieuMedia, attributes: ['url'], separate: true, limit: 1 }
             ]
           });
-          break;
+        case 'artisanat':
+          return await m.Artisanat.findOne({
+            where: { id_artisanat: id },
+            attributes: ['id_artisanat', 'id_oeuvre', 'prix', 'prix_max', 'en_stock', 'sur_commande', 'dimensions'],
+            include: [
+              {
+                model: m.Oeuvre, required: true, where: { statut: 'publie' },
+                attributes: ['id_oeuvre', 'titre', 'description', 'statut'],
+                include: [image(m.Media)]
+              },
+              { model: m.Materiau, attributes: ['nom'] },
+              { model: m.Technique, attributes: ['nom'] }
+            ]
+          });
+        default:
+          return null;
       }
-      return entite;
     } catch (error) {
       this.logger.error('Erreur récupération détails entité:', error);
       return null;

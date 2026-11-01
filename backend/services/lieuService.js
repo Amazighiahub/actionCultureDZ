@@ -7,6 +7,7 @@
  */
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
+const { pasTermine } = require('../helpers/finEvenement');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
@@ -174,7 +175,7 @@ class LieuService extends BaseService {
       include.push({
         model: this.models.Evenement,
         attributes: ['id_evenement', 'id_lieu', 'nom_evenement', 'date_debut', 'date_fin'],
-        where: { date_fin: { [Op.gte]: new Date() }, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } },
+        where: { [Op.and]: [pasTermine(new Date(), 'Evenement')], statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } },
         required: false,
         separate: true
       });
@@ -294,7 +295,7 @@ class LieuService extends BaseService {
         { model: this.models.QRCode },
         {
           model: this.models.Evenement,
-          where: { date_fin: { [Op.gte]: new Date() } },
+          where: pasTermine(new Date(), 'Evenements'),
           required: false
         }
       ]

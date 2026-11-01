@@ -18,6 +18,7 @@
  */
 
 const { peutGerer, estModeration } = require('../utils/droits');
+const logger = require('../utils/logger');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -148,6 +149,16 @@ class BaseController {
     if (IS_DEV_MODE) {
       console.error(`[${this.constructor.name}] Error [${code}]:`, error.message);
       if (statusCode === 500) console.error(error.stack);
+    } else if (statusCode >= 500) {
+      // Hors développement, une erreur 500 passée par ici ne laissait aucune trace (ni journal ni Sentry) :
+      // même format que errorMiddleware
+      const req = res.req || {};
+      logger.error('Erreur serveur: %s | %s %s | %s', error.message, req.method, req.originalUrl,
+        error.stack?.split('\n')[1]?.trim() || '');
+      try {
+        const Sentry = require('@sentry/node');
+        if (Sentry.getClient?.()) Sentry.captureException(error);
+      } catch (_e) { /* Sentry absent */ }
     }
 
     const response = {

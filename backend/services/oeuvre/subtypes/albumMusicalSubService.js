@@ -48,6 +48,20 @@ class AlbumMusicalSubService extends BaseSubtypeService {
   }
 
   /**
+   * Genre envoyé par le client, gardé seulement s'il est un genre musical actif
+   * (un identifiant inconnu donnait une erreur de clé étrangère, donc une erreur 500).
+   * @private
+   */
+  async _genreValide(idGenre, transaction) {
+    const id = parseInt(idGenre, 10);
+    if (!id || !this.models?.TypeOeuvreGenre) return null;
+    const lien = await this.models.TypeOeuvreGenre.findOne({
+      where: { id_type_oeuvre: TYPE_MUSIQUE, id_genre: id, actif: 1 }, attributes: ['id_genre'], transaction
+    });
+    return lien ? id : null;
+  }
+
+  /**
    * Surcharge createForOeuvre pour gérer la logique du genre
    */
   async createForOeuvre(oeuvreId, detailsSpecifiques, transaction) {
@@ -61,12 +75,13 @@ class AlbumMusicalSubService extends BaseSubtypeService {
     // Valider via le DTO
     this._validateDTO(ds);
 
-    let idGenre = ds.id_genre || await this._genreDesCategories(oeuvreId, transaction);
+    let idGenre = await this._genreValide(ds.id_genre, transaction) || await this._genreDesCategories(oeuvreId, transaction);
 
-    // Repli : premier genre actif du type
+    // Repli : premier genre actif du type, dans l'ordre d'affichage (Andalou, pas le plus petit id)
     if (!idGenre && this.models?.TypeOeuvreGenre) {
       const tog = await this.models.TypeOeuvreGenre.findOne({
         where: { id_type_oeuvre: TYPE_MUSIQUE, actif: 1 },
+        order: [['ordre_affichage', 'ASC']],
         transaction
       });
       idGenre = tog?.id_genre || null;
@@ -96,8 +111,11 @@ class AlbumMusicalSubService extends BaseSubtypeService {
    */
   async updateForOeuvre(oeuvreId, detailsSpecifiques, transaction) {
     if (!detailsSpecifiques) return null;
-    const idGenre = detailsSpecifiques.id_genre || await this._genreDesCategories(oeuvreId, transaction);
-    return super.updateForOeuvre(oeuvreId, idGenre ? { ...detailsSpecifiques, id_genre: idGenre } : detailsSpecifiques, transaction);
+    const idGenre = await this._genreValide(detailsSpecifiques.id_genre, transaction)
+      || await this._genreDesCategories(oeuvreId, transaction);
+    // Un genre non valide envoyé par le client est ignoré (le genre en place est gardé)
+    const { id_genre: _ignore, ...reste } = detailsSpecifiques;
+    return super.updateForOeuvre(oeuvreId, idGenre ? { ...reste, id_genre: idGenre } : reste, transaction);
   }
 
   _buildUpdateData(ds) {

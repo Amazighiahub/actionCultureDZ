@@ -372,7 +372,7 @@ class DashboardStatsService {
       return { totalScans: 0, uniqueVisitors: 0, peakHours: [], topSites: [] };
     }
     const [totalScans, peakHours] = await Promise.all([
-      this.models.QRScan.count({ where: { scan_date: { [Op.gte]: startDate } } }),
+      this.models.QRScan.count({ where: { date_scan: { [Op.gte]: startDate } } }),
       this._getQRScanPeakHours(startDate)
     ]);
     return { totalScans, peakHours };
@@ -382,9 +382,9 @@ class DashboardStatsService {
     try {
       if (!this.models.QRScan) return [];
       return await this.models.QRScan.findAll({
-        attributes: [[fn('HOUR', col('scan_date')), 'hour'], [fn('COUNT', '*'), 'scans']],
-        where: { scan_date: { [Op.gte]: startDate } },
-        group: [fn('HOUR', col('scan_date'))],
+        attributes: [[fn('HOUR', col('date_scan')), 'hour'], [fn('COUNT', '*'), 'scans']],
+        where: { date_scan: { [Op.gte]: startDate } },
+        group: [fn('HOUR', col('date_scan'))],
         order: [[literal('hour'), 'ASC']],
         raw: true
       });

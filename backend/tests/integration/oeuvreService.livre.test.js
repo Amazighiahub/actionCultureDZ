@@ -55,6 +55,7 @@ function buildModels(opts) {
       bulkCreate: jest.fn().mockResolvedValue([]),
     },
     TagMotCle: {
+      findOne: jest.fn().mockResolvedValue(null),
       findAll: jest.fn().mockResolvedValue([
         { id_tag: 5, nom: { fr: "litterature" } },
         { id_tag: 6, nom: { fr: "patrimoine" } },
@@ -192,10 +193,9 @@ describe("OeuvreService.create() — Livre (integration)", function() {
 
   test("resout les tags existants et cree le nouveau tag", async function() {
     await service.create(livrePayloadComplet(), 99);
-    expect(models.TagMotCle.bulkCreate).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ nom: { fr: "nouveau-tag" } })]),
-      expect.any(Object)
-    );
+    // Un mot-clé nouveau est créé seul (index unique : pas de doublon) ; les existants sont repris
+    expect(models.TagMotCle.create).toHaveBeenCalledTimes(1);
+    expect(models.TagMotCle.create).toHaveBeenCalledWith({ nom: { fr: "nouveau-tag" } }, expect.any(Object));
     expect(models.OeuvreTag.bulkCreate).toHaveBeenCalled();
   });
 

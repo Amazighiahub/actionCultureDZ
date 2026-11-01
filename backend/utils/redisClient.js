@@ -50,12 +50,19 @@ async function getRedisClient() {
       const newClient = redis.createClient({
         url,
         password: process.env.REDIS_PASSWORD || undefined,
+        // Redis coupé : les commandes échouent tout de suite (chaque appelant a sa solution de repli)
+        // au lieu d'attendre la reconnexion en bloquant la requête.
+        disableOfflineQueue: true,
         socket: {
           connectTimeout: 3000,
-          // Auto-reconnexion exponentielle, max 30s entre les retry
+          // Reconnexion sans fin (au plus toutes les 5 s) : abandonner laissait le serveur sans Redis
+          // jusqu'au prochain redémarrage — en production, sessions refusées (liste de révocation illisible).
+          // Vaut aussi pour le premier démarrage si Redis n'est pas encore prêt.
           reconnectStrategy: (retries) => {
-            if (retries > 20) return new Error('Redis max retries exceeded');
-            return Math.min(retries * 100, 30000);
+            if (retries % 60 === 1) {
+              logger.warn('Redis indisponible, nouvelle tentative de connexion', { tentative: retries });
+            }
+            return Math.min(retries * 200, 5000);
           }
         }
       });
@@ -115,7 +122,16 @@ function getClient() {
   return (ready && client) ? client : null;
 }
 
+/**
+ * État pour /health : 'pret', 'reconnexion' (client créé ou connexion en cours, Redis injoignable)
+ * ou 'absent' (aucune connexion tentée ou configuration refusée).
+ */
+function etat() {
+  if (ready && client) return 'pret';
+  return (client || connecting) ? 'reconnexion' : 'absent';
+}
+
 // Tenter la connexion au démarrage (non-bloquant)
 getRedisClient().catch(() => {});
 
-module.exports = { getRedisClient, isReady, getClient };
+module.exports = { getRedisClient, isReady, getClient, etat };

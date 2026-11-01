@@ -124,19 +124,19 @@ module.exports = (sequelize) => {
     Notification.belongsTo(models.Evenement, {
       foreignKey: 'id_evenement',
       as: 'Evenement',
-      onDelete: 'CASCADE'
+      onDelete: 'SET NULL' // la notification reste, son lien disparaît (migration 20261117)
     });
 
     Notification.belongsTo(models.Programme, {
       foreignKey: 'id_programme',
       as: 'Programme',
-      onDelete: 'CASCADE'
+      onDelete: 'SET NULL' // la notification reste, son lien disparaît (migration 20261117)
     });
 
     Notification.belongsTo(models.Oeuvre, {
       foreignKey: 'id_oeuvre',
       as: 'Oeuvre',
-      onDelete: 'CASCADE'
+      onDelete: 'SET NULL' // la notification reste, son lien disparaît (migration 20261117)
     });
   };
 

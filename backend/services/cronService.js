@@ -8,6 +8,7 @@ const { Op } = require('sequelize');
 // événement à venir (hook beforeValidate de models/events/evenement.js)
 const STATUTS_PUBLIES = ['publie', 'planifie'];
 const CronLock = require('../utils/cronLock');
+const { pasTermine, termine } = require('../helpers/finEvenement');
 const { translate, lireMultiLang } = require('../helpers/i18n');
 
 const FUSEAU = 'Africa/Algiers';
@@ -504,12 +505,13 @@ class CronService {
 
     const now = new Date();
 
-    // Passer les événements terminés en "terminé"
+    // Passer les événements terminés en "terminé" (fin réelle : jour sans heure = toute la journée,
+    // pas de date de fin = soir du premier jour — helpers/finEvenement)
     await this.models.Evenement.update(
       { statut: 'termine' },
       {
         where: {
-          date_fin: { [Op.lt]: now },
+          [Op.and]: [termine(now)],
           statut: [...STATUTS_PUBLIES, 'en_cours']
         }
       }
@@ -521,7 +523,7 @@ class CronService {
       {
         where: {
           date_debut: { [Op.lte]: now },
-          date_fin: { [Op.gte]: now },
+          [Op.and]: [pasTermine(now)],
           statut: STATUTS_PUBLIES
         }
       }
