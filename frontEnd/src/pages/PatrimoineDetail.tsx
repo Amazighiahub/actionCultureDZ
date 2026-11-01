@@ -944,7 +944,7 @@ const PatrimoineDetail = () => {
                 {/* Coordonnées GPS */}
                 <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
                   <span dir="ltr">GPS : {Number(site.latitude).toFixed(6)}, {Number(site.longitude).toFixed(6)}</span>
-                  <a href={itineraireUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline whitespace-nowrap">
+                  <a href={itineraireUrl} target="_blank" rel="noopener noreferrer" className="inline-block py-3 -my-3 px-2 -mx-2 font-medium text-primary hover:underline whitespace-nowrap">
                     {t('patrimoine.directions', 'Itinéraire')}
                   </a>
                 </div>

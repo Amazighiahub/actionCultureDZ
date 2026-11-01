@@ -22,8 +22,9 @@ const EnTeteSection: React.FC<Props> = ({ surtitre, titre, accroche, lien, id })
       <h2 id={id} className="font-serif text-3xl lg:text-4xl font-bold tracking-tight">{titre}</h2>
       {accroche && <p className="mt-2 text-muted-foreground">{accroche}</p>}
     </div>
+    {/* py-3 -my-3 : zone de toucher de 44 px sur téléphone, sans décaler la mise en page */}
     {lien && (
-      <Link to={lien.to} className="group inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4">
+      <Link to={lien.to} className="group inline-flex items-center gap-1.5 py-3 -my-3 text-sm font-semibold text-primary hover:underline underline-offset-4">
         {lien.libelle}
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
       </Link>

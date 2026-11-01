@@ -40,6 +40,7 @@ import FormPageHeader from '@/components/shared/FormPageHeader';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -91,6 +92,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [interieur, setInterieur] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [medias, setMedias] = useState<File[]>([]);
+  // Saisie en cours : confirmation avant de quitter la page (liens, fermeture de l'onglet)
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
   // Photographe ou source, droits, et confirmation du droit de publier
   const [creditPhotos, setCreditPhotos] = useState<ValeurCreditPhoto>(CREDIT_VIDE);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
@@ -255,6 +259,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
         // « Mes patrimoines » et la liste publique relus (sinon le nouveau site n'y apparaissait pas)
         rafraichirTableauDeBord();
         queryClient.invalidateQueries({ queryKey: ['patrimoine'] });
+        setIsDirty(false);
         navigate(`/patrimoine/${siteId}`);
       } else {
         // Gestion erreur 409 (doublon)
@@ -313,7 +318,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
     <div className="min-h-screen bg-background" dir={direction}>
       <Header />
 
-      <main className="container py-8 max-w-2xl mx-auto">
+      <main className="container py-8 max-w-2xl mx-auto" onInput={() => setIsDirty(true)}>
         <FormPageHeader
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}

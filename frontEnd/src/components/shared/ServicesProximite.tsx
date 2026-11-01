@@ -306,19 +306,19 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                     {/* Informations de contact */}
                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                       {service.telephone && (
-                        <a href={`tel:${service.telephone}`} className="flex items-center gap-1 hover:text-primary">
+                        <a href={`tel:${service.telephone}`} className="flex items-center gap-1 py-3 -my-3 hover:text-primary">
                           <Phone className="h-3 w-3" />
                           {service.telephone}
                         </a>
                       )}
                       {service.email && (
-                        <a href={`mailto:${service.email}`} className="flex items-center gap-1 hover:text-primary">
+                        <a href={`mailto:${service.email}`} className="flex items-center gap-1 py-3 -my-3 hover:text-primary">
                           <Mail className="h-3 w-3" />
                           {service.email}
                         </a>
                       )}
                       {service.site_web && (
-                        <a href={safeExternalUrl(service.site_web)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                        <a href={safeExternalUrl(service.site_web)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 py-3 -my-3 hover:text-primary">
                           <Globe className="h-3 w-3" />
                           {t('services.website', 'Site web')}
                           <ExternalLink className="h-2.5 w-2.5" />

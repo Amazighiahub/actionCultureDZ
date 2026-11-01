@@ -10,6 +10,10 @@ const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('../user/userFileCleanup');
 
+// Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
+// Le texte ne change pas (les contrôleurs le comparent encore).
+const erreurHttp = (message, statusCode) => Object.assign(new Error(message), { statusCode });
+
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {
     this.models = models;
@@ -81,7 +85,7 @@ class DashboardUserManagementService {
   async getUserDetails(userId) {
     const user = await this.userRepo.findDetailsWithRoles(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
     return user;
   }
@@ -129,7 +133,7 @@ class DashboardUserManagementService {
 
     const user = await this.userRepo.update(userId, updateData);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
     await this._invalidateUserCache(userId);
     return user;
@@ -149,7 +153,7 @@ class DashboardUserManagementService {
     // Charger l'utilisateur avec ses rôles via le repository
     const user = await this.userRepo.findWithRoles(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
 
     // Vérification métier : ne pas supprimer un admin (via Roles OU id_type_user=29)
@@ -157,12 +161,12 @@ class DashboardUserManagementService {
       (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin' || r.nom_role === 'Administrateur'))
       || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR
     ) {
-      throw new Error('CANNOT_DELETE_ADMIN');
+      throw erreurHttp('CANNOT_DELETE_ADMIN', 403);
     }
 
     // Vérification métier : ne pas se supprimer soi-même
     if (user.id_user === adminId) {
-      throw new Error('CANNOT_DELETE_SELF');
+      throw erreurHttp('CANNOT_DELETE_SELF', 400);
     }
 
     if (hardDelete) {
@@ -197,7 +201,7 @@ class DashboardUserManagementService {
       suspendu_par: null
     });
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
     await this._invalidateUserCache(userId);
     return user;
@@ -208,10 +212,10 @@ class DashboardUserManagementService {
    */
   async changeUserRole(userId, roleId, adminId) {
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
 
     const role = await this.models.Role.findByPk(roleId);
-    if (!role) throw new Error('Rôle non trouvé');
+    if (!role) throw erreurHttp('Rôle non trouvé', 404);
 
     let previousRole = null;
     if (this.models.UserRole) {
@@ -252,7 +256,7 @@ class DashboardUserManagementService {
    */
   async resetUserPassword(userId) {
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
 
     const tempPassword = crypto.randomBytes(24).toString('hex');
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
@@ -281,8 +285,8 @@ class DashboardUserManagementService {
    */
   async verifyEmailManually(userId) {
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
-    if (user.email_verifie) throw new Error('EMAIL_ALREADY_VERIFIED');
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
+    if (user.email_verifie) throw erreurHttp('EMAIL_ALREADY_VERIFIED', 409);
 
     await this.userRepo.update(userId, {
       email_verifie: true,
@@ -366,7 +370,7 @@ class DashboardUserManagementService {
       return results;
     }
 
-    throw new Error(`Action non reconnue: ${action}`);
+    throw erreurHttp(`Action non reconnue: ${action}`, 400);
   }
 
   /**
@@ -397,9 +401,9 @@ class DashboardUserManagementService {
     const raison = data.raison || data.reason;
 
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
-    if (user.id_type_user === TYPE_USER_IDS.VISITEUR) throw new Error('Les visiteurs n\'ont pas besoin de validation');
-    if (user.statut !== 'en_attente_validation') throw new Error(`Cet utilisateur a déjà été traité (statut: ${user.statut})`);
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
+    if (user.id_type_user === TYPE_USER_IDS.VISITEUR) throw erreurHttp('Les visiteurs n\'ont pas besoin de validation', 400);
+    if (user.statut !== 'en_attente_validation') throw erreurHttp(`Cet utilisateur a déjà été traité (statut: ${user.statut})`, 409);
 
     const updateData = { statut: valide ? 'actif' : 'rejete', date_validation: new Date(), id_user_validate: validateur_id };
     if (!valide && raison) updateData.raison_rejet = raison;
@@ -454,7 +458,7 @@ class DashboardUserManagementService {
   async suspendUserAction(userId, data) {
     const { raison, duree } = data;
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
     await this.userRepo.update(userId, { statut: 'suspendu', date_suspension: new Date(), raison_suspension: raison, duree_suspension: duree || null });
     await this._invalidateUserCache(userId);
     await user.reload();
