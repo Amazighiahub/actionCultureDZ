@@ -179,13 +179,13 @@ class ParcoursService extends BaseService {
   /**
    * Supprimer un parcours
    */
-  async delete(id, userId) {
+  async delete(id, userId, isAdmin = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_createur !== userId) {
+    if (existing.id_createur !== userId && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres parcours');
     }
 
@@ -211,6 +211,12 @@ class ParcoursService extends BaseService {
 
     if (!etapeData.id_lieu && !etapeData.lieuId) {
       throw this._validationError('L\'ID du lieu est requis');
+    }
+    // Lieu publié seulement (avant : un id inexistant finissait en erreur 500 de la base)
+    const Lieu = this.repository.models?.Lieu;
+    if (Lieu) {
+      const lieu = await Lieu.findByPk(etapeData.id_lieu || etapeData.lieuId, { attributes: ['id_lieu', 'statut'] });
+      if (!lieu || lieu.statut !== 'publie') throw this._validationError('Ce lieu n\'existe pas ou n\'est pas publié');
     }
 
     await this.repository.addEtape(parcoursId, etapeData);

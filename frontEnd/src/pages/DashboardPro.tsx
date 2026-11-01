@@ -61,6 +61,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 // Gestion d'un événement (participants, programme…) : chargée à l'ouverture de « Gérer »
 const GestionEvenement = React.lazy(() => import('@/components/event/GestionEvenement'));
 import { oeuvreService } from '@/services/oeuvre.service';
+import SEOHead from '@/components/SEOHead';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
 interface DashboardItem {
@@ -482,6 +483,7 @@ const DashboardPro = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <SEOHead title={t("dashboardpro.dashboard_professionnel")} noindex />
       
       <main className="container mx-auto py-8 px-4 max-w-6xl">
         {/* En-tête simplifié */}

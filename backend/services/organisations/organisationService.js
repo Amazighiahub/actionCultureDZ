@@ -16,6 +16,9 @@ const ROLES_GESTION = ['responsable', 'directeur'];
 const TYPES_EDITEUR_PAGE = ['maison_edition', 'editeur_scientifique'];
 // Maisons dont le catalogue est en cours d'import (un seul à la fois par maison)
 const importsEnCours = new Set();
+// Noms en cours de création : un double clic ne crée pas deux fois la même organisation
+// (verrou en mémoire, suffisant avec un seul processus Node)
+const creationsEnCours = new Set();
 
 const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Même nom dans chaque langue (espaces de début et de fin ignorés)
@@ -73,6 +76,19 @@ class OrganisationService extends BaseService {
    * - Sinon, crée et lie comme responsable.
    */
   async create(data, userId) {
+    const cleCreation = sansAccent(texteLisible(data.nom).trim());
+    if (cleCreation && creationsEnCours.has(cleCreation)) {
+      throw this._conflictError('Cette organisation est déjà en cours de création');
+    }
+    if (cleCreation) creationsEnCours.add(cleCreation);
+    try {
+      return await this._creer(data, userId);
+    } finally {
+      if (cleCreation) creationsEnCours.delete(cleCreation);
+    }
+  }
+
+  async _creer(data, userId) {
     const { nom, id_type_organisation, description, site_web } = data;
 
     const nomI18n = typeof nom === 'string' ? { fr: nom } : nom;

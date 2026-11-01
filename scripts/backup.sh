@@ -71,13 +71,15 @@ mkdir -p "${BACKUP_DIR}"
 # Identifiants dans un fichier temporaire (pas sur la ligne de commande : visible dans ps)
 CNF="$(mktemp)"
 chmod 600 "${CNF}"
-trap 'rm -f "${CNF}" "${BACKUP_DIR}"/*.partial' EXIT
+# Seulement les fichiers de CETTE exécution : « *.partial » effaçait aussi la sauvegarde en cours
+# d'une autre exécution (sauvegarde de nuit pendant une mise en ligne)
+trap 'rm -f "${CNF}" "${DUMP_FILE:-}.partial" "${UPLOADS_FILE:-}.partial" "${ERR_FILE:-}"' EXIT
 printf '[client]\nuser=%s\npassword=%s\nhost=%s\n' "${DB_USER}" "${DB_PASSWORD}" "${DB_HOST}" > "${CNF}"
 
 # ─── 1. Dump MySQL ──────────────────────────────────────────
 
 DUMP_FILE="${BACKUP_DIR}/db_${KIND}_${DATE}.sql.gz"
-ERR_FILE="${BACKUP_DIR}/last_mysqldump.err"
+ERR_FILE="${BACKUP_DIR}/mysqldump_$$.err"
 
 log "Dump MySQL '${DB_NAME}' → ${DUMP_FILE}"
 

@@ -147,10 +147,10 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
         {/* Actions au survol */}
         <div className="absolute bottom-3 start-3 end-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 text-white text-sm">
-            {oeuvre.vues !== undefined && (
+            {Number(oeuvre.nb_vues) > 0 && (
               <span className="flex items-center gap-1">
                 <Eye className="h-4 w-4" aria-hidden="true" />
-                {oeuvre.vues}
+                {Number(oeuvre.nb_vues)}
               </span>
             )}
             {oeuvre.note_moyenne !== undefined && (
@@ -278,14 +278,13 @@ const Oeuvres: React.FC = () => {
 
     // Tri
     switch (sortBy) {
+      // Champs renvoyés par l'API : date_creation et nb_vues (createdAt et vues n'existent pas :
+      // les tris « récents » et « plus vus » n'avaient aucun effet)
       case 'recent':
-        result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        result.sort((a, b) => new Date(b.date_creation || 0).getTime() - new Date(a.date_creation || 0).getTime());
         break;
       case 'popular':
-        result.sort((a, b) => (b.vues || 0) - (a.vues || 0));
-        break;
-      case 'rated':
-        result.sort((a, b) => (b.note_moyenne || 0) - (a.note_moyenne || 0));
+        result.sort((a, b) => (Number(b.nb_vues) || 0) - (Number(a.nb_vues) || 0));
         break;
       case 'title':
         result.sort((a, b) => (a.titre || '').localeCompare(b.titre || ''));
@@ -390,7 +389,6 @@ const Oeuvres: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="recent">{t('works.sort.recent', 'Plus récents')}</SelectItem>
                   <SelectItem value="popular">{t('works.sort.popular', 'Plus vus')}</SelectItem>
-                  <SelectItem value="rated">{t('works.sort.rated', 'Mieux notés')}</SelectItem>
                   <SelectItem value="title">{t('works.sort.title', 'Titre A-Z')}</SelectItem>
                 </SelectContent>
               </Select>

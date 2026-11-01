@@ -104,10 +104,25 @@ describe('MessagesParticipants', () => {
     process.env.FRONTEND_URL = 'https://taladz.com';
     const m = modeles();
     await new MessagesParticipants(m, { emailService: emailService(), pauseMs: 0 }).envoyer(2, ORGANISATEUR, FORMULAIRE);
-    expect(m.Notification.bulkCreate.mock.calls[0][0][0].message).toContain('https://taladz.com/api/evenements/2/messages/1/programme.pdf');
+    expect(m.Notification.bulkCreate.mock.calls[0][0][0].message).toMatch(/https:\/\/taladz\.com\/api\/evenements\/2\/messages\/1\/programme\.pdf\?cle=[a-f0-9]{32}/);
     expect(lienPublicProgramme({ id_evenement: 2, id_message: 1, lien_programme: 'https://drive.google.com/file/d/x' })).toBe('https://drive.google.com/file/d/x');
     m.MessageEvenement.findOne = jest.fn().mockResolvedValue({ lien_programme: 'https://exemple.dz/x.pdf' });
     await expect(new MessagesParticipants(m).programme(2, 1)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it('PDF du programme : signature exigée (sauf messages envoyés avant elle)', async () => {
+    process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+    process.env.FRONTEND_URL = 'https://taladz.com';
+    const pdf = 'https://res.cloudinary.com/demo/raw/upload/v1/prog';
+    const m = modeles();
+    const service = new MessagesParticipants(m);
+    const cle = lienPublicProgramme({ id_evenement: 2, id_message: 7, lien_programme: pdf }).split('cle=')[1];
+    m.MessageEvenement.findOne = jest.fn().mockResolvedValue({ lien_programme: pdf, date_creation: new Date('2026-12-01') });
+    await expect(service.programme(2, 7, cle)).resolves.toBe(pdf);
+    await expect(service.programme(2, 7)).rejects.toMatchObject({ statusCode: 404 });
+    await expect(service.programme(2, 8, cle)).rejects.toMatchObject({ statusCode: 404 });
+    m.MessageEvenement.findOne = jest.fn().mockResolvedValue({ lien_programme: pdf, date_creation: new Date('2026-10-20') });
+    await expect(service.programme(2, 7)).resolves.toBe(pdf);
   });
 
   it('l\'administration peut écrire aux participants de tout événement', async () => {

@@ -63,7 +63,9 @@ class CommentaireService extends BaseService {
    */
   async findOeuvre(oeuvreId) {
     if (!this.models.Oeuvre) return null;
-    return this.models.Oeuvre.findByPk(oeuvreId);
+    // On ne commente qu'une œuvre publiée
+    const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
+    return oeuvre && oeuvre.statut === 'publie' ? oeuvre : null;
   }
 
   /**
@@ -73,7 +75,9 @@ class CommentaireService extends BaseService {
    */
   async findEvenement(evenementId) {
     if (!this.models.Evenement) return null;
-    return this.models.Evenement.findByPk(evenementId);
+    // Pas de commentaire sur un brouillon ni sur un événement en attente de validation
+    const evenement = await this.models.Evenement.findByPk(evenementId);
+    return evenement && !['brouillon', 'en_attente'].includes(evenement.statut) ? evenement : null;
   }
 
   /**
@@ -88,12 +92,9 @@ class CommentaireService extends BaseService {
       throw new AppError('service.notFound', 404, 'SERVICE_INTROUVABLE');
     }
     if (commentaire_parent_id) {
-      const parent = await this.repository.findById(commentaire_parent_id);
-      if (!parent || Number(parent.id_service) !== Number(serviceId)) {
-        throw new AppError('common.notFound', 404, 'AVIS_INTROUVABLE');
-      }
+      const idParent = await this._parentValide(commentaire_parent_id, 'id_service', serviceId);
       // Une réponse ne porte pas de note
-      return this.repository.createWithAuthor({ contenu, commentaire_parent_id, id_user: userId, id_service: serviceId });
+      return this.repository.createWithAuthor({ contenu, commentaire_parent_id: idParent, id_user: userId, id_service: serviceId });
     }
     if (Number(service.id_user) === Number(userId)) {
       throw new AppError('comment.ownService', 403, 'AVIS_PROPRE_SERVICE');
@@ -116,7 +117,26 @@ class CommentaireService extends BaseService {
    * @returns {object} Commentaire complet avec User inclus
    */
   async createCommentaire(data) {
+    if (data.commentaire_parent_id) {
+      const [champ, valeur] = data.id_oeuvre ? ['id_oeuvre', data.id_oeuvre] : ['id_evenement', data.id_evenement];
+      const idParent = await this._parentValide(data.commentaire_parent_id, champ, valeur);
+      // Une réponse ne porte pas de note
+      return this.repository.createWithAuthor({ ...data, commentaire_parent_id: idParent, note_qualite: null });
+    }
     return this.repository.createWithAuthor(data);
+  }
+
+  /**
+   * Commentaire auquel on répond : publié, sur le même contenu. Une réponse à une réponse est
+   * rattachée au commentaire de départ (un seul niveau, comme l'affichage).
+   * @returns {Promise<number>} id du commentaire de départ
+   */
+  async _parentValide(idParent, champ, valeur) {
+    const parent = await this.repository.findById(idParent);
+    if (!parent || parent.statut !== 'publie' || Number(parent[champ]) !== Number(valeur)) {
+      throw new AppError('common.notFound', 404, 'COMMENTAIRE_INTROUVABLE');
+    }
+    return parent.commentaire_parent_id || parent.id_commentaire;
   }
 
   // ========================================================================

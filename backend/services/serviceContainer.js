@@ -312,6 +312,18 @@ class ServiceContainer {
     return this._services.get('messagesParticipants');
   }
 
+  /** Documents PDF joints à un événement (programme complet, présentation…) */
+  get documentsEvenementService() {
+    this._checkInitialized();
+
+    if (!this._services.has('documentsEvenement')) {
+      const { DocumentsEvenement } = require('./evenement/documentsEvenement');
+      this._services.set('documentsEvenement', new DocumentsEvenement(this._models));
+    }
+
+    return this._services.get('documentsEvenement');
+  }
+
   /** Propositions de modification d'un article (brouillons validés par l'auteur ou l'administration) */
   get articleRevisionService() {
     this._checkInitialized();

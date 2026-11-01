@@ -147,13 +147,23 @@ class ParcoursRepository extends BaseRepository {
       throw new Error('Model ParcoursLieu not available');
     }
 
-    // Déterminer l'ordre (dernier + 1)
-    const lastEtape = await this.models.ParcoursLieu.findOne({
-      where: { id_parcours: parcoursId },
-      order: [['ordre', 'DESC']]
+    // Ordre (dernier + 1) calculé sous verrou du parcours : deux ajouts simultanés
+    // ne reçoivent plus le même numéro
+    return this.models.ParcoursLieu.sequelize.transaction(async (transaction) => {
+      if (this.models.Parcours) {
+        await this.models.Parcours.findByPk(parcoursId, { attributes: ['id_parcours'], transaction, lock: transaction.LOCK.UPDATE });
+      }
+      const lastEtape = await this.models.ParcoursLieu.findOne({
+        where: { id_parcours: parcoursId },
+        order: [['ordre', 'DESC']],
+        transaction
+      });
+      const nextOrdre = lastEtape ? lastEtape.ordre + 1 : 1;
+      return this._creerEtape(parcoursId, etapeData, nextOrdre, transaction);
     });
-    const nextOrdre = lastEtape ? lastEtape.ordre + 1 : 1;
+  }
 
+  _creerEtape(parcoursId, etapeData, nextOrdre, transaction) {
     return this.models.ParcoursLieu.create({
       id_parcours: parcoursId,
       id_lieu: etapeData.id_lieu || etapeData.lieuId,
@@ -164,7 +174,7 @@ class ParcoursRepository extends BaseRepository {
       temps_trajet: etapeData.temps_trajet || etapeData.tempsTrajet || null,
       notes: etapeData.notes || null,
       transport_mode: etapeData.transport_mode || etapeData.transportMode || 'voiture'
-    });
+    }, { transaction });
   }
 
   /**

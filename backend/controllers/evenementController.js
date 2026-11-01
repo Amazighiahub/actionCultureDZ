@@ -551,7 +551,8 @@ class EvenementController extends BaseController {
    */
   async programmeMessage(req, res) {
     try {
-      const url = await container.messagesParticipantsService.programme(parseInt(req.params.id), parseInt(req.params.idMessage));
+      const url = await container.messagesParticipantsService.programme(
+        parseInt(req.params.id), parseInt(req.params.idMessage), req.query.cle);
       const fichier = await fetch(url);
       if (!fichier.ok || !fichier.body) return res.status(502).json({ success: false, error: req.t('common.serverError') });
       res.set({
@@ -568,6 +569,61 @@ class EvenementController extends BaseController {
   }
 
   /** Message envoyé aux participants (notification sur le site + email) */
+  // ============================================================================
+  // DOCUMENTS PDF DE L'ÉVÉNEMENT
+  // ============================================================================
+
+  async listerDocuments(req, res) {
+    try {
+      const id = parseInt(req.params.id);
+      const evenement = await this.evenementService.findById(id);
+      if (this._cache(req, evenement)) return this._introuvable(req, res);
+      res.json({ success: true, data: await container.documentsEvenementService.lister(id) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async ajouterDocument(req, res) {
+    try {
+      const data = await container.documentsEvenementService.ajouter(parseInt(req.params.id), req.user, req.body || {});
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async retirerDocument(req, res) {
+    try {
+      await container.documentsEvenementService.retirer(parseInt(req.params.id), parseInt(req.params.idMedia), req.user);
+      res.json({ success: true });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** Le PDF servi par le site (même principe que le programme joint à un message) */
+  async telechargerDocument(req, res) {
+    try {
+      const id = parseInt(req.params.id);
+      const evenement = await this.evenementService.findById(id);
+      if (this._cache(req, evenement)) return this._introuvable(req, res);
+      const url = await container.documentsEvenementService.fichier(id, parseInt(req.params.idMedia));
+      const fichier = await fetch(url);
+      if (!fichier.ok || !fichier.body) return res.status(502).json({ success: false, error: req.t('common.serverError') });
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="document.pdf"',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Content-Type-Options': 'nosniff'
+      });
+      if (fichier.headers.get('content-length')) res.set('Content-Length', fichier.headers.get('content-length'));
+      require('stream').Readable.fromWeb(fichier.body).pipe(res);
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async envoyerMessageParticipants(req, res) {
     try {
       const data = await container.messagesParticipantsService.envoyer(parseInt(req.params.id), req.user, req.body || {});
@@ -677,8 +733,9 @@ class EvenementController extends BaseController {
   async getQRCode(req, res) {
     try {
       const eventId = parseInt(req.params.id);
-      // Verify event exists (lightweight check)
+      // Route publique mise en cache : pas de QR (ni de titre dans l'URL) pour un brouillon
       const evenement = await this.evenementService.findById(eventId);
+      if (!evenement || this._cache(req, evenement)) return this._introuvable(req, res);
 
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const eventUrl = `${baseUrl}${evenementPath(eventId, evenement?.nom_evenement)}`;

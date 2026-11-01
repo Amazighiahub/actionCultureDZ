@@ -1,4 +1,5 @@
 // services/metadata.service.ts - VERSION CORRIGÉE
+import i18n from 'i18next';
 import { httpClient } from './httpClient';
 import type { ApiResponse } from '../config/api';
 import type {
@@ -80,7 +81,8 @@ export class MetadataService {
    * Obtenir toutes les métadonnées avec cache
    */
   async getAllCached(): Promise<ApiResponse<AllMetadata>> {
-    const cacheKey = 'all-metadata';
+    // Une copie par langue : les noms (types, genres, langues…) sont traduits par le serveur
+    const cacheKey = `all-metadata:${i18n.language || 'fr'}`;
     const cached = this.cache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
@@ -355,18 +357,6 @@ export class MetadataService {
   // ================================================
   // CATÉGORIES ET GENRES
   // ================================================
-
-  async getCategories(): Promise<ApiResponse<Categorie[]>> {
-    try {
-      const response = await httpClient.get<Categorie[]>('/metadata/categories');
-      return response;
-    } catch (error: unknown) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des catégories'
-      };
-    }
-  }
 
   async getGenres(): Promise<ApiResponse<Genre[]>> {
     try {

@@ -33,10 +33,12 @@ export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ'
 };
 
+// Codes courts plutôt que des drapeaux : une langue n'est pas un pays, et Windows affiche
+// les drapeaux en lettres (« GBEnglish »)
 export const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
-  fr: '🇫🇷',
-  ar: '🇩🇿',
-  en: '🇬🇧',
+  fr: 'FR',
+  ar: 'ع',
+  en: 'EN',
   'tz-ltn': 'ⵣ',
   'tz-tfng': 'ⵣ'
 };

@@ -26,6 +26,7 @@ const { mockToast, mockForgotPassword } = vi.hoisted(() => ({
 // ---------------------------------------------------------------------------
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,
 }));
 

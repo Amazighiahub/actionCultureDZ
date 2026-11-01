@@ -50,9 +50,9 @@ describe('GET /sitemap.xml', () => {
     expect(calls.Lieu[0].where).toEqual({ statut: 'publie' });
     // Artisanat : seulement si l'œuvre liée est publiée
     expect(calls.Artisanat[0].include[0]).toMatchObject({ where: { statut: 'publie' }, required: true });
-    // Œuvres : sans les articles (types 4 et 5), qui ont leur propre adresse
+    // Œuvres : sans les articles (types 4 et 5) ni l'artisanat (type 7), qui ont leur propre adresse
     const oeuvresWhere = calls.Oeuvre.find((o) => o.where.id_type_oeuvre && o.where.id_type_oeuvre[Op.notIn]);
-    expect(oeuvresWhere.where.id_type_oeuvre[Op.notIn]).toEqual([4, 5]);
+    expect(oeuvresWhere.where.id_type_oeuvre[Op.notIn]).toEqual([4, 5, 7]);
   });
 });
 

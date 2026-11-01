@@ -388,6 +388,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                   type="button"
                   size="sm"
                   onClick={handleAddSpecialite}
+                  aria-label={t('common.add', 'Ajouter')}
                   disabled={!newSpecialite.trim()}>
 
                   <Plus className="h-4 w-4" />

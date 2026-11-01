@@ -158,6 +158,8 @@ class CommentaireController extends BaseController {
 
       return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {
+      // Clé de traduction (ex. réponse à un commentaire introuvable) → texte dans la langue de la page
+      if (error.isOperational && error.statusCode < 500) error.message = req.t(error.message);
       return this._handleError(res, error);
     }
   }
@@ -189,6 +191,8 @@ class CommentaireController extends BaseController {
 
       return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {
+      // Clé de traduction (ex. réponse à un commentaire introuvable) → texte dans la langue de la page
+      if (error.isOperational && error.statusCode < 500) error.message = req.t(error.message);
       return this._handleError(res, error);
     }
   }

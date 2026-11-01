@@ -59,6 +59,9 @@ class ParcoursController extends BaseController {
   async getById(req, res) {
     try {
       const parcours = await this.parcoursService.findWithFullDetails(parseInt(req.params.id));
+      if (this._parcoursCache(req, parcours)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: parcours.toDetailJSON(req.lang)
@@ -68,9 +71,18 @@ class ParcoursController extends BaseController {
     }
   }
 
+  /** Parcours inactif ou en maintenance : visible seulement par son créateur et la modération */
+  _parcoursCache(req, parcours) {
+    const raw = parcours?._raw || {};
+    return raw.statut && raw.statut !== 'actif' && !this._canSeeUnpublished(req, raw.id_createur);
+  }
+
   async getMap(req, res) {
     try {
       const parcours = await this.parcoursService.findWithFullDetails(parseInt(req.params.id));
+      if (this._parcoursCache(req, parcours)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: parcours.toMapJSON(req.lang)
@@ -132,7 +144,7 @@ class ParcoursController extends BaseController {
 
   async delete(req, res) {
     try {
-      await this.parcoursService.delete(parseInt(req.params.id), req.user.id_user);
+      await this.parcoursService.delete(parseInt(req.params.id), req.user.id_user, this._estModeration(req));
       res.json({ success: true, message: req.t('parcours.deleted') });
     } catch (error) {
       this._handleError(res, error);

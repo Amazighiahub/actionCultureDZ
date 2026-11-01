@@ -456,7 +456,8 @@
     "lieu": "Place",
     "errorOccurred": "An error occurred",
     "notFound": "Not found",
-    "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?"
+    "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?",
+    "backToTop": "Back to top"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -3292,7 +3293,20 @@
       "copyLink": "Copy link",
       "share": "Share"
     },
-    "tags": "Keywords"
+    "tags": "Keywords",
+    "documents": {
+      "titre": "Documents to download",
+      "ajoute": "Document added to the event page",
+      "gestionTitre": "Event PDF documents",
+      "gestionAide": "Full programme, presentation… They appear on the event page, ready to download.",
+      "retirer": "Remove document",
+      "fichier": "PDF file",
+      "titreChamp": "Displayed title",
+      "titreExemple": "e.g. Full programme",
+      "envoi": "Uploading…",
+      "ajouter": "Add document",
+      "max": "5 documents at most: remove one to add another."
+    }
   },
   "places": {
     "address": "Address",
@@ -3657,7 +3671,8 @@
     "oeuvres": "Works",
     "showOeuvres": "Present works",
     "oeuvresDisabled": "Work management is disabled for this event.",
-    "oeuvresEnableHint": "Enable \"Present works\" if this event includes presentations of works."
+    "oeuvresEnableHint": "Enable \"Present works\" if this event includes presentations of works.",
+    "documents": "PDF documents"
   },
   "status": {
     "active": "Active",
@@ -4046,7 +4061,14 @@
       }
     },
     "personnalites": {
-      "liees": "People linked to this site"
+      "liees": "People linked to this site",
+      "vide": "This section is not documented yet.",
+      "rechercher": "Search for a figure (name, first name…)",
+      "dejaLie": "Already linked",
+      "role": "Role at this site",
+      "roleExemple": "e.g. historical figure, founder, artist…",
+      "periode": "Period",
+      "periodeExemple": "e.g. 13th century, 1830–1962…"
     },
     "proposition": {
       "envoyee": "Suggestion sent",
@@ -4749,7 +4771,8 @@
     "notFoundTitle": "Article not found",
     "video": "Video",
     "voirAussi": "See also",
-    "lireEn": "Read in"
+    "lireEn": "Read in",
+    "removeImage": "Remove image"
   },
   "passwordStrength": {
     "minLength": "12+ characters",
@@ -5325,5 +5348,9 @@
     "guitare": "Guitar",
     "piano": "Piano",
     "synthetiseur": "Synthesizer"
+  },
+  "seo": {
+    "defaultTitle": "Tala DZ - The source of Algerian culture",
+    "defaultDescription": "Discover Algeria's rich cultural heritage: events, historic sites, literary and artistic works, traditional crafts."
   }
 }

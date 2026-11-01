@@ -51,6 +51,7 @@ const searchParamsObj = {
 const searchParamsArr = [searchParamsObj] as const;
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
   useSearchParams: () => searchParamsArr,

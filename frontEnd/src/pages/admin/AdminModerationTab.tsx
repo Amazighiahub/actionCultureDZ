@@ -231,7 +231,7 @@ const AdminModerationTab: React.FC = () => {
             const reasonKey = RAISONS_SIGNALEMENT_CONFIG[signalement.reason];
 
             return (
-              <Card key={signalement.id} className="border-s-4 border-l-yellow-500 hover:shadow-md transition-shadow">
+              <Card key={signalement.id} className="border-s-4 border-s-yellow-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">

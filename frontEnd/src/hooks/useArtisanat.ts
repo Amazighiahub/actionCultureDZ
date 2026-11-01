@@ -4,6 +4,8 @@ import { artisanatService, Artisanat, ArtisanatStatistics } from '@/services/art
 import { httpClient } from '@/services/httpClient';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+// Copie de secours par langue : les titres sont traduits par le serveur
+import i18n from 'i18next';
 
 /** Extended Artisanat with optional `prix` field that may come from API responses */
 interface ArtisanatWithPrix extends Artisanat {
@@ -182,8 +184,8 @@ export function useArtisanat(): UseArtisanatReturn {
 
       // Sauvegarder en localStorage
       try {
-        localStorage.setItem('artisanats_backup', JSON.stringify(artisanatsData));
-        localStorage.setItem('artisanats_backup_time', Date.now().toString());
+        localStorage.setItem(`artisanats_backup:${i18n.language}`, JSON.stringify(artisanatsData));
+        localStorage.setItem(`artisanats_backup_time:${i18n.language}`, Date.now().toString());
       } catch (e) {
       }
     } catch (err: unknown) {
@@ -193,8 +195,8 @@ export function useArtisanat(): UseArtisanatReturn {
         localStorage.setItem('lastRateLimit', Date.now().toString());
 
         // Essayer le backup
-        const backup = localStorage.getItem('artisanats_backup');
-        const backupTime = localStorage.getItem('artisanats_backup_time');
+        const backup = localStorage.getItem(`artisanats_backup:${i18n.language}`);
+        const backupTime = localStorage.getItem(`artisanats_backup_time:${i18n.language}`);
 
         if (backup && backupTime) {
           const age = Date.now() - parseInt(backupTime);

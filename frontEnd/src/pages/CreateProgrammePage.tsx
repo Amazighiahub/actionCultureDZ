@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
+import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
@@ -27,6 +28,7 @@ const CreateProgrammePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const eventId = searchParams.get('eventId') ?? undefined;
   const navigate = useNavigate();
+  const naviguerPlusTard = useNavigationDifferee();
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
@@ -105,9 +107,7 @@ const CreateProgrammePage: React.FC = () => {
         rafraichirTableauDeBord();
 
         // Rediriger vers la page de l'événement après 2 secondes
-        setTimeout(() => {
-          navigate(`/evenements/${eventId}`);
-        }, 2000);
+        naviguerPlusTard(`/evenements/${eventId}`);
       } else {
         setError(response.error || t('programmePages.errors.createFailed'));
       }

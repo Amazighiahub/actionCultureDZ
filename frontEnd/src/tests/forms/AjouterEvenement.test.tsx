@@ -66,6 +66,7 @@ const MOCK_ORGANISATIONS = [
 // ---------------------------------------------------------------------------
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
   Link: ({ children, to, ...rest }: any) => <a href={to} {...rest}>{children}</a>,

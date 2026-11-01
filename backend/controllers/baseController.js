@@ -169,7 +169,14 @@ class BaseController {
       code
     };
 
-    if (error.errors && !IS_PRODUCTION) response.errors = error.errors;
+    // Détail des champs refusés : utile à la personne (avant : masqué en production, elle ne voyait
+    // que « Données invalides »). Seulement champ + message, jamais l'objet d'origine (une erreur
+    // Sequelize contient l'enregistrement complet).
+    if (Array.isArray(error.errors) && (statusCode < 500 || !IS_PRODUCTION)) {
+      response.errors = error.errors.slice(0, 50).map(e => (typeof e === 'string'
+        ? e
+        : { field: e?.field || e?.path || e?.param || null, message: e?.message || e?.msg || '' }));
+    }
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 
     res.status(statusCode).json(response);

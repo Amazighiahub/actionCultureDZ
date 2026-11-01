@@ -203,7 +203,7 @@ class WhatsAppService {
   async sendEventRegistrationConfirmation({ telephone, prenom, nomEvenement, dateEvenement, lieu }) {
     let message = `✅ *Inscription Confirmée*\n\nBonjour ${prenom},\nVotre inscription à *${nomEvenement}* est confirmée.\n\n📅 Date: ${dateEvenement}`;
     if (lieu) message += `\n📍 Lieu: ${lieu}`;
-    message += `\n\n_Action Culture_`;
+    message += `\n\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }
@@ -215,7 +215,7 @@ class WhatsAppService {
     const statutText = statut === 'confirme' ? '✅ *Acceptée*' : '❌ *Refusée*';
     let message = `${statutText}\n\nBonjour ${prenom},\nVotre participation à *${nomEvenement}* a été ${statut === 'confirme' ? 'acceptée' : 'refusée'}.`;
     if (notes) message += `\n\n💬 _${notes}_`;
-    message += `\n\n_Action Culture_`;
+    message += `\n\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }
@@ -226,7 +226,7 @@ class WhatsAppService {
   async sendEventCancellation({ telephone, prenom, nomEvenement, raison }) {
     let message = `⚠️ *Événement Annulé*\n\nBonjour ${prenom},\nL'événement *${nomEvenement}* a été annulé.`;
     if (raison) message += `\n\n📝 Raison: ${raison}`;
-    message += `\n\nNous nous excusons pour ce désagrément.\n_Action Culture_`;
+    message += `\n\nNous nous excusons pour ce désagrément.\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }
@@ -243,7 +243,7 @@ class WhatsAppService {
     };
     const typeText = types[typeModification] || 'modifié';
 
-    const message = `📋 *Programme ${typeText}*\n\nBonjour ${prenom},\nLe programme *"${titreProgramme}"* de l'événement *${nomEvenement}* a été ${typeText}.\n\nConnectez-vous pour voir les détails.\n_Action Culture_`;
+    const message = `📋 *Programme ${typeText}*\n\nBonjour ${prenom},\nLe programme *"${titreProgramme}"* de l'événement *${nomEvenement}* a été ${typeText}.\n\nConnectez-vous pour voir les détails.\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }
@@ -252,7 +252,7 @@ class WhatsAppService {
    * Rappel d'événement
    */
   async sendEventReminder({ telephone, prenom, nomEvenement, dateEvenement, heureDebut }) {
-    const message = `⏰ *Rappel*\n\nBonjour ${prenom},\nL'événement *${nomEvenement}* a lieu demain !\n\n📅 ${dateEvenement}\n🕐 ${heureDebut}\n\nÀ demain !\n_Action Culture_`;
+    const message = `⏰ *Rappel*\n\nBonjour ${prenom},\nL'événement *${nomEvenement}* a lieu demain !\n\n📅 ${dateEvenement}\n🕐 ${heureDebut}\n\nÀ demain !\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }
@@ -263,7 +263,7 @@ class WhatsAppService {
   async sendNewEvent({ telephone, prenom, nomEvenement, dateEvenement, lieu }) {
     let message = `🎉 *Nouvel Événement*\n\nBonjour ${prenom},\nDécouvrez *${nomEvenement}* !\n\n📅 Date: ${dateEvenement}`;
     if (lieu) message += `\n📍 Lieu: ${lieu}`;
-    message += `\n\nConnectez-vous pour en savoir plus.\n_Action Culture_`;
+    message += `\n\nConnectez-vous pour en savoir plus.\n_Tala DZ_`;
 
     return await this.sendMessage(telephone, message);
   }

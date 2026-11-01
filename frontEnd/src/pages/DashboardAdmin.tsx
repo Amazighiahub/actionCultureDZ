@@ -28,6 +28,7 @@ import {
 import { useAdminAuth } from '@/hooks/useAdmin';
 import { useSocket } from '@/hooks/useSocket';
 import { socketService } from '@/services/socketService';
+import SEOHead from '@/components/SEOHead';
 
 // ✅ LAZY LOADING - CHEMIN CORRIGÉ: ./admin/
 const AdminOverview = React.lazy(() => import('./admin/AdminOverview'));
@@ -114,6 +115,7 @@ const DashboardAdmin: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <SEOHead title={t('admin.dashboard.title')} noindex />
 
       <main className="container py-8">
         {/* En-tête */}

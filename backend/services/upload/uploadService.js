@@ -118,7 +118,10 @@ class UploadService {
    */
   async getMediaById(id) {
     if (!this.models.Media) return null;
-    return this.models.Media.findByPk(id);
+    const include = [];
+    if (this.models.Oeuvre) include.push({ model: this.models.Oeuvre, attributes: ['id_oeuvre', 'statut', 'saisi_par'], required: false });
+    if (this.models.Evenement) include.push({ model: this.models.Evenement, attributes: ['id_evenement', 'statut', 'id_user'], required: false });
+    return this.models.Media.findByPk(id, { include });
   }
 
   /**
@@ -138,8 +141,14 @@ class UploadService {
     const media = await this.getMediaById(id);
     if (!media) return { media: null };
 
-    const isPublic = this._getMediaVisibility(media);
-    const uploadedBy = this._getUploadedBy(media);
+    // Un média « public » d'une œuvre ou d'un événement non publié reste privé :
+    // seuls son auteur et l'administration y accèdent.
+    const oeuvre = media.Oeuvre;
+    const evenement = media.Evenement;
+    const parentCache = (oeuvre && oeuvre.statut !== 'publie')
+      || (evenement && ['brouillon', 'en_attente'].includes(evenement.statut));
+    const isPublic = this._getMediaVisibility(media) && !parentCache;
+    const uploadedBy = this._getUploadedBy(media) ?? oeuvre?.saisi_par ?? evenement?.id_user ?? null;
 
     // Check if Cloudinary URL
     if (cloudinarySvc.isCloudinaryUrl(media.url)) {
@@ -323,8 +332,14 @@ class UploadService {
     const media = await this.getMediaById(id);
     if (!media) return { media: null };
 
-    const isPublic = this._getMediaVisibility(media);
-    const uploadedBy = this._getUploadedBy(media);
+    // Un média « public » d'une œuvre ou d'un événement non publié reste privé :
+    // seuls son auteur et l'administration y accèdent.
+    const oeuvre = media.Oeuvre;
+    const evenement = media.Evenement;
+    const parentCache = (oeuvre && oeuvre.statut !== 'publie')
+      || (evenement && ['brouillon', 'en_attente'].includes(evenement.statut));
+    const isPublic = this._getMediaVisibility(media) && !parentCache;
+    const uploadedBy = this._getUploadedBy(media) ?? oeuvre?.saisi_par ?? evenement?.id_user ?? null;
 
     if (!isPublic && uploadedBy !== userId && !isAdmin) {
       return { media, forbidden: true };

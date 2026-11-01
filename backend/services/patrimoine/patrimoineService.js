@@ -925,7 +925,9 @@ class PatrimoineService extends BaseService {
     if (!DetailLieu || !LieuNotation) throw this._validationError('Modèles de notation non disponibles');
 
     return this.repository.withTransaction(async (transaction) => {
-      const detailLieu = await DetailLieu.findOne({ where: { id_lieu: siteId }, transaction });
+      // Verrou sur la fiche du site : deux notes simultanées ne calculent plus chacune
+      // une moyenne qui ignore l'autre
+      const detailLieu = await DetailLieu.findOne({ where: { id_lieu: siteId }, transaction, lock: transaction.LOCK.UPDATE });
       if (!detailLieu) {
         throw this._notFoundError(siteId);
       }

@@ -124,12 +124,18 @@ const initSignalementRoutes = (models, authMiddleware) => {
     authenticate,
     checkSignalementOwnership,
     asyncHandler(async (req, res) => {
-      const signalement = await models.Signalement.findByPk(req.params.id, {
-        include: [
-          { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
-          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom'] }
-        ]
-      });
+      // Le déclarant ne voit ni les notes internes ni le nom du modérateur
+      const signalement = await models.Signalement.findByPk(req.params.id, req.user.isAdmin
+        ? {
+          include: [
+            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom'] }
+          ]
+        }
+        : {
+          attributes: ['id_signalement', 'type_entite', 'id_entite', 'motif', 'description',
+            'url_screenshot', 'statut', 'date_signalement', 'date_traitement', 'action_prise']
+        });
 
       res.json({
         success: true,

@@ -20,7 +20,8 @@ const makeService = () => {
     CritiqueEvaluation: section(), Favori: section(), Notification: section(), Signalement: section(),
     UserOrganisation: section(), UserRole: section(), Intervenant: section(), Service: section(),
     Lieu: section(), Parcours: section(), EmailVerification: section(), Vue: section(), QRScan: section(),
-    OeuvreUser: section()
+    OeuvreUser: section(), MessageEvenement: section(), HistoriqueLieu: section(), ArticleRevision: section(),
+    sequelize: { query: jest.fn().mockResolvedValue([{ statut: 'en_attente' }]), QueryTypes: { SELECT: 'SELECT' } }
   };
   return { service: new UserService({ models }, {}), models, userFindByPk };
 };
@@ -38,7 +39,9 @@ describe('UserService.exportMyData', () => {
     const data = await service.exportMyData(42);
     for (const key of ['oeuvres', 'evenements_organises', 'inscriptions_evenements', 'commentaires', 'critiques',
       'favoris', 'notifications', 'signalements_effectues', 'organisations', 'roles', 'fiche_intervenant',
-      'services', 'lieux_crees', 'parcours', 'verifications_email', 'consultations', 'scans_qr']) {
+      'services', 'lieux_crees', 'parcours', 'verifications_email', 'consultations', 'scans_qr',
+      'messages_aux_participants', 'modifications_lieux', 'propositions_articles',
+      'demandes_organisations', 'propositions_patrimoine']) {
       expect(data).toHaveProperty(key);
     }
   });

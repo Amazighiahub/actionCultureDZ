@@ -20,12 +20,14 @@ const make = ({ oeuvre = {}, enAttente = 0, revision = null, mediasArticle = [] 
   const oeuvreObj = { id_oeuvre: 57, titre: { fr: 'La maison de la Casbah' }, description: { fr: 'Chapeau' }, id_type_oeuvre: 4, statut: 'publie', saisi_par: AUTEUR, update: jest.fn(), ...oeuvre };
   const crees = [];
   const models = {
-    Oeuvre: { findByPk: jest.fn().mockResolvedValue(oeuvreObj), sequelize: { transaction: jest.fn(async (cb) => cb({})) } },
+    Oeuvre: { findByPk: jest.fn().mockResolvedValue(oeuvreObj), sequelize: { transaction: jest.fn(async (cb) => cb({ LOCK: { UPDATE: 'UPDATE' } })) } },
     ArticleRevision: {
       count: jest.fn().mockResolvedValue(enAttente),
       create: jest.fn(async (d) => ({ id_revision: 5, ...d })),
       findAll: jest.fn().mockResolvedValue([]),
-      findOne: jest.fn().mockResolvedValue(revision)
+      findOne: jest.fn().mockResolvedValue(revision),
+      // Relecture sous verrou dans la transaction d'acceptation
+      findByPk: jest.fn(async () => revision)
     },
     Media: {
       findAll: jest.fn().mockResolvedValue(mediasArticle.map(id => ({ id_media: id }))),

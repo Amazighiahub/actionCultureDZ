@@ -603,9 +603,12 @@ class EvenementRepository extends BaseRepository {
         }],
         order: [['ordre_presentation', 'ASC']]
       }),
+      // Plafond : un catalogue importé peut compter des milliers de livres
       this.models.Oeuvre.findAll({
         where: { saisi_par: userId, statut: 'publie' },
-        attributes: ['id_oeuvre', 'titre', 'statut', 'id_type_oeuvre']
+        attributes: ['id_oeuvre', 'titre', 'statut', 'id_type_oeuvre'],
+        order: [['date_creation', 'DESC']],
+        limit: 500
       })
     ]);
     return { oeuvresAjoutees, toutesOeuvres };

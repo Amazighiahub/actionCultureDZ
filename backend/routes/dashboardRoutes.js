@@ -681,8 +681,8 @@ const initDashboardRoutes = (models) => {
   // NOTIFICATIONS
   // ========================================
 
+  // Pas de cache : la réponse dépend de l'admin connecté et change dès qu'il lit
   router.get('/notifications',
-    cacheMiddleware.conditionalCache(300),
     dashboardController.getNotifications
   );
 

@@ -77,9 +77,10 @@ const initSitemapRoutes = (models) => {
       // ══════════════════════════════════════════
       const SITEMAP_LIMIT = 50000;
       const [oeuvres, evenements, lieux, artisanats, articles, professionnels] = await Promise.all([
-        // Articles (types 4 et 5) exclus : ils ont leur propre adresse /articles/:id
+        // Articles (types 4 et 5) et artisanat (type 7) exclus : ils ont leur propre adresse
+        // (/articles/:id, /artisanat/:id)
         models.Oeuvre ? safeQuery('oeuvres', () => models.Oeuvre.findAll({
-          where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5] } },
+          where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5, 7] } },
           attributes: ['id_oeuvre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true

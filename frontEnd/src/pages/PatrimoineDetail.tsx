@@ -37,6 +37,7 @@ import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { evenementPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { useChangementLangue } from '@/hooks/useChangementLangue';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -190,29 +191,33 @@ const PatrimoineDetail = () => {
   const share = useShare();
   const handleShareSite = () => share({ title: translate(site?.nom, lang) });
 
-  // Charger les détails du site
+  // Charger les détails du site (de nouveau quand la langue change : noms et textes sont
+  // traduits par le serveur ; avant, la fiche restait dans l'ancienne langue)
+  const loadSiteDetail = React.useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await patrimoineService.getSiteDetail(parseInt(id));
+      if (response.success && response.data) {
+        setSite(response.data as unknown as SitePatrimoineDetail);
+      } else {
+        setError(t('patrimoine.notFound', 'Site non trouvé'));
+      }
+    } catch (err) {
+      console.error('Erreur chargement site:', err);
+      setError(t('oeuvre.errors.connectionError', 'Erreur de connexion au serveur'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id, t]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
-    const loadSiteDetail = async () => {
-      if (!id) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await patrimoineService.getSiteDetail(parseInt(id));
-        if (response.success && response.data) {
-          setSite(response.data as unknown as SitePatrimoineDetail);
-        } else {
-          setError('Site non trouvé');
-        }
-      } catch (err) {
-        console.error('Erreur chargement site:', err);
-        setError('Erreur de connexion au serveur');
-      } finally {
-        setLoading(false);
-      }
-    };
     loadSiteDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement au changement de site
   }, [id]);
+  useChangementLangue(loadSiteDetail);
 
   // Articles des sections (« Écrire un article ») : une seule requête pour toute la page
   const [blocsArticles, setBlocsArticles] = useState<PatrimoineBlock[]>([]);
@@ -287,7 +292,7 @@ const PatrimoineDetail = () => {
             <CardContent>
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
               <h2 className="text-2xl font-semibold mb-2">{t('common.error', 'Erreur')}</h2>
-              <p className="text-muted-foreground mb-4">{error || 'Site non trouvé'}</p>
+              <p className="text-muted-foreground mb-4">{error || t('patrimoine.notFound', 'Site non trouvé')}</p>
               <Button onClick={() => navigate('/patrimoine')}>
                 <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                 {t('common.back', 'Retour')}

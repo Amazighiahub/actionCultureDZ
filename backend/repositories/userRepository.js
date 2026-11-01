@@ -3,7 +3,7 @@
  * Étend BaseRepository avec des méthodes spécifiques aux utilisateurs
  */
 const BaseRepository = require('./baseRepository');
-const { Op } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const crypto = require('crypto');
 
@@ -613,7 +613,23 @@ class UserRepository extends BaseRepository {
       await destroy(m.EmailVerification, { id_user: userId });
       // index uniques (oeuvre, user) / (entité, signalant) : suppression plutôt que réattribution
       await destroy(m.CritiqueEvaluation, { id_user: userId });
+      // Notes des sites : retirées, puis moyenne et nombre recalculés (avant : la moyenne
+      // gardait la note d'un compte qui n'existe plus)
+      const lieuxNotes = m.LieuNotation
+        ? (await m.LieuNotation.findAll({ attributes: ['id_lieu'], where: { id_user: userId }, ...tx })).map(n => n.id_lieu)
+        : [];
       await destroy(m.LieuNotation, { id_user: userId });
+      for (const idLieu of new Set(lieuxNotes)) {
+        if (!m.DetailLieu) break;
+        const stats = await m.LieuNotation.findOne({
+          attributes: [[fn('AVG', col('note')), 'moyenne'], [fn('COUNT', col('id_lieu_notation')), 'total']],
+          where: { id_lieu: idLieu }, raw: true, ...tx
+        });
+        await m.DetailLieu.update({
+          noteMoyenne: Math.round(Number(stats?.moyenne || 0) * 10) / 10,
+          nb_notations: Number(stats?.total || 0)
+        }, { where: { id_lieu: idLieu }, ...tx });
+      }
       await destroy(m.Signalement, { id_user_signalant: userId });
       await destroy(m.Signalement, { type_entite: 'user', id_entite: userId });
 

@@ -549,7 +549,8 @@ class OeuvreController extends BaseController {
       const result = await this.oeuvreService.addMedia(
         parseInt(req.params.id),
         req.files || req.file,
-        req.user.id_user
+        req.user.id_user,
+        !!req.user.isAdmin
       );
       res.status(201).json({
         success: true,

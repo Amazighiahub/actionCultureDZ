@@ -50,6 +50,7 @@ const MOCK_TYPES = [
 // ---------------------------------------------------------------------------
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,
   useParams: () => routeur.params,
   useSearchParams: () => [new URLSearchParams(routeur.recherche), vi.fn()],

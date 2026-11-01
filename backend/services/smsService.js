@@ -88,7 +88,7 @@ class SMSService {
     try {
       const apiKey = process.env.VONAGE_API_KEY;
       const apiSecret = process.env.VONAGE_API_SECRET;
-      this.fromNumber = process.env.VONAGE_PHONE_NUMBER || 'ActionCulture';
+      this.fromNumber = process.env.VONAGE_PHONE_NUMBER || 'TalaDZ';
 
       if (!apiKey || !apiSecret) {
         throw new Error('Configuration Vonage incomplète');
@@ -112,7 +112,7 @@ class SMSService {
   initializeMessageBird() {
     try {
       const apiKey = process.env.MESSAGEBIRD_API_KEY;
-      this.fromNumber = process.env.MESSAGEBIRD_ORIGINATOR || 'ActionCulture';
+      this.fromNumber = process.env.MESSAGEBIRD_ORIGINATOR || 'TalaDZ';
 
       if (!apiKey) {
         throw new Error('Configuration MessageBird incomplète');
@@ -356,7 +356,7 @@ class SMSService {
    * @param {string} code - Code OTP à envoyer
    */
   async sendOTPCode(telephone, code) {
-    const message = `Votre code de vérification Action Culture est: ${code}. Ce code expire dans 10 minutes.`;
+    const message = `Votre code de vérification Tala DZ est: ${code}. Ce code expire dans 10 minutes.`;
     return await this.sendSMS(telephone, message);
   }
 }

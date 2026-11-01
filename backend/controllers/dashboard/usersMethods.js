@@ -58,6 +58,9 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
+      if (error.statusCode === 400) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
       console.error('Erreur updateUser:', error.message);
       res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
@@ -170,6 +173,10 @@ const usersMethods = {
   async bulkUserAction(req, res) {
     try {
       const { user_ids, action, role_id } = req.body;
+      // Plafond : une suppression coûte une trentaine de requêtes par compte
+      if (!Array.isArray(user_ids) || user_ids.length === 0 || user_ids.length > 100) {
+        return res.status(400).json({ success: false, error: '1 à 100 comptes par action groupée' });
+      }
       if (action === 'change_role' && !role_id) {
         return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }

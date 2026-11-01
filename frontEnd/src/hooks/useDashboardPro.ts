@@ -102,30 +102,12 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       const responseData = (response.data || {}) as Record<string, unknown>;
       const evenementsList = ((responseData?.evenements || responseData?.items || []) as Record<string, unknown>[]);
 
+      // (Avant : une requête « programmes » par événement, jusqu'à 50 à chaque ouverture du
+      // tableau de bord, pour un champ jamais affiché — la gestion d'un événement charge les siens.)
       if (evenementsList.length > 0) {
-        const evenementsAvecProgrammes = await Promise.all(
-          evenementsList.map(async (evenement: Record<string, unknown>) => {
-            try {
-              const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement as number);
-              const programmes = programmesResponse.success
-                ? (programmesResponse.data?.programmes || programmesResponse.data || [])
-                : [];
-
-              return {
-                ...evenement,
-                programmes: Array.isArray(programmes) ? programmes : []
-              };
-            } catch {
-              return {
-                ...evenement,
-                programmes: []
-              };
-            }
-          })
-        );
         return {
-          items: evenementsAvecProgrammes,
-          pagination: responseData?.pagination || { total: evenementsAvecProgrammes.length }
+          items: evenementsList,
+          pagination: responseData?.pagination || { total: evenementsList.length }
         };
       }
 

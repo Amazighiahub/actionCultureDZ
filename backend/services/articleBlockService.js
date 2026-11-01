@@ -4,7 +4,7 @@
  */
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
-const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+const { sanitizeBlockContent, sanitizeBlockJson } = require('../utils/sanitizeArticle');
 const { peutGerer, estModeration } = require('../utils/droits');
 
 // Types d'articles gérés par ce service (les blocs patrimoine ont leurs propres routes)
@@ -99,7 +99,7 @@ class ArticleBlockService extends BaseService {
         article_type,
         type_block,
         contenu: sanitizeBlockContent(type_block, contenu),
-        contenu_json,
+        contenu_json: sanitizeBlockJson(type_block, contenu_json),
         id_media,
         ordre,
         metadata,
@@ -143,6 +143,7 @@ class ArticleBlockService extends BaseService {
         const blockData = { id_article, article_type, ordre: i };
         BLOCK_FIELDS.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
         blockData.contenu = sanitizeBlockContent(blockData.type_block, blockData.contenu);
+        blockData.contenu_json = sanitizeBlockJson(blockData.type_block, blockData.contenu_json);
 
         const block = await this.repository.create(blockData, { transaction });
         createdBlocks.push(block);
@@ -182,6 +183,9 @@ class ArticleBlockService extends BaseService {
       // Toujours assainir selon le type effectif (celui envoyé, sinon celui en base)
       if (updates.contenu !== undefined || updates.type_block !== undefined) {
         block.contenu = sanitizeBlockContent(block.type_block, block.contenu);
+      }
+      if (updates.contenu_json !== undefined || updates.type_block !== undefined) {
+        block.contenu_json = sanitizeBlockJson(block.type_block, block.contenu_json);
       }
 
       await block.save({ transaction });

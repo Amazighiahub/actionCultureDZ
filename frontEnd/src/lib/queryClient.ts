@@ -45,3 +45,9 @@ export function rafraichirEvenement(idEvenement: number | string) {
     predicate: (q) => String(q.queryKey[0]).startsWith('event') && String(q.queryKey[1]) === String(idEvenement)
   });
 }
+
+/** Listes de favoris (espace personnel, compteurs) relues après un ajout ou un retrait */
+export function rafraichirFavoris() {
+  queryClient.invalidateQueries({ queryKey: ['favoris'] });
+  return queryClient.invalidateQueries({ queryKey: ['favoris-stats'] });
+}

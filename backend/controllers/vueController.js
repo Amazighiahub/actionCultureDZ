@@ -54,8 +54,8 @@ class VueController extends BaseController {
       // Avant : une session nouvelle à chaque appel, chaque appel comptait une vue de plus.
       const empreinte = () => 'anon-' + require('crypto').createHash('sha256')
         .update(`${ipAddress}|${userAgent}|${new Date().toISOString().slice(0, 10)}`).digest('hex').slice(0, 24);
-      const sessionId = req.session?.id || req.cookies?.sessionId ||
-                       req.headers['x-session-id'] || empreinte();
+      const sessionId = String(req.session?.id || req.cookies?.sessionId ||
+                       req.headers['x-session-id'] || empreinte()).slice(0, 128);
 
       if (!req.cookies?.sessionId && !req.headers['x-session-id'] && !req.session?.id) {
         res.cookie('sessionId', sessionId, {
@@ -78,9 +78,10 @@ class VueController extends BaseController {
         type_entite,
         id_entite,
         id_user: userId,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        referer: req.get('Referer'),
+        // Coupés à la taille des colonnes : en mode strict, un texte trop long faisait échouer la vue (500)
+        ip_address: ipAddress ? String(ipAddress).slice(0, 45) : ipAddress,
+        user_agent: userAgent ? String(userAgent).slice(0, 500) : userAgent,
+        referer: req.get('Referer') ? req.get('Referer').slice(0, 500) : null,
         source: source || this.vueService.detectSource(req.get('Referer')),
         page_source,
         session_id: sessionId,

@@ -522,17 +522,7 @@ class ProfessionnelService {
   // PROFIL PROFESSIONNEL
   // ========================================================================
 
-  async updateProfessionalProfile(userId, body) {
-    const allowedFields = ['nom', 'prenom', 'biographie', 'entreprise', 'telephone', 'photo_url', 'site_web', 'adresse', 'specialite'];
-    const updates = {};
-    allowedFields.forEach(f => { if (body[f] !== undefined) updates[f] = body[f]; });
-
-    const user = await this.models.User.findByPk(userId);
-    if (!user) return null;
-
-    await user.update(updates);
-    return user;
-  }
+  // La mise à jour du profil passe par userService.update (contrôles du DTO).
 
   // ========================================================================
   // EXPORT

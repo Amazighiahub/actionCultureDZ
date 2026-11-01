@@ -29,8 +29,9 @@ async function maDemande(models, idOrganisation, userId) {
 }
 
 async function demander(models, idOrganisation, userId, message) {
-  const org = await models.Organisation.findByPk(idOrganisation, { attributes: ['id_organisation', 'nom'] });
-  if (!org) throw erreur('Organisation introuvable', 404, 'NOT_FOUND');
+  const org = await models.Organisation.findByPk(idOrganisation, { attributes: ['id_organisation', 'nom', 'statut'] });
+  // Page non publiée : introuvable pour le public (sinon on la découvrirait par son numéro)
+  if (!org || org.statut !== 'valide') throw erreur('Organisation introuvable', 404, 'NOT_FOUND');
   if ((await organisationsGerees(models, [idOrganisation])).size) {
     throw erreur('Cette organisation a déjà un responsable : demandez-lui de vous ajouter comme membre', 409, 'ORGANISATION_DEJA_GEREE');
   }
@@ -79,6 +80,11 @@ async function decider(models, idDemande, decision, motif) {
         where: { id_organisation: demande.id_organisation, actif: true, role: ROLES_GESTION }, transaction
       });
       if (dejaGeree) throw erreur('Cette organisation a déjà un responsable', 409, 'ORGANISATION_DEJA_GEREE');
+      // Le compte a pu être suspendu ou supprimé depuis la demande
+      const demandeur = await models.User.findByPk(demande.id_user, { attributes: ['id_user', 'statut'], transaction });
+      if (!demandeur || demandeur.statut !== 'actif') {
+        throw erreur('Le compte qui a fait la demande n\'est plus actif : refusez la demande', 409, 'DEMANDEUR_INACTIF');
+      }
       const [lien] = await models.UserOrganisation.findOrCreate({
         where: { id_user: demande.id_user, id_organisation: demande.id_organisation },
         defaults: { role: 'responsable', actif: true }, transaction

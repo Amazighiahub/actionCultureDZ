@@ -275,31 +275,6 @@ class DashboardModerationService {
 
     return user;
   }
-
-  /**
-   * Action groupée sur plusieurs éléments
-   */
-  async bulkModerate(data, moderatorId) {
-    const { type, ids, action, motif } = data;
-    const results = { success: [], errors: [] };
-
-    await Promise.all(ids.map(async (id) => {
-      try {
-        if (type === 'user') {
-          await this.validateUser(id, { action, motif }, moderatorId);
-        } else if (type === 'oeuvre') {
-          await this.validateOeuvre(id, { action, motif }, moderatorId);
-        } else if (type === 'signalement') {
-          await this.moderateSignalement(id, { action, motif }, moderatorId);
-        }
-        results.success.push(id);
-      } catch (error) {
-        results.errors.push({ id, error: error.message });
-      }
-    }));
-
-    return results;
-  }
 }
 
 module.exports = DashboardModerationService;

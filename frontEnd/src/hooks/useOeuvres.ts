@@ -5,6 +5,8 @@ import { httpClient } from '@/services/httpClient';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { TypeOeuvre } from '@/types/models/references.types';
+// Copie de secours par langue : les titres sont traduits par le serveur
+import i18n from 'i18next';
 
 export interface UseOeuvresReturn {
   // États
@@ -135,8 +137,8 @@ export function useOeuvres(): UseOeuvresReturn {
 
       // Sauvegarder en localStorage
       try {
-        localStorage.setItem('oeuvres_backup', JSON.stringify(oeuvresData));
-        localStorage.setItem('oeuvres_backup_time', Date.now().toString());
+        localStorage.setItem(`oeuvres_backup:${i18n.language}`, JSON.stringify(oeuvresData));
+        localStorage.setItem(`oeuvres_backup_time:${i18n.language}`, Date.now().toString());
       } catch (e) {
       }
     } catch (err: unknown) {
@@ -146,8 +148,8 @@ export function useOeuvres(): UseOeuvresReturn {
         localStorage.setItem('lastRateLimit', Date.now().toString());
         
         // Essayer le backup
-        const backup = localStorage.getItem('oeuvres_backup');
-        const backupTime = localStorage.getItem('oeuvres_backup_time');
+        const backup = localStorage.getItem(`oeuvres_backup:${i18n.language}`);
+        const backupTime = localStorage.getItem(`oeuvres_backup_time:${i18n.language}`);
         
         if (backup && backupTime) {
           const age = Date.now() - parseInt(backupTime);

@@ -88,6 +88,7 @@ const MOCK_METADATA = {
 // ---------------------------------------------------------------------------
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
   useSearchParams: () => [mockSearch, vi.fn()],

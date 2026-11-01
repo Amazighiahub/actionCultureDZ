@@ -46,5 +46,7 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
 
-# Au démarrage : copier les fichiers frais dans le volume, puis lancer nginx
-CMD ["sh", "-c", "cp -r /app/dist/* /usr/share/nginx/html/ && nginx -g 'daemon off;'"]
+# Au démarrage : copier les fichiers frais dans le volume, retirer les anciens fichiers JS/CSS de
+# plus de 30 jours (ceux des versions précédentes, gardés un temps pour les onglets restés ouverts ;
+# avant, ils s'accumulaient sans fin), puis lancer nginx
+CMD ["sh", "-c", "cp -r /app/dist/* /usr/share/nginx/html/ && { find /usr/share/nginx/html/assets -type f -mtime +30 -delete 2>/dev/null || true; } && nginx -g 'daemon off;'"]

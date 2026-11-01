@@ -13,10 +13,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/hooks/use-toast';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
+import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
+  const naviguerPlusTard = useNavigationDifferee();
   const [initialData, setInitialData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -198,9 +200,7 @@ const EditArticle: React.FC = () => {
         description: t('article.updateSuccess', 'Article mis à jour avec succès !'),
       });
 
-      setTimeout(() => {
-        navigate(`/articles/${id}`);
-      }, 1000);
+      naviguerPlusTard(`/articles/${id}`, 1000);
 
     } catch (err: unknown) {
       console.error('❌ Erreur mise à jour article:', err);

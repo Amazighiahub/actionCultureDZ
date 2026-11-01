@@ -127,6 +127,9 @@ const moderationMethods = {
 
   async bulkModerateAction(data, moderatorId) {
     const { signalements = [], action, notes } = data;
+    if (!Array.isArray(signalements) || signalements.length > 100) {
+      throw Object.assign(new Error('100 signalements au plus par envoi'), { statusCode: 400 });
+    }
     const results = [];
     for (const signalementId of signalements) {
       try {
