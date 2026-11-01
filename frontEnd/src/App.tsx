@@ -80,7 +80,6 @@ const EditProgrammePage = React.lazy(() => import('./pages/EditProgrammePage'));
 const ViewProgrammePage = React.lazy(() => import('./pages/ViewProgrammePage'));
 
 // Pages de gestion
-const GestionArtisanat = React.lazy(() => import('./pages/GestionArtisanat'));
 
 // Pages de notifications
 const NotificationsPage = React.lazy(() => import('./pages/notifications/Notifications'));
@@ -400,15 +399,8 @@ const App = () => (
             />
             <Route path="/programme/:eventId/:programmeId" element={<ErrorBoundary><ViewProgrammePage /></ErrorBoundary>} />
 
-            {/* Gestion Artisanat */}
-            <Route
-              path="/gestion-artisanat"
-              element={
-                <ProfessionalRoute>
-                  <GestionArtisanat />
-                </ProfessionalRoute>
-              }
-            />
+            {/* Ancien formulaire (doublon d'« Ajouter un artisanat », jamais relié) : adresse redirigée */}
+            <Route path="/gestion-artisanat" element={<Navigate to="/ajouter-artisanat" replace />} />
 
             {/* Aliases de compatibilité pour les liens existants */}
             <Route path="/profile" element={<Navigate to="/dashboard-user" replace />} />

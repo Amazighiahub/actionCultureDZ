@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { evenementPath } from '@/utils/slug';
 
@@ -95,9 +96,11 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   jsonLd,
 }) => {
   const location = useLocation();
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
+  // Titre et description par défaut dans la langue de la page (avant : toujours en français)
+  const { t } = useTranslation();
+  const fullTitle = title ? `${title} | ${SITE_NAME}` : t('seo.defaultTitle', DEFAULT_TITLE);
   const fullUrl = url || canonicalUrl(location.pathname);
-  const desc = description || DEFAULT_DESCRIPTION;
+  const desc = description || t('seo.defaultDescription', DEFAULT_DESCRIPTION);
   const img = absoluteImage(image);
 
   useEffect(() => {

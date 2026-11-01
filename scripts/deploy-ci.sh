@@ -154,4 +154,6 @@ if ! curl -fsS -o /dev/null --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "htt
   docker logs --tail 20 eventculture-certbot 2>&1 || true
 fi
 docker image prune -f >/dev/null
+# Cache de construction de plus d'une semaine : jamais purgé avant, il remplissait le disque
+docker builder prune -f --filter until=168h >/dev/null 2>&1 || true
 log "deploiement OK : $SHA"

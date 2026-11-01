@@ -31,6 +31,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
+import { rafraichirFavoris } from '@/lib/queryClient';
 
 interface ArtisanatData {
   id: number;
@@ -194,6 +195,7 @@ const ArtisanatDetail: React.FC = () => {
       if (result.success) {
         const added = result.data?.added ?? !isFavorite;
         setIsFavorite(added);
+        rafraichirFavoris();
         toast({
           title: added
             ? t('favoris.added', 'Ajouté aux favoris')

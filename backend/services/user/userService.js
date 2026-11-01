@@ -570,7 +570,10 @@ class UserService extends BaseService {
       ['parcours', models.Parcours, { id_createur: userId }],
       ['verifications_email', models.EmailVerification, { id_user: userId }, ['token']],
       ['consultations', models.Vue, { id_user: userId }],
-      ['scans_qr', models.QRScan, { id_user: userId }]
+      ['scans_qr', models.QRScan, { id_user: userId }],
+      ['messages_aux_participants', models.MessageEvenement, { id_user: userId }],
+      ['modifications_lieux', models.HistoriqueLieu, { id_user: userId }],
+      ['propositions_articles', models.ArticleRevision, { id_auteur: userId }]
     ];
 
     for (const [key, Model, where, exclude = []] of SECTIONS) {
@@ -581,6 +584,23 @@ class UserService extends BaseService {
         raw: true,
         limit: EXPORT_LIMIT
       });
+    }
+
+    // Tables sans modèle Sequelize
+    const sequelize = models.sequelize || models.User.sequelize;
+    const TABLES = [
+      ['demandes_organisations', 'SELECT id_organisation, message, statut, motif, date_creation, date_decision FROM organisation_revendication WHERE id_user = :id'],
+      ['propositions_patrimoine', 'SELECT id_lieu, action, donnees, statut, motif, date_creation, date_decision FROM proposition_lieu WHERE id_user = :id']
+    ];
+    for (const [key, sql] of TABLES) {
+      if (!sequelize) break;
+      try {
+        data[key] = await sequelize.query(`${sql} LIMIT ${EXPORT_LIMIT}`, {
+          replacements: { id: userId }, type: sequelize.QueryTypes.SELECT
+        });
+      } catch (err) {
+        this.logger.warn(`RGPD export: ${key} indisponible (${err.message})`);
+      }
     }
 
     this.logger.info(`RGPD: Export de données demandé par l'utilisateur: ${userId}`);

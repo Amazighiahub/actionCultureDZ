@@ -461,7 +461,8 @@
     "lieu": "Lieu",
     "errorOccurred": "Une erreur est survenue",
     "notFound": "Introuvable",
-    "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?"
+    "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?",
+    "backToTop": "Retour en haut"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -3297,7 +3298,20 @@
       "copyLink": "Copier le lien",
       "share": "Partager"
     },
-    "tags": "Mots-clés"
+    "tags": "Mots-clés",
+    "documents": {
+      "titre": "Documents à télécharger",
+      "ajoute": "Document ajouté à la page de l’événement",
+      "gestionTitre": "Documents PDF de l’événement",
+      "gestionAide": "Programme complet, présentation… Ils s’affichent sur la page de l’événement, à télécharger.",
+      "retirer": "Retirer le document",
+      "fichier": "Fichier PDF",
+      "titreChamp": "Titre affiché",
+      "titreExemple": "ex. Programme complet",
+      "envoi": "Envoi…",
+      "ajouter": "Ajouter le document",
+      "max": "5 documents au plus : retirez-en un pour en ajouter un autre."
+    }
   },
   "places": {
     "address": "Adresse",
@@ -3662,7 +3676,8 @@
     "oeuvres": "Œuvres",
     "showOeuvres": "Présenter des œuvres",
     "oeuvresDisabled": "La gestion des œuvres est désactivée pour cet événement.",
-    "oeuvresEnableHint": "Activez \"Présenter des œuvres\" si cet événement inclut des présentations d'œuvres."
+    "oeuvresEnableHint": "Activez \"Présenter des œuvres\" si cet événement inclut des présentations d'œuvres.",
+    "documents": "Documents PDF"
   },
   "status": {
     "active": "Actif",
@@ -4051,7 +4066,14 @@
       }
     },
     "personnalites": {
-      "liees": "Personnalités liées à ce site"
+      "liees": "Personnalités liées à ce site",
+      "vide": "Cette section n’est pas encore documentée.",
+      "rechercher": "Rechercher une personnalité (nom, prénom…)",
+      "dejaLie": "Déjà lié",
+      "role": "Rôle sur ce site",
+      "roleExemple": "ex : figure historique, fondateur, artiste…",
+      "periode": "Période",
+      "periodeExemple": "ex : XIIIe siècle, 1830–1962…"
     },
     "proposition": {
       "envoyee": "Proposition envoyée",
@@ -4749,7 +4771,8 @@
     "notFoundTitle": "Article introuvable",
     "video": "Vidéo",
     "voirAussi": "Voir aussi",
-    "lireEn": "Lire en"
+    "lireEn": "Lire en",
+    "removeImage": "Retirer l’image"
   },
   "passwordStrength": {
     "minLength": "12 caractères minimum",
@@ -5325,5 +5348,9 @@
     "guitare": "Guitare",
     "piano": "Piano",
     "synthetiseur": "Synthétiseur"
+  },
+  "seo": {
+    "defaultTitle": "Tala DZ - La source de la culture algérienne",
+    "defaultDescription": "Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel."
   }
 }

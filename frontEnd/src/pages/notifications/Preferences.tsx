@@ -25,12 +25,14 @@ const Switch: React.FC<{
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
-}> = ({ checked, onCheckedChange, disabled = false }) => {const { t } = useTranslation();
+  ariaLabel?: string;
+}> = ({ checked, onCheckedChange, disabled = false, ariaLabel }) => {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={`
@@ -92,7 +94,8 @@ const PreferenceItem: React.FC<{
       <Switch
         checked={checked}
         onCheckedChange={onChange}
-        disabled={disabled} />
+        disabled={disabled}
+        ariaLabel={label} />
 
     </label>);
 

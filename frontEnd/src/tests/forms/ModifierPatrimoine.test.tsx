@@ -17,6 +17,7 @@ const { mockGet, mockPut, mockDeleteMedia, mockPermissions } = vi.hoisted(() => 
 }));
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useParams: () => ({ id: '10' }),
   useNavigate: () => vi.fn(),
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,

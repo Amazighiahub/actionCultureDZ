@@ -12,6 +12,7 @@ import { Mail, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 import { useRTL } from '@/hooks/useRTL';
+import SEOHead from '@/components/SEOHead';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -102,6 +103,7 @@ const ForgotPassword = () => {
     return (
       <div dir={direction} className="min-h-screen bg-background">
         <Header />
+        <SEOHead title={t('auth.forgotPassword.title', 'Mot de passe oublié')} noindex />
 
         <main className="container py-12">
           <div className="max-w-md mx-auto">
@@ -156,6 +158,7 @@ const ForgotPassword = () => {
   return (
     <div dir={direction} className="min-h-screen bg-background">
       <Header />
+      <SEOHead title={t('auth.forgotPassword.title', 'Mot de passe oublié')} noindex />
 
       <main className="container py-12">
         <div className="max-w-md mx-auto">

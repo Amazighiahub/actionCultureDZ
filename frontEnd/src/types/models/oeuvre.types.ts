@@ -57,6 +57,7 @@ export interface Oeuvre {
   
   // Champs virtuels
   note_moyenne?: number;
+  nb_vues?: number;
   nombre_evaluations?: number;
 
   // Relations one-to-many (hasMany)

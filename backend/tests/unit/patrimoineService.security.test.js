@@ -39,7 +39,7 @@ const makeService = ({ existingByCoords = null, existingDetail = null } = {}) =>
     Service: { destroy: jest.fn(), bulkCreate: jest.fn() },
     LieuMedia: { destroy: jest.fn(), bulkCreate: jest.fn(), findOne: jest.fn() }
   };
-  const repository = { withTransaction: jest.fn(async (cb) => cb({})) };
+  const repository = { withTransaction: jest.fn(async (cb) => cb({ LOCK: { UPDATE: 'UPDATE' } })) };
   const service = new PatrimoineService(repository, { models });
   return { service, models, detail };
 };
@@ -122,7 +122,7 @@ describe('PatrimoineService.noter - une note par utilisateur', () => {
         create: jest.fn(async (v) => { created.push(v); return v; })
       }
     };
-    const repository = { withTransaction: jest.fn(async (cb) => cb({})) };
+    const repository = { withTransaction: jest.fn(async (cb) => cb({ LOCK: { UPDATE: 'UPDATE' } })) };
     return { service: new PatrimoineService(repository, { models }), models, detail, created };
   };
 

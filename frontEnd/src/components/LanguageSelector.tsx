@@ -80,7 +80,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             variant="ghost"
             size="icon"
             className={cn("h-8 w-8", className)}
-            aria-label="Change language"
+            aria-label={t('common.language', 'Langue')}
           >
             <Languages className="h-4 w-4" />
           </Button>

@@ -270,6 +270,9 @@ class EmailQueueService {
       {
         attempts: emailData ? 3 : 1,
         backoff: { type: 'fixed', delay: 3000 },
+        // Ne pas garder les adresses dans Redis une fois le travail fini
+        removeOnComplete: true,
+        removeOnFail: 500,
         ...options
       }
     );
@@ -307,6 +310,8 @@ class EmailQueueService {
         {
           attempts: 2,
           backoff: { type: 'fixed', delay: 10000 },
+          removeOnComplete: true,
+          removeOnFail: 100,
           ...options
         }
       );

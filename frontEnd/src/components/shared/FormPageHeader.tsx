@@ -6,6 +6,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SEOHead from '@/components/SEOHead';
 
 interface FormPageHeaderProps {
   title: React.ReactNode;
@@ -29,6 +30,8 @@ const FormPageHeader: React.FC<FormPageHeaderProps> = ({ title, subtitle, backLa
   );
   return (
     <div className={`mb-8 ${className}`}>
+      {/* Titre de l'onglet traduit ; page privée, jamais indexée */}
+      {typeof title === 'string' && <SEOHead title={title} noindex />}
       {backTo ? (
         <Button variant="ghost" size="sm" className="-ms-3 mb-3 text-muted-foreground hover:text-foreground" asChild>
           <Link to={backTo}>{contenuRetour}</Link>

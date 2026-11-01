@@ -11,7 +11,7 @@ const services = {
   5: { id: 5, id_user: 37, statut: 'en_attente' }
 };
 // Avis existants : 100 (membre 8 sur le service 4), 200 (membre 9 sur un autre service)
-const avisExistants = { 100: { id_commentaire: 100, id_service: 4 }, 200: { id_commentaire: 200, id_service: 6 } };
+const avisExistants = { 100: { id_commentaire: 100, id_service: 4, statut: 'publie' }, 200: { id_commentaire: 200, id_service: 6, statut: 'publie' } };
 
 const makeService = ({ dejaDonne = false } = {}) => {
   const svc = Object.create(CommentaireService.prototype);

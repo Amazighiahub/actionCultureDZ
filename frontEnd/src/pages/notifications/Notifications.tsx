@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { getSafeRedirectPath } from '@/utils/safeUrl';
 import {
   Bell,
   Settings,
@@ -50,6 +52,7 @@ const NotificationItem: React.FC<{
   onMarkAsRead: (id: number) => void;
   onDelete: (id: number) => void;
 }> = ({ notification, onMarkAsRead, onDelete }) => {const { t, i18n } = useTranslation();
+  const lienAction = getSafeRedirectPath(notification.url_action);
   const getIcon = (type: NotificationType): JSX.Element => {
     const icons: Record<NotificationType, JSX.Element> = {
       'validation_participation': <Check className="w-5 h-5 text-green-600" />,
@@ -99,14 +102,13 @@ const NotificationItem: React.FC<{
               {formatNotificationDate(notification.date_creation, i18n.language)}
             </span>
             
-            {notification.url_action &&
-            <a
-              href={notification.url_action}
+            {/* Chemins internes seulement : un lien externe serait du hameçonnage */}
+            {lienAction &&
+            <Link
+              to={lienAction}
               className="text-blue-600 hover:text-blue-800 font-medium"
               onClick={() => !notification.lu && onMarkAsRead(notification.id_notification)}>{t("notifications_notifications.voir_plus")}
-
-
-            </a>
+            </Link>
             }
           </div>
         </div>

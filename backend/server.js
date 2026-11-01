@@ -12,7 +12,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 // Fonction principale pour démarrer le serveur
 async function startServer() {
   try {
-    logger.info('🚀 Démarrage du serveur Action Culture...');
+    logger.info('🚀 Démarrage du serveur Tala DZ...');
     
     // Valider la configuration d'environnement avant d'initialiser
     EnvironmentValidator.validate();
@@ -42,24 +42,16 @@ async function startServer() {
       
       server.close(async () => {
         logger.info('✅ Serveur HTTP fermé');
-        
-        try {
-          // Fermer la base de données
-          await appInstance.closeDatabase();
-          
-          logger.info('👋 Application arrêtée proprement');
-          process.exit(0);
-        } catch (error) {
-          logger.error('❌ Erreur lors de l\'arrêt:', error);
-          process.exit(1);
-        }
+        // Arrêt complet : tâches planifiées, file d'e-mails, vues en attente d'écriture, puis base.
+        // (Avant : seule la base était fermée ; les vues en mémoire et les envois en cours étaient perdus.)
+        await appInstance.gracefulShutdown(0);
       });
-      
-      // Forcer l'arrêt après 30 secondes
+
+      // Forcer l'arrêt après 25 secondes (Docker attend 30 s : stop_grace_period)
       setTimeout(() => {
         logger.error('⚠️ Arrêt forcé après timeout');
         process.exit(1);
-      }, 30000);
+      }, 25000).unref();
     };
     
     // Écouter les signaux de fermeture
@@ -69,7 +61,7 @@ async function startServer() {
     // Démarrer le serveur
     server.listen(PORT, HOST, () => {
       logger.info('═══════════════════════════════════════════════════');
-      logger.info('🎉 Serveur Action Culture démarré avec succès !');
+      logger.info('🎉 Serveur Tala DZ démarré avec succès !');
       logger.info('═══════════════════════════════════════════════════');
       logger.info(`📍 Adresse locale: http://localhost:${PORT}`);
       logger.info(`📍 Adresse réseau: http://${HOST}:${PORT}`);

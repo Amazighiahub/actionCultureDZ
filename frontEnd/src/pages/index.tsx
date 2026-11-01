@@ -73,9 +73,8 @@ const Index: React.FC = () => {
   
   return (
     <div className={`min-h-screen bg-background`} dir={direction}>
-      {/* Sans titre : titre complet par défaut « Tala DZ - La source de la culture algérienne » */}
+      {/* Sans titre ni description : ceux par défaut, traduits (seo.defaultTitle / defaultDescription) */}
       <SEOHead
-        description="Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel."
         keywords={[
           'culture algérienne', 'patrimoine Algérie', 'événements culturels', 'artisanat algérien',
           'littérature algérienne', 'tourisme culturel', 'histoire Algérie', 'traditions algériennes',

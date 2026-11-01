@@ -810,8 +810,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     maxLength={200}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMateriel())}
                   />
-                  <Button type="button" variant="outline" onClick={addMateriel} disabled={isReadOnly}>
-                    <Plus className="h-4 w-4" />
+                  <Button type="button" variant="outline" onClick={addMateriel} disabled={isReadOnly}
+                    aria-label={t('programme.form.options.addMaterial')}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">

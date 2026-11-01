@@ -280,7 +280,7 @@ class EmailService {
           <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Confirmez votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Confirmez votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
     } catch (error) {
       logger.error('Erreur dans sendInvitationInscription:', error);
       return { success: false, error: error.message };
@@ -307,7 +307,7 @@ class EmailService {
           <p style="font-size: 14px; color: #6b6a63;">Vous n'êtes pas à l'origine de cette demande ? Cliquez sur « Refuser » sur la page de l'événement, ou ignorez ce message.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Confirmez votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Confirmez votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
     } catch (error) {
       logger.error('Erreur dans sendDemandeConfirmationInscription:', error);
       return { success: false, error: error.message };
@@ -406,14 +406,14 @@ class EmailService {
         html = template({
           prenom: this._prenom(user),
           email: user.email,
-          date: new Date().toLocaleString('fr-FR')
+          date: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Algiers' })
         });
       } catch {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Mot de passe modifié</h2>
             <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
-            <p>Votre mot de passe a été modifié avec succès le ${new Date().toLocaleString('fr-FR')}.</p>
+            <p>Votre mot de passe a été modifié avec succès le ${new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Algiers' })}.</p>
             <p>Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.</p>
             <p>L'équipe Tala DZ</p>
           </div>
@@ -693,7 +693,7 @@ class EmailService {
 
       return await this.sendEmail(
         professionnel.email,
-        `Participation ${statutText} : ${nomEvenementStr}`,
+        `Participation ${statutText} : ${this._sanitizeSubject(nomEvenementStr)}`,
         html
       );
     } catch (error) {
@@ -769,18 +769,19 @@ class EmailService {
         const user = participant.User;
         const prenomStr = this._prenom(user);
         const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+        const esc = this._escapeHtml.bind(this);
 
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #f39c12;">📋 ${sujet}</h2>
-            <p>Bonjour ${prenomStr},</p>
-            <p>Le programme <strong>"${titreProgramme}"</strong> de l'événement <strong>${nomEvenementStr}</strong> a été modifié.</p>
+            <p>Bonjour ${esc(prenomStr)},</p>
+            <p>Le programme <strong>"${esc(titreProgramme)}"</strong> de l'événement <strong>${esc(nomEvenementStr)}</strong> a été modifié.</p>
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Type de modification :</strong> ${sujet}</p>
-              ${programme.date_debut ? `<p><strong>Date :</strong> ${new Date(programme.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
-              ${programme.heure_debut ? `<p><strong>Heure :</strong> ${programme.heure_debut}</p>` : ''}
+              ${programme.date_debut ? `<p><strong>Date :</strong> ${new Date(programme.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Africa/Algiers' })}</p>` : ''}
+              ${programme.heure_debut ? `<p><strong>Heure :</strong> ${esc(programme.heure_debut)}</p>` : ''}
             </div>
-            <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
+            <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
             <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
@@ -820,7 +821,7 @@ class EmailService {
             <p>Un nouvel événement vient d'être publié : <strong>${esc(nomEvenementStr)}</strong></p>
             ${descriptionStr ? `<p>${esc(descriptionStr.substring(0, 200))}${descriptionStr.length > 200 ? '...' : ''}</p>` : ''}
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              ${evenement.date_debut ? `<p><strong>📅 Date :</strong> ${new Date(evenement.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
+              ${evenement.date_debut ? `<p><strong>📅 Date :</strong> ${new Date(evenement.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Africa/Algiers' })}</p>` : ''}
               ${lieuNom ? `<p><strong>📍 Lieu :</strong> ${esc(lieuNom)}</p>` : ''}
               ${evenement.TypeEvenement?.nom_type ? `<p><strong>🏷️ Type :</strong> ${esc(evenement.TypeEvenement.nom_type)}</p>` : ''}
             </div>
@@ -863,7 +864,7 @@ class EmailService {
 
       return await this.sendEmail(
         email,
-        `Rappel : ${nomEvenement} - Demain !`,
+        `Rappel : ${this._sanitizeSubject(nomEvenement)} - Demain !`,
         html
       );
     } catch (error) {

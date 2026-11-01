@@ -119,6 +119,17 @@ const initEvenementRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => evenementController.listerMessagesParticipants(req, res)));
   router.post('/:id/participants/messages', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
     asyncHandler((req, res) => evenementController.envoyerMessageParticipants(req, res)));
+  // Documents PDF de l'événement (programme complet, présentation…) : liste et téléchargement publics,
+  // ajout et retrait par l'organisateur ou l'administration
+  router.get('/:id/documents', optionalAuth, validateId(),
+    asyncHandler((req, res) => evenementController.listerDocuments(req, res)));
+  router.get('/:id/documents/:idMedia/document.pdf', optionalAuth, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => evenementController.telechargerDocument(req, res)));
+  router.post('/:id/documents', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+    asyncHandler((req, res) => evenementController.ajouterDocument(req, res)));
+  router.delete('/:id/documents/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => evenementController.retirerDocument(req, res)));
+
   // Programme en PDF joint à un message (ouvert depuis l'email ou la notification, sans connexion)
   router.get('/:id/messages/:idMessage/programme.pdf', validateId(), validateId('idMessage'),
     asyncHandler((req, res) => evenementController.programmeMessage(req, res)));

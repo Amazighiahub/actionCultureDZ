@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Plus,
+  FileText,
   Trash2,
   Edit,
   Clock,
@@ -40,6 +41,7 @@ import {
   Loader2
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
+import DocumentsEvenementGestion from './DocumentsEvenementGestion';
 import { ConfirmDialog } from '@/components/shared';
 import { useToast } from '@/components/ui/use-toast';
 import { programmeService, type Programme } from '@/services/programme.service';
@@ -373,6 +375,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               <UserCheck className="h-4 w-4 me-2" />
               {t('gestion.participants', 'Participants')}
             </TabsTrigger>
+            <TabsTrigger value="documents">
+              <FileText className="h-4 w-4 me-2" />
+              {t('gestion.documents', 'Documents PDF')}
+            </TabsTrigger>
             {showOeuvresSection && (
               <TabsTrigger value="oeuvres">
                 <BookOpen className="h-4 w-4 me-2" />
@@ -395,6 +401,11 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             />
           </div>
         </div>
+
+        {/* Onglet Documents PDF (programme complet, présentation…) */}
+        <TabsContent value="documents">
+          <DocumentsEvenementGestion evenementId={evenementId} />
+        </TabsContent>
 
         {/* Onglet Programmes */}
         <TabsContent value="programmes" className="space-y-4">

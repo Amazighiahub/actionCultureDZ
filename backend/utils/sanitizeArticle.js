@@ -143,4 +143,26 @@ function sanitizeBlockContent(typeBlock, contenu) {
   }
 }
 
-module.exports = { sanitizeBlockContent, isAllowedEmbedUrl, isAllowedVideoUrl, ALLOWED_EMBED_DOMAINS };
+/**
+ * Données structurées d'un bloc, au format attendu par l'affichage :
+ * liste = tableau de textes, tableau = { headers: [textes], rows: [[textes]] }.
+ * Avant : n'importe quel JSON était gardé et un élément qui n'était pas un texte
+ * faisait planter la page de l'article. Les autres types sont laissés tels quels.
+ */
+function sanitizeBlockJson(type, json) {
+  const texte = (v) => (v == null ? '' : typeof v === 'object' ? '' : String(v).slice(0, 2000));
+  if (type === 'list') {
+    return Array.isArray(json) ? json.slice(0, 200).map(texte) : null;
+  }
+  if (type === 'table') {
+    if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
+    const headers = Array.isArray(json.headers) ? json.headers.slice(0, 20).map(texte) : [];
+    const rows = Array.isArray(json.rows)
+      ? json.rows.slice(0, 200).map(r => (Array.isArray(r) ? r.slice(0, 20).map(texte) : []))
+      : [];
+    return { headers, rows };
+  }
+  return json;
+}
+
+module.exports = { sanitizeBlockContent, sanitizeBlockJson, isAllowedEmbedUrl, isAllowedVideoUrl, ALLOWED_EMBED_DOMAINS };

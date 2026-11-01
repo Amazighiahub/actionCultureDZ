@@ -226,15 +226,23 @@ class CronService {
     dateLimit.setDate(dateLimit.getDate() - (process.env.NOTIFICATION_RETENTION_DAYS || 90));
 
     // Lues ou non : la politique de confidentialité annonce 90 jours de conservation
-    const result = await this.models.Notification.destroy({
-      where: {
-        date_creation: {
-          [Op.lt]: dateLimit
-        }
-      }
-    });
+    const result = await this._supprimerParLots(this.models.Notification, { date_creation: { [Op.lt]: dateLimit } });
 
     logger.info(`🧹 ${result} notifications anciennes supprimées`);
+  }
+
+  /**
+   * Suppression par lots de 5 000 (comme anonymizeOldLogs) : un seul gros DELETE gardait la
+   * table verrouillée longtemps et gonflait le journal d'annulation de MySQL.
+   * @returns {Promise<number>} nombre de lignes supprimées
+   */
+  async _supprimerParLots(Model, where, taille = 5000) {
+    let total = 0;
+    for (;;) {
+      const n = await Model.destroy({ where, limit: taille });
+      total += n;
+      if (n < taille) return total;
+    }
   }
 
   /**
@@ -247,13 +255,7 @@ class CronService {
     const dateLimit = new Date();
     dateLimit.setDate(dateLimit.getDate() - (parseInt(process.env.VIEW_RETENTION_DAYS) || 90));
 
-    const result = await this.models.Vue.destroy({
-      where: {
-        date_vue: {
-          [Op.lt]: dateLimit
-        }
-      }
-    });
+    const result = await this._supprimerParLots(this.models.Vue, { date_vue: { [Op.lt]: dateLimit } });
 
     logger.info(`🧹 ${result} vues anciennes supprimées (RGPD rétention ${process.env.VIEW_RETENTION_DAYS || 90}j)`);
   }
@@ -320,8 +322,8 @@ class CronService {
     const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
     // {{unsubscribe_url}} est remplacé par le lien signé propre à chaque destinataire
     const template = {
-      subject: '📰 Votre newsletter Action Culture',
-      text: `Découvrez les nouveautés de la semaine sur Action Culture...`,
+      subject: '📰 Votre newsletter Tala DZ',
+      text: `Découvrez les nouveautés de la semaine sur Tala DZ...`,
       html: withUnsubscribeFooter(this.generateNewsletterHtml(newEvents, newOeuvres), '{{unsubscribe_url}}'),
       headers: unsubscribeHeaders('{{unsubscribe_url}}')
     };
@@ -379,16 +381,28 @@ class CronService {
       attributes: ['id_evenement', 'nom_evenement', 'date_debut']
     });
 
-    if (upcomingEvents.length === 0) return;
+    // Un jour sans heure (minuit UTC) n'a pas d'heure de début : pas de « dans 1 heure » à minuit
+    const avecHeure = upcomingEvents.filter(e => {
+      const d = new Date(e.date_debut);
+      return d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0;
+    });
+    await Promise.all(upcomingEvents.filter(e => !avecHeure.includes(e))
+      .map(e => e.update({ rappel_derniere_minute: true })));
+    if (avecHeure.length === 0) return;
 
-    const eventIds = upcomingEvents.map(e => e.id_evenement);
+    const eventIds = avecHeure.map(e => e.id_evenement);
 
     // 1 seule requête pour TOUS les participants de TOUS les événements
+    // (inscrits ou confirmés, qui n'ont pas coupé les notifications d'événements)
     const allParticipants = await this.models.EvenementUser.findAll({
       where: {
         id_evenement: { [Op.in]: eventIds },
-        statut_participation: 'confirme'
+        statut_participation: { [Op.in]: ['inscrit', 'confirme'] }
       },
+      include: [{
+        model: this.models.User, as: 'User', attributes: [],
+        where: { notifications_evenements: true, statut: { [Op.notIn]: ['suspendu', 'banni'] } }
+      }],
       attributes: ['id_user', 'id_evenement']
     });
 
@@ -400,7 +414,7 @@ class CronService {
     }
 
     // Créer toutes les notifications + marquer les events en parallèle
-    await Promise.all(upcomingEvents.map(async (event) => {
+    await Promise.all(avecHeure.map(async (event) => {
       const userIds = participantsByEvent.get(event.id_evenement) || [];
       if (userIds.length > 0) {
         const notifications = userIds.map(userId => ({

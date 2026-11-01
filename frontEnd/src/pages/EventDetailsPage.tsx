@@ -25,6 +25,7 @@ import EventHero from './event/EventHero';
 
 // ✅ LAZY LOADING des sections
 const EventInfo = React.lazy(() => import('./event/EventInfo'));
+const EventDocuments = React.lazy(() => import('@/components/event/EventDocuments'));
 const EventProgram = React.lazy(() => import('./event/EventProgram'));
 const EventGallery = React.lazy(() => import('./event/EventGallery'));
 const EventComments = React.lazy(() => import('./event/EventComments'));
@@ -203,6 +204,7 @@ const EventDetailsPage: React.FC = () => {
                   <ErrorBoundary>
                     <Suspense fallback={<SectionFallback />}>
                       <EventInfo event={event} />
+                      <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
                     </Suspense>
                   </ErrorBoundary>
                 )}
@@ -211,6 +213,7 @@ const EventDetailsPage: React.FC = () => {
                   <ErrorBoundary>
                     <Suspense fallback={<SectionFallback />}>
                       <EventProgram programs={programs || []} />
+                      <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
                     </Suspense>
                   </ErrorBoundary>
                 )}
@@ -218,7 +221,8 @@ const EventDetailsPage: React.FC = () => {
                 {activeTab === 'gallery' && (
                   <ErrorBoundary>
                     <Suspense fallback={<SectionFallback />}>
-                      <EventGallery medias={medias || []} />
+                      {/* Les PDF sont dans « Documents à télécharger », pas dans la galerie */}
+                      <EventGallery medias={(medias || []).filter(m => m.type_media !== 'document')} />
                     </Suspense>
                   </ErrorBoundary>
                 )}

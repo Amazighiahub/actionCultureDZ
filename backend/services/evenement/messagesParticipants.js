@@ -6,6 +6,7 @@
  * créés par import qui n'ont pas encore choisi leur mot de passe). Les emails partent un par un,
  * en arrière-plan ; le message est gardé avec le nombre d'emails envoyés.
  */
+const crypto = require('crypto');
 const { Op } = require('sequelize');
 
 /** À qui : « tous » = toute personne inscrite sauf les annulés / refusés */
@@ -24,8 +25,18 @@ const LIENS = { lien_programme: 'Le lien du programme', lien_whatsapp: 'Le lien 
  */
 const estPdfDuSite = (url) => Boolean(url && process.env.CLOUDINARY_CLOUD_NAME
   && url.startsWith(`https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/`));
+// Le lien du PDF porte une signature : sans elle, les ids se suivent et n'importe qui
+// pourrait lire le programme de tous les messages. Les messages envoyés avant la
+// signature (date ci-dessous) gardent leur ancien lien, déjà dans les e-mails reçus.
+const SIGNATURE_DEPUIS = new Date('2026-11-02T00:00:00Z');
+const signaturePdf = (idMessage) => crypto
+  .createHmac('sha256', process.env.JWT_SECRET || '').update(`programme-message:${idMessage}`).digest('hex').slice(0, 32);
+const signatureValide = (idMessage, cle) => {
+  if (typeof cle !== 'string' || !/^[a-f0-9]{32}$/.test(cle)) return false;
+  return crypto.timingSafeEqual(Buffer.from(signaturePdf(idMessage)), Buffer.from(cle));
+};
 const lienPublicProgramme = (m) => (estPdfDuSite(m.lien_programme)
-  ? `${process.env.FRONTEND_URL}/api/evenements/${m.id_evenement}/messages/${m.id_message}/programme.pdf`
+  ? `${process.env.FRONTEND_URL}/api/evenements/${m.id_evenement}/messages/${m.id_message}/programme.pdf?cle=${signaturePdf(m.id_message)}`
   : m.lien_programme);
 
 const erreur = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
@@ -165,11 +176,13 @@ class MessagesParticipants {
   }
 
   /** Adresse Cloudinary du PDF d'un message (servi par le site) ; 404 si ce message n'en a pas */
-  async programme(idEvenement, idMessage) {
+  async programme(idEvenement, idMessage, cle) {
     const m = await this.models.MessageEvenement.findOne({
-      where: { id_message: idMessage, id_evenement: idEvenement }, attributes: ['lien_programme'], raw: true
+      where: { id_message: idMessage, id_evenement: idEvenement }, attributes: ['lien_programme', 'date_creation'], raw: true
     });
     if (!m || !estPdfDuSite(m.lien_programme)) throw erreur('Programme introuvable', 404);
+    const ancien = m.date_creation && new Date(m.date_creation) < SIGNATURE_DEPUIS;
+    if (!ancien && !signatureValide(idMessage, cle)) throw erreur('Programme introuvable', 404);
     return m.lien_programme;
   }
 
@@ -192,4 +205,4 @@ class MessagesParticipants {
   }
 }
 
-module.exports = { MessagesParticipants, lireMessage, lireLien, texteNotification, lienPublicProgramme, CIBLES };
+module.exports = { MessagesParticipants, lireMessage, lireLien, texteNotification, lienPublicProgramme, estPdfDuSite, CIBLES };

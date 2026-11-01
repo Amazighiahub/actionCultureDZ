@@ -65,6 +65,8 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    # Le temps d'écrire les vues en attente et de finir les envois en cours (server.js coupe à 25 s)
+    stop_grace_period: 30s
     logging: *default-logging
     security_opt:
       - no-new-privileges:true

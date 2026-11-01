@@ -64,6 +64,13 @@ interface Participant {
   present?: boolean;
 }
 
+/** Document PDF d'un événement ; `lien` est servi par le site (/api/evenements/:id/documents/:idMedia/document.pdf) */
+export interface DocumentEvenement {
+  id_media: number;
+  titre: string | Record<string, string>;
+  lien: string;
+}
+
 export interface PublicParticipant {
   role_participation: string;
   date_inscription: string;
@@ -207,6 +214,19 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
 
   async getProfessionnelsEnAttente(eventId: number): Promise<ApiResponse<Participant[]>> {
     return httpClient.get<Participant[]>(API_ENDPOINTS.evenements.professionnelsEnAttente(eventId));
+  }
+
+  // Documents PDF de l'événement (programme complet, présentation…)
+  async getDocuments(id: number): Promise<ApiResponse<DocumentEvenement[]>> {
+    return httpClient.get<DocumentEvenement[]>(`/evenements/${id}/documents`);
+  }
+
+  async ajouterDocument(id: number, url: string, titre: string): Promise<ApiResponse<DocumentEvenement>> {
+    return httpClient.post<DocumentEvenement>(`/evenements/${id}/documents`, { url, titre });
+  }
+
+  async retirerDocument(id: number, idMedia: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(`/evenements/${id}/documents/${idMedia}`);
   }
 
   // Médias

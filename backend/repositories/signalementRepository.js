@@ -3,6 +3,7 @@
  * Extends BaseRepository avec des methodes specifiques a la moderation
  */
 
+const { Op } = require('sequelize');
 const BaseRepository = require('./baseRepository');
 const AppError = require('../utils/appError');
 const { invalidateUserSession } = require('../utils/sessionCache');
@@ -97,17 +98,25 @@ class SignalementRepository extends BaseRepository {
    * Verifie l'existence d'une entite signalee
    */
   async entityExists(type, id) {
+    // Seuls les contenus visibles du public peuvent être signalés : sinon la
+    // réponse (404 ou 201) révélerait l'existence d'un brouillon.
     const modelMap = {
-      oeuvre: { model: this.models.Oeuvre, pk: 'id_oeuvre' },
-      evenement: { model: this.models.Evenement, pk: 'id_evenement' },
+      oeuvre: { model: this.models.Oeuvre, pk: 'id_oeuvre', where: { statut: 'publie' } },
+      evenement: {
+        model: this.models.Evenement, pk: 'id_evenement',
+        where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }
+      },
       user: { model: this.models.User, pk: 'id_user' },
-      commentaire: { model: this.models.Commentaire, pk: 'id_commentaire' },
+      commentaire: { model: this.models.Commentaire, pk: 'id_commentaire', where: { statut: 'publie' } },
     };
 
     const entry = modelMap[type];
     if (!entry || !entry.model) return false;
 
-    const entity = await entry.model.findByPk(id);
+    const entity = await entry.model.findOne({
+      where: { [entry.pk]: id, ...(entry.where || {}) },
+      attributes: [entry.pk]
+    });
     return !!entity;
   }
 

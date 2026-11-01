@@ -96,6 +96,8 @@ async function executer({ models, oeuvreService, logger }, org, lignes, userId, 
   const dejaPresents = [];
   const echecs = [];
 
+  let auteurCree = null;
+  let cleAuteur = null;
   for (const l of aTraiter) {
     try {
       if (l.etat === 'existe') {
@@ -113,14 +115,14 @@ async function executer({ models, oeuvreService, logger }, org, lignes, userId, 
         continue;
       }
 
-      const cle = cleNom(l.auteur.prenom, l.auteur.nom);
-      let idAuteur = auteurs.get(cle);
+      cleAuteur = cleNom(l.auteur.prenom, l.auteur.nom);
+      let idAuteur = auteurs.get(cleAuteur);
       if (!idAuteur) {
-        const cree = await models.Intervenant.create({
+        auteurCree = await models.Intervenant.create({
           nom: { fr: l.auteur.nom }, prenom: l.auteur.prenom ? { fr: l.auteur.prenom } : {}, actif: true
         });
-        idAuteur = cree.id_intervenant;
-        auteurs.set(cle, idAuteur);
+        idAuteur = auteurCree.id_intervenant;
+        auteurs.set(cleAuteur, idAuteur);
       }
 
       const nettoyer = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v));
@@ -139,9 +141,18 @@ async function executer({ models, oeuvreService, logger }, org, lignes, userId, 
       await oeuvreService.submitForValidation(oeuvre.id_oeuvre ?? oeuvre.id, userId);
       crees.push({ ligne: l.ligne, id_oeuvre: oeuvre.id_oeuvre ?? oeuvre.id, couverture: l.couverture });
       for (const t of titres) titresConnus.add(t);
+      auteurCree = null;
     } catch (error) {
       logger?.warn?.(`Import catalogue ${org.id_organisation}, ligne ${l.ligne} : ${error.message}`);
-      echecs.push({ ligne: l.ligne, erreur: error.message });
+      // Fiche auteur créée pour ce livre seulement : retirée si le livre n'a pas pu l'être
+      if (auteurCree) {
+        await auteurCree.destroy().catch(() => {});
+        auteurs.delete(cleAuteur);
+        auteurCree = null;
+      }
+      // Message clair pour une donnée refusée ; jamais le texte d'une erreur technique (SQL…)
+      const lisible = error.statusCode && error.statusCode < 500;
+      echecs.push({ ligne: l.ligne, erreur: lisible ? error.message : 'Erreur technique : ce livre n\'a pas été créé' });
     }
   }
   return { crees, lies, aVerifier, dejaPresents, echecs, ignorees: lignes.length - aTraiter.length };

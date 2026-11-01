@@ -4,13 +4,19 @@
  */
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 
-/** Comptes administrateurs actifs (rôle Administrateur ou type administrateur) */
+/**
+ * Comptes de la modération (rôle Administrateur ou Modérateur, ou type administrateur) :
+ * les écrans de modération leur sont ouverts à tous, les alertes aussi.
+ */
 async function idsAdministrateurs(models) {
   const { User, Role } = models;
   const parType = await User.findAll({ where: { id_type_user: TYPE_USER_IDS.ADMINISTRATEUR }, attributes: ['id_user'] });
   const parRole = Role ? await User.findAll({
     attributes: ['id_user'],
-    include: [{ model: Role, as: 'Roles', where: { nom_role: 'Administrateur' }, attributes: [], through: { attributes: [] } }]
+    include: [{
+      model: Role, as: 'Roles', where: { nom_role: ['Administrateur', 'Modérateur', 'Moderateur'] },
+      attributes: [], through: { attributes: [] }
+    }]
   }) : [];
   return [...new Set([...parType, ...parRole].map(u => u.id_user))];
 }

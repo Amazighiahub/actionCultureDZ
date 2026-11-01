@@ -112,6 +112,13 @@ class DashboardUserManagementService {
       'entreprise', 'biographie', 'statut'
     ];
 
+    // Devenir administrateur passe par le changement de rôle (journal CHANGE_USER_ROLE)
+    if (Number(data.id_type_user) === 29) {
+      const err = new Error('Pour nommer un administrateur, utilisez « Changer le rôle »');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const updateData = {};
     for (const field of allowedFields) {
       if (data[field] !== undefined) {

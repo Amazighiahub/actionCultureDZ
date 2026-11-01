@@ -9,7 +9,7 @@
  */
 const BaseService = require('../core/baseService');
 const { Op } = require('sequelize');
-const { sanitizeBlockContent } = require('../../utils/sanitizeArticle');
+const { sanitizeBlockContent, sanitizeBlockJson } = require('../../utils/sanitizeArticle');
 const { peutGerer } = require('../../utils/droits');
 const { mergeTranslations, translate, lireMultiLang } = require('../../helpers/i18n');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
@@ -161,6 +161,9 @@ class ArticleRevisionService extends BaseService {
     const { titre, description, blocks } = revision.contenu || {};
 
     await Oeuvre.sequelize.transaction(async (transaction) => {
+      // Relue sous verrou : deux « Accepter » simultanés n'appliquent pas deux fois les blocs
+      const verrouillee = await ArticleRevision.findByPk(revision.id_revision, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!verrouillee || verrouillee.statut !== 'en_attente') throw this._validationError('Cette proposition a déjà été traitée');
       const maj = {};
       if (titre) maj.titre = mergeTranslations(oeuvre.titre, typeof titre === 'string' ? { fr: titre } : titre);
       if (description) maj.description = mergeTranslations(oeuvre.description, typeof description === 'string' ? { fr: description } : description);
@@ -183,7 +186,7 @@ class ArticleRevisionService extends BaseService {
         await ArticleBlock.create({
           id_article: idArticle, article_type: articleType, type_block: b.type_block,
           contenu: sanitizeBlockContent(b.type_block, b.contenu || ''),
-          contenu_json: b.contenu_json ?? null, metadata, id_media: idMedia, ordre: i, visible: true
+          contenu_json: sanitizeBlockJson(b.type_block, b.contenu_json) ?? null, metadata, id_media: idMedia, ordre: i, visible: true
         }, { transaction });
       }
       await revision.update({ statut: 'acceptee', id_decideur: userId, date_decision: new Date() }, { transaction });
@@ -216,7 +219,7 @@ class ArticleRevisionService extends BaseService {
       if (contenu.length > 20000) throw this._validationError(`Bloc ${i + 1} : contenu trop long`);
       const metadata = b.metadata && typeof b.metadata === 'object' && !Array.isArray(b.metadata) ? { ...b.metadata } : {};
       delete metadata.tempFile;
-      const bloc = { type_block: b.type_block, contenu, contenu_json: b.contenu_json ?? null, metadata };
+      const bloc = { type_block: b.type_block, contenu, contenu_json: sanitizeBlockJson(b.type_block, b.contenu_json) ?? null, metadata };
       if (b.type_block === 'image') {
         if (b.id_media && mediasArticle.has(Number(b.id_media))) bloc.id_media = Number(b.id_media);
         else if (imageAutorisee(metadata.url)) bloc.metadata.url = metadata.url;

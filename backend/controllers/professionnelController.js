@@ -109,11 +109,9 @@ class ProfessionnelController extends BaseController {
   async updateProfessionalProfile(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const user = await this.professionnelService.updateProfessionalProfile(req.user.id_user, req.body);
-
-      if (!user) {
-        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
-      }
+      // Mêmes contrôles que le profil membre (UpdateUserDTO : photo hébergée
+      // par la plateforme, format du téléphone, URL du site…)
+      const user = await container.userService.update(req.user.id_user, req.body, req.user.id_user);
 
       res.json({
         success: true,

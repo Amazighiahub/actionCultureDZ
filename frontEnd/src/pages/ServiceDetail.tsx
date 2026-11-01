@@ -85,6 +85,7 @@ const ServiceDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
+        {etat !== 'chargement' && <SEOHead title={t('servicesVisiteurs.title', 'Services aux visiteurs')} noindex />}
         <main className="container py-8 max-w-4xl">
           {retour}
           {etat === 'chargement'

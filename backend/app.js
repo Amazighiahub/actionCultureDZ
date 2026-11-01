@@ -182,7 +182,7 @@ class App {
     // Forcer application/json clobberait les res.sendFile/res.download/exports binaires
     this.app.use('/api', (req, res, next) => {
       // Vary pour CDN/proxies (langue + encoding)
-      res.set('Vary', 'Accept-Encoding, Accept-Language');
+      res.set('Vary', 'Accept-Encoding, Accept-Language, X-Language');
       // Empêcher le cache sur les mutations
       if (req.method !== 'GET') {
         res.set('Cache-Control', 'no-store');
@@ -456,11 +456,10 @@ class App {
     // Account lockout protection (brute force par compte email)
     this.app.use('/api/users/login', rateLimitMiddleware.accountRateLimiter.checkAccountLock);
 
-    // Rate limiting pour les créations
-    this.app.use('/api/oeuvres', ...rateLimitMiddleware.creation);
-    this.app.use('/api/evenements', ...rateLimitMiddleware.creation);
-    this.app.use('/api/artisanat', ...rateLimitMiddleware.creation);
-    // (la création d'un lieu, POST /api/patrimoine, a sa propre limite dans patrimoineRoutes)
+    // Créations : la limite (createContentLimiter) est posée dans chaque route, après
+    // authenticate, pour compter par personne. Montée ici, avant l'identification, elle
+    // comptait par IP toutes les écritures (inscriptions comprises) : 20/h pour tout un
+    // Wi-Fi de salon ou un opérateur mobile.
     
     // Actions sensibles : limites posées sur chaque route (dashboardRoutes, professionnelRoutes,
     // userRoutes) ; ici, elles comptaient chaque action deux fois.

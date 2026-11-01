@@ -10,7 +10,7 @@ const { handleValidationErrors, validateId, validateStringLengths } = require('.
 
 const initParcoursRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, requireRole, requireVerifiedEmail, optionalAuth } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -27,8 +27,9 @@ const initParcoursRoutes = (models, authMiddleware) => {
     ],
     handleValidationErrors,
     (req, res) => parcoursController.personnalise(req, res));
-  router.get('/:id', validateId(), (req, res) => parcoursController.getById(req, res));
-  router.get('/:id/map', validateId(), (req, res) => parcoursController.getMap(req, res));
+  // optionalAuth : un parcours inactif reste visible par son créateur et la modération
+  router.get('/:id', optionalAuth, validateId(), (req, res) => parcoursController.getById(req, res));
+  router.get('/:id/map', optionalAuth, validateId(), (req, res) => parcoursController.getMap(req, res));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES

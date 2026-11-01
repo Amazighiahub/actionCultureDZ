@@ -182,10 +182,15 @@ const OeuvreDetailPage: React.FC = () => {
     setViewCount(0);
   }, [id]);
 
-  // Rediriger vers ArticleViewPage pour les articles (type 4 et 5)
+  // Rediriger vers ArticleViewPage pour les articles (type 4 et 5), et vers la fiche artisanat
+  // pour un artisanat (type 7) : une seule adresse par contenu
   useEffect(() => {
     if (oeuvre && (oeuvre.id_type_oeuvre === 4 || oeuvre.id_type_oeuvre === 5)) {
       navigate(`/articles/${oeuvre.id_oeuvre}`, { replace: true });
+    }
+    const idArtisanat = (oeuvre as { Artisanat?: { id_artisanat?: number } } | null)?.Artisanat?.id_artisanat;
+    if (oeuvre && oeuvre.id_type_oeuvre === 7 && idArtisanat) {
+      navigate(`/artisanat/${idArtisanat}`, { replace: true });
     }
   }, [oeuvre, navigate]);
 

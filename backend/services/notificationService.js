@@ -172,7 +172,7 @@ class NotificationService {
   }
 
   /**
-   * Rappel « c'est demain » aux participants confirmés (email, SMS / WhatsApp, notification).
+   * Rappel « c'est demain » aux participants inscrits ou confirmés (email, SMS / WhatsApp, notification).
    * Appelé par la tâche du matin pour les événements du lendemain ; une erreur remonte, pour
    * que l'événement ne soit pas marqué « rappel envoyé ».
    * @returns {Promise<{ envoyes: number }>}
@@ -190,8 +190,10 @@ class NotificationService {
     const heureDebut = debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
     const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
 
+    // Inscrits et confirmés : une inscription reste « inscrit » tant que l'organisateur ne la
+    // confirme pas ; avant, sans cette confirmation, personne ne recevait de rappel.
     const participants = await this.models.EvenementUser.findAll({
-      where: { id_evenement: evenementId, statut_participation: 'confirme' },
+      where: { id_evenement: evenementId, statut_participation: ['inscrit', 'confirme'] },
       include: [{
         model: this.models.User,
         as: 'User',
@@ -449,6 +451,8 @@ class NotificationService {
       const users = await this.models.User.findAll({
         where: whereClause,
         attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
+        // Plafond anti-avalanche ; ordre fixe pour que le choix ne soit pas aléatoire
+        order: [['id_user', 'ASC']],
         limit: filtres.limit || 100 // Limiter pour éviter trop d'envois
       });
 
@@ -462,7 +466,7 @@ class NotificationService {
 
       // SMS + WhatsApp pour chaque utilisateur
       const nomEvt = this._str(evenement.nom_evenement);
-      const dateEvt = evenement.date_debut ? new Date(evenement.date_debut).toLocaleDateString('fr-FR') : '';
+      const dateEvt = evenement.date_debut ? new Date(evenement.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Africa/Algiers' }) : '';
       const lieuEvt = evenement.Lieu ? this._str(evenement.Lieu.nom) : '';
       await Promise.all(users.map(user =>
         this._envoyerSmsWhatsapp(user, 'nouvel_evenement', {
@@ -627,6 +631,8 @@ class NotificationService {
         // « preferences_notification » n'existe pas dans la table users : la requête échouait
         // et l'envoi à un groupe s'arrêtait en silence (ni notification, ni e-mail)
         attributes: ['id_user', 'email', 'email_verifie', 'notifications_email', 'notifications_evenements'],
+        // Ordre fixe : sans ORDER BY, les pages peuvent se recouvrir (doublons, oublis)
+        order: [['id_user', 'ASC']],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
@@ -891,7 +897,8 @@ class NotificationService {
       type_notification: type_notification || 'message_admin',
       titre,
       message,
-      url_action: url_action || null,
+      // Chemin interne seulement (pas de lien externe ni « //domaine »)
+      url_action: typeof url_action === 'string' && /^\/(?![/\\])/.test(url_action) ? url_action : null,
       priorite: priorite || 'normale',
       metadata: metadata || null,
       lu: false,
@@ -912,6 +919,7 @@ class NotificationService {
       const users = await this.models.User.findAll({
         where: { statut: 'actif' },
         attributes: ['id_user'],
+        order: [['id_user', 'ASC']],
         limit: batchSize,
         offset,
         raw: true

@@ -73,6 +73,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'none';data: null;};
 import Header from '@/components/Header';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+import { rafraichirFavoris } from '@/lib/queryClient';
 
 // Nom de chaque langue écrit dans cette langue
 const NOMS_LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
@@ -160,18 +161,26 @@ const articleHelpers = {
 
 // Composant de barre de progression de lecture
 const ReadingProgress: React.FC = () => {
-  const [progress, setProgress] = useState(0);const { t } = useTranslation();
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    // Un calcul par image affichée (requestAnimationFrame) au lieu d'un à chaque événement de
+    // défilement ; page plus courte que l'écran : 0 (avant : division par zéro)
+    let image = 0;
     const updateProgress = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollProgress = scrollTop / docHeight * 100;
-      setProgress(scrollProgress);
+      if (image) return;
+      image = requestAnimationFrame(() => {
+        image = 0;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        setProgress(docHeight > 0 ? Math.min(100, Math.max(0, window.scrollY / docHeight * 100)) : 0);
+      });
     };
 
     window.addEventListener('scroll', updateProgress, { passive: true });
-    return () => window.removeEventListener('scroll', updateProgress, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', updateProgress);
+      if (image) cancelAnimationFrame(image);
+    };
   }, []);
 
   return (
@@ -337,6 +346,7 @@ const ArticleViewPage: React.FC = () => {
       const response = await favoriService.toggle('oeuvre', articleId);
       if (response.success && response.data) {
         setIsFavorite(response.data.added);
+        rafraichirFavoris();
       }
     } catch (err) {
       console.error('Erreur toggle favori:', err);
@@ -1085,6 +1095,7 @@ const ArticleViewPage: React.FC = () => {
       <Button
         className="fixed bottom-6 end-6 z-50 rounded-full shadow-lg"
         size="icon"
+        aria-label={t('common.backToTop', 'Retour en haut')}
         onClick={scrollToTopFunc}>
         
           <ChevronUp className="h-4 w-4" />

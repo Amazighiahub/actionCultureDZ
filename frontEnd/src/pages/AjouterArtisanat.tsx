@@ -26,6 +26,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
+import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 
 type MultiLangText = {
   fr: string;
@@ -64,6 +65,7 @@ const INITIAL_FORM: FormData = {
 const AjouterArtisanat: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const naviguerPlusTard = useNavigationDifferee();
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
@@ -290,9 +292,7 @@ const AjouterArtisanat: React.FC = () => {
 
         setSuccess(true);
         rafraichirTableauDeBord();
-        setTimeout(() => {
-          navigate('/dashboard-pro');
-        }, 2000);
+        naviguerPlusTard('/dashboard-pro');
       } else {
         setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }

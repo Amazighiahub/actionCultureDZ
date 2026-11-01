@@ -23,6 +23,20 @@ const TYPE_LIVRE = 1;
 
 const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").toLowerCase().trim();
 const chiffres = (t) => String(t || '').replace(/[^0-9]/g, '');
+/** ISBN tel que saisi, sans tirets ni espaces (le X final d'un ISBN-10 est gardé) */
+const isbnBrut = (t) => String(t || '').toUpperCase().replace(/[^0-9X]/g, '');
+/**
+ * Clé de comparaison d'un ISBN : un ISBN-10 est converti en ISBN-13 (978 + 9 chiffres + clé),
+ * pour reconnaître le même livre saisi sous ses deux formes. null si invalide.
+ */
+function cleIsbn(t) {
+  const b = isbnBrut(t);
+  if (/^\d{13}$/.test(b)) return b;
+  if (!/^\d{9}[\dX]$/.test(b)) return null;
+  const base = `978${b.slice(0, 9)}`;
+  const somme = [...base].reduce((acc, c, i) => acc + Number(c) * (i % 2 ? 3 : 1), 0);
+  return base + ((10 - (somme % 10)) % 10);
+}
 const nomImage = (n) => sansAccent(n).replace(/\s+/g, ' ');
 const sansExtension = (n) => nomImage(n).replace(/\.[a-z0-9]+$/, '');
 
@@ -84,7 +98,7 @@ async function references(models, groupes) {
   }
   const isbnExistants = new Map();
   for (const l of await models.Livre.findAll({ attributes: ['id_oeuvre', 'isbn'], where: { isbn: { [require('sequelize').Op.ne]: null } } })) {
-    const cle = chiffres(l.isbn);
+    const cle = cleIsbn(l.isbn);
     if (cle) isbnExistants.set(cle, l.id_oeuvre);
   }
   return { langues, categories, isbnExistants };
@@ -111,7 +125,7 @@ async function lireCatalogue(buffer, nomsImages, refs) {
   }
 
   const images = new Map((nomsImages || []).map(n => [nomImage(n), n]));
-  const imagesParIsbn = new Map((nomsImages || []).map(n => [chiffres(sansExtension(n)), n]).filter(([k]) => k.length >= 10));
+  const imagesParIsbn = new Map((nomsImages || []).map(n => [cleIsbn(sansExtension(n)), n]).filter(([k]) => k));
   const imagesUtilisees = new Set();
   const isbnDuFichier = new Map();
   const lignes = [];
@@ -160,14 +174,15 @@ async function lireCatalogue(buffer, nomsImages, refs) {
       if (!Number.isFinite(prix) || prix < 0) erreurs.push(`prix invalide « ${v('prix')} »`);
     }
 
-    const isbn = chiffres(v('isbn'));
+    const isbn = isbnBrut(v('isbn'));
+    const cle = cleIsbn(isbn);
     let existant = null;
     if (v('isbn')) {
-      if (!/^(\d{10}|\d{13})$/.test(isbn)) erreurs.push(`ISBN invalide « ${v('isbn')} » (10 ou 13 chiffres)`);
-      else if (isbnDuFichier.has(isbn)) erreurs.push(`ISBN déjà utilisé ligne ${isbnDuFichier.get(isbn)}`);
+      if (!cle) erreurs.push(`ISBN invalide « ${v('isbn')} » (10 ou 13 chiffres)`);
+      else if (isbnDuFichier.has(cle)) erreurs.push(`ISBN déjà utilisé ligne ${isbnDuFichier.get(cle)}`);
       else {
-        isbnDuFichier.set(isbn, numero);
-        existant = refs.isbnExistants.get(isbn) || null;
+        isbnDuFichier.set(cle, numero);
+        existant = refs.isbnExistants.get(cle) || null;
       }
     }
 
@@ -178,7 +193,7 @@ async function lireCatalogue(buffer, nomsImages, refs) {
       couverture = images.get(nomImage(nomCouverture)) || null;
       if (!couverture && nomsImages?.length) erreurs.push(`image « ${nomCouverture} » non fournie`);
     } else if (isbn) {
-      couverture = imagesParIsbn.get(isbn) || null;
+      couverture = (cle && imagesParIsbn.get(cle)) || null;
     }
     if (couverture) imagesUtilisees.add(couverture);
 
@@ -257,4 +272,4 @@ async function modeleCatalogue({ langues, categories }) {
   return wb.xlsx.writeBuffer();
 }
 
-module.exports = { lireCatalogue, modeleCatalogue, references, MAX_LIGNES, TYPE_LIVRE, chiffres };
+module.exports = { lireCatalogue, modeleCatalogue, references, MAX_LIGNES, TYPE_LIVRE, chiffres, cleIsbn };

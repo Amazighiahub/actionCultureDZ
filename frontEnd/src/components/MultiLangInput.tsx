@@ -61,9 +61,9 @@ interface MultiLangInputProps {
 
 // Langues disponibles
 const AVAILABLE_LANGUAGES: Language[] = [
-  { code: 'fr', label: 'Français', dir: 'ltr', flag: '🇫🇷' },
-  { code: 'ar', label: 'العربية', dir: 'rtl', flag: '🇩🇿' },
-  { code: 'en', label: 'English', dir: 'ltr', flag: '🇬🇧' },
+  { code: 'fr', label: 'Français', dir: 'ltr', flag: 'FR' },
+  { code: 'ar', label: 'العربية', dir: 'rtl', flag: 'ع' },
+  { code: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
   { code: 'tz-ltn', label: 'Tamaziɣt', dir: 'ltr', flag: 'ⵣ' },
   { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr', flag: 'ⵣ' },
 ];
@@ -201,7 +201,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
                 hasError && 'text-destructive'
               )}
             >
-              <span className="me-1" aria-hidden="true">{lang.flag}</span>
+              <span className="me-1 text-[10px] font-semibold opacity-70" aria-hidden="true">{lang.flag}</span>
               <span>{lang.label}</span>
               {isRequired && !hasValue && (
                 <>

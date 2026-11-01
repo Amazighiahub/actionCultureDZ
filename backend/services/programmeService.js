@@ -102,7 +102,8 @@ class ProgrammeService extends BaseService {
       await transaction.commit();
       return { programme: await this._getProgrammeComplet(programme.id_programme) };
     } catch (error) {
-      await transaction.rollback();
+      // Une erreur de relecture après le commit ne doit pas tenter d'annuler une transaction terminée
+      if (!transaction.finished) await transaction.rollback();
       throw error;
     }
   }
@@ -314,7 +315,8 @@ class ProgrammeService extends BaseService {
       await transaction.commit();
       return { programme: await this._getProgrammeComplet(newProgramme.id_programme) };
     } catch (error) {
-      await transaction.rollback();
+      // Une erreur de relecture après le commit ne doit pas tenter d'annuler une transaction terminée
+      if (!transaction.finished) await transaction.rollback();
       throw error;
     }
   }
@@ -540,33 +542,6 @@ class ProgrammeService extends BaseService {
     }, { transaction });
 
     return newIntervenant.id_intervenant;
-  }
-
-  /**
-   * Envoie un email d'invitation à un intervenant nouvellement créé.
-   */
-  async _sendIntervenantInviteEmail(user, tempPassword) {
-    try {
-      const emailService = require('./emailService');
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      await emailService.sendEmail({
-        to: user.email,
-        subject: 'Invitation - Vous êtes intervenant sur ActionCulture',
-        html: `
-          <h2>Bienvenue sur ActionCulture</h2>
-          <p>Vous avez été ajouté comme intervenant dans un programme.</p>
-          <p>Un compte a été créé pour vous :</p>
-          <ul>
-            <li><strong>Email :</strong> ${user.email}</li>
-            <li><strong>Mot de passe temporaire :</strong> ${tempPassword}</li>
-          </ul>
-          <p><a href="${frontendUrl}/login">Se connecter</a></p>
-          <p>Nous vous recommandons de changer votre mot de passe après la première connexion.</p>
-        `
-      });
-    } catch (err) {
-      console.error('Échec envoi mail intervenant:', err.message);
-    }
   }
 
   _prepareMultiLang(value, lang = 'fr') {

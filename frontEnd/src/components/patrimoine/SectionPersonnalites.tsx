@@ -285,7 +285,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           <CardContent className="py-8 text-center">
             <div className="text-4xl mb-3">{icon}</div>
             <h3 className="font-medium mb-1">{title}</h3>
-            <p className="text-sm text-muted-foreground mb-4">Cette section n'est pas encore documentée.</p>
+            <p className="text-sm text-muted-foreground mb-4">{t('patrimoine.personnalites.vide', 'Cette section n’est pas encore documentée.')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" onClick={openEditor}>
                 <Plus className="h-4 w-4 me-2" />{t('patrimoine.contribute.addQuick', 'Texte rapide')}
@@ -429,7 +429,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                 <div className="relative">
                   <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher une personnalité (nom, prénom…)"
+                    placeholder={t('patrimoine.personnalites.rechercher', 'Rechercher une personnalité (nom, prénom…)')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="ps-9"
@@ -466,7 +466,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                             <p className="text-sm font-medium truncate">{nom}</p>
                             {inv.titre_professionnel && <p className="text-xs text-muted-foreground truncate">{inv.titre_professionnel}</p>}
                           </div>
-                          {alreadyLinked && <span className="text-xs text-muted-foreground">Déjà lié</span>}
+                          {alreadyLinked && <span className="text-xs text-muted-foreground">{t('patrimoine.personnalites.dejaLie', 'Déjà lié')}</span>}
                         </button>
                       );
                     })}
@@ -518,10 +518,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
 
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="role_sur_site">Rôle sur ce site <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                    <Label htmlFor="role_sur_site">{t('patrimoine.personnalites.role', 'Rôle sur ce site')} <span className="text-muted-foreground text-xs">({t('common.optional', 'optionnel')})</span></Label>
                     <Input
                       id="role_sur_site"
-                      placeholder="ex : figure_historique, fondateur, artiste…"
+                      placeholder={t('patrimoine.personnalites.roleExemple', 'ex : figure historique, fondateur, artiste…')}
                       value={roleSurSite}
                       onChange={e => setRoleSurSite(e.target.value)}
                       maxLength={80}
@@ -529,10 +529,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="periode">Période <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                    <Label htmlFor="periode">{t('patrimoine.personnalites.periode', 'Période')} <span className="text-muted-foreground text-xs">({t('common.optional', 'optionnel')})</span></Label>
                     <Input
                       id="periode"
-                      placeholder="ex : XIIIe siècle, 1830–1962…"
+                      placeholder={t('patrimoine.personnalites.periodeExemple', 'ex : XIIIe siècle, 1830–1962…')}
                       value={periode}
                       onChange={e => setPeriode(e.target.value)}
                       maxLength={100}

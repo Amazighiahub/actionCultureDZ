@@ -88,6 +88,7 @@ const OrganisationVitrine: React.FC = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
+        <SEOHead title={t('organisations.introuvable', 'Organisation introuvable')} noindex />
         <main className="container py-24 text-center">
           <Building className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden="true" />
           <h1 className="text-2xl font-bold mb-2">{t('organisations.introuvable', 'Organisation introuvable')}</h1>

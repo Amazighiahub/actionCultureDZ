@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -352,12 +352,6 @@ const Header = () => {
                           <Link to="/admin/validation" className="flex items-center gap-2 min-h-[44px]">
                             <UserCheck className="h-4 w-4" />
                             <span>{t('header.userMenu.pendingValidations')}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin/metadata" className="flex items-center gap-2 min-h-[44px]">
-                            <Settings className="h-4 w-4" />
-                            <span>{t('header.userMenu.metadata')}</span>
                           </Link>
                         </DropdownMenuItem>
                       </>

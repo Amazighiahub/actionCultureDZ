@@ -561,17 +561,13 @@ class OeuvreService extends BaseService {
    * @param {Array|Object} files - fichier(s) uploadé(s) par multer
    * @param {number} userId
    */
-  async addMedia(oeuvreId, files, userId) {
-    const oeuvre = await this.repository.findById(oeuvreId);
-    if (!oeuvre) throw this._notFoundError(oeuvreId);
-
-    // Vérifier que l'utilisateur est le propriétaire
-    if (oeuvre.saisi_par !== userId) {
-      throw this._forbiddenError('Vous ne pouvez modifier que vos propres œuvres');
-    }
+  async addMedia(oeuvreId, files, userId, isAdmin = false) {
+    // Auteur ou administration (même règle que le retrait et le réordonnancement)
+    const oeuvre = await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
 
     const medias = await this.enregistrerMedias(oeuvreId, files, userId);
-    await this._signalerModificationPubliee(oeuvre, userId, 'a ajouté des médias à');
+    // L'équipe n'a pas besoin d'être prévenue de ses propres ajouts
+    if (!isAdmin) await this._signalerModificationPubliee(oeuvre, userId, 'a ajouté des médias à');
     return medias;
   }
 

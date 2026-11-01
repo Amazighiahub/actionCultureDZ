@@ -56,7 +56,14 @@ const errorMiddleware = {
         success: false,
         error: error.message,
         code: error.code,
-        ...(error.details && !isProduction && { details: error.details })
+        // Champs refusés (champ + message seulement), aussi en production pour une erreur 4xx
+        ...(error.details && (!isProduction || error.statusCode < 500) && {
+          details: Array.isArray(error.details)
+            ? error.details.slice(0, 50).map(e => (typeof e === 'string'
+              ? e
+              : { field: e?.field || e?.path || e?.param || null, message: e?.message || e?.msg || '' }))
+            : (isProduction ? undefined : error.details)
+        })
       });
     }
 

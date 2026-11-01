@@ -156,23 +156,6 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
     refetch();
   }, [queryClient, refetch]);
 
-  // Précharger la page suivante
-  const prefetchNextPage = useCallback(() => {
-    if (page < pagination.totalPages) {
-      const nextParams = { ...queryParams, page: page + 1 };
-      queryClient.prefetchQuery({
-        queryKey: ['evenements', nextParams],
-        queryFn: async () => {
-          const response = await evenementService.search(nextParams);
-          if (response.success && response.data) {
-            return response.data;
-          }
-          throw new Error(response.error);
-        },
-      });
-    }
-  }, [page, pagination.totalPages, queryParams, queryClient]);
-
   return {
     // Données
     evenements: evenements as Evenement[],
@@ -190,7 +173,6 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
 
     // Actions
     refresh,
-    prefetchNextPage,
 
     // Helpers
     hasNextPage: page < pagination.totalPages,

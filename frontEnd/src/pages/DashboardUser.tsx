@@ -42,6 +42,7 @@ import { notificationService } from '@/services/notification.service';
 import { httpClient } from '@/services/httpClient';
 import type { Notification } from '@/services/notification.service';
 import type { GroupedFavoris } from '@/services/favori.service';
+import SEOHead from '@/components/SEOHead';
 
 const DashboardUser = () => {
   const { user } = useAuth();
@@ -156,6 +157,7 @@ const DashboardUser = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <SEOHead title={t("dashboarduser.mon_espace_personnel")} noindex />
       
       <main className="container py-12">
         {/* En-tête */}

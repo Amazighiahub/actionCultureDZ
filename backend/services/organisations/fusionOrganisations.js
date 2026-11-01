@@ -61,8 +61,14 @@ async function fusionner(models, idGarde, idsDoublons) {
   const sequelize = Organisation.sequelize;
 
   return sequelize.transaction(async (transaction) => {
-    const garde = await Organisation.findByPk(idGarde, { transaction, lock: transaction.LOCK.UPDATE });
-    const autres = await Organisation.findAll({ where: { id_organisation: doublons }, transaction, lock: transaction.LOCK.UPDATE });
+    // Verrous pris en une fois, par numéro croissant : deux fusions croisées (A dans B et B dans A)
+    // ne peuvent pas s'attendre l'une l'autre
+    const verrouillees = await Organisation.findAll({
+      where: { id_organisation: [Number(idGarde), ...doublons] },
+      order: [['id_organisation', 'ASC']], transaction, lock: transaction.LOCK.UPDATE
+    });
+    const garde = verrouillees.find(o => o.id_organisation === Number(idGarde));
+    const autres = verrouillees.filter(o => o.id_organisation !== Number(idGarde));
     if (!garde || autres.length !== doublons.length) {
       const err = new Error('Organisation introuvable'); err.statusCode = 404; err.code = 'NOT_FOUND'; throw err;
     }
@@ -100,10 +106,12 @@ async function fusionner(models, idGarde, idsDoublons) {
       }
 
       // 3. Fiches « éditeur » (livres) : regroupées sur une seule fiche de la page gardée
-      const principal = await Editeur.findOne({ where: { id_organisation: idGarde }, order: [['id_editeur', 'ASC']], transaction });
-      for (const editeur of await Editeur.findAll({ where: { id_organisation: idAutre }, transaction })) {
+      let principal = await Editeur.findOne({ where: { id_organisation: idGarde }, order: [['id_editeur', 'ASC']], transaction });
+      for (const editeur of await Editeur.findAll({ where: { id_organisation: idAutre }, order: [['id_editeur', 'ASC']], transaction })) {
         if (!principal) {
+          // La première fiche déplacée devient la fiche de la page gardée ; les suivantes s'y regroupent
           await editeur.update({ id_organisation: idGarde }, { transaction });
+          principal = editeur;
           continue;
         }
         if (OeuvreEditeur) {
@@ -126,8 +134,8 @@ async function fusionner(models, idGarde, idsDoublons) {
       champs.description = completer(garde.description, autre.description);
       const reseaux = completer(garde.reseaux, autre.reseaux);
       if (Object.keys(reseaux).length) champs.reseaux = reseaux;
-      // Une page déjà publiée absorbée : la page gardée l'est aussi
-      if (autre.statut === 'valide' && garde.statut !== 'valide') champs.statut = 'valide';
+      // Une page déjà publiée absorbée : la page gardée l'est aussi (sauf si la modération l'a refusée)
+      if (autre.statut === 'valide' && !['valide', 'rejete'].includes(garde.statut)) champs.statut = 'valide';
       await garde.update(champs, { transaction });
 
       // 5. Ancienne adresse → page gardée (y compris les redirections qui menaient au doublon)

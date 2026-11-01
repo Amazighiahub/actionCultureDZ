@@ -149,9 +149,10 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <Button
                   size="icon"
                   variant="destructive"
-                  className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
+                  aria-label={t('article.removeImage', 'Retirer l’image')}
                   onClick={handleImageRemove}>
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             ) : (
