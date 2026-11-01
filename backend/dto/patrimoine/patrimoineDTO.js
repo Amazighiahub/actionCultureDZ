@@ -82,7 +82,9 @@ class PatrimoineDTO extends BaseDTO {
         id: m.id_media || m.id,
         url: m.url,
         type: m.type_media || m.type,
-        langue: m.langue || null
+        langue: m.langue || null,
+        credit: m.credit || null,
+        licence: m.licence || null
       })),
       services: (raw.Services || raw.services || []).map(s => ({
         id: s.id,

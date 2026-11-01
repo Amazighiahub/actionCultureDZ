@@ -39,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -90,6 +91,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [interieur, setInterieur] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [medias, setMedias] = useState<File[]>([]);
+  // Photographe ou source, droits, et confirmation du droit de publier
+  const [creditPhotos, setCreditPhotos] = useState<ValeurCreditPhoto>(CREDIT_VIDE);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -138,6 +141,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
     if (currentStep === 3) {
       if (medias.length === 0) {
         newErrors.medias = t('patrimoine.errors.photoRequired', 'Au moins une photo est requise');
+      } else if (!creditPhotos.autorise) {
+        newErrors.medias = t('credit.autorisationRequise', 'Confirmez que vous avez le droit de publier ces photos.');
       }
     }
 
@@ -231,7 +236,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
         let uploadFailed = false;
         if (siteId && medias.length > 0) {
           try {
-            await patrimoineService.uploadMedias(siteId as number, medias);
+            await patrimoineService.uploadMedias(siteId as number, medias, undefined, {
+              credit: creditPhotos.credit, licence: creditPhotos.licence || undefined
+            });
           } catch {
             uploadFailed = true;
           }
@@ -600,6 +607,12 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              )}
+
+              {/* Photographe ou source, droits, et droit de publier */}
+              {medias.length > 0 && (
+                <CreditPhotoChamps valeur={creditPhotos} id="credit-creation"
+                  onChange={(v) => { setCreditPhotos(v); if (v.autorise) setErrors(prev => { const { medias: _m, ...rest } = prev; return rest; }); }} />
               )}
 
               {/* Récapitulatif complet */}

@@ -603,7 +603,12 @@ class PatrimoineController extends BaseController {
   async uploadMedias(req, res) {
     const siteId = parseInt(req.params.id);
     // langue : celle des enregistrements audio envoyés (champ texte du formulaire)
-    const medias = await this.patrimoineService.uploadMedias(siteId, req.files, { langue: req.body?.langue || undefined });
+    const medias = await this.patrimoineService.uploadMedias(siteId, req.files, {
+      langue: req.body?.langue || undefined,
+      // Photographe ou source, et droits des photos envoyées
+      credit: req.body?.credit,
+      licence: req.body?.licence
+    });
     if (medias?.length) await this._signalerContribution(req, 'a ajouté des photos ou des enregistrements à');
     res.json({ success: true, data: medias });
   }
@@ -627,6 +632,13 @@ class PatrimoineController extends BaseController {
     const parentId = req.body?.parentId ? parseInt(req.body.parentId, 10) : null;
     const bilan = await this.patrimoineService.importerReleve(req.file.buffer, { parentId, userId: req.user.id_user });
     res.json({ success: true, data: bilan });
+  }
+
+  async updateMediaCredit(req, res) {
+    if (!(await this._verifierDroitModification(req, res))) return;
+    const { id, mediaId } = req.params;
+    const data = await this.patrimoineService.updateMediaCredit(id, mediaId, req.body);
+    res.json({ success: true, data });
   }
 
   async deleteMedia(req, res) {

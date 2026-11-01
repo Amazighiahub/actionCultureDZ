@@ -5355,5 +5355,26 @@
   "seo": {
     "defaultTitle": "Tala DZ - La source de la culture algérienne",
     "defaultDescription": "Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel."
+  },
+  "credit": {
+    "photographe": "Photographe ou source",
+    "photographeExemple": "ex. Amina Brahimi, ou Wikimedia Commons",
+    "photographeAide": "Affiché sur la photo : « © Nom ».",
+    "droits": "Droits de la photo",
+    "droitsChoisir": "Choisir (facultatif)",
+    "autorisation": "J’ai le droit de publier ces photos : j’en suis l’auteur, j’ai l’accord du photographe, ou elles sont libres de droits.",
+    "autorisationRequise": "Confirmez que vous avez le droit de publier ces photos.",
+    "modifier": "Photographe et droits de la photo {{n}}",
+    "titreDialogue": "Photographe et droits de la photo",
+    "licences": {
+      "tousDroits": "Tous droits réservés (accord du photographe)",
+      "ccBy": "Photo libre avec mention de l’auteur (CC BY)",
+      "ccBySa": "Photo libre avec mention, partage à l’identique (CC BY-SA, ex. Wikimedia Commons)",
+      "domainePublic": "Domaine public (photo gratuite, sans droits)",
+      "tousDroitsCourt": "Tous droits réservés",
+      "ccByCourt": "CC BY",
+      "ccBySaCourt": "CC BY-SA",
+      "domainePublicCourt": "Domaine public"
+    }
   }
 }

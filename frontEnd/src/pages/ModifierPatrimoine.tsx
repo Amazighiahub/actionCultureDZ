@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MultiLangInput from '@/components/MultiLangInput';
 import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio';
-import { Loader2, Save, Upload, Trash2, Eye, Lock, Footprints, X } from 'lucide-react';
+import { Loader2, Save, Upload, Trash2, Eye, Lock, Footprints, X, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { httpClient } from '@/services/httpClient';
 import { patrimoineService } from '@/services/patrimoine.service';
@@ -29,12 +29,16 @@ import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
+import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
+import { mentionCredit, type CreditPhoto, type LicencePhoto } from '@/utils/creditPhoto';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
 type Multilingue = Record<string, string | undefined>;
 
-type Media = MediaAudio;
+// Photos : crédit (photographe ou source) et droits en plus
+type Media = MediaAudio & CreditPhoto;
 
 interface SiteEdition {
   id_lieu: number;
@@ -79,6 +83,10 @@ const ModifierPatrimoine: React.FC = () => {
   const [envoiPhotos, setEnvoiPhotos] = useState(false);
   const [medias, setMedias] = useState<Media[]>([]);
   const [mediaASupprimer, setMediaASupprimer] = useState<Media | null>(null);
+  // Crédit des photos à envoyer, et correction du crédit d'une photo déjà en ligne
+  const [creditNouvelles, setCreditNouvelles] = useState<ValeurCreditPhoto>(CREDIT_VIDE);
+  const [creditEdite, setCreditEdite] = useState<{ media: Media; valeur: ValeurCreditPhoto } | null>(null);
+  const [enregistrementCredit, setEnregistrementCredit] = useState(false);
   const [suppression, setSuppression] = useState(false);
   // Rattachement à un site (modération) : le lieu devient un point de visite de ce site
   const [parentChoisi, setParentChoisi] = useState<{ id: number; nom: string } | null>(null);
@@ -184,7 +192,9 @@ const ModifierPatrimoine: React.FC = () => {
     }
     setEnvoiPhotos(true);
     try {
-      const res = await patrimoineService.uploadMedias(siteId, fichiers);
+      const res = await patrimoineService.uploadMedias(siteId, fichiers, undefined, {
+        credit: creditNouvelles.credit, licence: creditNouvelles.licence || undefined
+      });
       if (!res.success || !res.data) throw new Error(res.error);
       setMedias(prev => [...prev, ...(res.data as unknown as Media[])]);
       toast({ title: t('patrimoine.edit.photosAdded', 'Photos ajoutées') });
@@ -208,6 +218,22 @@ const ModifierPatrimoine: React.FC = () => {
     } finally {
       setSuppression(false);
       setMediaASupprimer(null);
+    }
+  };
+
+  const enregistrerCredit = async () => {
+    if (!creditEdite || !siteId) return;
+    setEnregistrementCredit(true);
+    const res = await patrimoineService.updateMediaCredit(siteId, creditEdite.media.id, {
+      credit: creditEdite.valeur.credit, licence: creditEdite.valeur.licence
+    });
+    setEnregistrementCredit(false);
+    if (res.success && res.data) {
+      const { credit, licence } = res.data;
+      setMedias(prev => prev.map(m => (m.id === creditEdite.media.id ? { ...m, credit, licence } : m)));
+      setCreditEdite(null);
+    } else {
+      toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
     }
   };
 
@@ -363,6 +389,14 @@ const ModifierPatrimoine: React.FC = () => {
                           ? <video src={getAssetUrl(m.url)} controls preload="none" className="w-full h-full object-cover" />
                           : <img src={getAssetUrl(m.url)} alt={t('patrimoine.edit.photoN', 'Photo {{n}}', { n: i + 1 })} className="w-full h-full object-cover" loading="lazy" />}
                         {i === 0 && <span className="absolute top-1 start-1 text-[10px] px-1.5 py-0.5 rounded bg-background/90">{t('patrimoine.edit.mainPhoto', 'Principale')}</span>}
+                        {mentionCredit(m, t) && (
+                          <span className="absolute bottom-0 inset-x-0 truncate bg-black/60 text-white text-[10px] px-1.5 py-0.5" dir="auto">{mentionCredit(m, t)}</span>
+                        )}
+                        <Button type="button" size="icon" variant="secondary" className="absolute top-1 end-10 h-8 w-8"
+                          onClick={() => setCreditEdite({ media: m, valeur: { credit: m.credit || '', licence: (m.licence as LicencePhoto) || '', autorise: true } })}
+                          aria-label={t('credit.modifier', 'Photographe et droits de la photo {{n}}', { n: i + 1 })}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button type="button" size="icon" variant="destructive" className="absolute top-1 end-1 h-8 w-8"
                           onClick={() => setMediaASupprimer(m)}
                           aria-label={t('patrimoine.edit.deletePhoto', 'Supprimer la photo {{n}}', { n: i + 1 })}>
@@ -374,9 +408,11 @@ const ModifierPatrimoine: React.FC = () => {
                 ) : (
                   <p className="text-sm text-muted-foreground">{t('patrimoine.edit.noPhoto', 'Aucune photo pour l’instant.')}</p>
                 )}
+                {/* Photographe ou source, droits, et droit de publier : avant l'envoi */}
+                <CreditPhotoChamps valeur={creditNouvelles} onChange={setCreditNouvelles} id="credit-ajout" />
                 <input ref={photosRef} type="file" accept="image/*,video/mp4,video/webm" multiple className="hidden" onChange={ajouterPhotos}
                   aria-label={t('patrimoine.edit.addPhotos', 'Ajouter des photos')} />
-                <Button type="button" variant="outline" disabled={envoiPhotos} onClick={() => photosRef.current?.click()}>
+                <Button type="button" variant="outline" disabled={envoiPhotos || !creditNouvelles.autorise} onClick={() => photosRef.current?.click()}>
                   {envoiPhotos ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Upload className="h-4 w-4 me-2" />}
                   {t('patrimoine.edit.addPhotos', 'Ajouter des photos')}
                 </Button>
@@ -401,6 +437,25 @@ const ModifierPatrimoine: React.FC = () => {
           </>
         )}
       </main>
+
+      <Dialog open={!!creditEdite} onOpenChange={(o) => { if (!o) setCreditEdite(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('credit.titreDialogue', 'Photographe et droits de la photo')}</DialogTitle>
+          </DialogHeader>
+          {creditEdite && (
+            <CreditPhotoChamps valeur={creditEdite.valeur} avecAutorisation={false} id="credit-edition"
+              onChange={(valeur) => setCreditEdite(c => (c ? { ...c, valeur } : c))} />
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCreditEdite(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button type="button" onClick={enregistrerCredit} disabled={enregistrementCredit}>
+              {enregistrementCredit && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+              {t('common.save', 'Enregistrer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={mediaASupprimer !== null}

@@ -36,6 +36,16 @@ module.exports = (sequelize) => {
       allowNull: true,
       defaultValue: {},
       comment: 'Description en plusieurs langues { fr: "Vue panoramique", ar: "منظر بانورامي", en: "Panoramic view" }'
+    },
+    // Photographe ou source, affiché « © … » (migration 20261125)
+    credit: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
+    // tous_droits_reserves | cc_by | cc_by_sa | domaine_public ; null = non précisée
+    licence: {
+      type: DataTypes.STRING(30),
+      allowNull: true
     }
   }, {
     tableName: 'lieu_medias',

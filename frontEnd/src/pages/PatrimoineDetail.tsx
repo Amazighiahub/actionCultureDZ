@@ -38,6 +38,7 @@ import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/compone
 import { evenementPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
+import { mentionCredit } from '@/utils/creditPhoto';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -106,7 +107,7 @@ interface SitePatrimoineDetail {
     noteMoyenne?: number;
     nb_contributions?: number;
   };
-  medias?: Array<{ id: number; url: string; type: string; langue?: string | null; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField }>;
+  medias?: Array<{ id: number; url: string; type: string; langue?: string | null; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField; credit?: string | null; licence?: string | null }>;
   services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
   monuments?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
   vestiges?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
@@ -266,7 +267,8 @@ const PatrimoineDetail = () => {
   };
 
   // Image principale (null sans photo : bandeau compact plutôt qu'une image de remplacement)
-  const mainImage = site?.medias?.find(m => m.type === 'image' && m.url)?.url || null;
+  const mediaPrincipal = site?.medias?.find(m => m.type === 'image' && m.url) || null;
+  const mainImage = mediaPrincipal?.url || null;
   const getMainImage = (): string => mainImage || '/images/placeholder-patrimoine.svg';
 
   if (loading) {
@@ -430,6 +432,11 @@ const PatrimoineDetail = () => {
               />
               {/* Dégradé assez sombre pour que le titre reste lisible sur toute photo */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              {mediaPrincipal && mentionCredit(mediaPrincipal, t) && (
+                <span className="absolute top-2 start-2 max-w-[70%] truncate rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/90" dir="auto">
+                  {mentionCredit(mediaPrincipal, t)}
+                </span>
+              )}
             </>
           ) : (
             <Landmark className="absolute end-6 top-6 h-24 w-24 text-white/10" aria-hidden="true" />
@@ -493,7 +500,7 @@ const PatrimoineDetail = () => {
                   {visuels.map((media, idx) => (
                     <div
                       key={idx}
-                      className="aspect-video cursor-pointer overflow-hidden rounded-lg"
+                      className="relative aspect-video cursor-pointer overflow-hidden rounded-lg"
                       onClick={() => setSelectedImage(media.url)}
                       role="button"
                       tabIndex={0}
@@ -510,6 +517,9 @@ const PatrimoineDetail = () => {
                           alt={getMediaLabel(media, idx)}
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
+                      )}
+                      {mentionCredit(media, t) && (
+                        <span className="absolute bottom-0 inset-x-0 truncate bg-black/55 px-1.5 py-0.5 text-[10px] text-white" dir="auto">{mentionCredit(media, t)}</span>
                       )}
                     </div>
                   ))}
@@ -835,10 +845,13 @@ const PatrimoineDetail = () => {
                             visuels.length > 0 ? (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {visuels.map((media, idx) => (
-                                  <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
+                                  <div key={idx} className="relative aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
                                     {media.type === 'video'
                                       ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" aria-hidden="true" /></div>
                                       : <img loading="lazy" decoding="async" src={getAssetUrl(media.url, { width: 640 })} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
+                                    {mentionCredit(media, t) && (
+                                      <span className="absolute bottom-0 inset-x-0 truncate bg-black/55 px-1.5 py-0.5 text-[10px] text-white" dir="auto">{mentionCredit(media, t)}</span>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -1063,6 +1076,9 @@ const PatrimoineDetail = () => {
               alt={selectedImageAlt}
               className="w-full h-auto rounded-lg"
             />
+            {selectedMediaIndex >= 0 && mentionCredit(visuels[selectedMediaIndex], t) && (
+              <p className="px-4 pb-3 text-xs text-muted-foreground" dir="auto">{mentionCredit(visuels[selectedMediaIndex], t)}</p>
+            )}
           </DialogContent>
         </Dialog>
       )}
