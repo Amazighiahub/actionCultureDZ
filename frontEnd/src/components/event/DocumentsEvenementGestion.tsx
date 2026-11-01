@@ -108,7 +108,7 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
                   <Button asChild size="icon" variant="ghost" aria-label={t('common.download', 'Télécharger')}>
                     <a href={getAssetUrl(doc.lien)} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" aria-hidden="true" /></a>
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => retirer(doc.id_media)} aria-label={t('event.documents.retirer', 'Retirer le document')}>
+                  <Button type="button" size="icon" variant="ghost" onClick={() => retirer(doc.id_media)} aria-label={t('event.documents.retirer', 'Retirer le document')}>
                     <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </span>
@@ -129,7 +129,8 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
                 placeholder={t('event.documents.titreExemple', 'ex. Programme complet')} disabled={envoi} className="mt-1" />
             </div>
             {erreur && <p className="text-sm text-destructive" role="alert">{erreur}</p>}
-            <Button onClick={ajouter} disabled={!fichier || !titre.trim() || envoi}>
+            {/* type="button" : la section est aussi dans le formulaire de l'événement, qu'elle ne doit pas envoyer */}
+            <Button type="button" onClick={ajouter} disabled={!fichier || !titre.trim() || envoi}>
               <Upload className="h-4 w-4 me-2" aria-hidden="true" />
               {envoi ? t('event.documents.envoi', 'Envoi…') : t('event.documents.ajouter', 'Ajouter le document')}
             </Button>
