@@ -8,7 +8,7 @@ const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddle
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, importLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
@@ -101,9 +101,9 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.delete('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.removeOeuvre(req, res)));
 
   // Liste d'inscriptions (Excel d'un formulaire en ligne) : aperçu, puis import (organisateur ou admin)
-  router.post('/:id/participants/import/apercu', authenticate, validateId(), ...uploadClasseurXlsx,
+  router.post('/:id/participants/import/apercu', authenticate, requireVerifiedEmail, importLimiter, validateId(), ...uploadClasseurXlsx,
     asyncHandler((req, res) => evenementController.apercuImportInscriptions(req, res)));
-  router.post('/:id/participants/import', authenticate, requireVerifiedEmail, validateId(), ...uploadClasseurXlsx,
+  router.post('/:id/participants/import', authenticate, requireVerifiedEmail, importLimiter, validateId(), ...uploadClasseurXlsx,
     invalidateCache([req => `/evenements/${req.params.id}/participants`]),
     asyncHandler((req, res) => evenementController.importerInscriptions(req, res)));
 

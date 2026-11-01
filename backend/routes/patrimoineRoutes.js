@@ -30,6 +30,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     [body('parentId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage('Lieu invalide')],
     handleValidationErrors
   ];
+  // Propositions de modification des sites (hors équipe et créateur du site) : relecture par l'équipe
+  router.get('/admin/propositions', authenticate, requireModeration, patrimoineController.wrap('propositionsEnAttente'));
+  router.patch('/propositions/:idProposition', authenticate, requireModeration, validateId('idProposition'),
+    [body('decision').isIn(['acceptee', 'refusee']), body('motif').optional().isString().isLength({ max: 1000 })],
+    handleValidationErrors,
+    patrimoineController.wrap('deciderProposition'));
   router.post('/import-releve/apercu', authenticate, requireModeration, ...releveUpload, patrimoineController.wrap('apercuReleve'));
   router.post('/import-releve', authenticate, requireModeration, ...releveUpload, patrimoineController.wrap('importerReleve'));
 

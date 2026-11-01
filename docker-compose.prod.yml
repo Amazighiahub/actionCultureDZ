@@ -222,16 +222,19 @@ services:
       retries: 5
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD must be set in production}
+    # volatile-lru : seules les clés à durée de vie (cache, compteurs) peuvent être évincées ; la file des
+    # e-mails (Bull) n'est jamais effacée sous charge (avant : allkeys-lru 128 Mo, e-mails de vérification
+    # perdus). Pris en compte seulement quand le conteneur Redis est recréé (deploy-ci ne le recrée pas).
     command: >
       redis-server
       --appendonly yes
-      --maxmemory 128mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory 256mb
+      --maxmemory-policy volatile-lru
       --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in production}
     deploy:
       resources:
         limits:
-          memory: 192M
+          memory: 384M
         reservations:
           memory: 64M
 

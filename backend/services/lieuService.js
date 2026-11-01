@@ -290,12 +290,15 @@ class LieuService extends BaseService {
             { model: this.models.Vestige }
           ]
         },
-        { model: this.models.Service },
+        // Services validés (ou anciens services sans professionnel), comme sur la fiche patrimoine :
+        // avant, les services en attente ou refusés (téléphone, e-mail) étaient publics
+        { model: this.models.Service, where: require('../utils/servicesVisibles').whereServicesVisibles(), required: false },
         { model: this.models.LieuMedia },
         { model: this.models.QRCode },
         {
           model: this.models.Evenement,
-          where: pasTermine(new Date(), 'Evenements'),
+          // Événements publiés seulement, pas encore terminés
+          where: { [Op.and]: [pasTermine(new Date(), 'Evenements')], statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
           required: false
         }
       ]
@@ -437,7 +440,8 @@ class LieuService extends BaseService {
   async searchLieux({ lang = 'fr', q, type, commune, daira, wilaya, radius, lat, lng, page = 1, limit = 20 } = {}) {
     limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
     const offset = (page - 1) * limit;
-    const where = {};
+    // Sites publiés seulement, sans les points de visite (salles, étapes internes d'un site)
+    const where = { statut: 'publie', id_lieu_parent: null };
 
     // Recherche multilingue
     if (q) {
@@ -549,14 +553,19 @@ class LieuService extends BaseService {
    * Lieux a proximite par bounding box (lat/lng)
    */
   async getLieuxProximite({ latitude, longitude, rayon = 10, limit = 20 } = {}) {
+    // Bornés : un rayon ou une limite démesurés lisaient toute la table
+    rayon = Math.min(Math.max(parseFloat(rayon) || 10, 0.1), 100);
+    limit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
     const latDelta = rayon / 111;
     const lngDelta = rayon / (111 * Math.cos(parseFloat(latitude) * Math.PI / 180));
 
     const include = [
       {
         model: this.models.DetailLieu,
-        attributes: ['id_detail_lieu', 'type_lieu', 'description_courte'],
-        required: true
+        // Colonnes réelles (id_detail_lieu, type_lieu, description_courte n'existent pas : la requête
+        // échouait toujours) ; un site sans fiche détaillée reste proposé
+        attributes: ['id_detailLieu', 'description'],
+        required: false
       }
     ];
 
@@ -581,6 +590,9 @@ class LieuService extends BaseService {
 
     const lieux = await this.models.Lieu.findAll({
       where: {
+        // Sites publiés seulement, sans les points de visite
+        statut: 'publie',
+        id_lieu_parent: null,
         latitude: {
           [Op.between]: [parseFloat(latitude) - latDelta, parseFloat(latitude) + latDelta]
         },
@@ -590,7 +602,7 @@ class LieuService extends BaseService {
       },
       attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typeLieu'],
       include,
-      limit: parseInt(limit),
+      limit,
       subQuery: false
     });
 

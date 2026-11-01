@@ -68,8 +68,8 @@ class CronService {
     // 3. Nettoyage des vieilles notifications - Tous les dimanches à 2h
     this.scheduleJob('clean-old-notifications', '0 2 * * 0', () => this.cleanOldNotifications());
 
-    // 4. Calcul des statistiques - Tous les jours à 1h
-    this.scheduleJob('calculate-stats', '0 1 * * *', () => this.calculateDailyStats());
+    // 4. (Plus de calcul de statistiques quotidiennes : il comptait depuis minuit UTC et n'enregistrait
+    // rien, la table DailyStats n'existant pas.)
 
     // 5. Newsletter hebdomadaire - Tous les lundis à 9h
     if (process.env.ENABLE_NEWSLETTER === 'true') {
@@ -137,6 +137,8 @@ class CronService {
       }
     }, {
       scheduled: false, // Ne pas démarrer automatiquement
+      // Heures d'Algérie pour toutes les tâches (avant : UTC, sauf les rappels — une heure de décalage)
+      timezone: FUSEAU,
       ...options
     });
 
@@ -281,61 +283,6 @@ class CronService {
         if (n < 5000) break;
       }
       logger.info(`🧹 ${table} : adresse IP effacée sur ${total} ligne(s) de plus de ${mois} mois`);
-    }
-  }
-
-  /**
-   * 4. Calculer les statistiques quotidiennes
-   */
-  async calculateDailyStats() {
-    if (!this.models) return;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    try {
-      // Nouveaux utilisateurs aujourd'hui
-      const newUsers = await this.models.User.count({
-        where: {
-          date_creation: {
-            [Op.gte]: today
-          }
-        }
-      });
-
-      // Nouvelles œuvres
-      const newOeuvres = await this.models.Oeuvre?.count({
-        where: {
-          date_creation: {
-            [Op.gte]: today
-          }
-        }
-      }) || 0;
-
-      // Nouveaux événements
-      const newEvents = await this.models.Evenement?.count({
-        where: {
-          date_creation: {
-            [Op.gte]: today
-          }
-        }
-      }) || 0;
-
-      // Enregistrer les stats
-      if (this.models.DailyStats) {
-        await this.models.DailyStats.create({
-          date: today,
-          new_users: newUsers,
-          new_oeuvres: newOeuvres,
-          new_events: newEvents,
-          active_users: await this.getActiveUsersCount(today)
-        });
-      }
-
-      logger.info(`📊 Stats du jour: ${newUsers} users, ${newOeuvres} œuvres, ${newEvents} événements`);
-      
-    } catch (error) {
-      logger.error('Erreur calcul stats:', error);
     }
   }
 

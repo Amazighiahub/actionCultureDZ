@@ -250,7 +250,7 @@ const HeroSection: React.FC = () => {
               >
                 <Link to="/patrimoine">
                   {t('home.hero.explore', 'Explorer le patrimoine')}
-                  <ChevronRight aria-hidden="true" className={`h-4 w-4 sm:h-5 sm:w-5 ${isRtl ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                  <ChevronRight aria-hidden="true" className={`h-4 w-4 sm:h-5 sm:w-5 ms-2 ${isRtl ? 'rotate-180' : ''}`} />
                 </Link>
               </Button>
 

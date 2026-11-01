@@ -51,7 +51,8 @@ const moderationMethods = {
           }, req);
           break;
         case 'validate_oeuvre':
-          result = await this.validateOeuvreAction(entityId, data);
+          // Le validateur est toujours le compte connecté (jamais une valeur envoyée par le navigateur)
+          result = await this.validateOeuvreAction(entityId, { ...data, validateur_id: req.user.id_user });
           // Invalider le cache du service oeuvre pour que le listing public se rafraîchisse
           try { container.oeuvreService.cache.invalidate(); } catch (_) { /* cache optionnel */ }
           break;
@@ -71,8 +72,9 @@ const moderationMethods = {
       this.clearCache(entityType);
       res.json({ success: true, message: result.message || req.t('admin.actionSuccess', { action }), data: result.data || result });
     } catch (error) {
-      console.error('Erreur performAdminAction:', error.message);
-      res.status(500).json({ success: false, error: error.message || req.t('common.serverError') });
+      // Erreurs attendues (refus sans motif, œuvre déjà traitée…) : leur code et leur message ;
+      // les autres : erreur 500 journalisée, sans détail technique
+      this._handleError(res, error);
     }
   },
 

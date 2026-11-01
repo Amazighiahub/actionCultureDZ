@@ -125,7 +125,7 @@ describe('NotificationService — dashboard methods', () => {
 
       const result = await service.broadcastNotification({ title: 'T', message: 'M' }, 1);
 
-      expect(mockModels.User.findAll.mock.calls[0][0].attributes).toEqual(['id_user', 'email', 'notifications_email', 'notifications_evenements']);
+      expect(mockModels.User.findAll.mock.calls[0][0].attributes).toEqual(['id_user', 'email', 'email_verifie', 'notifications_email', 'notifications_evenements']);
       expect(result.notified).toBe(1);
       expect(result.skipped).toBe(0);
     });

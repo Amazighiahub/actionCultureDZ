@@ -36,34 +36,32 @@ describe('DashboardModerationService', () => {
   // validateOeuvreAction
   // =========================================================================
   describe('validateOeuvreAction', () => {
-    it('should throw if oeuvre not found', async () => {
-      mockModels.Oeuvre.findByPk.mockResolvedValue(null);
-      await expect(service.validateOeuvreAction(99, { valide: true }))
-        .rejects.toThrow('Œuvre non trouvée');
+    // Passe par oeuvreService.validate / reject (verrou, œuvre en attente, motif obligatoire)
+    const container = require('../../services/serviceContainer');
+    let validate, reject;
+    beforeEach(() => {
+      validate = jest.fn().mockResolvedValue({});
+      reject = jest.fn().mockResolvedValue({});
+      jest.spyOn(container, 'oeuvreService', 'get').mockReturnValue({ validate, reject });
+      mockModels.Oeuvre.findByPk.mockResolvedValue({ id_oeuvre: 1, titre: { fr: 'A' }, saisi_par: null });
     });
+    afterEach(() => jest.restoreAllMocks());
 
-    it('should validate (publish) oeuvre', async () => {
-      const mockOeuvre = { id_oeuvre: 1, update: jest.fn().mockResolvedValue(true) };
-      mockModels.Oeuvre.findByPk.mockResolvedValue(mockOeuvre);
-
+    it('validation : oeuvreService.validate avec le validateur', async () => {
       const result = await service.validateOeuvreAction(1, { valide: true, validateur_id: 10 });
-
-      expect(mockOeuvre.update).toHaveBeenCalledWith(expect.objectContaining({
-        statut: 'publie', validateur_id: 10, raison_rejet: null
-      }));
+      expect(validate).toHaveBeenCalledWith(1, 10);
       expect(result.message).toContain('validée');
     });
 
-    it('should reject oeuvre with reason', async () => {
-      const mockOeuvre = { id_oeuvre: 1, update: jest.fn().mockResolvedValue(true) };
-      mockModels.Oeuvre.findByPk.mockResolvedValue(mockOeuvre);
-
-      const result = await service.validateOeuvreAction(1, { valide: false, raison_rejet: 'Contenu inapproprié' });
-
-      expect(mockOeuvre.update).toHaveBeenCalledWith(expect.objectContaining({
-        statut: 'rejete', raison_rejet: 'Contenu inapproprié'
-      }));
+    it('refus : oeuvreService.reject avec le motif', async () => {
+      const result = await service.validateOeuvreAction(1, { valide: false, validateur_id: 10, raison_rejet: 'Contenu inapproprié' });
+      expect(reject).toHaveBeenCalledWith(1, 10, 'Contenu inapproprié');
       expect(result.message).toContain('rejetée');
+    });
+
+    it('erreur de oeuvreService (déjà traitée, motif manquant) : transmise telle quelle', async () => {
+      reject.mockRejectedValue(Object.assign(new Error('Un motif de refus est requis'), { statusCode: 400 }));
+      await expect(service.validateOeuvreAction(1, { valide: false, validateur_id: 10 })).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 

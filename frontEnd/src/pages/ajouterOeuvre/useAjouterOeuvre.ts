@@ -1,3 +1,4 @@
+import type { MediaEnregistre } from './MediasEnregistres';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -107,6 +108,8 @@ export function useAjouterOeuvre() {
 
   // État pour les médias
   const [medias, setMedias] = useState<MediaUpload[]>([]);
+  // Modification : médias déjà enregistrés (retirables un par un)
+  const [mediasEnregistres, setMediasEnregistres] = useState<MediaEnregistre[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
   // État pour les métadonnées
@@ -132,6 +135,44 @@ export function useAjouterOeuvre() {
 
   // Ref synchrone pour bloquer les double-envois (mobile double-tap)
   const submittingRef = useRef(false);
+
+  // Brouillon gardé quand la session expire pendant la saisie (httpClient émet « auth:expired » puis
+  // renvoie vers la connexion, qui ramène ici) : la saisie revient, sauf les fichiers joints
+  const BROUILLON_OEUVRE = 'eventculture_draft_oeuvre';
+  const saisieRef = useRef({ formData, contributeurs, editeurs, nouveauxIntervenants });
+  saisieRef.current = { formData, contributeurs, editeurs, nouveauxIntervenants };
+  useEffect(() => {
+    const garder = () => {
+      try {
+        sessionStorage.setItem(BROUILLON_OEUVRE, JSON.stringify({ savedAt: Date.now(), editId, ...saisieRef.current }));
+      } catch { /* stockage plein : rien à faire */ }
+    };
+    window.addEventListener('auth:expired', garder);
+    return () => window.removeEventListener('auth:expired', garder);
+  }, [editId]);
+
+  /** Remet le brouillon de cette œuvre (création ou modification), s'il date de moins de 30 minutes */
+  const restaurerBrouillon = useCallback(() => {
+    try {
+      const brut = sessionStorage.getItem(BROUILLON_OEUVRE);
+      if (!brut) return;
+      const brouillon = JSON.parse(brut);
+      if ((brouillon.editId ?? null) !== (editId ?? null)) return;
+      sessionStorage.removeItem(BROUILLON_OEUVRE);
+      if (!brouillon.savedAt || Date.now() - brouillon.savedAt > 30 * 60 * 1000) return;
+      if (brouillon.formData) setFormData(brouillon.formData);
+      if (Array.isArray(brouillon.contributeurs)) setContributeurs(brouillon.contributeurs);
+      if (Array.isArray(brouillon.editeurs)) setEditeurs(brouillon.editeurs);
+      if (Array.isArray(brouillon.nouveauxIntervenants)) setNouveauxIntervenants(brouillon.nouveauxIntervenants);
+      toast({
+        title: t('ajouteroeuvre.brouillonRestaure', 'Votre saisie a été restaurée'),
+        description: t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')
+      });
+    } catch { /* brouillon illisible : ignoré */ }
+  }, [editId]);
+  useEffect(() => {
+    if (!isEditMode) restaurerBrouillon();
+  }, [isEditMode, restaurerBrouillon]);
 
   // Track unsaved changes
   const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
@@ -230,6 +271,9 @@ export function useAjouterOeuvre() {
           dimensions_art: (oeuvreArtData['dimensions'] ?? oeuvre['dimensions_art']) as string | undefined,
           support: (oeuvreArtData['support'] ?? oeuvre['support']) as string | undefined,
         });
+        setMediasEnregistres(((oeuvre['Media'] ?? oeuvre['medias'] ?? []) as MediaEnregistre[]).filter(m => m?.id_media));
+        // Saisie en cours perdue par une session expirée : elle remplace les valeurs chargées
+        restaurerBrouillon();
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
@@ -323,7 +367,7 @@ export function useAjouterOeuvre() {
   // HANDLERS
   // ============================================================================
 
-  const handleInputChange = useCallback((field: keyof FormData, value: FormData[keyof FormData]) => {
+  const handleInputChange = useCallback((field: keyof FormData, value: FormData[keyof FormData] | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -740,8 +784,9 @@ export function useAjouterOeuvre() {
         errors.prix = t('oeuvre.errors.invalidPrice', 'Le prix ne peut pas être négatif');
       }
       if (formData.isbn) {
-        const isbnClean = formData.isbn.replace(/[-\s]/g, '');
-        if (!/^(\d{10}|\d{13})$/.test(isbnClean)) {
+        const isbnClean = formData.isbn.replace(/[-\s]/g, '').toUpperCase();
+        // ISBN-10 : le dernier caractère peut être X (même règle que le serveur)
+        if (!/^(\d{9}[\dX]|\d{13})$/.test(isbnClean)) {
           errors.isbn = t('oeuvre.errors.invalidIsbn', 'ISBN invalide — 10 ou 13 chiffres attendus');
         }
       }
@@ -853,7 +898,11 @@ export function useAjouterOeuvre() {
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : '';
         const errorCode = (error as { code?: string })?.code;
-        if (errorMessage && (errorMessage.includes('timeout') || errorMessage.includes('Timeout') || errorCode === 'ECONNABORTED')) {
+        const delaiDepasse = !!errorMessage && (errorMessage.includes('timeout') || errorMessage.includes('Timeout') || errorCode === 'ECONNABORTED');
+        if (delaiDepasse && isEditMode) {
+          // Modification : pas de reprise (elle renvoyait les médias en double) ; la personne vérifie
+          setSubmitError(t('ajouteroeuvre.verifyUpdate', 'Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer.'));
+        } else if (delaiDepasse) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
           const titreStr = formData.titre.fr || '';
           const checkResult = await oeuvreService.checkRecentOeuvre(titreStr);
@@ -866,7 +915,15 @@ export function useAjouterOeuvre() {
                 await mediaService.uploadOeuvreMedia(media.file, oeuvreId, { is_principal: media.isPrincipal, ordre: i });
               }
             }
-            toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.oeuvre_creee_succes') });
+            // « Publier » demandé : envoi à la validation, comme sans délai dépassé (avant : restait en brouillon)
+            if (!isDraft) {
+              try {
+                await oeuvreService.submitForValidation(checkResult.data.id_oeuvre);
+              } catch (err) {
+                console.warn('Soumission pour validation échouée:', err);
+              }
+            }
+            toast({ title: t('ajouteroeuvre.succes'), description: isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes') });
             navigate('/dashboard-pro');
           } else {
             setSubmitError(t('ajouteroeuvre.verifyError', 'Impossible de vérifier si l\'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.'));
@@ -909,5 +966,7 @@ export function useAjouterOeuvre() {
     handleSubmit,
     loadMetadata,
     getTagName: (nom: unknown) => getTagName(nom, lang),
+    mediasEnregistres,
+    retirerMediaEnregistre: (idMedia: number) => setMediasEnregistres(prev => prev.filter(m => m.id_media !== idMedia)),
   };
 }

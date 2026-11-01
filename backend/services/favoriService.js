@@ -82,7 +82,9 @@ class FavoriService extends BaseService {
    * @returns {Array<{ type_entite, id_entite, count, entite }>}
    */
   async getPopularFavorites({ type, limit = 10 }) {
-    const populaires = await this.repository.findPopular({ type, limit });
+    // Borné (1 à 50) : chaque résultat est ensuite lu en base ; ?limit=100000 lançait des milliers de requêtes
+    const borne = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
+    const populaires = await this.repository.findPopular({ type, limit: borne });
 
     const enriched = await Promise.all(
       populaires.map(item => this._getEntiteDetails(item.type_entite, item.id_entite)

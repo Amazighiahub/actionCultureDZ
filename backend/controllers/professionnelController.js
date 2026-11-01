@@ -325,6 +325,9 @@ class ProfessionnelController extends BaseController {
       if (result.error === 'notFound' || result.error === 'participantNotFound') {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
+      if (result.error === 'invitationEnAttente') {
+        return res.status(409).json({ success: false, error: "Cette personne n'a pas encore confirmé son inscription", code: 'INVITATION_EN_ATTENTE' });
+      }
 
       res.json({
         success: true,

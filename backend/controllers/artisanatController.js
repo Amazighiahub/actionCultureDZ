@@ -137,7 +137,7 @@ class ArtisanatController extends BaseController {
       const artisanat = await this.artisanatService.verifierProprietaire(
         parseInt(req.params.id), req.user.id_user, req.user.isAdmin
       );
-      const medias = await container.oeuvreService.enregistrerMedias(artisanat.id_oeuvre, req.files);
+      const medias = await container.oeuvreService.enregistrerMedias(artisanat.id_oeuvre, req.files, req.user.id_user);
 
       res.status(201).json({ success: true, data: medias });
     } catch (error) {

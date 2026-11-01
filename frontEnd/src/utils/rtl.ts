@@ -26,17 +26,14 @@ export const getDirection = (language: string): 'rtl' | 'ltr' => {
 
 // Classes Tailwind pour RTL
 export const rtlClasses = {
-  // Marges
-  marginStart: (value: string | number, isRtl: boolean) =>
-    isRtl ? `mr-${value}` : `ml-${value}`,
-  marginEnd: (value: string | number, isRtl: boolean) =>
-    isRtl ? `ml-${value}` : `mr-${value}`,
+  // Marges et paddings : classes logiques, justes dans les deux sens (index.css retourne déjà
+  // mr-/ml-/pr-/pl- en arabe : choisir la classe selon la langue les inversait deux fois)
+  marginStart: (value: string | number, _isRtl?: boolean) => `ms-${value}`,
+  marginEnd: (value: string | number, _isRtl?: boolean) => `me-${value}`,
 
   // Paddings
-  paddingStart: (value: string | number, isRtl: boolean) =>
-    isRtl ? `pr-${value}` : `pl-${value}`,
-  paddingEnd: (value: string | number, isRtl: boolean) =>
-    isRtl ? `pl-${value}` : `pr-${value}`,
+  paddingStart: (value: string | number, _isRtl?: boolean) => `ps-${value}`,
+  paddingEnd: (value: string | number, _isRtl?: boolean) => `pe-${value}`,
 
   // Positions
   start: (value: string | number, isRtl: boolean) =>
@@ -45,10 +42,8 @@ export const rtlClasses = {
     isRtl ? `left-${value}` : `right-${value}`,
 
   // Text alignment
-  textStart: (isRtl: boolean) =>
-    isRtl ? 'text-right' : 'text-left',
-  textEnd: (isRtl: boolean) =>
-    isRtl ? 'text-left' : 'text-right',
+  textStart: (_isRtl?: boolean) => 'text-start',
+  textEnd: (_isRtl?: boolean) => 'text-end',
 
   // Flex direction
   flexRowReverse: (isRtl: boolean) =>

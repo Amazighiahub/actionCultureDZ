@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { estProposition, toastProposition } from '@/utils/propositionPatrimoine';
 import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { cn } from '@/lib/Utils';
@@ -205,7 +206,11 @@ export default function SectionElements({
         `/patrimoine/${lieuId}/${cfg.endpoint}`,
         addForm.payload()
       );
-      if (res.success && res.data) {
+      if (res.success && estProposition(res)) {
+        toast(toastProposition(t));
+        setAddOpen(false);
+        addForm.reset();
+      } else if (res.success && res.data) {
         onItemAdded(res.data);
         toast({ title: lib.added });
         setAddOpen(false);
@@ -232,7 +237,10 @@ export default function SectionElements({
         `/patrimoine/${lieuId}/${cfg.endpoint}/${editItem.id}`,
         editForm.payload()
       );
-      if (res.success && res.data) {
+      if (res.success && estProposition(res)) {
+        toast(toastProposition(t));
+        setEditItem(null);
+      } else if (res.success && res.data) {
         onItemUpdated?.(res.data);
         toast({ title: t('patrimoine.elements.modifie', 'Modification enregistrée') });
         setEditItem(null);

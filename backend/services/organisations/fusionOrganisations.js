@@ -144,7 +144,22 @@ async function fusionner(models, idGarde, idsDoublons) {
       await autre.destroy({ transaction });
     }
 
-    return { garde, fusionnees: doublons, responsables: [...new Set(responsablesAvant)] };
+    // Page gardée déjà gérée : les demandes « C'est mon organisation » encore en attente n'ont plus d'objet
+    // (avant : elles restaient bloquées, l'acceptation répondant toujours « a déjà un responsable »)
+    let demandesRefusees = [];
+    const geree = await models.UserOrganisation.findOne({
+      where: { id_organisation: idGarde, actif: true, role: ['responsable', 'directeur'] }, transaction
+    });
+    if (geree) {
+      demandesRefusees = (await sequelize.query(
+        "SELECT DISTINCT id_user FROM organisation_revendication WHERE id_organisation = :garde AND statut = 'en_attente'",
+        { replacements: { garde: idGarde }, type: sequelize.QueryTypes.SELECT, transaction })).map(r => r.id_user);
+      await sequelize.query(`UPDATE organisation_revendication SET statut = 'refusee', date_decision = NOW(),
+          motif = 'Cette organisation a déjà un responsable : demandez-lui de vous ajouter comme membre'
+        WHERE id_organisation = :garde AND statut = 'en_attente'`, { replacements: { garde: idGarde }, transaction });
+    }
+
+    return { garde, fusionnees: doublons, responsables: [...new Set(responsablesAvant)], demandesRefusees };
   });
 }
 

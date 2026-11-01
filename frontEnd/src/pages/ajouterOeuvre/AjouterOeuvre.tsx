@@ -1,3 +1,4 @@
+import MediasEnregistres from './MediasEnregistres';
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -65,6 +66,7 @@ const AjouterOeuvre: React.FC = () => {
     loadMetadata,
     getTagName,
     isEditMode,
+    editId, mediasEnregistres, retirerMediaEnregistre,
   } = hook;
 
   // ============================================================================
@@ -484,6 +486,9 @@ const AjouterOeuvre: React.FC = () => {
                         <p className="text-sm text-muted-foreground mt-2">{t("ajouteroeuvre.premire_image_ajoute")}</p>
                       </CardHeader>
                       <CardContent className="space-y-6">
+                        {isEditMode && editId &&
+                          <MediasEnregistres oeuvreId={editId} medias={mediasEnregistres} onRetire={retirerMediaEnregistre} />
+                        }
                         {medias.length > 0 &&
                         <div className="space-y-4">
                             <h4 className="font-medium text-lg">{t("ajouteroeuvre.mdias_ajouts")}</h4>

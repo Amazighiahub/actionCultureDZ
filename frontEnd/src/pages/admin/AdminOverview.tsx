@@ -2,7 +2,8 @@
  * AdminOverview - Vue d'ensemble du dashboard administrateur
  * Utilise useDashboardAdmin (le hook existant qui fonctionne)
  */
-import React from 'react';
+import React, { useState } from 'react';
+import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -117,6 +118,8 @@ const AdminOverview: React.FC = () => {
     validateOeuvre,
     refreshAll
   } = useDashboardAdmin('overview');
+  // Œuvre dont on saisit le motif de refus
+  const [aRefuser, setARefuser] = useState<number | null>(null);
 
   // Afficher le skeleton pendant le chargement
   if (loadingOverview) {
@@ -293,7 +296,7 @@ const AdminOverview: React.FC = () => {
                     date={formatDate(oeuvre.date_creation || oeuvre.created_at)}
                     imageUrl={getAssetUrl(oeuvre.medias?.[0]?.url)}
                     onApprove={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
-                    onReject={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}
+                    onReject={() => setARefuser(oeuvre.id_oeuvre)}
                   />
                 ))}
                 {pendingOeuvres.items.length > 5 && (
@@ -384,6 +387,16 @@ const AdminOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      <MotifRefusDialog
+        open={aRefuser !== null}
+        titre={t('admin.refus.oeuvre', 'Refuser l’œuvre')}
+        onClose={() => setARefuser(null)}
+        onConfirm={async (motif) => {
+          if (aRefuser === null) return;
+          await validateOeuvre({ oeuvreId: aRefuser, validated: false, motif });
+          setARefuser(null);
+        }}
+      />
     </div>
   );
 };

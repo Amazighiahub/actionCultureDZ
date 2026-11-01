@@ -137,6 +137,22 @@ const actionsLimiter = rateLimit(withStore('actions', {
   },
 }));
 
+// 2 ter. Import d'une liste d'inscriptions (classeur de 500 lignes au plus) : 20 aperçus ou imports par
+// heure et par organisateur (audit V7 E2 : aperçus en boucle sur des milliers d'adresses)
+const importLimiter = rateLimit(withStore('import', {
+  windowMs: 60 * 60 * 1000,
+  max: IS_PRODUCTION ? 20 : 200,
+  keyGenerator: parPersonne,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+    });
+  },
+}));
+
 // 3. Rate limiter pour la création de contenu (POST/PUT/PATCH/DELETE uniquement)
 const createContentLimiter = rateLimit(withStore('create', {
   windowMs: 60 * 60 * 1000, // 1 heure
@@ -193,17 +209,14 @@ const publicUploadLimiter = rateLimit(withStore('upload-public', {
 }));
 
 // 4. Rate limiter pour les vues/statistiques
+// 30 vues par 5 minutes, par adresse et par contenu. Au-delà, la vue n'est simplement pas comptée
+// (réponse 200 sans message : un 429 afficherait « trop de requêtes » à un vrai visiteur derrière une
+// adresse mobile partagée). Avant : défini mais branché nulle part, les vues pouvaient être gonflées.
 const viewLimiter = rateLimit(withStore('views', {
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 30, // 30 vues par 5 minutes
-  keyGenerator: (req) => {
-    // Clé unique par IP + ID de l'œuvre
-    return `${req.ip}:${req.params.id}`;
-  },
-  skip: (req) => {
-    // Skip pour les utilisateurs authentifiés premium
-    return req.user?.isPremium === true;
-  }
+  keyGenerator: (req) => `${req.ip}:${req.params.type || req.body?.type_entite}:${req.params.id || req.body?.id_entite}`,
+  handler: (req, res) => res.json({ success: true, data: { compte: false } })
 }));
 
 // 5. Rate limiter dynamique basé sur le rôle
@@ -510,6 +523,7 @@ module.exports = {
   globalLimiter,
   strictLimiter,
   actionsLimiter,
+  importLimiter,
   createContentLimiter,
   commentLimiter,
   uploadLimiter,

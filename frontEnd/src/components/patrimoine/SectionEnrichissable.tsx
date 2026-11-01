@@ -17,6 +17,7 @@ import { Loader2, Plus, Pencil, FileText, ChevronRight } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { estProposition, toastProposition } from '@/utils/propositionPatrimoine';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
@@ -120,7 +121,11 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
         [fieldName]: editValue
       });
 
-      if ((response as any).success) {
+      if ((response as any).success && estProposition(response)) {
+        // Proposition à relire : la fiche garde son texte actuel
+        toast(toastProposition(t));
+        setIsEditing(false);
+      } else if ((response as any).success) {
         toast({ title: t('patrimoine.contribute.saved', 'Contribution enregistrée !'), description: t('patrimoine.contribute.thanks', 'Merci pour votre contribution') });
         setIsEditing(false);
         onSaved?.(editValue);
@@ -164,7 +169,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {texte && <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
+          {texte && <p dir="auto" className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{texte}</p>}
           <BlocsArticle blocs={blocs} />
           <PagesDetaillees pages={pages} retirer={(pg) => retirerPagePatrimoine(lieuId, pg.id_lien)} onChange={onPagesChange} />
           {/* Gastronomie : vers les plats de toute l'Algérie (sous-page de l'Artisanat) */}

@@ -2,6 +2,7 @@
  * ViewProgrammePage - Page pour consulter un programme d'événement
  * Affiche les détails d'un programme en mode lecture seule
  */
+import { rafraichirEvenement, rafraichirTableauDeBord } from '@/lib/queryClient';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,6 +115,9 @@ const ViewProgrammePage: React.FC = () => {
         const response = await programmeService.delete(parseInt(programmeId));
         
         if (response.success) {
+          // Fiche de l'événement et tableau de bord relus (sinon l'activité supprimée restait affichée)
+          if (eventId) rafraichirEvenement(eventId);
+          rafraichirTableauDeBord();
           navigate(`/evenements/${eventId}`);
         } else {
           setError(response.error || t('programmePages.errors.deleteFailed'));
@@ -132,6 +136,8 @@ const ViewProgrammePage: React.FC = () => {
     try {
       const response = await programmeService.duplicate(parseInt(programmeId));
       if (response.success && response.data) {
+        if (eventId) rafraichirEvenement(eventId);
+        rafraichirTableauDeBord();
         navigate(`/programme/${eventId}/${response.data.id_programme}`);
       } else {
         setError(response.error || t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication'));

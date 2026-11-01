@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -128,8 +128,8 @@ const AjouterEvenement = () => {
       const saved = sessionStorage.getItem(DRAFT_KEY);
       if (saved) {
         const draft = JSON.parse(saved);
-        // Expirer les brouillons de plus de 5 minutes (réduction fenêtre d'exposition)
-        if (draft.savedAt && Date.now() - draft.savedAt > 5 * 60 * 1000) {
+        // Expirer les brouillons de plus de 30 minutes (le temps de se reconnecter après une session expirée)
+        if (draft.savedAt && Date.now() - draft.savedAt > 30 * 60 * 1000) {
           sessionStorage.removeItem(DRAFT_KEY);
           return;
         }
@@ -144,6 +144,19 @@ const AjouterEvenement = () => {
         toast({ title: t('events.create.draftRestored', 'Brouillon restauré'), description: t('events.create.draftRestoredDesc', 'Vos données précédentes ont été restaurées.') });
       }
     } catch { /* ignore parsing errors */ }
+  }, [isEditMode]);
+
+  // Session expirée pendant la saisie (httpClient émet « auth:expired », puis la connexion ramène ici) :
+  // même brouillon que pour la création d'une organisation
+  const brouillonRef = useRef({ formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual });
+  brouillonRef.current = { formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual };
+  useEffect(() => {
+    if (isEditMode) return;
+    const garder = () => {
+      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), ...brouillonRef.current })); } catch { /* stockage plein */ }
+    };
+    window.addEventListener('auth:expired', garder);
+    return () => window.removeEventListener('auth:expired', garder);
   }, [isEditMode]);
 
   const saveDraftAndNavigate = (path: string) => {

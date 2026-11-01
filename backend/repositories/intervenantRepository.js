@@ -44,8 +44,11 @@ class IntervenantRepository extends BaseRepository {
     let orderClause;
     if (['nom', 'prenom', 'biographie'].includes(order)) {
       orderClause = [buildMultiLangOrder(this.sequelize, order, lang, safeDirection, 'Intervenant')];
-    } else {
+    } else if (order && (!this.model.rawAttributes || this.model.rawAttributes[order])) {
       orderClause = [[order, safeDirection]];
+    } else {
+      // Colonne inconnue (avant : erreur 500) : tri par nom
+      orderClause = [buildMultiLangOrder(this.sequelize, 'nom', lang, safeDirection, 'Intervenant')];
     }
 
     const include = [];

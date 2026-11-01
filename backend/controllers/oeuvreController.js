@@ -571,7 +571,8 @@ class OeuvreController extends BaseController {
       await this.oeuvreService.reorderMedias(
         parseInt(req.params.id),
         orderedIds,
-        req.user.id_user
+        req.user.id_user,
+        !!req.user.isAdmin
       );
       res.json({ success: true, message: req.t('media.reordered') });
     } catch (error) {
@@ -588,46 +589,10 @@ class OeuvreController extends BaseController {
       await this.oeuvreService.deleteMedia(
         parseInt(req.params.id),
         parseInt(req.params.mediaId),
-        req.user.id_user
+        req.user.id_user,
+        !!req.user.isAdmin
       );
       res.json({ success: true, message: req.t('media.deleted') });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  /**
-   * GET /api/oeuvres/admin/rejected
-   * Œuvres rejetées (admin)
-   */
-  async getRejected(req, res) {
-    try {
-      const { page, limit } = this._paginate(req);
-      const result = await this.oeuvreService.findRejected({ page, limit });
-      res.json({
-        success: true,
-        data: this._translateOeuvres(result.data, req.lang, 'admin'),
-        pagination: result.pagination
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  /**
-   * GET /api/oeuvres/search/intervenants
-   * Recherche d'intervenants
-   */
-  async searchIntervenants(req, res) {
-    try {
-      const { q } = req.query;
-      const { page, limit } = this._paginate(req);
-      const result = await this.oeuvreService.searchIntervenants(q, { page, limit });
-      res.json({
-        success: true,
-        data: result.data,
-        pagination: result.pagination
-      });
     } catch (error) {
       this._handleError(res, error);
     }

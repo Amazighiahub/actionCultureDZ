@@ -4,6 +4,7 @@
  */
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
+const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const crypto = require('crypto');
 
 // Compte réservé « Utilisateur supprimé » (voir _getDeletedUserSentinel)
@@ -281,9 +282,10 @@ class UserRepository extends BaseRepository {
   async searchUsers(query, options = {}, { includePrivate = false } = {}) {
     // Échapper les wildcards LIKE pour éviter la manipulation de résultats
     const escaped = query.replace(/[%_\\]/g, '\\$&');
+    // Nom et prénom (texte par langue) : sans majuscules ni accents (avant : « karim » ne trouvait pas « Karim »)
     const criteria = [
-      { nom: { [Op.like]: `%${escaped}%` } },
-      { prenom: { [Op.like]: `%${escaped}%` } },
+      ...buildMultiLangSearch(this.model.sequelize, 'nom', escaped, 'User'),
+      ...buildMultiLangSearch(this.model.sequelize, 'prenom', escaped, 'User'),
       { entreprise: { [Op.like]: `%${escaped}%` } }
     ];
     // Recherche par email et comptes non actifs : réservés à l'administration
@@ -650,7 +652,14 @@ class UserRepository extends BaseRepository {
       await detach(m.IntervenantArticle, 'id_contributeur');
       await detach(m.ArticleRevision, 'id_auteur');
       await detach(m.ArticleRevision, 'id_decideur');
-      await detach(m.Service, 'id_user');
+      // Services de la personne : coordonnées effacées et service retiré du public, puis rattaché au compte
+      // « Utilisateur supprimé » (détaché, un service sans compte reste affiché comme un ancien service ;
+      // téléphone et e-mail restaient en ligne malgré l'effacement demandé)
+      if (m.Service) {
+        await m.Service.update({ telephone: null, email: null, site_web: null, statut: 'rejete' },
+          { where: { id_user: userId }, ...tx, ...UPDATE });
+      }
+      await reassign(m.Service, 'id_user');
       await detach(m.Vue, 'id_user');
       await detach(m.QRScan, 'id_user');
       await detach(m.UserOrganisation, 'id_superviseur');

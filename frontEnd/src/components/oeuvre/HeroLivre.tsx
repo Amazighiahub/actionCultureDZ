@@ -236,7 +236,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                 )}
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-bold font-serif mb-4">{titre}</h1>
+              <h1 dir="auto" className="text-4xl lg:text-5xl font-bold font-serif mb-4">{titre}</h1>
 
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
@@ -271,7 +271,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                 </DialogHeader>
                 <div className="mt-4">
                   {oeuvre.description ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap">{description}</div>
+                    <div dir="auto" className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap">{description}</div>
                   ) : (
                     <p className="text-muted-foreground text-center py-8">{t('works.excerpt.noContent', "Aucun contenu disponible pour cet ouvrage.")}</p>
                   )}

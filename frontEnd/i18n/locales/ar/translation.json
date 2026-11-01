@@ -1326,6 +1326,19 @@
           "size": "حجم الملف يتجاوز 5 ميغابايت.",
           "read": "ملف غير قابل للقراءة."
         }
+      },
+      "propositions": {
+        "titre": "اقتراحات للمراجعة ({{count}})",
+        "detail": "نصوص الموقع",
+        "personnalite": "شخصية للربط",
+        "ajout": "{{genre}} جديد",
+        "modif": "تعديل {{genre}}",
+        "monument": "معلم",
+        "vestige": "أثر",
+        "acceptee": "تم نشر الاقتراح وإبلاغ صاحبه",
+        "refusee": "تم رفض الاقتراح وإبلاغ صاحبه",
+        "accepter": "نشر",
+        "refuserTitre": "رفض الاقتراح"
       }
     },
     "overview": {
@@ -1553,6 +1566,11 @@
         "refuserTitre": "رفض الطلب",
         "refuserAide": "يُرسل السبب إلى صاحب الطلب."
       }
+    },
+    "refus": {
+      "titre": "رفض",
+      "aide": "اشرح ما يجب تصحيحه: يُرسل السبب إلى صاحب العمل.",
+      "oeuvre": "رفض العمل"
     }
   },
   "works": {
@@ -1923,7 +1941,8 @@
       "valide": "منشور",
       "rejete": "مرفوض"
     },
-    "resubmitOeuvre": "إعادة الإرسال بعد التصحيح"
+    "resubmitOeuvre": "إعادة الإرسال بعد التصحيح",
+    "motifRefus": "سبب الرفض"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",
@@ -2526,7 +2545,15 @@
     "mediasFailedTitle": "لم يتم إرسال الوسائط",
     "mediasFailed": "تعذّر إرسال {{count}} ملف(ات). أضفها من لوحة التحكم.",
     "editTitle": "تعديل العمل",
-    "editSubtitle": "صحّح عملك أو أكمله، ثم احفظ."
+    "editSubtitle": "صحّح عملك أو أكمله، ثم احفظ.",
+    "mediasEnregistres": "الوسائط المسجلة",
+    "retirerMedia": "إزالة",
+    "retirerMediaTitre": "إزالة هذه الوسائط؟",
+    "retirerMediaAide": "ستختفي من بطاقة العمل. هذا الإجراء نهائي.",
+    "mediaRetire": "تمت إزالة الوسائط",
+    "brouillonRestaure": "تمت استعادة ما أدخلته",
+    "brouillonFichiers": "انتهت جلستك. أضف الملفات (الصور، الأصوات) من جديد قبل الإرسال.",
+    "verifyUpdate": "تأخر الخادم في الرد: ربما تم حفظ التعديل. افتح لوحة التحكم للتحقق قبل إعادة المحاولة."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",
@@ -3314,7 +3341,11 @@
         "invalid": "إجابة غير صالحة",
         "between": "بين {{min}} و{{max}}",
         "incomplete": "بعض الإجابات ناقصة أو غير صالحة."
-      }
+      },
+      "invitationTitle": "أكّد تسجيلك",
+      "invitationDesc": "أرسل المنظم طلب تسجيلك. لن تكون مسجّلًا إلا إذا أكدته.",
+      "invitationAccept": "تأكيد تسجيلي",
+      "invitationDecline": "رفض"
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -3592,21 +3623,17 @@
       "import": {
         "bouton": "استيراد قائمة (Excel)",
         "titre": "استيراد قائمة تسجيلات",
-        "description": "ملف Excel لاستمارتك على الإنترنت: سطر لكل شخص، وعناوين الأعمدة في السطر الأول. يُسجَّل الأشخاص «في الانتظار» ثم تؤكّد أنت.",
         "fichier": "ملف Excel (.xlsx)",
         "aide": "لا يُحفظ شيء في هذه المرحلة: سترى القائمة أولًا.",
         "voir": "عرض القائمة",
         "resume": "{{n}} شخص محدَّد من {{total}}.",
         "colonnesIgnorees": "أعمدة غير مأخوذة:",
-        "creer": "حساب جديد",
-        "inscrire": "حساب موجود",
         "dejaInscrit": "مسجّل من قبل",
         "doublon": "بريد مكرّر",
         "invalide": "بريد غير صالح",
-        "inviter": "إرسال بريد لكل حساب جديد لاختيار كلمة المرور (رابط صالح 7 أيام)",
+        "inviter": "للدعوة",
         "confirmer": "تسجيل {{n}} شخص",
         "termine": "انتهى الاستيراد",
-        "bilanInscrits": "{{n}} شخص مسجّل «في الانتظار»",
         "bilanComptes": "{{n}} حساب أُنشئ",
         "bilanInvitations": "{{n}} دعوة أُرسلت",
         "erreurLecture": "تعذّرت قراءة الملف.",
@@ -3615,7 +3642,9 @@
         "metier": "المهنة: {{metier}}",
         "profilDe": "صفة {{nom}}",
         "choisir": "اختيار…",
-        "profilsManquants": "اختاروا صفة {{n}} شخص(أشخاص) محدَّدين قبل التسجيل."
+        "profilsManquants": "اختاروا صفة {{n}} شخص(أشخاص) محدَّدين قبل التسجيل.",
+        "descriptionInvitation": "ملف Excel الخاص باستمارتك على الإنترنت: سطر لكل شخص، وعناوين الأعمدة في السطر الأول. يتلقى كل شخص دعوة ويؤكد تسجيله بنفسه، ثم تصادق أنت عليه.",
+        "bilanInvites": "{{n}} شخص(أشخاص) تمت دعوتهم، في انتظار تأكيدهم"
       },
       "messages": {
         "bouton": "مراسلة المشاركين",
@@ -3767,7 +3796,8 @@
     "present": "حاضر",
     "absent": "غائب",
     "pendingValidation": "في انتظار المصادقة",
-    "banned": "محظور"
+    "banned": "محظور",
+    "invitation": "تم إرسال الدعوة"
   },
   "patrimoine": {
     "historique": {
@@ -4131,6 +4161,10 @@
     },
     "personnalites": {
       "liees": "شخصيات مرتبطة بهذا الموقع"
+    },
+    "proposition": {
+      "envoyee": "تم إرسال الاقتراح",
+      "relecture": "شكرًا! سيُنشر بعد مراجعته من طرف الفريق."
     }
   },
   "toasts": {

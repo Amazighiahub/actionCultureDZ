@@ -484,7 +484,6 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Admin
     validate: (id: number) => `/oeuvres/${id}/validate`,
     pending: '/oeuvres/admin/pending',
-    rejected: '/oeuvres/admin/rejected',
   },
 
   // ================================================

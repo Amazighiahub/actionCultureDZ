@@ -149,6 +149,8 @@ module.exports = (models, middlewares = {}) => {
       body('contenu').optional()
         .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
         .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+      // Note de 1 à 5 (avant : 7 donnait une erreur 500, null effaçait la note)
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être comprise entre 1 et 5'),
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -183,7 +185,7 @@ module.exports = (models, middlewares = {}) => {
 
   /**
    * DELETE /commentaires/:id
-   * Supprimer un commentaire (propriétaire uniquement)
+   * Supprimer un commentaire (son auteur, ou l'administration et la modération)
    */
   router.delete('/:id', authMiddleware, validateId(), async (req, res) => {
     try {
@@ -196,7 +198,7 @@ module.exports = (models, middlewares = {}) => {
         });
       }
       
-      if (commentaire.id_user !== req.user.id_user && !req.user.isAdmin) {
+      if (commentaire.id_user !== req.user.id_user && !req.user.isAdmin && !req.user.isModerateur) {
         return res.status(403).json({
           success: false,
           error: req.t ? req.t('auth.forbidden') : 'Forbidden'

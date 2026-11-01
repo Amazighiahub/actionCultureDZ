@@ -38,7 +38,8 @@ module.exports = (sequelize) => {
       defaultValue: DataTypes.NOW
     },
     statut_participation: {
-      type: DataTypes.ENUM('inscrit', 'confirme', 'present', 'absent', 'annule'),
+      // invitation : ajouté par l'import d'une liste, en attente de la confirmation de la personne
+      type: DataTypes.ENUM('invitation', 'inscrit', 'confirme', 'present', 'absent', 'annule'),
       defaultValue: 'inscrit'
     },
     notes: {

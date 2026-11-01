@@ -6,10 +6,11 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
-const { mergeTranslations, texteLisible } = require('../helpers/i18n');
+const { texteLisible } = require('../helpers/i18n');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const historique = require('../services/patrimoine/historiqueLieu');
 const elements = require('../services/patrimoine/elementsLieu');
+const propositions = require('../services/patrimoine/propositionsLieu');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
@@ -212,6 +213,35 @@ class PatrimoineController extends BaseController {
     return this.patrimoineService.models;
   }
 
+  /**
+   * Hors équipe et créateur du site, la modification devient une proposition à relire (202) ;
+   * true si c'est le cas (la réponse est envoyée).
+   */
+  async _proposer(req, res, action, extra = {}) {
+    const idLieu = parseInt(req.params.id, 10);
+    if (!(await propositions.doitProposer(this._models, req.user, idLieu))) return false;
+    await propositions.proposer(this._models, container.notificationService, {
+      idLieu, user: req.user, action, donnees: { ...extra, corps: req.body }
+    });
+    res.status(202).json({
+      success: true, proposition: true,
+      message: 'Merci ! Votre proposition sera publiée après relecture par l’équipe.'
+    });
+    return true;
+  }
+
+  /** Propositions en attente (modération) */
+  async propositionsEnAttente(req, res) {
+    res.json({ success: true, data: await propositions.enAttente(this._models) });
+  }
+
+  /** Accepter ou refuser une proposition (modération) */
+  async deciderProposition(req, res) {
+    const data = await propositions.decider(this._models, container.notificationService,
+      parseInt(req.params.idProposition, 10), req.body.decision, req.body.motif, req.user.id_user);
+    res.json({ success: true, data });
+  }
+
   /** Personnalités liées au site */
   async personnalites(req, res) {
     res.json({ success: true, data: await elements.personnalites(this._models, parseInt(req.params.id, 10)) });
@@ -219,6 +249,7 @@ class PatrimoineController extends BaseController {
 
   /** Rattacher une personnalité existante au site */
   async rattacherPersonnalite(req, res) {
+    if (await this._proposer(req, res, 'personnalite')) return;
     const lien = await elements.rattacherPersonnalite(this._models, parseInt(req.params.id, 10), req.body, req.user?.id_user);
     await this._signalerContribution(req, 'a rattaché une personnalité à');
     res.status(201).json({ success: true, data: lien });
@@ -227,6 +258,7 @@ class PatrimoineController extends BaseController {
   // Monuments et vestiges (req.genreElement posé par la route)
   async ajouterElement(req, res) {
     const genre = req.genreElement;
+    if (await this._proposer(req, res, 'element_ajout', { genre })) return;
     const element = await elements.ajouterElement(this._models, genre, parseInt(req.params.id, 10), req.body, req.user?.id_user);
     await this._signalerContribution(req, `a ajouté le ${genre} « ${texteLisible(element.nom)} » à`);
     res.status(201).json({ success: true, data: element });
@@ -234,6 +266,7 @@ class PatrimoineController extends BaseController {
 
   async modifierElement(req, res) {
     const genre = req.genreElement;
+    if (await this._proposer(req, res, 'element_modif', { genre, idElement: parseInt(req.params.idElement, 10) })) return;
     const element = await elements.modifierElement(this._models, genre, parseInt(req.params.id, 10),
       parseInt(req.params.idElement, 10), req.body);
     await this._signalerContribution(req, `a modifié le ${genre} « ${texteLisible(element.nom)} » de`);
@@ -442,41 +475,15 @@ class PatrimoineController extends BaseController {
   async enrichDetail(req, res) {
     try {
       const lieuId = parseInt(req.params.id);
-      const userId = req.user?.id_user;
-      const allowedFields = ['histoire', 'gastronomie', 'traditions', 'artisanat_local', 'personnalites', 'architecture', 'infos_pratiques', 'referencesHistoriques', 'description', 'horaires'];
-
-      // Trouver ou créer le DetailLieu
-      const models = container.patrimoineService.models;
-      let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
-
-      // Filtrer seulement les champs autorisés ; les langues sont fusionnées : une contribution
-      // dans une langue ne doit pas effacer les autres traductions de la section
-      const updates = {};
-      for (const field of allowedFields) {
-        if (req.body[field] !== undefined) {
-          updates[field] = mergeTranslations(detail?.[field], req.body[field]);
-        }
-      }
-
-      if (Object.keys(updates).length === 0) {
+      if (!elements.CHAMPS_DETAIL.some(champ => req.body[champ] !== undefined)) {
         return res.status(400).json({ success: false, error: 'Aucun champ valide à mettre à jour' });
       }
+      const corps = Object.fromEntries(elements.CHAMPS_DETAIL.filter(c => req.body[c] !== undefined).map(c => [c, req.body[c]]));
+      req.body = corps;
+      if (await this._proposer(req, res, 'detail')) return;
 
-      // Anciens textes gardés dans l'historique (l'administration peut revenir en arrière)
-      const avant = Object.fromEntries(Object.keys(updates).map(champ => [champ, detail?.[champ] ?? null]));
-      let champs = [];
-      await models.sequelize.transaction(async (transaction) => {
-        if (!detail) {
-          detail = await models.DetailLieu.create({ id_lieu: lieuId, ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: 1 }, { transaction });
-        } else {
-          await detail.update({ ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: (detail.nb_contributions || 0) + 1 }, { transaction });
-        }
-        champs = await historique.enregistrerModifications(models, { idLieu: lieuId, idUser: userId, avant, apres: updates, transaction });
-      });
-
-      // Le créateur du lieu et l'administration sont prévenus : qui, quelle section
-      await historique.notifierTextes(models, container.notificationService, { idLieu: lieuId, idUser: userId, champs });
-
+      // Équipe ou créateur du site : modification directe (historique, notifications)
+      const detail = await elements.enrichirDetail(this._models, container.notificationService, lieuId, req.user?.id_user, corps);
       res.json({ success: true, data: detail, message: 'Contribution enregistrée' });
     } catch (error) {
       this._handleError(res, error);

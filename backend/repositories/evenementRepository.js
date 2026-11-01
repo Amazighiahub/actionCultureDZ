@@ -10,8 +10,8 @@ const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../cons
 // Programme vu publiquement : tout sauf les notes internes de l'organisateur
 const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
 const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
-const { attributsComptes, STATUTS_PLACE_PRISE } = require('../utils/comptesEvenement');
-const { pasTermine, termine } = require('../helpers/finEvenement');
+const { attributsComptes, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
+const { pasTermine, termine, finSql } = require('../helpers/finEvenement');
 
 class EvenementRepository extends BaseRepository {
   constructor(models) {
@@ -166,9 +166,18 @@ class EvenementRepository extends BaseRepository {
     const p = parseInt(page);
     const l = parseInt(limit);
     const extra = await this._buildPublicFilters(filters);
-    // « Terminé » demandé explicitement : les événements terminés font partie des résultats
-    const visibleStatuts = filters.statut === 'termine' ? ['publie', 'planifie', 'en_cours', 'termine'] : ['publie', 'planifie', 'en_cours'];
+    // Les événements terminés restent visibles (« Tous » et « Terminés ») : ils ne sont jamais archivés
+    // automatiquement ; seule l'administration retire un événement (annulation ou suppression).
+    // Avant, « Tous » les cachait : un salon passé disparaissait de la liste dès le lendemain.
+    const visibleStatuts = ['publie', 'planifie', 'en_cours', 'termine'];
     const where = { ...options.where, statut: { [Op.in]: visibleStatuts }, ...(extra.length ? { [Op.and]: extra } : {}) };
+    // À venir et en cours d'abord (date croissante), puis les terminés (le plus récent d'abord)
+    const alias = this.model.name;
+    const passe = `(\`${alias}\`.\`statut\` = 'termine' OR ${finSql(alias)} <= NOW())`;
+    const ordre = [
+      [literal(passe), 'ASC'],
+      [literal(`CASE WHEN ${passe} THEN -UNIX_TIMESTAMP(\`${alias}\`.\`date_debut\`) ELSE UNIX_TIMESTAMP(\`${alias}\`.\`date_debut\`) END`), 'ASC']
+    ];
 
     const [total, rows] = await Promise.all([
       this.model.count({ where }),
@@ -176,7 +185,7 @@ class EvenementRepository extends BaseRepository {
         where,
         attributes: { include: attributsComptes() },
         include: this._defaultIncludes(),
-        order: [['date_debut', 'ASC']],
+        order: ordre,
         limit: l,
         offset: (p - 1) * l,
         subQuery: false
@@ -405,6 +414,11 @@ class EvenementRepository extends BaseRepository {
       if (existing.statut_participation === 'annule') {
         throw AppError.badRequest('Inscription refusée — participation annulée par l\'organisateur', 'REGISTRATION_REFUSED');
       }
+      // Invitation (import d'une liste) : la personne confirme elle-même → inscription normale,
+      // que l'organisateur confirme ou refuse ensuite
+      if (existing.statut_participation === 'invitation') {
+        return existing.update({ statut_participation: 'inscrit', ...data }, queryOpts);
+      }
       // Déjà inscrit/confirmé/présent → pas de changement
       return existing;
     }
@@ -440,13 +454,17 @@ class EvenementRepository extends BaseRepository {
   async countParticipants(evenementId, options = {}) {
     if (!this.models.EvenementUser) return 0;
 
-    return this.models.EvenementUser.count({
+    // Places prises en personnes (nombre_personnes de chaque inscription, 1 par défaut)
+    const [ligne] = await this.models.EvenementUser.findAll({
+      attributes: [[literal(`COALESCE(SUM(${personnesSql('`EvenementUser`')}), 0)`), 'places']],
       where: {
         id_evenement: evenementId,
         statut_participation: { [Op.in]: STATUTS_PLACE_PRISE }
       },
+      raw: true,
       ...options
     });
+    return Number(ligne?.places) || 0;
   }
 
   // ============================================================================

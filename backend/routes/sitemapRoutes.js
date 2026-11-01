@@ -4,7 +4,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const { professionnelPath, evenementPath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
@@ -67,6 +67,10 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/oeuvres', 'weekly', '0.9');
       urls += urlBlock('/artisanat', 'weekly', '0.9');
       urls += urlBlock('/a-propos', 'monthly', '0.6');
+      // Rubriques absentes jusqu'ici du plan du site
+      urls += urlBlock('/organisations', 'weekly', '0.8');
+      urls += urlBlock('/patrimoine/services', 'weekly', '0.7');
+      urls += urlBlock('/artisanat/gastronomie', 'weekly', '0.7');
 
       // ══════════════════════════════════════════
       // 2-6. Toutes les entités en parallèle
@@ -127,6 +131,22 @@ const initSitemapRoutes = (models) => {
       artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a['Oeuvre.date_modification']); });
       articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });
       professionnels.forEach(u => { urls += urlBlock(professionnelPath(u.id_user, u.prenom, u.nom), 'weekly', '0.6', u.date_modification); });
+
+      // Organisations publiées, services visibles, personnalités : pages publiques jamais signalées avant
+      const [organisations, services, personnalites] = await Promise.all([
+        models.Organisation ? safeQuery('organisations', () => models.Organisation.findAll({
+          where: { statut: 'valide' }, attributes: ['id_organisation', 'nom'], limit: SITEMAP_LIMIT, raw: true
+        })) : [],
+        models.Service ? safeQuery('services', () => models.Service.findAll({
+          where: { [Op.or]: [{ statut: 'valide' }, { id_user: null }] }, attributes: ['id'], limit: SITEMAP_LIMIT, raw: true
+        })) : [],
+        models.Intervenant ? safeQuery('personnalites', () => models.Intervenant.findAll({
+          where: { actif: true }, attributes: ['id_intervenant'], limit: SITEMAP_LIMIT, raw: true
+        })) : []
+      ]);
+      organisations.forEach(o => { urls += urlBlock(organisationPath(o.id_organisation, o.nom), 'weekly', '0.6'); });
+      services.forEach(s => { urls += urlBlock(`/services/${s.id}`, 'monthly', '0.5'); });
+      personnalites.forEach(p => { urls += urlBlock(`/personnalites/${p.id_intervenant}`, 'monthly', '0.5'); });
 
       // ══════════════════════════════════════════
       // Assembler le XML final

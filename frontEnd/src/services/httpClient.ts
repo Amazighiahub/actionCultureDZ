@@ -606,10 +606,14 @@ class HttpClient {
       variant: 'destructive',
     });
 
-    // Rediriger vers login seulement si pas déjà sur /auth
+    // Rediriger vers login seulement si pas déjà sur /auth. Avant : la personne revenait à l'accueil et
+    // perdait sa saisie. Maintenant : les formulaires ouverts gardent un brouillon (événement « auth:expired »)
+    // et la connexion ramène sur la page quittée (?redirect=).
     if (!window.location.pathname.startsWith('/auth')) {
+      window.dispatchEvent(new Event('auth:expired'));
+      const retour = encodeURIComponent(window.location.pathname + window.location.search);
       setTimeout(() => {
-        window.location.href = '/auth';
+        window.location.href = `/auth?redirect=${retour}`;
       }, 500);
     }
   }

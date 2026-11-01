@@ -126,10 +126,8 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex flex-col items-center justify-center p-8">
-                          <Music className="h-24 w-24 text-emerald-400/50 mb-4" />
-                          <h3 className="text-xl font-bold text-center line-clamp-3 text-emerald-100">
-                            {titre}
-                          </h3>
+                          {/* Titre : affiché par le bandeau du bas (avant : deux fois, superposé) */}
+                          <Music className="h-24 w-24 text-emerald-400/50 mb-4" aria-hidden="true" />
                         </div>
                       )}
 
@@ -336,7 +334,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                 )}
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
+              <h1 dir="auto" className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
 
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
@@ -446,7 +444,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                     <FileText className="h-4 w-4 text-primary" />
                     {t('works.description', 'Description')}
                   </h3>
-                  <p className="leading-relaxed text-muted-foreground">
+                  <p dir="auto" className="leading-relaxed text-muted-foreground">
                     {description}
                   </p>
                 </CardContent>

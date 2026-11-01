@@ -5,8 +5,11 @@
  * Pour chaque ligne cochée :
  * - un compte visiteur est créé si l'email n'en a pas (sinon le compte existant est repris) ;
  *   sans mot de passe utilisable ni conditions acceptées : la personne les accepte en choisissant
- *   son mot de passe, grâce au lien d'invitation (valable 7 jours) ;
- * - elle est inscrite à l'événement « En attente » : l'organisateur confirme ou refuse ensuite ;
+ *   son mot de passe, grâce au lien d'invitation (valable 7 jours) ; compte non visible dans la
+ *   recherche de membres (profil non public) ;
+ * - elle n'est PAS inscrite d'office (audit V7 E2) : son inscription est une « invitation », sans place
+ *   prise, qu'elle confirme ou refuse elle-même sur la page de l'événement ; une fois confirmée,
+ *   l'organisateur la confirme ou la refuse comme une inscription faite sur le site ;
  * - ses réponses sont reprises dans les questions du formulaire de l'événement (colonnes reconnues
  *   par leur titre), le montant est calculé comme pour une inscription faite sur le site.
  * Relançable : une personne déjà inscrite à l'événement est laissée telle quelle.
@@ -221,7 +224,8 @@ class ImportInscriptions {
       const { compte, reponses, remarques, profilInconnu } = convertirLigne(ligne, colonnes, config, profils[ligne.numero]);
       const mail = lireEmail(compte.email);
       if (mail.corrige) remarques.unshift(`Email corrigé : ${mail.corrige} → ${mail.email}`);
-      let action = 'creer';
+      // « inviter » pour tout email valide : l'aperçu ne dit pas si l'adresse a déjà un compte
+      let action = 'inviter';
       if (!mail.valide) action = 'invalide';
       else if (emails.includes(mail.email)) action = 'doublon';
       emails.push(mail.email);
@@ -239,8 +243,8 @@ class ImportInscriptions {
       });
     }
 
-    // Comptes existants, et personnes déjà inscrites à l'événement
-    const valides = resultat.filter(r => r.action === 'creer').map(r => r.email);
+    // Personnes déjà inscrites (ou invitées) à cet événement : déjà visibles par l'organisateur
+    const valides = resultat.filter(r => r.action === 'inviter').map(r => r.email);
     if (valides.length) {
       const existants = await this.models.User.findAll({ where: { email: { [Op.in]: valides } }, attributes: ['id_user', 'email'] });
       const parEmail = new Map(existants.map(u => [u.email.toLowerCase(), u.id_user]));
@@ -250,8 +254,7 @@ class ImportInscriptions {
       const dejaInscrits = new Set(inscrits.map(i => i.id_user));
       for (const r of resultat) {
         const id = parEmail.get(r.email);
-        if (r.action !== 'creer' || !id) continue;
-        r.action = dejaInscrits.has(id) ? 'deja_inscrit' : 'inscrire';
+        if (r.action === 'inviter' && id && dejaInscrits.has(id)) r.action = 'deja_inscrit';
       }
     }
 
@@ -265,13 +268,15 @@ class ImportInscriptions {
   }
 
   /**
-   * Import des lignes choisies (numéros de ligne du classeur) ; invitation envoyée aux comptes
-   * créés si `inviter`. Retourne le bilan.
+   * Import des lignes choisies (numéros de ligne du classeur) : une invitation par personne (e-mail
+   * « choisir mon mot de passe » pour un compte créé, « confirmez votre inscription » sinon, si
+   * `inviter`). Retourne le bilan.
    */
   async importer(buffer, idEvenement, utilisateur, { lignes: choisies, inviter = true, profils = {} } = {}) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
     const apercu = await this.apercu(buffer, idEvenement, utilisateur, { profils });
-    const aFaire = apercu.lignes.filter(l => (!choisies || choisies.includes(l.ligne)) && ['creer', 'inscrire'].includes(l.action));
+    const aFaire = apercu.lignes.filter(l => (!choisies || choisies.includes(l.ligne)) && l.action === 'inviter');
+    // inscrits : invitations créées (la personne confirme ensuite elle-même)
     const bilan = { comptes_crees: 0, inscrits: 0, invitations: 0, erreurs: [] };
     // Pas d'inscription sans vrai profil : la personne reste à inscrire une fois son profil choisi
     for (const l of aFaire.filter(x => x.profil_inconnu && !x.reponses.profil)) {
@@ -295,7 +300,9 @@ class ImportInscriptions {
             id_type_user: TYPE_USER_IDS.VISITEUR,
             statut: 'actif',
             email_verifie: false,
-            accepte_conditions: false
+            accepte_conditions: false,
+            // Pas dans la recherche de membres : la personne n'a encore rien accepté
+            profil_public: false
           }, { hooks: false });
           nouveau = true;
           bilan.comptes_crees += 1;
@@ -303,7 +310,7 @@ class ImportInscriptions {
         const [, cree] = await this.models.EvenementUser.findOrCreate({
           where: { id_evenement: evenement.id_evenement, id_user: user.id_user },
           defaults: {
-            statut_participation: 'inscrit',
+            statut_participation: 'invitation',
             role_participation: 'participant',
             date_inscription: l.date || new Date(),
             reponses_inscription: l.reponses,
@@ -311,8 +318,9 @@ class ImportInscriptions {
           }
         });
         if (cree) bilan.inscrits += 1;
-        if (nouveau && inviter && this.emailService) {
-          if (await this._inviter(user, evenement)) bilan.invitations += 1;
+        if (cree && inviter && this.emailService) {
+          const envoye = nouveau ? await this._inviter(user, evenement) : await this._demanderConfirmation(user, evenement);
+          if (envoye) bilan.invitations += 1;
           else bilan.erreurs.push(`${l.email} : invitation non envoyée`);
         }
       } catch (e) {
@@ -330,6 +338,12 @@ class ImportInscriptions {
     return envoi?.success !== false;
   }
 
+  /** Compte existant : e-mail « confirmez ou refusez votre inscription » ; true si envoyé */
+  async _demanderConfirmation(user, evenement) {
+    const envoi = await this.emailService.sendDemandeConfirmationInscription(user, evenement);
+    return envoi?.success !== false;
+  }
+
   /**
    * Renvoie l'invitation à un participant inscrit qui n'a pas encore choisi son mot de passe
    * (email perdu, lien expiré). Un nouveau lien remplace l'ancien pour 7 jours.
@@ -341,6 +355,13 @@ class ImportInscriptions {
     const user = await this.models.User.findByPk(idUser);
     if (!user) throw Object.assign(new Error('Compte introuvable'), { statusCode: 404 });
     if (user.email_verifie) {
+      // Compte actif dont l'invitation attend sa réponse : nouvelle demande de confirmation
+      if (inscription.statut_participation === 'invitation') {
+        if (!this.emailService || !(await this._demanderConfirmation(user, evenement))) {
+          throw Object.assign(new Error("L'email n'a pas pu être envoyé, réessayez plus tard"), { statusCode: 502 });
+        }
+        return { email: user.email };
+      }
       throw Object.assign(new Error('Cette personne a déjà choisi son mot de passe'), { statusCode: 400 });
     }
     if (!this.emailService || !(await this._inviter(user, evenement))) {

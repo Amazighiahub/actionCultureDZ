@@ -34,11 +34,17 @@ async function demander(models, idOrganisation, userId, message) {
   if ((await organisationsGerees(models, [idOrganisation])).size) {
     throw erreur('Cette organisation a déjà un responsable : demandez-lui de vous ajouter comme membre', 409, 'ORGANISATION_DEJA_GEREE');
   }
-  const derniere = await maDemande(models, idOrganisation, userId);
-  if (derniere?.statut === 'en_attente') throw erreur('Votre demande est déjà en cours de vérification', 409, 'DEMANDE_EN_COURS');
-  await models.Organisation.sequelize.query(
-    'INSERT INTO organisation_revendication (id_organisation, id_user, message) VALUES (:org, :user, :message)',
-    { replacements: { org: idOrganisation, user: userId, message: String(message || '').trim().slice(0, 1000) || null } });
+  // Contrôle puis insertion sous verrou de l'organisation : un double clic ne crée plus deux demandes
+  await models.Organisation.sequelize.transaction(async (transaction) => {
+    await q(models, 'SELECT id_organisation FROM organisation WHERE id_organisation = :org FOR UPDATE', { org: idOrganisation }, { transaction });
+    const [enCours] = await q(models,
+      "SELECT id FROM organisation_revendication WHERE id_organisation = :org AND id_user = :user AND statut = 'en_attente' LIMIT 1",
+      { org: idOrganisation, user: userId }, { transaction });
+    if (enCours) throw erreur('Votre demande est déjà en cours de vérification', 409, 'DEMANDE_EN_COURS');
+    await models.Organisation.sequelize.query(
+      'INSERT INTO organisation_revendication (id_organisation, id_user, message) VALUES (:org, :user, :message)',
+      { replacements: { org: idOrganisation, user: userId, message: String(message || '').trim().slice(0, 1000) || null }, transaction });
+  });
   return org;
 }
 
@@ -78,7 +84,11 @@ async function decider(models, idDemande, decision, motif) {
         defaults: { role: 'responsable', actif: true }, transaction
       });
       if (lien.role !== 'responsable' || !lien.actif) await lien.update({ role: 'responsable', actif: true }, { transaction });
-      // Les autres demandes pour la même organisation n'ont plus d'objet
+      // Les autres demandes pour la même organisation n'ont plus d'objet. Celles du même demandeur (double
+      // envoi) sont acceptées avec la sienne : il ne reçoit pas « a déjà un responsable ».
+      await sequelize.query(`UPDATE organisation_revendication SET statut = 'acceptee', date_decision = NOW()
+        WHERE id_organisation = :org AND statut = 'en_attente' AND id <> :id AND id_user = :user`,
+      { replacements: { org: demande.id_organisation, id: idDemande, user: demande.id_user }, transaction });
       refusesAuto = (await q(models,
         "SELECT id_user FROM organisation_revendication WHERE id_organisation = :org AND statut = 'en_attente' AND id <> :id",
         { org: demande.id_organisation, id: idDemande }, { transaction })).map(r => r.id_user);

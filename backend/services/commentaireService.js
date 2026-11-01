@@ -130,11 +130,13 @@ class CommentaireService extends BaseService {
    * @returns {object} Instance mise a jour
    */
   async updateCommentaire(commentaireInstance, data) {
-    await commentaireInstance.update({
-      contenu: data.contenu,
-      note_qualite: data.note_qualite,
-      date_modification: new Date()
-    });
+    // Seuls les champs envoyés changent ; une réponse à un avis n'a pas de note
+    const maj = { date_modification: new Date() };
+    if (data.contenu !== undefined) maj.contenu = data.contenu;
+    if (data.note_qualite !== undefined && data.note_qualite !== null && !commentaireInstance.commentaire_parent_id) {
+      maj.note_qualite = parseInt(data.note_qualite, 10);
+    }
+    await commentaireInstance.update(maj);
 
     return commentaireInstance;
   }
@@ -150,9 +152,7 @@ class CommentaireService extends BaseService {
    */
   async deleteCommentaire(commentaireInstance, userId) {
     if (userId !== undefined && commentaireInstance.id_user !== userId) {
-      const err = new Error('Forbidden');
-      err.status = 403;
-      throw err;
+      throw this._forbiddenError('Vous ne pouvez supprimer que vos propres commentaires');
     }
     return this.repository.softDelete(commentaireInstance);
   }

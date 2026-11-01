@@ -5,6 +5,7 @@
 
 const BaseService = require('../core/baseService');
 const { lireTags, resolveTagIds } = require('../../helpers/tags');
+const { finEffective } = require('../../helpers/finEvenement');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
@@ -309,7 +310,14 @@ class EvenementService extends BaseService {
       // Fusion des langues : une langue laissée vide ne remplace pas la traduction existante
       if (data.nom_evenement || data.nom) updateData.nom_evenement = mergeTranslations(existing.nom_evenement, data.nom_evenement || data.nom);
       if (data.description !== undefined) updateData.description = mergeTranslations(existing.description, data.description);
-      if (data.date_debut || data.dateDebut) updateData.date_debut = this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut);
+      if (data.date_debut || data.dateDebut) {
+        updateData.date_debut = this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut);
+        // Nouvelle date : les rappels (veille, dernière minute) repartiront pour elle
+        if (new Date(updateData.date_debut).getTime() !== new Date(existing.date_debut).getTime()) {
+          updateData.rappel_envoye = false;
+          updateData.rappel_derniere_minute = false;
+        }
+      }
       if (data.date_fin || data.dateFin) updateData.date_fin = this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin);
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
       if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
@@ -430,14 +438,42 @@ class EvenementService extends BaseService {
         throw this._validationError('La date limite d\'inscription est dépassée');
       }
 
-      if (evenement.capacite_max) {
-        const count = await this.repository.countParticipants(evenementId, { transaction });
-        if (count >= evenement.capacite_max) {
-          throw this._validationError('L\'événement est complet');
-        }
+      // Événement terminé (même règle que le passage en « terminé » : jour sans heure = toute la journée,
+      // sans date de fin = jusqu'au soir du premier jour). Avant : inscription possible des mois après.
+      const fin = finEffective(evenement.date_debut, evenement.date_fin);
+      if (fin && fin <= new Date()) {
+        throw this._validationError('Cet événement est terminé');
       }
 
-      const reponses_inscription = await this._reponsesInscription(evenement, data, transaction);
+      // Déjà inscrit (ou refusé) : réponse habituelle du dépôt, sans contrôle de capacité
+      // (avant : une personne déjà inscrite recevait « complet »)
+      const existante = await this.models?.EvenementUser?.findOne({
+        where: { id_evenement: evenementId, id_user: userId },
+        attributes: ['statut_participation', 'reponses_inscription'],
+        transaction
+      });
+      if (existante && existante.statut_participation !== 'invitation') {
+        return this.repository.registerParticipant(evenementId, userId, { transaction });
+      }
+
+      // Invitation (import d'une liste) confirmée par la personne : ses réponses du classeur sont gardées
+      // si elle n'en envoie pas de nouvelles (bouton « Confirmer » de la page de l'événement)
+      const reponses_inscription = existante && !data.reponses
+        ? existante.reponses_inscription
+        : await this._reponsesInscription(evenement, data, transaction);
+
+      // Capacité en personnes : « 4 personnes » prend 4 places (avant : 1 inscription = 1 place)
+      if (evenement.capacite_max) {
+        const reponses = typeof reponses_inscription === 'string' ? JSON.parse(reponses_inscription) : (reponses_inscription || {});
+        const demandees = Math.max(1, parseInt(reponses.nombre_personnes, 10) || 1);
+        const prises = await this.repository.countParticipants(evenementId, { transaction });
+        if (prises + demandees > evenement.capacite_max) {
+          const restantes = Math.max(0, evenement.capacite_max - prises);
+          throw this._validationError(restantes
+            ? `Il reste ${restantes} place(s) : réduisez le nombre de personnes`
+            : 'L\'événement est complet');
+        }
+      }
       // Le montant est calculé ici (profil, présence, nombre de personnes), jamais choisi par le participant
       const montant_du = montantInscription(evenement, reponses_inscription || {});
       return this.repository.registerParticipant(evenementId, userId, { transaction, reponses_inscription, montant_du });
@@ -481,6 +517,18 @@ class EvenementService extends BaseService {
    * Désinscrire un participant
    */
   async unregisterParticipant(evenementId, userId) {
+    // Après le début de l'événement, ou présence déjà notée : la désinscription effaçait la présence
+    // (statistiques, attestations). Une invitation (import d'une liste) se refuse à tout moment.
+    const inscription = await this.repository.getRegistration(evenementId, userId);
+    if (inscription && ['present', 'absent'].includes(inscription.statut_participation)) {
+      throw this._validationError("Votre présence a déjà été notée : la désinscription n'est plus possible");
+    }
+    if (inscription && inscription.statut_participation !== 'invitation') {
+      const evenement = await this.repository.findById(evenementId, { attributes: ['id_evenement', 'date_debut'] });
+      if (evenement?.date_debut && new Date(evenement.date_debut) <= new Date()) {
+        throw this._validationError("L'événement a commencé : la désinscription n'est plus possible");
+      }
+    }
     const result = await this.repository.unregisterParticipant(evenementId, userId);
     if (!result) {
       throw this._notFoundError(evenementId);
@@ -575,6 +623,7 @@ class EvenementService extends BaseService {
    */
   async validateParticipation(evenementId, userId, validated, validatedBy, notes) {
     await this._assertEventOwnerOrAdmin(evenementId, validatedBy.id, validatedBy.isAdmin);
+    await this._refuserSiInvitation(evenementId, userId, validated);
 
     const participation = await this.repository.updateParticipationStatus(evenementId, userId, {
       statut_participation: validated ? 'confirme' : 'annule',
@@ -598,6 +647,15 @@ class EvenementService extends BaseService {
     }
 
     return participation;
+  }
+
+  /** Une invitation (import d'une liste) n'est confirmée par l'organisateur qu'après l'accord de la personne */
+  async _refuserSiInvitation(evenementId, userId, confirmer) {
+    if (!confirmer) return;
+    const inscription = await this.repository.getRegistration(evenementId, userId);
+    if (inscription?.statut_participation === 'invitation') {
+      throw this._validationError("Cette personne n'a pas encore confirmé son inscription");
+    }
   }
 
   /**

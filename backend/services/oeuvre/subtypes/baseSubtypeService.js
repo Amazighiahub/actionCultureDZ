@@ -187,4 +187,14 @@ class BaseSubtypeService {
   }
 }
 
+/**
+ * Nombre saisi → valeur enregistrée : vide, null ou illisible → null (champ effacé) ; sinon le nombre.
+ * Avant : parseInt(null) / parseFloat('') donnaient NaN (valeur invalide ou erreur 500).
+ */
+BaseSubtypeService.nombre = (valeur, entier = false) => {
+  if (valeur === null || valeur === undefined || valeur === '') return null;
+  const n = entier ? parseInt(valeur, 10) : parseFloat(valeur);
+  return Number.isNaN(n) ? null : n;
+};
+
 module.exports = BaseSubtypeService;

@@ -15,6 +15,7 @@ const { subtypeRegistry, initSubtypeServices } = require('./subtypes');
 class OeuvreService extends BaseService {
   constructor(oeuvreRepository, options = {}) {
     super(oeuvreRepository, options);
+    this.notificationService = options.notificationService;
     this.cache = CacheManager.create({
       namespace: 'oeuvres',
       defaultTTL: 3 * 60 * 1000, // 3 min pour les listes
@@ -318,8 +319,11 @@ class OeuvreService extends BaseService {
     }
     const updateDTO = UpdateOeuvreDTO.fromRequest(safeBody);
 
-    // 4. Vérifier s'il y a des modifications
-    if (!updateDTO.hasChanges()) {
+    // 4. Vérifier s'il y a des modifications (ajouter seulement un intervenant ou un éditeur en est une)
+    const nonVide = (v) => Array.isArray(v) && v.length > 0;
+    const ajoutsLies = ['intervenants_non_inscrits', 'intervenants_existants', 'utilisateurs_inscrits', 'nouveaux_intervenants', 'editeurs']
+      .some(cle => nonVide(requestBody?.[cle]));
+    if (!updateDTO.hasChanges() && !ajoutsLies) {
       throw this._validationError('Aucune modification fournie');
     }
 
@@ -361,10 +365,17 @@ class OeuvreService extends BaseService {
           await subService.updateForOeuvre(id, ds, transaction);
         }
       }
+
+      // Intervenants et éditeurs ajoutés en modification (avant : ignorés, « succès » affiché quand même).
+      // Ajout seulement (doublons ignorés) : le formulaire de modification ne montre pas les liens existants,
+      // les remplacer les effacerait.
+      await this._associateIntervenants(id, requestBody, transaction);
+      await this._associateEditeurs(id, requestBody.editeurs, transaction);
     });
 
     this.cache.invalidate();
     this.logger.info(`Œuvre mise à jour: ${id} par utilisateur: ${userId}`);
+    if (!isAdmin) await this._signalerModificationPubliee(existingOeuvre, userId, 'a modifié');
 
     // 8. Retourner l'œuvre mise à jour (sans compter comme vue)
     return this.findWithFullDetails(id, { incrementViews: false });
@@ -388,6 +399,11 @@ class OeuvreService extends BaseService {
     if (ownerId !== userId && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
     }
+
+    // Fichiers Cloudinary des médias, retirés après la suppression en base (avant : laissés pour toujours)
+    const fichiers = this.models?.Media
+      ? await this.models.Media.findAll({ where: { id_oeuvre: id }, attributes: ['url', 'mime_type', 'metadata'] })
+      : [];
 
     // 3. Suppression atomique : les ArticleBlock (polymorphique sans FK)
     // doivent être liés au sort de l'Oeuvre. Un échec DB ne doit pas laisser
@@ -413,6 +429,9 @@ class OeuvreService extends BaseService {
 
       await this.repository.delete(id, { transaction });
     });
+
+    // Après la validation en base seulement : une suppression annulée garde ses fichiers
+    await this._supprimerFichiersCloudinary(fichiers);
 
     this.cache.invalidate();
     this.logger.info(`Œuvre supprimée: ${id} par utilisateur: ${userId}`);
@@ -551,14 +570,97 @@ class OeuvreService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres œuvres');
     }
 
-    return this.enregistrerMedias(oeuvreId, files);
+    const medias = await this.enregistrerMedias(oeuvreId, files, userId);
+    await this._signalerModificationPubliee(oeuvre, userId, 'a ajouté des médias à');
+    return medias;
+  }
+
+  /**
+   * Œuvre déjà publiée modifiée par son auteur : elle reste en ligne, l'équipe est prévenue pour
+   * vérifier (audit V7 fiabilité E2 ; avant, aucune trace). Une notification manquée n'annule rien.
+   */
+  async _signalerModificationPubliee(oeuvre, userId, action) {
+    if (oeuvre?.statut !== 'publie' || !this.models?.User) return;
+    try {
+      const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+      const { texteLisible } = require('../../helpers/i18n');
+      const auteur = await this.models.User.findByPk(userId, { attributes: ['nom', 'prenom'] });
+      const qui = [texteLisible(auteur?.prenom), texteLisible(auteur?.nom)].filter(Boolean).join(' ') || 'L’auteur';
+      for (const idAdmin of await idsAdministrateurs(this.models)) {
+        await notifier(this.notificationService, idAdmin, {
+          titre: 'Œuvre publiée modifiée',
+          message: `${qui} ${action} « ${texteLisible(oeuvre.titre)} », déjà publiée : à vérifier.`,
+          url_action: `/oeuvres/${oeuvre.id_oeuvre}`, metadata: { id_oeuvre: oeuvre.id_oeuvre }
+        });
+      }
+    } catch (e) {
+      this.logger.error('Signalement de modification d’une œuvre publiée :', e.message);
+    }
+  }
+
+  /** Œuvre dont ce compte peut gérer les médias (auteur ou administration) */
+  async _oeuvrePourMedias(oeuvreId, userId, isAdmin) {
+    const oeuvre = await this.repository.findById(oeuvreId);
+    if (!oeuvre) throw this._notFoundError(oeuvreId);
+    const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
+    if (Number(ownerId) !== Number(userId) && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez modifier que vos propres œuvres');
+    }
+    return oeuvre;
+  }
+
+  /**
+   * Retire un média de l'œuvre (fichier Cloudinary compris). Avant : méthode absente, erreur 500 —
+   * une mauvaise pochette ou un mauvais extrait ne pouvait plus être retiré.
+   */
+  async deleteMedia(oeuvreId, mediaId, userId, isAdmin = false) {
+    await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
+    const media = await this.models.Media.findOne({ where: { id_media: mediaId, id_oeuvre: oeuvreId } });
+    if (!media) throw this._notFoundError(mediaId);
+
+    await media.destroy();
+    // Un échec Cloudinary n'empêche pas de retirer le média de la fiche (deleteAsset le journalise)
+    await this._supprimerFichiersCloudinary([media]);
+    this.cache.invalidate();
+    return true;
+  }
+
+  /** Fichiers Cloudinary de médias supprimés (sans effet sur les fichiers hébergés ailleurs) ; un échec est journalisé */
+  async _supprimerFichiersCloudinary(medias) {
+    if (!medias?.length) return;
+    const cloudinary = require('../cloudinaryService');
+    for (const media of medias) {
+      const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
+      const publicId = meta.cloudinaryPublicId || cloudinary.extractPublicId(media.url);
+      if (publicId && cloudinary.isCloudinaryUrl(media.url)) {
+        await cloudinary.deleteAsset(publicId, cloudinary.getResourceType(media.mime_type));
+      }
+    }
+  }
+
+  /** Ordre d'affichage des médias : `orderedIds` = tous ou une partie des médias de l'œuvre */
+  async reorderMedias(oeuvreId, orderedIds, userId, isAdmin = false) {
+    await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
+    const ids = Array.isArray(orderedIds) ? orderedIds.map(Number) : [];
+    if (!ids.length || ids.some(id => !Number.isInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
+      throw this._validationError("orderedIds doit être la liste des médias de l'œuvre");
+    }
+    const medias = await this.models.Media.findAll({ where: { id_oeuvre: oeuvreId, id_media: ids }, attributes: ['id_media'] });
+    if (medias.length !== ids.length) throw this._validationError("Un des médias n'appartient pas à cette œuvre");
+    await this.withTransaction(async (transaction) => {
+      for (const [ordre, id] of ids.entries()) {
+        await this.models.Media.update({ ordre }, { where: { id_media: id, id_oeuvre: oeuvreId }, transaction });
+      }
+    });
+    this.cache.invalidate();
+    return true;
   }
 
   /**
    * Enregistre les fichiers déjà envoyés (Cloudinary) comme médias de l'œuvre.
    * Sans contrôle de propriété : à appeler après ce contrôle (œuvre, fiche artisanat…).
    */
-  async enregistrerMedias(oeuvreId, files) {
+  async enregistrerMedias(oeuvreId, files, userId = null) {
     const fileArray = Array.isArray(files) ? files : [files];
     const results = [];
 
@@ -577,7 +679,9 @@ class OeuvreService extends BaseService {
           visible_public: true,
           metadata: {
             originalName: file.originalname,
-            cloudinaryPublicId: file.filename
+            cloudinaryPublicId: file.filename,
+            // Lu par la suppression générique (DELETE /upload/:id) ; absent, elle était toujours refusée
+            ...(userId ? { uploadedBy: userId } : {})
           }
         });
         results.push(media);

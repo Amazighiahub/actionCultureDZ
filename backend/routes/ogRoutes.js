@@ -7,7 +7,7 @@
 const express = require('express');
 const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
-const { professionnelPath, evenementPath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
@@ -152,6 +152,27 @@ const initOgRoutes = (models) => {
         // Adresse canonique avec le nom (17-amina-benali)
         path: professionnelPath(u.id_user, u.prenom, u.nom),
       };
+    },
+    // Page d'une organisation publiée (maison d'édition, association…) : avant, aperçu générique
+    async organisations(id) {
+      const o = await models.Organisation.findByPk(id, { attributes: ['id_organisation', 'nom', 'description', 'logo_url', 'statut'] });
+      if (!o || o.statut !== 'valide') return null;
+      return {
+        title: text(o.nom), description: summary(o.description) || undefined, image: o.logo_url, type: 'profile',
+        path: organisationPath(o.id_organisation, o.nom)
+      };
+    },
+    // Service validé (ou ancien service sans professionnel), comme sur le site
+    async services(id) {
+      const s = await models.Service.findByPk(id, { attributes: ['id', 'nom', 'description', 'photo_url', 'statut', 'id_user'] });
+      if (!s || (s.statut !== 'valide' && s.id_user !== null)) return null;
+      return { title: text(s.nom), description: summary(s.description) || undefined, image: s.photo_url, type: 'place' };
+    },
+    // Personnalité (fiche active)
+    async personnalites(id) {
+      const p = await models.Intervenant.findByPk(id, { attributes: ['id_intervenant', 'nom', 'prenom', 'biographie', 'photo_url', 'actif'] });
+      if (!p || p.actif === false) return null;
+      return { title: `${text(p.prenom)} ${text(p.nom)}`.trim(), description: summary(p.biographie) || undefined, image: p.photo_url, type: 'profile' };
     },
   };
   loaders.articles = loaders.oeuvres;

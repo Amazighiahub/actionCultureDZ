@@ -20,6 +20,7 @@ describe('authMiddleware', () => {
       nom: 'Test',
       prenom: 'User',
       email: 'test@example.com',
+      email_verifie: true,
       statut: 'actif',
       id_type_user: 1,
       Roles: [{ nom_role: 'User' }],
@@ -85,6 +86,28 @@ describe('authMiddleware', () => {
       expect(req.user).toBeDefined();
       expect(req.userId).toBe(1);
       expect(next).toHaveBeenCalled();
+    });
+
+    it("e-mail non vérifié : lecture permise, écriture refusée (sauf renvoi de l'e-mail et déconnexion)", async () => {
+      mockUser.email_verifie = false;
+      req.cookies = { access_token: 'jeton' };
+      jwt.verify.mockReturnValue({ userId: 1 });
+
+      req.method = 'GET';
+      req.originalUrl = '/api/oeuvres';
+      await authMiddleware.authenticate(req, res, next);
+      expect(next).toHaveBeenCalledTimes(1);
+
+      req.method = 'POST';
+      req.originalUrl = '/api/upload/image';
+      await authMiddleware.authenticate(req, res, next);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ needsEmailVerification: true }));
+
+      req.originalUrl = '/api/email-verification/resend';
+      await authMiddleware.authenticate(req, res, next);
+      expect(next).toHaveBeenCalledTimes(2);
     });
 
     it('should authenticate with a valid Bearer header', async () => {

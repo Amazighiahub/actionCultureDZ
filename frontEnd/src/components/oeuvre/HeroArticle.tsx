@@ -121,7 +121,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
           </div>
 
           {/* Titre — style académique */}
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold font-serif leading-tight text-foreground">
+          <h1 dir="auto" className="text-3xl lg:text-4xl xl:text-5xl font-bold font-serif leading-tight text-foreground">
             {titre}
           </h1>
 

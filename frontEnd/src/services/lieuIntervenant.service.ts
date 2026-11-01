@@ -53,11 +53,13 @@ export const lieuIntervenantService = {
     return (res as any).data ?? [];
   },
 
-  add: async (lieuId: number, payload: AddIntervenantPayload): Promise<LieuIntervenant> => {
+  /** null : rattachement envoyé comme proposition à l'équipe (hors équipe et créateur du site) */
+  add: async (lieuId: number, payload: AddIntervenantPayload): Promise<LieuIntervenant | null> => {
     const res = await httpClient.post<{ success: boolean; data: LieuIntervenant }>(
       `/patrimoine/${lieuId}/intervenants`,
       payload
     );
+    if ((res as { proposition?: boolean }).proposition) return null;
     return (res as any).data;
   },
 

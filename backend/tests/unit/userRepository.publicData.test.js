@@ -14,7 +14,9 @@ const row = (data) => ({
 const makeRepo = (rows) => {
   const User = {
     findAndCountAll: jest.fn().mockResolvedValue({ rows, count: rows.length }),
-    findAll: jest.fn().mockResolvedValue(rows)
+    findAll: jest.fn().mockResolvedValue(rows),
+    // Recherche nom / prénom par langue (buildMultiLangSearch)
+    sequelize: { escape: (v) => `'${v}'`, literal: (val) => ({ val }) }
   };
   return { repo: new UserRepository({ User, TypeUser: {}, Wilaya: {} }), User };
 };

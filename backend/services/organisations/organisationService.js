@@ -419,6 +419,13 @@ class OrganisationService extends BaseService {
         url_action: `/organisations/${idGarde}`, metadata: { id_organisation: Number(idGarde) }
       });
     }
+    for (const idUser of resultat.demandesRefusees || []) {
+      await notifier(this.notificationService, idUser, {
+        titre: 'Demande non acceptée',
+        message: `« ${texteLisible(resultat.garde.nom)} » a déjà un responsable : demandez-lui de vous ajouter comme membre.`,
+        url_action: `/organisations/${idGarde}`, metadata: { id_organisation: Number(idGarde) }
+      });
+    }
     return this.repository.findVitrine(idGarde);
   }
 
