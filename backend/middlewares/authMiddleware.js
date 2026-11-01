@@ -17,6 +17,12 @@ const {
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true';
+// Seules écritures permises avant la vérification de l'e-mail
+const ECRITURES_SANS_VERIFICATION = [
+  '/api/email-verification/resend',
+  '/api/email-verification/request-email-change',
+  '/api/users/logout'
+];
 
 // Valeurs d'exemple à rejeter
 const INSECURE_SECRETS = [
@@ -343,6 +349,19 @@ module.exports = (modelsOrUser) => {
           success: false,
           message: req.t('auth.unknownAccountStatus'),
           statut: user.statut
+        });
+      }
+
+      // E-mail non vérifié (session ouverte à l'inscription) : lecture seule, sauf renvoyer l'e-mail de
+      // vérification, corriger l'adresse et se déconnecter. Avant, ce compte pouvait téléverser, modifier
+      // des fiches, créer des éditeurs… (49 routes avaient requireVerifiedEmail, pas les autres).
+      if (!SKIP_EMAIL_VERIFICATION && !user.email_verifie && !user.isAdmin
+          && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+          && !ECRITURES_SANS_VERIFICATION.includes((req.originalUrl || '').split('?')[0])) {
+        return res.status(403).json({
+          success: false,
+          message: req.t('auth.emailNotVerified'),
+          needsEmailVerification: true
         });
       }
 

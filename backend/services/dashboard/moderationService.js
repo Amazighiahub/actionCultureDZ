@@ -185,9 +185,13 @@ class DashboardModerationService {
    */
   async validateOeuvreAction(oeuvreId, data) {
     const { valide, validateur_id, raison_rejet } = data;
+    // Même chemin que les routes /oeuvres/:id/validate|reject : verrou, œuvre « en attente » seulement
+    // (pas de brouillon publié, pas d'œuvre publiée repassée en refusée, pas de double envoi sur double clic),
+    // motif obligatoire pour un refus. Avant : mise à jour directe, sans aucun contrôle.
+    const container = require('../serviceContainer');
+    if (valide) await container.oeuvreService.validate(Number(oeuvreId), validateur_id);
+    else await container.oeuvreService.reject(Number(oeuvreId), validateur_id, raison_rejet);
     const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
-    if (!oeuvre) throw new Error('Œuvre non trouvée');
-    await oeuvre.update({ statut: valide ? 'publie' : 'rejete', date_validation: new Date(), validateur_id, raison_rejet: !valide ? raison_rejet : null });
 
     // Envoyer un email de notification au créateur
     try {

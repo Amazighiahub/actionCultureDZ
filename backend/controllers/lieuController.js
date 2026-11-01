@@ -100,7 +100,8 @@ class LieuController extends BaseController {
 
       const lieuData = await this.service.getLieuById(id);
 
-      if (!lieuData) {
+      // Lieu non publié (brouillon, archivé) : seulement pour son créateur et la modération
+      if (!lieuData || (lieuData.statut && lieuData.statut !== 'publie' && !this._canSeeUnpublished(req, lieuData.id_createur))) {
         return res.status(404).json({
           success: false,
           error: req.t('lieu.notFound')
@@ -306,6 +307,13 @@ class LieuController extends BaseController {
           code: 'LIEU_UTILISE'
         });
       }
+      if (result.services > 0) {
+        return res.status(409).json({
+          success: false,
+          error: `Ce lieu accueille ${result.services} service(s) de professionnels : déplacez-les ou retirez-les d'abord`,
+          code: 'LIEU_UTILISE'
+        });
+      }
 
       return this._sendMessage(res, req.t('lieu.deleted'));
     } catch (error) {
@@ -371,7 +379,9 @@ class LieuController extends BaseController {
   async getLieuxProximite(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { latitude, longitude, rayon = 10, limit = 20 } = req.query;
+      // « rayon » (envoyé par le site) ou « radius »
+      const { latitude, longitude, limit = 20 } = req.query;
+      const rayon = req.query.rayon ?? req.query.radius ?? 10;
 
       const lieux = await this.service.getLieuxProximite({
         latitude, longitude, rayon, limit

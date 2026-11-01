@@ -4,6 +4,8 @@
  */
 const AppError = require('../../utils/appError');
 const { sanitizeBlockContent } = require('../../utils/sanitizeArticle');
+const { mergeTranslations } = require('../../helpers/i18n');
+const historique = require('./historiqueLieu');
 
 const MODELES = { monument: 'Monument', vestige: 'Vestige' };
 const LIBELLES = { monument: 'Monument', vestige: 'Vestige' };
@@ -149,6 +151,39 @@ async function supprimerBloc(models, idLieu, idBloc) {
   await bloc.destroy();
 }
 
+/** Textes du site (detail_lieux) qu'une contribution peut modifier */
+const CHAMPS_DETAIL = ['histoire', 'gastronomie', 'traditions', 'artisanat_local', 'personnalites', 'architecture',
+  'infos_pratiques', 'referencesHistoriques', 'description', 'horaires'];
+
+/**
+ * Textes du site modifiés (contribution directe, ou proposition acceptée par l'équipe) : langues fusionnées
+ * (une contribution dans une langue n'efface pas les autres traductions), anciens textes dans l'historique,
+ * créateur du lieu et administration prévenus.
+ * @returns {Promise<object|null>} le DetailLieu, ou null si aucun champ valide
+ */
+async function enrichirDetail(models, notificationService, idLieu, idUser, corps) {
+  let detail = await models.DetailLieu.findOne({ where: { id_lieu: idLieu } });
+  const updates = {};
+  for (const champ of CHAMPS_DETAIL) {
+    if (corps[champ] !== undefined) updates[champ] = mergeTranslations(detail?.[champ], corps[champ]);
+  }
+  if (Object.keys(updates).length === 0) return null;
+
+  const avant = Object.fromEntries(Object.keys(updates).map(champ => [champ, detail?.[champ] ?? null]));
+  let champs = [];
+  await models.sequelize.transaction(async (transaction) => {
+    if (!detail) {
+      detail = await models.DetailLieu.create({ id_lieu: idLieu, ...updates, id_dernier_contributeur: idUser, date_derniere_contribution: new Date(), nb_contributions: 1 }, { transaction });
+    } else {
+      await detail.update({ ...updates, id_dernier_contributeur: idUser, date_derniere_contribution: new Date(), nb_contributions: (detail.nb_contributions || 0) + 1 }, { transaction });
+    }
+    champs = await historique.enregistrerModifications(models, { idLieu, idUser, avant, apres: updates, transaction });
+  });
+  await historique.notifierTextes(models, notificationService, { idLieu, idUser, champs });
+  return detail;
+}
+
 module.exports = {
+  CHAMPS_DETAIL, enrichirDetail,
   personnalites, rattacherPersonnalite, ajouterElement, modifierElement, supprimerElement, blocs, ajouterBloc, supprimerBloc
 };

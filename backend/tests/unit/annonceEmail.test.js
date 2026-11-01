@@ -24,20 +24,22 @@ describe('Annonce par e-mail', () => {
     });
   });
 
-  it('e-mail seulement à ceux qui acceptent e-mails et annonces ; notification pour tous', async () => {
+  it('e-mail seulement aux adresses vérifiées qui acceptent e-mails et annonces ; notification pour tous', async () => {
     service.models.User.findAll.mockResolvedValueOnce([
-      { id_user: 1, email: 'a@x.dz', preferences_notification: null },
-      { id_user: 2, email: 'b@x.dz', preferences_notification: null, notifications_evenements: false },
-      { id_user: 3, email: 'c@x.dz', preferences_notification: null, notifications_email: false },
+      { id_user: 1, email: 'a@x.dz', email_verifie: 1, preferences_notification: null },
+      { id_user: 2, email: 'b@x.dz', email_verifie: 1, preferences_notification: null, notifications_evenements: false },
+      { id_user: 3, email: 'c@x.dz', email_verifie: 1, preferences_notification: null, notifications_email: false },
       // Valeurs brutes de MySQL : 0 = non, 1 = oui
-      { id_user: 4, email: 'd@x.dz', preferences_notification: null, notifications_evenements: 0 },
-      { id_user: 5, email: 'e@x.dz', preferences_notification: null, notifications_email: 1, notifications_evenements: 1 }
+      { id_user: 4, email: 'd@x.dz', email_verifie: 1, preferences_notification: null, notifications_evenements: 0 },
+      { id_user: 5, email: 'e@x.dz', email_verifie: 1, preferences_notification: null, notifications_email: 1, notifications_evenements: 1 },
+      // Adresse jamais vérifiée : notification sur le site, pas d'e-mail
+      { id_user: 6, email: 'f@x.dz', email_verifie: 0, preferences_notification: null }
     ]).mockResolvedValueOnce([]);
     const envoi = jest.spyOn(service, '_envoyerAnnonceParEmail').mockResolvedValue({ envoyes: 1, echecs: 0 });
 
     const res = await service.broadcastNotification({ title: 'Salon', message: 'Venez' }, 9);
 
-    expect(res.notified).toBe(5);
+    expect(res.notified).toBe(6);
     expect(res.emails).toBe(2);
     expect(envoi).toHaveBeenCalledWith([{ id_user: 1, email: 'a@x.dz' }, { id_user: 5, email: 'e@x.dz' }], { title: 'Salon', message: 'Venez' });
   });

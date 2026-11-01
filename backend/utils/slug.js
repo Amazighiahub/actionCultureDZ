@@ -41,4 +41,10 @@ function evenementPath(id, nom) {
   return `/evenements/${id}${slug ? `-${slug}` : ''}`;
 }
 
-module.exports = { slugify, plainText, professionnelPath, evenementPath };
+/** Chemin public d'une organisation : /organisations/12-editions-casbah (comme le site) */
+function organisationPath(id, nom) {
+  const slug = slugify(plainText(nom));
+  return `/organisations/${id}${slug ? `-${slug}` : ''}`;
+}
+
+module.exports = { slugify, plainText, professionnelPath, evenementPath, organisationPath };

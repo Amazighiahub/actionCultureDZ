@@ -18,8 +18,9 @@ class LivreDTO extends BaseSubtypeDTO {
 
     // Validation ISBN (si fourni)
     if (this.isbn) {
-      const isbnClean = this.isbn.replace(/[-\s]/g, '');
-      if (!/^(\d{10}|\d{13})$/.test(isbnClean)) {
+      const isbnClean = this.isbn.replace(/[-\s]/g, '').toUpperCase();
+      // ISBN-10 : le dernier caractère peut être X
+      if (!/^(\d{9}[\dX]|\d{13})$/.test(isbnClean)) {
         errors.push({
           field: 'isbn',
           message: 'ISBN invalide (doit être 10 ou 13 chiffres)'

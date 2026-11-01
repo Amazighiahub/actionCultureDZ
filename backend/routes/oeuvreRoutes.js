@@ -30,7 +30,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.get('/popular', cachePublic, asyncHandler((req, res) => oeuvreController.getPopular(req, res)));
   router.get('/statistics', cachePublic, asyncHandler((req, res) => oeuvreController.getStatistics(req, res)));
   router.get('/search', cachePublic, asyncHandler((req, res) => oeuvreController.search(req, res)));
-  router.get('/search/intervenants', cachePublic, asyncHandler((req, res) => oeuvreController.searchIntervenants(req, res)));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES (specific paths BEFORE :id catch-all)
@@ -45,7 +44,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   router.get('/admin/all', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.listAll(req, res)));
   router.get('/admin/pending', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.getPending(req, res)));
-  router.get('/admin/rejected', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.getRejected(req, res)));
   router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.getStats(req, res)));
 
   // ============================================================================

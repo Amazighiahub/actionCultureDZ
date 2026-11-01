@@ -17,7 +17,8 @@ module.exports = (sequelize) => {
     },
     isbn: {
       type: DataTypes.STRING(20),
-      validate: { is: /^[0-9\-]{10,17}$/ }
+      // ISBN-10 (dernier caractère : chiffre ou X) ou ISBN-13, avec ou sans tirets
+      validate: { is: /^[0-9-]{9,16}[0-9X]$/ }
     },
     nb_pages: {
       type: DataTypes.INTEGER

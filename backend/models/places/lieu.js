@@ -201,9 +201,11 @@ module.exports = (sequelize) => {
   Lieu.afterDestroy(async (lieu, options) => {
     const { Favori, Vue, Signalement } = sequelize.models;
     const id = lieu.id_lieu;
-    if (Favori) await Favori.destroy({ where: { type_entite: 'lieu', id_entite: id } });
-    if (Vue) await Vue.destroy({ where: { type_entite: 'lieu', id_entite: id } });
-    if (Signalement) await Signalement.destroy({ where: { type_entite: 'lieu', id_entite: id } });
+    // Dans la transaction de la suppression : si elle est annulée, favoris, vues et signalements restent
+    const tx = options?.transaction ? { transaction: options.transaction } : {};
+    if (Favori) await Favori.destroy({ where: { type_entite: 'lieu', id_entite: id }, ...tx });
+    if (Vue) await Vue.destroy({ where: { type_entite: 'lieu', id_entite: id }, ...tx });
+    if (Signalement) await Signalement.destroy({ where: { type_entite: 'lieu', id_entite: id }, ...tx });
   });
 
   return Lieu;

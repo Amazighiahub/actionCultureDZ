@@ -9,7 +9,8 @@ describe('utils/comptesEvenement', () => {
     const [[inscrits, a1], [participants, a2]] = attributsComptes();
     expect(a1).toBe('nombre_inscrits');
     expect(a2).toBe('nombre_participants');
-    expect(inscrits.val).toMatch(/FROM evenementusers eu WHERE eu\.id_evenement = `Evenement`\.`id_evenement` AND eu\.statut_participation <> 'annule'/);
+    // Invitations (import d'une liste) pas encore confirmées : pas de place prise
+    expect(inscrits.val).toMatch(/FROM evenementusers eu WHERE eu\.id_evenement = `Evenement`\.`id_evenement` AND eu\.statut_participation NOT IN \('annule', 'invitation'\)/);
     expect(participants.val).toMatch(/IN \('confirme', 'present'\)/);
   });
 

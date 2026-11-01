@@ -3,6 +3,8 @@
  *
  * - Refusée tant que le lieu ou l'un de ses points de visite accueille un événement
  *   (lieu de l'événement ou d'une séance du programme) : sinon l'événement perdrait son lieu sans prévenir.
+ * - Refusée aussi tant qu'un professionnel y propose un service : la cascade supprimait ses services
+ *   et les avis de ses clients (suppression d'un doublon par l'administration).
  * - Les points de visite (sous-lieux, sur plusieurs niveaux) sont supprimés avec le site :
  *   la clé id_lieu_parent est en SET NULL, ils deviendraient sinon des sites indépendants.
  */
@@ -38,25 +40,33 @@ async function compterEvenements(models, ids, transaction) {
   return new Set([...directs, ...parSeance].map(e => e.id_evenement).filter(Boolean)).size;
 }
 
+/** Nombre de services de professionnels (compte rattaché) dans l'un de ces lieux */
+async function compterServicesPro(models, ids, transaction) {
+  if (!models.Service) return 0;
+  return models.Service.count({ where: { id_lieu: { [Op.in]: ids }, id_user: { [Op.ne]: null } }, transaction });
+}
+
 /**
- * @returns {Promise<{ trouve: boolean, evenements: number, supprime: boolean, points: number }>}
+ * @returns {Promise<{ trouve: boolean, evenements: number, services: number, supprime: boolean, points: number }>}
  */
 async function supprimerLieu(models, idLieu) {
   const id = Number(idLieu);
   return models.Lieu.sequelize.transaction(async (transaction) => {
     const lieu = await models.Lieu.findByPk(id, { attributes: ['id_lieu'], transaction });
-    if (!lieu) return { trouve: false, evenements: 0, supprime: false, points: 0 };
+    if (!lieu) return { trouve: false, evenements: 0, services: 0, supprime: false, points: 0 };
 
     const niveaux = await niveauxDescendants(models, id, transaction);
-    const evenements = await compterEvenements(models, [id, ...niveaux.flat()], transaction);
-    if (evenements > 0) return { trouve: true, evenements, supprime: false, points: 0 };
+    const tous = [id, ...niveaux.flat()];
+    const evenements = await compterEvenements(models, tous, transaction);
+    const services = await compterServicesPro(models, tous, transaction);
+    if (evenements > 0 || services > 0) return { trouve: true, evenements, services, supprime: false, points: 0 };
 
     // Les plus profonds d'abord, puis le site
     for (const ids of [...niveaux].reverse()) {
       await models.Lieu.destroy({ where: { id_lieu: { [Op.in]: ids } }, transaction });
     }
     await lieu.destroy({ transaction });
-    return { trouve: true, evenements: 0, supprime: true, points: niveaux.flat().length };
+    return { trouve: true, evenements: 0, services: 0, supprime: true, points: niveaux.flat().length };
   });
 }
 

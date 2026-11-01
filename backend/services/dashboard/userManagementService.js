@@ -31,9 +31,12 @@ class DashboardUserManagementService {
       const { sanitizeLike } = require('../../utils/sanitize');
       const { where: seqWhere, literal } = require('sequelize');
       const searchTerm = `%${sanitizeLike(search)}%`;
+      // Toutes les langues, sans majuscules ni accents (avant : français seulement, sensible à la casse)
+      const { buildMultiLangSearch } = require('../../utils/multiLangSearchBuilder');
+      const sequelize = this.models.User.sequelize;
       where[Op.or] = [
-        seqWhere(fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col('nom'), literal("'$.fr'"))), { [Op.like]: searchTerm }),
-        seqWhere(fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col('prenom'), literal("'$.fr'"))), { [Op.like]: searchTerm }),
+        ...buildMultiLangSearch(sequelize, 'nom', sanitizeLike(search), 'User'),
+        ...buildMultiLangSearch(sequelize, 'prenom', sanitizeLike(search), 'User'),
         { email: { [Op.like]: searchTerm } }
       ];
     }
@@ -52,7 +55,14 @@ class DashboardUserManagementService {
     switch (type) {
       case 'email': whereClause = { email: { [Op.like]: searchTerm } }; break;
       case 'telephone': whereClause = { telephone: { [Op.like]: searchTerm } }; break;
-      default: whereClause = { [Op.or]: [{ nom: { [Op.like]: searchTerm } }, { prenom: { [Op.like]: searchTerm } }] };
+      default: {
+        const { buildMultiLangSearch } = require('../../utils/multiLangSearchBuilder');
+        const terme = searchTerm.replace(/^%|%$/g, '');
+        whereClause = { [Op.or]: [
+          ...buildMultiLangSearch(this.models.User.sequelize, 'nom', terme, 'User'),
+          ...buildMultiLangSearch(this.models.User.sequelize, 'prenom', terme, 'User')
+        ] };
+      }
     }
 
     return this.userRepo.searchFiltered(whereClause, 20);

@@ -254,7 +254,9 @@ class NotificationService {
         throw new Error('Événement non trouvé');
       }
 
-      // Récupérer les participants ayant activé les notifications événements
+      // Tous les inscrits : l'annulation concerne leur inscription. Le réglage « notifications d'événements »
+      // (annonces, coupé aussi par le lien de désabonnement) ne s'applique pas : avant, qui l'avait coupé
+      // se rendait à un événement annulé.
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: evenementId,
@@ -266,8 +268,7 @@ class NotificationService {
           {
             model: this.models.User,
             as: 'User',
-            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone'],
-            where: { notifications_evenements: true }
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
           }
         ]
       });
@@ -346,7 +347,8 @@ class NotificationService {
         throw new Error('Programme ou événement non trouvé');
       }
 
-      // Récupérer les participants confirmés ayant activé les notifications
+      // Participants confirmés : un changement de programme concerne leur inscription (comme l'annulation,
+      // envoyé même si les annonces d'événements sont coupées)
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: programme.id_evenement,
@@ -356,8 +358,7 @@ class NotificationService {
           {
             model: this.models.User,
             as: 'User',
-            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone'],
-            where: { notifications_evenements: true }
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
           }
         ]
       });
@@ -625,7 +626,7 @@ class NotificationService {
         where: targetWhere,
         // « preferences_notification » n'existe pas dans la table users : la requête échouait
         // et l'envoi à un groupe s'arrêtait en silence (ni notification, ni e-mail)
-        attributes: ['id_user', 'email', 'notifications_email', 'notifications_evenements'],
+        attributes: ['id_user', 'email', 'email_verifie', 'notifications_email', 'notifications_evenements'],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
@@ -651,7 +652,9 @@ class NotificationService {
         // Requête « raw » : MySQL renvoie 0 / 1 (et non false / true) pour un booléen
         const refuse = (v) => v === false || v === 0 || v === '0';
         for (const user of usersToNotify) {
-          if (user.email && !refuse(user.notifications_email) && !refuse(user.notifications_evenements)) {
+          // Adresses vérifiées seulement (une adresse inventée ou mal saisie nuit à la réputation d'envoi)
+          const verifiee = user.email_verifie === true || user.email_verifie === 1 || user.email_verifie === '1';
+          if (user.email && verifiee && !refuse(user.notifications_email) && !refuse(user.notifications_evenements)) {
             destinatairesEmail.push({ id_user: user.id_user, email: user.email });
           }
         }
@@ -700,6 +703,29 @@ class NotificationService {
             <p style="color:#444;line-height:1.6;white-space:pre-wrap">${avecLiens(message)}</p>
             <p style="color:#999;font-size:12px;margin-top:24px">Tala DZ — taladz.com</p>
           </div>`;
+    // File d'envoi (Redis) : les e-mails partent même si le serveur redémarre pendant l'envoi, avec
+    // nouveaux essais. Avant : boucle en mémoire (300 ms par personne), la suite perdue à chaque mise en ligne.
+    let file = null;
+    try { file = require('./serviceContainer').emailQueueService; } catch { file = null; }
+    if (file?.isInitialized) {
+      let enFile = 0;
+      for (const user of destinataires) {
+        const url = buildUnsubscribeUrl(user.id_user, 'annonces');
+        try {
+          await file.addEmail({
+            to: user.email, subject: title, html: withUnsubscribeFooter(html, url, 'annonces'),
+            texteBrut: `${title}\n\n${message}\n\n--\nTala DZ — taladz.com\nNe plus recevoir ces annonces : ${url}`,
+            headers: unsubscribeHeaders(url)
+          });
+          enFile++;
+        } catch (err) {
+          logger.warn(`Annonce non mise en file pour ${maskEmail(user.email)}:`, err.message);
+        }
+      }
+      logger.info(`Annonce « ${title} » : ${enFile} e-mail(s) mis en file d’envoi`);
+      return { envoyes: enFile, echecs: destinataires.length - enFile, erreur: null };
+    }
+
     let envoyes = 0;
     let echecs = 0;
     let derniereErreur = null;

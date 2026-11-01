@@ -221,7 +221,8 @@ class CommentaireController extends BaseController {
    */
   async deleteCommentaire(req, res) {
     try {
-      await this.service.deleteCommentaire(req.resource, req.user?.id_user);
+      // Administration ou modération : pas de contrôle de l'auteur (avant : refus, puis erreur 500)
+      await this.service.deleteCommentaire(req.resource, this._estModeration(req) ? undefined : req.user?.id_user);
 
       return this._sendMessage(res, req.t('comment.deleted'));
     } catch (error) {

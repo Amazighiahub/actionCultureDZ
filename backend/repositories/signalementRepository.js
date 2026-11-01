@@ -4,6 +4,9 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const AppError = require('../utils/appError');
+const { invalidateUserSession } = require('../utils/sessionCache');
+const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 
 class SignalementRepository extends BaseRepository {
   constructor(models) {
@@ -159,11 +162,21 @@ class SignalementRepository extends BaseRepository {
       case 'suspension_temporaire':
       case 'suspension_permanente':
         if (signalement.type_entite === 'user' && this.models.User) {
+          // Un compte administrateur ne se sanctionne pas par un signalement
+          const cible = await this.models.User.findByPk(signalement.id_entite, {
+            attributes: ['id_user', 'id_type_user'],
+            include: this.models.Role ? [{ model: this.models.Role, as: 'Roles', attributes: ['nom_role'], through: { attributes: [] } }] : []
+          });
+          if (cible && (cible.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR || cible.Roles?.some(r => r.nom_role === 'Administrateur'))) {
+            throw AppError.forbidden('Un compte administrateur ne peut pas être sanctionné par un signalement');
+          }
           const newStatut = action === 'suspension_temporaire' ? 'suspendu' : 'banni';
+          // Session coupée tout de suite (avant : encore valable 15 min en cache, et le renouvellement aussi)
           await this.models.User.update(
-            { statut: newStatut },
+            { statut: newStatut, refresh_token: null, refresh_token_expires: null },
             { where: { id_user: signalement.id_entite } }
           );
+          await invalidateUserSession(signalement.id_entite);
         }
         break;
 

@@ -273,6 +273,7 @@ const DashboardPro = () => {
       switch (type) {
         case 'oeuvre':
           return (
+            <>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>{td(item.TypeOeuvre?.nom_type) || td(item.type_oeuvre?.nom_type) || t('common.uncategorized', 'Non catégorisé')}</span>
               {typeof item.vues === 'number' &&
@@ -290,7 +291,14 @@ const DashboardPro = () => {
               <Badge variant={item.statut === 'publie' ? 'default' : 'secondary'}>
                 {libelleStatutOeuvre(item.statut, t)}
               </Badge>
-            </div>);
+            </div>
+            {/* Refusée : ce qu'il faut corriger avant de la renvoyer */}
+            {item.statut === 'rejete' && typeof item.raison_rejet === 'string' && item.raison_rejet.trim() &&
+            <p className="text-sm text-destructive mt-1 whitespace-pre-line" dir="auto">
+                {t('dashboardpro.motifRefus', 'Motif du refus')} : {item.raison_rejet}
+              </p>
+            }
+            </>);
 
         case 'evenement':
           return (
@@ -388,25 +396,31 @@ const DashboardPro = () => {
             <Button
               variant="ghost"
               size="sm"
+              aria-label={t('common.view', 'Voir')}
+              title={t('common.view', 'Voir')}
               onClick={() => onView(item)}>
 
-              <Eye className="h-4 w-4" />
+              <Eye className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
+              aria-label={t('common.edit', 'Modifier')}
+              title={t('common.edit', 'Modifier')}
               onClick={() => onEdit(item)}>
 
-              <Edit className="h-4 w-4" />
+              <Edit className="h-4 w-4" aria-hidden="true" />
             </Button>
             {onDelete &&
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onDelete(item)}
+              aria-label={t('common.delete', 'Supprimer')}
+              title={t('common.delete', 'Supprimer')}
               className="text-destructive hover:text-destructive">
 
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
             </Button>
             }
           </div>
@@ -650,22 +664,23 @@ const DashboardPro = () => {
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <div className="border-b">
-                <TabsList className="w-full justify-start h-auto p-0 bg-transparent">
-                  <TabsTrigger value="oeuvres" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                {/* Défilement horizontal sur téléphone : 5 onglets ne tiennent pas sur 360 px */}
+                <TabsList className="w-full justify-start h-auto p-0 bg-transparent overflow-x-auto flex-nowrap">
+                  <TabsTrigger value="oeuvres" className="shrink-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                     <BookOpen className="h-4 w-4 me-2" />{t("dashboardpro.uvres_1")}
 
                   </TabsTrigger>
-                  <TabsTrigger value="evenements" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <TabsTrigger value="evenements" className="shrink-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                     <Calendar className="h-4 w-4 me-2" />{t("dashboardpro.vnements_1")}
 
                   </TabsTrigger>
-                  <TabsTrigger value="services" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <TabsTrigger value="services" className="shrink-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                     <Briefcase className="h-4 w-4 me-2" />{t("dashboardpro.services_1")}
                   </TabsTrigger>
-                  <TabsTrigger value="artisanat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <TabsTrigger value="artisanat" className="shrink-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                     <Hammer className="h-4 w-4 me-2" />{t("dashboardpro.artisanat", "Artisanat")}
                   </TabsTrigger>
-                  <TabsTrigger value="patrimoine" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <TabsTrigger value="patrimoine" className="shrink-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                     <MapPin className="h-4 w-4 me-2" />{t("dashboardpro.patrimoine")}
                   </TabsTrigger>
                 </TabsList>

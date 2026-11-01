@@ -19,7 +19,7 @@ class ArticleScientifiqueSubService extends BaseSubtypeService {
       numero: ds.numero || null,
       pages: ds.pages || null,
       issn: ds.issn || null,
-      impact_factor: ds.impact_factor != null ? parseFloat(ds.impact_factor) : null,
+      impact_factor: BaseSubtypeService.nombre(ds.impact_factor),
       peer_reviewed: ds.peer_reviewed !== false,
       open_access: ds.open_access === true,
       resume: ds.resume || null,
@@ -37,7 +37,7 @@ class ArticleScientifiqueSubService extends BaseSubtypeService {
     if (ds.numero !== undefined) data.numero = ds.numero;
     if (ds.pages !== undefined) data.pages = ds.pages;
     if (ds.issn !== undefined) data.issn = ds.issn;
-    if (ds.impact_factor !== undefined) data.impact_factor = parseFloat(ds.impact_factor);
+    if (ds.impact_factor !== undefined) data.impact_factor = BaseSubtypeService.nombre(ds.impact_factor);
     if (ds.peer_reviewed !== undefined) data.peer_reviewed = ds.peer_reviewed;
     if (ds.open_access !== undefined) data.open_access = ds.open_access;
     if (ds.resume !== undefined) data.resume = ds.resume;

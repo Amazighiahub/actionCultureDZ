@@ -13,7 +13,7 @@ class FilmSubService extends BaseSubtypeService {
   _buildCreateData(oeuvreId, ds) {
     return {
       id_oeuvre: oeuvreId,
-      duree_minutes: ds.duree_minutes != null ? parseInt(ds.duree_minutes, 10) : null,
+      duree_minutes: BaseSubtypeService.nombre(ds.duree_minutes, true),
       realisateur: ds.realisateur || null,
       id_genre: ds.id_genre || null
     };
@@ -21,7 +21,7 @@ class FilmSubService extends BaseSubtypeService {
 
   _buildUpdateData(ds) {
     const data = {};
-    if (ds.duree_minutes !== undefined) data.duree_minutes = parseInt(ds.duree_minutes, 10);
+    if (ds.duree_minutes !== undefined) data.duree_minutes = BaseSubtypeService.nombre(ds.duree_minutes, true);
     if (ds.realisateur !== undefined) data.realisateur = ds.realisateur;
     if (ds.id_genre !== undefined) data.id_genre = ds.id_genre;
     return data;

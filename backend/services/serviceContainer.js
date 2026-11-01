@@ -91,7 +91,8 @@ class ServiceContainer {
         this._repositories.oeuvre,
         {
           models: this._models,
-          cache: this._cache
+          cache: this._cache,
+          notificationService: this.notificationService
         }
       ));
     }

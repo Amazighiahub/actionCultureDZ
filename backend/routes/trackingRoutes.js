@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const VueController = require('../controllers/vueController');
+const { viewLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // Factory function qui reçoit les modèles et middlewares
 const initTrackingRoutes = (models, authMiddleware) => {
@@ -80,12 +81,14 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // Enregistrer une vue (authentification optionnelle)
   router.post('/view',
     optionalAuth,
+    viewLimiter,
     (req, res) => vueController.trackView(req, res)
   );
 
   // Enregistrer une vue pour une entité spécifique
   router.post('/:type/:id/view',
     optionalAuth,
+    viewLimiter,
     validateEntityType,
     checkEntityExists,
     async (req, res) => {
@@ -144,7 +147,10 @@ const initTrackingRoutes = (models, authMiddleware) => {
     async (req, res) => {
       try {
         const { type } = req.params;
-        const { limit = 10, periode = '7j' } = req.query;
+        const { periode = '7j' } = req.query;
+        // Borné à 50 (sans borne, ?limit=100000 regroupait toute la table des vues)
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+        const Op = models.Sequelize.Op;
         
         // Calculer la date de début
         const dateDebut = new Date();
@@ -175,36 +181,37 @@ const initTrackingRoutes = (models, authMiddleware) => {
           },
           group: ['id_entite'],
           order: [[models.Vue.sequelize.literal('views'), 'DESC']],
-          limit: parseInt(limit)
+          limit
         });
 
-        // Enrichir avec les données des entités
+        // Enrichir (contenus publiés seulement) avec les données des entités
         const entityIds = popular.map(p => p.dataValues.id_entite);
         let entities = [];
 
         switch (type) {
           case 'oeuvre':
             entities = await models.Oeuvre.findAll({
-              where: { id_oeuvre: entityIds },
+              where: { id_oeuvre: entityIds, statut: 'publie' },
               attributes: ['id_oeuvre', 'titre']
             });
             break;
           case 'evenement':
             entities = await models.Evenement.findAll({
-              where: { id_evenement: entityIds },
+              where: { id_evenement: entityIds, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
               attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'image_url']
             });
             break;
           case 'lieu':
             entities = await models.Lieu.findAll({
-              where: { id_lieu: entityIds },
+              where: { id_lieu: entityIds, statut: 'publie' },
               attributes: ['id_lieu', 'nom']
             });
             break;
           case 'artisanat':
             entities = await models.Artisanat.findAll({
               where: { id_artisanat: entityIds },
-              attributes: ['id_artisanat', 'id_oeuvre']
+              attributes: ['id_artisanat', 'id_oeuvre'],
+              include: [{ model: models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }]
             });
             break;
         }
@@ -223,12 +230,12 @@ const initTrackingRoutes = (models, authMiddleware) => {
             ...p.dataValues,
             entity
           };
-        });
+        }).filter(r => r.entity);
 
         res.json({
           success: true,
           data: results,
-          params: { type, limit: parseInt(limit), periode }
+          params: { type, limit, periode }
         });
       } catch (error) {
         console.error('Erreur récupération populaires:', error);

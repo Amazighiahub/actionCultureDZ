@@ -21,7 +21,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { httpClient } from '@/services/httpClient';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
-type Action = 'creer' | 'inscrire' | 'deja_inscrit' | 'doublon' | 'invalide';
+type Action = 'inviter' | 'deja_inscrit' | 'doublon' | 'invalide';
 interface LigneApercu {
   ligne: number;
   nom: string;
@@ -40,7 +40,7 @@ interface Apercu {
 }
 interface Bilan { comptes_crees: number; inscrits: number; invitations: number; erreurs: string[] }
 
-const IMPORTABLES: Action[] = ['creer', 'inscrire'];
+const IMPORTABLES: Action[] = ['inviter'];
 
 interface Props {
   evenementId: number;
@@ -109,8 +109,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
   });
 
   const libelleAction: Record<Action, string> = {
-    creer: t('pro.participants.import.creer', 'Nouveau compte'),
-    inscrire: t('pro.participants.import.inscrire', 'Compte existant'),
+    inviter: t('pro.participants.import.inviter', 'À inviter'),
     deja_inscrit: t('pro.participants.import.dejaInscrit', 'Déjà inscrit'),
     doublon: t('pro.participants.import.doublon', 'Email en double'),
     invalide: t('pro.participants.import.invalide', 'Email non valable'),
@@ -128,7 +127,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
             {t('pro.participants.import.titre', 'Importer une liste d’inscriptions')}
           </DialogTitle>
           <DialogDescription>
-            {t('pro.participants.import.description', 'Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Les personnes sont inscrites « En attente » : vous confirmez ensuite.')}
+            {t('pro.participants.import.descriptionInvitation', 'Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Chaque personne reçoit une invitation et confirme elle-même son inscription ; vous la validez ensuite.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -229,7 +228,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
             <div className="space-y-2" role="status">
               <p className="font-medium">{t('pro.participants.import.termine', 'Import terminé')}</p>
               <ul className="text-sm list-disc ps-5">
-                <li>{t('pro.participants.import.bilanInscrits', '{{n}} personne(s) inscrite(s) « En attente »', { n: bilan.inscrits })}</li>
+                <li>{t('pro.participants.import.bilanInvites', '{{n}} personne(s) invitée(s), en attente de leur confirmation', { n: bilan.inscrits })}</li>
                 <li>{t('pro.participants.import.bilanComptes', '{{n}} compte(s) créé(s)', { n: bilan.comptes_crees })}</li>
                 <li>{t('pro.participants.import.bilanInvitations', '{{n}} invitation(s) envoyée(s)', { n: bilan.invitations })}</li>
               </ul>

@@ -426,7 +426,9 @@ class OeuvreRepository extends BaseRepository {
     return this.update(oeuvreId, {
       statut: 'publie',
       date_validation: new Date(),
-      validateur_id: validatorId
+      validateur_id: validatorId,
+      // Motif d'un refus précédent : plus d'actualité une fois l'œuvre publiée
+      raison_rejet: null
     }, options);
   }
 

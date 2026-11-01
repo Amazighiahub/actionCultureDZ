@@ -11,6 +11,25 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { withTranslation, type WithTranslation } from 'react-i18next';
+import { estErreurDeVersion, rechargerPourNouvelleVersion } from '@/utils/rechargementVersion';
+
+/**
+ * Textes de l'écran d'erreur global, sans i18next (qui peut être la cause de la panne) : langue lue
+ * dans le stockage du navigateur. Avant : toujours en français.
+ */
+const TEXTES_GLOBAUX = {
+  fr: { titre: 'Une erreur est survenue', texte: 'L’application a rencontré un problème inattendu. Veuillez recharger la page pour continuer.', bouton: 'Recharger la page' },
+  ar: { titre: 'حدث خطأ', texte: 'واجه التطبيق مشكلة غير متوقعة. يرجى إعادة تحميل الصفحة للمتابعة.', bouton: 'إعادة تحميل الصفحة' },
+  en: { titre: 'Something went wrong', texte: 'The application ran into an unexpected problem. Please reload the page to continue.', bouton: 'Reload the page' }
+};
+const langueGlobale = (): keyof typeof TEXTES_GLOBAUX => {
+  try {
+    const l = (localStorage.getItem('i18nextLng') || document.documentElement.lang || 'fr').slice(0, 2);
+    return l === 'ar' || l === 'en' ? l : 'fr';
+  } catch {
+    return 'fr';
+  }
+};
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -42,6 +61,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Morceau de page d'une ancienne version (mise en ligne pendant la visite) : rechargement
+    if (estErreurDeVersion(error) && rechargerPourNouvelleVersion()) return;
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
@@ -60,8 +81,11 @@ class ErrorBoundary extends Component<Props, State> {
    * Résiste même si shadcn, i18n ou le theme provider sont cassés.
    */
   private renderGlobalFallback() {
+    const langue = langueGlobale();
+    const textes = TEXTES_GLOBAUX[langue];
     return (
       <div
+        dir={langue === 'ar' ? 'rtl' : 'ltr'}
         style={{
           minHeight: '100vh',
           display: 'flex',
@@ -90,12 +114,11 @@ class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.75rem', color: '#111' }}>
-            Une erreur est survenue
+            {textes.titre}
           </h1>
 
           <p style={{ color: '#6b7280', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-            L&apos;application a rencontré un problème inattendu.
-            Veuillez recharger la page pour continuer.
+            {textes.texte}
           </p>
 
           {IS_DEV && this.state.error && (
@@ -131,7 +154,7 @@ class ErrorBoundary extends Component<Props, State> {
               cursor: 'pointer',
             }}
           >
-            Recharger la page
+            {textes.bouton}
           </button>
         </div>
       </div>
@@ -152,7 +175,8 @@ class ErrorBoundary extends Component<Props, State> {
             {t('shared.errorBoundary.title', 'Une erreur est survenue')}
           </h2>
           <p className="text-muted-foreground mb-4">
-            {this.state.error?.message || t('shared.errorBoundary.unexpected', 'Erreur inattendue')}
+            {/* Message technique (« Minified React error… ») seulement en développement */}
+            {(IS_DEV && this.state.error?.message) || t('shared.errorBoundary.unexpected', 'Erreur inattendue')}
           </p>
 
           {IS_DEV && this.state.errorInfo && (

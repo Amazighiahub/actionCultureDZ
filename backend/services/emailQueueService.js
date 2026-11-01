@@ -49,7 +49,8 @@ class EmailQueueService {
   async initialize() {
     try {
       // Queue principale pour les emails
-      this.queues.email = new Bull('email-queue', this.redisConfig);
+      // Au plus 5 e-mails par seconde : envoyés tous ensemble, une partie était refusée par la messagerie
+      this.queues.email = new Bull('email-queue', this.redisConfig, { limiter: { max: 5, duration: 1000 } });
       
       // Queue pour les notifications
       this.queues.notification = new Bull('notification-queue', this.redisConfig);
@@ -81,12 +82,13 @@ class EmailQueueService {
     // NOTE: emailService.sendEmail(to, subject, html, attachments)
     // Si seul `text` est fourni, on l'encapsule en HTML minimal.
     this.queues.email.process('send-email', async (job) => {
-      const { to, subject, text, html, attachments } = job.data;
+      const { to, subject, text, html, attachments, texteBrut, headers } = job.data;
 
       logger.info(`📧 Traitement email: ${subject} → ${maskEmail(to)}`);
 
       const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
-      const result = await emailService.sendEmail(to, subject, body, attachments);
+      // texteBrut / headers : version texte et en-têtes de désabonnement (annonces de l'administration)
+      const result = await emailService.sendEmail(to, subject, body, attachments, texteBrut || null, headers ? { headers } : {});
 
       if (!result.success) {
         throw new Error(result.error || 'Échec envoi email');
@@ -227,7 +229,8 @@ class EmailQueueService {
         delay: 5000 // 5 secondes
       },
       removeOnComplete: true,
-      removeOnFail: false
+      // 500 derniers échecs gardés pour diagnostic (avant : tous, avec le contenu HTML, sans limite)
+      removeOnFail: 500
     };
 
     const job = await this.queues.email.add(

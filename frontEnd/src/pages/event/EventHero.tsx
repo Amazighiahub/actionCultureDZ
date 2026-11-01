@@ -79,7 +79,7 @@ const EventHero: React.FC<EventHeroProps> = ({
             </div>
 
             {/* Titre */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif">
+            <h1 dir="auto" className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif">
               {td(event.nom_evenement)}
             </h1>
 

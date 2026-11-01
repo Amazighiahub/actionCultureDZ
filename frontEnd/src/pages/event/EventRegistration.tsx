@@ -85,7 +85,7 @@ interface EventRegistrationProps {
   onRegister: (data?: InscriptionPayload) => Promise<boolean>;
   onUnregister?: () => Promise<boolean>;
   isRegistered?: boolean;
-  /** statut_participation renvoyé par l'API (inscrit, confirme, present, absent, annule) */
+  /** statut_participation renvoyé par l'API (invitation, inscrit, confirme, present, absent, annule) */
   registrationStatus?: string;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
@@ -335,7 +335,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
 
   // Badge de statut d'inscription
   const getStatusBadge = () => {
-    if (!isRegistered) return null;
+    if (!isRegistered || registrationStatus === 'invitation') return null;
 
     const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
       pending: {
@@ -533,6 +533,38 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               </Link>
             </Button>
           </>
+        ) : isRegistered && registrationStatus === 'invitation' ? (
+          // Ajouté par l'organisateur depuis sa liste (import) : rien n'est fait sans l'accord de la personne
+          <div className="w-full space-y-3" role="region" aria-label={t('event.registration.invitationTitle', 'Confirmez votre inscription')}>
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                {t('event.registration.invitationTitle', 'Confirmez votre inscription')}
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                {t('event.registration.invitationDesc', 'L’organisateur a transmis votre demande d’inscription. Vous n’êtes inscrit(e) que si vous la confirmez.')}
+              </p>
+            </div>
+            <Button
+              className="w-full"
+              disabled={isSubmitting}
+              onClick={async () => {
+                setIsSubmitting(true);
+                try { await onRegister(); } finally { setIsSubmitting(false); }
+              }}
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" /> : <CheckCircle className="h-4 w-4 me-2" aria-hidden="true" />}
+              {t('event.registration.invitationAccept', 'Confirmer mon inscription')}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={isSubmitting}
+              onClick={async () => { if (onUnregister) await onUnregister(); }}
+            >
+              <XCircle className="h-4 w-4 me-2" aria-hidden="true" />
+              {t('event.registration.invitationDecline', 'Refuser')}
+            </Button>
+          </div>
         ) : isRegistered && statutAffiche === 'refused' ? (
           <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
             <XCircle className="h-5 w-5 text-red-600 mx-auto mb-1" aria-hidden="true" />

@@ -36,38 +36,20 @@ export const useRTL = (languageParam?: string) => {
   
   // Classes pré-calculées basées sur isRtl
   const rtlClasses = useMemo(() => ({
-    // Text alignment
-    textStart: isRtl ? 'text-right' : 'text-left',
-    textEnd: isRtl ? 'text-left' : 'text-right',
+    // Classes logiques (début / fin du texte), justes dans les deux sens d'écriture. Avant : mr-/ml-,
+    // pr-/pl-, text-right/left selon la langue — or index.css retourne déjà ces classes en arabe :
+    // marges et alignements repassaient du mauvais côté (inversés deux fois).
+    textStart: 'text-start',
+    textEnd: 'text-end',
     textCenter: 'text-center',
     
     // Margins
-    marginStart: (value: number | string) => {
-      if (typeof value === 'string') {
-        return isRtl ? `mr-${value}` : `ml-${value}`;
-      }
-      return isRtl ? `mr-${value}` : `ml-${value}`;
-    },
-    marginEnd: (value: number | string) => {
-      if (typeof value === 'string') {
-        return isRtl ? `ml-${value}` : `mr-${value}`;
-      }
-      return isRtl ? `ml-${value}` : `mr-${value}`;
-    },
+    marginStart: (value: number | string) => `ms-${value}`,
+    marginEnd: (value: number | string) => `me-${value}`,
     
     // Paddings
-    paddingStart: (value: number | string) => {
-      if (typeof value === 'string') {
-        return isRtl ? `pr-${value}` : `pl-${value}`;
-      }
-      return isRtl ? `pr-${value}` : `pl-${value}`;
-    },
-    paddingEnd: (value: number | string) => {
-      if (typeof value === 'string') {
-        return isRtl ? `pl-${value}` : `pr-${value}`;
-      }
-      return isRtl ? `pl-${value}` : `pr-${value}`;
-    },
+    paddingStart: (value: number | string) => `ps-${value}`,
+    paddingEnd: (value: number | string) => `pe-${value}`,
     
     // Flex
     // dir="rtl" (posé sur <html>) inverse déjà les rangées flex : ajouter flex-row-reverse

@@ -100,7 +100,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold">
+              <h1 dir="auto" className="text-3xl lg:text-5xl font-bold">
                 {titre}
               </h1>
               {mainContributors.length > 0 && (

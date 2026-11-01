@@ -199,7 +199,14 @@ class ServiceService extends BaseService {
     if (data.description !== undefined) updateData.description = mergeTranslations(existing.description, data.description);
     if (data.type_service || data.typeService) updateData.type_service = data.type_service || data.typeService;
     if (data.disponible !== undefined) updateData.disponible = data.disponible;
-    if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
+    if (data.id_lieu || data.lieuId) {
+      // Lieu inexistant : message clair (avant : erreur 500 de clé étrangère)
+      const lieuId = data.id_lieu || data.lieuId;
+      if (this.models?.Lieu && !(await this.models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] }))) {
+        throw this._validationError("Le lieu spécifié n'existe pas");
+      }
+      updateData.id_lieu = lieuId;
+    }
     if (data.latitude !== undefined) updateData.latitude = data.latitude;
     if (data.longitude !== undefined) updateData.longitude = data.longitude;
     if (data.adresse) updateData.adresse = mergeTranslations(existing.adresse, data.adresse);
@@ -213,9 +220,13 @@ class ServiceService extends BaseService {
 
     // Un service déjà validé dont le contenu public change repasse en modération
     // (sinon un pro pourrait faire valider un contenu puis le remplacer).
+    // Lieu, type et position comptent aussi (un service pouvait être déplacé sur un autre lieu sans
+    // relecture) ; horaires, tarifs et disponibilité restent modifiables sans repasser en attente.
     const PUBLIC_FIELDS = ['nom', 'description', 'site_web', 'email', 'telephone', 'photo_url', 'adresse'];
+    const POSITION = ['id_lieu', 'type_service', 'latitude', 'longitude'];
+    const positionChangee = POSITION.some(f => updateData[f] !== undefined && String(updateData[f]) !== String(existing[f] ?? ''));
     if (!isModerator && existing.statut === 'valide'
-        && PUBLIC_FIELDS.some(f => updateData[f] !== undefined)) {
+        && (PUBLIC_FIELDS.some(f => updateData[f] !== undefined) || positionChangee)) {
       updateData.statut = 'en_attente';
     }
     // Un service refusé, corrigé par son propriétaire, repart en validation

@@ -213,7 +213,9 @@ class EnvAdapter {
       
       // Maintenance
       maintenance: {
-        auditLogRetentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS),
+        // Au moins 12 mois, comme l'effacement des adresses IP (anonymizeOldLogs) : avant, 90 jours
+        // effaçaient les traces de suppression de compte et d'erreurs des tâches au bout de 3 mois
+        auditLogRetentionDays: Math.max(365, parseInt(process.env.AUDIT_LOG_RETENTION_DAYS) || 365),
         tempFilesRetentionHours: parseInt(process.env.TEMP_FILES_RETENTION_HOURS)
       }
     };

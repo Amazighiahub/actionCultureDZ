@@ -475,6 +475,10 @@ class ProfessionnelService {
       where: { id_evenement: evenementId, id_user: userId }
     });
     if (!participation) return { error: 'participantNotFound' };
+    // Invitation (import d'une liste) : confirmée seulement après l'accord de la personne
+    if (participation.statut_participation === 'invitation' && ['confirmer', 'marquer_present', 'marquer_absent'].includes(action)) {
+      return { error: 'invitationEnAttente' };
+    }
 
     const updates = { date_validation: new Date(), valide_par: organisateurId };
 

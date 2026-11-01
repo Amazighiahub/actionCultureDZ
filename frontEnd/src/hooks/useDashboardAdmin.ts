@@ -456,31 +456,35 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
   // ACTIONS ŒUVRES
   // ========================================
 
-  const validateOeuvre = async ({ oeuvreId, validated }: { oeuvreId: number; validated: boolean }) => {
+  // Refus : motif obligatoire (envoyé à l'auteur)
+  const validateOeuvre = async ({ oeuvreId, validated, motif }: { oeuvreId: number; validated: boolean; motif?: string }) => {
     try {
-      const response = await adminService.validateOeuvre(oeuvreId, validated);
+      const response = await adminService.validateOeuvre(oeuvreId, validated, motif);
       if (response.success) {
         toast({
           title: t('toasts.success'),
           description: validated ? t('toasts.oeuvreValidated') : t('toasts.oeuvreRejected')
         });
-        await loadPendingOeuvres();
+        // Les deux listes : sinon l'onglet Œuvres gardait l'ancien statut
+        await Promise.all([loadPendingOeuvres(), loadOeuvres()]);
       }
     } catch (error) {
       toast({
         title: t('toasts.error'),
-        description: t('toasts.oeuvreValidationFailed'),
+        // Message du serveur (œuvre déjà traitée, motif manquant…) plutôt qu'un échec générique
+        description: error instanceof Error && error.message ? error.message : t('toasts.oeuvreValidationFailed'),
         variant: "destructive"
       });
     }
   };
 
-  const updateOeuvreStatus = async (oeuvreId: number, status: string) => {
+  const updateOeuvreStatus = async (oeuvreId: number, status: string, motif?: string) => {
     try {
       const endpoint = status === 'rejete' 
         ? `/oeuvres/${oeuvreId}/reject` 
         : `/oeuvres/${oeuvreId}/validate`;
-      const response = await httpClient.post(endpoint, { statut: status });
+      // Le serveur lit « motif » (refus) ; « statut » était ignoré et le refus toujours en erreur 400
+      const response = await httpClient.post(endpoint, status === 'rejete' ? { motif } : {});
       if (response.success) {
         toast({
           title: t('toasts.success'),

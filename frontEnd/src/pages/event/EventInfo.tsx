@@ -62,7 +62,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
+              <p dir="auto" className="whitespace-pre-line text-muted-foreground leading-relaxed">
                 {td(event.description)}
               </p>
             </div>

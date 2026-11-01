@@ -295,6 +295,9 @@ class ParcoursRepository extends BaseRepository {
 
     return this.models.Lieu.findAll({
       where: {
+        // Étapes possibles : sites publiés (ni brouillons, ni archives, ni points de visite internes)
+        statut: 'publie',
+        id_lieu_parent: null,
         latitude: { [Op.between]: [bbox.minLat, bbox.maxLat] },
         longitude: { [Op.between]: [bbox.minLng, bbox.maxLng] }
       },

@@ -504,7 +504,8 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
 
   const rejectMutation = useReactMutation({
     mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
-      const response = await httpClient.post(`/oeuvres/${id}/reject`, { raison: reason });
+      // Le serveur lit « motif » (avec « raison », le refus était toujours en erreur 400)
+      const response = await httpClient.post(`/oeuvres/${id}/reject`, { motif: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },

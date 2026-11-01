@@ -1422,7 +1422,8 @@
       "valide": "Publié",
       "rejete": "Refusé"
     },
-    "resubmitOeuvre": "Renvoyer après correction"
+    "resubmitOeuvre": "Renvoyer après correction",
+    "motifRefus": "Motif du refus"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -2025,7 +2026,15 @@
     "mediasFailedTitle": "Médias non envoyés",
     "mediasFailed": "{{count}} fichier(s) n'ont pas pu être envoyés. Ajoutez-les depuis votre tableau de bord.",
     "editTitle": "Modifier l’œuvre",
-    "editSubtitle": "Corrigez ou complétez votre œuvre, puis enregistrez."
+    "editSubtitle": "Corrigez ou complétez votre œuvre, puis enregistrez.",
+    "mediasEnregistres": "Médias déjà enregistrés",
+    "retirerMedia": "Retirer",
+    "retirerMediaTitre": "Retirer ce média ?",
+    "retirerMediaAide": "Il disparaît de la fiche de l’œuvre. Cette action est définitive.",
+    "mediaRetire": "Média retiré",
+    "brouillonRestaure": "Votre saisie a été restaurée",
+    "brouillonFichiers": "Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.",
+    "verifyUpdate": "Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -2844,6 +2853,19 @@
           "size": "Le fichier dépasse 5 Mo.",
           "read": "Fichier illisible."
         }
+      },
+      "propositions": {
+        "titre": "Propositions à relire ({{count}})",
+        "detail": "Textes du site",
+        "personnalite": "Personnalité à rattacher",
+        "ajout": "Nouveau {{genre}}",
+        "modif": "Modification d’un {{genre}}",
+        "monument": "monument",
+        "vestige": "vestige",
+        "acceptee": "Proposition publiée : son auteur est prévenu",
+        "refusee": "Proposition refusée : son auteur est prévenu",
+        "accepter": "Publier",
+        "refuserTitre": "Refuser la proposition"
       }
     },
     "overview": {
@@ -2924,6 +2946,11 @@
         "refuserTitre": "Refuser la demande",
         "refuserAide": "Le motif est envoyé au demandeur."
       }
+    },
+    "refus": {
+      "titre": "Refuser",
+      "aide": "Expliquez ce qu’il faut corriger : le motif est envoyé à l’auteur.",
+      "oeuvre": "Refuser l’œuvre"
     }
   },
   "wilayas": {
@@ -3205,7 +3232,11 @@
         "invalid": "Réponse invalide",
         "between": "Entre {{min}} et {{max}}",
         "incomplete": "Certaines réponses sont manquantes ou invalides."
-      }
+      },
+      "invitationTitle": "Confirmez votre inscription",
+      "invitationDesc": "L’organisateur a transmis votre demande d’inscription. Vous n’êtes inscrit(e) que si vous la confirmez.",
+      "invitationAccept": "Confirmer mon inscription",
+      "invitationDecline": "Refuser"
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -3483,21 +3514,17 @@
       "import": {
         "bouton": "Importer une liste (Excel)",
         "titre": "Importer une liste d’inscriptions",
-        "description": "Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Les personnes sont inscrites « En attente » : vous confirmez ensuite.",
         "fichier": "Classeur Excel (.xlsx)",
         "aide": "Rien n’est enregistré à cette étape : vous verrez d’abord la liste.",
         "voir": "Voir la liste",
         "resume": "{{n}} personne(s) cochée(s) sur {{total}}.",
         "colonnesIgnorees": "Colonnes non reprises :",
-        "creer": "Nouveau compte",
-        "inscrire": "Compte existant",
         "dejaInscrit": "Déjà inscrit",
         "doublon": "Email en double",
         "invalide": "Email non valable",
-        "inviter": "Envoyer à chaque nouveau compte un email pour choisir son mot de passe (lien valable 7 jours)",
+        "inviter": "À inviter",
         "confirmer": "Inscrire {{n}} personne(s)",
         "termine": "Import terminé",
-        "bilanInscrits": "{{n}} personne(s) inscrite(s) « En attente »",
         "bilanComptes": "{{n}} compte(s) créé(s)",
         "bilanInvitations": "{{n}} invitation(s) envoyée(s)",
         "erreurLecture": "Le fichier n’a pas pu être lu.",
@@ -3506,7 +3533,9 @@
         "metier": "métier : {{metier}}",
         "profilDe": "Profil de {{nom}}",
         "choisir": "Choisir…",
-        "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire."
+        "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire.",
+        "descriptionInvitation": "Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Chaque personne reçoit une invitation et confirme elle-même son inscription ; vous la validez ensuite.",
+        "bilanInvites": "{{n}} personne(s) invitée(s), en attente de leur confirmation"
       },
       "messages": {
         "bouton": "Écrire aux participants",
@@ -3658,7 +3687,8 @@
     "present": "Présent",
     "absent": "Absent",
     "pendingValidation": "En attente de validation",
-    "banned": "Banni"
+    "banned": "Banni",
+    "invitation": "Invitation envoyée"
   },
   "patrimoine": {
     "historique": {
@@ -4022,6 +4052,10 @@
     },
     "personnalites": {
       "liees": "Personnalités liées à ce site"
+    },
+    "proposition": {
+      "envoyee": "Proposition envoyée",
+      "relecture": "Merci ! Elle sera publiée après relecture par l’équipe."
     }
   },
   "toasts": {

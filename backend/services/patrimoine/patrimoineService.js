@@ -866,10 +866,14 @@ class PatrimoineService extends BaseService {
       throw this._notFoundError(id);
     }
     if (!resultat.supprime) {
-      const err = new Error(`Ce site accueille ${resultat.evenements} événement(s)`);
+      const raisons = [
+        resultat.evenements ? `${resultat.evenements} événement(s)` : null,
+        resultat.services ? `${resultat.services} service(s) de professionnels (à déplacer ou retirer d'abord)` : null
+      ].filter(Boolean).join(' et ');
+      const err = new Error(`Ce site accueille ${raisons}`);
       err.statusCode = 409;
       err.code = 'LIEU_UTILISE';
-      err.data = { evenements: resultat.evenements };
+      err.data = { evenements: resultat.evenements, services: resultat.services };
       throw err;
     }
     this.logger.info(`Site patrimonial supprimé: ${id} (${resultat.points} point(s) de visite)`);

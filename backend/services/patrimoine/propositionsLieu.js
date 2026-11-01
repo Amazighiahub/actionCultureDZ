@@ -1,0 +1,145 @@
+/**
+ * Propositions de modification d'un site patrimoine (audit V7 M5 : « tout le monde propose, l'équipe valide »).
+ *
+ * L'équipe (administration, modération) et le créateur du site modifient directement. Toute autre
+ * personne envoie une proposition (textes du site, personnalité rattachée, monument ou vestige ajouté
+ * ou modifié), invisible sur le site tant que l'équipe ne l'a pas acceptée. Acceptée, elle passe par
+ * les mêmes fonctions qu'une modification directe (historique, notifications) ; refusée, le motif est
+ * envoyé à son auteur.
+ */
+const { estModeration } = require('../../utils/droits');
+const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+const { texteLisible } = require('../../helpers/i18n');
+const logger = require('../../utils/logger');
+const elements = require('./elementsLieu');
+
+const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif'];
+const LIBELLES = {
+  detail: 'une modification des textes de',
+  personnalite: 'une personnalité pour',
+  element_ajout: 'un ajout à',
+  element_modif: 'une modification de'
+};
+
+const erreur = (message, statusCode, code) => Object.assign(new Error(message), { statusCode, code });
+const lireJson = (v) => {
+  if (typeof v !== 'string') return v;
+  try { return JSON.parse(v); } catch { return v; }
+};
+
+/** true : la modification de ce compte doit passer par une proposition */
+async function doitProposer(models, user, idLieu) {
+  if (!user || estModeration(user)) return false;
+  const lieu = await models.Lieu.findByPk(idLieu, { attributes: ['id_lieu', 'id_createur'] });
+  if (!lieu) throw erreur('Site introuvable', 404, 'NOT_FOUND');
+  return Number(lieu.id_createur) !== Number(user.id_user);
+}
+
+/** Enregistre la proposition et prévient l'équipe */
+async function proposer(models, notificationService, { idLieu, user, action, donnees }) {
+  if (!ACTIONS.includes(action)) throw erreur('Action invalide', 400, 'VALIDATION_ERROR');
+  const [id] = await models.sequelize.query(
+    'INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees) VALUES (:lieu, :user, :action, :donnees)',
+    { replacements: { lieu: idLieu, user: user.id_user, action, donnees: JSON.stringify(donnees) } }
+  );
+  try {
+    const lieu = await models.Lieu.findByPk(idLieu, { attributes: ['nom'] });
+    const qui = [texteLisible(user.prenom), texteLisible(user.nom)].filter(Boolean).join(' ') || 'Un membre';
+    for (const idAdmin of await idsAdministrateurs(models)) {
+      await notifier(notificationService, idAdmin, {
+        titre: 'Proposition à relire',
+        message: `${qui} propose ${LIBELLES[action]} « ${texteLisible(lieu?.nom)} ».`,
+        url_action: '/admin/dashboard?tab=patrimoine', metadata: { id_lieu: idLieu, id_proposition: id }
+      });
+    }
+  } catch (e) {
+    logger.error('Notification de proposition de lieu :', { message: e.message });
+  }
+  return { id };
+}
+
+/** Propositions en attente, avec le site, l'auteur et le nom de la personnalité proposée */
+async function enAttente(models) {
+  const lignes = await models.sequelize.query(`SELECT p.id, p.id_lieu, p.action, p.donnees, p.date_creation,
+      l.nom AS lieu_nom, p.id_user, u.prenom, u.nom, u.email
+    FROM proposition_lieu p
+    JOIN lieu l ON l.id_lieu = p.id_lieu
+    JOIN user u ON u.id_user = p.id_user
+    WHERE p.statut = 'en_attente' ORDER BY p.id ASC`, { type: models.sequelize.QueryTypes.SELECT });
+  for (const ligne of lignes) {
+    ligne.donnees = lireJson(ligne.donnees) || {};
+    const idIntervenant = ligne.action === 'personnalite' ? Number(ligne.donnees.corps?.id_intervenant) : null;
+    if (idIntervenant && models.Intervenant) {
+      const p = await models.Intervenant.findByPk(idIntervenant, { attributes: ['nom', 'prenom'] });
+      ligne.donnees.intervenant = p ? [texteLisible(p.prenom), texteLisible(p.nom)].filter(Boolean).join(' ') : null;
+    }
+  }
+  return lignes;
+}
+
+/** Applique une proposition acceptée, comme une modification directe de son auteur */
+async function appliquer(models, notificationService, p) {
+  const { corps = {}, genre, idElement } = p.donnees;
+  switch (p.action) {
+    case 'detail':
+      if (!(await elements.enrichirDetail(models, notificationService, p.id_lieu, p.id_user, corps))) {
+        throw erreur('Proposition vide', 400, 'VALIDATION_ERROR');
+      }
+      return;
+    case 'personnalite':
+      await elements.rattacherPersonnalite(models, p.id_lieu, corps, p.id_user);
+      return;
+    case 'element_ajout':
+      await elements.ajouterElement(models, genre, p.id_lieu, corps, p.id_user);
+      return;
+    case 'element_modif':
+      await elements.modifierElement(models, genre, p.id_lieu, Number(idElement), corps);
+      return;
+    default:
+      throw erreur('Action invalide', 400, 'VALIDATION_ERROR');
+  }
+}
+
+/**
+ * Accepter (la modification est appliquée) ou refuser avec un motif ; l'auteur est prévenu.
+ * La proposition est verrouillée le temps de la décision (deux modérateurs en même temps : une seule passe).
+ */
+async function decider(models, notificationService, idProposition, decision, motif, idModerateur) {
+  if (!['acceptee', 'refusee'].includes(decision)) throw erreur('Décision invalide', 400, 'VALIDATION_ERROR');
+  const raison = String(motif || '').trim().slice(0, 1000);
+  if (decision === 'refusee' && !raison) throw erreur('Un motif de refus est requis', 400, 'VALIDATION_ERROR');
+  const sequelize = models.sequelize;
+
+  const p = await sequelize.transaction(async (transaction) => {
+    const [ligne] = await sequelize.query('SELECT * FROM proposition_lieu WHERE id = :id FOR UPDATE',
+      { replacements: { id: idProposition }, type: sequelize.QueryTypes.SELECT, transaction });
+    if (!ligne) throw erreur('Proposition introuvable', 404, 'NOT_FOUND');
+    if (ligne.statut !== 'en_attente') throw erreur('Cette proposition a déjà été traitée', 409, 'PROPOSITION_TRAITEE');
+    await sequelize.query(`UPDATE proposition_lieu SET statut = :statut, motif = :motif, id_moderateur = :moderateur,
+        date_decision = NOW() WHERE id = :id`,
+    { replacements: { statut: decision, motif: raison || null, moderateur: idModerateur, id: idProposition }, transaction });
+    return { ...ligne, donnees: lireJson(ligne.donnees) || {} };
+  });
+
+  if (decision === 'acceptee') {
+    try {
+      await appliquer(models, notificationService, p);
+    } catch (e) {
+      // Plus applicable (élément supprimé, personnalité déjà rattachée…) : la proposition reste à traiter
+      await sequelize.query("UPDATE proposition_lieu SET statut = 'en_attente', id_moderateur = NULL, date_decision = NULL WHERE id = :id",
+        { replacements: { id: idProposition } });
+      throw e;
+    }
+  }
+
+  const lieu = await models.Lieu.findByPk(p.id_lieu, { attributes: ['nom'] });
+  const nomLieu = texteLisible(lieu?.nom);
+  await notifier(notificationService, p.id_user, decision === 'acceptee'
+    ? { titre: 'Proposition acceptée', message: `Merci ! Votre proposition pour « ${nomLieu} » est publiée.`,
+      url_action: `/patrimoine/${p.id_lieu}`, metadata: { id_lieu: p.id_lieu } }
+    : { titre: 'Proposition non retenue', message: `Votre proposition pour « ${nomLieu} » n'a pas été retenue : ${raison.slice(0, 300)}`,
+      url_action: `/patrimoine/${p.id_lieu}`, metadata: { id_lieu: p.id_lieu } });
+  return { statut: decision };
+}
+
+module.exports = { ACTIONS, doitProposer, proposer, enAttente, decider };

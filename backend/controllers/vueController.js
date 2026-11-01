@@ -37,18 +37,6 @@ class VueController extends BaseController {
       }
 
       // Recuperer les infos de la requete
-      const sessionId = req.session?.id || req.cookies?.sessionId ||
-                       req.headers['x-session-id'] ||
-                       `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      if (!req.cookies?.sessionId && !req.headers['x-session-id'] && !req.session?.id) {
-        res.cookie('sessionId', sessionId, {
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production'
-        });
-      }
-
       const userAgent = req.get('User-Agent') || '';
       const rawIp = req.ip ||
                     req.connection?.remoteAddress ||
@@ -61,6 +49,21 @@ class VueController extends BaseController {
       const ipAddress = rawIp.includes(':')
         ? rawIp.split(':').slice(0, 3).join(':') + '::'
         : rawIp.replace(/\.\d+$/, '.0');
+
+      // Sans témoin de session (robot, script) : empreinte de l'adresse tronquée, du navigateur et du jour.
+      // Avant : une session nouvelle à chaque appel, chaque appel comptait une vue de plus.
+      const empreinte = () => 'anon-' + require('crypto').createHash('sha256')
+        .update(`${ipAddress}|${userAgent}|${new Date().toISOString().slice(0, 10)}`).digest('hex').slice(0, 24);
+      const sessionId = req.session?.id || req.cookies?.sessionId ||
+                       req.headers['x-session-id'] || empreinte();
+
+      if (!req.cookies?.sessionId && !req.headers['x-session-id'] && !req.session?.id) {
+        res.cookie('sessionId', sessionId, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production'
+        });
+      }
 
       // Une seule vue par session et par contenu : l'index unique (type_entite, id_entite, session_id)
       // s'applique à toutes les lignes (MySQL ignore sa condition is_unique). Revoir un article dans

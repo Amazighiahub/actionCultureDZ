@@ -98,6 +98,11 @@ module.exports = (_models, authMiddleware) => {
         const { organisation, created } = await get().create(req.body, req.user.id_user);
         res.status(created ? 201 : 200).json({ success: true, data: organisation });
       } catch (error) {
+        // Erreur attendue (organisation déjà sur Tala DZ → « C'est mon organisation ») : son code et son
+        // message ; avant, toujours « Server error » et la revendication n'était jamais découverte
+        if (error.statusCode && error.statusCode < 500) {
+          return res.status(error.statusCode).json({ success: false, error: error.message, code: error.code });
+        }
         const logger = require('../utils/logger');
         logger.error('Erreur création organisation:', error);
         res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Server error' });

@@ -112,7 +112,9 @@ const initLieuRoutes = (models) => {
     [
       query('latitude').isFloat({ min: -90, max: 90 }).withMessage((value, { req }) => req.t('validation.invalidLatitude')),
       query('longitude').isFloat({ min: -180, max: 180 }).withMessage((value, { req }) => req.t('validation.invalidLongitude')),
-      query('radius').optional().isFloat({ min: 0.1, max: 100 }).withMessage((value, { req }) => req.t('validation.invalidRadius'))
+      query('radius').optional().isFloat({ min: 0.1, max: 100 }).withMessage((value, { req }) => req.t('validation.invalidRadius')),
+      // Nom utilisé par le site
+      query('rayon').optional().isFloat({ min: 0.1, max: 100 }).withMessage((value, { req }) => req.t('validation.invalidRadius'))
     ],
     validationMiddleware.handleValidationErrors,
     lieuController.getLieuxProximite.bind(lieuController)
@@ -180,7 +182,9 @@ const initLieuRoutes = (models) => {
   // ========================================================================
 
   // Détails d'un lieu
+  // optionalAuth : un lieu non publié n'est visible que de son créateur et de la modération
   router.get('/:id', 
+    authMiddleware.optionalAuth,
     validationMiddleware.validateId('id'),
     lieuController.getLieuById.bind(lieuController)
   );

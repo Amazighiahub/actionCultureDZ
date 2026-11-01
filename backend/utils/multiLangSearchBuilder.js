@@ -78,8 +78,10 @@ function buildMultiLangSearch(sequelize, field, search, tableName = null, langua
   return safeLangs.map(lang => {
     // Hyphenated lang codes (tz-ltn, tz-tfng) need double quotes in MySQL JSON paths
     const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
+    // Sans majuscules ni accents : la valeur extraite du JSON est comparée en binaire (« palais » ne
+    // trouvait pas « Palais », ni « theatre » « Théâtre ») — la recherche des lieux ne trouvait presque rien
     return sequelize.literal(
-      `JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}')) LIKE ${safeSearch}`
+      `CONVERT(JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}')) USING utf8mb4) COLLATE utf8mb4_0900_ai_ci LIKE ${safeSearch}`
     );
   });
 }

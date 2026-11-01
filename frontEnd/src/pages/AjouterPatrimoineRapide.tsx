@@ -14,6 +14,7 @@
  * La localisation vient du site ; le point a sa propre position GPS (extérieur)
  * ou reprend celle du site avec un repère (intérieur : « 1er étage, salle 3 »).
  */
+import { queryClient, rafraichirTableauDeBord } from '@/lib/queryClient';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -244,6 +245,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
           variant: uploadFailed ? 'destructive' : 'default',
         });
 
+        // « Mes patrimoines » et la liste publique relus (sinon le nouveau site n'y apparaissait pas)
+        rafraichirTableauDeBord();
+        queryClient.invalidateQueries({ queryKey: ['patrimoine'] });
         navigate(`/patrimoine/${siteId}`);
       } else {
         // Gestion erreur 409 (doublon)

@@ -608,14 +608,27 @@ class ProgrammeService extends BaseService {
     return value;
   }
 
+  /** « 2026-11-20 » → « 20/11/2026 » ; '' si pas de jour */
+  _jourFr(p) {
+    const jour = this._dateProgramme(p.date_programme instanceof Date ? p.date_programme.toISOString() : p.date_programme, null);
+    if (!jour) return '';
+    const [annee, mois, j] = jour.split('-');
+    return `${j}/${mois}/${annee}`;
+  }
+
+  /** « 09:30:00 » → « 09:30 » (colonne TIME : new Date('09:30:00') donnait « Invalid Date ») */
+  _heureCourte(valeur) {
+    const h = this._toTimeOnly(valeur);
+    return typeof h === 'string' && /^\d{2}:\d{2}/.test(h) ? h.slice(0, 5) : '';
+  }
+
+  /** Activités par jour (clé « 20/11/2026 ») ; sans jour : clé « Sans date » */
   _groupByDay(programmes) {
     const byDay = {};
     programmes.forEach(p => {
-      if (p.heure_debut) {
-        const date = new Date(p.heure_debut).toLocaleDateString('fr-FR');
-        if (!byDay[date]) byDay[date] = [];
-        byDay[date].push(p);
-      }
+      const date = this._jourFr(p) || 'Sans date';
+      if (!byDay[date]) byDay[date] = [];
+      byDay[date].push(p);
     });
     return byDay;
   }
@@ -623,14 +636,16 @@ class ProgrammeService extends BaseService {
   formatProgrammesToCSV(programmes) {
     let csv = 'Date,Heure début,Heure fin,Titre,Description,Lieu,Type,Intervenants\n';
     const escapeCsv = (field) => (field ? csvCell(field) : '');
+    // Textes par langue (titre, lieu…) : la langue lisible, pas « [object Object] »
+    const lisible = (v) => (v && typeof v === 'object' ? texteLisible(v) : v);
 
     programmes.forEach(p => {
-      const date = p.heure_debut ? new Date(p.heure_debut).toLocaleDateString('fr-FR') : '';
-      const heureDebut = p.heure_debut ? new Date(p.heure_debut).toLocaleTimeString('fr-FR') : '';
-      const heureFin = p.heure_fin ? new Date(p.heure_fin).toLocaleTimeString('fr-FR') : '';
-      const lieu = p.Lieu?.nom || p.lieu_specifique || '';
-      const intervenants = p.Intervenants?.map(i => `${i.prenom} ${i.nom}`).join('; ') || '';
-      csv += `${escapeCsv(date)},${escapeCsv(heureDebut)},${escapeCsv(heureFin)},${escapeCsv(p.titre)},${escapeCsv(p.description)},${escapeCsv(lieu)},${escapeCsv(p.type_activite)},${escapeCsv(intervenants)}\n`;
+      const date = this._jourFr(p);
+      const heureDebut = this._heureCourte(p.heure_debut);
+      const heureFin = this._heureCourte(p.heure_fin);
+      const lieu = lisible(p.Lieu?.nom) || p.lieu_specifique || '';
+      const intervenants = p.Intervenants?.map(i => `${lisible(i.prenom) || ''} ${lisible(i.nom) || ''}`.trim()).join('; ') || '';
+      csv += `${escapeCsv(date)},${escapeCsv(heureDebut)},${escapeCsv(heureFin)},${escapeCsv(lisible(p.titre))},${escapeCsv(lisible(p.description))},${escapeCsv(lieu)},${escapeCsv(p.type_activite)},${escapeCsv(intervenants)}\n`;
     });
     return csv;
   }

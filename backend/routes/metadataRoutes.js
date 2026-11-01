@@ -5,6 +5,7 @@ const MetadataController = require('../controllers/metadataController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, param, query } = require('express-validator');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // ⚡ Import du middleware de validation de langue (CHEMIN CORRIGÉ)
 const { validateLanguage } = require('../middlewares/language');
@@ -426,15 +427,22 @@ const initMetadataRoutes = (models) => {
 
 
   // Créer un éditeur
+  // Tout compte vérifié (pour l'éditeur de son œuvre), limité à 20 créations par heure ; site web et
+  // e-mail contrôlés (avant : n'importe quel lien ou adresse, liste publique remplissable sans limite)
   router.post('/editeurs',
     authMiddleware.authenticate,
+    createContentLimiter,
     [
       body('nom').custom((value) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
       }).withMessage((value, { req }) => req.t('validation.invalidName')),
-      body('type_editeur').optional().isString()
+      body('type_editeur').optional().isString(),
+      body('site_web').optional({ values: 'falsy' }).isURL({ protocols: ['http', 'https'], require_protocol: true })
+        .withMessage((value, { req }) => req.t('validation.invalidWebsite')),
+      body('email').optional({ values: 'falsy' }).isEmail().withMessage((value, { req }) => req.t('validation.invalidEmail')),
+      body('telephone').optional({ values: 'falsy' }).isLength({ max: 30 })
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createEditeur.bind(metadataController)

@@ -139,10 +139,8 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-900 to-slate-900 flex flex-col items-center justify-center p-8">
-                          <Film className="h-24 w-24 text-purple-400/50 mb-4" />
-                          <h3 className="text-xl font-bold text-center line-clamp-3 text-purple-100">
-                            {titre}
-                          </h3>
+                          {/* Titre : affiché par le bandeau du bas (avant : deux fois, superposé) */}
+                          <Film className="h-24 w-24 text-purple-400/50 mb-4" aria-hidden="true" />
                         </div>
                       )}
 
@@ -361,7 +359,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 )}
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
+              <h1 dir="auto" className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
 
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
@@ -467,7 +465,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                     <FileText className="h-4 w-4 text-primary" />
                     {t('works.synopsis', 'Synopsis')}
                   </h3>
-                  <p className="leading-relaxed text-muted-foreground">
+                  <p dir="auto" className="leading-relaxed text-muted-foreground">
                     {description}
                   </p>
                 </CardContent>

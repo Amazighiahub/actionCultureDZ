@@ -340,6 +340,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const getStatusBadge = (statut: string) => {
     const config: Record<string, { color: string; icon: React.ElementType; label: string }> = {
+      // Ajouté par l'import d'une liste : la personne n'a pas encore confirmé
+      invitation: { color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', icon: Mail, label: t('status.invitation', 'Invitation envoyée') },
       inscrit: { color: 'bg-accent/15 text-accent', icon: Clock, label: t('status.pending', 'Inscrit') },
       confirme: { color: 'bg-primary/15 text-primary', icon: CheckCircle, label: t('status.validated', 'Confirmé') },
       present: { color: 'bg-primary/20 text-primary', icon: CheckCircle, label: t('status.present', 'Présent') },
@@ -418,6 +420,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('common.allStatuses', 'Tous les statuts')}</SelectItem>
+              <SelectItem value="invitation">{t('status.invitation', 'Invitation envoyée')}</SelectItem>
               <SelectItem value="inscrit">{t('status.pending', 'Inscrit')}</SelectItem>
               <SelectItem value="confirme">{t('status.validated', 'Confirmé')}</SelectItem>
               <SelectItem value="present">{t('status.present', 'Présent')}</SelectItem>
@@ -526,7 +529,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       {/* Mot de passe : bouton pour tout participant ; grisé quand la personne a déjà choisi
                           son mot de passe (l'email « Choisir mon mot de passe » ne servirait à rien) */}
                       {participant.statut_participation !== 'annule' && (() => {
-                        const aSonMotDePasse = participant.User.email_verifie !== false;
+                        // Invitation pas encore confirmée : l'email (demande de confirmation) peut être renvoyé
+                        const aSonMotDePasse = participant.User.email_verifie !== false && participant.statut_participation !== 'invitation';
                         return (
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             {aSonMotDePasse

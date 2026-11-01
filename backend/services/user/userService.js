@@ -20,6 +20,8 @@ const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('./userFileCleanup');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { pasTermine } = require('../../helpers/finEvenement');
+const { texteLisible } = require('../../helpers/i18n');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -211,6 +213,21 @@ class UserService extends BaseService {
       if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
         await this._clearRefreshToken(user.id_user, { transaction });
         throw this._forbiddenError('Compte désactivé ou suspendu');
+      }
+
+      // E-mail non vérifié : la session ouverte à l'inscription n'est pas prolongée (la connexion est déjà
+      // refusée dans ce cas ; avant, un compte à adresse inventée gardait une session sans fin).
+      // Administrateurs exemptés, comme à la connexion.
+      if (!user.email_verifie && process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
+        const admin = await this.models.User.findByPk(user.id_user, {
+          attributes: ['id_user'],
+          include: [{ model: this.models.Role, as: 'Roles', attributes: ['nom_role'], where: { nom_role: 'Administrateur' }, required: true }],
+          transaction
+        });
+        if (!admin) {
+          await this._clearRefreshToken(user.id_user, { transaction });
+          throw this._forbiddenError('Veuillez vérifier votre adresse email');
+        }
       }
 
       const newAccessToken = this._generateToken(user);
@@ -435,6 +452,16 @@ class UserService extends BaseService {
       throw this._forbiddenError('Impossible de supprimer un compte administrateur');
     }
 
+    // Événements à venir de ce compte : annulés, inscrits prévenus (avant : ils restaient publiés au nom
+    // d'« Utilisateur supprimé », le rappel partait et plus personne ne pouvait les annuler)
+    const aVenir = await this._evenementsAVenir(id);
+    if (aVenir.length) {
+      const container = require('../serviceContainer');
+      for (const ev of aVenir) {
+        await container.evenementService.cancel(ev.id_evenement, adminId, 'Le compte de l’organisateur a été supprimé', { isAdmin: true });
+      }
+    }
+
     // Suppression complète (données liées nettoyées) — un destroy direct échouait
     // sur les clés étrangères RESTRICT et laissait les données personnelles liées.
     await this._eraseAccount(id, { adminId, userEmail: user.email, userType: user.id_type_user });
@@ -464,6 +491,15 @@ class UserService extends BaseService {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       throw this._validationError('Mot de passe incorrect');
+    }
+
+    // Organisateur d'événements à venir : il les annule d'abord (les inscrits sont prévenus) ou les confie à
+    // l'équipe ; sinon ils resteraient publiés sans personne pour les gérer
+    const aVenir = await this._evenementsAVenir(userId);
+    if (aVenir.length) {
+      const noms = aVenir.slice(0, 3).map(e => `« ${texteLisible(e.nom_evenement)} »`).join(', ');
+      throw this._conflictError(`Vous organisez encore ${aVenir.length} événement(s) à venir (${noms}${aVenir.length > 3 ? '…' : ''}) : `
+        + 'annulez-les depuis votre tableau de bord, ou écrivez à contact@taladz.com pour les confier à l’équipe, avant de supprimer votre compte.');
     }
 
     // Suppression complète : données personnelles, liens, fichiers, sessions
@@ -801,6 +837,17 @@ class UserService extends BaseService {
                && Number(entityData.wilaya_residence) !== Number(current.wilaya_residence)) {
       entityData.id_commune = null;
     }
+  }
+
+  /** Événements publiés et pas encore terminés organisés par ce compte */
+  async _evenementsAVenir(userId) {
+    const { Evenement } = this.models || {};
+    if (!Evenement) return [];
+    const { Op } = require('sequelize');
+    return Evenement.findAll({
+      where: { id_user: userId, statut: ['publie', 'planifie', 'en_cours'], [Op.and]: [pasTermine(new Date())] },
+      attributes: ['id_evenement', 'nom_evenement']
+    });
   }
 
   /** Hash bcrypt factice (même coût que les vrais) pour égaliser le temps de réponse du login */

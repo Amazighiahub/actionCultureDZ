@@ -72,9 +72,18 @@ class EmailService {
    * Initialise le transporteur Nodemailer.
    */
   initializeTransporter() {
-    // Cette partie ne change pas.
+    // Délais maximum et connexions réutilisées : un serveur d'e-mails figé bloquait plusieurs minutes
+    // l'inscription et « mot de passe oublié » (attente sans fin), et chaque e-mail ouvrait une connexion
+    const delaisEtPool = {
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+      pool: true,
+      maxConnections: 3
+    };
     if (process.env.EMAIL_SERVICE === 'gmail') {
       this.transporter = nodemailer.createTransport({
+        ...delaisEtPool,
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
@@ -96,6 +105,7 @@ class EmailService {
       }
 
       this.transporter = nodemailer.createTransport({
+        ...delaisEtPool,
         host: smtpHost,
         port: parseInt(smtpPort),
         secure: (process.env.SMTP_SECURE || process.env.EMAIL_SECURE) === 'true',
@@ -247,27 +257,59 @@ class EmailService {
   async sendInvitationInscription(user, token, evenement) {
     try {
       const lien = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+      const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement?.id_evenement}`;
       const nomEvenement = this._texte(evenement?.nom_evenement);
       const nom = this._prenom(user);
+      // Pas d'inscription d'office (audit V7 E2) : la personne choisit son mot de passe (elle accepte
+      // alors Tala DZ), puis confirme elle-même son inscription sur la page de l'événement
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
-          <h2 style="color: #3A4224;">Votre demande d'inscription est bien reçue</h2>
+          <h2 style="color: #3A4224;">Confirmez votre inscription</h2>
           <p>Bonjour ${this._escapeHtml(nom)},</p>
-          <p>Votre demande d'inscription à <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a bien été reçue par l'organisateur.
-          Elle est <b>en cours d'étude</b> : vous serez prévenu(e) de sa décision.</p>
-          <p>Pour suivre votre demande, l'organisateur a ouvert pour vous un espace sur <b>Tala DZ</b>, la plateforme de la culture algérienne.
-          Il ne vous reste qu'à choisir votre mot de passe :</p>
+          <p>L'organisateur de <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a transmis votre demande d'inscription
+          sur <b>Tala DZ</b>, la plateforme de la culture algérienne. <b>Rien n'est fait sans votre accord</b> :</p>
+          <ol>
+            <li>choisissez votre mot de passe (vous acceptez ainsi les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ) ;</li>
+            <li>sur la <a href="${encodeURI(pageEvenement)}">page de l'événement</a>, confirmez ou refusez votre inscription.</li>
+          </ol>
           <p style="text-align: center; margin: 28px 0;">
             <a href="${encodeURI(lien)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Choisir mon mot de passe</a>
           </p>
-          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Votre identifiant est votre adresse email : ${this._escapeHtml(user.email)}.
-          En choisissant votre mot de passe, vous acceptez les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ.</p>
-          <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
+          <p>Une fois votre inscription confirmée, l'organisateur l'étudie et vous serez prévenu(e) de sa décision.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Votre identifiant est votre adresse email : ${this._escapeHtml(user.email)}.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Confirmez votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
     } catch (error) {
       logger.error('Erreur dans sendInvitationInscription:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Compte existant ajouté par l'organisateur (import d'une liste) : il confirme ou refuse lui-même
+   * son inscription sur la page de l'événement. Il n'est jamais inscrit d'office.
+   */
+  async sendDemandeConfirmationInscription(user, evenement) {
+    try {
+      const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement?.id_evenement}`;
+      const nomEvenement = this._texte(evenement?.nom_evenement);
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
+          <h2 style="color: #3A4224;">Confirmez votre inscription</h2>
+          <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
+          <p>L'organisateur de <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a transmis votre demande d'inscription sur Tala DZ.
+          Vous n'êtes inscrit(e) que si vous le confirmez.</p>
+          <p style="text-align: center; margin: 28px 0;">
+            <a href="${encodeURI(pageEvenement)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Confirmer ou refuser</a>
+          </p>
+          <p style="font-size: 14px; color: #6b6a63;">Vous n'êtes pas à l'origine de cette demande ? Cliquez sur « Refuser » sur la page de l'événement, ou ignorez ce message.</p>
+          <p>L'équipe Tala DZ</p>
+        </div>`;
+      return await this.sendEmail(user.email, `Confirmez votre inscription : ${nomEvenement || 'Tala DZ'}`, html);
+    } catch (error) {
+      logger.error('Erreur dans sendDemandeConfirmationInscription:', error);
       return { success: false, error: error.message };
     }
   }

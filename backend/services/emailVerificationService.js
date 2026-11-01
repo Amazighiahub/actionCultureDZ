@@ -49,12 +49,18 @@ class EmailVerificationService {
       throw err;
     }
 
-    const hasActive = await this.models.EmailVerification.hasActiveToken(
-      userId,
-      'email_verification'
-    );
+    // Un nouvel envoi est possible 2 minutes après le précédent (l'ancien lien est alors annulé).
+    // Avant : refusé tant que le premier lien restait valable (24 h) — un e-mail perdu bloquait le compte.
+    const envoiRecent = await this.models.EmailVerification.count({
+      where: {
+        id_user: userId,
+        type: 'email_verification',
+        used_at: null,
+        created_at: { [Op.gt]: new Date(Date.now() - 2 * 60 * 1000) }
+      }
+    });
 
-    if (hasActive) {
+    if (envoiRecent > 0) {
       const err = new Error('Verification already sent');
       err.statusCode = 429;
       err.code = 'RATE_LIMITED';
@@ -114,6 +120,9 @@ class EmailVerificationService {
       err.code = 'INVALID_TOKEN';
       throw err;
     }
+
+    // Session en cache (15 min) : sans cela, le compte restait vu « non vérifié » après le clic sur le lien
+    await invalidateUserSession(result.user.id_user);
 
     return {
       user: {

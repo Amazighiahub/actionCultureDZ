@@ -37,6 +37,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { adminService } from '@/services/admin.service';
 import { useToast } from '@/components/ui/use-toast';
 import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
+import PropositionsPatrimoine from './PropositionsPatrimoine';
 
 // Helper pour extraire le texte multilingue
 
@@ -159,6 +160,9 @@ const AdminPatrimoineTab: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Propositions de modification à relire (affiché seulement s'il y en a) */}
+      <PropositionsPatrimoine />
 
       {/* Filtres */}
       <Card>

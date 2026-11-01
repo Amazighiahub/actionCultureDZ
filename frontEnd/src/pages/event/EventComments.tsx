@@ -135,7 +135,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         </div>
 
         {/* Texte du commentaire */}
-        <p className="mt-2 text-sm whitespace-pre-line">
+        <p dir="auto" className="mt-2 text-sm whitespace-pre-line">
           {td(comment.contenu)}
         </p>
 

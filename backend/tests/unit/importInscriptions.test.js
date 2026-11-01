@@ -36,7 +36,7 @@ async function classeur(lignes) {
 const LIGNES = [
   ['16/10/2026 18:01:25', 'Amrani Lydia', '25', '0550 00 00 01', 'lydia.amrani@exemple.dz', 'Alger', 'Étudiant', 'Pierre, Mortier et enduit, Toiture', 'Toute la durée', '12', 'Plans et dessin, Préparation des repas (bénévole)', 'Oui'],
   ['17/10/2026 01:28:55', 'Bensaid', '31', '0550 00 00 02', 'Karim.Bensaid@Exemple.dz', 'Blida', 'Amateur du patrimoine', 'Pierre', 'Toute la durée', '12', '', 'Oui'],
-  ['20/10/2026 11:47:38', 'Yanis Ait Ali', '', '0550 00 00 03', 'yanis.aitali@gmail.coml.com', 'Batna', 'Amateur du patrimoine', '', 'Toute la durée', '12', '', 'Oui'],
+  ['20/10/2026 11:47:38', 'Yanis Ait Ali', '', '0550 00 00 03', 'test.fictif@gmail.coml.com', 'Batna', 'Amateur du patrimoine', '', 'Toute la durée', '12', '', 'Oui'],
   ['21/10/2026 00:20:38', 'Nadia Ferhat', '60', '0550 00 00 04', 'nadia.ferhat@exemple.dz', 'Batna', 'Retraité', '', 'Partielle', '2', '', 'Oui'],
   ['21/10/2026 01:00:00', 'Doublon', '30', '0550 00 00 05', 'lydia.amrani@exemple.dz', 'Alger', 'Étudiant', '', 'Toute la durée', '12', '', 'Oui'],
   ['22/10/2026 10:00:00', 'Sans email', '30', '0550 00 00 06', 'pas-un-email', 'Alger', 'Étudiant', '', 'Toute la durée', '12', '', 'Oui']
@@ -70,7 +70,7 @@ const ORGANISATEUR = { id_user: 37, isAdmin: false };
 describe('Lecture des cellules', () => {
   it('email : minuscules, faute « gmail.coml.com » corrigée, email faux repéré', () => {
     expect(lireEmail(' Karim.Bensaid@Exemple.dz ')).toMatchObject({ email: 'karim.bensaid@exemple.dz', valide: true, corrige: null });
-    expect(lireEmail('yanis.aitali@gmail.coml.com')).toMatchObject({ email: 'yanis.aitali@gmail.com', valide: true });
+    expect(lireEmail('test.fictif@gmail.coml.com')).toMatchObject({ email: 'test.fictif@gmail.com', valide: true });
     expect(lireEmail('pas-un-email').valide).toBe(false);
   });
   it('date du formulaire, à l’heure d’Algérie', () => {
@@ -84,14 +84,14 @@ describe('Aperçu', () => {
     const { lignes, profils } = await svc.apercu(await classeur(LIGNES), 2, ORGANISATEUR);
     const [lydia, karim, yanis, nadia, doublon, faux] = lignes;
     expect(profils.map(p => p.valeur)).toEqual(['Artisan ou professionnel', 'Étudiant', 'Retraité', 'Bénévole (préparation des repas)']);
-    expect(lydia).toMatchObject({ action: 'creer', nom: 'Amrani Lydia', montant: 2000,
+    expect(lydia).toMatchObject({ action: 'inviter', nom: 'Amrani Lydia', montant: 2000,
       reponses: { tel: '0550 00 00 01', age: 25, ville: 'Alger', profil: 'Étudiant', interets: ['Pierre', 'Mortier et enduit', 'Toiture'],
         presence: 'Toute la durée', competences: ['Plans et dessin', 'Préparation des repas (bénévole)'], frais: 'Oui' } });
     expect(karim.reponses).not.toHaveProperty('profil');
     expect(karim).toMatchObject({ profil_inconnu: 'Amateur du patrimoine', montant: null });
     expect(karim.remarques).toEqual(['« Amateur du patrimoine » n\'est pas un profil : choisissez le sien']);
     expect(lydia.profil_inconnu).toBeNull();
-    expect(yanis).toMatchObject({ action: 'creer', email: 'yanis.aitali@gmail.com' });
+    expect(yanis).toMatchObject({ action: 'inviter', email: 'test.fictif@gmail.com' });
     expect(yanis.remarques[0]).toMatch(/Email corrigé/);
     expect(nadia).toMatchObject({ reponses: { presence: 'Partielle', jours: 2 }, montant: 2100 });
     expect(doublon.action).toBe('doublon');
@@ -105,12 +105,12 @@ describe('Aperçu', () => {
     expect(lignes[1].remarques).toEqual(['Profil « Amateur du patrimoine » → Retraité']);
   });
 
-  it('compte existant : inscrit seulement ; déjà inscrit : laissé tel quel', async () => {
+  it("compte existant : même action qu'une adresse inconnue (l'aperçu ne révèle pas les comptes) ; déjà inscrit : laissé tel quel", async () => {
     const svc = new ImportInscriptions(modeles({
       existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz' }, { id_user: 10, email: 'nadia.ferhat@exemple.dz' }], dejaInscrits: [10]
     }));
     const { lignes } = await svc.apercu(await classeur(LIGNES), 2, ORGANISATEUR);
-    expect(lignes[0].action).toBe('inscrire');
+    expect(lignes[0].action).toBe('inviter');
     expect(lignes[3].action).toBe('deja_inscrit');
   });
 
@@ -121,17 +121,31 @@ describe('Aperçu', () => {
 });
 
 describe('Import', () => {
-  it('lignes cochées : comptes visiteurs créés sans conditions acceptées, inscrits « en attente », invités 7 jours', async () => {
+  it('lignes cochées : comptes visiteurs créés sans conditions acceptées ni profil public, invitations à confirmer, liens de 7 jours', async () => {
     const m = modeles();
     const emailService = { sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) };
     const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
     const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2, 3, 4, 6, 7], profils: { 3: 'Étudiant', 4: 'Retraité' } });
     expect(bilan).toEqual({ comptes_crees: 3, inscrits: 3, invitations: 3, erreurs: [] });
-    expect(m.crees[0].data).toMatchObject({ email: 'lydia.amrani@exemple.dz', id_type_user: 1, statut: 'actif', email_verifie: false, accepte_conditions: false, nom: { fr: 'Amrani Lydia' } });
+    expect(m.crees[0].data).toMatchObject({ email: 'lydia.amrani@exemple.dz', id_type_user: 1, statut: 'actif', email_verifie: false, accepte_conditions: false, profil_public: false, nom: { fr: 'Amrani Lydia' } });
     expect(m.crees[0].options).toEqual({ hooks: false });
-    expect(m.inscriptions[0]).toMatchObject({ id_evenement: 2, statut_participation: 'inscrit', montant_du: 2000 });
+    expect(m.inscriptions[0]).toMatchObject({ id_evenement: 2, statut_participation: 'invitation', montant_du: 2000 });
     expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 168);
     expect(emailService.sendInvitationInscription).toHaveBeenCalledTimes(3);
+  });
+
+  it("compte existant : pas d'inscription d'office, une demande de confirmation lui est envoyée", async () => {
+    const m = modeles({ existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz' }] });
+    const emailService = {
+      sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }),
+      sendDemandeConfirmationInscription: jest.fn().mockResolvedValue({ success: true })
+    };
+    const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
+    const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2] });
+    expect(bilan).toMatchObject({ comptes_crees: 0, inscrits: 1, invitations: 1 });
+    expect(m.inscriptions[0]).toMatchObject({ id_user: 9, statut_participation: 'invitation' });
+    expect(emailService.sendDemandeConfirmationInscription).toHaveBeenCalledTimes(1);
+    expect(emailService.sendInvitationInscription).not.toHaveBeenCalled();
   });
 
   it('profil pas encore choisi : la personne n’est pas inscrite, c’est signalé', async () => {

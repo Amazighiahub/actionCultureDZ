@@ -4,6 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getDateLocale } from '@/hooks/useFormatDate';
@@ -80,6 +81,8 @@ const AdminOeuvresTab: React.FC = () => {
     deleteOeuvre,
     refreshAll
   } = useDashboardAdmin('oeuvres');
+  // Œuvre dont on saisit le motif de refus
+  const [aRefuser, setARefuser] = useState<number | null>(null);
 
   // Combiner œuvres et œuvres en attente
   const allOeuvres = React.useMemo(() => {
@@ -271,7 +274,7 @@ const AdminOeuvresTab: React.FC = () => {
                               <Button type="button" variant="ghost" size="icon" title={t('common.validate', 'Valider')} className="text-green-600 hover:text-green-700" onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}>
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
-                              <Button type="button" variant="ghost" size="icon" title={t('common.reject', 'Rejeter')} className="text-amber-600 hover:text-amber-700" onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}>
+                              <Button type="button" variant="ghost" size="icon" title={t('common.reject', 'Rejeter')} className="text-amber-600 hover:text-amber-700" onClick={() => setARefuser(oeuvre.id_oeuvre)}>
                                 <XCircle className="h-4 w-4" />
                               </Button>
                             </>
@@ -306,6 +309,16 @@ const AdminOeuvresTab: React.FC = () => {
             setIsDeleting(false);
             setConfirmDelete({ open: false });
           }
+        }}
+      />
+      <MotifRefusDialog
+        open={aRefuser !== null}
+        titre={t('admin.refus.oeuvre', 'Refuser l’œuvre')}
+        onClose={() => setARefuser(null)}
+        onConfirm={async (motif) => {
+          if (aRefuser === null) return;
+          await validateOeuvre({ oeuvreId: aRefuser, validated: false, motif });
+          setARefuser(null);
         }}
       />
     </div>

@@ -13,6 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import FicheIntervenantDialog, { type DonneesFiche } from '@/components/forms/FicheIntervenantDialog';
 import PersonnaliteDialog from '@/components/patrimoine/PersonnaliteDialog';
 import { useToast } from '@/hooks/use-toast';
+import { estProposition, toastProposition } from '@/utils/propositionPatrimoine';
 import { httpClient } from '@/services/httpClient';
 import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
@@ -149,8 +150,11 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
     setSaving(true);
     try {
       const response = await httpClient.patch(`/patrimoine/${lieuId}/detail`, { personnalites: editValue });
-      if ((response as any).success) {
-        toast({ title: 'Contribution enregistrée !', description: 'Merci pour votre contribution' });
+      if ((response as any).success && estProposition(response)) {
+        toast(toastProposition(t));
+        setIsEditing(false);
+      } else if ((response as any).success) {
+        toast({ title: t('patrimoine.contribute.saved', 'Contribution enregistrée !'), description: t('patrimoine.contribute.thanks', 'Merci pour votre contribution') });
         setIsEditing(false);
         onSaved?.(editValue);
       } else {
@@ -200,6 +204,13 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             periode: periode || undefined,
             contexte: contexte || undefined,
           });
+      // Rattachement proposé à l'équipe (pas encore sur la fiche)
+      if (lien === null) {
+        setIsAddOpen(false);
+        resetAddForm();
+        toast(toastProposition(t));
+        return;
+      }
       if (nouvelle) {
         setIntervenants(prev => [...prev, lien]);
         setIsAddOpen(false);

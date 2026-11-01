@@ -11,6 +11,16 @@ import type { TypeOeuvre, Materiau, Technique } from '@/types/models/references.
 import type { ExtendedMetadata, FormData, PisteAlbum } from './types';
 import { TECHNIQUES_ART, SUPPORTS_ART, FORMATS_MUSIQUE, INSTRUMENTS_MUSIQUE } from './types';
 
+/**
+ * Champ numérique vidé → null (envoyé au serveur, qui efface la valeur). Avant : undefined, absent de
+ * l'envoi — « Modifié » s'affichait mais l'ancien nombre restait.
+ */
+const nombreOuVide = (valeur: string, entier = false): number | null => {
+  if (valeur.trim() === '') return null;
+  const n = entier ? parseInt(valeur, 10) : parseFloat(valeur);
+  return Number.isNaN(n) ? null : n;
+};
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Composant champs Art avec sélecteurs
@@ -95,7 +105,7 @@ const ArtFields: React.FC<{ formData: FormData; handleInputChange: (field: strin
 const MusiqueFields: React.FC<{
   formData: FormData;
   fieldErrors: Record<string, string>;
-  handleInputChange: (field: keyof FormData, value: FormData[keyof FormData]) => void;
+  handleInputChange: (field: keyof FormData, value: FormData[keyof FormData] | null) => void;
   t: any;
 }> = ({ formData, fieldErrors, handleInputChange, t }) => {
   const [autreInstrument, setAutreInstrument] = React.useState('');
@@ -123,7 +133,7 @@ const MusiqueFields: React.FC<{
             id="format_album"
             className="w-full p-3 border rounded-lg hover:border-primary focus:border-primary"
             value={formData.format_album || ''}
-            onChange={(e) => handleInputChange('format_album', e.target.value || undefined)}>
+            onChange={(e) => handleInputChange('format_album', e.target.value || null)}>
             <option value="">{t('musique.choisirFormat', '-- Choisir --')}</option>
             {FORMATS_MUSIQUE.map((f) => <option key={f} value={f}>{t(`musique.formats.${f}`)}</option>)}
           </select>
@@ -155,7 +165,7 @@ const MusiqueFields: React.FC<{
             max={500}
             placeholder={t("ajouteroeuvre.placeholder_nb_pistes", "Ex: 12")}
             value={formData.nb_pistes || ''}
-            onChange={(e) => handleInputChange('nb_pistes', parseInt(e.target.value) || undefined)} />
+            onChange={(e) => handleInputChange('nb_pistes', nombreOuVide(e.target.value, true))} />
         </div>
       </div>
 
@@ -251,7 +261,7 @@ interface OeuvreSpecificFieldsProps {
   metadata: ExtendedMetadata;
   formData: FormData;
   fieldErrors: Record<string, string>;
-  handleInputChange: (field: keyof FormData, value: FormData[keyof FormData]) => void;
+  handleInputChange: (field: keyof FormData, value: FormData[keyof FormData] | null) => void;
 }
 
 const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
@@ -292,7 +302,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           type="number"
           placeholder={t("ajouteroeuvre.placeholder_250")}
           value={formData.nb_pages || ''}
-          onChange={(e) => handleInputChange('nb_pages', parseInt(e.target.value) || undefined)} />
+          onChange={(e) => handleInputChange('nb_pages', nombreOuVide(e.target.value, true))} />
         </div>
       </div>,
 
@@ -305,7 +315,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           type="number"
           placeholder={t("ajouteroeuvre.placeholder_120")}
           value={formData.duree_minutes || ''}
-          onChange={(e) => handleInputChange('duree_minutes', parseInt(e.target.value) || undefined)} />
+          onChange={(e) => handleInputChange('duree_minutes', nombreOuVide(e.target.value, true))} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="realisateur">{t("ajouteroeuvre.ralisateur")}</Label>
@@ -484,7 +494,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           step="0.1"
           placeholder={t("ajouteroeuvre.placeholder_ex_1_5")}
           value={formData.poids || ''}
-          onChange={(e) => handleInputChange('poids', parseFloat(e.target.value) || undefined)} />
+          onChange={(e) => handleInputChange('poids', nombreOuVide(e.target.value))} />
         </div>
       </div>,
 
