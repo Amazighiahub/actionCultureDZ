@@ -3305,7 +3305,10 @@
       "titreExemple": "e.g. Full programme",
       "envoi": "Uploading…",
       "ajouter": "Add document",
-      "max": "5 documents at most: remove one to add another."
+      "max": "5 documents at most: remove one to add another.",
+      "choisir": "Add a PDF",
+      "echecTitre": "Document not added",
+      "echecDesc": "One or more PDFs could not be uploaded: add them from “Manage programmes and works”, “PDF documents” tab."
     }
   },
   "places": {

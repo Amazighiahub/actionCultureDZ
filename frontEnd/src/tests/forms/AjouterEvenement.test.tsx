@@ -94,6 +94,8 @@ vi.mock('@/components/ui/use-toast', () => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+  // Documents PDF de l'événement (section du formulaire en modification)
+  useQuery: () => ({ data: [], isLoading: false }),
   QueryClient: vi.fn(),
   QueryClientProvider: ({ children }: any) => children,
 }));

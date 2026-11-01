@@ -3310,7 +3310,10 @@
       "titreExemple": "ex. Programme complet",
       "envoi": "Envoi…",
       "ajouter": "Ajouter le document",
-      "max": "5 documents au plus : retirez-en un pour en ajouter un autre."
+      "max": "5 documents au plus : retirez-en un pour en ajouter un autre.",
+      "choisir": "Ajouter un PDF",
+      "echecTitre": "Document non ajouté",
+      "echecDesc": "Un ou plusieurs PDF n’ont pas pu être envoyés : ajoutez-les depuis « Gérer programmes et œuvres », onglet « Documents PDF »."
     }
   },
   "places": {

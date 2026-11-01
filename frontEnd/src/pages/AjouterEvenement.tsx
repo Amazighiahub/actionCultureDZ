@@ -38,6 +38,8 @@ import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormul
 import type { ConfigInscription } from '@/utils/formulaireInscription';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
+import DocumentsEvenementChoix, { envoyerDocumentsEvenement, type DocumentChoisi } from '@/components/event/DocumentsEvenementChoix';
+import DocumentsEvenementGestion from '@/components/event/DocumentsEvenementGestion';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -116,6 +118,8 @@ const AjouterEvenement = () => {
 
   // État pour les fichiers
   const [affiche, setAffiche] = useState<File | null>(null);
+  // PDF choisis à la création : envoyés juste après l'enregistrement de l'événement
+  const [documentsChoisis, setDocumentsChoisis] = useState<DocumentChoisi[]>([]);
   const [affichePreview, setAffichePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -507,6 +511,18 @@ const AjouterEvenement = () => {
         queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });
         rafraichirTableauDeBord();
         if (id) rafraichirEvenement(id);
+        // PDF choisis à la création : rattachés au nouvel événement
+        const idCree = (response.data as { id_evenement?: number } | undefined)?.id_evenement;
+        if (!isEditMode && idCree && documentsChoisis.length) {
+          const echecs = await envoyerDocumentsEvenement(idCree, documentsChoisis);
+          if (echecs) {
+            toast({
+              title: t('event.documents.echecTitre', 'Document non ajouté'),
+              description: t('event.documents.echecDesc', 'Un ou plusieurs PDF n’ont pas pu être envoyés : ajoutez-les depuis « Gérer programmes et œuvres », onglet « Documents PDF ».'),
+              variant: 'destructive',
+            });
+          }
+        }
         // Événement d'un professionnel envoyé à l'équipe : publié après validation
         const envoye = statut === 'publie' && (response.data as { statut?: string } | undefined)?.statut === 'en_attente'
           && statutActuel !== 'en_attente';
@@ -1105,6 +1121,26 @@ const AjouterEvenement = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Documents PDF (programme complet, présentation…) : en modification, envoi immédiat ;
+                à la création, envoyés après l'enregistrement de l'événement */}
+            {isEditMode && editId ? (
+              <DocumentsEvenementGestion evenementId={editId} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    {t('event.documents.gestionTitre', 'Documents PDF de l’événement')} <span className="text-sm text-muted-foreground font-normal">({t('common.optional')})</span>
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {t('event.documents.gestionAide', 'Programme complet, présentation… Ils s’affichent sur la page de l’événement, à télécharger.')}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <DocumentsEvenementChoix documents={documentsChoisis} onChange={(d) => { setDocumentsChoisis(d); setIsDirty(true); }} />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Message si organisation requise mais manquante */}
             {!isVirtual && !hasOrganisation && !loadingOrganisations && (
