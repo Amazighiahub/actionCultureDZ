@@ -18,6 +18,7 @@ import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
@@ -34,6 +35,9 @@ const EditProgrammePage: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Saisie en cours : confirmation avant de quitter la page (liens, fermeture de l'onglet)
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
@@ -162,6 +166,7 @@ const EditProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
+        setIsDirty(false);
         rafraichirEvenement(eventId);
         rafraichirTableauDeBord();
         // Rediriger vers la page de l'événement après 2 secondes
@@ -270,7 +275,7 @@ const EditProgrammePage: React.FC = () => {
             {t('programmePages.edit.editProgram')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent onInput={() => setIsDirty(true)}>
           <ProgrammeForm
             eventId={parseInt(eventId)}
             initialData={programmeData || undefined}

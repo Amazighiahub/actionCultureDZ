@@ -32,6 +32,7 @@ import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 import { mentionCredit, type CreditPhoto, type LicencePhoto } from '@/utils/creditPhoto';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -83,6 +84,9 @@ const ModifierPatrimoine: React.FC = () => {
   const [envoiPhotos, setEnvoiPhotos] = useState(false);
   const [medias, setMedias] = useState<Media[]>([]);
   const [mediaASupprimer, setMediaASupprimer] = useState<Media | null>(null);
+  // Saisie en cours : confirmation avant de quitter la page (liens, fermeture de l'onglet)
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
   // Crédit des photos à envoyer, et correction du crédit d'une photo déjà en ligne
   const [creditNouvelles, setCreditNouvelles] = useState<ValeurCreditPhoto>(CREDIT_VIDE);
   const [creditEdite, setCreditEdite] = useState<{ media: Media; valeur: ValeurCreditPhoto } | null>(null);
@@ -155,6 +159,7 @@ const ModifierPatrimoine: React.FC = () => {
           ? { id_lieu_parent: parentChoisi?.id ?? null } : {})
       });
       if (!res.success) throw new Error(res.error);
+      setIsDirty(false);
       rafraichirTableauDeBord();
       toast({ title: t('patrimoine.edit.saved', 'Modifications enregistrées') });
       // Recharger : le rattachement change le titre de la page et la liste des points
@@ -244,7 +249,10 @@ const ModifierPatrimoine: React.FC = () => {
   return (
     <div className="min-h-screen bg-background" dir={direction}>
       <Header />
-      <main className="container py-8 max-w-3xl mx-auto space-y-6">
+      <main className="container py-8 max-w-3xl mx-auto space-y-6" onInput={(e) => {
+        // Photos et sons : enregistrés dès leur envoi, rien à perdre
+        if ((e.target as HTMLInputElement).type !== 'file') setIsDirty(true);
+      }}>
         <FormPageHeader
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}

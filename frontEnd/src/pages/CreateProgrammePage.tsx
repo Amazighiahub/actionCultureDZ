@@ -18,6 +18,7 @@ import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 /** API response shape for lieux list */
 interface LieuxResponseData {
@@ -34,6 +35,9 @@ const CreateProgrammePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Saisie en cours : confirmation avant de quitter la page (liens, fermeture de l'onglet)
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -103,6 +107,7 @@ const CreateProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
+        setIsDirty(false);
         rafraichirEvenement(eventId);
         rafraichirTableauDeBord();
 
@@ -196,7 +201,7 @@ const CreateProgrammePage: React.FC = () => {
             {t('programmePages.create.newProgram')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent onInput={() => setIsDirty(true)}>
           <ProgrammeForm
             eventId={parseInt(eventId)}
             onSubmit={handleSubmit}

@@ -5,6 +5,10 @@
 const { Op } = require('sequelize');
 const { texteLisible } = require('../../helpers/i18n');
 
+// Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
+// Le texte ne change pas (les contrôleurs le comparent encore).
+const erreurHttp = (message, statusCode) => Object.assign(new Error(message), { statusCode });
+
 class DashboardModerationService {
   constructor(models) {
     this.models = models;
@@ -154,7 +158,7 @@ class DashboardModerationService {
   async validateUser(userId, data, moderatorId) {
     const user = await this.models.User.findByPk(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
 
     const { action, motif } = data;
@@ -243,7 +247,7 @@ class DashboardModerationService {
 
     const signalement = await this.models.Signalement.findByPk(signalementId);
     if (!signalement) {
-      throw new Error('Signalement non trouvé');
+      throw erreurHttp('Signalement non trouvé', 404);
     }
 
     const { action, motif } = data;
@@ -264,7 +268,7 @@ class DashboardModerationService {
   async suspendUser(userId, data, moderatorId) {
     const user = await this.models.User.findByPk(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw erreurHttp('Utilisateur non trouvé', 404);
     }
 
     const { duree, motif } = data;
