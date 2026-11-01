@@ -71,6 +71,9 @@ interface MediaSite {
   description?: string;
   ordre: number;
   is_principale: boolean;
+  /** Photographe ou source, et droits (photo d'un lieu) */
+  credit?: string | null;
+  licence?: string | null;
 }
 
 interface Parcours {
@@ -275,10 +278,15 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.retirerFavoris(id));
   }
 
-  /** langue : celle des enregistrements audio envoyés (fr, ar, en, tz-ltn, tz-tfng) */
-  async uploadMedias(siteId: number, files: File[], langue?: string): Promise<ApiResponse<MediaSite[]>> {
+  /**
+   * langue : celle des enregistrements audio envoyés (fr, ar, en, tz-ltn, tz-tfng) ;
+   * credit : photographe ou source, et droits, communs aux photos envoyées
+   */
+  async uploadMedias(siteId: number, files: File[], langue?: string, credit?: { credit?: string; licence?: string }): Promise<ApiResponse<MediaSite[]>> {
     const formData = new FormData();
     if (langue) formData.append('langue', langue);
+    if (credit?.credit?.trim()) formData.append('credit', credit.credit.trim());
+    if (credit?.licence) formData.append('licence', credit.licence);
     (await prepareFilesForUpload(files)).forEach(file => formData.append('medias', file));
     return httpClient.upload<MediaSite[]>(
       API_ENDPOINTS.patrimoine.uploadMedias(siteId),
@@ -289,6 +297,11 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
   /** Nouvel ordre de visite des points d'un site (tous les points, dans l'ordre) */
   async reordonnerPoints(siteId: number, ordre: number[]): Promise<ApiResponse<Array<{ id_lieu: number; ordre_visite: number }>>> {
     return httpClient.put(API_ENDPOINTS.patrimoine.reordonnerPoints(siteId), { ordre });
+  }
+
+  /** Corriger le photographe ou les droits d'une photo déjà en ligne */
+  async updateMediaCredit(siteId: number, mediaId: number, credit: { credit: string; licence: string }): Promise<ApiResponse<{ id: number; credit: string | null; licence: string | null }>> {
+    return httpClient.patch(API_ENDPOINTS.patrimoine.deleteMedia(siteId, mediaId), credit);
   }
 
   async deleteMedia(siteId: number, mediaId: number): Promise<ApiResponse<void>> {

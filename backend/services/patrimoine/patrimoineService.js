@@ -13,6 +13,7 @@ const historique = require('./historiqueLieu');
 const { supprimerLieu } = require('./suppressionLieu');
 const { memeUtilisateur, peutGerer } = require('../../utils/droits');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
+const { champsCredit } = require('./creditPhoto');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -397,7 +398,9 @@ class PatrimoineService extends BaseService {
             id_lieu: lieuId,
             url: m.url,
             type: m.type || 'image',
-            description: m.description || {}
+            description: m.description || {},
+            // Crédit et licence conservés quand la liste des photos est renvoyée
+            ...champsCredit(m)
           }));
         if (mediaRows.length) {
           await LieuMedia.bulkCreate(mediaRows, { transaction });
@@ -832,7 +835,9 @@ class PatrimoineService extends BaseService {
             id_lieu: lieuId,
             url: m.url,
             type: m.type || 'image',
-            description: m.description || {}
+            description: m.description || {},
+            // Crédit et licence conservés quand la liste des photos est renvoyée
+            ...champsCredit(m)
           }));
         if (mediaRows.length) {
           await LieuMedia.bulkCreate(mediaRows, { transaction });
@@ -987,7 +992,7 @@ class PatrimoineService extends BaseService {
    * @param {Object} [options]
    * @param {string} [options.langue] - langue des enregistrements audio envoyés
    */
-  async uploadMedias(siteId, files, { langue } = {}) {
+  async uploadMedias(siteId, files, { langue, credit, licence } = {}) {
     const { Lieu, LieuMedia } = this.models || {};
     if (!Lieu || !LieuMedia) throw this._validationError('Modèles non disponibles');
 
@@ -1018,7 +1023,9 @@ class PatrimoineService extends BaseService {
         url,
         // La langue ne concerne que l'audio (guide, conte, prononciation)
         langue: type === 'audio' ? (langue || null) : null,
-        description: {}
+        description: {},
+        // Photographe ou source, et droits : communs aux photos envoyées ensemble
+        ...(type === 'image' || type === 'video' ? champsCredit({ credit, licence }) : {})
       });
     }));
     return medias;
@@ -1095,6 +1102,18 @@ class PatrimoineService extends BaseService {
   /**
    * Supprimer un média
    */
+  /** Crédit (photographe ou source) et licence d'une photo déjà en ligne */
+  async updateMediaCredit(siteId, mediaId, donnees) {
+    const { LieuMedia } = this.models || {};
+    if (!LieuMedia) throw this._validationError('Modèle LieuMedia non disponible');
+    const media = await LieuMedia.findOne({
+      where: { id: parseInt(mediaId, 10), id_lieu: parseInt(siteId, 10) }
+    });
+    if (!media) throw this._notFoundError(mediaId);
+    await media.update(champsCredit(donnees || {}));
+    return { id: media.id, credit: media.credit, licence: media.licence };
+  }
+
   async deleteMedia(siteId, mediaId) {
     const { LieuMedia } = this.models || {};
     if (!LieuMedia) throw this._validationError('Modèle LieuMedia non disponible');

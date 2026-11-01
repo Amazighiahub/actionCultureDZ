@@ -96,6 +96,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     handleValidationErrors,
     patrimoineController.wrap('reordonnerPoints'));
   router.delete('/:id/medias/:mediaId', authenticate, requireModerationOuPro, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  // Crédit (photographe ou source) et licence d'une photo
+  router.patch('/:id/medias/:mediaId', authenticate, requireVerifiedEmail, requireModerationOuPro, validateId(), validateId('mediaId'),
+    patrimoineController.wrap('updateMediaCredit'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // Historique des textes du lieu, et retour à une version précédente (administration)
