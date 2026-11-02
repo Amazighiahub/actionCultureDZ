@@ -437,6 +437,28 @@ class EvenementService extends BaseService {
     return EvenementDTO.fromEntity(updated);
   }
 
+  /**
+   * Personne invitée par un import, qui n'a pas encore confirmé : l'organisateur ne voit que ce que
+   * contenait son classeur. Sinon, importer une adresse donnait le nom et la photo de son titulaire,
+   * et révélait si elle avait un compte (audit V8, sécurité M1).
+   */
+  _masquerInvitation(ligne) {
+    if (ligne.statut_participation !== 'invitation') return ligne;
+    const brut = ligne.get ? ligne.get({ plain: true }) : ligne;
+    const email = brut.User?.email || '';
+    return {
+      ...brut,
+      User: brut.User && {
+        id_user: brut.User.id_user,
+        email,
+        nom: brut.reponses_inscription?._nom_import || email.split('@')[0],
+        prenom: '',
+        photo_url: null,
+        id_type_user: null
+      }
+    };
+  }
+
   /** Médias d'un événement, sans recharger toute sa fiche */
   async findMedias(id) {
     if (!this.models?.Media) return [];
@@ -629,7 +651,8 @@ class EvenementService extends BaseService {
    */
   async getParticipants(evenementId, requesterId, isAdmin) {
     await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
-    return this.repository.getParticipants(evenementId);
+    const lignes = await this.repository.getParticipants(evenementId);
+    return lignes.map(l => this._masquerInvitation(l));
   }
 
   /** Choix de la question « Vous êtes » de l'événement (pour corriger le profil d'un participant) */
@@ -721,7 +744,8 @@ class EvenementService extends BaseService {
    */
   async getParticipantProfil(evenementId, userId) {
     const participation = await this.repository.getRegistration(evenementId, userId);
-    if (!participation) {
+    // Invitation : la personne n'a encore rien accepté, son profil n'est pas montré
+    if (!participation || participation.statut_participation === 'invitation') {
       throw this._notFoundError(userId);
     }
 

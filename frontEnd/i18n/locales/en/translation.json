@@ -2123,7 +2123,8 @@
     "patrimoine_unesco": "UNESCO Heritage",
     "facile": "Easy",
     "modere": "Moderate",
-    "aventurier": "Adventurous"
+    "aventurier": "Adventurous",
+    "explorezSites": "Explore historic sites and monuments across Algeria"
   },
   "notifications_preferences": {
     "prfrences_notifications": "Notification preferences",
@@ -5201,7 +5202,8 @@
     "accepter": "Accept and publish",
     "raisonRequise": "Explain why the suggestion is declined",
     "acceptee": "Suggestion accepted: the article is updated",
-    "refusee": "Suggestion declined"
+    "refusee": "Suggestion declined",
+    "articleModifie": "The article has changed since this proposal. Accepting it will replace those changes. Continue?"
   },
   "servicesVisiteurs": {
     "menu": "Visitor services",

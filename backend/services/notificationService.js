@@ -187,7 +187,9 @@ class NotificationService {
     const debut = new Date(evenement.date_debut);
     const enAlgerie = { timeZone: 'Africa/Algiers' };
     const dateDebut = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long' });
-    const heureDebut = debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
+    // Jour sans heure (minuit UTC) : pas d'heure annoncée (avant : « à 01:00 »)
+    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0;
+    const heureDebut = sansHeure ? '' : debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
     const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
 
     // Inscrits et confirmés : une inscription reste « inscrit » tant que l'organisateur ne la
@@ -203,18 +205,21 @@ class NotificationService {
     });
 
     const redis = getRedisClient();
+    const jour = debut.toISOString().slice(0, 10);
     let envoyes = 0;
+    let echecs = 0;
     await this._sendBatch(participants, async (participant) => {
-      // Déduplication : éviter d'envoyer le rappel plusieurs fois si la tâche est relancée
+      // Déduplication : éviter d'envoyer le rappel plusieurs fois si la tâche est relancée. La date est
+      // dans la clé : un événement reporté aura bien son nouveau rappel.
+      const dedupeKey = `notif:rappel:${evenementId}:${jour}:${participant.id_user}`;
       if (redis) {
         try {
-          const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
           const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
           if (!claimed) return; // rappel déjà envoyé à ce participant
         } catch { /* si Redis indisponible, on continue sans déduplication */ }
       }
 
-      await this.emailService.sendEventReminder({
+      const envoi = await this.emailService.sendEventReminder({
         email: participant.User.email,
         prenom: this._str(participant.User.prenom),
         nomEvenement,
@@ -223,6 +228,13 @@ class NotificationService {
         lieu,
         eventUrl: `${process.env.FRONTEND_URL}/evenements/${evenementId}`
       });
+      // Échec (SMTP en panne, quota atteint) : la clé est retirée pour que la tâche réessaie cette personne.
+      // Avant, sendEmail renvoyait { success: false } sans que personne ne le lise : « prévenu » à tort.
+      if (envoi?.success === false) {
+        echecs++;
+        if (redis) await redis.del(dedupeKey).catch(() => {});
+        return;
+      }
 
       await this._envoyerSmsWhatsapp(participant.User, 'rappel', { nomEvenement, dateEvenement: dateDebut, heureDebut });
 
@@ -230,13 +242,14 @@ class NotificationService {
         id_user: participant.id_user,
         type_notification: 'rappel_evenement',
         titre: 'C’est demain !',
-        message: `« ${nomEvenement} » a lieu demain, ${dateDebut} à ${heureDebut}${lieu ? ` — ${lieu}` : ''}.`,
+        message: `« ${nomEvenement} » a lieu demain, ${dateDebut}${heureDebut ? ` à ${heureDebut}` : ''}${lieu ? ` — ${lieu}` : ''}.`,
         id_evenement: evenementId,
         url_action: `/evenements/${evenementId}`
       });
       envoyes++;
     });
-    return { envoyes };
+    // reprise : sans Redis, réessayer renverrait le rappel à ceux qui l'ont déjà reçu
+    return { envoyes, echecs, reprise: echecs > 0 && !!redis };
   }
 
   /**

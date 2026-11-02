@@ -60,7 +60,9 @@ class CronService {
    */
   scheduleJobs() {
     // 1. Rappels « c'est demain » - Tous les jours à 9 h, heure d'Algérie
-    this.scheduleJob('event-reminders', '0 9 * * *', () => this.sendEventReminders(), { timezone: FUSEAU });
+    // Toutes les heures de 9 h à 20 h : un serveur redémarré ou une panne d'envoi à 9 h ne fait plus
+    // manquer le rappel. Déjà envoyé : rappel_envoye et la clé par personne évitent tout doublon.
+    this.scheduleJob('event-reminders', '0 9-20 * * *', () => this.sendEventReminders(), { timezone: FUSEAU });
 
     // 2. Nettoyage des tokens expirés - Tous les jours à 3h
     this.scheduleJob('clean-expired-tokens', '0 3 * * *', () => this.cleanExpiredTokens());
@@ -180,11 +182,12 @@ class CronService {
     // Un événement après l'autre : chaque rappel envoie déjà ses emails par petits groupes
     for (const evenement of evenements) {
       try {
-        const { envoyes } = await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
-        await evenement.update({ rappel_envoye: true });
-        logger.info(`📧 Rappel de l'événement ${evenement.id_evenement} : ${envoyes} participant(s) prévenu(s)`);
+        const { envoyes, echecs = 0, reprise = false } = await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
+        // Des échecs : pas marqué « envoyé », la prochaine heure réessaie ceux qui ne l'ont pas reçu
+        if (!reprise) await evenement.update({ rappel_envoye: true });
+        logger.info(`📧 Rappel de l'événement ${evenement.id_evenement} : ${envoyes} participant(s) prévenu(s), ${echecs} échec(s)`);
       } catch (error) {
-        // Pas marqué « envoyé » : la tâche réessaiera demain matin si l'événement est encore à venir
+        // Pas marqué « envoyé » : la tâche réessaiera à l'heure suivante
         logger.error(`Erreur rappel événement ${evenement.id_evenement}:`, error);
       }
     }

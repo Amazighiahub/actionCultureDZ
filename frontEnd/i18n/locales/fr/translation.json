@@ -2148,7 +2148,8 @@
     "patrimoine_unesco": "Patrimoine UNESCO",
     "facile": "Facile",
     "modere": "Modéré",
-    "aventurier": "Aventurier"
+    "aventurier": "Aventurier",
+    "explorezSites": "Explorez les sites et monuments historiques à travers l’Algérie"
   },
   "notifications_preferences": {
     "prfrences_notifications": "Préférences de notifications",
@@ -5201,7 +5202,8 @@
     "accepter": "Accepter et publier",
     "raisonRequise": "Expliquez pourquoi la proposition est refusée",
     "acceptee": "Proposition acceptée : l’article est mis à jour",
-    "refusee": "Proposition refusée"
+    "refusee": "Proposition refusée",
+    "articleModifie": "L’article a été modifié depuis cette proposition. L’accepter remplacera ces changements. Continuer ?"
   },
   "servicesVisiteurs": {
     "menu": "Services aux visiteurs",

@@ -883,7 +883,7 @@ class EmailService {
           <p>Nous vous rappelons que l'événement <strong>${esc(nomEvenement)}</strong> aura lieu demain !</p>
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <p><strong>📅 Date :</strong> ${esc(dateDebut)}</p>
-            <p><strong>🕐 Heure :</strong> ${esc(heureDebut)}</p>
+            ${heureDebut ? `<p><strong>🕐 Heure :</strong> ${esc(heureDebut)}</p>` : ''}
             ${lieu ? `<p><strong>📍 Lieu :</strong> ${esc(lieu)}</p>` : ''}
           </div>
           <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>

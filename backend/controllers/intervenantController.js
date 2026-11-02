@@ -240,7 +240,7 @@ class IntervenantController extends BaseController {
           if (req.body[champ] !== undefined) donnees[champ] = req.body[champ];
         }
       }
-      const updated = await this.intervenantService.updateIntervenant(req.params.id, lang, donnees);
+      const updated = await this.intervenantService.updateIntervenant(req.params.id, lang, donnees, { isAdmin: req.user?.isAdmin === true });
 
       if (!updated) {
         return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });

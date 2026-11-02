@@ -64,12 +64,9 @@ describe('Fiche intervenant créée depuis un programme', () => {
     expect(create.mock.calls[0][0].id_user).toBeNull();
   });
 
-  test('e-mail d’un compte : relié, sauf si ce compte a déjà sa fiche', async () => {
-    const libre = makeSvc({ compteEmail: 12 });
-    await libre.s._resolveIntervenant({ nom: 'Benali', prenom: 'Amina', email: 'amina@example.com' });
-    expect(libre.create.mock.calls[0][0].id_user).toBe(12);
-    const pris = makeSvc({ compteEmail: 12, dejaRelie: true });
-    await pris.s._resolveIntervenant({ nom: 'Benali', prenom: 'Amina', email: 'amina@example.com' });
-    expect(pris.create.mock.calls[0][0].id_user).toBeNull();
+  test('e-mail d’un compte : jamais relié par l’organisateur (audit V8 : photo d’un tiers sous un faux nom)', async () => {
+    const { s, create } = makeSvc({ compteEmail: 12 });
+    await s._resolveIntervenant({ nom: 'Benali', prenom: 'Amina', email: 'amina@example.com' });
+    expect(create.mock.calls[0][0].id_user).toBeNull();
   });
 });

@@ -16,6 +16,7 @@ const mockEvenementService = {
   search: jest.fn(),
   create: jest.fn(),
   findById: jest.fn(),
+  findMedias: jest.fn(),
   getPublicParticipants: jest.fn(),
   getParticipants: jest.fn(),
   getMyRegistration: jest.fn(),
@@ -154,16 +155,20 @@ describe('Evenement Routes Integration', () => {
 
   describe('GET /api/evenements/:id/medias', () => {
     it('retourne les médias de l\'événement', async () => {
-      const event = createEventDTO({
-        id_evenement: 9,
-        Medias: [{ id_media: 1, type: 'image', url: '/img.jpg' }],
-      });
-      mockEvenementService.findWithFullDetails.mockResolvedValue(event);
+      mockEvenementService.findById.mockResolvedValue({ id_evenement: 9, statut: 'publie', id_user: 1 });
+      mockEvenementService.findMedias.mockResolvedValue([{ id_media: 1, type: 'image', url: '/img.jpg' }]);
 
       const res = await request(app).get('/api/evenements/9/medias').expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveLength(1);
+      // Sans recharger toute la fiche
+      expect(mockEvenementService.findWithFullDetails).not.toHaveBeenCalled();
+    });
+
+    it('brouillon : introuvable pour le public', async () => {
+      mockEvenementService.findById.mockResolvedValue({ id_evenement: 9, statut: 'brouillon', id_user: 1 });
+      await request(app).get('/api/evenements/9/medias').expect(404);
     });
   });
 

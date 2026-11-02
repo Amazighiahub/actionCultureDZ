@@ -23,6 +23,8 @@ const { configAvecProfil, tarificationDe, montantInscription } = require('./tari
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 const LIGNES_MAX = 500;
+const PLAFOND_INVITATIONS_JOUR = 1000;
+const STATUTS_SANS_IMPORT = ['brouillon', 'en_attente', 'annule', 'termine'];
 const INVITATION_HEURES = 7 * 24;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
@@ -274,10 +276,16 @@ class ImportInscriptions {
    */
   async importer(buffer, idEvenement, utilisateur, { lignes: choisies, inviter = true, profils = {} } = {}) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
+    // Les e-mails mèneraient à une page invisible ou fermée
+    if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
+      throw Object.assign(new Error('Publiez d\'abord l\'événement : les invitations mènent à sa page'), { statusCode: 400 });
+    }
     const apercu = await this.apercu(buffer, idEvenement, utilisateur, { profils });
     const aFaire = apercu.lignes.filter(l => (!choisies || choisies.includes(l.ligne)) && l.action === 'inviter');
-    // inscrits : invitations créées (la personne confirme ensuite elle-même)
-    const bilan = { comptes_crees: 0, inscrits: 0, invitations: 0, erreurs: [] };
+    if (!utilisateur.isAdmin) await this._verifierPlafondJour(utilisateur.id_user, aFaire.length);
+    // inscrits : invitations créées (la personne confirme ensuite elle-même). Pas de nombre de comptes
+    // créés dans le bilan : il dirait à l'organisateur quelles adresses ont déjà un compte.
+    const bilan = { inscrits: 0, invitations: 0, erreurs: [] };
     // Pas d'inscription sans vrai profil : la personne reste à inscrire une fois son profil choisi
     for (const l of aFaire.filter(x => x.profil_inconnu && !x.reponses.profil)) {
       bilan.erreurs.push(`Ligne ${l.ligne} (${l.nom || l.email}) : profil à choisir, non inscrite`);
@@ -305,7 +313,6 @@ class ImportInscriptions {
             profil_public: false
           }, { hooks: false });
           nouveau = true;
-          bilan.comptes_crees += 1;
         }
         const [, cree] = await this.models.EvenementUser.findOrCreate({
           where: { id_evenement: evenement.id_evenement, id_user: user.id_user },
@@ -313,7 +320,8 @@ class ImportInscriptions {
             statut_participation: 'invitation',
             role_participation: 'participant',
             date_inscription: l.date || new Date(),
-            reponses_inscription: l.reponses,
+            // _nom_import : le nom du classeur, seul nom montré tant que la personne n'a pas confirmé
+            reponses_inscription: { ...l.reponses, _nom_import: l.nom || null },
             montant_du: l.montant
           }
         });
@@ -329,6 +337,25 @@ class ImportInscriptions {
       }
     }
     return bilan;
+  }
+
+  /**
+   * Plafond d'invitations par organisateur et par 24 h : chaque ligne envoie un e-mail signé Tala DZ.
+   * Sans plafond, un compte pouvait en envoyer 10 000 par heure et faire blacklister le domaine.
+   */
+  async _verifierPlafondJour(idUser, nombre) {
+    const { Evenement, EvenementUser } = this.models;
+    const evenements = await Evenement.findAll({ where: { id_user: idUser }, attributes: ['id_evenement'], raw: true });
+    const deja = await EvenementUser.count({
+      where: {
+        id_evenement: evenements.map(e => e.id_evenement),
+        statut_participation: 'invitation',
+        date_creation: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      }
+    });
+    if (deja + nombre > PLAFOND_INVITATIONS_JOUR) {
+      throw Object.assign(new Error(`${PLAFOND_INVITATIONS_JOUR} invitations au plus par 24 heures (déjà ${deja} envoyées) : importez le reste demain, ou contactez l'équipe Tala DZ`), { statusCode: 429 });
+    }
   }
 
   /** Email « Choisir mon mot de passe » (lien valable 7 jours) ; true si envoyé */

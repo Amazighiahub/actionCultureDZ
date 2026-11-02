@@ -35,8 +35,8 @@ class ArticleRevisionController extends BaseController {
 
   /** Accepter ou refuser une proposition */
   async decider(req, res) {
-    const { decision, motif_refus } = req.body;
-    const revision = await this.service.decider(parseInt(req.params.id, 10), parseInt(req.params.idRevision, 10), { decision, motif_refus }, this._compte(req));
+    const { decision, motif_refus, forcer } = req.body;
+    const revision = await this.service.decider(parseInt(req.params.id, 10), parseInt(req.params.idRevision, 10), { decision, motif_refus, forcer: forcer === true }, this._compte(req));
     // L'article a pu changer : le cache des œuvres est vidé
     if (revision.statut === 'acceptee') container.oeuvreService?.cache?.invalidate?.();
     res.json({ success: true, data: { id_revision: revision.id_revision, statut: revision.statut } });

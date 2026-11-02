@@ -2667,7 +2667,8 @@
     "patrimoine_unesco": "تراث اليونسكو",
     "facile": "سهل",
     "modere": "معتدل",
-    "aventurier": "مغامر"
+    "aventurier": "مغامر",
+    "explorezSites": "استكشف المواقع والمعالم التاريخية عبر الجزائر"
   },
   "notifications_preferences": {
     "prfrences_notifications": "تفضيلات الإشعارات",
@@ -5331,7 +5332,8 @@
     "accepter": "قبول ونشر",
     "raisonRequise": "اشرح سبب رفض الاقتراح",
     "acceptee": "تم قبول الاقتراح: حُدِّث المقال",
-    "refusee": "تم رفض الاقتراح"
+    "refusee": "تم رفض الاقتراح",
+    "articleModifie": "عُدّل المقال منذ هذا الاقتراح. قبوله سيستبدل هذه التغييرات. هل تريد المتابعة؟"
   },
   "servicesVisiteurs": {
     "menu": "خدمات الزوّار",

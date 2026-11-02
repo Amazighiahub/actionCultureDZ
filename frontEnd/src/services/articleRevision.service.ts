@@ -40,8 +40,9 @@ export const articleRevisionService = {
   proposer(idOeuvre: number, donnees: { motif: string; titre?: unknown; description?: unknown; blocks: BlocRevision[] }): Promise<ApiResponse<{ id_revision: number }>> {
     return httpClient.post(`/oeuvres/${idOeuvre}/revisions`, donnees);
   },
-  decider(idOeuvre: number, idRevision: number, decision: 'accepter' | 'refuser', motif_refus?: string): Promise<ApiResponse<{ statut: string }>> {
-    return httpClient.post(`/oeuvres/${idOeuvre}/revisions/${idRevision}/decision`, { decision, motif_refus });
+  /** forcer : accepter même si l'article a changé depuis la proposition */
+  decider(idOeuvre: number, idRevision: number, decision: 'accepter' | 'refuser', motif_refus?: string, forcer = false): Promise<ApiResponse<{ statut: string }>> {
+    return httpClient.post(`/oeuvres/${idOeuvre}/revisions/${idRevision}/decision`, { decision, motif_refus, forcer });
   },
 };
 

@@ -268,7 +268,8 @@ class IntervenantService extends BaseService {
         err.statusCode = 400;
         throw err;
       }
-    } else if (normalizedEmail) {
+    } else if (normalizedEmail && isAdmin) {
+      // Liaison par e-mail réservée à l'administration (sinon : fiche reliée au compte d'un tiers)
       const link = await this._tryLinkUserIdFromEmail(normalizedEmail, null);
       if (link.id_user) idUserToSet = link.id_user;
     }
@@ -342,7 +343,7 @@ class IntervenantService extends BaseService {
     });
   }
 
-  async updateIntervenant(id, lang, data) {
+  async updateIntervenant(id, lang, data, { isAdmin = false } = {}) {
     const { nom, prenom, biographie, ...rest } = data;
 
     const transaction = await this.sequelize.transaction();
@@ -394,7 +395,7 @@ class IntervenantService extends BaseService {
         }
 
         // Liaison automatique si id_user non imposé dans la requête
-        if (rest.id_user === undefined && normalizedNew) {
+        if (isAdmin && rest.id_user === undefined && normalizedNew) {
           const link = await this._tryLinkUserIdFromEmail(normalizedNew, id);
           if (link.id_user) {
             updates.id_user = link.id_user;

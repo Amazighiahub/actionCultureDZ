@@ -37,7 +37,7 @@ const make = ({ oeuvre = {}, enAttente = 0, revision = null, mediasArticle = [] 
     Role: {},
     Article: { findOne: jest.fn().mockResolvedValue({ id_article: 9 }) },
     ArticleScientifique: { findOne: jest.fn() },
-    ArticleBlock: { destroy: jest.fn(), create: jest.fn(async (d) => { crees.push(d); return d; }) }
+    ArticleBlock: { findAll: jest.fn().mockResolvedValue([]), destroy: jest.fn(), create: jest.fn(async (d) => { crees.push(d); return d; }) }
   };
   const notificationService = { sendToUser: jest.fn() };
   return { service: new ArticleRevisionService(models, { notificationService }), models, notificationService, crees, oeuvreObj };

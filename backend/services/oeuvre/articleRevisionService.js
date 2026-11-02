@@ -7,6 +7,7 @@
  * l'article, l'article reste publié) ou la refuse en expliquant pourquoi ; la personne qui a
  * proposé est notifiée de la décision.
  */
+const crypto = require('crypto');
 const BaseService = require('../core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent, sanitizeBlockJson } = require('../../utils/sanitizeArticle');
@@ -91,11 +92,13 @@ class ArticleRevisionService extends BaseService {
     }
 
     const blocks = await this._blocsValides(donnees.blocks, idOeuvre, Media);
+    // Empreinte de l'article au moment de la proposition : à l'acceptation, on saura s'il a changé
+    const empreinte_base = await this._empreinteArticle(oeuvre);
     const revision = await ArticleRevision.create({
       id_oeuvre: idOeuvre,
       id_auteur: userId,
       motif,
-      contenu: { titre: donnees.titre ?? null, description: donnees.description ?? null, blocks },
+      contenu: { titre: donnees.titre ?? null, description: donnees.description ?? null, blocks, empreinte_base },
       statut: 'en_attente'
     });
 
@@ -124,7 +127,7 @@ class ArticleRevisionService extends BaseService {
    * Accepter (la proposition remplace le contenu de l'article) ou refuser (avec un motif).
    * Réservé à l'auteur de l'article et à l'administration.
    */
-  async decider(idOeuvre, idRevision, { decision, motif_refus }, { userId, isModerator = false }) {
+  async decider(idOeuvre, idRevision, { decision, motif_refus, forcer = false }, { userId, isModerator = false }) {
     const { ArticleRevision, Oeuvre, Article, ArticleScientifique, ArticleBlock, Media } = this.models;
     const revision = await ArticleRevision.findOne({ where: { id_revision: idRevision, id_oeuvre: idOeuvre } });
     if (!revision) throw this._notFoundError(idRevision);
@@ -158,7 +161,20 @@ class ArticleRevisionService extends BaseService {
     if (!fiche) throw this._validationError('Article introuvable');
     const idArticle = scientifique ? fiche.id_article_scientifique : fiche.id_article;
     const articleType = scientifique ? 'article_scientifique' : 'article';
-    const { titre, description, blocks } = revision.contenu || {};
+    const { titre, description, blocks, empreinte_base } = revision.contenu || {};
+
+    // L'article a changé depuis la proposition (autre proposition acceptée, ajouts de l'auteur) : on
+    // prévient au lieu d'écraser sans le dire. Le décideur peut confirmer (forcer). Les propositions
+    // plus anciennes n'ont pas d'empreinte : pas de contrôle possible.
+    const blocsActuels = await ArticleBlock.findAll({
+      where: { id_article: idArticle, article_type: articleType }, order: [['ordre', 'ASC']], raw: true
+    });
+    if (empreinte_base && !forcer && empreinte_base !== this._empreinte(oeuvre, blocsActuels)) {
+      throw Object.assign(
+        new Error('L’article a été modifié depuis cette proposition : l’accepter remplacera ces changements.'),
+        { statusCode: 409, code: 'ARTICLE_MODIFIE' }
+      );
+    }
 
     await Oeuvre.sequelize.transaction(async (transaction) => {
       // Relue sous verrou : deux « Accepter » simultanés n'appliquent pas deux fois les blocs
@@ -189,7 +205,11 @@ class ArticleRevisionService extends BaseService {
           contenu_json: sanitizeBlockJson(b.type_block, b.contenu_json) ?? null, metadata, id_media: idMedia, ordre: i, visible: true
         }, { transaction });
       }
-      await revision.update({ statut: 'acceptee', id_decideur: userId, date_decision: new Date() }, { transaction });
+      // L'ancienne version reste gardée avec la proposition : rien n'est perdu définitivement
+      await revision.update({
+        statut: 'acceptee', id_decideur: userId, date_decision: new Date(),
+        contenu: { ...revision.contenu, version_remplacee: { titre: oeuvre.titre, description: oeuvre.description, blocks: blocsActuels } }
+      }, { transaction });
     });
 
     await this._notifier(revision.id_auteur, {
@@ -204,6 +224,29 @@ class ArticleRevisionService extends BaseService {
   // --------------------------------------------------------------------------
   // Outils
   // --------------------------------------------------------------------------
+
+  /** Empreinte du contenu d'un article : titre, chapeau et blocs (type, texte, données, image, ordre) */
+  _empreinte(oeuvre, blocs) {
+    const lire = (v) => (typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch { return v; } })() : v);
+    const contenu = {
+      titre: lire(oeuvre.titre) ?? null,
+      description: lire(oeuvre.description) ?? null,
+      blocs: blocs.map(b => [b.type_block, b.contenu ?? '', lire(b.contenu_json) ?? null, b.id_media ?? null])
+    };
+    return crypto.createHash('sha256').update(JSON.stringify(contenu)).digest('hex');
+  }
+
+  async _empreinteArticle(oeuvre) {
+    const { Article, ArticleScientifique, ArticleBlock } = this.models;
+    const scientifique = oeuvre.id_type_oeuvre === 5;
+    const fiche = await (scientifique ? ArticleScientifique : Article).findOne({ where: { id_oeuvre: oeuvre.id_oeuvre } });
+    if (!fiche) return null;
+    const blocs = await ArticleBlock.findAll({
+      where: { id_article: scientifique ? fiche.id_article_scientifique : fiche.id_article, article_type: scientifique ? 'article_scientifique' : 'article' },
+      order: [['ordre', 'ASC']], raw: true
+    });
+    return this._empreinte(oeuvre, blocs);
+  }
 
   /** Blocs proposés : types connus, taille raisonnable, images autorisées ou déjà dans l'article */
   async _blocsValides(blocks, idOeuvre, Media) {

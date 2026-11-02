@@ -47,7 +47,7 @@ const modeles = ({ existants = [], dejaInscrits = [] } = {}) => {
   const inscriptions = [];
   return {
     crees, inscriptions,
-    Evenement: { findByPk: jest.fn().mockResolvedValue({
+    Evenement: { findAll: jest.fn().mockResolvedValue([{ id_evenement: 2 }]), findByPk: jest.fn().mockResolvedValue({
       id_evenement: 2, id_user: 37, nom_evenement: { fr: 'Chantier-école' }, tarif: 2000,
       tarification: { mode: 'profil', profils: [{ valeur: 'Étudiant', prix: 2000 }, { valeur: 'Retraité', prix: 3000 }], partiel_pourcent: 70 },
       TypeEvenement: { config_inscription: CONFIG }
@@ -60,6 +60,7 @@ const modeles = ({ existants = [], dejaInscrits = [] } = {}) => {
     },
     EvenementUser: {
       findAll: jest.fn().mockResolvedValue(dejaInscrits.map(id_user => ({ id_user }))),
+      count: jest.fn().mockResolvedValue(0),
       findOrCreate: jest.fn(async ({ where, defaults }) => { inscriptions.push({ ...where, ...defaults }); return [{}, true]; })
     },
     EmailVerification: { createVerificationToken: jest.fn().mockResolvedValue({ token: 'jeton' }) }
@@ -126,7 +127,7 @@ describe('Import', () => {
     const emailService = { sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) };
     const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
     const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2, 3, 4, 6, 7], profils: { 3: 'Étudiant', 4: 'Retraité' } });
-    expect(bilan).toEqual({ comptes_crees: 3, inscrits: 3, invitations: 3, erreurs: [] });
+    expect(bilan).toEqual({ inscrits: 3, invitations: 3, erreurs: [] });
     expect(m.crees[0].data).toMatchObject({ email: 'lydia.amrani@exemple.dz', id_type_user: 1, statut: 'actif', email_verifie: false, accepte_conditions: false, profil_public: false, nom: { fr: 'Amrani Lydia' } });
     expect(m.crees[0].options).toEqual({ hooks: false });
     expect(m.inscriptions[0]).toMatchObject({ id_evenement: 2, statut_participation: 'invitation', montant_du: 2000 });
@@ -142,7 +143,8 @@ describe('Import', () => {
     };
     const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
     const bilan = await svc.importer(await classeur(LIGNES), 2, ORGANISATEUR, { lignes: [2] });
-    expect(bilan).toMatchObject({ comptes_crees: 0, inscrits: 1, invitations: 1 });
+    expect(bilan).toMatchObject({ inscrits: 1, invitations: 1 });
+    expect(bilan.comptes_crees).toBeUndefined();
     expect(m.inscriptions[0]).toMatchObject({ id_user: 9, statut_participation: 'invitation' });
     expect(emailService.sendDemandeConfirmationInscription).toHaveBeenCalledTimes(1);
     expect(emailService.sendInvitationInscription).not.toHaveBeenCalled();

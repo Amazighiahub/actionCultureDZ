@@ -513,31 +513,16 @@ class ProgrammeService extends BaseService {
     const meme = memes.find(i => texte(i.prenom).toLowerCase() === prenom.toLowerCase());
     if (meme) return meme.id_intervenant;
 
-    // Cas 4 : Créer un nouvel Intervenant, relié au compte qui a cet e-mail s'il existe.
-    // interv.id_user n'est jamais lu : choisir librement le compte lié est réservé à
-    // l'administration (intervenantService) — sinon un organisateur rattachait la fiche au
-    // compte d'un tiers. Un compte déjà relié à une autre fiche ne l'est pas une 2e fois
-    // (index unique : la création du programme échouait).
-    let userId = null;
-    if (interv.email) {
-      const user = await this.models.User.findOne({
-        where: { email: interv.email },
-        attributes: ['id_user'],
-        transaction
-      });
-      const dejaRelie = user && await this.models.Intervenant.findOne({
-        where: { id_user: user.id_user }, attributes: ['id_intervenant'], transaction
-      });
-      if (user && !dejaRelie) userId = user.id_user;
-    }
-
+    // Cas 4 : Créer un nouvel Intervenant, sans compte lié. Relier une fiche à un compte est réservé à
+    // l'administration (intervenantService) : par e-mail, un organisateur affichait la photo du compte
+    // d'un tiers sous un nom de son choix, et sa vraie fiche ne pouvait plus être reliée à son compte.
     const newIntervenant = await this.models.Intervenant.create({
       nom: this._prepareMultiLang(interv.nom, 'fr') || { fr: '', ar: '' },
       prenom: this._prepareMultiLang(interv.prenom, 'fr') || { fr: '', ar: '' },
       email: interv.email || null,
       telephone: interv.telephone || null,
       biographie: interv.biographie ? this._prepareMultiLang(interv.biographie, 'fr') : null,
-      id_user: userId,
+      id_user: null,
       statut: 'actif'
     }, { transaction });
 

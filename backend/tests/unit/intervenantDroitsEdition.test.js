@@ -65,7 +65,7 @@ describe('IntervenantController.updateIntervenant — professionnel', () => {
   it('modifiable : seuls les champs de présentation sont transmis', async () => {
     const ctrl = makeCtrl({ intervenant: {}, peutModifier: true });
     await ctrl.updateIntervenant(req({ biographie: { fr: 'Potière' }, titre_professionnel: 'Artisane', email: 'x@y.dz', id_user: 7, telephone: '0555' }), res());
-    expect(ctrl.intervenantService.updateIntervenant).toHaveBeenCalledWith('1', 'fr', { biographie: { fr: 'Potière' }, titre_professionnel: 'Artisane' });
+    expect(ctrl.intervenantService.updateIntervenant).toHaveBeenCalledWith('1', 'fr', { biographie: { fr: 'Potière' }, titre_professionnel: 'Artisane' }, { isAdmin: false });
   });
 
   it('non modifiable : 403, rien n’est enregistré', async () => {

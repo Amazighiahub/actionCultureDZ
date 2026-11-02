@@ -38,7 +38,7 @@ interface Apercu {
   colonnes: { titre: string; cible: string | null }[];
   lignes: LigneApercu[];
 }
-interface Bilan { comptes_crees: number; inscrits: number; invitations: number; erreurs: string[] }
+interface Bilan { inscrits: number; invitations: number; erreurs: string[] }
 
 const IMPORTABLES: Action[] = ['inviter'];
 
@@ -229,7 +229,6 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
               <p className="font-medium">{t('pro.participants.import.termine', 'Import terminé')}</p>
               <ul className="text-sm list-disc ps-5">
                 <li>{t('pro.participants.import.bilanInvites', '{{n}} personne(s) invitée(s), en attente de leur confirmation', { n: bilan.inscrits })}</li>
-                <li>{t('pro.participants.import.bilanComptes', '{{n}} compte(s) créé(s)', { n: bilan.comptes_crees })}</li>
                 <li>{t('pro.participants.import.bilanInvitations', '{{n}} invitation(s) envoyée(s)', { n: bilan.invitations })}</li>
               </ul>
               {bilan.erreurs.length > 0 && (

@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MapPin, Clock, Users, Star, Route, Maximize2, Navigation } from 'lucide-react';
+import { MapPin, Maximize2, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { patrimoineService } from '@/services/patrimoine.service';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
 // Fix pour les icônes Leaflet
 // Icônes des marqueurs servies localement (voir src/lib/leafletIcons.ts)
@@ -21,130 +21,23 @@ interface Monument {
   position: [number, number];
   region: string;
   type: string;
-  descriptionKey: string;
   image: string;
-  visiteurs: string;
-  duree: string;
   heritage: string;
-  annee?: string;
 }
 
-// Données statiques - les traductions sont appliquées dans le composant via les clés
-const monumentsData: Monument[] = [
-  {
-    id: 1,
-    nom: "Casbah d'Alger",
-    position: [36.7828, 3.0594],
-    region: "Alger",
-    type: "Citadelle historique",
-    descriptionKey: "common_cartepatrimoine.description_citadelle_historique_inscrit",
-    image: "/images/hero/casbah-alger-768.webp",
-    visiteurs: "250k/an",
-    duree: "2-3h",
-    heritage: "UNESCO",
-    annee: "XVIe siècle"
-  },
-  {
-    id: 2,
-    nom: "Tassili n'Ajjer",
-    position: [25.5000, 9.5000],
-    region: "Illizi",
-    type: "Parc national",
-    descriptionKey: "common_cartepatrimoine.description_plateau_montagneux_avec",
-    image: "/images/hero/sahara-768.webp",
-    visiteurs: "15k/an",
-    duree: "1-2 jours",
-    heritage: "UNESCO",
-    annee: "Préhistoire"
-  },
-  {
-    id: 3,
-    nom: "Vallée du M'zab",
-    position: [32.4840, 3.6730],
-    region: "Ghardaïa",
-    type: "Architecture traditionnelle",
-    descriptionKey: "common_cartepatrimoine.description_ensemble_architectural_mozab",
-    image: "/images/hero/ghardaia.webp",
-    visiteurs: "45k/an",
-    duree: "1 jour",
-    heritage: "UNESCO",
-    annee: "XIe siècle"
-  },
-  {
-    id: 4,
-    nom: "Timgad",
-    position: [35.4833, 6.4667],
-    region: "Batna",
-    type: "Site archéologique",
-    descriptionKey: "common_cartepatrimoine.description_ancienne_cit_romaine",
-    image: "/images/hero/timgad-768.webp",
-    visiteurs: "80k/an",
-    duree: "2-3h",
-    heritage: "UNESCO",
-    annee: "100 ap. J.-C."
-  },
-  {
-    id: 5,
-    nom: "Djémila",
-    position: [36.3167, 5.7333],
-    region: "Sétif",
-    type: "Site archéologique",
-    descriptionKey: "common_cartepatrimoine.description_cuicul_ancienne_ville",
-    image: "/images/placeholder-patrimoine.svg",
-    visiteurs: "60k/an",
-    duree: "2h",
-    heritage: "UNESCO",
-    annee: "Ier siècle"
-  },
-  {
-    id: 6,
-    nom: "Tipaza",
-    position: [36.5833, 2.4333],
-    region: "Tipaza",
-    type: "Site archéologique",
-    descriptionKey: "common_cartepatrimoine.description_vestiges_puniques_romains",
-    image: "/images/placeholder-patrimoine.svg",
-    visiteurs: "120k/an",
-    duree: "2-3h",
-    heritage: "UNESCO",
-    annee: "IIe siècle av. J.-C."
-  }
-];
-
-interface ParcoursData {
-  nomKey: string;
-  monuments: number[];
-  duree: string;
-  difficulteKey: string;
-}
-
-const parcoursData: ParcoursData[] = [
-  {
-    nomKey: "common_cartepatrimoine.circuit_algerois",
-    monuments: [1, 6],
-    duree: "1 jour",
-    difficulteKey: "common_cartepatrimoine.facile"
-  },
-  {
-    nomKey: "common_cartepatrimoine.route_romaine",
-    monuments: [4, 5, 6],
-    duree: "3 jours",
-    difficulteKey: "common_cartepatrimoine.modere"
-  },
-  {
-    nomKey: "common_cartepatrimoine.patrimoine_unesco",
-    monuments: [1, 2, 3, 4, 5, 6],
-    duree: "1 semaine",
-    difficulteKey: "common_cartepatrimoine.aventurier"
-  }
-];
-
-const PARCOURS_COLORS = ['#6B8E23', '#4A6FA5', '#16A085'] as const;
+/** Cadre la carte sur les sites présents (sinon ils pouvaient rester hors de la vue) */
+const CadrerSurSites: React.FC<{ positions: Array<[number, number]> }> = ({ positions }) => {
+  const carte = useMap();
+  useEffect(() => {
+    if (positions.length > 0) carte.fitBounds(positions, { padding: [40, 40], maxZoom: 9 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement quand la liste des sites change
+  }, [positions.length, carte]);
+  return null;
+};
 
 const CartePatrimoine: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [monumentSelectionne, setMonumentSelectionne] = useState<Monument | null>(null);
-  const [parcoursActif, setParcoursActif] = useState<number | null>(null);
   const [carteOuverte, setCarteOuverte] = useState(false);
   const [dbMonuments, setDbMonuments] = useState<Monument[]>([]);
 
@@ -164,10 +57,7 @@ const CartePatrimoine: React.FC = () => {
               position: [parseFloat(s.latitude), parseFloat(s.longitude)] as [number, number],
               region: s.Commune?.nom || s.wilaya || '',
               type: s.typePatrimoine || 'monument',
-              descriptionKey: '',
               image: s.image_url || s.medias?.[0]?.url || '/images/placeholder-patrimoine.svg',
-              visiteurs: '',
-              duree: '',
               heritage: s.classement || '',
             }));
           if (mapped.length > 0) setDbMonuments(mapped);
@@ -179,29 +69,7 @@ const CartePatrimoine: React.FC = () => {
     loadFromDb();
   }, [i18n.language]);
 
-  // Mémoriser les parcours avec traductions
-  const parcours = useMemo(() => 
-    parcoursData.map(p => ({
-      nom: t(p.nomKey, p.nomKey),
-      monuments: p.monuments,
-      duree: p.duree,
-      difficulte: t(p.difficulteKey, p.difficulteKey)
-    })),
-    [t]
-  );
-
-  const obtenirCouleurParcours = (index: number): string => {
-    return PARCOURS_COLORS[index] || PARCOURS_COLORS[0];
-  };
-
-  const allMonuments = dbMonuments.length > 0 ? dbMonuments : monumentsData;
-
-  const lignesParcours = useMemo(() => {
-    if (parcoursActif === null) return [];
-    const parcoursCourant = parcoursData[parcoursActif];
-    const monumentsParcours = allMonuments.filter(m => parcoursCourant.monuments.includes(m.id));
-    return monumentsParcours.length >= 2 ? monumentsParcours.map(m => m.position) : [];
-  }, [parcoursActif]);
+  const allMonuments = dbMonuments;
 
   // Composant Map
   const MapComponent: React.FC<{ height?: string }> = ({ height = "400px" }) => (
@@ -211,6 +79,7 @@ const CartePatrimoine: React.FC = () => {
         zoom={6}
         style={{ height: '100%', width: '100%', borderRadius: '12px' }}
       >
+        <CadrerSurSites positions={allMonuments.map(m => m.position)} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
@@ -235,24 +104,14 @@ const CartePatrimoine: React.FC = () => {
                   className="w-full h-24 object-cover rounded mb-2"
                   loading="lazy"
                 />
-                <p className="text-xs mb-2">{t(monument.descriptionKey)}</p>
-                <div className="flex justify-between text-xs">
-                  <span>{monument.visiteurs}</span>
-                  <span>{monument.duree}</span>
-                </div>
+                <Link to={`/patrimoine/${monument.id}`} className="text-sm font-medium text-primary hover:underline">
+                  {t('common_cartepatrimoine.plus_dinformations')}
+                </Link>
               </div>
             </Popup>
           </Marker>
         ))}
         
-        {parcoursActif !== null && lignesParcours.length >= 2 && (
-          <Polyline
-            positions={lignesParcours}
-            color={obtenirCouleurParcours(parcoursActif)}
-            weight={3}
-            opacity={0.7}
-          />
-        )}
       </MapContainer>
     </div>
   );
@@ -287,7 +146,7 @@ const CartePatrimoine: React.FC = () => {
             </Dialog>
           </div>
           <p className="text-muted-foreground">
-            {t("common_cartepatrimoine.explorez_plus_sites")}
+            {t('common_cartepatrimoine.explorezSites', 'Explorez les sites et monuments historiques à travers l’Algérie')}
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -295,83 +154,6 @@ const CartePatrimoine: React.FC = () => {
             <MapComponent height="300px" />
             <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none rounded-lg" />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Parcours */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-serif">
-            <Route className="h-5 w-5 text-primary" />
-            <span>{t("common_cartepatrimoine.parcours_dcouverte")}</span>
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("common_cartepatrimoine.choisissez_itinraire_thmatique")}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {parcours.map((p, index) => (
-              <Card
-                key={index}
-                className={`relative cursor-pointer transition-all hover:shadow-md hover-lift ${
-                  parcoursActif === index ? 'ring-2 ring-primary bg-primary/5' : ''
-                }`}
-              >
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold font-serif">
-                        {/* Bouton « étiré » : son ::after couvre toute la carte (sélection au clic et au clavier) */}
-                        <button
-                          type="button"
-                          aria-pressed={parcoursActif === index}
-                          onClick={() => setParcoursActif(index)}
-                          className="text-start after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2"
-                        >
-                          {p.nom}
-                        </button>
-                      </h4>
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: obtenirCouleurParcours(index) }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" aria-hidden="true" />
-                        <span>{p.monuments.length} {t("common_cartepatrimoine.sites")}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" aria-hidden="true" />
-                        <span>{p.duree}</span>
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="w-fit">{p.difficulte}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {parcoursActif !== null && (
-            <div className="mt-6 p-4 bg-muted/30 rounded-lg border-s-4 border-primary">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">
-                    {t("common_cartepatrimoine.parcours_actif")} {parcours[parcoursActif].nom}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t("common_cartepatrimoine.itinraire_trac_sur")} {parcours[parcoursActif].monuments.length} {t("common_cartepatrimoine.monuments")}
-                  </p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setParcoursActif(null)}>
-                  {t("common_cartepatrimoine.effacer")}
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -388,7 +170,7 @@ const CartePatrimoine: React.FC = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Badge variant="secondary">{monumentSelectionne.type}</Badge>
+                <Badge variant="secondary">{t(`patrimoine.types.${monumentSelectionne.type}`, monumentSelectionne.type)}</Badge>
                 {monumentSelectionne.heritage === 'UNESCO' && (
                   <Badge className="bg-accent text-accent-foreground">
                     {t("common_cartepatrimoine.unesco")}
@@ -404,47 +186,9 @@ const CartePatrimoine: React.FC = () => {
               className="w-full h-64 object-cover rounded-lg shadow-md"
               loading="lazy"
             />
-            <p className="text-muted-foreground leading-relaxed">
-              {t(monumentSelectionne.descriptionKey)}
-            </p>
-            
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-              <div className="flex items-center gap-2 p-3 bg-background/50 rounded-lg">
-                <Users className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="font-medium">{monumentSelectionne.visiteurs}</p>
-                  <p className="text-xs text-muted-foreground">{t("common_cartepatrimoine.visiteurs")}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-background/50 rounded-lg">
-                <Clock className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="font-medium">{monumentSelectionne.duree}</p>
-                  <p className="text-xs text-muted-foreground">{t("common_cartepatrimoine.dure")}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-background/50 rounded-lg">
-                <MapPin className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="font-medium">{monumentSelectionne.annee}</p>
-                  <p className="text-xs text-muted-foreground">{t("common_cartepatrimoine.poque")}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-background/50 rounded-lg">
-                <Star className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="font-medium">{monumentSelectionne.heritage}</p>
-                  <p className="text-xs text-muted-foreground">{t("common_cartepatrimoine.statut")}</p>
-                </div>
-              </div>
-            </div>
-            
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button className="flex-1 btn-hover">
-                {t("common_cartepatrimoine.rserver_une_visite")}
-              </Button>
-              <Button variant="outline" className="flex-1">
-                {t("common_cartepatrimoine.plus_dinformations")}
+              <Button asChild className="flex-1 btn-hover">
+                <Link to={`/patrimoine/${monumentSelectionne.id}`}>{t('common_cartepatrimoine.plus_dinformations')}</Link>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setMonumentSelectionne(null)}>
                 {t("common_cartepatrimoine.fermer")}

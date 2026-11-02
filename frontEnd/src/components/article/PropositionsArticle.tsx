@@ -96,7 +96,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
   const titreChange = detail && detail.contenu.titre != null && getLocalizedText(detail.contenu.titre) !== getLocalizedText(titreActuel);
   const chapeauChange = detail && detail.contenu.description != null && getLocalizedText(detail.contenu.description) !== getLocalizedText(descriptionActuelle);
 
-  const decider = async (decision: 'accepter' | 'refuser') => {
+  const decider = async (decision: 'accepter' | 'refuser', forcer = false) => {
     if (!detail) return;
     if (decision === 'refuser' && motifRefus.trim().length < 3) {
       toast({ title: t('revisions.raisonRequise', 'Expliquez pourquoi la proposition est refusée'), variant: 'destructive' });
@@ -104,13 +104,23 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
     }
     setEnvoi(true);
     try {
-      const res = await articleRevisionService.decider(idOeuvre, detail.id_revision, decision, motifRefus.trim() || undefined);
-      if (!res.success) throw new Error(res.error);
+      const res = await articleRevisionService.decider(idOeuvre, detail.id_revision, decision, motifRefus.trim() || undefined, forcer);
+      if (!res.success) {
+        throw Object.assign(new Error(res.error), { code: (res as { code?: string }).code });
+      }
       toast({ title: decision === 'accepter' ? t('revisions.acceptee', 'Proposition acceptée : l’article est mis à jour') : t('revisions.refusee', 'Proposition refusée') });
       setDetail(null);
       await charger();
       if (decision === 'accepter') onAcceptee();
     } catch (e) {
+      // L'article a changé depuis la proposition : le décideur choisit en connaissance de cause
+      if ((e as { code?: string }).code === 'ARTICLE_MODIFIE' && !forcer) {
+        setEnvoi(false);
+        if (window.confirm(t('revisions.articleModifie', 'L’article a été modifié depuis cette proposition. L’accepter remplacera ces changements. Continuer ?'))) {
+          await decider(decision, true);
+        }
+        return;
+      }
       toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
     } finally {
       setEnvoi(false);

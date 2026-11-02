@@ -59,12 +59,20 @@ describe('envoyerRappelEvenement', () => {
 
   it('email et notification avec le nom, la date et l’heure d’Algérie', async () => {
     const { s, models } = service([PARTICIPANT]);
-    await expect(s.envoyerRappelEvenement(2)).resolves.toEqual({ envoyes: 1 });
+    await expect(s.envoyerRappelEvenement(2)).resolves.toEqual({ envoyes: 1, echecs: 0, reprise: false });
     const email = s.emailService.sendEventReminder.mock.calls[0][0];
     expect(email).toMatchObject({ email: 'lydia.amrani@exemple.dz', prenom: 'Lydia', nomEvenement: 'Chantier-école de Ghoufi', heureDebut: '08:00', lieu: 'Ghoufi, Balcons de Ghoufi' });
     const notif = models.Notification.create.mock.calls[0][0];
     expect(notif.message).toContain('« Chantier-école de Ghoufi »');
     expect(notif.message).not.toContain('[object Object]');
+  });
+
+  it('e-mail refusé : compté en échec, pas de notification « c’est demain »', async () => {
+    const { s, models } = service([PARTICIPANT]);
+    s.emailService.sendEventReminder.mockResolvedValue({ success: false, error: 'quota' });
+    const r = await s.envoyerRappelEvenement(2);
+    expect(r).toMatchObject({ envoyes: 0, echecs: 1 });
+    expect(models.Notification.create).not.toHaveBeenCalled();
   });
 
   it('événement introuvable : erreur (le cron ne le marque pas « envoyé »)', async () => {
