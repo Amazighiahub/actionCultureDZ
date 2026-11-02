@@ -1,10 +1,11 @@
 /**
- * Lien d'un événement en ligne (Google Meet, Zoom…) : réservé aux inscrits, à l'organisateur et à l'équipe.
+ * Lien d'un événement en ligne (Google Meet, Zoom…) : réservé aux personnes dont l'inscription est validée,
+ * à l'organisateur et à l'équipe. Il part aussi dans l'e-mail d'acceptation.
  * Toutes les réponses JSON passent par retirerLienEnLigne : un événement peut sortir de nombreuses
  * requêtes (listes, programmes, favoris…), le retrait à un seul endroit évite tout oubli. Les autres
  * ne reçoivent que en_ligne: true. Une personne autorisée reçoit le lien dans lien_en_ligne (fiche de l'événement).
  */
-const STATUTS_AVEC_LIEN = ['inscrit', 'confirme', 'present'];
+const STATUTS_AVEC_LIEN = ['confirme', 'present'];
 
 /** Pour app.set('json replacer') : ne modifie jamais l'objet d'origine (il peut venir du cache) */
 function retirerLienEnLigne(_cle, valeur) {
@@ -25,4 +26,15 @@ function lienPour(evenement, { peutGerer = false, inscription = null } = {}) {
   return STATUTS_AVEC_LIEN.includes(inscription?.statut_participation) ? evenement.url_virtuel : null;
 }
 
-module.exports = { retirerLienEnLigne, lienPour, STATUTS_AVEC_LIEN };
+/** Lien pour un e-mail : seulement http(s), jamais pour un événement annulé ou terminé */
+function lienPourEmail(evenement) {
+  if (!evenement?.url_virtuel || ['annule', 'termine'].includes(evenement.statut)) return null;
+  try {
+    const adresse = new URL(String(evenement.url_virtuel).trim());
+    return ['http:', 'https:'].includes(adresse.protocol) ? adresse.href : null;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { retirerLienEnLigne, lienPour, lienPourEmail, STATUTS_AVEC_LIEN };

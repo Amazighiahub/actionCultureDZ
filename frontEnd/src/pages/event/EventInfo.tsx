@@ -265,7 +265,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
                 <p className="text-sm text-muted-foreground break-all" dir="ltr">{lienEnLigne}</p>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('event.enLigne.reserve', 'Le lien de la réunion est réservé aux personnes inscrites. Inscrivez-vous pour le recevoir ici.')}</p>
+              <p className="text-sm text-muted-foreground">{t('event.enLigne.reserve', 'Inscrivez-vous : une fois votre inscription validée par l’organisateur, vous recevrez le lien de la réunion par e-mail et il s’affichera ici.')}</p>
             )}
           </CardContent>
         </Card>

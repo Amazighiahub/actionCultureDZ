@@ -1,5 +1,6 @@
 // services/EmailService.js - Service email refactorisé avec templates externes
 const logger = require('../utils/logger');
+const { lienPourEmail } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
@@ -673,6 +674,8 @@ class EmailService {
       const statutText = statut === 'confirme' ? 'acceptée' : 'refusée';
       const statusColor = statut === 'confirme' ? '#27ae60' : '#e74c3c';
       const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+      // Événement en ligne : le lien de la réunion part avec l'acceptation, jamais avec un refus
+      const lienReunion = statut === 'confirme' ? lienPourEmail(evenement) : null;
 
       const esc = this._escapeHtml.bind(this);
       const html = `
@@ -684,6 +687,14 @@ class EmailService {
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Message de l'organisateur :</strong></p>
               <p style="font-style: italic;">${esc(notes)}</p>
+            </div>
+          ` : ''}
+          ${lienReunion ? `
+            <div style="background-color: #f0f8f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Lien de la réunion en ligne :</strong></p>
+              <p><a href="${esc(lienReunion)}" style="background-color: #27ae60; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Rejoindre la réunion</a></p>
+              <p style="word-break: break-all;">${esc(lienReunion)}</p>
+              <p style="font-size: 12px; color: #666;">Ce lien vous est personnellement destiné : merci de ne pas le transmettre.</p>
             </div>
           ` : ''}
           <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>

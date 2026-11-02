@@ -36,10 +36,10 @@ describe('réponses JSON', () => {
 
 describe('qui reçoit le lien', () => {
   const evenement = { url_virtuel: LIEN };
-  test.each(['inscrit', 'confirme', 'present'])('inscription « %s » : oui', (statut) => {
+  test.each(['confirme', 'present'])('inscription « %s » : oui', (statut) => {
     expect(lienPour(evenement, { inscription: { statut_participation: statut } })).toBe(LIEN);
   });
-  test.each(['invitation', 'annule', 'absent'])('inscription « %s » : non', (statut) => {
+  test.each(['inscrit', 'invitation', 'annule', 'absent'])('inscription « %s » : non', (statut) => {
     expect(lienPour(evenement, { inscription: { statut_participation: statut } })).toBeNull();
   });
   test('organisateur ou équipe : oui ; visiteur : non', () => {
@@ -48,5 +48,36 @@ describe('qui reçoit le lien', () => {
   });
   test('événement sans lien : rien', () => {
     expect(lienPour({ url_virtuel: null }, { peutGerer: true })).toBeNull();
+  });
+});
+
+describe('e-mail de validation', () => {
+  const emailService = require('../../services/emailService');
+  const professionnel = { prenom: 'Lydia', email: 'lydia@example.com' };
+  const evenement = { id_evenement: 3, nom_evenement: 'Réunion', url_virtuel: LIEN, statut: 'planifie' };
+  let envoi;
+  beforeEach(() => { envoi = jest.spyOn(emailService, 'sendEmail').mockResolvedValue({ success: true }); });
+  afterEach(() => envoi.mockRestore());
+  const corps = async (ev, statut) => {
+    await emailService.notifierValidationProfessionnel(professionnel, ev, statut);
+    return envoi.mock.calls[0][2];
+  };
+
+  test('acceptation : le lien est dans l’e-mail', async () => {
+    const html = await corps(evenement, 'confirme');
+    expect(html).toContain(`href="${LIEN}"`);
+    expect(html).toContain('Rejoindre la réunion');
+  });
+  test('refus : pas de lien', async () => {
+    expect(await corps(evenement, 'refuse')).not.toContain('meet.example.com');
+  });
+  test('événement sur place : pas de bloc réunion', async () => {
+    expect(await corps({ ...evenement, url_virtuel: null }, 'confirme')).not.toContain('Rejoindre la réunion');
+  });
+  test.each(['annule', 'termine'])('événement %s : pas de lien', async (statut) => {
+    expect(await corps({ ...evenement, statut }, 'confirme')).not.toContain('meet.example.com');
+  });
+  test('lien piégé : jamais envoyé', async () => {
+    expect(await corps({ ...evenement, url_virtuel: 'javascript:alert(1)' }, 'confirme')).not.toContain('javascript:');
   });
 });
