@@ -5,6 +5,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { lienPour } = require('../utils/lienEnLigne');
 const { servirPdf } = require('../utils/servirPdf');
 const QRCode = require('qrcode');
 const { evenementPath } = require('../utils/slug');
@@ -83,6 +84,16 @@ class EvenementController extends BaseController {
     return !!raw && ['brouillon', 'en_attente'].includes(raw.statut) && !this._canSeeUnpublished(req, raw.id_user);
   }
 
+  /** Lien de l'événement en ligne, si cette personne y a droit (inscrite, organisatrice ou équipe) */
+  async _lienEnLigne(req, evenement) {
+    const raw = evenement?._raw || evenement;
+    if (!raw?.url_virtuel || !req.user?.id_user) return null;
+    const peutGerer = this._canSeeUnpublished(req, raw.id_user);
+    const inscription = peutGerer ? null
+      : await this.evenementService.repository.getRegistration(raw.id_evenement, req.user.id_user);
+    return lienPour(raw, { peutGerer, inscription });
+  }
+
   _introuvable(req, res) {
     return res.status(404).json({ success: false, error: req.t('common.notFound') });
   }
@@ -91,10 +102,11 @@ class EvenementController extends BaseController {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
       if (this._cache(req, evenement)) return this._introuvable(req, res);
-      res.json({
-        success: true,
-        data: this._serialize(evenement, 'toDetailJSON', req.lang)
-      });
+      const data = this._serialize(evenement, 'toDetailJSON', req.lang);
+      const lien = await this._lienEnLigne(req, evenement);
+      // Réponse propre à cette personne : aucun cache ne doit la garder ; copie, l'objet peut être partagé
+      if (lien) res.set('Cache-Control', 'private, no-store');
+      res.json({ success: true, data: lien ? { ...data, lien_en_ligne: lien } : data });
     } catch (error) {
       this._handleError(res, error);
     }

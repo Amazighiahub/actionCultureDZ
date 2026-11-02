@@ -33,6 +33,7 @@ const { resolveTrustProxy } = require('./utils/trustProxy');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { redactUrl } = require('./utils/maskPII');
+const { retirerLienEnLigne } = require('./utils/lienEnLigne');
 const compression = require('compression');
 const path = require('path');
 const { csrfTokenProvider, csrfVerifier } = require('./middlewares/csrfMiddleware');
@@ -105,6 +106,8 @@ class App {
   initializeMiddlewares() {
     // IP réelle des clients derrière nginx (voir utils/trustProxy.js)
     this.app.set('trust proxy', resolveTrustProxy(process.env.TRUSTED_PROXY_IP));
+    // Lien d'un événement en ligne : retiré de toutes les réponses JSON (voir utils/lienEnLigne.js)
+    this.app.set('json replacer', retirerLienEnLigne);
 
     // Redirection HTTPS et HSTS en production
     this.app.use(httpsRedirect);

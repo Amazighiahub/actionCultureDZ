@@ -3342,7 +3342,8 @@
     },
     "enLigne": {
       "titre": "Événement en ligne",
-      "rejoindre": "Rejoindre la réunion"
+      "rejoindre": "Rejoindre la réunion",
+      "reserve": "Le lien de la réunion est réservé aux personnes inscrites. Inscrivez-vous pour le recevoir ici."
     }
   },
   "places": {

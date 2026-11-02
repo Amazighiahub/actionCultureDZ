@@ -73,7 +73,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
                 {t('event.metadata.free', 'Gratuit')}
               </Badge>
             )}
-            {event.url_virtuel && (
+            {event.en_ligne && (
               <Badge variant="outline" className="gap-1">
                 <Globe className="h-3.5 w-3.5" />
                 {t('event.metadata.virtual', 'Événement en ligne')}

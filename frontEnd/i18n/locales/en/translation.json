@@ -3337,7 +3337,8 @@
     },
     "enLigne": {
       "titre": "Online event",
-      "rejoindre": "Join the meeting"
+      "rejoindre": "Join the meeting",
+      "reserve": "The meeting link is reserved for registered people. Register to get it here."
     }
   },
   "places": {

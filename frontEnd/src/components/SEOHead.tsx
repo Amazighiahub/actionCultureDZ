@@ -192,7 +192,7 @@ const EVENT_STATUS: Record<string, string> = {
 };
 
 export function buildEvenementJsonLd(event: any): Record<string, any> {
-  const online = !event.Lieu && !!event.url_virtuel;
+  const online = !event.Lieu && !!event.en_ligne;
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -205,7 +205,8 @@ export function buildEvenementJsonLd(event: any): Record<string, any> {
       ? 'https://schema.org/OnlineEventAttendanceMode'
       : 'https://schema.org/OfflineEventAttendanceMode',
     location: online
-      ? { '@type': 'VirtualLocation', url: event.url_virtuel }
+      // Pas le lien de la réunion, réservé aux inscrits : la page de l'événement
+      ? { '@type': 'VirtualLocation', url: `${SITE_URL}${evenementPath(event.id_evenement, event.nom_evenement)}` }
       : event.Lieu ? {
         '@type': 'Place',
         name: text(event.Lieu.nom),

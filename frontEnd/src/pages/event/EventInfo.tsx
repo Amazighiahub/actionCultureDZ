@@ -31,7 +31,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData(); // Pour traduire les champs JSON multilingues
   // Seulement http(s) : ce lien est saisi par l'organisateur
-  const lienEnLigne = safeExternalUrl(event.url_virtuel);
+  const lienEnLigne = safeExternalUrl(event.lien_en_ligne);
 
   // Helper pour vérifier si un champ multilingue a du contenu
   const hasContent = (field: unknown): boolean => {
@@ -245,7 +245,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
       </Card>
 
       {/* En ligne : le lien (Google Meet, Zoom…) n'était jamais affiché, seulement un badge */}
-      {lienEnLigne && !['annule', 'termine'].includes(String(event.statut)) && (
+      {event.en_ligne && !['annule', 'termine'].includes(String(event.statut)) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -254,13 +254,19 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button asChild>
-              <a href={lienEnLigne} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 me-2" aria-hidden="true" />
-                {t('event.enLigne.rejoindre', 'Rejoindre la réunion')}
-              </a>
-            </Button>
-            <p className="text-sm text-muted-foreground break-all" dir="ltr">{lienEnLigne}</p>
+            {lienEnLigne ? (
+              <>
+                <Button asChild>
+                  <a href={lienEnLigne} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 me-2" aria-hidden="true" />
+                    {t('event.enLigne.rejoindre', 'Rejoindre la réunion')}
+                  </a>
+                </Button>
+                <p className="text-sm text-muted-foreground break-all" dir="ltr">{lienEnLigne}</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('event.enLigne.reserve', 'Le lien de la réunion est réservé aux personnes inscrites. Inscrivez-vous pour le recevoir ici.')}</p>
+            )}
           </CardContent>
         </Card>
       )}

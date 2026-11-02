@@ -214,7 +214,7 @@ const AjouterEvenement = () => {
           contactEmail: (evt.contact_email as string) || '',
           contactTelephone: (evt.contact_telephone as string) || '',
           tarif: evt.tarif?.toString() || '',
-          urlVirtuel: evt.url_virtuel || '',
+          urlVirtuel: evt.lien_en_ligne || '',
           // Mots-clés : nom dans la langue de l'interface, sinon le premier renseigné
           tags: (Array.isArray(evt.Tags) ? evt.Tags as Array<{ nom?: Record<string, string> | string }> : [])
             .map(tg => (typeof tg.nom === 'string' ? tg.nom : (tg.nom?.[i18n.language] || tg.nom?.fr || Object.values(tg.nom || {}).find(Boolean) || '')))
@@ -237,7 +237,7 @@ const AjouterEvenement = () => {
           profils: (tarification.profils || []).map(pr => ({ ...pr, prix: String(pr.prix) })),
           partiel: tarification.partiel_pourcent ? String(tarification.partiel_pourcent) : '',
         });
-        if (evt.url_virtuel) setIsVirtual(true);
+        if (evt.en_ligne || evt.lien_en_ligne) setIsVirtual(true);
         // Data loaded for edit mode
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.eventNotFound'), variant: 'destructive' });
@@ -503,7 +503,9 @@ const AjouterEvenement = () => {
     fd.append('tags', JSON.stringify(formData.tags));
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
-    if (isEditMode) fd.append('url_virtuel', isVirtual ? formData.urlVirtuel || '' : '');
+    if (isEditMode) {
+      if (!isVirtual || formData.urlVirtuel) fd.append('url_virtuel', isVirtual ? formData.urlVirtuel : '');
+    }
     else if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
     fd.append('statut', statut);
     if (affiche) fd.append('affiche', await prepareImageForUpload(affiche));

@@ -31,7 +31,9 @@ export interface Evenement {
   age_minimum?: number;
   accessibilite?: string;
   certificat_delivre: boolean;
-  url_virtuel?: string;
+  /** Le lien lui-même n'est transmis qu'aux inscrits, à l'organisateur et à l'équipe */
+  en_ligne?: boolean;
+  lien_en_ligne?: string;
   date_limite_inscription?: string;
   date_creation: string;
   date_modification: string;
