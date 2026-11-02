@@ -35,12 +35,33 @@ async function doitProposer(models, user, idLieu) {
   return Number(lieu.id_createur) !== Number(user.id_user);
 }
 
+// Garde-fous : un compte ne peut pas noyer la file de relecture de l'équipe
+const PLAFOND_EN_ATTENTE = 20;
+const TAILLE_MAX_DONNEES = 200 * 1024;
+
 /** Enregistre la proposition et prévient l'équipe */
 async function proposer(models, notificationService, { idLieu, user, action, donnees }) {
   if (!ACTIONS.includes(action)) throw erreur('Action invalide', 400, 'VALIDATION_ERROR');
+  const json = JSON.stringify(donnees);
+  if (Buffer.byteLength(json) > TAILLE_MAX_DONNEES) throw erreur('Proposition trop longue', 413, 'PROPOSITION_TROP_LONGUE');
+  const sql = { type: models.sequelize.QueryTypes.SELECT };
+  const [{ n }] = await models.sequelize.query(
+    "SELECT COUNT(*) AS n FROM proposition_lieu WHERE id_user = :user AND statut = 'en_attente'",
+    { ...sql, replacements: { user: user.id_user } }
+  );
+  if (Number(n) >= PLAFOND_EN_ATTENTE) {
+    throw erreur('Vous avez déjà beaucoup de propositions en attente : l\'équipe doit d\'abord les relire', 409, 'TROP_DE_PROPOSITIONS');
+  }
+  // Double clic : la même proposition, encore en attente, n'est pas enregistrée une seconde fois
+  const [identique] = await models.sequelize.query(
+    `SELECT id FROM proposition_lieu WHERE id_user = :user AND id_lieu = :lieu AND action = :action
+       AND statut = 'en_attente' AND donnees = CAST(:donnees AS JSON) LIMIT 1`,
+    { ...sql, replacements: { user: user.id_user, lieu: idLieu, action, donnees: json } }
+  ).catch(() => []);
+  if (identique) return { id: identique.id };
   const [id] = await models.sequelize.query(
     'INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees) VALUES (:lieu, :user, :action, :donnees)',
-    { replacements: { lieu: idLieu, user: user.id_user, action, donnees: JSON.stringify(donnees) } }
+    { replacements: { lieu: idLieu, user: user.id_user, action, donnees: json } }
   );
   try {
     const lieu = await models.Lieu.findByPk(idLieu, { attributes: ['nom'] });
@@ -65,14 +86,17 @@ async function enAttente(models) {
     FROM proposition_lieu p
     JOIN lieu l ON l.id_lieu = p.id_lieu
     JOIN user u ON u.id_user = p.id_user
-    WHERE p.statut = 'en_attente' ORDER BY p.id ASC`, { type: models.sequelize.QueryTypes.SELECT });
+    WHERE p.statut = 'en_attente' ORDER BY p.id ASC LIMIT 200`, { type: models.sequelize.QueryTypes.SELECT });
+  const idIntervenant = (ligne) => (ligne.action === 'personnalite' ? Number(ligne.donnees.corps?.id_intervenant) : null);
+  for (const ligne of lignes) ligne.donnees = lireJson(ligne.donnees) || {};
+  const ids = [...new Set(lignes.map(idIntervenant).filter(Boolean))];
+  const personnes = ids.length && models.Intervenant
+    ? await models.Intervenant.findAll({ where: { id_intervenant: ids }, attributes: ['id_intervenant', 'nom', 'prenom'] })
+    : [];
+  const noms = new Map(personnes.map(p => [p.id_intervenant, [texteLisible(p.prenom), texteLisible(p.nom)].filter(Boolean).join(' ')]));
   for (const ligne of lignes) {
-    ligne.donnees = lireJson(ligne.donnees) || {};
-    const idIntervenant = ligne.action === 'personnalite' ? Number(ligne.donnees.corps?.id_intervenant) : null;
-    if (idIntervenant && models.Intervenant) {
-      const p = await models.Intervenant.findByPk(idIntervenant, { attributes: ['nom', 'prenom'] });
-      ligne.donnees.intervenant = p ? [texteLisible(p.prenom), texteLisible(p.nom)].filter(Boolean).join(' ') : null;
-    }
+    const idPersonne = idIntervenant(ligne);
+    if (idPersonne && models.Intervenant) ligne.donnees.intervenant = noms.get(idPersonne) || null;
   }
   return lignes;
 }

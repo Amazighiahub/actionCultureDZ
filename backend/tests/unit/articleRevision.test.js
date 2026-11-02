@@ -114,7 +114,7 @@ describe('decider', () => {
     await expect(service.decider(57, 5, { decision: 'refuser', motif_refus: '' }, { userId: AUTEUR })).rejects.toMatchObject({ statusCode: 400 });
     await service.decider(57, 5, { decision: 'refuser', motif_refus: 'La date est déjà correcte' }, { userId: AUTEUR });
     expect(models.ArticleBlock.destroy).not.toHaveBeenCalled();
-    expect(revision.update).toHaveBeenCalledWith(expect.objectContaining({ statut: 'refusee', motif_refus: 'La date est déjà correcte' }));
+    expect(revision.update).toHaveBeenCalledWith(expect.objectContaining({ statut: 'refusee', motif_refus: 'La date est déjà correcte' }), expect.anything());
     expect(notificationService.sendToUser).toHaveBeenCalledWith(PROPOSANT, expect.objectContaining({ titre: 'Proposition refusée' }));
   });
 

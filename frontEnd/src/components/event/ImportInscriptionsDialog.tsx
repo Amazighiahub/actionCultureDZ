@@ -218,7 +218,7 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
               <div className="flex items-start gap-2">
                 <Checkbox id="import-inviter" checked={inviter} onCheckedChange={(c) => setInviter(c === true)} className="mt-0.5" />
                 <Label htmlFor="import-inviter" className="font-normal">
-                  {t('pro.participants.import.inviter', 'Envoyer à chaque nouveau compte un email pour choisir son mot de passe (lien valable 7 jours)')}
+                  {t('pro.participants.import.inviterEmail', 'Envoyer à chaque personne un e-mail pour confirmer son inscription (lien valable 7 jours pour un nouveau compte)')}
                 </Label>
               </div>
             </>

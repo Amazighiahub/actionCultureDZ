@@ -233,17 +233,25 @@ class EmailQueueService {
       removeOnFail: 500
     };
 
-    const job = await this.queues.email.add(
-      'send-email',
-      emailData,
-      { ...defaultOptions, ...options }
-    );
-
-    return {
-      success: true,
-      jobId: job.id,
-      queue: 'email'
-    };
+    // Redis absent : queue.add attend sans fin. Après 5 s, envoi direct plutôt qu'un e-mail perdu.
+    let minuteur;
+    const ajout = this.queues.email.add('send-email', emailData, { ...defaultOptions, ...options });
+    try {
+      const job = await Promise.race([
+        ajout,
+        new Promise((_, rejeter) => { minuteur = setTimeout(() => rejeter(new Error('file indisponible')), 5000); })
+      ]);
+      return { success: true, jobId: job.id, queue: 'email' };
+    } catch (error) {
+      logger.warn(`File d'e-mails indisponible (${error.message}), envoi direct`);
+      // Redis revenu plus tard : la tâche en attente est retirée, sinon l'e-mail partirait deux fois
+      Promise.resolve(ajout).then((job) => job?.remove?.()).catch(() => {});
+      const corps = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
+      return emailService.sendEmail(emailData.to, emailData.subject, corps, emailData.attachments, emailData.texteBrut || null,
+        emailData.headers ? { headers: emailData.headers } : {});
+    } finally {
+      clearTimeout(minuteur);
+    }
   }
 
   /**

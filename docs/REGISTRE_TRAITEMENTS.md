@@ -190,7 +190,7 @@
 | **Finalité** | Restauration en cas d'incident |
 | **Base légale** | Intérêt légitime (continuité de service) |
 | **Données** | Copie complète de la base de données |
-| **Durée de conservation** | 7 dernières sauvegardes ; copie hors site chiffrée (age) si activée |
+| **Durée de conservation** | Sur le serveur : 14 sauvegardes de nuit, 10 de déploiement, 5 manuelles, 6 mensuelles (6 mois au plus). Hors site : copie chiffrée (age) si activée ; durée à fixer chez l'hébergeur de la copie |
 | **Mesures de sécurité** | Chiffrement par clé publique, clé privée conservée hors du serveur |
 
 ---

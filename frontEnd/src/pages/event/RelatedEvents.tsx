@@ -21,6 +21,8 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Evenement } from '@/types/models/evenement.types';
 import { evenementPath } from '@/utils/slug';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { tarificationDe } from '@/utils/tarifEvenement';
 
 interface RelatedEventsProps {
   eventId: number;
@@ -61,7 +63,7 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
             {/* Date badge */}
             {event.date_debut && (
               <div className="absolute bottom-1 start-1 bg-background/90 backdrop-blur-sm rounded px-1.5 py-0.5 text-xs font-medium">
-                {new Date(event.date_debut).getDate()}/{new Date(event.date_debut).getMonth() + 1}
+                {Number(partiesEvenement(event.date_debut).date.slice(8))}/{Number(partiesEvenement(event.date_debut).date.slice(5, 7))}
               </div>
             )}
           </div>
@@ -81,7 +83,9 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
               )}
             
               <div className="flex items-center justify-between">
-                {event.tarif === 0 ? (
+                {tarificationDe(event).mode === 'profil' ? (
+                  <span className="text-sm font-medium text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</span>
+                ) : Number(event.tarif) === 0 ? (
                   <Badge variant="secondary" className="text-xs h-5">
                     {t('events.free', 'Gratuit')}
                   </Badge>
@@ -143,7 +147,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
             <div className="absolute bottom-3 end-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <div className="text-center">
                 <div className="text-lg font-bold leading-none">
-                  {new Date(event.date_debut).getDate()}
+                  {Number(partiesEvenement(event.date_debut).date.slice(8))}
                 </div>
                 <div className="text-xs uppercase text-muted-foreground">
                   {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
@@ -194,8 +198,10 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
 
           {/* Prix et action */}
           <div className="flex items-center justify-between mt-4 pt-3 border-t">
-            {event.tarif === 0 ? (
-              <Badge className="bg-green-500 text-white">
+            {tarificationDe(event).mode === 'profil' ? (
+                  <span className="text-sm font-medium text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</span>
+                ) : Number(event.tarif) === 0 ? (
+              <Badge className="bg-green-700 text-white">
                 {t('events.free', 'Gratuit')}
               </Badge>
             ) : (

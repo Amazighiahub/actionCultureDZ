@@ -43,6 +43,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { statutAffiche } from '@/utils/statutEvenement';
 import { evenementPath } from '@/utils/slug';
+import { partiesEvenement } from '@/utils/dateHeureEvenement';
 
 // Types d'événements — labels resolved via t() in JSX
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
@@ -91,7 +92,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
           <div className="absolute bottom-3 end-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
             <div className="text-center">
               <div className="text-xl font-bold leading-none">
-                {new Date(event.date_debut).getDate()}
+                {Number(partiesEvenement(event.date_debut).date.slice(8))}
               </div>
               <div className="text-xs uppercase text-muted-foreground">
                 {formatDate(event.date_debut, { month: 'short' })}

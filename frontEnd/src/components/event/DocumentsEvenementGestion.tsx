@@ -15,6 +15,7 @@ import { evenementService } from '@/services/evenement.service';
 import { uploadService } from '@/services/upload.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { ConfirmDialog } from '@/components/shared';
 
 const PDF_MAX = 50 * 1024 * 1024;
 const MAX_DOCUMENTS = 5;
@@ -31,6 +32,8 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
   const [erreur, setErreur] = useState<string | null>(null);
   // Changer la clé vide le champ fichier après un ajout
   const [cleChamp, setCleChamp] = useState(0);
+  const [aRetirer, setARetirer] = useState<number | null>(null);
+  const [retraitEnCours, setRetraitEnCours] = useState(false);
 
   const { data: documents = [] } = useQuery({
     queryKey: cle,
@@ -46,11 +49,13 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
     if (f && f.type !== 'application/pdf') {
       setErreur(t('pro.participants.messages.pdfSeulement', 'Choisissez un fichier PDF.'));
       e.target.value = '';
+      setFichier(null);
       return;
     }
     if (f && f.size > PDF_MAX) {
       setErreur(t('pro.participants.messages.pdfTropGros', 'Le PDF est trop lourd (50 Mo au plus).'));
       e.target.value = '';
+      setFichier(null);
       return;
     }
     setFichier(f);
@@ -78,8 +83,12 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
     }
   };
 
-  const retirer = async (idMedia: number) => {
-    const res = await evenementService.retirerDocument(evenementId, idMedia);
+  const retirer = async () => {
+    if (aRetirer === null) return;
+    setRetraitEnCours(true);
+    const res = await evenementService.retirerDocument(evenementId, aRetirer);
+    setRetraitEnCours(false);
+    setARetirer(null);
     if (res.success) {
       queryClient.invalidateQueries({ queryKey: cle });
     } else {
@@ -108,7 +117,7 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
                   <Button asChild size="icon" variant="ghost" aria-label={t('common.download', 'Télécharger')}>
                     <a href={getAssetUrl(doc.lien)} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" aria-hidden="true" /></a>
                   </Button>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => retirer(doc.id_media)} aria-label={t('event.documents.retirer', 'Retirer le document')}>
+                  <Button type="button" size="icon" variant="ghost" onClick={() => setARetirer(doc.id_media)} aria-label={t('event.documents.retirer', 'Retirer le document')}>
                     <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </span>
@@ -126,6 +135,7 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
             <div>
               <Label htmlFor="document-titre">{t('event.documents.titreChamp', 'Titre affiché')}</Label>
               <Input id="document-titre" value={titre} onChange={e => setTitre(e.target.value)} maxLength={150}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); ajouter(); } }}
                 placeholder={t('event.documents.titreExemple', 'ex. Programme complet')} disabled={envoi} className="mt-1" />
             </div>
             {erreur && <p className="text-sm text-destructive" role="alert">{erreur}</p>}
@@ -141,6 +151,17 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
           </p>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={aRetirer !== null}
+        onOpenChange={(o) => { if (!o && !retraitEnCours) setARetirer(null); }}
+        title={t('event.documents.retirerTitre', 'Retirer ce document ?')}
+        description={t('event.documents.retirerAide', 'Il disparaît de la page de l’événement.')}
+        confirmLabel={t('event.documents.retirer', 'Retirer le document')}
+        cancelLabel={t('common.cancel', 'Annuler')}
+        variant="destructive"
+        loading={retraitEnCours}
+        onConfirm={retirer}
+      />
     </Card>
   );
 };

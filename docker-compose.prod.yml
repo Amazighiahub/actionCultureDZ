@@ -97,6 +97,12 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
       - EMAIL_PAUSED=${EMAIL_PAUSED:-false}
       - BCRYPT_ROUNDS=12
+      # bcrypt, compression et DNS partagent ces fils (4 par défaut) : une rafale d'inscriptions ne bloque plus le reste
+      - UV_THREADPOOL_SIZE=8
+      # Attente d'une connexion SQL : prioritaire sur la valeur du .env (audit V8)
+      - DB_POOL_ACQUIRE=10000
+      # Vide ici : le backend n'en a pas besoin, seuls mysql et backup l'utilisent
+      - MYSQL_ROOT_PASSWORD=
       - UPLOAD_MAX_SIZE=10485760
     volumes:
       - backend_uploads:/app/uploads
@@ -271,8 +277,9 @@ services:
         chmod +x /backup.sh;
         echo "Backup service started — next run at 03:00";
         while true; do
-          NEXT=$(date -d "tomorrow 03:00" +%s 2>/dev/null || date -d "03:00" +%s);
           NOW=$(date +%s);
+          NEXT=$(date -d "today 03:00" +%s);
+          if [ $$NEXT -le $$NOW ]; then NEXT=$(date -d "tomorrow 03:00" +%s); fi;
           SLEEP=$((NEXT - NOW));
           if [ $$SLEEP -le 0 ]; then SLEEP=86400; fi;
           echo "[backup] Sleeping $$SLEEP seconds until next run...";

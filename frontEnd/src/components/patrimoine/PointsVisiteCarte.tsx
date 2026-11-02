@@ -3,7 +3,8 @@
  * Chargée à la demande (leaflet) par PointsVisite.
  */
 import React, { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, ZoomControl, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -40,6 +41,7 @@ const Cadrage: React.FC<{ positions: [number, number][] }> = ({ positions }) => 
 };
 
 const PointsVisiteCarte: React.FC<PointsVisiteCarteProps> = ({ site, points }) => {
+  const { t } = useTranslation();
   const positions = useMemo<[number, number][]>(
     () => [[site.latitude, site.longitude], ...points.map(p => [p.latitude, p.longitude] as [number, number])],
     [site.latitude, site.longitude, points]
@@ -47,7 +49,8 @@ const PointsVisiteCarte: React.FC<PointsVisiteCarteProps> = ({ site, points }) =
 
   return (
     <div className="h-[280px] rounded-lg overflow-hidden border relative z-0">
-      <MapContainer center={[site.latitude, site.longitude]} zoom={16} scrollWheelZoom={false} className="h-full w-full">
+      <MapContainer center={[site.latitude, site.longitude]} zoom={16} scrollWheelZoom={false} zoomControl={false} className="h-full w-full">
+        <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Marker position={[site.latitude, site.longitude]}>
           <Popup>{site.nom}</Popup>

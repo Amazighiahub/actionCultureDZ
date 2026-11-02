@@ -8,7 +8,13 @@ const P = require('../../services/patrimoine/propositionsLieu');
 
 const modeles = (lieu = { id_lieu: 3, id_createur: 20, nom: { fr: 'Tkout' } }) => ({
   Lieu: { findByPk: jest.fn().mockResolvedValue(lieu) },
-  sequelize: { query: jest.fn().mockResolvedValue([41, 1]), QueryTypes: { SELECT: 'SELECT' } }
+  sequelize: {
+    query: jest.fn(async (sql) => {
+      if (sql.startsWith('INSERT')) return [41, 1];
+      return sql.includes('COUNT(*)') ? [{ n: 0 }] : [];
+    }),
+    QueryTypes: { SELECT: 'SELECT' }
+  }
 });
 
 describe('qui doit proposer', () => {
@@ -32,8 +38,25 @@ describe('proposer et décider', () => {
     const m = modeles();
     const r = await P.proposer(m, {}, { idLieu: 3, user: { id_user: 37, prenom: 'Lydia' }, action: 'detail', donnees: { corps: { histoire: { fr: 'x' } } } });
     expect(r).toEqual({ id: 41 });
-    expect(m.sequelize.query.mock.calls[0][0]).toContain('INSERT INTO proposition_lieu');
+    expect(m.sequelize.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO proposition_lieu'))).toBe(true);
     expect(notifier).toHaveBeenCalledWith({}, 8, expect.objectContaining({ titre: 'Proposition à relire' }));
+  });
+  test('trop de propositions en attente : 409, rien n’est enregistré', async () => {
+    const m = modeles();
+    m.sequelize.query = jest.fn(async () => [{ n: 20 }]);
+    await expect(P.proposer(m, {}, { idLieu: 3, user: { id_user: 37 }, action: 'detail', donnees: { corps: {} } }))
+      .rejects.toMatchObject({ statusCode: 409 });
+    expect(m.sequelize.query).toHaveBeenCalledTimes(1);
+  });
+  test('proposition démesurée : 413', async () => {
+    await expect(P.proposer(modeles(), {}, { idLieu: 3, user: { id_user: 37 }, action: 'detail', donnees: { corps: { histoire: 'x'.repeat(300000) } } }))
+      .rejects.toMatchObject({ statusCode: 413 });
+  });
+  test('même proposition déjà en attente : pas de doublon', async () => {
+    const m = modeles();
+    m.sequelize.query = jest.fn(async (sql) => (sql.includes('COUNT(*)') ? [{ n: 1 }] : [{ id: 9 }]));
+    await expect(P.proposer(m, {}, { idLieu: 3, user: { id_user: 37 }, action: 'detail', donnees: { corps: {} } })).resolves.toEqual({ id: 9 });
+    expect(m.sequelize.query.mock.calls.some(([sql]) => sql.includes('INSERT'))).toBe(false);
   });
   test('action inconnue refusée', async () => {
     await expect(P.proposer(modeles(), {}, { idLieu: 3, user: { id_user: 37 }, action: 'supprimer', donnees: {} }))

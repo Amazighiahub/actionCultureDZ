@@ -52,7 +52,7 @@ class DashboardAnalyticsService {
     const [vues, favoris, participations] = await Promise.all([
       this.models.Vue?.count({ where: { date_vue: { [Op.gte]: startDate } } }) || 0,
       this.models.Favori?.count({ where: { date_ajout: { [Op.gte]: startDate } } }) || 0,
-      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.gte]: startDate } } }) || 0
+      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.gte]: startDate }, statut_participation: { [Op.ne]: 'invitation' } } }) || 0
     ]);
     return { vues, favoris, participations };
   }
@@ -143,7 +143,7 @@ class DashboardAnalyticsService {
   async _getEngagementReportData(startDate, endDate) {
     const [favoris, participations, vues] = await Promise.all([
       this.models.Favori?.count({ where: { date_ajout: { [Op.between]: [startDate, endDate] } } }) || 0,
-      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.between]: [startDate, endDate] } } }) || 0,
+      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.between]: [startDate, endDate] }, statut_participation: { [Op.ne]: 'invitation' } } }) || 0,
       this.models.Vue?.count({ where: { date_vue: { [Op.between]: [startDate, endDate] } } }) || 0
     ]);
     return { favoris, participations, vues };

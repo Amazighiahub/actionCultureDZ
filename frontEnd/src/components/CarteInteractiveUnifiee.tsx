@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, ZoomControl, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { useTranslation } from 'react-i18next';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -245,7 +245,9 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
         center={center}
         zoom={zoom}
         style={{ height: '100%', width: '100%', borderRadius: '12px' }}
+        zoomControl={false}
       >
+        <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'

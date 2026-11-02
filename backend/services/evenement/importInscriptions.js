@@ -327,7 +327,10 @@ class ImportInscriptions {
         });
         if (cree) bilan.inscrits += 1;
         if (cree && inviter && this.emailService) {
-          const envoye = nouveau ? await this._inviter(user, evenement) : await this._demanderConfirmation(user, evenement);
+          // Compte importé jamais activé (par un autre organisateur, par exemple) : il faut encore choisir
+          // un mot de passe. « Confirmez » seul mènerait à une connexion impossible.
+          const aActiver = nouveau || (!user.email_verifie && !user.accepte_conditions);
+          const envoye = aActiver ? await this._inviter(user, evenement, { reprendre: !nouveau }) : await this._demanderConfirmation(user, evenement);
           if (envoye) bilan.invitations += 1;
           else bilan.erreurs.push(`${l.email} : invitation non envoyée`);
         }
@@ -359,8 +362,12 @@ class ImportInscriptions {
   }
 
   /** Email « Choisir mon mot de passe » (lien valable 7 jours) ; true si envoyé */
-  async _inviter(user, evenement) {
-    const jeton = await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
+  async _inviter(user, evenement, { reprendre = false } = {}) {
+    // Déjà invité par un autre organisateur : son lien reste valable, il n'est pas annulé par ce nouvel envoi
+    const actif = reprendre ? await this.models.EmailVerification.lienActif(user.id_user, 'password_reset') : null;
+    const jeton = actif?.metadata?.invitation
+      ? actif
+      : await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
     const envoi = await this.emailService.sendInvitationInscription(user, jeton.token, evenement);
     return envoi?.success !== false;
   }
@@ -377,6 +384,9 @@ class ImportInscriptions {
    */
   async renvoyerInvitation(idEvenement, idUser, utilisateur) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
+    if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
+      throw Object.assign(new Error('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse'), { statusCode: 400 });
+    }
     const inscription = await this.models.EvenementUser.findOne({ where: { id_evenement: evenement.id_evenement, id_user: idUser } });
     if (!inscription) throw Object.assign(new Error('Cette personne n\'est pas inscrite à l\'événement'), { statusCode: 404 });
     const user = await this.models.User.findByPk(idUser);

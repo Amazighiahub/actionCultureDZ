@@ -144,7 +144,12 @@ class ArticleRevisionService extends BaseService {
     if (decision === 'refuser') {
       const raison = String(motif_refus || '').trim();
       if (raison.length < 3) throw this._validationError('Expliquez à la personne pourquoi la proposition est refusée');
-      await revision.update({ statut: 'refusee', motif_refus: raison.slice(0, 2000), id_decideur: userId, date_decision: new Date() });
+      // Relue sous verrou : une acceptation simultanée n'est pas marquée « refusée » après coup
+      await Oeuvre.sequelize.transaction(async (transaction) => {
+        const verrouillee = await ArticleRevision.findByPk(revision.id_revision, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!verrouillee || verrouillee.statut !== 'en_attente') throw this._validationError('Cette proposition a déjà été traitée');
+        await revision.update({ statut: 'refusee', motif_refus: raison.slice(0, 2000), id_decideur: userId, date_decision: new Date() }, { transaction });
+      });
       await this._notifier(revision.id_auteur, {
         titre: 'Proposition refusée',
         message: `Votre proposition de modification de « ${titreArticle} » n’a pas été retenue : ${raison.slice(0, 300)}`,
@@ -189,6 +194,9 @@ class ArticleRevisionService extends BaseService {
       for (let i = 0; i < (blocks || []).length; i++) {
         const b = blocks[i];
         let idMedia = b.id_media || null;
+        // Média retiré depuis la proposition : sinon la clé étrangère bloquait toute acceptation
+        if (idMedia && !(await Media.count({ where: { id_media: idMedia }, transaction }))) idMedia = null;
+        if (b.type_block === 'image' && !idMedia && !b.metadata?.url) continue;
         // Nouvelle photo de la proposition : devient un média de l'article
         if (b.type_block === 'image' && !idMedia && b.metadata?.url) {
           const media = await Media.create({

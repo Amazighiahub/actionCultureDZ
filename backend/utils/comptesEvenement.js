@@ -7,7 +7,7 @@
  * - nombre_inscrits     : places prises (inscrit, confirmé, présent, absent ; ni annulé ni invitation)
  * - nombre_participants : personnes confirmées ou présentes
  */
-const { literal } = require('sequelize');
+const { literal, Op } = require('sequelize');
 
 /** Statuts qui occupent une place (capacité de l'événement) */
 const STATUTS_PLACE_PRISE = ['inscrit', 'confirme', 'present', 'absent'];
@@ -29,4 +29,23 @@ function attributsComptes(alias = 'Evenement') {
   ];
 }
 
-module.exports = { attributsComptes, STATUTS_PLACE_PRISE, personnesSql };
+/**
+ * Rétablir une inscription refusée reprend des places : contrôle de la capacité, comme à l'inscription.
+ * Avant, un événement complet à 30/30 passait à 34/30 sans avertissement.
+ */
+async function verifierPlacePourRetablir(models, idEvenement, inscription) {
+  if (inscription?.statut_participation !== 'annule') return;
+  const evenement = await models.Evenement.findByPk(idEvenement, { attributes: ['capacite_max'] });
+  if (!evenement?.capacite_max) return;
+  const [ligne] = await models.EvenementUser.findAll({
+    attributes: [[literal(`COALESCE(SUM(${personnesSql('`EvenementUser`')}), 0)`), 'places']],
+    where: { id_evenement: idEvenement, statut_participation: { [Op.in]: STATUTS_PLACE_PRISE } },
+    raw: true
+  });
+  const personnes = Math.max(1, parseInt(inscription.reponses_inscription?.nombre_personnes, 10) || 1);
+  if ((Number(ligne?.places) || 0) + personnes > evenement.capacite_max) {
+    throw Object.assign(new Error('Cet événement est complet : libérez des places avant de rétablir cette inscription'), { statusCode: 409 });
+  }
+}
+
+module.exports = { attributsComptes, STATUTS_PLACE_PRISE, personnesSql, verifierPlacePourRetablir };

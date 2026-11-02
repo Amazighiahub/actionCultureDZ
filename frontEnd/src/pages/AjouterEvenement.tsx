@@ -489,10 +489,10 @@ const AjouterEvenement = () => {
     fd.append('description', JSON.stringify(formData.description));
     fd.append('id_type_evenement', formData.idTypeEvenement);
     fd.append('date_debut', formData.dateDebut);
-    if (formData.dateFin) fd.append('date_fin', formData.dateFin);
+    if (formData.dateFin || isEditMode) fd.append('date_fin', formData.dateFin || '');
     if (formData.heureDebut) fd.append('heure_debut', formData.heureDebut);
     if (formData.heureFin) fd.append('heure_fin', formData.heureFin);
-    if (formData.maxParticipants) fd.append('capacite_max', formData.maxParticipants);
+    if (formData.maxParticipants || isEditMode) fd.append('capacite_max', formData.maxParticipants || '');
     // En modification, un champ vidé doit effacer la valeur : on l'envoie même vide
     for (const [cle, valeur] of [['date_limite_inscription', formData.dateLimite], ['contact_email', formData.contactEmail], ['contact_telephone', formData.contactTelephone]] as const) {
       if (valeur || isEditMode) fd.append(cle, valeur || '');
@@ -503,7 +503,8 @@ const AjouterEvenement = () => {
     fd.append('tags', JSON.stringify(formData.tags));
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
-    if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
+    if (isEditMode) fd.append('url_virtuel', isVirtual ? formData.urlVirtuel || '' : '');
+    else if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
     fd.append('statut', statut);
     if (affiche) fd.append('affiche', await prepareImageForUpload(affiche));
 

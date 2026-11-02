@@ -182,9 +182,8 @@ class SMSService {
 
     // Mode simulation
     if (this.isPaused) {
-      logger.info(`\n📱 [SMS SIMULATION] Envoi à: ${normalizedTo}`);
-      logger.info(`📱 [SMS SIMULATION] Message: ${message}`);
-      logger.info(`📱 [SMS SIMULATION] Longueur: ${message.length} caractères\n`);
+      // Ni numéro complet ni contenu : les journaux ne gardent pas de données personnelles
+      logger.info(`📱 [SMS SIMULATION] Envoi à: ${maskPhone(normalizedTo)} (${message.length} caractères)`);
       return { success: true, messageId: 'simulated-' + Date.now() };
     }
 

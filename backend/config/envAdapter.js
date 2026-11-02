@@ -86,7 +86,7 @@ class EnvAdapter {
     // Valeurs par défaut pour la base de données
     process.env.DB_POOL_MAX = process.env.DB_POOL_MAX || '10';
     process.env.DB_POOL_MIN = process.env.DB_POOL_MIN || '0';
-    process.env.DB_POOL_ACQUIRE = process.env.DB_POOL_ACQUIRE || '30000';
+    process.env.DB_POOL_ACQUIRE = process.env.DB_POOL_ACQUIRE || '10000';
     process.env.DB_POOL_IDLE = process.env.DB_POOL_IDLE || '10000';
 
     // JWT

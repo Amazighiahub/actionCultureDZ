@@ -730,6 +730,12 @@
   line-height: var(--leading-snug);
 }
 
+/* Contenus saisis par les utilisateurs, souvent en français : chaque texte suit sa propre langue. Sans cela,
+   en arabe : « .Site archéologique de Timgad », point au début et début des titres coupé (audit V8). */
+[dir="rtl"] :is(h1, h2, h3, h4, .line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4, .line-clamp-6, .prose p) {
+  unicode-bidi: plaintext;
+}
+
 [lang="tz-tfng"],
 .font-tifinagh {
   font-family: var(--font-tifinagh), "Noto Sans Tifinagh", sans-serif;

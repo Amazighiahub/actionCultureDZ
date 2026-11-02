@@ -46,7 +46,7 @@ describe('login', () => {
 describe('demande de réinitialisation', () => {
   const EmailVerificationService = require('../../services/emailVerificationService');
   const make = (hasActive) => new EmailVerificationService({
-    User: { findOne: jest.fn().mockResolvedValue({ id_user: 1, email: 'a@b.dz' }) },
+    User: { findOne: jest.fn().mockResolvedValue({ id_user: 1, email: 'a@b.dz', email_verifie: true }) },
     EmailVerification: {
       hasActiveToken: jest.fn().mockResolvedValue(hasActive),
       createVerificationToken: jest.fn().mockResolvedValue({ token: 't' })

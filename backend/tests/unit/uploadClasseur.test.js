@@ -20,10 +20,10 @@ function gonfler(buffer) {
   return copie;
 }
 
-const appeler = (buffer) => {
+const appeler = async (buffer) => {
   const res = { status: jest.fn(function () { return this; }), json: jest.fn() };
   const next = jest.fn();
-  verifierDecompression({ file: { buffer } }, res, next);
+  await verifierDecompression({ file: { buffer } }, res, next);
   return { res, next };
 };
 
@@ -31,17 +31,17 @@ describe('Classeur Excel : taille décompressée', () => {
   test('un vrai classeur passe', async () => {
     const buffer = await classeur();
     expect(tailleDecompressee(buffer)).toBeGreaterThan(0);
-    expect(appeler(buffer).next).toHaveBeenCalled();
+    expect((await appeler(buffer)).next).toHaveBeenCalled();
   });
 
   test('une archive qui se décompresse en plus de 60 Mo est refusée (400)', async () => {
-    const { res, next } = appeler(gonfler(await classeur()));
+    const { res, next } = await appeler(gonfler(await classeur()));
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('un fichier qui n’est pas une archive zip est refusé', () => {
+  test('un fichier qui n’est pas une archive zip est refusé', async () => {
     expect(tailleDecompressee(Buffer.from('pas un classeur'.repeat(10)))).toBeNull();
-    expect(appeler(Buffer.from('pas un classeur'.repeat(10))).next).not.toHaveBeenCalled();
+    expect((await appeler(Buffer.from('pas un classeur'.repeat(10)))).next).not.toHaveBeenCalled();
   });
 });

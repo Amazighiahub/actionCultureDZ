@@ -6,6 +6,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
+const LRUCache = require('../utils/LRUCache');
 const { texteLisible } = require('../helpers/i18n');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const historique = require('../services/patrimoine/historiqueLieu');
@@ -14,6 +15,8 @@ const propositions = require('../services/patrimoine/propositionsLieu');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
+
+const qrEnMemoire = new LRUCache(500);
 
 class PatrimoineController extends BaseController {
   get patrimoineService() {
@@ -462,7 +465,13 @@ class PatrimoineController extends BaseController {
       }
 
       // Default: data URL
-      const dataUrl = await QRCode.toDataURL(siteUrl, { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+      // Appelé à chaque visite d'une fiche : même image pour un même site, 17 ms de calcul évités (audit V8)
+      const cleQr = `${siteId}:${qrSize}`;
+      let dataUrl = qrEnMemoire.get(cleQr);
+      if (!dataUrl) {
+        dataUrl = await QRCode.toDataURL(siteUrl, { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+        qrEnMemoire.set(cleQr, dataUrl, 24 * 60 * 60 * 1000);
+      }
       res.set('Cache-Control', 'public, max-age=86400');
       res.json({ success: true, data: { qr_data_url: dataUrl, site_url: siteUrl, site_id: siteId } });
     } catch (error) {

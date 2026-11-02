@@ -13,6 +13,7 @@ import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { Link } from 'react-router-dom';
 import { professionnelPath } from '@/utils/slug';
+import { libelleRole } from '@/utils/rolesOeuvre';
 
 interface Contributeur {
   id_user?: number;
@@ -78,7 +79,9 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
     </Link>
   ) : displayName;
 
-  const roleLabel = getLocalizedText(contributeur.TypeUser?.nom_type) || getLocalizedText(contributeur.type_user) || contributeur.role;
+  // Code du rôle (« interprete ») → nom lisible et traduit
+  const roleBrut = getLocalizedText(contributeur.TypeUser?.nom_type) || getLocalizedText(contributeur.type_user) || contributeur.role;
+  const roleLabel = roleBrut ? libelleRole(t, roleBrut) : roleBrut;
 
   return (
     <Card className={cn(
@@ -106,7 +109,7 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
                     )}
                   </h4>
                   {roleLabel && (
-                    <Badge className={cn("mt-1", getRoleColor(roleLabel))}>
+                    <Badge className={cn("mt-1", getRoleColor(roleBrut))}>
                       {roleLabel}
                     </Badge>
                   )}

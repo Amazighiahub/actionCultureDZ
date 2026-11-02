@@ -117,6 +117,14 @@ module.exports = (sequelize) => {
     return count > 0;
   };
 
+  /** Dernier lien encore valable (null s'il n'y en a pas) */
+  EmailVerification.lienActif = async function(userId, type) {
+    return this.findOne({
+      where: { id_user: userId, type, used_at: null, expires_at: { [Op.gt]: new Date() } },
+      order: [['id', 'DESC']]
+    });
+  };
+
   /**
    * Vérifier et utiliser un token
    * @param {string} token - Le token à vérifier

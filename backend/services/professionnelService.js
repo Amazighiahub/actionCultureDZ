@@ -2,8 +2,8 @@
  * ProfessionnelService - Service pour les professionnels de la culture
  * Gère : profils, œuvres, événements, artisanats, statistiques, exports
  */
-const { Op } = require('sequelize');
-const { attributsComptes } = require('../utils/comptesEvenement');
+const { Op, literal } = require('sequelize');
+const { attributsComptes, verifierPlacePourRetablir, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
 const { mergeTranslations } = require('../helpers/i18n');
 const { pasTermine, termine } = require('../helpers/finEvenement');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
@@ -380,7 +380,12 @@ class ProfessionnelService {
 
     const EvenementUser = this.models.EvenementUser;
     const [inscrits, confirmes, presents] = await Promise.all([
-      EvenementUser ? EvenementUser.count({ where: { id_evenement: evenementId } }) : 0,
+      // En personnes, sans les invitations ni les annulations : le même compte que la capacité de l'événement
+      EvenementUser ? EvenementUser.findAll({
+        where: { id_evenement: evenementId, statut_participation: STATUTS_PLACE_PRISE },
+        attributes: [[literal(`COALESCE(SUM(${personnesSql('`EvenementUser`')}), 0)`), 'n']],
+        raw: true
+      }).then(([ligne]) => Number(ligne?.n) || 0) : 0,
       EvenementUser ? EvenementUser.count({ where: { id_evenement: evenementId, statut_participation: 'confirme' } }) : 0,
       EvenementUser ? EvenementUser.count({ where: { id_evenement: evenementId, statut_participation: 'present' } }) : 0
     ]);
@@ -389,7 +394,7 @@ class ProfessionnelService {
       inscrits,
       confirmes,
       presents,
-      places_restantes: evenement.capacite_max ? evenement.capacite_max - inscrits : null
+      places_restantes: evenement.capacite_max ? Math.max(0, evenement.capacite_max - inscrits) : null
     };
   }
 
@@ -480,6 +485,10 @@ class ProfessionnelService {
       return { error: 'invitationEnAttente' };
     }
 
+    const statutAvant = participation.statut_participation;
+    if (action === 'confirmer' || action === 'marquer_present') {
+      await verifierPlacePourRetablir(this.models, evenementId, participation);
+    }
     const updates = { date_validation: new Date(), valide_par: organisateurId };
 
     switch (action) {
@@ -504,7 +513,8 @@ class ProfessionnelService {
 
     // Acceptation / refus : e-mail, notification, SMS/WhatsApp
     // (best effort, sans bloquer la réponse — comme evenementService.validateParticipation)
-    if ((action === 'confirmer' || action === 'rejeter') && this.models.Notification) {
+    if ((action === 'confirmer' || action === 'rejeter') && this.models.Notification
+      && statutAvant !== updates.statut_participation) {
       // Service partagé (avec ses repositories) ; instance locale seulement à défaut (tests)
       (this.notificationService || new (require('./notificationService'))(this.models))
         .notifierValidationParticipation(evenementId, userId, action === 'confirmer' ? 'confirme' : 'refuse', notes || '')
@@ -573,7 +583,7 @@ class ProfessionnelService {
     const config = configAvecProfil(evenement.TypeEvenement?.config_inscription, tarification);
     const champs = listerChamps(config);
     const avecBase = !config || !config.remplace_formulaire_base;
-    const STATUTS = { inscrit: 'En attente', confirme: 'Confirmé', present: 'Présent', absent: 'Absent', annule: 'Refusé' };
+    const STATUTS = { invitation: 'Invité, pas encore confirmé', inscrit: 'En attente', confirme: 'Confirmé', present: 'Présent', absent: 'Absent', annule: 'Refusé' };
 
     return participations.map((p) => {
       const reponses = p.reponses_inscription || {};

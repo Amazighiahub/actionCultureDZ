@@ -174,7 +174,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           <PagesDetaillees pages={pages} retirer={(pg) => retirerPagePatrimoine(lieuId, pg.id_lien)} onChange={onPagesChange} />
           {/* Gastronomie : vers les plats de toute l'Algérie (sous-page de l'Artisanat) */}
           {fieldName === 'gastronomie' && (
-            <Link to="/artisanat/gastronomie" className="inline-flex items-center text-sm font-medium text-primary hover:underline">
+            <Link to="/artisanat/gastronomie" className="inline-flex items-center py-2 text-sm font-medium text-primary hover:underline">
               {t('gastronomie.voirTous', 'Voir tous les plats d’Algérie')}<ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
             </Link>
           )}

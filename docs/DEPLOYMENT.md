@@ -186,11 +186,8 @@ chmod +x scripts/deploy.sh
 
 ### Mise à jour (déploiements suivants)
 
-```bash
-# Une seule commande — fait automatiquement :
-# backup DB → git pull → rebuild → restart → migrations → health check
-./scripts/deploy.sh
-```
+Un enregistrement sur `main` déclenche le déploiement automatique (voir « Déploiement automatique » plus bas).
+Ne lancez pas `scripts/deploy.sh` sur le serveur de production : ce chemin ne fait ni les contrôles ni le retour arrière du pipeline.
 
 ### Déploiement via CI/CD (automatique)
 
@@ -198,7 +195,7 @@ Le pipeline GitHub Actions se déclenche automatiquement :
 
 | Branche | Action |
 |---------|--------|
-| Push sur `develop` | → Deploy staging |
+| Push sur `develop` | → Tests uniquement (il n'y a pas de serveur de préproduction) |
 | Push sur `main` | → Deploy production (après tests) |
 | Pull Request | → Tests uniquement (lint + test + build) |
 
@@ -351,7 +348,9 @@ make shell-mysql    # Client MySQL interactif
 make migrate        # Lancer les migrations
 ```
 
-### deploy.sh (production)
+### deploy.sh (ancien script, pas pour la production en service)
+
+La production se déploie par le pipeline. `--init` et `--down` sur le serveur couperaient le site.
 
 ```bash
 ./scripts/deploy.sh --init        # Premier déploiement
@@ -447,21 +446,23 @@ Voir « Restauration (production) » plus haut : `scripts/restaurer-sauvegarde.s
 ### En cas d'urgence
 
 ```bash
+# Sur le serveur, toujours avec le fichier de production : sans lui, Docker lance la configuration de développement
+C="docker compose -f docker-compose.prod.yml"
+
 # 1. Vérifier ce qui ne va pas
-./scripts/deploy.sh --status
-docker compose logs --tail=50 backend
+$C ps
+$C logs --tail=50 backend
 
 # 2. Redémarrer un service spécifique
-docker compose restart backend
+$C restart backend
 
-# 3. Redémarrer tout
-docker compose down && docker compose up -d
+# 3. Revenir à une version précédente du code : depuis un poste de développement, puis laisser le pipeline déployer
+git revert <commit-fautif> && git push origin main
 
-# 4. Rollback complet (code + DB)
-git checkout <dernier-commit-stable>
-# Restaurer le backup DB correspondant
-./scripts/deploy.sh --init
+# 4. Base de données endommagée : voir « Restauration (production) » et docs/PLAN_REPRISE.md
 ```
+
+N'utilisez jamais `down -v` sur le serveur : cette option efface les volumes, donc la base.
 
 ---
 

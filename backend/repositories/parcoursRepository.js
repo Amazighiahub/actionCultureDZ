@@ -206,16 +206,17 @@ class ParcoursRepository extends BaseRepository {
   async removeEtape(parcoursId, etapeId) {
     if (!this.models.ParcoursLieu) return false;
 
-    const result = await this.models.ParcoursLieu.destroy({
-      where: { id_parcours_lieu: etapeId, id_parcours: parcoursId }
+    // Suppression et renumérotation ensemble : une erreur ne laisse pas de trou dans les ordres
+    return this.models.ParcoursLieu.sequelize.transaction(async (transaction) => {
+      const result = await this.models.ParcoursLieu.destroy({
+        where: { id_parcours_lieu: etapeId, id_parcours: parcoursId },
+        transaction
+      });
+      if (result > 0 && this.models.ParcoursLieu.reorderParcours) {
+        await this.models.ParcoursLieu.reorderParcours(parcoursId, transaction);
+      }
+      return result > 0;
     });
-
-    // Réordonner les étapes restantes
-    if (result > 0 && this.models.ParcoursLieu.reorderParcours) {
-      await this.models.ParcoursLieu.reorderParcours(parcoursId);
-    }
-
-    return result > 0;
   }
 
   /**

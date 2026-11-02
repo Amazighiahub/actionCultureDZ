@@ -41,11 +41,12 @@ const CreditPhotoChamps: React.FC<{
       </div>
       <div>
         <Label htmlFor={`${id}-licence`}>{t('credit.droits', 'Droits de la photo')}</Label>
-        <Select value={valeur.licence || undefined} onValueChange={(v) => maj({ licence: v as LicencePhoto })}>
+        <Select value={valeur.licence || 'non_precise'} onValueChange={(v) => maj({ licence: v === 'non_precise' ? '' : v as LicencePhoto })}>
           <SelectTrigger id={`${id}-licence`} className="mt-1">
             <SelectValue placeholder={t('credit.droitsChoisir', 'Choisir (facultatif)')} />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="non_precise">{t('credit.nonPrecise', 'Non précisé')}</SelectItem>
             {LICENCES_PHOTO.map(l => (
               <SelectItem key={l.valeur} value={l.valeur}>{t(l.cle, l.defaut)}</SelectItem>
             ))}

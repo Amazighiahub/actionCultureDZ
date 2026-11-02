@@ -495,7 +495,12 @@ class EvenementRepository extends BaseRepository {
         }],
         order: [['date_inscription', 'ASC']]
       }),
-      this.models.EvenementUser.count({ where })
+      // En personnes : une inscription « 4 personnes » en compte 4
+      this.models.EvenementUser.findAll({
+        where,
+        attributes: [[literal(`COALESCE(SUM(${personnesSql('`EvenementUser`')}), 0)`), 'n']],
+        raw: true
+      }).then(([ligne]) => Number(ligne?.n) || 0)
     ]);
     return { participants, total };
   }

@@ -77,6 +77,8 @@ const DocumentsEvenementChoix: React.FC<{
             </Label>
             <Input id={`document-titre-${index}`} value={doc.titre} maxLength={150} className="mt-1"
               onChange={e => changerTitre(index, e.target.value)}
+              onBlur={() => { if (!doc.titre.trim()) changerTitre(index, doc.fichier.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim()); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               placeholder={t('event.documents.titreExemple', 'ex. Programme complet')}
               aria-label={t('event.documents.titreChamp', 'Titre affiché')} />
           </div>

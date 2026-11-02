@@ -1831,7 +1831,7 @@
       "donneesIdentite": "Données d'identité : nom, prénom, adresse email (obligatoires à l'inscription)",
       "donneesOptionnelles": "Données optionnelles : date de naissance, sexe, téléphone, adresse, photo de profil, biographie",
       "donneesPro": "Données professionnelles (si applicable) : entreprise, spécialités, certifications, site web",
-      "donneesNavigation": "Données de navigation : adresse IP (anonymisée), pages consultées, type d'appareil",
+      "donneesNavigation": "Données de navigation : adresse IP, pages consultées, type d'appareil",
       "pasDeVente": "Vos informations personnelles ne sont jamais vendues à des tiers.",
       "finalites": "3. Finalités et base légale",
       "finaliteCompte": "Gestion de votre compte et authentification — base légale : exécution du contrat (CGU)",
@@ -1844,7 +1844,7 @@
       "conservationNotifs": "Notifications : supprimées automatiquement après 90 jours",
       "conservationLogs": "Journaux de sécurité et de connexion : l'adresse IP et le navigateur sont effacés après 12 mois",
       "conservationSuppression": "En cas de suppression de compte : vos données personnelles sont effacées, vos contributions publiques sont anonymisées",
-      "conservationSauvegardes": "Sauvegardes de sécurité : conservées 7 jours ; les données d'un compte supprimé en disparaissent dans ce délai",
+      "conservationSauvegardes": "Sauvegardes de sécurité : conservées 6 mois au plus sur notre serveur ; les données d'un compte supprimé en disparaissent dans ce délai. Une copie chiffrée, illisible sans notre clé privée, peut aussi être gardée hors du serveur",
       "droits": "5. Vos droits",
       "droitsIntro": "Conformément à la législation en vigueur et au RGPD, vous disposez des droits suivants :",
       "droitAcces": "Droit d'accès",
@@ -1863,7 +1863,6 @@
       "soustraitantCloudinary": "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)",
       "soustraitantEmail": "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)",
       "soustraitantOSM": "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche",
-      "soustraitantUnsplash": "Unsplash — certaines images d'illustration : votre adresse IP est transmise lors de leur affichage",
       "soustraitantsPas": "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.",
       "cookies": "7. Cookies",
       "cookiesText": "La Plateforme utilise uniquement des cookies strictement nécessaires au fonctionnement (authentification, préférence de langue, sécurité CSRF). Aucun cookie publicitaire ou de traçage tiers n'est utilisé.",
@@ -1882,7 +1881,8 @@
       "dpoText": "Pour toute question relative à la protection de vos données personnelles, vous pouvez contacter notre délégué à la protection des données à l'adresse : contact@taladz.com."
     },
     "ressources": "Ressources",
-    "ressourcesText": "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus."
+    "ressourcesText": "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.",
+    "titreCourt": "À propos"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Chargement des catégories...",
@@ -2870,7 +2870,22 @@
         "acceptee": "Proposition publiée : son auteur est prévenu",
         "refusee": "Proposition refusée : son auteur est prévenu",
         "accepter": "Publier",
-        "refuserTitre": "Refuser la proposition"
+        "refuserTitre": "Refuser la proposition",
+        "erreurChargement": "Les propositions n’ont pas pu être chargées. Rechargez la page.",
+        "champs": {
+          "histoire": "Histoire",
+          "gastronomie": "Gastronomie",
+          "traditions": "Traditions",
+          "artisanat_local": "Artisanat local",
+          "personnalites": "Personnalités",
+          "architecture": "Architecture",
+          "infos_pratiques": "Infos pratiques",
+          "referencesHistoriques": "Références historiques",
+          "description": "Description",
+          "horaires": "Horaires",
+          "nom": "Nom",
+          "type": "Type"
+        }
       }
     },
     "overview": {
@@ -3317,7 +3332,9 @@
       "max": "5 documents au plus : retirez-en un pour en ajouter un autre.",
       "choisir": "Ajouter un PDF",
       "echecTitre": "Document non ajouté",
-      "echecDesc": "Un ou plusieurs PDF n’ont pas pu être envoyés : ajoutez-les depuis « Gérer programmes et œuvres », onglet « Documents PDF »."
+      "echecDesc": "Un ou plusieurs PDF n’ont pas pu être envoyés : ajoutez-les depuis « Gérer programmes et œuvres », onglet « Documents PDF ».",
+      "retirerTitre": "Retirer ce document ?",
+      "retirerAide": "Il disparaît de la page de l’événement."
     }
   },
   "places": {
@@ -3556,7 +3573,8 @@
         "choisir": "Choisir…",
         "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire.",
         "descriptionInvitation": "Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Chaque personne reçoit une invitation et confirme elle-même son inscription ; vous la validez ensuite.",
-        "bilanInvites": "{{n}} personne(s) invitée(s), en attente de leur confirmation"
+        "bilanInvites": "{{n}} personne(s) invitée(s), en attente de leur confirmation",
+        "inviterEmail": "Envoyer à chaque personne un e-mail pour confirmer son inscription (lien valable 7 jours pour un nouveau compte)"
       },
       "messages": {
         "bouton": "Écrire aux participants",
@@ -5359,7 +5377,10 @@
   },
   "seo": {
     "defaultTitle": "Tala DZ - La source de la culture algérienne",
-    "defaultDescription": "Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel."
+    "defaultDescription": "Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel.",
+    "siteName": "Tala DZ",
+    "aproposDescription": "Découvrez la mission de Tala DZ : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative.",
+    "notFoundDescription": "La page que vous recherchez n'existe pas ou a été déplacée."
   },
   "credit": {
     "photographe": "Photographe ou source",
@@ -5380,6 +5401,11 @@
       "ccByCourt": "CC BY",
       "ccBySaCourt": "CC BY-SA",
       "domainePublicCourt": "Domaine public"
-    }
+    },
+    "nonPrecise": "Non précisé"
+  },
+  "carte": {
+    "zoomAvant": "Zoomer",
+    "zoomArriere": "Dézoomer"
   }
 }

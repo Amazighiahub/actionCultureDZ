@@ -77,6 +77,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback ?? key,
     i18n: { language: 'fr', changeLanguage: vi.fn() },
   }),
+  withTranslation: () => <T,>(composant: T) => composant,
 }));
 
 vi.mock('@/hooks/useRTL', () => ({

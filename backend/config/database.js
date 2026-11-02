@@ -107,7 +107,7 @@ const config = {
     pool: {
       max: parseInt(process.env.DB_POOL_MAX || '10'),
       min: parseInt(process.env.DB_POOL_MIN || '2'),
-      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
+      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '10000'),
       idle: parseInt(process.env.DB_POOL_IDLE || '10000')
     },
     dialectOptions: {
@@ -141,7 +141,7 @@ const config = {
       // Avec 4 workers et DB_POOL_MAX=50 → chaque worker max=12
       max: Math.max(5, Math.floor(parseInt(process.env.DB_POOL_MAX || '50') / EFFECTIVE_WORKERS)),
       min: Math.max(2, Math.floor(parseInt(process.env.DB_POOL_MIN || '10') / EFFECTIVE_WORKERS)),
-      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
+      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '10000'),
       idle: parseInt(process.env.DB_POOL_IDLE || '30000'),
       evict: parseInt(process.env.DB_POOL_EVICT || '1000')
     },
@@ -182,6 +182,7 @@ const createDatabaseConnection = (env = 'development') => {
       // Relance UNIQUEMENT sur une connexion perdue ou indisponible. Sans `match`, Sequelize
       // relançait toute erreur (colonne inconnue, syntaxe...) jusqu'à 10 fois avec un délai
       // croissant : la requête dépassait 30 s et la page tombait en 408 au lieu d'une erreur claire.
+      // Pool saturé : pas de relance non plus, attendre encore ne ferait qu'allonger la file.
       retry: {
         max: parseInt(process.env.DB_RETRY_MAX || '3'),
         backoffBase: 500,
@@ -189,7 +190,6 @@ const createDatabaseConnection = (env = 'development') => {
         match: [
           /SequelizeConnectionError/,
           /SequelizeConnectionRefusedError/,
-          /SequelizeConnectionAcquireTimeoutError/,
           /SequelizeConnectionTimedOutError/,
           /SequelizeHostNotReachableError/,
           /ETIMEDOUT/,

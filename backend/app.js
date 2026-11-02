@@ -163,7 +163,8 @@ class App {
     } else {
       // :safe-url : URL sans les jetons (vérification email, désinscription...) pour ne pas les conserver dans les logs
       morgan.token('safe-url', (req) => redactUrl(req.originalUrl || req.url));
-      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
+      morgan.token('safe-referrer', (req) => redactUrl(req.headers.referer || req.headers.referrer) || '-');
+      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":safe-referrer" ":user-agent" - :response-time ms'));
     }
 
     // Cookie Parser (nécessaire pour langue)

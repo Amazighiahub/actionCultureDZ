@@ -5,7 +5,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -17,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  ChevronLeft, Music, FileText, Sparkles, Heart, Star,
+  Music, FileText, Sparkles, Heart, Star,
   MessageCircle, Calendar, Clock, Headphones, RotateCcw,
   Quote, Globe, ZoomIn, X
 } from 'lucide-react';
@@ -52,7 +51,6 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
   isFavorite, favoriteLoading, onToggleFavorite, shareButton,
   playableMedia, handlePlay, noMediaMsg,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses, direction } = useRTL();
@@ -65,15 +63,6 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
   return (
     <div className="relative bg-gradient-to-br from-emerald-50/50 via-background to-teal-50/30 dark:from-emerald-950/20 dark:via-background dark:to-teal-950/10 min-h-[500px]">
       <div className="container max-w-7xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-6 hover:bg-background/80"
-          onClick={() => navigate(-1)}
-          aria-label={t('common.back', 'Retour')}
-        >
-          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
-        </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
 
@@ -155,7 +144,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
 
                       {/* Infos en bas de pochette */}
                       <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
-                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg">
+                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg text-white">
                           {titre}
                         </h2>
                         {mainContributors.length > 0 && (
@@ -249,14 +238,14 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                         <div className="space-y-2 text-sm">
                           {oeuvre.AlbumMusical?.label && (
                             <div className="flex items-center justify-between text-emerald-200/80">
-                              <span>Label</span>
+                              <span>{t('oeuvre.label', 'Label')}</span>
                               <span className="font-medium">{oeuvre.AlbumMusical.label === 'Indépendant' ? t('musique.independant', 'Indépendant') : oeuvre.AlbumMusical.label}</span>
                             </div>
                           )}
                           {oeuvre.AlbumMusical?.duree && (
                             <div className="flex items-center justify-between text-emerald-200/80">
                               <span>{t('works.duration.label', 'Durée')}</span>
-                              <span>{oeuvre.AlbumMusical.duree} min</span>
+                              <span>{t('musique.minutes', '{{count}} min', { count: Number(oeuvre.AlbumMusical.duree) })}</span>
                             </div>
                           )}
                           {oeuvre.Langue && (

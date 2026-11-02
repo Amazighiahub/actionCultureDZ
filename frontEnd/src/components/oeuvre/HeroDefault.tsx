@@ -2,12 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  ChevronLeft, BookOpen, Film, Music, Palette,
+  BookOpen, Film, Music, Palette,
   Sparkles, Heart, User,
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -53,7 +52,6 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
   onToggleFavorite,
   shareButton,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { rtlClasses } = useRTL();
 
@@ -76,15 +74,6 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
           </div>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('common.back', 'Retour')}
-          className={`absolute top-4 ${rtlClasses.start(4)} bg-background/10 backdrop-blur-md hover:bg-background/20`}
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
-        </Button>
 
         <div className="absolute bottom-0 start-0 end-0 p-6 lg:p-12">
           <div className="container max-w-6xl">

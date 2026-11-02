@@ -388,7 +388,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             </div>
           ) : tarification.mode === 'gratuit' ? (
             <div>
-              <Badge className="bg-green-500 text-white text-lg px-4 py-1">
+              <Badge className="bg-green-700 text-white text-lg px-4 py-1">
                 {t('events.free', 'Gratuit')}
               </Badge>
             </div>
@@ -504,7 +504,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               <p className="text-sm text-amber-700 dark:text-amber-300">
                 {t('event.registration.interestedVisitor', 'Intéressé(e) par cet événement ?')}
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                 {t('event.registration.connectToParticipate', 'Connectez-vous pour vous inscrire ou ajoutez aux favoris')}
               </p>
             </div>

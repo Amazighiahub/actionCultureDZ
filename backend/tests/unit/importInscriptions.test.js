@@ -63,7 +63,7 @@ const modeles = ({ existants = [], dejaInscrits = [] } = {}) => {
       count: jest.fn().mockResolvedValue(0),
       findOrCreate: jest.fn(async ({ where, defaults }) => { inscriptions.push({ ...where, ...defaults }); return [{}, true]; })
     },
-    EmailVerification: { createVerificationToken: jest.fn().mockResolvedValue({ token: 'jeton' }) }
+    EmailVerification: { createVerificationToken: jest.fn().mockResolvedValue({ token: 'jeton' }), lienActif: jest.fn().mockResolvedValue(null) }
   };
 };
 const ORGANISATEUR = { id_user: 37, isAdmin: false };
@@ -136,7 +136,7 @@ describe('Import', () => {
   });
 
   it("compte existant : pas d'inscription d'office, une demande de confirmation lui est envoyée", async () => {
-    const m = modeles({ existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz' }] });
+    const m = modeles({ existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz', email_verifie: true }] });
     const emailService = {
       sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }),
       sendDemandeConfirmationInscription: jest.fn().mockResolvedValue({ success: true })

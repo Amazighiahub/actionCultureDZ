@@ -39,7 +39,7 @@ class EnvironmentValidator {
     'BCRYPT_ROUNDS': '12',
     'DB_POOL_MAX': '10',
     'DB_POOL_MIN': '0',
-    'DB_POOL_ACQUIRE': '30000',
+    'DB_POOL_ACQUIRE': '10000',
     'DB_POOL_IDLE': '10000',
     'RATE_LIMIT_WINDOW': '900000',
     'RATE_LIMIT_MAX': '1000',

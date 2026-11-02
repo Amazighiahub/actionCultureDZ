@@ -98,7 +98,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   const location = useLocation();
   // Titre et description par défaut dans la langue de la page (avant : toujours en français)
   const { t } = useTranslation();
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : t('seo.defaultTitle', DEFAULT_TITLE);
+  const fullTitle = title ? `${title} | ${t('seo.siteName', SITE_NAME)}` : t('seo.defaultTitle', DEFAULT_TITLE);
   const fullUrl = url || canonicalUrl(location.pathname);
   const desc = description || t('seo.defaultDescription', DEFAULT_DESCRIPTION);
   const img = absoluteImage(image);
@@ -143,8 +143,8 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       document.getElementById('seo-json-ld')?.remove();
       // Retour aux valeurs par défaut : une page sans SEOHead ne garde pas
       // le titre, la description ou le canonical de la page précédente
-      document.title = DEFAULT_TITLE;
-      setMeta('description', DEFAULT_DESCRIPTION, true);
+      document.title = i18n.t('seo.defaultTitle', DEFAULT_TITLE);
+      setMeta('description', i18n.t('seo.defaultDescription', DEFAULT_DESCRIPTION), true);
       setMeta('robots', 'index, follow', true);
       setMeta('og:title', DEFAULT_TITLE);
       setMeta('og:description', DEFAULT_DESCRIPTION);

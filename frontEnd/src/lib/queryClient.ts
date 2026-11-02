@@ -14,7 +14,11 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
-      retry: 2,
+      // « Introuvable » ne changera pas en réessayant : la page l'affiche tout de suite
+      retry: (essais, erreur) => {
+        const e = erreur as { status?: number; response?: { status?: number } };
+        return (e?.status ?? e?.response?.status) !== 404 && essais < 2;
+      },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {

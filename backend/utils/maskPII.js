@@ -44,7 +44,7 @@ function redactUrl(url) {
   if (typeof url !== 'string') return url;
   return url
     .replace(/\/(verify|verify-email|confirm-email-change|reset-password)\/[^/?#]+/gi, '/$1/***')
-    .replace(/([?&](?:t|token|code)=)[^&#]*/gi, '$1***');
+    .replace(/([?&](?:t|token|code|cle)=)[^&#]*/gi, '$1***');
 }
 
 module.exports = { maskEmail, maskPhone, redactForLog, redactUrl };

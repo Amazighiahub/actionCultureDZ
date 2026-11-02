@@ -169,9 +169,9 @@ const Index: React.FC = () => {
                     <p className="text-muted-foreground mb-4">{t('home.contribuer.texte', 'Associations, artisans, passionnés : ajoutez un lieu, écrivez un article, publiez vos événements.')}</p>
                     <ul className="space-y-2">
                       {/* Guides : pages statiques (lien classique) */}
-                      <li><a className="font-medium text-primary hover:underline underline-offset-4" href={lienSommaireGuides(i18n.language)}>{t('home.contribuer.guide', 'Guide du contributeur')}</a></li>
-                      <li><a className="font-medium text-primary hover:underline underline-offset-4" href={i18n.language.startsWith('ar') ? '/guide/ar/article' : '/guide/article'}>{t('home.contribuer.article', 'Écrire un article')}</a></li>
-                      <li><Link className="font-medium text-primary hover:underline underline-offset-4" to="/evenements">{t('home.contribuer.agenda', 'L’agenda culturel')}</Link></li>
+                      <li><a className="inline-block py-2 font-medium text-primary hover:underline underline-offset-4" href={lienSommaireGuides(i18n.language)}>{t('home.contribuer.guide', 'Guide du contributeur')}</a></li>
+                      <li><a className="inline-block py-2 font-medium text-primary hover:underline underline-offset-4" href={i18n.language.startsWith('ar') ? '/guide/ar/article' : '/guide/article'}>{t('home.contribuer.article', 'Écrire un article')}</a></li>
+                      <li><Link className="inline-block py-2 font-medium text-primary hover:underline underline-offset-4" to="/evenements">{t('home.contribuer.agenda', 'L’agenda culturel')}</Link></li>
                     </ul>
                   </div>
                 </div>

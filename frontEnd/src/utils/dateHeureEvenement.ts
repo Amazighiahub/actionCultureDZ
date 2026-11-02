@@ -15,7 +15,7 @@ export function partiesEvenement(iso?: string | null): { date: string; heure: st
       hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
     }).formatToParts(d).map(p => [p.type, p.value])
   );
-  const sansHeure = d.getUTCHours() === 0 && d.getUTCMinutes() === 0;
+  const sansHeure = d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0;
   return {
     date: `${parts.year}-${parts.month}-${parts.day}`,
     heure: sansHeure ? '' : `${parts.hour}:${parts.minute}`

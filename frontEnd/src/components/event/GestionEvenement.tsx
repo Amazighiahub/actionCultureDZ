@@ -346,6 +346,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       loadOeuvres();
     } catch (error) {
       console.error('Erreur réorganisation:', error);
+      toast({ title: t('common.error', 'Erreur'), description: error instanceof Error ? error.message : undefined, variant: 'destructive' });
     }
   };
 

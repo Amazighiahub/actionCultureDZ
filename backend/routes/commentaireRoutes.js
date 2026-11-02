@@ -47,7 +47,7 @@ module.exports = (models, middlewares = {}) => {
       body('contenu').notEmpty().withMessage('Le contenu est requis')
         .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
         .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
-      body('note').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -93,7 +93,7 @@ module.exports = (models, middlewares = {}) => {
       body('contenu').notEmpty().withMessage('Le contenu est requis')
         .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
         .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
-      body('note').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
     ],
     handleValidationErrors,
     async (req, res) => {

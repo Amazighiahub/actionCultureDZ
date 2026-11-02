@@ -119,7 +119,8 @@ const validationMiddleware = {
       }
 
       const cap = parseInt(capacite_max);
-      if (capacite_max !== undefined && (isNaN(cap) || cap < 0 || cap > 100000)) {
+      // Vide : pas de limite de places (le formulaire de modification envoie les champs vidés)
+      if (capacite_max !== undefined && capacite_max !== '' && (isNaN(cap) || cap < 0 || cap > 100000)) {
         return res.status(400).json({
           success: false,
           error: req.t ? req.t('validation.invalidCapacity') : 'Capacity must be between 0 and 100,000'

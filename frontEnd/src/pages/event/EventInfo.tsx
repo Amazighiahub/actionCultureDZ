@@ -174,7 +174,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
               {tarificationDe(event).mode === 'profil' ? (
                 <p className="font-semibold text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</p>
               ) : tarificationDe(event).mode === 'gratuit' ? (
-                <Badge className="bg-green-500 mt-1">
+                <Badge className="bg-green-700 text-white mt-1">
                   {t('events.free', 'Gratuit')}
                 </Badge>
               ) : (

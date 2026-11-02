@@ -44,11 +44,16 @@ const PropositionsPatrimoine: React.FC = () => {
   const [envoi, setEnvoi] = useState(false);
   const cle = ['admin-propositions-patrimoine'];
 
-  const { data } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: cle,
-    queryFn: async () => (await httpClient.get<Proposition[]>('/patrimoine/admin/propositions')).data || []
+    queryFn: async () => {
+      const reponse = await httpClient.get<Proposition[]>('/patrimoine/admin/propositions');
+      if (!reponse.success) throw new Error(reponse.error);
+      return reponse.data || [];
+    }
   });
   const propositions = data || [];
+  if (isError) return <p role="alert" className="text-sm text-destructive">{t('admin.patrimoine.propositions.erreurChargement', 'Les propositions n’ont pas pu être chargées. Rechargez la page.')}</p>;
   if (!propositions.length) return null;
 
   const texte = (v: unknown) => getLocalizedText(lireJson(v), lang, '');
@@ -113,7 +118,13 @@ const PropositionsPatrimoine: React.FC = () => {
                 </p>
                 <ul className="text-muted-foreground space-y-1">
                   {contenu(p).map((ligne, i) => (
-                    <li key={i} className="whitespace-pre-line break-words line-clamp-6" dir="auto">{ligne}</li>
+                    <li key={i} dir="auto">
+                      {/* Texte entier avant de publier : un clic l'ouvre */}
+                      <details>
+                        <summary className="whitespace-pre-line break-words cursor-pointer list-none line-clamp-6 [details[open]>&]:hidden">{ligne}</summary>
+                        <p className="whitespace-pre-line break-words">{ligne}</p>
+                      </details>
+                    </li>
                   ))}
                 </ul>
                 <p className="text-xs text-muted-foreground">{qui} ({p.email}) · {formatDate(p.date_creation, { relative: true })}</p>

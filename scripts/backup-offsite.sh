@@ -69,10 +69,12 @@ if [ "${BACKUP_OFFSITE_UPLOADS:-1}" = "1" ]; then
       log "OK : $UNAME.age -> $BACKUP_RCLONE_DEST"
     else
       log "ATTENTION : copie des uploads échouée ($UNAME)"
+      UPLOADS_EN_ECHEC=1
     fi
   fi
 fi
 
-if [ -n "${BACKUP_ALERT_URL:-}" ]; then
+# Pas de signal « tout va bien » si une partie de la copie a échoué
+if [ -n "${BACKUP_ALERT_URL:-}" ] && [ -z "${UPLOADS_EN_ECHEC:-}" ]; then
   curl -fsS --max-time 10 "$BACKUP_ALERT_URL" >/dev/null || log "ping de supervision échoué"
 fi

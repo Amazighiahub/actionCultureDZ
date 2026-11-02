@@ -23,8 +23,18 @@ const LIENS = { lien_programme: 'Le lien du programme', lien_whatsapp: 'Le lien 
  * extension ni type, et refuse les liens en « .pdf ». Le site le sert donc lui-même, sous le nom
  * « programme.pdf » ; les autres liens (Drive…) restent tels quels.
  */
-const estPdfDuSite = (url) => Boolean(url && process.env.CLOUDINARY_CLOUD_NAME
-  && url.startsWith(`https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/`));
+const estPdfDuSite = (url) => {
+  const compte = process.env.CLOUDINARY_CLOUD_NAME;
+  if (typeof url !== 'string' || !compte) return false;
+  try {
+    // Adresse normalisée : « /raw/upload/../../autre-compte/ » ne passe pas pour un fichier du site
+    const adresse = new URL(url);
+    return adresse.protocol === 'https:' && adresse.hostname === 'res.cloudinary.com'
+      && adresse.pathname.startsWith(`/${compte}/raw/upload/`);
+  } catch {
+    return false;
+  }
+};
 // Le lien du PDF porte une signature : sans elle, les ids se suivent et n'importe qui
 // pourrait lire le programme de tous les messages. Les messages envoyés avant la
 // signature (date ci-dessous) gardent leur ancien lien, déjà dans les e-mails reçus.

@@ -15,6 +15,8 @@
 # Options (variables d'environnement) :
 #   MYSQL_CONTAINER   conteneur MySQL cible (défaut : eventculture-mysql)
 #   BACKUP_CONTAINER  conteneur des sauvegardes (défaut : eventculture-backup)
+#   BACKEND_CONTAINER arrêté pendant l'import, pour que rien n'écrive dans la base
+#                     (défaut : eventculture-backend, ou aucun si MYSQL_CONTAINER est changé)
 #   DB_NAME, MYSQL_ROOT_PASSWORD   lus dans .env s'ils ne sont pas déjà définis
 #   SANS_SAUVEGARDE_AVANT=1        ne pas sauvegarder l'état actuel (base vide, essai)
 #   CONFIRMER=<nom de la base>     confirmation sans question (essai automatisé)
@@ -24,6 +26,12 @@ set -Eeuo pipefail
 
 MYSQL_CONTAINER="${MYSQL_CONTAINER:-eventculture-mysql}"
 BACKUP_CONTAINER="${BACKUP_CONTAINER:-eventculture-backup}"
+# Essai sur une autre base : le vrai backend n'est pas concerné
+if [ "$MYSQL_CONTAINER" = "eventculture-mysql" ]; then
+  BACKEND_CONTAINER="${BACKEND_CONTAINER:-eventculture-backend}"
+else
+  BACKEND_CONTAINER="${BACKEND_CONTAINER:-}"
+fi
 
 log()  { echo "[restauration $(date +%T)] $*"; }
 fail() { echo "[restauration] ERREUR : $*" >&2; exit 1; }
@@ -87,8 +95,16 @@ if [ "${CONFIRMER:-}" != "$DB_NAME" ]; then
 fi
 
 # 5. Import (le dump contient DROP DATABASE / CREATE DATABASE / USE)
+if [ -n "$BACKEND_CONTAINER" ]; then
+  docker stop "$BACKEND_CONTAINER" >/dev/null 2>&1 && log "backend arrêté pendant l'import" || true
+fi
 log "import en cours…"
-zcat "$FICHIER" | mysql_import
+if ! zcat "$FICHIER" | mysql_import; then
+  fail "import échoué : la base peut être incomplète, le backend reste donc arrêté. Relancez la restauration avec une autre sauvegarde, puis : docker compose -f docker-compose.prod.yml up -d backend"
+fi
 TABLES="$(mysql_cible -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$DB_NAME'")"
 log "restauration terminée : $TABLES tables dans « $DB_NAME »"
-log "pensez à redémarrer le backend (cache) : docker compose -f docker-compose.prod.yml restart backend"
+if [ -n "$BACKEND_CONTAINER" ]; then
+  docker start "$BACKEND_CONTAINER" >/dev/null 2>&1 && log "backend redémarré" || log "backend à redémarrer : docker compose -f docker-compose.prod.yml up -d backend"
+fi
+log "le cache des listes se renouvelle seul en 5 minutes"

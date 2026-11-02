@@ -306,7 +306,7 @@ const AdminEvenementsTab: React.FC = () => {
                           <Edit className="h-4 w-4 me-2" />
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>
-                        {!['brouillon', 'en_attente', 'annule'].includes(event.statut) && (
+                        {!['brouillon', 'en_attente', 'annule', 'termine'].includes(event.statut) && (
                           <DropdownMenuItem onClick={() => setConfirmCancel({ open: true, eventId: event.id_evenement })}>
                             <XCircle className="h-4 w-4 me-2" />
                             {t('admin.events.cancel', 'Annuler')}

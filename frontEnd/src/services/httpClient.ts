@@ -490,7 +490,8 @@ class HttpClient {
         }
         
         // Gestion du 404 (non trouvé)
-        if (error.response?.status === 404) {
+        // Lecture (GET) : la page affiche elle-même « introuvable ». Le bandeau s'y ajoutait, répété à chaque essai.
+        if (error.response?.status === 404 && (error.config?.method || 'get').toLowerCase() !== 'get') {
           let errorMessage = i18next.t('toasts.notFoundDesc', 'La ressource demandée est introuvable.');
 
           if (error.response.data && typeof error.response.data === 'object') {

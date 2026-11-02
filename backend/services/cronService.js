@@ -387,7 +387,7 @@ class CronService {
     // Un jour sans heure (minuit UTC) n'a pas d'heure de début : pas de « dans 1 heure » à minuit
     const avecHeure = upcomingEvents.filter(e => {
       const d = new Date(e.date_debut);
-      return d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0;
+      return d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0 || d.getUTCSeconds() !== 0;
     });
     await Promise.all(upcomingEvents.filter(e => !avecHeure.includes(e))
       .map(e => e.update({ rappel_derniere_minute: true })));

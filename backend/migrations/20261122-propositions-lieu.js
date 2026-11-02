@@ -1,3 +1,4 @@
+// Attention : la descente supprime la table proposition_lieu, propositions en attente comprises. Seule la sauvegarde d'avant déploiement les conserve.
 'use strict';
 
 /**

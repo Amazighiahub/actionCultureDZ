@@ -93,7 +93,7 @@ const ALaUne: React.FC = () => {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             {/* Grande carte : le prochain événement */}
             <article className="group relative">
-              <Link to={evenementPath(premier.id_evenement, premier.nom_evenement)} className="block overflow-hidden rounded-2xl bg-muted aspect-[16/10]">
+              <Link to={evenementPath(premier.id_evenement, premier.nom_evenement)} aria-hidden="true" tabIndex={-1} className="block overflow-hidden rounded-2xl bg-muted aspect-[16/10]">
                 {image(premier) ? (
                   <img src={getAssetUrl(image(premier), { width: 1200 })} alt="" loading="eager" decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />

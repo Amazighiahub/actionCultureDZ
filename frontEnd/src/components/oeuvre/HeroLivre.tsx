@@ -4,7 +4,6 @@
  */
 import React, { useState } from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   BookOpen, BookMarked, Star, Heart, Eye, MessageCircle,
   Globe, Calendar, FileText, ZoomIn, RotateCcw, Quote,
-  Sparkles, ChevronLeft, X
+  Sparkles, X
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
@@ -43,7 +42,6 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
   mainContributors, gt, viewCount, commentsCount,
   isFavorite, favoriteLoading, onToggleFavorite, shareButton
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses, direction } = useRTL();
@@ -55,15 +53,6 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
   return (
     <div className="relative bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 min-h-[500px]">
       <div className="container max-w-7xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-6 hover:bg-background/80"
-          onClick={() => navigate(-1)}
-          aria-label={t('common.back', 'Retour')}
-        >
-          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
-        </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
 

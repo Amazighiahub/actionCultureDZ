@@ -166,8 +166,20 @@ class EmailVerificationService {
     );
 
     // Lien déjà envoyé : réponse identique à celle d'un email inconnu (pas d'énumération)
-    if (hasActive) {
+    if (hasActive && (user.email_verifie || user.accepte_conditions)) {
       return { rateLimited: true };
+    }
+
+    // Compte importé jamais activé : son invitation dure 7 jours et il l'a peut-être perdue. Le même lien
+    // lui est renvoyé : n'importe qui peut saisir son adresse ici, cela ne doit pas annuler ce lien.
+    const lienExistant = hasActive ? await this.models.EmailVerification.lienActif(user.id_user, 'password_reset') : null;
+    if (lienExistant) {
+      try {
+        await emailService.sendPasswordResetEmail(user, lienExistant.token);
+      } catch (error) {
+        logger.error('Envoi email de réinitialisation échoué:', error.message);
+      }
+      return { expiresIn: '2 heures' };
     }
 
     const verification = await this.models.EmailVerification.createVerificationToken(

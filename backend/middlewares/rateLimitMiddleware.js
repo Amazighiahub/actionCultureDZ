@@ -257,6 +257,21 @@ const publicUploadLimiter = rateLimit(withStore('upload-public', {
 // 30 vues par 5 minutes, par adresse et par contenu. Au-delà, la vue n'est simplement pas comptée
 // (réponse 200 sans message : un 429 afficherait « trop de requêtes » à un vrai visiteur derrière une
 // adresse mobile partagée). Avant : défini mais branché nulle part, les vues pouvaient être gonflées.
+// PDF servis par le site : chaque appel occupe une connexion vers Cloudinary. Plafond large : après
+// un envoi à tous les inscrits, beaucoup de personnes peuvent sortir par la même adresse mobile.
+const pdfLimiter = rateLimit(withStore('pdf', {
+  windowMs: 5 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+    });
+  },
+}));
+
 const viewLimiter = rateLimit(withStore('views', {
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 30, // 30 vues par 5 minutes
@@ -571,6 +586,7 @@ module.exports = {
   actionsLimiter,
   importLimiter,
   createContentLimiter,
+  pdfLimiter,
   commentLimiter,
   uploadLimiter,
   viewLimiter,

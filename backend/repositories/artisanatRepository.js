@@ -191,7 +191,10 @@ class ArtisanatRepository extends BaseRepository {
    * Statistiques
    */
   async getStats() {
-    const total = await this.count();
+    // Publié seulement : le chiffre doit correspondre à la liste publique (« 4 produits » pour 1 visible)
+    const total = await this.model.count({
+      include: [{ model: this.models.Oeuvre, required: true, attributes: [], where: { statut: 'publie' } }]
+    });
 
     let byMateriau = [];
     if (this.models.Materiau) {

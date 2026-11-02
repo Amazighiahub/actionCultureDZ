@@ -1,3 +1,4 @@
+// Attention : la descente supprime les colonnes credit et licence, donc les crédits saisis. Seule la sauvegarde d'avant déploiement les conserve.
 'use strict';
 
 /**

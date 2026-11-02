@@ -63,7 +63,8 @@ async function supprimerLieu(models, idLieu) {
 
     // Les plus profonds d'abord, puis le site
     for (const ids of [...niveaux].reverse()) {
-      await models.Lieu.destroy({ where: { id_lieu: { [Op.in]: ids } }, transaction });
+      // individualHooks : favoris, vues et signalements de chaque point de visite partent aussi
+      await models.Lieu.destroy({ where: { id_lieu: { [Op.in]: ids } }, transaction, individualHooks: true });
     }
     await lieu.destroy({ transaction });
     return { trouve: true, evenements: 0, services: 0, supprime: true, points: niveaux.flat().length };

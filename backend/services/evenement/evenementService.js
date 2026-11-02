@@ -7,6 +7,7 @@ const BaseService = require('../core/baseService');
 const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const { finEffective } = require('../../helpers/finEvenement');
 const { entitesBrutes } = require('../../utils/entitesBrutes');
+const { verifierPlacePourRetablir } = require('../../utils/comptesEvenement');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
@@ -160,7 +161,9 @@ class EvenementService extends BaseService {
     const nomFr = typeof nomEvent === 'object' ? nomEvent.fr : nomEvent;
     if (nomFr && data.date_debut) {
       const { Sequelize, Op } = require('sequelize');
-      const dupWhere = { date_debut: data.date_debut };
+      // Même heure que celle enregistrée ; un événement annulé peut être recréé
+      const debutPrevu = new Date(this._avecHeure(data.date_debut, data.heure_debut || data.heureDebut));
+      const dupWhere = { date_debut: debutPrevu, statut: { [Op.ne]: 'annule' } };
       if (lieuId) dupWhere.id_lieu = lieuId;
       const existing = await this.repository.model.findOne({
         where: {
@@ -303,7 +306,8 @@ class EvenementService extends BaseService {
     const jour = String(date);
     const hm = String(heure).match(/^(\d{2}):(\d{2})/);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(jour) || !hm) return date;
-    return `${jour}T${hm[1]}:${hm[2]}:00+01:00`;
+    // 01:00 à Alger vaut minuit UTC, la convention d'un jour sans heure : 1 seconde les distingue
+    return `${jour}T${hm[1]}:${hm[2]}:${hm[1] === '01' && hm[2] === '00' ? '01' : '00'}+01:00`;
   }
 
   /**
@@ -350,7 +354,9 @@ class EvenementService extends BaseService {
           updateData.rappel_derniere_minute = false;
         }
       }
-      if (data.date_fin || data.dateFin) updateData.date_fin = this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin);
+      // Vidé dans le formulaire : la valeur est effacée (avant, le message annonçait un succès sans rien changer)
+      const finRecue = data.date_fin ?? data.dateFin;
+      if (finRecue !== undefined) updateData.date_fin = finRecue ? this._avecHeure(finRecue, data.heure_fin || data.heureFin) : null;
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
       if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
       // Statut : un brouillon peut être envoyé à la validation (ou publié par l'administration) ;
@@ -359,7 +365,8 @@ class EvenementService extends BaseService {
         updateData.statut = this._statutDemande('publie', options.isAdmin);
         envoye = updateData.statut === 'en_attente';
       }
-      if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
+      const capaciteRecue = data.capacite_max ?? data.capaciteMax;
+      if (capaciteRecue !== undefined) updateData.capacite_max = Number(capaciteRecue) > 0 ? capaciteRecue : null;
       if (data.tarif !== undefined) updateData.tarif = data.tarif;
       Object.assign(updateData, this._tarification(data));
       if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
@@ -372,7 +379,10 @@ class EvenementService extends BaseService {
         updateData.date_debut || existing.date_debut);
       if (limite !== undefined) updateData.date_limite_inscription = limite;
       if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
-        updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
+        updateData.url_virtuel = data.url_virtuel || data.urlVirtuel || null;
+        // Passage en ligne : l'ancien lieu n'est plus affiché. Un événement déjà en ligne garde
+        // son lieu s'il en a un (événement à la fois sur place et en ligne).
+        if (updateData.url_virtuel && !existing.url_virtuel && !updateData.id_lieu) updateData.id_lieu = null;
       }
 
       const newOrgId = data.id_organisation || data.organisationId;
@@ -483,6 +493,11 @@ class EvenementService extends BaseService {
     if (!options.isAdmin && !['brouillon', 'en_attente'].includes(existing.statut)) {
       throw this._validationError('Seuls les événements en brouillon peuvent être supprimés. Utilisez l\'annulation pour les événements publiés.');
     }
+    // Administration : un événement visible avec des inscrits s'annule d'abord (ils sont alors prévenus).
+    // Sinon leurs inscriptions disparaissaient sans qu'ils le sachent.
+    if (['publie', 'planifie', 'en_cours', 'reporte'].includes(existing.statut) && await this.repository.countParticipants(id) > 0) {
+      throw Object.assign(this._validationError('Cet événement a des inscrits : annulez-le d\'abord pour qu\'ils soient prévenus'), { statusCode: 409 });
+    }
 
     await this.repository.delete(id);
     this.cache.invalidate();
@@ -511,7 +526,9 @@ class EvenementService extends BaseService {
 
       const openStatuses = ['publie', 'planifie', 'en_cours'];
       if (!openStatuses.includes(evenement.statut)) {
-        throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
+        throw this._validationError(evenement.statut === 'annule'
+          ? 'Cet événement a été annulé'
+          : 'Les inscriptions ne sont pas ouvertes pour cet événement');
       }
 
       if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
@@ -705,9 +722,12 @@ class EvenementService extends BaseService {
   async validateParticipation(evenementId, userId, validated, validatedBy, notes) {
     await this._assertEventOwnerOrAdmin(evenementId, validatedBy.id, validatedBy.isAdmin);
     await this._refuserSiInvitation(evenementId, userId, validated);
+    const avant = await this.repository.getRegistration(evenementId, userId);
+    const nouveauStatut = validated ? 'confirme' : 'annule';
+    if (validated && this.models) await verifierPlacePourRetablir(this.models, evenementId, avant);
 
     const participation = await this.repository.updateParticipationStatus(evenementId, userId, {
-      statut_participation: validated ? 'confirme' : 'annule',
+      statut_participation: nouveauStatut,
       date_validation: new Date(),
       valide_par: validatedBy.id
     });
@@ -716,8 +736,9 @@ class EvenementService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    // Notification (best effort, fire-and-forget — ne pas bloquer la réponse HTTP)
-    if (this.models?.Notification) {
+    // Notification (best effort, fire-and-forget — ne pas bloquer la réponse HTTP). Rien si le statut
+    // ne change pas : un double clic envoyait deux e-mails et deux SMS.
+    if (this.models?.Notification && avant?.statut_participation !== nouveauStatut) {
       // Service partagé (avec ses repositories) ; instance locale seulement à défaut (tests)
       const notifService = this.notificationService || new (require('../notificationService'))(this.models);
       notifService.notifierValidationParticipation(
@@ -918,6 +939,10 @@ class EvenementService extends BaseService {
       return EvenementDTO.fromEntity(await this.repository.findWithFullDetails(id));
     }
 
+    // Un événement annulé ou terminé ne revient pas en ligne sans que personne ne soit prévenu
+    if (!['brouillon', 'en_attente', 'reporte'].includes(evenement.statut)) {
+      throw this._validationError('Seul un événement en attente ou en brouillon peut être publié');
+    }
     await this.repository.update(id, { statut: 'publie' });
     const updated = await this.repository.findWithFullDetails(id);
 
@@ -983,7 +1008,16 @@ class EvenementService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez annuler que vos propres événements');
     }
 
-    await this.repository.update(id, { statut: 'annule' });
+    // Sous verrou : un double clic n'envoie pas deux séries d'e-mails et de SMS. Un événement terminé
+    // reste terminé : ses participants ne doivent pas recevoir « annulé » après y être allés.
+    await this.repository.withTransaction(async (transaction) => {
+      const actuel = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (actuel.statut === 'annule') {
+        throw Object.assign(this._validationError('Cet événement est déjà annulé'), { statusCode: 409 });
+      }
+      if (actuel.statut === 'termine') throw this._validationError('Un événement terminé ne peut pas être annulé');
+      await this.repository.update(id, { statut: 'annule' }, { transaction });
+    });
     const updated = await this.repository.findWithFullDetails(id);
 
     // Notification annulation (best effort, fire-and-forget)

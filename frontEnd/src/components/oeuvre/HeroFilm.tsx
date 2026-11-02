@@ -5,7 +5,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -17,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  ChevronLeft, Film, Star, Heart, Eye, MessageCircle,
+  Film, Star, Heart, Eye, MessageCircle,
   Play, Clock, Globe, Calendar, FileText, ZoomIn,
   RotateCcw, Quote, Sparkles, X
 } from 'lucide-react';
@@ -66,7 +65,6 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
   handlePlay,
   noMediaMsg,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses, direction } = useRTL();
@@ -81,15 +79,6 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
   return (
     <div className="relative bg-gradient-to-br from-slate-900/50 via-background to-purple-950/30 dark:from-slate-950 dark:via-background dark:to-purple-950/20 min-h-[500px]">
       <div className="container max-w-7xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-6 hover:bg-background/80"
-          onClick={() => navigate(-1)}
-          aria-label={t('common.back', 'Retour')}
-        >
-          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
-        </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
 
@@ -169,7 +158,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
 
                       {/* Infos en bas d'affiche */}
                       <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
-                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg">
+                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg text-white">
                           {titre}
                         </h2>
                         {mainContributors.length > 0 && (

@@ -149,6 +149,12 @@ module.exports = (sequelize) => {
     const cases = etapes.map((_, i) => `WHEN ? THEN ?`).join(' ');
     const caseReplacements = etapes.flatMap((e, i) => [e.id_parcours_lieu, i + 1]);
     const placeholders = ids.map(() => '?').join(',');
+    // Deux passes : l'index unique (id_parcours, ordre) est contrôlé ligne par ligne, et une position
+    // encore occupée donnait une erreur 500
+    await sequelize.query(
+      `UPDATE parcours_lieux SET ordre = ordre + 100000 WHERE id_parcours_lieu IN (${placeholders})`,
+      { replacements: ids, transaction }
+    );
     await sequelize.query(
       `UPDATE parcours_lieux SET ordre = CASE id_parcours_lieu ${cases} END WHERE id_parcours_lieu IN (${placeholders})`,
       { replacements: [...caseReplacements, ...ids], transaction }

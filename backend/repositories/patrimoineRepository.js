@@ -79,8 +79,8 @@ class PatrimoineRepository extends BaseRepository {
         required: false
       };
       const detailNested = [];
-      if (this.models.Monument) detailNested.push({ model: this.models.Monument, required: false });
-      if (this.models.Vestige) detailNested.push({ model: this.models.Vestige, required: false });
+      if (this.models.Monument) detailNested.push({ model: this.models.Monument, required: false, separate: true });
+      if (this.models.Vestige) detailNested.push({ model: this.models.Vestige, required: false, separate: true });
       if (detailNested.length) detailInclude.include = detailNested;
       includes.push(detailInclude);
     }

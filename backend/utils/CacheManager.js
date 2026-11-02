@@ -27,6 +27,8 @@ class CacheManager {
     this.namespace = namespace;
     this.defaultTTL = defaultTTL;
     this._store = new LRUCache(maxSize);
+    // Calculs en cours par clé : à l'expiration, un seul appel recalcule, les autres attendent son résultat
+    this._enCours = new Map();
     this._stats = { hits: 0, misses: 0 };
   }
 
@@ -111,6 +113,7 @@ class CacheManager {
    * Supprime une clé
    */
   delete(key) {
+    this._enCours.delete(key);
     this._store.delete(this._key(key));
     const redis = getRedisClient();
     if (redis) {
@@ -122,6 +125,7 @@ class CacheManager {
    * Vide tout le namespace
    */
   clear() {
+    this._enCours.clear();
     // LRU : ne supprimer que les clés de ce namespace
     const prefix = `${this.namespace}:`;
     for (const key of this._store.keys()) {
@@ -150,6 +154,9 @@ class CacheManager {
       this.clear();
       return;
     }
+    for (const key of this._enCours.keys()) {
+      if (key.includes(pattern)) this._enCours.delete(key);
+    }
     // LRU
     const prefix = `${this.namespace}:`;
     for (const key of this._store.keys()) {
@@ -171,7 +178,7 @@ class CacheManager {
 
   /**
    * Wrapper get-or-set : retourne le cache ou exécute le generator
-   * Essaie Redis → LRU → generator
+   * Essaie Redis → LRU → calcul déjà en cours → generator
    * @param {string} key
    * @param {Function} generator - Async function qui génère la valeur
    * @param {number} [ttl] - TTL en ms
@@ -196,11 +203,30 @@ class CacheManager {
       return cached;
     }
 
-    // 3. Generate + store both
+    // 3. Même calcul déjà en cours : copie du résultat, comme une lecture Redis (objet jamais partagé)
+    const enCours = this._enCours.get(key);
+    if (enCours) {
+      this._stats.hits++;
+      const json = await enCours;
+      return json === undefined ? undefined : JSON.parse(json);
+    }
+
+    // 4. Generate + store both
     this._stats.misses++;
-    const value = await generator();
-    this.set(key, value, ttl);
-    return value;
+    let value;
+    const calcul = (async () => {
+      value = await generator();
+      // Invalidé pendant le calcul : le résultat est peut-être déjà périmé, il n'est pas gardé
+      if (this._enCours.get(key) === calcul) this.set(key, value, ttl);
+      return JSON.stringify(value);
+    })();
+    this._enCours.set(key, calcul);
+    try {
+      await calcul;
+      return value;
+    } finally {
+      if (this._enCours.get(key) === calcul) this._enCours.delete(key);
+    }
   }
 
   /**

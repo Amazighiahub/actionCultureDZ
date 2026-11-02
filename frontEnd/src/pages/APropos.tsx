@@ -71,8 +71,8 @@ const APropos = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={t("apropos.propos_culture_algrie", "À propos de Tala DZ")}
-        description="Découvrez la mission de Tala DZ : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative."
+        title={t("apropos.titreCourt", "À propos")}
+        description={t("seo.aproposDescription", "Découvrez la mission de Tala DZ : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative.")}
         keywords={['à propos', 'culture algérienne', 'mission', 'patrimoine', 'contact', 'équipe']}
         type="website"
       />
@@ -278,7 +278,6 @@ const APropos = () => {
                   <li>{t("apropos.privacy.soustraitantCloudinary", "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)")}</li>
                   <li>{t("apropos.privacy.soustraitantEmail", "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)")}</li>
                   <li>{t("apropos.privacy.soustraitantOSM", "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche")}</li>
-                  <li>{t("apropos.privacy.soustraitantUnsplash", "Unsplash — certaines images d'illustration : votre adresse IP est transmise lors de leur affichage")}</li>
                 </ul>
                 <p className="mt-2">{t("apropos.privacy.soustraitantsPas", "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.")}</p>
               </div>

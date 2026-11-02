@@ -119,14 +119,14 @@ log_ok "Git installe"
 # 8. Creer les dossiers du projet
 # ============================================
 log_info "8/8 - Preparation des dossiers..."
-mkdir -p /home/EventCulture
-chown $DEPLOY_USER:$DEPLOY_USER /home/EventCulture
+mkdir -p /home/actionCultureDZ
+chown $DEPLOY_USER:$DEPLOY_USER /home/actionCultureDZ
 
 mkdir -p /home/$DEPLOY_USER/backups
 chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/backups
 
 # Cron de sauvegarde automatique (tous les jours a 3h)
-(crontab -u $DEPLOY_USER -l 2>/dev/null; echo "0 3 * * * cd /home/EventCulture && ./scripts/deploy.sh --backup 2>/dev/null") | crontab -u $DEPLOY_USER -
+(crontab -u $DEPLOY_USER -l 2>/dev/null; echo "0 3 * * * cd /home/actionCultureDZ && ./scripts/deploy.sh --backup 2>/dev/null") | crontab -u $DEPLOY_USER -
 
 log_ok "Dossiers prets"
 
@@ -147,10 +147,10 @@ echo "  2. Se connecter en tant que $DEPLOY_USER :"
 echo "     ssh $DEPLOY_USER@$(hostname -I | awk '{print $1}')"
 echo ""
 echo "  3. Cloner le projet :"
-echo "     git clone <repo> /home/EventCulture"
+echo "     git clone <repo> /home/actionCultureDZ"
 echo ""
 echo "  4. Configurer et deployer :"
-echo "     cd /home/EventCulture"
+echo "     cd /home/actionCultureDZ"
 echo "     cp .env.example .env && nano .env"
 echo "     ./scripts/deploy.sh --init"
 echo ""

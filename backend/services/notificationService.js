@@ -188,7 +188,7 @@ class NotificationService {
     const enAlgerie = { timeZone: 'Africa/Algiers' };
     const dateDebut = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long' });
     // Jour sans heure (minuit UTC) : pas d'heure annoncée (avant : « à 01:00 »)
-    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0;
+    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0 && debut.getUTCSeconds() === 0;
     const heureDebut = sansHeure ? '' : debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
     const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
 
@@ -269,7 +269,7 @@ class NotificationService {
     if (participants.length === 0) return { notified: 0 };
 
     const debut = new Date(evenement.date_debut);
-    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0;
+    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0 && debut.getUTCSeconds() === 0;
     const enAlgerie = { timeZone: 'Africa/Algiers' };
     const date = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const heure = sansHeure ? '' : debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
@@ -408,7 +408,8 @@ class NotificationService {
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: programme.id_evenement,
-          statut_participation: 'confirme'
+          // Inscrits aussi : un organisateur qui ne confirme pas laisserait tout le monde sans nouvelles
+          statut_participation: { [Op.in]: ['inscrit', 'confirme'] }
         },
         include: [
           {

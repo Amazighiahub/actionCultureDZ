@@ -147,7 +147,7 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <Link to={`/patrimoine/${point.id_lieu}`} className="font-medium hover:underline">
+                  <Link to={`/patrimoine/${point.id_lieu}`} className="inline-block py-2 font-medium hover:underline">
                     <span className="sr-only">{t('patrimoine.points.number', 'Point {{n}} :', { n: index + 1 })} </span>
                     {nom}
                   </Link>

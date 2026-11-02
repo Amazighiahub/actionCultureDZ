@@ -26,6 +26,18 @@ warn() { echo "[deploy $(date +%T)] ATTENTION: $*" >&2; }
 annotate() { echo "::error title=Deploiement ($STEP)::$*"; }
 trap 'annotate "echec de : $BASH_COMMAND"' ERR
 
+# Échec avant la bascule : le dépôt revient au commit en service. Sinon le déploiement suivant comparait
+# depuis le commit raté, et un changement de nginx ou de sauvegarde n'était jamais appliqué (audit V8).
+AVANT_BASCULE=1
+retour_depot() {
+  local code=$?
+  if [ "$AVANT_BASCULE" = 1 ] && [ "$code" != 0 ]; then
+    warn "prod inchangee : retour du depot sur $PREV"
+    git reset --hard --quiet "$PREV" || true
+  fi
+}
+trap retour_depot EXIT
+
 wait_healthy() {
   local container="$1" timeout="${2:-180}" status=""
   for ((i = 0; i < timeout; i += 5)); do
@@ -65,9 +77,13 @@ rollback() {
 # 0. Configuration compose + .env lisibles
 $C config -q
 
-# 1. Conserver les images actuelles pour un éventuel retour arrière
+# 1. Conserver les images en service pour un éventuel retour arrière
+#    (:latest peut désigner une image construite par un déploiement raté, jamais mise en ligne)
 for s in backend frontend; do
-  if docker image inspect "$PROJECT-$s:latest" >/dev/null 2>&1; then
+  EN_SERVICE="$(docker inspect -f '{{.Image}}' "eventculture-$s" 2>/dev/null || true)"
+  if [ -n "$EN_SERVICE" ]; then
+    docker tag "$EN_SERVICE" "$PROJECT-$s:rollback"
+  elif docker image inspect "$PROJECT-$s:latest" >/dev/null 2>&1; then
     docker tag "$PROJECT-$s:latest" "$PROJECT-$s:rollback"
   fi
 done
@@ -105,6 +121,7 @@ fi
 echo "$BACKUP_OUT" | tail -n 4
 
 # A partir d'ici on modifie la prod : retour arrière automatique en cas d'erreur
+AVANT_BASCULE=0
 trap 'annotate "echec de : $BASH_COMMAND (retour aux images precedentes)"; rollback' ERR
 
 # 6. Migrations (uniquement celles pas encore appliquées)

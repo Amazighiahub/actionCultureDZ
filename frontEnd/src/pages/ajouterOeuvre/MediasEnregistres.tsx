@@ -67,7 +67,8 @@ const MediasEnregistres: React.FC<Props> = ({ oeuvreId, medias, onRetire }) => {
               </div>
             )}
             {titre && <p className="text-sm truncate" dir="auto">{titre}</p>}
-            <Button type="button" size="sm" variant="outline" className="w-full" onClick={() => setARetirer(media)}>
+            <Button type="button" size="sm" variant="outline" className="w-full" onClick={() => setARetirer(media)}
+              aria-label={titre ? `${t('ajouteroeuvre.retirerMedia', 'Retirer')} : ${titre}` : undefined}>
               <Trash2 className="h-4 w-4 me-2" aria-hidden="true" />
               {t('ajouteroeuvre.retirerMedia', 'Retirer')}
             </Button>

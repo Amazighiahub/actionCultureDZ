@@ -29,6 +29,7 @@ describe('config/database : relance des requêtes', () => {
     "SequelizeDatabaseError: Unknown column 'DetailLieu.nb_notations' in 'field list'",
     'SequelizeDatabaseError: You have an error in your SQL syntax',
     'SequelizeUniqueConstraintError: Validation error',
+    'SequelizeConnectionAcquireTimeoutError: Operation timeout',
   ])('ne relance pas : %s', (message) => {
     expect(retried(message)).toBe(false);
   });

@@ -8,7 +8,7 @@ const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddle
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter, importLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, importLimiter, pdfLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
@@ -96,8 +96,9 @@ const initEvenementRoutes = (models, authMiddleware) => {
 
   // Oeuvres dans un événement
   router.post('/:id/oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.addOeuvre(req, res)));
-  router.put('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.updateOeuvre(req, res)));
+  // /reorder avant /:oeuvreId : sinon « reorder » était lu comme un numéro d'œuvre (400 à chaque fois)
   router.put('/:id/oeuvres/reorder', authenticate, validateId(), asyncHandler((req, res) => evenementController.reorderOeuvres(req, res)));
+  router.put('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.updateOeuvre(req, res)));
   router.delete('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.removeOeuvre(req, res)));
 
   // Liste d'inscriptions (Excel d'un formulaire en ligne) : aperçu, puis import (organisateur ou admin)
@@ -123,7 +124,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
   // ajout et retrait par l'organisateur ou l'administration
   router.get('/:id/documents', optionalAuth, validateId(),
     asyncHandler((req, res) => evenementController.listerDocuments(req, res)));
-  router.get('/:id/documents/:idMedia/document.pdf', optionalAuth, validateId(), validateId('idMedia'),
+  router.get('/:id/documents/:idMedia/document.pdf', pdfLimiter, optionalAuth, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.telechargerDocument(req, res)));
   router.post('/:id/documents', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
     asyncHandler((req, res) => evenementController.ajouterDocument(req, res)));
@@ -131,7 +132,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => evenementController.retirerDocument(req, res)));
 
   // Programme en PDF joint à un message (ouvert depuis l'email ou la notification, sans connexion)
-  router.get('/:id/messages/:idMessage/programme.pdf', validateId(), validateId('idMessage'),
+  router.get('/:id/messages/:idMessage/programme.pdf', pdfLimiter, validateId(), validateId('idMessage'),
     asyncHandler((req, res) => evenementController.programmeMessage(req, res)));
 
   // Email « Choisir mon mot de passe » renvoyé à un participant qui ne l'a pas encore fait

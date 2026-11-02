@@ -23,7 +23,7 @@ const NotFound = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <SEOHead
         title={t("notfound.oops_page_not", "Page introuvable")}
-        description="La page que vous recherchez n'existe pas ou a été déplacée."
+        description={t("seo.notFoundDescription", "La page que vous recherchez n'existe pas ou a été déplacée.")}
         noindex={true}
       />
       <Header />

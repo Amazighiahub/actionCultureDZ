@@ -67,7 +67,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                 </Badge>
               )}
               {modeTarif === 'gratuit' && (
-                <Badge className="bg-green-500 text-white">
+                <Badge className="bg-green-700 text-white">
                   {t('events.free', 'Gratuit')}
                 </Badge>
               )}
@@ -190,7 +190,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                 )}
 
                 {modeTarif === 'gratuit' && (
-                  <Badge className="bg-green-500 text-white">
+                  <Badge className="bg-green-700 text-white">
                     {t('events.free', 'Gratuit')}
                   </Badge>
                 )}

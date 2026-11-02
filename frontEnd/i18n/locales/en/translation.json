@@ -1806,7 +1806,7 @@
       "donneesIdentite": "Identity data: last name, first name, email address (required at registration)",
       "donneesOptionnelles": "Optional data: date of birth, gender, phone, address, profile photo, biography",
       "donneesPro": "Professional data (if applicable): company, specialities, certifications, website",
-      "donneesNavigation": "Browsing data: IP address (anonymised), pages viewed, device type",
+      "donneesNavigation": "Browsing data: IP address, pages viewed, device type",
       "pasDeVente": "Your personal information is never sold to third parties.",
       "finalites": "3. Purposes and legal basis",
       "finaliteCompte": "Account management and authentication — legal basis: performance of the contract (Terms)",
@@ -1819,7 +1819,7 @@
       "conservationNotifs": "Notifications: automatically deleted after 90 days",
       "conservationLogs": "Security and login logs: IP address and browser details are erased after 12 months",
       "conservationSuppression": "If your account is deleted: your personal data is erased and your public contributions are anonymised",
-      "conservationSauvegardes": "Security backups: kept for 7 days; data from a deleted account disappears from them within that period",
+      "conservationSauvegardes": "Security backups: kept for up to 6 months on our server; data from a deleted account disappears from them within that period. An encrypted copy, unreadable without our private key, may also be kept off the server",
       "droits": "5. Your rights",
       "droitsIntro": "In accordance with applicable legislation and the GDPR, you have the following rights:",
       "droitAcces": "Right of access",
@@ -1838,7 +1838,6 @@
       "soustraitantCloudinary": "Cloudinary — hosting of the images and media you publish (servers located outside Algeria)",
       "soustraitantEmail": "Email delivery provider (SMTP) — transactional emails and newsletter (your email address)",
       "soustraitantOSM": "OpenStreetMap / Nominatim — base maps and geocoding: your IP address is sent to their servers when a map is displayed",
-      "soustraitantUnsplash": "Unsplash — some illustration images: your IP address is sent when they are displayed",
       "soustraitantsPas": "No personal data is sold, rented or transferred for commercial purposes. Fonts and icons are hosted by the Platform itself.",
       "cookies": "7. Cookies",
       "cookiesText": "The Platform only uses cookies that are strictly necessary for it to work (authentication, language preference, CSRF security). No advertising or third-party tracking cookies are used.",
@@ -1857,7 +1856,8 @@
       "dpoText": "For any question about the protection of your personal data, you can contact our data protection officer at: contact@taladz.com."
     },
     "ressources": "Resources",
-    "ressourcesText": "Tala DZ provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more."
+    "ressourcesText": "Tala DZ provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more.",
+    "titreCourt": "About"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Loading categories...",
@@ -2706,7 +2706,22 @@
         "acceptee": "Suggestion published: its author has been notified",
         "refusee": "Suggestion declined: its author has been notified",
         "accepter": "Publish",
-        "refuserTitre": "Decline the suggestion"
+        "refuserTitre": "Decline the suggestion",
+        "erreurChargement": "The proposals could not be loaded. Reload the page.",
+        "champs": {
+          "histoire": "History",
+          "gastronomie": "Gastronomy",
+          "traditions": "Traditions",
+          "artisanat_local": "Local crafts",
+          "personnalites": "Notable people",
+          "architecture": "Architecture",
+          "infos_pratiques": "Practical information",
+          "referencesHistoriques": "Historical references",
+          "description": "Description",
+          "horaires": "Opening hours",
+          "nom": "Name",
+          "type": "Type"
+        }
       }
     },
     "overview": {
@@ -3312,7 +3327,9 @@
       "max": "5 documents at most: remove one to add another.",
       "choisir": "Add a PDF",
       "echecTitre": "Document not added",
-      "echecDesc": "One or more PDFs could not be uploaded: add them from “Manage programmes and works”, “PDF documents” tab."
+      "echecDesc": "One or more PDFs could not be uploaded: add them from “Manage programmes and works”, “PDF documents” tab.",
+      "retirerTitre": "Remove this document?",
+      "retirerAide": "It disappears from the event page."
     }
   },
   "places": {
@@ -3551,7 +3568,8 @@
         "choisir": "Choose…",
         "profilsManquants": "Choose the profile of {{n}} ticked person(s) before registering.",
         "descriptionInvitation": "The Excel workbook from your online form: one row per person, column titles on the first row. Each person receives an invitation and confirms their registration themselves; you then approve it.",
-        "bilanInvites": "{{n}} person(s) invited, awaiting their confirmation"
+        "bilanInvites": "{{n}} person(s) invited, awaiting their confirmation",
+        "inviterEmail": "Send each person an email to confirm their registration (link valid 7 days for a new account)"
       },
       "messages": {
         "bouton": "Message participants",
@@ -5359,7 +5377,10 @@
   },
   "seo": {
     "defaultTitle": "Tala DZ - The source of Algerian culture",
-    "defaultDescription": "Discover Algeria's rich cultural heritage: events, historic sites, literary and artistic works, traditional crafts."
+    "defaultDescription": "Discover Algeria's rich cultural heritage: events, historic sites, literary and artistic works, traditional crafts.",
+    "siteName": "Tala DZ",
+    "aproposDescription": "Discover Tala DZ's mission: preserving, passing on and opening up Algerian cultural heritage through a collaborative digital platform.",
+    "notFoundDescription": "The page you are looking for does not exist or has been moved."
   },
   "credit": {
     "photographe": "Photographer or source",
@@ -5380,6 +5401,11 @@
       "ccByCourt": "CC BY",
       "ccBySaCourt": "CC BY-SA",
       "domainePublicCourt": "Public domain"
-    }
+    },
+    "nonPrecise": "Not specified"
+  },
+  "carte": {
+    "zoomAvant": "Zoom in",
+    "zoomArriere": "Zoom out"
   }
 }

@@ -59,11 +59,24 @@ class DocumentsEvenement {
 
   async retirer(idEvenement, idMedia, utilisateur) {
     const evenement = await this._evenement(idEvenement, utilisateur);
-    const n = await this.models.Media.destroy({
-      where: { id_media: idMedia, id_evenement: evenement.id_evenement, type_media: 'document' }
-    });
+    const where = { id_media: idMedia, id_evenement: evenement.id_evenement, type_media: 'document' };
+    const media = await this.models.Media.findOne({ where, attributes: ['url'], raw: true });
+    const n = await this.models.Media.destroy({ where });
     if (!n) throw erreur('Document introuvable', 404);
+    await this._effacerFichier(media?.url);
     return true;
+  }
+
+  /** Le fichier retiré ne reste pas sur Cloudinary, sauf si un autre document s'en sert. Un échec n'empêche pas le retrait. */
+  async _effacerFichier(url) {
+    if (!estPdfDuSite(url)) return;
+    try {
+      if (await this.models.Media.count({ where: { url } })) return;
+      const idPublic = decodeURIComponent(new URL(url).pathname.split('/raw/upload/')[1].replace(/^v\d+\//, ''));
+      await require('../cloudinaryService').deleteAsset(idPublic, 'raw');
+    } catch (e) {
+      require('../../utils/logger').warn(`PDF non effacé de Cloudinary : ${e.message}`);
+    }
   }
 
   /** Adresse Cloudinary du PDF à servir ; 404 si ce n'est pas un document PDF de cet événement */
