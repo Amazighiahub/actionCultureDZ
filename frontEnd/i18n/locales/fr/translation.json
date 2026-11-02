@@ -591,7 +591,10 @@
       "removeTag": "Retirer le mot-clé {{tag}}",
       "saveChanges": "Enregistrer les modifications",
       "sentTitle": "Envoyé pour validation",
-      "sentDesc": "L’équipe Tala DZ va relire votre événement. Vous recevrez une notification dès qu’il sera publié."
+      "sentDesc": "L’équipe Tala DZ va relire votre événement. Vous recevrez une notification dès qu’il sera publié.",
+      "dateLimite": "Date limite d’inscription",
+      "contactEmail": "E-mail de contact",
+      "contactTelephone": "Téléphone de contact"
     },
     "types": {
       "concert": "Concert",

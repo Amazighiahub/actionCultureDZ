@@ -566,7 +566,10 @@
       "removeTag": "Remove keyword {{tag}}",
       "saveChanges": "Save changes",
       "sentTitle": "Sent for approval",
-      "sentDesc": "The Tala DZ team will review your event. You will be notified as soon as it is published."
+      "sentDesc": "The Tala DZ team will review your event. You will be notified as soon as it is published.",
+      "dateLimite": "Registration deadline",
+      "contactEmail": "Contact email",
+      "contactTelephone": "Contact phone"
     },
     "types": {
       "concert": "Concert",

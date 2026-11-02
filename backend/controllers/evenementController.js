@@ -5,6 +5,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { servirPdf } = require('../utils/servirPdf');
 const QRCode = require('qrcode');
 const { evenementPath } = require('../utils/slug');
 
@@ -553,16 +554,9 @@ class EvenementController extends BaseController {
     try {
       const url = await container.messagesParticipantsService.programme(
         parseInt(req.params.id), parseInt(req.params.idMessage), req.query.cle);
-      const fichier = await fetch(url);
-      if (!fichier.ok || !fichier.body) return res.status(502).json({ success: false, error: req.t('common.serverError') });
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'inline; filename="programme.pdf"',
-        'Cache-Control': 'public, max-age=3600',
-        'X-Content-Type-Options': 'nosniff'
-      });
-      if (fichier.headers.get('content-length')) res.set('Content-Length', fichier.headers.get('content-length'));
-      require('stream').Readable.fromWeb(fichier.body).pipe(res);
+      if (!(await servirPdf(res, url, { nomFichier: 'programme.pdf' }))) {
+        return res.status(502).json({ success: false, error: req.t('common.serverError') });
+      }
     } catch (error) {
       this._handleError(res, error);
     }
@@ -609,16 +603,10 @@ class EvenementController extends BaseController {
       const evenement = await this.evenementService.findById(id);
       if (this._cache(req, evenement)) return this._introuvable(req, res);
       const url = await container.documentsEvenementService.fichier(id, parseInt(req.params.idMedia));
-      const fichier = await fetch(url);
-      if (!fichier.ok || !fichier.body) return res.status(502).json({ success: false, error: req.t('common.serverError') });
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'inline; filename="document.pdf"',
-        'Cache-Control': 'public, max-age=3600',
-        'X-Content-Type-Options': 'nosniff'
-      });
-      if (fichier.headers.get('content-length')) res.set('Content-Length', fichier.headers.get('content-length'));
-      require('stream').Readable.fromWeb(fichier.body).pipe(res);
+      const publie = !['brouillon', 'en_attente'].includes(evenement.statut);
+      if (!(await servirPdf(res, url, { nomFichier: 'document.pdf', enCachePublic: publie }))) {
+        return res.status(502).json({ success: false, error: req.t('common.serverError') });
+      }
     } catch (error) {
       this._handleError(res, error);
     }

@@ -99,6 +99,9 @@ const AjouterEvenement = () => {
     heureDebut: string;
     heureFin: string;
     maxParticipants: string;
+    dateLimite: string;
+    contactEmail: string;
+    contactTelephone: string;
     tarif: string;
     urlVirtuel: string;
     tags: string[];
@@ -111,6 +114,9 @@ const AjouterEvenement = () => {
     heureDebut: '',
     heureFin: '',
     maxParticipants: '',
+    dateLimite: '',
+    contactEmail: '',
+    contactTelephone: '',
     tarif: '',
     urlVirtuel: '',
     tags: []
@@ -204,6 +210,9 @@ const AjouterEvenement = () => {
           heureDebut: partiesEvenement(evt.date_debut as string).heure,
           heureFin: partiesEvenement(evt.date_fin as string).heure,
           maxParticipants: evt.capacite_max?.toString() || '',
+          dateLimite: evt.date_limite_inscription ? partiesEvenement(evt.date_limite_inscription as string).date : '',
+          contactEmail: (evt.contact_email as string) || '',
+          contactTelephone: (evt.contact_telephone as string) || '',
           tarif: evt.tarif?.toString() || '',
           urlVirtuel: evt.url_virtuel || '',
           // Mots-clés : nom dans la langue de l'interface, sinon le premier renseigné
@@ -484,6 +493,10 @@ const AjouterEvenement = () => {
     if (formData.heureDebut) fd.append('heure_debut', formData.heureDebut);
     if (formData.heureFin) fd.append('heure_fin', formData.heureFin);
     if (formData.maxParticipants) fd.append('capacite_max', formData.maxParticipants);
+    // En modification, un champ vidé doit effacer la valeur : on l'envoie même vide
+    for (const [cle, valeur] of [['date_limite_inscription', formData.dateLimite], ['contact_email', formData.contactEmail], ['contact_telephone', formData.contactTelephone]] as const) {
+      if (valeur || isEditMode) fd.append(cle, valeur || '');
+    }
     fd.append('tarif', tarifForm.mode === 'payant' && tarifForm.prix ? tarifForm.prix : '0');
     const tarification = tarificationAEnvoyer();
     if (tarification) fd.append('tarification', JSON.stringify(tarification));
@@ -1019,6 +1032,25 @@ const AjouterEvenement = () => {
                     }}
                     placeholder={t('events.create.maxParticipantsPlaceholder')}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="date-limite">{t('events.create.dateLimite', 'Date limite d’inscription')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                  <Input id="date-limite" type="date" max={formData.dateDebut || undefined} value={formData.dateLimite ?? ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dateLimite: e.target.value }))} />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-email">{t('events.create.contactEmail', 'E-mail de contact')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                    <Input id="contact-email" type="email" dir="ltr" maxLength={255} value={formData.contactEmail ?? ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-telephone">{t('events.create.contactTelephone', 'Téléphone de contact')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                    <Input id="contact-telephone" type="tel" dir="ltr" maxLength={30} value={formData.contactTelephone ?? ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, contactTelephone: e.target.value }))} />
+                  </div>
                 </div>
                 
                 <div className="space-y-2 pt-2">

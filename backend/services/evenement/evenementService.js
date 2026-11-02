@@ -209,14 +209,17 @@ class EvenementService extends BaseService {
       capacite_max: data.capacite_max || data.capaciteMax,
       tarif: data.tarif || 0,
       inscription_requise: data.inscription_requise || data.inscriptionRequise || false,
-      contact_email: data.contact_email || data.contactEmail,
-      contact_telephone: data.contact_telephone || data.contactTelephone,
+      contact_email: this._contactEmail(data.contact_email ?? data.contactEmail) ?? undefined,
+      contact_telephone: this._contactTelephone(data.contact_telephone ?? data.contactTelephone) ?? undefined,
       url_virtuel: data.url_virtuel || data.urlVirtuel,
       image_url: data.image_url || data.imageUrl,
       age_minimum: data.age_minimum || data.ageMinimum,
       accessibilite: data.accessibilite || {},
       certificat_delivre: data.certificat_delivre || data.certificatDelivre || false,
-      date_limite_inscription: data.date_limite_inscription || data.dateLimiteInscription,
+      date_limite_inscription: this._limiteInscription(
+        data.date_limite_inscription ?? data.dateLimiteInscription,
+        this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut)
+      ),
       id_user: userId
     };
     Object.assign(entityData, this._tarification(data));
@@ -267,6 +270,39 @@ class EvenementService extends BaseService {
    * Jour (« 2026-10-29 ») + heure (« 10:00 ») → instant à l'heure de l'Algérie (UTC+1,
    * sans heure d'été). Une date déjà complète, ou sans heure, est gardée telle quelle.
    */
+  _limiteInscription(valeur, dateDebut) {
+    if (valeur === undefined) return undefined;
+    const texte = String(valeur ?? '').trim();
+    if (!texte) return null;
+    // Un jour vaut jusqu'à 23 h 59 à l'heure d'Algérie
+    const limite = new Date(/^\d{4}-\d{2}-\d{2}$/.test(texte) ? `${texte}T23:59:59+01:00` : texte);
+    if (Number.isNaN(limite.getTime())) throw this._validationError('Date limite d\'inscription invalide');
+    const debut = dateDebut ? new Date(dateDebut) : null;
+    if (debut && !Number.isNaN(debut.getTime()) && limite > debut) {
+      // Le jour même : jusqu'au début de l'événement ; au-delà : refusé
+      if (limite.getTime() - debut.getTime() >= 24 * 60 * 60 * 1000) {
+        throw this._validationError('La date limite d\'inscription doit être avant le début de l\'événement');
+      }
+      return debut;
+    }
+    return limite;
+  }
+
+  /** E-mail de contact : vide → null ; absent → undefined (inchangé) ; invalide → message clair */
+  _contactEmail(valeur) {
+    if (valeur === undefined) return undefined;
+    const email = String(valeur ?? '').trim();
+    if (!email) return null;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw this._validationError('E-mail de contact invalide');
+    return email.slice(0, 255);
+  }
+
+  /** Téléphone de contact : vide → null ; absent → undefined (inchangé) */
+  _contactTelephone(valeur) {
+    if (valeur === undefined) return undefined;
+    return String(valeur ?? '').trim().slice(0, 30) || null;
+  }
+
   _avecHeure(date, heure) {
     if (!date || !heure) return date;
     const jour = String(date);
@@ -331,8 +367,14 @@ class EvenementService extends BaseService {
       if (data.tarif !== undefined) updateData.tarif = data.tarif;
       Object.assign(updateData, this._tarification(data));
       if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
-      if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
-      if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
+      // Contacts et date limite : un champ vidé efface la valeur
+      const email = this._contactEmail(data.contact_email ?? data.contactEmail);
+      if (email !== undefined) updateData.contact_email = email;
+      const telephone = this._contactTelephone(data.contact_telephone ?? data.contactTelephone);
+      if (telephone !== undefined) updateData.contact_telephone = telephone;
+      const limite = this._limiteInscription(data.date_limite_inscription ?? data.dateLimiteInscription,
+        updateData.date_debut || existing.date_debut);
+      if (limite !== undefined) updateData.date_limite_inscription = limite;
       if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
         updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
       }

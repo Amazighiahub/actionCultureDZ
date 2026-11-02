@@ -45,13 +45,56 @@ const createRedisStore = (options) => {
  * isole correctement les compteurs et fait refleter le bon TTL dans
  * l'entete `ratelimit-reset` renvoye au client.
  */
+/**
+ * Store Redis « tolérant » : si Redis ne répond pas (panne, saturation, redémarrage), le comptage
+ * continue en mémoire au lieu de faire échouer la requête. Avant : express-rate-limit 6 transmet
+ * l'erreur du store à Express, et TOUTE l'API répondait 500 tant que Redis était absent
+ * (audit V8, constaté en arrêtant Redis en local).
+ */
+class StoreTolerant {
+  constructor(redisStore, nom) {
+    this.redis = redisStore;
+    this.memoire = new rateLimit.MemoryStore();
+    this.nom = nom;
+    this.dernierAvertissement = 0;
+    // Compteurs Redis partagés entre processus : pas de recomptage local
+    this.localKeys = false;
+  }
+
+  init(options) {
+    this.memoire.init(options);
+    if (typeof this.redis.init === 'function') this.redis.init(options);
+  }
+
+  _avertir(e) {
+    // Un message par minute au plus : une panne Redis ne doit pas noyer le journal
+    if (Date.now() - this.dernierAvertissement > 60000) {
+      this.dernierAvertissement = Date.now();
+      logger.warn(`Limiteur "${this.nom}" : Redis indisponible, comptage en mémoire (${e?.message || e})`);
+    }
+  }
+
+  async increment(key) {
+    try { return await this.redis.increment(key); } catch (e) { this._avertir(e); return this.memoire.increment(key); }
+  }
+
+  async decrement(key) {
+    try { return await this.redis.decrement(key); } catch (e) { this._avertir(e); return this.memoire.decrement(key); }
+  }
+
+  async resetKey(key) {
+    try { await this.redis.resetKey(key); } catch (e) { this._avertir(e); }
+    return this.memoire.resetKey(key);
+  }
+}
+
 const makeStore = (name) => {
   if (!redisAvailable || !redisClient) return undefined;
   try {
-    return createRedisStore({
+    return new StoreTolerant(createRedisStore({
       sendCommand: (...args) => redisClient.sendCommand(args),
       prefix: `rl:${name}:`,
-    });
+    }), name);
   } catch (e) {
     logger.warn(`Impossible de creer le store Redis pour "${name}":`, e.message);
     return undefined;
@@ -520,6 +563,7 @@ async function logRateLimitViolation(userId, endpoint, ip) {
 }
 
 module.exports = {
+  StoreTolerant,
   globalLimiter,
   strictLimiter,
   actionsLimiter,
