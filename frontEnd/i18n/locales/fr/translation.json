@@ -3339,6 +3339,10 @@
       "echecDesc": "Un ou plusieurs PDF n’ont pas pu être envoyés : ajoutez-les depuis « Gérer programmes et œuvres », onglet « Documents PDF ».",
       "retirerTitre": "Retirer ce document ?",
       "retirerAide": "Il disparaît de la page de l’événement."
+    },
+    "enLigne": {
+      "titre": "Événement en ligne",
+      "rejoindre": "Rejoindre la réunion"
     }
   },
   "places": {

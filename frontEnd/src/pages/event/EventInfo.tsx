@@ -18,6 +18,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
+import { safeExternalUrl } from '@/utils/safeUrl';
 import { heureEvenement } from '@/utils/dateHeureEvenement';
 
 interface EventInfoProps {
@@ -29,6 +30,8 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData(); // Pour traduire les champs JSON multilingues
+  // Seulement http(s) : ce lien est saisi par l'organisateur
+  const lienEnLigne = safeExternalUrl(event.url_virtuel);
 
   // Helper pour vérifier si un champ multilingue a du contenu
   const hasContent = (field: unknown): boolean => {
@@ -240,6 +243,27 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
           )}
         </CardContent>
       </Card>
+
+      {/* En ligne : le lien (Google Meet, Zoom…) n'était jamais affiché, seulement un badge */}
+      {lienEnLigne && !['annule', 'termine'].includes(String(event.statut)) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" aria-hidden="true" />
+              {t('event.enLigne.titre', 'Événement en ligne')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button asChild>
+              <a href={lienEnLigne} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('event.enLigne.rejoindre', 'Rejoindre la réunion')}
+              </a>
+            </Button>
+            <p className="text-sm text-muted-foreground break-all" dir="ltr">{lienEnLigne}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lieu */}
       {event.Lieu && (

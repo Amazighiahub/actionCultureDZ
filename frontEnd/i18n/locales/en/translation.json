@@ -3334,6 +3334,10 @@
       "echecDesc": "One or more PDFs could not be uploaded: add them from “Manage programmes and works”, “PDF documents” tab.",
       "retirerTitre": "Remove this document?",
       "retirerAide": "It disappears from the event page."
+    },
+    "enLigne": {
+      "titre": "Online event",
+      "rejoindre": "Join the meeting"
     }
   },
   "places": {
