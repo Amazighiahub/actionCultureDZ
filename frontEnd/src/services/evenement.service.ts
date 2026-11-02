@@ -135,6 +135,14 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     return httpClient.post<Evenement>(this.baseEndpoint, data);
   }
 
+  // Modification avec une nouvelle image : même envoi que la création
+  async update(id: number, data: UpdateEvenementData | FormData): Promise<ApiResponse<Evenement>> {
+    if (data instanceof FormData) {
+      return httpClient.putFormData<Evenement>(`${this.baseEndpoint}/${id}`, data);
+    }
+    return httpClient.put<Evenement>(`${this.baseEndpoint}/${id}`, data);
+  }
+
   // Recherche et listing
   async getUpcoming(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Evenement>>> {
     return httpClient.getPaginated<Evenement>(API_ENDPOINTS.evenements.upcoming, params);

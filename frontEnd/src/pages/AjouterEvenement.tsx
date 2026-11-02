@@ -512,7 +512,7 @@ const AjouterEvenement = () => {
       let response;
       if (isEditMode && editId) {
         // Updating event
-        response = await evenementService.update(editId, fd as unknown as Parameters<typeof evenementService.update>[1]);
+        response = await evenementService.update(editId, fd);
       } else {
         response = await evenementService.create(fd as unknown as Parameters<typeof evenementService.create>[0]);
       }

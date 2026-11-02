@@ -803,6 +803,17 @@ class HttpClient {
     }, endpoint, 'POST');
   }
 
+  /** Modification avec fichier. Avec put(), le fichier disparaissait : la requête partait en JSON. */
+  async putFormData<T = unknown>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+    return this.requestQueue.add(async () => {
+      const response = await this.axiosInstance.put<ApiResponse<T>>(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000, // 5 minutes, comme postFormData
+      });
+      return response.data;
+    }, endpoint, 'PUT');
+  }
+
   // Méthodes utilitaires publiques
   
   // Obtenir les statistiques de la queue
