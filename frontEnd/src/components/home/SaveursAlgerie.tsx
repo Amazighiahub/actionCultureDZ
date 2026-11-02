@@ -14,7 +14,7 @@ const SaveursAlgerie: React.FC = () => {
   const { data: plats = [] } = useQuery({
     queryKey: ['home', 'saveurs'],
     queryFn: async (): Promise<Plat[]> => {
-      const res = await httpClient.get<{ plats: Plat[] }>('/patrimoine/gastronomie');
+      const res = await httpClient.get<{ plats: Plat[] }>('/patrimoine/gastronomie', { limite: 4 });
       return res.success && res.data ? res.data.plats.slice(0, 4) : [];
     },
     staleTime: 5 * 60 * 1000,

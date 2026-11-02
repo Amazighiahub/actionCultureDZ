@@ -333,7 +333,9 @@ class PatrimoineController extends BaseController {
   async plats(req, res) {
     const wilaya = parseInt(req.query.wilaya, 10) || null;
     const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 100) : '';
-    res.json({ success: true, data: await this.patrimoineService.plats({ wilaya, q }) });
+    // limite : l'accueil n'affiche que quelques plats (avant : jusqu'à 500 chargés à chaque visite)
+    const limite = Math.min(Math.max(parseInt(req.query.limite, 10) || 0, 0), 500) || null;
+    res.json({ success: true, data: await this.patrimoineService.plats({ wilaya, q, limite }) });
   }
 
   /** Lieux et personnalités auxquels un article est relié (fil de la page de l'article) */

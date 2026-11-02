@@ -134,7 +134,9 @@ const globalLimiter = rateLimit(withStore('global', {
   // strictes (connexion, inscription, créations, envois) restent à part.
   // 3 000 (au lieu de 1 000) : une adresse mobile partagée (Mobilis, Djezzy, Ooredoo) regroupe des
   // centaines de visiteurs pendant une campagne. Les rafales restent freinées par nginx (30/s par adresse).
-  max: 3000, // 15 minutes, par adresse internet
+  // 10 000 (audit V8) : à 200 visiteurs actifs derrière la même adresse, 3 000 étaient atteints en 75 s
+  // et toute l'adresse était bloquée 15 minutes.
+  max: 10000, // 15 minutes, par adresse internet
   handler: (req, res) => {
     res.status(429).json({
       success: false,

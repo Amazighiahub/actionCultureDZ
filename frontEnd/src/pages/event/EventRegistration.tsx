@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { montantInscription, prixAConvenir, tarificationDe, PRESENCE_PARTIELLE } from '@/utils/tarifEvenement';
+import { finEffective } from '@/utils/statutEvenement';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -266,11 +267,10 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     ? new Date(event.date_limite_inscription) < new Date()
     : false;
 
-  const isEventPast = event.date_fin
-    ? new Date(event.date_fin) < new Date()
-    : event.date_debut
-      ? new Date(event.date_debut) < new Date()
-      : false;
+  // Même règle que le serveur : un jour sans heure vaut pour toute la journée. Avant, le formulaire
+  // disparaissait dès 1 h du matin le jour de l'événement, alors que le serveur acceptait l'inscription.
+  const finEvenement = finEffective(event.date_debut, event.date_fin);
+  const isEventPast = finEvenement ? finEvenement <= new Date() : false;
 
   // Déterminer si l'inscription est possible
   const canRegister = !isEventFull && !isRegistrationClosed && !isEventPast && !isRegistered;

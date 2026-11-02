@@ -60,7 +60,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
   router.get('/types', cachePublic, patrimoineController.wrap('getTypes'));
   // Plats de la page Gastronomie (articles des sections Gastronomie des lieux)
-  router.get('/gastronomie', patrimoineController.wrap('plats'));
+  router.get('/gastronomie', cachePublic, patrimoineController.wrap('plats'));
   // « À lire » de la page d'accueil : derniers articles publiés
   router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));

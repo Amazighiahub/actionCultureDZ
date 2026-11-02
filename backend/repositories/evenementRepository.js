@@ -266,7 +266,11 @@ class EvenementRepository extends BaseRepository {
         model: this.models.Programme,
         as: 'Programmes',
         required: false,
+        // Requête à part : jointes ensemble, activités × médias × mots-clés multipliaient les lignes
+        // (351 pour un seul événement), et les comptes d'inscrits étaient recalculés pour chacune
+        separate: true,
         attributes: { exclude: PUBLIC_PROGRAMME_EXCLUDE },
+        order: [['date_programme', 'ASC'], ['heure_debut', 'ASC']],
         include: this.models.Lieu ? [{
           model: this.models.Lieu,
           as: 'Lieu',
@@ -280,7 +284,8 @@ class EvenementRepository extends BaseRepository {
       includes.push({
         model: this.models.Media,
         as: 'Medias',
-        required: false
+        required: false,
+        separate: true
       });
     }
 
@@ -306,11 +311,7 @@ class EvenementRepository extends BaseRepository {
 
     return this.model.findByPk(id, {
       attributes: { include: attributsComptes() },
-      include: includes,
-      order: [
-        [{ model: this.models.Programme, as: 'Programmes' }, 'date_programme', 'ASC'],
-        [{ model: this.models.Programme, as: 'Programmes' }, 'heure_debut', 'ASC']
-      ]
+      include: includes
     });
   }
 

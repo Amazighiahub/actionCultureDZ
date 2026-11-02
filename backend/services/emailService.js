@@ -709,6 +709,36 @@ class EmailService {
    * @param {string} raison - Raison de l'annulation
    * @returns {Array} Résultats d'envoi par participant
    */
+  /** Date ou lieu d'un événement changés : e-mail aux inscrits */
+  async notifierChangementEvenement(participants, evenement, nouveautes) {
+    const nomEvenementStr = texteLisible(evenement.nom_evenement);
+    const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+    const esc = this._escapeHtml.bind(this);
+
+    return this._parPaquets(participants, async (participant) => {
+      try {
+        const user = participant.User;
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #f39c12;">Événement modifié</h2>
+            <p>Bonjour ${esc(this._prenom(user))},</p>
+            <p>L'événement <strong>${esc(nomEvenementStr)}</strong>, auquel vous êtes inscrit(e), a changé :</p>
+            <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              ${nouveautes.map(n => `<p style="margin: 4px 0;"><strong>${esc(n)}</strong></p>`).join('')}
+            </div>
+            <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
+          </div>
+        `;
+        const result = await this.sendEmail(user.email, `Événement modifié : ${this._sanitizeSubject(nomEvenementStr)}`, html);
+        return { email: user.email, result };
+      } catch (error) {
+        logger.error(`Erreur envoi changement d'événement à ${maskEmail(participant.User?.email)}:`, error);
+        return { email: participant.User?.email, result: { success: false, error: error.message } };
+      }
+    });
+  }
+
   async notifierAnnulationEvenement(participants, evenement, raison) {
     const nomEvenementStr = texteLisible(evenement.nom_evenement);
 

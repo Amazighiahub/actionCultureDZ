@@ -6,6 +6,7 @@
 const BaseService = require('../core/baseService');
 const { lireTags, resolveTagIds } = require('../../helpers/tags');
 const { finEffective } = require('../../helpers/finEvenement');
+const { entitesBrutes } = require('../../utils/entitesBrutes');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
 const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
@@ -36,28 +37,24 @@ class EvenementService extends BaseService {
    * Liste des événements publiés
    */
   async findPublished(options = {}) {
-    const cacheKey = `published:${JSON.stringify(options)}`;
-    return this.cache.getOrSet(cacheKey, async () => {
+    const cacheKey = `brut:published:${JSON.stringify(options)}`;
+    const { data, pagination } = await this.cache.getOrSet(cacheKey, async () => {
       const result = await this.repository.findPublished(options);
-      return {
-        data: EvenementDTO.fromEntities(result.data),
-        pagination: result.pagination
-      };
+      return { data: entitesBrutes(result.data), pagination: result.pagination };
     });
+    return { data: EvenementDTO.fromEntities(data), pagination };
   }
 
   /**
    * Événements à venir
    */
   async findUpcoming(options = {}) {
-    const cacheKey = `upcoming:${JSON.stringify(options)}`;
-    return this.cache.getOrSet(cacheKey, async () => {
+    const cacheKey = `brut:upcoming:${JSON.stringify(options)}`;
+    const { data, pagination } = await this.cache.getOrSet(cacheKey, async () => {
       const result = await this.repository.findUpcoming(options);
-      return {
-        data: EvenementDTO.fromEntities(result.data),
-        pagination: result.pagination
-      };
+      return { data: entitesBrutes(result.data), pagination: result.pagination };
     });
+    return { data: EvenementDTO.fromEntities(data), pagination };
   }
 
   /**
@@ -115,14 +112,12 @@ class EvenementService extends BaseService {
    * Par wilaya
    */
   async findByWilaya(wilayaId, options = {}) {
-    const cacheKey = `wilaya:${wilayaId}:${JSON.stringify(options)}`;
-    return this.cache.getOrSet(cacheKey, async () => {
+    const cacheKey = `brut:wilaya:${wilayaId}:${JSON.stringify(options)}`;
+    const { data, pagination } = await this.cache.getOrSet(cacheKey, async () => {
       const result = await this.repository.findByWilaya(wilayaId, options);
-      return {
-        data: EvenementDTO.fromEntities(result.data),
-        pagination: result.pagination
-      };
+      return { data: entitesBrutes(result.data), pagination: result.pagination };
     });
+    return { data: EvenementDTO.fromEntities(data), pagination };
   }
 
   /**
@@ -328,6 +323,7 @@ class EvenementService extends BaseService {
 
   async update(id, data, userId, options = {}) {
     let envoye = false;
+    let changements = null;
     await this.withTransaction(async (transaction) => {
       const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!existing) throw this._notFoundError(id);
@@ -393,6 +389,14 @@ class EvenementService extends BaseService {
         }
       }
 
+      // Date ou lieu changés sur un événement visible : les inscrits seront prévenus après l'enregistrement
+      if (['publie', 'planifie', 'en_cours'].includes(existing.statut)) {
+        const dateChangee = updateData.date_debut
+          && new Date(updateData.date_debut).getTime() !== new Date(existing.date_debut).getTime();
+        const lieuChange = updateData.id_lieu && Number(updateData.id_lieu) !== Number(existing.id_lieu);
+        if (dateChangee || lieuChange) changements = { date: !!dateChangee, lieu: !!lieuChange };
+      }
+
       await this.repository.update(id, updateData, { transaction });
       await this._syncTags(id, data.tags, transaction);
 
@@ -423,8 +427,20 @@ class EvenementService extends BaseService {
     await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement modifié: ${id} par user: ${userId}`);
     if (envoye) await this._prevenirModeration(updated);
+    if (changements) {
+      // En arrière-plan : un e-mail en échec n'annule pas la modification
+      const notifService = this.notificationService || new (require('../notificationService'))(this.models);
+      notifService.notifierChangementEvenement(id, changements)
+        .catch(err => this.logger.error('Erreur notification changement événement:', err));
+    }
 
     return EvenementDTO.fromEntity(updated);
+  }
+
+  /** Médias d'un événement, sans recharger toute sa fiche */
+  async findMedias(id) {
+    if (!this.models?.Media) return [];
+    return this.models.Media.findAll({ where: { id_evenement: id }, order: [['ordre', 'ASC'], ['id_media', 'ASC']], raw: true });
   }
 
   /**

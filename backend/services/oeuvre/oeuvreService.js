@@ -6,6 +6,7 @@
 
 const BaseService = require('../core/baseService');
 const { resolveTagIds } = require('../../helpers/tags');
+const { entitesBrutes } = require('../../utils/entitesBrutes');
 const OeuvreDTO = require('../../dto/oeuvre/oeuvreDTO');
 const CreateOeuvreDTO = require('../../dto/oeuvre/createOeuvreDTO');
 const UpdateOeuvreDTO = require('../../dto/oeuvre/updateOeuvreDTO');
@@ -49,14 +50,12 @@ class OeuvreService extends BaseService {
    * Récupère les œuvres publiées
    */
   async findPublished(options = {}) {
-    const cacheKey = `published:${JSON.stringify(options)}`;
-    return this.cache.getOrSet(cacheKey, async () => {
+    const cacheKey = `brut:published:${JSON.stringify(options)}`;
+    const { data, pagination } = await this.cache.getOrSet(cacheKey, async () => {
       const result = await this.repository.findPublished(options);
-      return {
-        data: OeuvreDTO.fromEntities(result.data),
-        pagination: result.pagination
-      };
+      return { data: entitesBrutes(result.data), pagination: result.pagination };
     });
+    return { data: OeuvreDTO.fromEntities(data), pagination };
   }
 
   /**
@@ -146,20 +145,18 @@ class OeuvreService extends BaseService {
    * Récupère les œuvres populaires
    */
   async findPopular(limit = 10) {
-    return this.cache.getOrSet(`popular:${limit}`, async () => {
-      const oeuvres = await this.repository.findPopular(limit);
-      return OeuvreDTO.fromEntities(oeuvres);
-    }, 5 * 60 * 1000); // 5 min — classement stable
+    const oeuvres = await this.cache.getOrSet(`brut:popular:${limit}`, async () =>
+      entitesBrutes(await this.repository.findPopular(limit)), 5 * 60 * 1000); // 5 min — classement stable
+    return OeuvreDTO.fromEntities(oeuvres);
   }
 
   /**
    * Récupère les œuvres récentes
    */
   async findRecent(limit = 10) {
-    return this.cache.getOrSet(`recent:${limit}`, async () => {
-      const oeuvres = await this.repository.findRecent(limit);
-      return OeuvreDTO.fromEntities(oeuvres);
-    }, 5 * 60 * 1000);
+    const oeuvres = await this.cache.getOrSet(`brut:recent:${limit}`, async () =>
+      entitesBrutes(await this.repository.findRecent(limit)), 5 * 60 * 1000);
+    return OeuvreDTO.fromEntities(oeuvres);
   }
 
   /**

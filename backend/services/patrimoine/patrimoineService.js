@@ -559,10 +559,11 @@ class PatrimoineService extends BaseService {
   /**
    * Plats de la page « Gastronomie » (sous-page de l'Artisanat) : articles publiés reliés à la
    * section Gastronomie d'un lieu publié, avec les lieux (commune, wilaya) d'où vient chaque plat.
-   * @param {{ wilaya?: number, q?: string }} filtres q : sans tenir compte des accents ni des majuscules
+   * @param {{ wilaya?: number, q?: string, limite?: number }} filtres q : sans tenir compte des accents ni des
+   *   majuscules ; limite : nombre de plats voulus (un plat peut occuper plusieurs lignes, une par lieu)
    * @returns {Promise<{ plats: Array, wilayas: Array }>} wilayas : celles qui ont au moins un plat
    */
-  async plats({ wilaya = null, q = '' } = {}) {
+  async plats({ wilaya = null, q = '', limite = null } = {}) {
     const { LieuOeuvre, Lieu, Commune, Daira, Wilaya } = this.models || {};
     const carte = includeOeuvreCarte(this.models);
     const liens = await LieuOeuvre.findAll({
@@ -578,7 +579,7 @@ class PatrimoineService extends BaseService {
         }
       ],
       order: [['date_creation', 'DESC']],
-      limit: 500
+      limit: limite ? Math.min(limite * 5, 500) : 500
     });
 
     // Un plat relié à plusieurs lieux n'apparaît qu'une fois, avec tous ses lieux
@@ -605,7 +606,7 @@ class PatrimoineService extends BaseService {
       plats = plats.filter(p => textes(p.titre).includes(recherche) || textes(p.resume).includes(recherche)
         || p.lieux.some(x => textes(x.nom).includes(recherche)));
     }
-    return { plats, wilayas };
+    return { plats: limite ? plats.slice(0, limite) : plats, wilayas };
   }
 
   /**

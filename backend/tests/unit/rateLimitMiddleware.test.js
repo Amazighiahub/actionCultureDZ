@@ -342,7 +342,7 @@ describe('limites en production (adresses mobiles partagées)', () => {
 
   it('3 000 requêtes / 15 min par adresse ; connexion et inscription toujours limitées', () => {
     const configs = configsProduction();
-    expect(configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 3000)).toBeDefined();
+    expect(configs.find(c => c.windowMs === 15 * 60 * 1000 && c.max === 10000)).toBeDefined();
     expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 50 && c.skipSuccessfulRequests)).toBe(true);
     expect(configs.some(c => c.windowMs === 60 * 60 * 1000 && c.max === 30 && c.skipSuccessfulRequests === false)).toBe(true);
   });

@@ -348,13 +348,12 @@ class EvenementController extends BaseController {
 
   async getMedias(req, res) {
     try {
-      const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      // Seulement les médias : avant, toute la fiche était rechargée une 2e fois à chaque visite
+      const id = parseInt(req.params.id);
+      const evenement = await this.evenementService.findById(id);
       if (this._cache(req, evenement)) return this._introuvable(req, res);
-      const data = this._serialize(evenement, 'toJSON', req.lang);
-      res.json({
-        success: true,
-        data: data.Medias || data.medias || []
-      });
+      const medias = await this.evenementService.findMedias(id);
+      res.json({ success: true, data: medias.map(m => this._serialize(m, 'toJSON', req.lang)) });
     } catch (error) {
       this._handleError(res, error);
     }

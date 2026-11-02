@@ -239,6 +239,47 @@ class NotificationService {
     return { envoyes };
   }
 
+  /**
+   * Date ou lieu d'un événement changés : tous les inscrits sont prévenus (e-mail et notification),
+   * comme pour une annulation : ils risqueraient sinon de venir au mauvais endroit ou au mauvais moment.
+   * @param {{ date: boolean, lieu: boolean }} changements
+   */
+  async notifierChangementEvenement(evenementId, changements) {
+    const evenement = await this.models.Evenement.findByPk(evenementId, {
+      include: [{ model: this.models.Lieu, as: 'Lieu', attributes: ['nom', 'adresse'] }]
+    });
+    if (!evenement) return { notified: 0 };
+    const participants = await this.models.EvenementUser.findAll({
+      where: { id_evenement: evenementId, statut_participation: { [Op.in]: ['confirme', 'inscrit'] } },
+      include: [{ model: this.models.User, as: 'User', attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone'] }]
+    });
+    if (participants.length === 0) return { notified: 0 };
+
+    const debut = new Date(evenement.date_debut);
+    const sansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0;
+    const enAlgerie = { timeZone: 'Africa/Algiers' };
+    const date = debut.toLocaleDateString('fr-FR', { ...enAlgerie, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const heure = sansHeure ? '' : debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
+    const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
+    const nomEvenement = this._str(evenement.nom_evenement);
+    const nouveautes = [
+      ...(changements.date ? [`Nouvelle date : ${date}${heure ? ` à ${heure}` : ''}`] : []),
+      ...(changements.lieu && lieu ? [`Nouveau lieu : ${lieu}`] : [])
+    ];
+
+    const results = await this.emailService.notifierChangementEvenement(participants, evenement, nouveautes);
+    await this.enregistrerNotificationsMultiples(participants.map(participant => ({
+      id_user: participant.id_user,
+      type_notification: 'modification_programme',
+      titre: 'Événement modifié',
+      message: `« ${nomEvenement} » a changé. ${nouveautes.join('. ')}`,
+      id_evenement: evenementId,
+      url_action: `/evenements/${evenementId}`,
+      email_envoye: results.find(r => r.email === participant.User?.email)?.result?.success || false
+    })));
+    return { notified: participants.length };
+  }
+
   // Notifier l'annulation d'un événement
   async notifierAnnulationEvenement(evenementId, raison) {
     try {
@@ -700,7 +741,7 @@ class NotificationService {
    * lien « Ne plus recevoir ces annonces ». Envoi un par un avec une courte pause.
    * @returns {Promise<{ envoyes: number, echecs: number }>}
    */
-  async _envoyerAnnonceParEmail(destinataires, { title, message }, { pauseMs = 300 } = {}) {
+  async _envoyerAnnonceParEmail(destinataires, { title, message }, { pauseMs = 300, direct = false } = {}) {
     const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const avecLiens = (texte) => esc(texte).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#6b6b2e">${url}</a>`);
     const html = `
@@ -711,8 +752,11 @@ class NotificationService {
           </div>`;
     // File d'envoi (Redis) : les e-mails partent même si le serveur redémarre pendant l'envoi, avec
     // nouveaux essais. Avant : boucle en mémoire (300 ms par personne), la suite perdue à chaque mise en ligne.
+    // direct : message à une seule personne, envoyé tout de suite pour connaître le vrai résultat
     let file = null;
-    try { file = require('./serviceContainer').emailQueueService; } catch { file = null; }
+    if (!direct) {
+      try { file = require('./serviceContainer').emailQueueService; } catch { file = null; }
+    }
     if (file?.isInitialized) {
       let enFile = 0;
       for (const user of destinataires) {
@@ -773,7 +817,7 @@ class NotificationService {
     if (!user?.email) return { etat, envoye: false, raison: 'sans_email' };
     if (user.notifications_email === false || user.notifications_email === 0) return { etat, envoye: false, raison: 'refuse' };
     if (etat !== 'actif') return { etat, envoye: false, raison: etat };
-    const res = await this._envoyerAnnonceParEmail([user], { title, message }, { pauseMs: 0 });
+    const res = await this._envoyerAnnonceParEmail([user], { title, message }, { pauseMs: 0, direct: true });
     return { etat, envoye: res.envoyes === 1, erreur: res.erreur };
   }
   // ========================================================================
