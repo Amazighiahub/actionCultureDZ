@@ -21,6 +21,7 @@ const Footer = () => {
         { label: t('header.nav.works'), href: '/oeuvres' },
         { label: t('header.nav.crafts'), href: '/artisanat' },
         { label: t('organisations.menu.toutes', 'Organisations'), href: '/organisations' },
+        { label: t('wilaya.toutes', 'Les wilayas'), href: '/wilayas' },
       ]
     },
     {

@@ -7,7 +7,9 @@ const { DataTypes } = require('sequelize');
 
 const SECTIONS_PATRIMOINE = [
   'histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local',
-  'personnalites', 'infos_pratiques', 'referencesHistoriques'
+  'personnalites', 'infos_pratiques', 'referencesHistoriques',
+  // Pas une section de texte : œuvre reliée au lieu par son propriétaire (« Œuvres liées à ce lieu »)
+  'oeuvres_liees'
 ];
 
 module.exports = (sequelize) => {

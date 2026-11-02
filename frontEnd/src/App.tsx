@@ -41,6 +41,7 @@ const ServiceDetail = React.lazy(() => import('./pages/ServiceDetail'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
 const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const OrganisationsAnnuaire = React.lazy(() => import('./pages/OrganisationsAnnuaire'));
+const WilayaVitrine = React.lazy(() => import('./pages/WilayaVitrine'));
 const OrganisationVitrine = React.lazy(() => import('./pages/OrganisationVitrine'));
 const ImportCatalogue = React.lazy(() => import('./pages/ImportCatalogue'));
 const APropos = React.lazy(() => import('./pages/APropos'));
@@ -197,6 +198,8 @@ const App = () => (
             <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
             <Route path="/professionnels/:id" element={<ErrorBoundary><ProfessionnelPortfolio /></ErrorBoundary>} />
             <Route path="/organisations" element={<ErrorBoundary><OrganisationsAnnuaire /></ErrorBoundary>} />
+            <Route path="/wilayas" element={<ErrorBoundary><WilayaVitrine /></ErrorBoundary>} />
+            <Route path="/wilayas/:id" element={<ErrorBoundary><WilayaVitrine /></ErrorBoundary>} />
             <Route path="/organisations/:id" element={<ErrorBoundary><OrganisationVitrine /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
             <Route path="/auth" element={<Auth />} />

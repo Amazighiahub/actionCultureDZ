@@ -51,6 +51,7 @@ import type { MediaExtended } from '@/types/models/media-extended.types';
 import type { Intervenant } from '@/types/models/intervenant.types';
 import { getSafeRedirectPath, safeExternalUrl } from '@/utils/safeUrl';
 import { evenementPath } from '@/utils/slug';
+import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -766,6 +767,8 @@ const OeuvreDetailPage: React.FC = () => {
               </ErrorBoundary>
             </TabsContent>
           </Tabs>
+
+          <LieuxDeOeuvre oeuvreId={oeuvre.id_oeuvre} />
 
           {/* Section Actions - Toujours visible */}
           <Card className="mt-6">

@@ -486,6 +486,12 @@ const DashboardPro = () => {
       <SEOHead title={t("dashboardpro.dashboard_professionnel")} noindex />
       
       <main className="container mx-auto py-8 px-4 max-w-6xl">
+        {currentUser && !(currentUser as { wilaya_residence?: number | null; wilayaResidence?: number | null }).wilaya_residence && !(currentUser as { wilayaResidence?: number | null }).wilayaResidence && (
+          <div role="status" className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
+            {t('dashboardpro.rappelWilaya', 'Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.')}{' '}
+            <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('dashboardpro.rappelWilayaLien', 'Compléter mon profil')}</Link>
+          </div>
+        )}
         {/* En-tête simplifié */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

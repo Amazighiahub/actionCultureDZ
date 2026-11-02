@@ -1892,7 +1892,9 @@
     "photoHelper": "JPG أو PNG أو WebP. الحد الأقصى 5 MB.",
     "emailReadOnly": "لا يمكن تعديل البريد الإلكتروني",
     "biographie": "السيرة الذاتية",
-    "biographiePlaceholder": "عرّف بنفسك في بضعة أسطر..."
+    "biographiePlaceholder": "عرّف بنفسك في بضعة أسطر...",
+    "wilaya": "ولاية الإقامة",
+    "wilayaAide": "سيظهر ملفك العام وأعمالك في صفحة هذه الولاية."
   },
   "dashboardpro": {
     "participants": "مشاركين",
@@ -1961,7 +1963,9 @@
       "rejete": "مرفوض"
     },
     "resubmitOeuvre": "إعادة الإرسال بعد التصحيح",
-    "motifRefus": "سبب الرفض"
+    "motifRefus": "سبب الرفض",
+    "rappelWilaya": "حدّد ولايتك لتظهر في صفحتها مع أعمالك.",
+    "rappelWilayaLien": "إكمال ملفي"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",
@@ -5593,5 +5597,33 @@
   "carte": {
     "zoomAvant": "تكبير",
     "zoomArriere": "تصغير"
+  },
+  "wilaya": {
+    "toutes": "الولايات",
+    "toutesAide": "الكتّاب والحرفيون والأعمال والفعاليات والأماكن في كل ولاية من ولايات الجزائر.",
+    "autres": "{{n}} معروضة من أصل {{total}}",
+    "introuvable": "هذه الولاية غير موجودة.",
+    "description": "الكتّاب والحرفيون والأعمال والفعاليات والأماكن في ولاية {{nom}}.",
+    "vide": "لم يُنشر شيء بعد لهذه الولاية.",
+    "professionnels": "المهنيون",
+    "oeuvres": "أعمال هؤلاء المؤلفين",
+    "artisanat": "الحرف",
+    "articles": "المقالات",
+    "evenements": "الفعاليات القادمة",
+    "lieux": "الأماكن",
+    "organisations": "الجمعيات والهيئات"
+  },
+  "lieuOeuvres": {
+    "titre": "أعمال مرتبطة بهذا المكان",
+    "retirer": "إزالة من المكان",
+    "retirerTitre": "إزالة هذا العمل من المكان؟",
+    "retirerAide": "يبقى العمل منشورًا: يختفي الرابط مع هذا المكان فقط.",
+    "region": "من المنطقة نفسها",
+    "voirWilaya": "عرض كل ما يخص {{nom}}",
+    "lieuxTitre": "أماكن مرتبطة بهذا العمل",
+    "retirerNom": "إزالة الرابط مع {{nom}}",
+    "relier": "ربط بمكان",
+    "relierAide": "اختر مكانًا موجودًا يتعلق به هذا العمل: سيظهر في صفحته.",
+    "confirmer": "ربط"
   }
 }

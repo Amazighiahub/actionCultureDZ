@@ -160,6 +160,14 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('lierPage'));
   router.delete('/:id/pages/:lieuOeuvreId', authenticate, validateId(), patrimoineController.wrap('retirerPage'));
 
+  // Œuvres reliées à un lieu par leur propriétaire (retrait : DELETE /:id/pages/:lieuOeuvreId)
+  router.get('/oeuvre-lieux/:idOeuvre', optionalAuth, validateId('idOeuvre'), patrimoineController.wrap('lieuxDeOeuvre'));
+  router.get('/:id/oeuvres-liees', optionalAuth, validateId(), patrimoineController.wrap('oeuvresLiees'));
+  router.post('/:id/oeuvres-liees', authenticate, createContentLimiter, validateId(),
+    [body('id_oeuvre').isInt({ min: 1 }).withMessage('Œuvre invalide')],
+    handleValidationErrors,
+    patrimoineController.wrap('lierOeuvre'));
+
   // ============================================================================
   // MONUMENTS ET VESTIGES — ajout / modification depuis la fiche enrichissement,
   // suppression par la modération

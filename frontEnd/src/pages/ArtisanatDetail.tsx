@@ -32,6 +32,7 @@ import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/componen
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { rafraichirFavoris } from '@/lib/queryClient';
+import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 
 interface ArtisanatData {
   id: number;
@@ -598,6 +599,8 @@ const ArtisanatDetail: React.FC = () => {
               )}
             </div>
           </div>
+
+          {Oeuvre?.id_oeuvre && <LieuxDeOeuvre oeuvreId={Oeuvre.id_oeuvre} />}
 
           {/* Commentaires sur l'œuvre */}
           {Oeuvre?.Commentaires && Oeuvre.Commentaires.length > 0 && (

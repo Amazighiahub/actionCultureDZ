@@ -9,6 +9,7 @@ const initOeuvreRoutes = require('./oeuvreRoutes');
 const initUserRoutes = require('./userRoutes');
 const initEvenementRoutes = require('./evenementRoutes');
 const initLieuRoutes = require('./lieuRoutes');
+const initWilayaRoutes = require('./wilayaRoutes');
 const initPatrimoineRoutes = require('./patrimoineRoutes');
 const initCommentaireRoutes = require('./commentaireRoutes');
 const initMetadataRoutes = require('./metadataRoutes');
@@ -485,6 +486,7 @@ const initRoutes = (models, authMiddleware) => {
     
     // Autres routes
     { path: '/lieux', init: initLieuRoutes, args: [models] },
+    { path: '/wilayas', init: initWilayaRoutes, args: [models] },
     // /api/languages et /api/set-language sont définis directement dans app.js
     { path: '/multilingual', init: initMultilingualRoutes, args: [models, authMiddleware] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },

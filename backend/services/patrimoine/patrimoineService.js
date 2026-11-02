@@ -26,6 +26,10 @@ function isEmptyMultilang(value) {
   return false;
 }
 
+const SECTION_OEUVRES_LIEES = 'oeuvres_liees';
+const MAX_LIEUX_PAR_OEUVRE = 10;
+const MAX_OEUVRES_LIEES_AFFICHEES = 60;
+
 class PatrimoineService extends BaseService {
   constructor(patrimoineRepository, options = {}) {
     super(patrimoineRepository, options);
@@ -523,7 +527,7 @@ class PatrimoineService extends BaseService {
     const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'id_createur'] });
     if (!lieu) throw this._notFoundError(lieuId);
     const liens = await LieuOeuvre.findAll({
-      where: { id_lieu: lieuId },
+      where: { id_lieu: lieuId, section_patrimoine: { [Op.ne]: SECTION_OEUVRES_LIEES } },
       order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC'], ['id_lieu_oeuvre', 'ASC']],
       include: [includeOeuvreCarte(this.models)]
     });
@@ -554,6 +558,79 @@ class PatrimoineService extends BaseService {
       defaults: { ordre, id_contributeur: userId || null }
     });
     return lien;
+  }
+
+  /** Le propriétaire de l'œuvre (ou la personne qui y a contribué) et la modération */
+  async _peutRelierOeuvre(oeuvre, { userId, isModerator = false } = {}) {
+    if (peutGerer(oeuvre.saisi_par, { userId, isModerator })) return true;
+    if (!userId) return false;
+    return (await this.models.OeuvreUser.count({ where: { id_oeuvre: oeuvre.id_oeuvre, id_user: userId } })) > 0;
+  }
+
+  /** Œuvres reliées à un lieu par leur propriétaire (une œuvre non publiée reste visible de lui seul) */
+  async oeuvresLiees(lieuId, { userId = null, isModerator = false } = {}) {
+    const { LieuOeuvre, Lieu, Artisanat } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'id_createur'] });
+    if (!lieu) throw this._notFoundError(lieuId);
+    const carte = includeOeuvreCarte(this.models);
+    const liens = await LieuOeuvre.findAll({
+      where: { id_lieu: lieuId, section_patrimoine: SECTION_OEUVRES_LIEES },
+      order: [['ordre', 'ASC'], ['id_lieu_oeuvre', 'ASC']],
+      include: [{ ...carte, include: [...carte.include, { model: Artisanat, attributes: ['id_artisanat'], required: false }] }],
+      limit: MAX_OEUVRES_LIEES_AFFICHEES
+    });
+    return ajouterCouvertures(this.models, liens
+      .map(l => l.get({ plain: true }))
+      .filter(l => estVisible(l.Oeuvre, l.id_contributeur, { userId, isModerator }))
+      .map(l => ({
+        ...versCarte(l.id_lieu_oeuvre, l.Oeuvre, peutGerer([l.id_contributeur, lieu.id_createur], { userId, isModerator })),
+        id_artisanat: l.Oeuvre.Artisanat?.id_artisanat || null
+      })));
+  }
+
+  /** Relier une œuvre à un lieu : réservé à son propriétaire et à la modération */
+  async lierOeuvre(lieuId, idOeuvre, { userId, isModerator = false } = {}) {
+    const { LieuOeuvre, Oeuvre, Lieu } = this.models || {};
+    const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_lieu', 'statut'] });
+    if (!lieu || (lieu.statut !== 'publie' && !isModerator)) throw this._notFoundError(lieuId);
+    const oeuvre = await Oeuvre.findByPk(idOeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'statut', 'saisi_par'] });
+    if (!oeuvre) throw this._notFoundError(idOeuvre);
+    if (!(await this._peutRelierOeuvre(oeuvre, { userId, isModerator }))) {
+      throw this._forbiddenError('Seul le propriétaire de l’œuvre peut la relier à un lieu');
+    }
+    // Un article se relie à une section du lieu (« En savoir plus »)
+    if ([4, 5].includes(oeuvre.id_type_oeuvre)) throw this._validationError('Un article se relie depuis la section du lieu');
+    if (!['publie', 'brouillon', 'en_attente'].includes(oeuvre.statut)) throw this._validationError('Cette œuvre n’est plus disponible');
+    const nombre = await LieuOeuvre.count({ where: { id_oeuvre: idOeuvre, section_patrimoine: SECTION_OEUVRES_LIEES } });
+    if (nombre >= MAX_LIEUX_PAR_OEUVRE) throw this._validationError(`${MAX_LIEUX_PAR_OEUVRE} lieux au plus par œuvre`);
+    const ordre = ((await LieuOeuvre.max('ordre', { where: { id_lieu: lieuId, section_patrimoine: SECTION_OEUVRES_LIEES } })) || 0) + 1;
+    const [lien] = await LieuOeuvre.findOrCreate({
+      where: { id_lieu: lieuId, id_oeuvre: idOeuvre, section_patrimoine: SECTION_OEUVRES_LIEES },
+      defaults: { ordre, id_contributeur: userId || null }
+    });
+    return lien;
+  }
+
+  /** Lieux reliés à une œuvre, et droit de la personne connectée d'en ajouter ou d'en retirer */
+  async lieuxDeOeuvre(idOeuvre, { userId = null, isModerator = false } = {}) {
+    const { LieuOeuvre, Oeuvre, Lieu } = this.models || {};
+    const oeuvre = await Oeuvre.findByPk(idOeuvre, { attributes: ['id_oeuvre', 'id_type_oeuvre', 'saisi_par'] });
+    if (!oeuvre) throw this._notFoundError(idOeuvre);
+    const liens = await LieuOeuvre.findAll({
+      where: { id_oeuvre: idOeuvre, section_patrimoine: SECTION_OEUVRES_LIEES },
+      include: [{ model: Lieu, as: 'Lieu', required: true, where: { statut: 'publie' }, attributes: ['id_lieu', 'nom', 'id_createur'] }],
+      order: [['id_lieu_oeuvre', 'ASC']]
+    });
+    const peutRelier = ![4, 5].includes(oeuvre.id_type_oeuvre) && await this._peutRelierOeuvre(oeuvre, { userId, isModerator });
+    return {
+      peut_relier: peutRelier,
+      lieux: liens.map(l => ({
+        id_lien: l.id_lieu_oeuvre,
+        id_lieu: l.Lieu.id_lieu,
+        nom: l.Lieu.nom,
+        peut_retirer: peutRelier || peutGerer([l.id_contributeur, l.Lieu.id_createur], { userId, isModerator })
+      }))
+    };
   }
 
   /**
@@ -704,6 +781,11 @@ class PatrimoineService extends BaseService {
     if (!autorise && userId) {
       const lieu = await Lieu.findByPk(lieuId, { attributes: ['id_createur'] });
       autorise = !!lieu && memeUtilisateur(lieu.id_createur, userId);
+    }
+    // Le propriétaire d'une œuvre peut toujours la détacher d'un lieu
+    if (!autorise && userId && lien.section_patrimoine === SECTION_OEUVRES_LIEES) {
+      const oeuvre = await this.models.Oeuvre.findByPk(lien.id_oeuvre, { attributes: ['id_oeuvre', 'saisi_par'] });
+      autorise = !!oeuvre && await this._peutRelierOeuvre(oeuvre, { userId, isModerator });
     }
     if (!autorise) return 'interdit';
     await lien.destroy();

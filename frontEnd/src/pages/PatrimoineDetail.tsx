@@ -39,6 +39,7 @@ import { evenementPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { mentionCredit } from '@/utils/creditPhoto';
+import { OeuvresLieesLieu, DeLaRegion } from '@/components/patrimoine/OeuvresEtRegion';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -898,6 +899,16 @@ const PatrimoineDetail = () => {
               <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} pages={pagesDe('personnalites')} onPagesChange={() => chargerPages(site.id_lieu)} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
               <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" blocs={blocsDe('infos_pratiques')} pages={pagesDe('infos_pratiques')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
             </div>}
+
+            <div className="mt-6 space-y-6">
+              <OeuvresLieesLieu lieuId={site.id_lieu} />
+              {(site.wilaya?.id_wilaya || site.Commune?.Daira?.Wilaya?.id_wilaya) && (
+                <DeLaRegion
+                  idWilaya={(site.wilaya?.id_wilaya || site.Commune?.Daira?.Wilaya?.id_wilaya) as number}
+                  nomWilaya={nomGeo(site.wilaya || site.Commune?.Daira?.Wilaya)}
+                />
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}

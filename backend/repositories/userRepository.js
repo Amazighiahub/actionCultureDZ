@@ -729,10 +729,10 @@ class UserRepository extends BaseRepository {
     const { limit = 100, offset = 0 } = options;
     const includes = [];
     if (this.models.TypeUser) {
-      includes.push({ model: this.models.TypeUser, attributes: ['id_type_user', 'nom_type'], required: false });
+      includes.push({ model: this.models.TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false });
     }
     if (this.models.Wilaya) {
-      includes.push({ model: this.models.Wilaya, attributes: ['id_wilaya', 'nom', 'code'], required: false });
+      includes.push({ model: this.models.Wilaya, as: 'Wilaya', attributes: ['id_wilaya', 'nom', 'codeW'], required: false });
     }
 
     // Route publique : professionnels actifs uniquement (jamais les admins),

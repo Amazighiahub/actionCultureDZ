@@ -356,6 +356,30 @@ class PatrimoineController extends BaseController {
     res.status(201).json({ success: true, data: lien });
   }
 
+  /** Œuvres reliées à ce lieu par leur propriétaire */
+  async oeuvresLiees(req, res) {
+    const data = await this.patrimoineService.oeuvresLiees(parseInt(req.params.id, 10), {
+      userId: req.user?.id_user || null, isModerator: this._estModeration(req)
+    });
+    res.json({ success: true, data });
+  }
+
+  /** Relier une œuvre à ce lieu (son propriétaire ou la modération) */
+  async lierOeuvre(req, res) {
+    const lien = await this.patrimoineService.lierOeuvre(parseInt(req.params.id, 10), parseInt(req.body.id_oeuvre, 10), {
+      userId: req.user.id_user, isModerator: this._estModeration(req)
+    });
+    res.status(201).json({ success: true, data: lien });
+  }
+
+  /** Lieux reliés à une œuvre */
+  async lieuxDeOeuvre(req, res) {
+    const data = await this.patrimoineService.lieuxDeOeuvre(parseInt(req.params.idOeuvre, 10), {
+      userId: req.user?.id_user || null, isModerator: this._estModeration(req)
+    });
+    res.json({ success: true, data });
+  }
+
   /** Retirer une page détaillée (modération, la personne qui l'a reliée ou le créateur du site) */
   async retirerPage(req, res) {
     const resultat = await this.patrimoineService.retirerPage(

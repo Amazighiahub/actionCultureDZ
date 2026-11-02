@@ -71,6 +71,17 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/organisations', 'weekly', '0.8');
       urls += urlBlock('/patrimoine/services', 'weekly', '0.7');
       urls += urlBlock('/artisanat/gastronomie', 'weekly', '0.7');
+      // Pages de wilaya : seulement celles qui ont au moins un site publié (pas de pages vides)
+      if (models.Lieu) {
+        const wilayasAvecSites = await safeQuery('wilayas', () => models.Lieu.sequelize.query(
+          `SELECT DISTINCT d.wilayaId AS id FROM lieu l
+            JOIN communes c ON c.id_commune = l.communeId
+            JOIN dairas d ON d.id_daira = c.dairaId
+            WHERE l.statut = 'publie'`,
+          { type: models.Lieu.sequelize.QueryTypes.SELECT }
+        ));
+        wilayasAvecSites.forEach(w => { urls += urlBlock(`/wilayas/${w.id}`, 'weekly', '0.6'); });
+      }
 
       // ══════════════════════════════════════════
       // 2-6. Toutes les entités en parallèle

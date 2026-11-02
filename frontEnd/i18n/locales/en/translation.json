@@ -1333,7 +1333,9 @@
     "photoHelper": "JPG, PNG or WebP. Max 5 MB.",
     "emailReadOnly": "Email cannot be changed",
     "biographie": "Biography",
-    "biographiePlaceholder": "Describe yourself in a few lines..."
+    "biographiePlaceholder": "Describe yourself in a few lines...",
+    "wilaya": "Wilaya of residence",
+    "wilayaAide": "Your public profile and works will appear on this wilaya’s page."
   },
   "dashboardpro": {
     "participants": "participants",
@@ -1402,7 +1404,9 @@
       "rejete": "Declined"
     },
     "resubmitOeuvre": "Resubmit after corrections",
-    "motifRefus": "Reason for refusal"
+    "motifRefus": "Reason for refusal",
+    "rappelWilaya": "Add your wilaya to appear on its page, with your works.",
+    "rappelWilayaLien": "Complete my profile"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -5407,5 +5411,33 @@
   "carte": {
     "zoomAvant": "Zoom in",
     "zoomArriere": "Zoom out"
+  },
+  "wilaya": {
+    "toutes": "Wilayas",
+    "toutesAide": "The writers, craftspeople, works, events and places of every Algerian wilaya.",
+    "autres": "{{n}} shown out of {{total}}",
+    "introuvable": "This wilaya could not be found.",
+    "description": "Writers, craftspeople, works, events and places of the wilaya of {{nom}}.",
+    "vide": "Nothing has been published for this wilaya yet.",
+    "professionnels": "Professionals",
+    "oeuvres": "Works by these authors",
+    "artisanat": "Crafts",
+    "articles": "Articles",
+    "evenements": "Upcoming events",
+    "lieux": "Places",
+    "organisations": "Associations and organisations"
+  },
+  "lieuOeuvres": {
+    "titre": "Works linked to this place",
+    "retirer": "Remove from this place",
+    "retirerTitre": "Remove this work from the place?",
+    "retirerAide": "The work stays published: only the link with this place disappears.",
+    "region": "From the same region",
+    "voirWilaya": "See everything for {{nom}}",
+    "lieuxTitre": "Places linked to this work",
+    "retirerNom": "Remove the link with {{nom}}",
+    "relier": "Link to a place",
+    "relierAide": "Choose an existing place this work relates to: it will appear on its page.",
+    "confirmer": "Link"
   }
 }

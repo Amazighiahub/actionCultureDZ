@@ -43,6 +43,8 @@ import { httpClient } from '@/services/httpClient';
 import type { Notification } from '@/services/notification.service';
 import type { GroupedFavoris } from '@/services/favori.service';
 import SEOHead from '@/components/SEOHead';
+import { nomWilaya } from '@/components/gastronomie/PlatCard';
+import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 
 const DashboardUser = () => {
   const { user } = useAuth();
@@ -528,10 +530,15 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const { isProfessional } = usePermissions();
+  const { i18n } = useTranslation();
+  const { data: wilayas = [] } = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60 * 1000 });
+  const wilayaActuelle = (user as { wilaya_residence?: number | null; wilayaResidence?: number | null } | null)?.wilaya_residence
+    ?? (user as { wilayaResidence?: number | null } | null)?.wilayaResidence ?? null;
   const [form, setForm] = useState({
     prenom: '',
     nom: '',
     telephone: '',
+    wilaya_residence: '',
     biographie: '',
     site_web: '',
     reseaux_sociaux: {} as Record<string, string>,
@@ -546,6 +553,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       prenom: typeof user?.prenom === 'object' ? user?.prenom?.fr || '' : user?.prenom || '',
       nom: typeof user?.nom === 'object' ? user?.nom?.fr || '' : user?.nom || '',
       telephone: user?.telephone || '',
+      wilaya_residence: wilayaActuelle ? String(wilayaActuelle) : '',
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
       site_web: user?.site_web || '',
       reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
@@ -586,6 +594,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         prenom: form.prenom,
         nom: form.nom,
         telephone: form.telephone,
+        ...(form.wilaya_residence ? { wilaya_residence: Number(form.wilaya_residence) } : {}),
         biographie: form.biographie,
         ...(isProfessional ? {
           site_web: form.site_web.trim(),
@@ -709,6 +718,21 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         </div>
 
         <div className="space-y-4">
+          <div>
+            <label htmlFor="profil-wilaya" className="block text-sm font-medium mb-2">{t('dashboarduser.wilaya', 'Wilaya de résidence')}</label>
+            {editing ? (
+              <select id="profil-wilaya" className="w-full p-3 border rounded-lg bg-background" value={form.wilaya_residence}
+                onChange={(e) => setForm(f => ({ ...f, wilaya_residence: e.target.value }))}>
+                <option value="">{t('common.notProvided', 'Non renseigné')}</option>
+                {wilayas.map(w => <option key={w.id_wilaya} value={w.id_wilaya}>{nomWilaya(w, i18n.language)}</option>)}
+              </select>
+            ) : (
+              <div className="p-3 border rounded-lg bg-muted">
+                {nomWilaya(wilayas.find(w => w.id_wilaya === Number(wilayaActuelle)), i18n.language) || <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}
+              </div>
+            )}
+            {isProfessional && <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.wilayaAide', 'Votre profil public et vos œuvres apparaîtront sur la page de cette wilaya.')}</p>}
+          </div>
           <div>
             <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>
             <div className="p-3 border rounded-lg bg-muted">

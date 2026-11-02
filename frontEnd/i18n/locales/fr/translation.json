@@ -1358,7 +1358,9 @@
     "photoHelper": "JPG, PNG ou WebP. Max 5 MB.",
     "emailReadOnly": "L'email ne peut pas être modifié",
     "biographie": "Biographie",
-    "biographiePlaceholder": "Décrivez-vous en quelques lignes..."
+    "biographiePlaceholder": "Décrivez-vous en quelques lignes...",
+    "wilaya": "Wilaya de résidence",
+    "wilayaAide": "Votre profil public et vos œuvres apparaîtront sur la page de cette wilaya."
   },
   "dashboardpro": {
     "participants": " participants",
@@ -1427,7 +1429,9 @@
       "rejete": "Refusé"
     },
     "resubmitOeuvre": "Renvoyer après correction",
-    "motifRefus": "Motif du refus"
+    "motifRefus": "Motif du refus",
+    "rappelWilaya": "Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.",
+    "rappelWilayaLien": "Compléter mon profil"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -5407,5 +5411,33 @@
   "carte": {
     "zoomAvant": "Zoomer",
     "zoomArriere": "Dézoomer"
+  },
+  "wilaya": {
+    "toutes": "Les wilayas",
+    "toutesAide": "Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.",
+    "autres": "{{n}} affichés sur {{total}}",
+    "introuvable": "Cette wilaya est introuvable.",
+    "description": "Écrivains, artisans, œuvres, événements et lieux de la wilaya de {{nom}}.",
+    "vide": "Rien n’est encore publié pour cette wilaya.",
+    "professionnels": "Professionnels",
+    "oeuvres": "Œuvres de ces auteurs",
+    "artisanat": "Artisanat",
+    "articles": "Articles",
+    "evenements": "Événements à venir",
+    "lieux": "Lieux",
+    "organisations": "Associations et organisations"
+  },
+  "lieuOeuvres": {
+    "titre": "Œuvres liées à ce lieu",
+    "retirer": "Retirer du lieu",
+    "retirerTitre": "Retirer cette œuvre du lieu ?",
+    "retirerAide": "L’œuvre reste publiée : seul le lien avec ce lieu disparaît.",
+    "region": "De la même région",
+    "voirWilaya": "Tout voir pour {{nom}}",
+    "lieuxTitre": "Lieux liés à cette œuvre",
+    "retirerNom": "Retirer le lien avec {{nom}}",
+    "relier": "Relier à un lieu",
+    "relierAide": "Choisissez un lieu existant que cette œuvre concerne : elle apparaîtra sur sa fiche.",
+    "confirmer": "Relier"
   }
 }
