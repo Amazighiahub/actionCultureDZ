@@ -281,6 +281,9 @@ const loadModels = (sequelize) => {
   const notificationModel = loadModelSafely('./misc/notification', 'Notification', sequelize);
   if (notificationModel) models.Notification = notificationModel;
 
+  const pushAbonnementModel = loadModelSafely('./misc/pushAbonnement', 'PushAbonnement', sequelize);
+  if (pushAbonnementModel) models.PushAbonnement = pushAbonnementModel;
+
   const auditLogModel = loadModelSafely('./misc/auditLog', 'AuditLog', sequelize);
   if (auditLogModel) models.AuditLog = auditLogModel;
 

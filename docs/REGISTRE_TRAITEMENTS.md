@@ -124,8 +124,8 @@
 | **Base légale** | Exécution du contrat (CGU) |
 | **Catégories de personnes** | Utilisateurs inscrits |
 | **Données collectées** | Liste des favoris, préférences de notifications (6 booléens granulaires) |
-| **Destinataires** | L'utilisateur lui-même uniquement |
-| **Durée de conservation** | Notifications : 90 jours (purge automatique). Favoris : tant que le compte est actif |
+| **Destinataires** | L'utilisateur lui-même ; services de notification des navigateurs si la personne active les notifications sur son appareil |
+| **Durée de conservation** | Notifications : 90 jours (purge automatique). Favoris : tant que le compte est actif. Appareils abonnés (`push_abonnement`) : jusqu'au retrait, à la suppression du compte ou au refus du service de notification |
 | **Mesures de sécurité** | Accès restreint au propriétaire du compte |
 
 ---
@@ -205,6 +205,8 @@
 | **Unsplash** | Images d'illustration | Adresse IP du visiteur | USA | — |
 | **Sentry** (si SENTRY_DSN défini) | Suivi des erreurs | Traces techniques, identifiant utilisateur | Selon la région du projet Sentry | DPA Sentry |
 | **Let's Encrypt** | Certificats SSL | Nom de domaine uniquement | USA | Service public gratuit |
+| **Google, Apple, Mozilla, Microsoft** (si la personne active les notifications sur son appareil) | Acheminement des notifications | Identifiant technique de l'appareil, texte de la notification chiffré | Selon le service du navigateur | À vérifier |
+| **Backblaze** | Copies de sauvegarde hors serveur | Base de données et fichiers du serveur, chiffrés avant l'envoi avec une clé que Backblaze n'a pas | UE (région `eu-central-003`) | À vérifier |
 
 ---
 

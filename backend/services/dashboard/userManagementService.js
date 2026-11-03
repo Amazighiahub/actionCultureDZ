@@ -447,7 +447,7 @@ class DashboardUserManagementService {
           const prenom = texteLisible(user.prenom);
           const html = valide
             ? `<h2>Félicitations ${prenom} !</h2><p>Votre compte professionnel a été validé. Vous pouvez maintenant publier du contenu sur la plateforme.</p><p><a href="${process.env.FRONTEND_URL || 'https://taladz.com'}/dashboard-pro">Accéder à votre tableau de bord</a></p>`
-            : `<h2>Bonjour ${prenom}</h2><p>Votre demande de compte professionnel a été refusée.${raison ? ` Raison : ${raison}` : ''}</p><p>Vous pouvez soumettre une nouvelle demande avec des informations complémentaires.</p>`;
+            : `<h2>Bonjour ${prenom}</h2><p>Votre demande de compte professionnel a été refusée.${raison ? ` Raison : ${raison}` : ''}</p><p>Pour compléter votre demande ou poser une question, écrivez-nous à contact@taladz.com.</p>`;
           emailService.sendEmail(user.email, subject, html).catch(err => {
             logger.error('Erreur envoi email validation:', err.message);
           });

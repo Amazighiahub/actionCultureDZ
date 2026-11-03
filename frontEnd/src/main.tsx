@@ -6,6 +6,7 @@ import './styles/fonts'
 import './index.css'
 import { HERO_PREMIERE_IMAGE } from './components/home/heroPremiereImage'
 import { rechargerPourNouvelleVersion } from './utils/rechargementVersion'
+import './utils/applicationMobile'
 
 // Fichier d'une ancienne version introuvable (onglet ouvert pendant une mise en ligne) : rechargement
 window.addEventListener('vite:preloadError', (event) => {

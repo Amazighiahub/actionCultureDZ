@@ -277,6 +277,7 @@ const APropos = () => {
                 <ul className="list-disc list-inside space-y-1 ms-2">
                   <li>{t("apropos.privacy.soustraitantCloudinary", "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)")}</li>
                   <li>{t("apropos.privacy.soustraitantEmail", "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)")}</li>
+                  <li>{t('apropos.privacy.soustraitantPush')}</li>
                   <li>{t("apropos.privacy.soustraitantOSM", "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche")}</li>
                 </ul>
                 <p className="mt-2">{t("apropos.privacy.soustraitantsPas", "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.")}</p>

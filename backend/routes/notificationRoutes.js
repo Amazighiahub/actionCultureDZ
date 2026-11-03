@@ -67,6 +67,48 @@ const initNotificationRoutes = (models) => {
     (req, res) => notificationController.getMyNotifications(req, res)
   );
 
+  // Notifications sur le téléphone : clé publique, puis enregistrement ou retrait de cet appareil
+  router.get('/push/cle', authMiddleware.authenticate, (req, res) => {
+    const push = require('../services/pushService');
+    res.json({ success: true, data: { cle: push.actif() ? push.clePublique() : null } });
+  });
+
+  router.post('/push/abonnement',
+    authMiddleware.authenticate,
+    [
+      body('endpoint').isString().isLength({ max: 512 }),
+      body('p256dh').isString().isLength({ min: 16, max: 255 }).matches(/^[A-Za-z0-9_-]+=*$/),
+      body('auth').isString().isLength({ min: 16, max: 255 }).matches(/^[A-Za-z0-9_-]+=*$/),
+    ],
+    validationMiddleware.handleValidationErrors,
+    async (req, res) => {
+      const push = require('../services/pushService');
+      if (!push.adresseAutorisee(req.body.endpoint)) {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      }
+      try {
+        await push.abonner(models, req.user.id_user, req.body);
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ success: false, error: req.t('common.serverError') });
+      }
+    }
+  );
+
+  router.post('/push/abonnement/retrait',
+    authMiddleware.authenticate,
+    [body('endpoint').isString().isLength({ max: 512 })],
+    validationMiddleware.handleValidationErrors,
+    async (req, res) => {
+      try {
+        await require('../services/pushService').desabonner(models, req.user.id_user, req.body.endpoint);
+        res.json({ success: true });
+      } catch {
+        res.status(500).json({ success: false, error: req.t('common.serverError') });
+      }
+    }
+  );
+
   // Résumé des notifications
   router.get('/summary',
     authMiddleware.authenticate,

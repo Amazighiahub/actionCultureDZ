@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const { publicHttpCache } = require('../middlewares/cacheMiddleware');
+const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
@@ -20,6 +20,10 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
   const cachePublic = publicHttpCache(180);
+  // Le tableau de bord professionnel reste en cache 3 min : sans cela, un bouton « Envoyer » restait
+  // affiché après l'envoi, et un second clic répondait par une erreur
+  const viderTableauPro = invalidateCache(['/professionnel/']);
+  router.use((req, res, next) => (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? viderTableauPro(req, res, next) : next()));
 
   // ============================================================================
   // ROUTES PUBLIQUES

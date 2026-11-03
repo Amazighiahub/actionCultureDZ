@@ -1,4 +1,5 @@
 // services/auth.service.ts
+import { rattacherAppareil, retirerAppareilALaDeconnexion } from '@/utils/applicationMobile';
 import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, AUTH_CONFIG } from '@/config/api';
 import { httpClient, doRefreshToken } from './httpClient';
 import { uploadService as UploadService } from "./upload.service";
@@ -102,6 +103,7 @@ class AuthService {
   async login(credentials: LoginCredentials) {
     const response = await httpClient.post<AuthTokenData>(API_ENDPOINTS.auth.login, credentials);
     if (response.success && response.data) {
+      rattacherAppareil().catch(() => undefined);
       this.setAuthData(response.data);
     }
     return response;
@@ -467,6 +469,8 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
    * Déconnexion - efface les données locales et appelle l'API pour supprimer les cookies
    */
   async logout(): Promise<ApiResponse<void>> {
+    // Avant de quitter la session : ce téléphone ne reçoit plus les notifications de ce compte
+    await retirerAppareilALaDeconnexion();
     // Nettoyer le cache local avant l'appel réseau (session invalide même si réseau échoue)
     this.clearLocalAuthData();
     this.clearUserCache();

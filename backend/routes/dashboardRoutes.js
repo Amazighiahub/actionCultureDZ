@@ -395,6 +395,7 @@ const initDashboardRoutes = (models) => {
 
   // Validation d'une œuvre
   router.patch('/oeuvres/:id/validate',
+    require('../middlewares/cacheMiddleware').invalidateCache(['/professionnel/']),
     validationMiddleware.validateId('id'),
     [
       body('valide').isBoolean().withMessage((value, { req }) => req.t('validation.invalidValidationValue')),

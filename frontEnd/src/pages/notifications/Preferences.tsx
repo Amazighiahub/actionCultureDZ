@@ -1,6 +1,7 @@
 // pages/notifications/Preferences.tsx - Page de gestion des préférences de notifications
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import React, { useState, useEffect } from 'react';
 import {
   Bell,
@@ -242,6 +243,7 @@ export default function NotificationPreferences() {
 
       {/* Contenu */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6"><ApplicationMobileCard /></div>
         {/* Message d'erreur */}
         {error &&
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

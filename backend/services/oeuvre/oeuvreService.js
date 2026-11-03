@@ -477,8 +477,28 @@ class OeuvreService extends BaseService {
     });
 
     this.logger.info(`Œuvre soumise pour validation: ${id}`);
+    await this._prevenirModeration(oeuvre, userId);
 
     return OeuvreDTO.fromEntity(updated);
+  }
+
+  /** Œuvre ou article en attente : les administrateurs sont prévenus (un échec ne bloque pas l'envoi) */
+  async _prevenirModeration(oeuvre, userId) {
+    if (!this.models?.User) return;
+    try {
+      const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+      const { texteLisible } = require('../../helpers/i18n');
+      for (const idAdmin of await idsAdministrateurs(this.models)) {
+        if (idAdmin === userId) continue;
+        await notifier(this.notificationService, idAdmin, {
+          titre: 'Œuvre à valider',
+          message: `« ${texteLisible(oeuvre.titre)} » attend votre validation avant d’être publiée.`,
+          url_action: '/admin/dashboard?tab=oeuvres', metadata: { id_oeuvre: oeuvre.id_oeuvre }
+        });
+      }
+    } catch (e) {
+      this.logger.error('Prévenir la modération d’une œuvre :', e.message);
+    }
   }
 
   /**

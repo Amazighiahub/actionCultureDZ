@@ -1,4 +1,21 @@
 {
+  "applicationMobile": {
+    "titre": "Tala DZ on your phone",
+    "intro": "Open the site like an app and receive your notifications: registration validated, event change, reminder. E-mails are still sent.",
+    "installer": "Install Tala DZ",
+    "activer": "Turn on notifications on this device",
+    "desactiver": "Turn off notifications on this device",
+    "activees": "Notifications turned on for this device",
+    "desactivees": "Notifications turned off for this device",
+    "refusees": "Notifications blocked",
+    "refuseesAide": "Allow them for this site in your browser settings, then try again.",
+    "indisponibles": "Notifications are not available at the moment.",
+    "nonPrisEnCharge": "This browser does not support notifications. Try Chrome on Android, or update it.",
+    "iphone1": "Open taladz.com in Safari.",
+    "iphone2": "Tap the Share button at the bottom of the screen.",
+    "iphone3": "Choose “Add to Home Screen”, then “Add”.",
+    "iphone4": "Open Tala DZ from its icon, then come back here to turn on notifications."
+  },
   "auth": {
     "mustBeConnected": "You must be logged in",
     "required": "Required",
@@ -1841,6 +1858,7 @@
       "soustraitantsIntro": "To operate the Platform, we use the following services:",
       "soustraitantCloudinary": "Cloudinary — hosting of the images and media you publish (servers located outside Algeria)",
       "soustraitantEmail": "Email delivery provider (SMTP) — transactional emails and newsletter (your email address)",
+      "soustraitantPush": "Browser notification services (Google, Apple, Mozilla, Microsoft) — if you turn on notifications on your device: a technical device identifier and the notification text, encrypted in transit. You can turn them off at any time.",
       "soustraitantOSM": "OpenStreetMap / Nominatim — base maps and geocoding: your IP address is sent to their servers when a map is displayed",
       "soustraitantsPas": "No personal data is sold, rented or transferred for commercial purposes. Fonts and icons are hosted by the Platform itself.",
       "cookies": "7. Cookies",

@@ -1,4 +1,21 @@
 {
+  "applicationMobile": {
+    "titre": "Tala DZ sur votre téléphone",
+    "intro": "Ouvrez le site comme une application et recevez vos notifications : inscription validée, changement d’événement, rappel. Les e-mails continuent de partir.",
+    "installer": "Installer Tala DZ",
+    "activer": "Activer les notifications sur cet appareil",
+    "desactiver": "Désactiver les notifications sur cet appareil",
+    "activees": "Notifications activées sur cet appareil",
+    "desactivees": "Notifications désactivées sur cet appareil",
+    "refusees": "Notifications bloquées",
+    "refuseesAide": "Autorisez-les dans les réglages de votre navigateur pour ce site, puis réessayez.",
+    "indisponibles": "Les notifications ne sont pas disponibles pour le moment.",
+    "nonPrisEnCharge": "Ce navigateur ne permet pas les notifications. Essayez avec Chrome sur Android, ou mettez-le à jour.",
+    "iphone1": "Ouvrez taladz.com dans Safari.",
+    "iphone2": "Touchez le bouton Partager, en bas de l’écran.",
+    "iphone3": "Choisissez « Sur l’écran d’accueil », puis « Ajouter ».",
+    "iphone4": "Ouvrez Tala DZ depuis son icône, puis revenez ici pour activer les notifications."
+  },
   "auth": {
     "mustBeConnected": "Vous devez être connecté",
     "required": "Requis",
@@ -1866,6 +1883,7 @@
       "soustraitantsIntro": "Pour assurer le fonctionnement de la Plateforme, nous faisons appel aux services suivants :",
       "soustraitantCloudinary": "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)",
       "soustraitantEmail": "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)",
+      "soustraitantPush": "Services de notification des navigateurs (Google, Apple, Mozilla, Microsoft) — si vous activez les notifications sur votre appareil : un identifiant technique de l’appareil et le texte de la notification, chiffré pendant l’envoi. Vous pouvez les désactiver à tout moment.",
       "soustraitantOSM": "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche",
       "soustraitantsPas": "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.",
       "cookies": "7. Cookies",

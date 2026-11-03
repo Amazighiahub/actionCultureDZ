@@ -114,6 +114,20 @@ module.exports = (sequelize) => {
   });
 
   // Associations
+  // Quel que soit le service qui l'enregistre, une notification part aussi vers les appareils abonnés.
+  // Pas de « return » : l'envoi ne retarde ni ne fait échouer l'enregistrement
+  const versTelephones = (lignes) => {
+    if (!lignes.length) return;
+    try {
+      const plates = lignes.map(n => (n.get ? n.get({ plain: true }) : n));
+      require('../../services/pushService').pourNotifications(sequelize.models, plates).catch(() => {});
+    } catch {
+      // Le téléphone ne doit jamais empêcher d'enregistrer une notification
+    }
+  };
+  Notification.afterCreate((notification) => { versTelephones([notification]); });
+  Notification.afterBulkCreate((notifications) => { versTelephones(notifications); });
+
   Notification.associate = (models) => {
     Notification.belongsTo(models.User, {
       foreignKey: 'id_user',

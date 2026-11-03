@@ -555,6 +555,7 @@ class UserService extends BaseService {
       ['notes_sites_patrimoine', models.LieuNotation, { id_user: userId }],
       ['favoris', models.Favori, { id_user: userId }],
       ['notifications', models.Notification, { id_user: userId }],
+      ['appareils_notifications', models.PushAbonnement, { id_user: userId }, ['p256dh', 'auth']],
       ['signalements_effectues', models.Signalement, { id_user_signalant: userId }],
       ['organisations', models.UserOrganisation, { id_user: userId }],
       ['roles', models.UserRole, { id_user: userId }],

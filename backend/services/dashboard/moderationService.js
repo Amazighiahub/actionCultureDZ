@@ -4,6 +4,7 @@
  */
 const { Op } = require('sequelize');
 const { texteLisible } = require('../../helpers/i18n');
+const { notifier } = require('../../utils/notifierModeration');
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
@@ -200,6 +201,15 @@ class DashboardModerationService {
     // Envoyer un email de notification au créateur
     try {
       if (oeuvre.saisi_par) {
+        // Dans le site aussi : un e-mail perdu ne doit pas laisser l'auteur sans nouvelles
+        await notifier(container.notificationService, oeuvre.saisi_par, {
+          titre: valide ? 'Votre œuvre a été validée' : 'Votre œuvre n’a pas été validée',
+          message: valide
+            ? `« ${texteLisible(oeuvre.titre)} » est maintenant publiée.`
+            : `« ${texteLisible(oeuvre.titre)} » n’a pas été validée.${raison_rejet ? ` Raison : ${raison_rejet}` : ''} Vous pouvez la corriger et la renvoyer.`,
+          url_action: valide ? `/oeuvres/${oeuvreId}` : '/dashboard-pro',
+          metadata: { id_oeuvre: Number(oeuvreId) }
+        });
         const user = await this.models.User.findByPk(oeuvre.saisi_par);
         if (user?.email) {
           const emailService = require('../emailService');
