@@ -123,7 +123,7 @@
 | **Finalité** | Permettre aux utilisateurs de marquer des contenus en favoris et recevoir des notifications |
 | **Base légale** | Exécution du contrat (CGU) |
 | **Catégories de personnes** | Utilisateurs inscrits |
-| **Données collectées** | Liste des favoris, préférences de notifications (6 booléens granulaires) |
+| **Données collectées** | Liste des favoris, professionnels suivis (`suivi_professionnel`, seul leur nombre est public), préférences de notifications (6 booléens granulaires) |
 | **Destinataires** | L'utilisateur lui-même ; services de notification des navigateurs si la personne active les notifications sur son appareil |
 | **Durée de conservation** | Notifications : 90 jours (purge automatique). Favoris : tant que le compte est actif. Appareils abonnés (`push_abonnement`) : jusqu'au retrait, à la suppression du compte ou au refus du service de notification |
 | **Mesures de sécurité** | Accès restreint au propriétaire du compte |

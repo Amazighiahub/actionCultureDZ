@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
+import MesSuivisCard from '@/components/user/MesSuivisCard';
 import React, { useState, useEffect } from 'react';
 import {
   Bell,
@@ -244,6 +245,7 @@ export default function NotificationPreferences() {
       {/* Contenu */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6"><ApplicationMobileCard /></div>
+        <div className="mb-6"><MesSuivisCard /></div>
         {/* Message d'erreur */}
         {error &&
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

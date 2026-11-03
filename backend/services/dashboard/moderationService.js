@@ -210,6 +210,17 @@ class DashboardModerationService {
           url_action: valide ? `/oeuvres/${oeuvreId}` : '/dashboard-pro',
           metadata: { id_oeuvre: Number(oeuvreId) }
         });
+        if (valide) {
+          const auteur = await this.models.User.findByPk(oeuvre.saisi_par, { attributes: ['nom', 'prenom'] });
+          const qui = [texteLisible(auteur?.prenom), texteLisible(auteur?.nom)].filter(Boolean).join(' ') || 'Un professionnel que vous suivez';
+          await require('../suivisProfessionnels').prevenirAbonnes(this.models, oeuvre.saisi_par, {
+            titre: 'Nouvelle publication',
+            message: `${qui} a publié « ${texteLisible(oeuvre.titre)} ».`,
+            url_action: [4, 5].includes(oeuvre.id_type_oeuvre) ? `/articles/${oeuvreId}` : `/oeuvres/${oeuvreId}`,
+            type_notification: 'nouvelle_oeuvre',
+            metadata: { id_oeuvre: Number(oeuvreId) }
+          });
+        }
         const user = await this.models.User.findByPk(oeuvre.saisi_par);
         if (user?.email) {
           const emailService = require('../emailService');

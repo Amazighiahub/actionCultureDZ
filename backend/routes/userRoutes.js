@@ -76,6 +76,31 @@ const initUserRoutes = (models, authMiddleware) => {
   router.get('/types', asyncHandler((req, res) => authController.getTypes(req, res)));
   router.get('/professionals', asyncHandler((req, res) => userProfileController.getProfessionals(req, res)));
   // Professionnels proches (suggestions de contributeurs, fiche lieu) — profils publics
+  // Suivre un professionnel : ses abonnés sont prévenus de ses nouvelles publications
+  const suivis = require('../services/suivisProfessionnels');
+  const repondreErreur = (res, req, err) => res.status(err.statusCode || 500).json({
+    success: false, error: err.statusCode ? err.message : req.t('common.serverError')
+  });
+  router.get('/mes-suivis', authenticate, asyncHandler(async (req, res) => {
+    res.json({ success: true, data: await suivis.mesSuivis(models, req.user.id_user) });
+  }));
+  router.get('/professionals/:id/suivi', optionalAuth, validateId(), asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ success: true, data: await suivis.etat(models, Number(req.params.id), req.user?.id_user) });
+  }));
+  router.post('/professionals/:id/suivi', authenticate, validateId(), asyncHandler(async (req, res) => {
+    try {
+      await suivis.suivre(models, req.user.id_user, Number(req.params.id));
+      res.json({ success: true });
+    } catch (err) {
+      repondreErreur(res, req, err);
+    }
+  }));
+  router.delete('/professionals/:id/suivi', authenticate, validateId(), asyncHandler(async (req, res) => {
+    await suivis.nePlusSuivre(models, req.user.id_user, Number(req.params.id));
+    res.json({ success: true });
+  }));
+
   router.get('/professionals/:id/qrcode', validateId(), asyncHandler((req, res) => userProfileController.getPortfolioQRCode(req, res)));
   router.get('/professionals/:id/portfolio', optionalAuth, validateId(), asyncHandler((req, res) => userProfileController.getPortfolio(req, res)));
   router.get('/professionals/nearby', optionalAuth, asyncHandler((req, res) => userProfileController.getNearbyProfessionals(req, res)));

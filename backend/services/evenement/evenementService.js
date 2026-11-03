@@ -959,6 +959,7 @@ class EvenementService extends BaseService {
         message: `« ${nom} » est en ligne : tout le monde peut le voir et s'y inscrire.`,
         url_action: lien, metadata: { id_evenement: id }
       });
+      await this._prevenirAbonnes(evenement.id_user, nom, lien, id);
     }
     return EvenementDTO.fromEntity(updated);
   }
@@ -982,6 +983,24 @@ class EvenementService extends BaseService {
   _statutDemande(statut, isAdmin) {
     if (statut !== 'publie') return 'brouillon';
     return isAdmin ? 'publie' : 'en_attente';
+  }
+
+  /** Événement publié : les personnes qui suivent son organisateur sont prévenues */
+  async _prevenirAbonnes(idOrganisateur, nom, lien, idEvenement) {
+    // Une notification ne bloque jamais une publication
+    try {
+      const organisateur = await this.models?.User?.findByPk(idOrganisateur, { attributes: ['nom', 'prenom'] });
+      const qui = [texteLisible(organisateur?.prenom), texteLisible(organisateur?.nom)].filter(Boolean).join(' ') || 'Un professionnel que vous suivez';
+      await require('../suivisProfessionnels').prevenirAbonnes(this.models, idOrganisateur, {
+        titre: 'Nouvel événement',
+        message: `${qui} organise « ${nom} ».`,
+        url_action: lien,
+        type_notification: 'nouvel_evenement',
+        metadata: { id_evenement: idEvenement }
+      });
+    } catch (err) {
+      this.logger.error(`Abonnés de l'organisateur non prévenus : ${err.message}`);
+    }
   }
 
   /** Un événement attend une validation : les administrateurs sont prévenus */

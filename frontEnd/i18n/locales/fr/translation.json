@@ -13,6 +13,18 @@
     "lienInvalide": "Ce lien n’est plus valable. Inscrivez-vous de nouveau depuis le bas de la page.",
     "retour": "Retour à l’accueil"
   },
+  "suivi": {
+    "suivre": "Suivre",
+    "suivi": "Suivi",
+    "nePlusSuivre": "Ne plus suivre",
+    "total_one": "{{count}} abonné",
+    "total_other": "{{count}} abonnés",
+    "confirme": "Vous serez prévenu(e) de ses nouvelles publications",
+    "arrete": "Vous ne suivez plus ce professionnel",
+    "echec": "Cette action n’a pas abouti. Réessayez.",
+    "mesSuivis": "Les professionnels que je suis",
+    "aucun": "Vous ne suivez encore personne. Touchez « Suivre » sur la page d’un professionnel."
+  },
   "applicationMobile": {
     "invitationTitre": "Installez Tala DZ sur votre téléphone",
     "invitationTexte": "Ouvrez le site d’un geste et recevez vos notifications : inscription validée, rappel, changement d’événement.",

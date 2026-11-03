@@ -30,6 +30,7 @@ import {
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
+import MesSuivisCard from '@/components/user/MesSuivisCard';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
@@ -493,6 +494,7 @@ const DashboardUser = () => {
           {/* Onglet Profil */}
           <TabsContent value="profil" className="space-y-6">
             <ProfilEditableTab user={user} t={t} formatDate={formatDate} />
+            <MesSuivisCard />
             <ApplicationMobileCard />
             <MesDonneesCard />
           </TabsContent>

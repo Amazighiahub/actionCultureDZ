@@ -614,6 +614,8 @@ class UserRepository extends BaseRepository {
       await destroy(m.Favori, { id_user: userId });
       await destroy(m.Notification, { id_user: userId });
       await destroy(m.PushAbonnement, { id_user: userId });
+      await destroy(m.SuiviProfessionnel, { id_user: userId });
+      await destroy(m.SuiviProfessionnel, { id_professionnel: userId });
       await destroy(m.EmailVerification, { id_user: userId });
       // index uniques (oeuvre, user) / (entité, signalant) : suppression plutôt que réattribution
       await destroy(m.CritiqueEvaluation, { id_user: userId });

@@ -13,6 +13,18 @@
     "lienInvalide": "This link is no longer valid. Subscribe again from the bottom of the page.",
     "retour": "Back to home"
   },
+  "suivi": {
+    "suivre": "Follow",
+    "suivi": "Following",
+    "nePlusSuivre": "Unfollow",
+    "total_one": "{{count}} follower",
+    "total_other": "{{count}} followers",
+    "confirme": "You will be notified of their new publications",
+    "arrete": "You no longer follow this professional",
+    "echec": "This action did not go through. Please try again.",
+    "mesSuivis": "Professionals I follow",
+    "aucun": "You don’t follow anyone yet. Tap “Follow” on a professional’s page."
+  },
   "applicationMobile": {
     "invitationTitre": "Install Tala DZ on your phone",
     "invitationTexte": "Open the site with one tap and receive your notifications: registration validated, reminder, event change.",

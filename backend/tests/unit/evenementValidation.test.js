@@ -15,7 +15,7 @@ const makeSvc = (existing, apres = existing) => {
   const svc = Object.create(EvenementService.prototype);
   svc.models = {
     EvenementOrganisation: { count: jest.fn().mockResolvedValue(1) },
-    User: { findAll: jest.fn().mockResolvedValue([{ id_user: 1 }]) }
+    User: { findAll: jest.fn().mockResolvedValue([{ id_user: 1 }]), findByPk: jest.fn().mockResolvedValue({ nom: 'N', prenom: 'P' }) }
   };
   svc.repository = {
     findById: jest.fn().mockResolvedValue(existing),
@@ -25,7 +25,7 @@ const makeSvc = (existing, apres = existing) => {
   svc.notificationService = { sendToUser: jest.fn() };
   svc.withTransaction = async (cb) => cb({ LOCK: { UPDATE: 'UPDATE' } });
   svc.cache = { invalidate: jest.fn() };
-  svc.logger = { info: jest.fn() };
+  svc.logger = { info: jest.fn(), error: jest.fn() };
   return svc;
 };
 
