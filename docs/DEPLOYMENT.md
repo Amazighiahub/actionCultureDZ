@@ -70,8 +70,8 @@ node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
 | `JWT_SECRET` | n'importe quoi (32+ chars) | **Généré (128 chars)** | Clé de signature JWT |
 | `REDIS_PASSWORD` | *(vide ou `redis_dev_password`)* | **Généré (32 chars)** | Mot de passe Redis |
 | `FRONTEND_URL` | `http://localhost:8080` | `https://votredomaine.com` | URL du frontend |
-| `API_URL` | `http://localhost:3001` | `https://api.votredomaine.com` | URL du backend |
-| `VITE_API_URL` | `http://localhost:3001/api` | `https://api.votredomaine.com/api` | URL API pour le frontend |
+| `API_URL` | `http://localhost:3001` | `https://votredomaine.com` | URL du backend |
+| `VITE_API_URL` | `http://localhost:3001/api` | `https://votredomaine.com/api` | URL API pour le frontend |
 | `EMAIL_HOST` | `smtp.gmail.com` | Votre SMTP | Serveur email |
 | `EMAIL_USER` | *(votre email)* | *(email prod)* | Expéditeur |
 | `EMAIL_PASSWORD` | *(app password)* | *(app password)* | Mot de passe SMTP |
@@ -162,8 +162,8 @@ npm run dev                # Vite sur http://localhost:8080
 ssh user@votre-serveur
 
 # 2. Cloner le repo
-git clone https://github.com/Amazighiahub/actionCultureDZ.git /home/EventCulture
-cd /home/EventCulture
+git clone https://github.com/Amazighiahub/actionCultureDZ.git /home/actionCultureDZ
+cd /home/actionCultureDZ
 
 # 3. Configurer l'environnement PRODUCTION
 cp .env.example .env
@@ -213,7 +213,7 @@ Le pipeline exécute : lint → tests → build → backup DB → deploy → hea
 
 # Vérifie que ça marche :
 curl -I https://votredomaine.com
-curl https://api.votredomaine.com/health
+curl https://votredomaine.com/health
 ```
 
 Le renouvellement SSL est **automatique** via le conteneur Certbot (toutes les 12h).
@@ -226,7 +226,7 @@ Le renouvellement SSL est **automatique** via le conteneur Certbot (toutes les 1
 
 ```bash
 # Via Docker
-docker compose exec backend npm run db:migrate
+docker compose -f docker-compose.prod.yml exec backend npm run db:migrate
 
 # Via deploy.sh (fait automatiquement à chaque déploiement)
 ./scripts/deploy.sh
@@ -245,7 +245,7 @@ Script : `scripts/backup.sh <catégorie>`, une rotation par catégorie :
 | `deploiement` | avant chaque mise en ligne (`deploy-ci.sh`) | base | 10 (`db_deploiement_…`) |
 | `manuel` | à la main, et avant une restauration | base | 5 (`db_manuel_…`) |
 
-Nombres modifiables : `BACKUP_KEEP_NUIT`, `BACKUP_KEEP_MOIS`, `BACKUP_KEEP_DEPLOIEMENT`,
+Nombres modifiables dans la section `backup` de `docker-compose.prod.yml` (le `.env` ne suffit pas) : `BACKUP_KEEP_NUIT`, `BACKUP_KEEP_MOIS`, `BACKUP_KEEP_DEPLOIEMENT`,
 `BACKUP_KEEP_MANUEL`, `BACKUP_KEEP_UPLOADS`. Copie chiffrée hors du serveur (base + uploads de
 la nuit) : `scripts/backup-offsite.sh`, par le cron de l'hôte (voir l'en-tête du script).
 
@@ -276,7 +276,7 @@ scripts/restaurer-sauvegarde.sh /tmp/db.sql.gz
 
 # Uploads (archive de la nuit) : à extraire dans le volume du backend
 docker compose -f docker-compose.prod.yml run --rm --no-deps -T -v "$PWD/uploads_….tar.gz:/u.tar.gz:ro"   --entrypoint sh backend -c 'tar -xzf /u.tar.gz -C /app'
-docker compose -f docker-compose.prod.yml restart backend    # remet les fichiers au compte node (docker-entrypoint.sh)
+docker compose -f docker-compose.prod.yml restart backend   
 ```
 
 `./restore.sh` et `./dump.sh` (racine) servent au **développement local** (fichier
@@ -299,11 +299,11 @@ make reset
 | Paramètre | Dev | Production |
 |-----------|-----|------------|
 | Image | `redis:7-alpine` | `redis:7-alpine` |
-| Mémoire max | 256 MB | 128 MB |
+| Mémoire max | 256 MB | 256 MB |
 | Persistence | AOF (`appendonly yes`) | AOF |
 | Password | Optionnel | **Obligatoire** |
 | Port exposé | Non (réseau Docker) | Non |
-| Eviction policy | `allkeys-lru` | `allkeys-lru` |
+| Eviction policy | `volatile-lru` | `volatile-lru` |
 
 ### Accéder à Redis
 
@@ -495,7 +495,7 @@ ssh-keyscan -t ed25519 <VPS_HOST> 2>/dev/null | ssh-keygen -lf - | awk '{print $
 ```
 
 **2. Initialiser le suivi des migrations** si `SequelizeMeta` est vide en production
-(le script de déploiement saute alors les migrations et l'indique dans les logs) :
+(le script de déploiement s'arrête alors, sans lancer les migrations ni toucher au site) :
 
 ```bash
 # Sur une COPIE de la base de prod d'abord, puis en prod après sauvegarde

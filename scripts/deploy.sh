@@ -215,12 +215,12 @@ setup_ssl() {
 
     # Obtenir le certificat
     log_info "Obtention du certificat Let's Encrypt..."
-    docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+    # --entrypoint : le service certbot boucle sur le renouvellement et ignorerait ces arguments
+    docker compose -f "$COMPOSE_FILE" run --rm --entrypoint certbot certbot certonly \
         --webroot \
         -w /var/www/certbot \
         -d "$domain" \
         -d "www.$domain" \
-        -d "api.$domain" \
         --email "admin@$domain" \
         --agree-tos \
         --no-eff-email
@@ -229,16 +229,15 @@ setup_ssl() {
         log_ok "Certificat SSL obtenu !"
 
         # Mettre a jour la config Nginx avec SSL
-        log_info "Mise a jour de la configuration Nginx..."
-        sed -i "s/actionculture\.dz/$domain/g" "$PROJECT_DIR/nginx/prod.conf"
-
-        # Redemarrer Nginx
-        docker compose -f "$COMPOSE_FILE" restart nginx
+        # Retour à la vraie configuration : le dépôt doit rester propre, sinon le déploiement automatique refuse
+        log_info "Retour a la configuration Nginx du depot..."
+        git -C "$PROJECT_DIR" checkout -- nginx/prod.conf
+        docker compose -f "$COMPOSE_FILE" up -d --force-recreate nginx
         sleep 3
 
         log_ok "SSL configure et actif !"
         log_info "Testez : https://$domain"
-        log_info "Testez : https://api.$domain/health"
+        log_info "Testez : https://$domain/health"
     else
         log_error "Echec de l'obtention du certificat SSL."
         log_info "Verifiez que le DNS pointe vers ce serveur."

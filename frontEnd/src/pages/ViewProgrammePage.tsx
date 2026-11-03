@@ -14,6 +14,7 @@ import { programmeService, IntervenantUser } from '@/services/programme.service'
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '@/components/SEOHead';
+import { useAuth } from '@/hooks/useAuth';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 
 const ViewProgrammePage: React.FC = () => {
@@ -21,6 +22,7 @@ const ViewProgrammePage: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
@@ -199,7 +201,7 @@ const ViewProgrammePage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <SEOHead title={programmeTitle} />
+      <SEOHead title={programmeTitle} noindex />
       {/* En-tête */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -215,7 +217,8 @@ const ViewProgrammePage: React.FC = () => {
             <h1 className="text-3xl font-bold">{t('programmePages.view.title')}</h1>
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Le serveur refuse ces actions aux autres comptes ; un visiteur ne les voit pas du tout */}
+          {isAuthenticated && <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={handleDuplicate}
@@ -241,7 +244,7 @@ const ViewProgrammePage: React.FC = () => {
               <Trash2 className="h-4 w-4" />
               {t('programmePages.actions.delete')}
             </Button>
-          </div>
+          </div>}
         </div>
         
         <div className="flex items-center gap-6 text-sm text-muted-foreground">

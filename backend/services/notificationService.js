@@ -402,6 +402,7 @@ class NotificationService {
         include: [
           {
             model: this.models.Evenement,
+            as: 'Evenement',
             include: [
               { model: this.models.Lieu, as: 'Lieu' },
               { model: this.models.TypeEvenement, as: 'TypeEvenement' }

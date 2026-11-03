@@ -6,6 +6,7 @@
 const mockProgrammeService = {
   // Événement publié par défaut ; un brouillon d'un autre organisateur renvoie false
   evenementVisible: jest.fn().mockResolvedValue(true),
+  notesPourOrganisateur: jest.fn().mockResolvedValue(null),
   getProgrammesByEvenement: jest.fn(),
   getProgrammeById: jest.fn(),
   getExportData: jest.fn(),

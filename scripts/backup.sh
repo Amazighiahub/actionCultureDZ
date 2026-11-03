@@ -96,7 +96,8 @@ if mysqldump \
      --quick \
      2>"${ERR_FILE}" | gzip > "${DUMP_FILE}.partial" \
    && gzip -t "${DUMP_FILE}.partial" \
-   && zcat "${DUMP_FILE}.partial" | tail -n 1 | grep -q 'Dump completed'; then
+   && zcat "${DUMP_FILE}.partial" | tail -n 1 | grep -q 'Dump completed' \
+   && [ "$(zcat "${DUMP_FILE}.partial" | grep -c '^CREATE TABLE')" -ge "${BACKUP_MIN_TABLES:-10}" ]; then
   mv "${DUMP_FILE}.partial" "${DUMP_FILE}"
   log "✅ Dump MySQL OK ($(du -h "${DUMP_FILE}" | cut -f1))"
   # Nuit du 1er du mois : copie gardée 6 mois (un retour en arrière lointain reste possible)
@@ -105,7 +106,8 @@ if mysqldump \
     log "✅ Copie mensuelle : db_mois_${DATE}.sql.gz"
   fi
 else
-  error "Dump MySQL échoué : $(tail -n 3 "${ERR_FILE}" 2>/dev/null | tr '\n' ' ')"
+  # Y compris un dump sans table : la rotation par nombre finirait par chasser les bonnes sauvegardes
+  error "Dump MySQL échoué ou incomplet (moins de ${BACKUP_MIN_TABLES:-10} tables) : $(tail -n 3 "${ERR_FILE}" 2>/dev/null | tr '\n' ' ')"
   exit 1
 fi
 

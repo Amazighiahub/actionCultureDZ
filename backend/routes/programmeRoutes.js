@@ -53,7 +53,8 @@ const initProgrammeRoutes = (models) => {
       }),
     body('type_activite')
       .optional()
-      .isIn(['conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'autre']),
+      .isIn(['conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'presentation', 'pause', 'autre']),
+    body('statut').optional().isIn(['planifie', 'en_cours', 'termine', 'annule', 'reporte']),
     body('duree_estimee').optional({ values: 'falsy' }).isInt({ min: 1 }),
     body('nb_participants_max').optional({ values: 'falsy' }).isInt({ min: 1 }),
     body('materiel_requis').optional().isLength({ max: 1000 }),

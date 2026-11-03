@@ -24,7 +24,7 @@ const makeService = ({ existants = [], programme } = {}) => {
       findAll: jest.fn(async () => existants),
       create: jest.fn(async (d) => ({ id_intervenant: 99, ...d }))
     },
-    ProgrammeIntervenant: { create: jest.fn(), destroy: jest.fn() },
+    ProgrammeIntervenant: { findAll: jest.fn().mockResolvedValue([]), create: jest.fn(), destroy: jest.fn() },
     User: { findOne: jest.fn() }
   };
   const repository = {

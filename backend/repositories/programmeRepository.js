@@ -60,7 +60,8 @@ class ProgrammeRepository extends BaseRepository {
       // Route publique : pas de notes internes de l'organisateur
       attributes: { exclude: ['notes_organisateur'] },
       include: this._defaultIncludes(),
-      order: [['ordre', 'ASC'], ['heure_debut', 'ASC']]
+      // Par jour d'abord : les activités de plusieurs journées se mélangeaient
+      order: [['date_programme', 'ASC'], ['ordre', 'ASC'], ['heure_debut', 'ASC']]
     });
   }
 

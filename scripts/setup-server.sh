@@ -41,7 +41,7 @@ else
     adduser --disabled-password --gecos "" $DEPLOY_USER
     usermod -aG sudo $DEPLOY_USER
     # Permettre sudo sans mot de passe pour deploy.sh
-    echo "$DEPLOY_USER ALL=(ALL) NOPASSWD: /usr/bin/cp, /usr/bin/chown, /usr/sbin/nginx, /usr/bin/systemctl" > /etc/sudoers.d/$DEPLOY_USER
+    echo "$DEPLOY_USER ALL=(ALL) NOPASSWD: /usr/bin/cp, /usr/bin/chown, /usr/sbin/nginx, /usr/bin/systemctl, /usr/bin/git, /usr/bin/bash" > /etc/sudoers.d/$DEPLOY_USER
     chmod 440 /etc/sudoers.d/$DEPLOY_USER
     log_ok "Utilisateur $DEPLOY_USER cree"
 fi
@@ -125,8 +125,7 @@ chown $DEPLOY_USER:$DEPLOY_USER /home/actionCultureDZ
 mkdir -p /home/$DEPLOY_USER/backups
 chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/backups
 
-# Cron de sauvegarde automatique (tous les jours a 3h)
-(crontab -u $DEPLOY_USER -l 2>/dev/null; echo "0 3 * * * cd /home/actionCultureDZ && ./scripts/deploy.sh --backup 2>/dev/null") | crontab -u $DEPLOY_USER -
+# Sauvegardes de nuit : conteneur backup du compose (pas de cron ici). Copie hors serveur : voir docs/PLAN_REPRISE.md
 
 log_ok "Dossiers prets"
 

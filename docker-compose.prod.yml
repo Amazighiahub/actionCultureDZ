@@ -101,6 +101,14 @@ services:
       - UV_THREADPOOL_SIZE=8
       # Attente d'une connexion SQL : prioritaire sur la valeur du .env (audit V8)
       - DB_POOL_ACQUIRE=10000
+      # Connexions SQL : prioritaire sur le .env (10 par défaut dans la configuration d'exemple)
+      - DB_POOL_MAX=30
+      # Le ramasse-miettes agit avant que Docker ne tue le conteneur à sa limite de mémoire
+      - NODE_OPTIONS=--max-old-space-size=512
+      # Connexions SQL : prioritaire sur le .env (10 par défaut dans la configuration d'exemple)
+      - DB_POOL_MAX=30
+      # Le ramasse-miettes agit avant que Docker ne tue le conteneur à sa limite de mémoire
+      - NODE_OPTIONS=--max-old-space-size=512
       # Vide ici : le backend n'en a pas besoin, seuls mysql et backup l'utilisent
       - MYSQL_ROOT_PASSWORD=
       - UPLOAD_MAX_SIZE=10485760
@@ -129,7 +137,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 768M
         reservations:
           memory: 256M
 

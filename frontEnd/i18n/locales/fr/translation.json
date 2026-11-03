@@ -4297,6 +4297,7 @@
     "hasError": "(erreur)"
   },
   "programme": {
+    "chargementImpossible": "Cette activité n’a pas pu être chargée. Réessayez.",
     "form": {
       "tabs": {
         "basic": "Informations",

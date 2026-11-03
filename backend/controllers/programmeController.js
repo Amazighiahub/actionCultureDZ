@@ -57,7 +57,9 @@ class ProgrammeController extends BaseController {
         return res.status(404).json({ success: false, error: req.t('programme.notFound') });
       }
 
-      res.json({ success: true, data: translateDeep(programme, lang), lang });
+      const notes = await this.programmeService.notesPourOrganisateur(programme, req.user);
+      const data = translateDeep(programme, lang);
+      res.json({ success: true, data: notes === null ? data : { ...data, notes_organisateur: notes }, lang });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -164,6 +166,11 @@ class ProgrammeController extends BaseController {
       }
       if (result.error === 'forbidden') {
         return res.status(403).json({ success: false, error: req.t('auth.forbidden') });
+      }
+
+      if (result.notifier) {
+        this.notificationService.notifierModificationProgramme(req.params.id, result.notifier)
+          .catch(() => { /* Un échec d'envoi ne bloque pas la modification */ });
       }
 
       res.json({

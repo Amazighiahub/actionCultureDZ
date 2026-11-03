@@ -78,6 +78,12 @@ const TYPES_ACTIVITE = [
   { value: 'autre', label: 'Autre' }
 ];
 
+type TextesLangues = { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string };
+const textesEnregistres = (valeur: unknown, langue: string): TextesLangues => ({
+  fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '',
+  ...(valeur && typeof valeur === 'object' ? valeur as Partial<TextesLangues> : { [langue]: String(valeur || '') })
+});
+
 const GestionEvenement: React.FC<GestionEvenementProps> = ({
   evenementId,
   evenementNom,
@@ -217,6 +223,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         titre: data.titre,
         description: data.description,
         type_activite: data.type_activite, // Conforme
+        // Nouvelle activité : le serveur la place à la fin (le formulaire envoyait toujours 1)
+        ...(editingProgramme ? { statut: data.statut, ordre: data.ordre } : {}),
         date_programme: data.date_programme, // jour de l'activité (événement sur plusieurs jours)
         heure_debut: heurePourApi(data.date_programme, data.heure_debut), // Format ISO pour la base
         heure_fin: heurePourApi(data.date_programme, data.heure_fin), // Format ISO pour la base
@@ -225,14 +233,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         nb_participants_max: data.nb_participants_max, // Conforme
         niveau_requis: data.niveau_requis, // Conforme
         materiel_requis: data.materiel_requis, // Conforme
-        // Le serveur ne renvoie jamais les notes à la lecture : vides en modification = on garde les anciennes
-        ...(editingProgramme && !data.notes_organisateur ? {} : { notes_organisateur: data.notes_organisateur }),
+        notes_organisateur: data.notes_organisateur, // Conforme
         traduction_disponible: data.traduction_disponible, // Conforme
         enregistrement_autorise: data.enregistrement_autorise, // Conforme
         diffusion_live: data.diffusion_live, // Conforme
         support_numerique: data.support_numerique, // Conforme
         langue_principale: data.langue_principale, // Conforme
-        ordre: data.ordre, // Conforme
         intervenants: data.intervenants // Conforme
       };
 
@@ -277,8 +283,16 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     }
   };
 
-  const handleEditProgramme = (programme: Programme) => {
-    setEditingProgramme(programme);
+  const handleEditProgramme = async (programme: Programme) => {
+    // Toutes les langues et les notes : le texte affiché peut être un repli en français, qu'il ne faut
+    // pas enregistrer comme traduction arabe
+    const detail = await programmeService.getDetailPourModification(programme.id_programme).catch(() => null);
+    if (!detail?.success || !detail.data) {
+      toast({ title: t('common.error', 'Erreur'), description: t('programme.chargementImpossible', 'Cette activité n’a pas pu être chargée. Réessayez.'), variant: 'destructive' });
+      return;
+    }
+    const { titre, description, notes_organisateur } = detail.data as Programme & { notes_organisateur?: string };
+    setEditingProgramme({ ...programme, titre, description, notes_organisateur } as Programme);
     setShowProgrammeDialog(true);
   };
 
@@ -437,28 +451,28 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                 <ProgrammeForm
                   eventId={evenementId}
                   initialData={editingProgramme ? {
-                    // Texte affiché = traduction dans la langue de l'interface : rangé sous cette
-                    // langue seulement (le recopier dans toutes écrasait les vraies traductions)
-                    titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.titre || '' },
-                    description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.description || '' },
+                    // Toutes les langues enregistrées (voir handleEditProgramme) ; un ancien texte simple
+                    // reste rangé sous la langue de l'interface
+                    titre: textesEnregistres(editingProgramme.titre, i18n.language),
+                    description: textesEnregistres(editingProgramme.description, i18n.language),
                     // Le serveur renvoie le jour (date_programme) et des heures seules (« 10:00:00 »)
                     date_programme: jourProgramme(editingProgramme),
                     heure_debut: heureProgramme(editingProgramme.heure_debut),
                     heure_fin: heureProgramme(editingProgramme.heure_fin),
                     type_activite: editingProgramme.type_activite as any,
-                    statut: 'planifie',
+                    statut: (editingProgramme.statut || 'planifie') as ProgrammeFormData['statut'],
                     // Position actuelle (avant : 1, l'activité modifiée remontait en tête du programme)
                     ordre: editingProgramme.ordre ?? 1,
                     nb_participants_max: editingProgramme.nb_participants_max,
-                    niveau_requis: 'tous_niveaux',
+                    niveau_requis: (editingProgramme.niveau_requis || 'tous_niveaux') as ProgrammeFormData['niveau_requis'],
                     materiel_requis: (Array.isArray(editingProgramme.materiel_requis) ? editingProgramme.materiel_requis : []) as unknown as string[],
                     lieu_specifique: { fr: editingProgramme.lieu_specifique || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-                    langue_principale: 'fr',
-                    traduction_disponible: false,
-                    enregistrement_autorise: false,
-                    diffusion_live: false,
-                    support_numerique: false,
-                    notes_organisateur: '',
+                    langue_principale: (editingProgramme as unknown as Partial<ProgrammeFormData>).langue_principale || 'fr',
+                    traduction_disponible: !!(editingProgramme as unknown as Partial<ProgrammeFormData>).traduction_disponible,
+                    enregistrement_autorise: !!(editingProgramme as unknown as Partial<ProgrammeFormData>).enregistrement_autorise,
+                    diffusion_live: !!(editingProgramme as unknown as Partial<ProgrammeFormData>).diffusion_live,
+                    support_numerique: !!(editingProgramme as unknown as Partial<ProgrammeFormData>).support_numerique,
+                    notes_organisateur: (editingProgramme as { notes_organisateur?: string }).notes_organisateur || '',
                     // Intervenants actuels : le formulaire les renvoie, ils remplacent ceux de l'activité
                     intervenants: intervenantsPourFormulaire((editingProgramme as { Intervenants?: unknown }).Intervenants, i18n.language)
                   } : undefined}

@@ -86,6 +86,8 @@ module.exports = (sequelize) => {
         'debat',
         'formation',
         'ceremonie',
+        'presentation',
+        'pause',
         'autre'
       ),
       defaultValue: 'autre'

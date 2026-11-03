@@ -4665,6 +4665,7 @@
     "hasError": "(خطأ)"
   },
   "programme": {
+    "chargementImpossible": "تعذّر تحميل هذا النشاط. أعد المحاولة.",
     "form": {
       "tabs": {
         "basic": "معلومات",

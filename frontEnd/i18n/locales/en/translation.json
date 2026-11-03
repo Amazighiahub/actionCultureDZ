@@ -4543,6 +4543,7 @@
     "hasError": "(error)"
   },
   "programme": {
+    "chargementImpossible": "This activity could not be loaded. Please try again.",
     "form": {
       "tabs": {
         "basic": "Information",

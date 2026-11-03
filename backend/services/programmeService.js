@@ -11,6 +11,8 @@ const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers
 const { csvCell } = require('../utils/csv');
 const { peutGerer, estModeration } = require('../utils/droits');
 
+const CHAMPS_INTERVENANT_CONSERVES = ['heure_debut_intervention', 'heure_fin_intervention', 'honoraires', 'frais_deplacement', 'logement_requis', 'materiel_technique', 'date_confirmation', 'notes_organisateur'];
+
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
     super(repository, options);
@@ -84,6 +86,7 @@ class ProgrammeService extends BaseService {
         id_lieu,
         ordre: rest.ordre || await this.repository.getNextOrdre(evenementId),
         statut: 'planifie',
+        ...this._optionsActivite(rest),
         ...this._pickFields(rest, ['date_programme', 'heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
       };
 
@@ -108,12 +111,48 @@ class ProgrammeService extends BaseService {
     }
   }
 
+  /** Options enregistrées de l'activité ; « tous niveaux » n'a pas de valeur en base : colonne vide */
+  _optionsActivite(donnees) {
+    const options = {};
+    ['langue_principale', 'traduction_disponible', 'enregistrement_autorise', 'diffusion_live', 'support_numerique']
+      .forEach(f => { if (donnees[f] !== undefined) options[f] = donnees[f]; });
+    if (donnees.niveau_requis !== undefined) {
+      options.niveau_requis = donnees.niveau_requis === 'tous_niveaux' ? null : donnees.niveau_requis;
+    }
+    return options;
+  }
+
+  /** Activité annulée, reportée ou déplacée sur un événement visible : type de message aux inscrits, sinon null */
+  _changementANotifier(programme, updates) {
+    if (!['publie', 'planifie', 'en_cours'].includes(programme.Evenement?.statut)) return null;
+    if (updates.statut && updates.statut !== programme.statut && ['annule', 'reporte'].includes(updates.statut)) {
+      return updates.statut;
+    }
+    const heure = v => String(v || '').slice(0, 8);
+    const jour = v => String(v || '').slice(0, 10);
+    const deplacee = (updates.heure_debut !== undefined && heure(updates.heure_debut) !== heure(programme.heure_debut))
+      || (updates.heure_fin !== undefined && heure(updates.heure_fin) !== heure(programme.heure_fin))
+      || (updates.date_programme !== undefined && jour(updates.date_programme) !== jour(programme.date_programme));
+    return deplacee ? 'general' : null;
+  }
+
+  /** Notes internes de l'activité, pour son organisateur et la modération ; null pour les autres */
+  async notesPourOrganisateur(programme, user) {
+    if (!user) return null;
+    const evenement = await this.models.Evenement.findByPk(programme.id_evenement, { attributes: ['id_user'] });
+    if (!peutGerer(evenement?.id_user, { userId: user.id_user, isModerator: estModeration(user) })) return null;
+    const brut = await this.repository.model.findByPk(programme.id_programme, { attributes: ['notes_organisateur'], raw: true });
+    return brut?.notes_organisateur ?? '';
+  }
+
   async updateProgramme(id, userId, lang, data) {
     const { titre, description, intervenants, ...rest } = data;
 
     const allowedFields = ['id_lieu', 'lieu_specifique', 'date_programme', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
     const updates = {};
     allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
+    Object.assign(updates, this._optionsActivite(rest));
+    if (rest.statut !== undefined) updates.statut = rest.statut;
 
     const jour = this._dateProgramme(updates.date_programme, updates.heure_debut);
     if (jour) updates.date_programme = jour;
@@ -155,15 +194,19 @@ class ProgrammeService extends BaseService {
           : mergeTranslations(programme.description, { [lang]: description });
       }
 
+      const notifier = this._changementANotifier(programme, updates);
+
       await programme.update(updates, { transaction });
-      // Liste d'intervenants envoyée par le formulaire : elle remplace celle de l'activité
+      // Liste d'intervenants envoyée par le formulaire : elle remplace celle de l'activité. Une personne
+      // qui reste garde sa confirmation, ses honoraires et ses frais (avant : effacés à chaque modification)
       if (Array.isArray(intervenants)) {
+        const anciens = await this.models.ProgrammeIntervenant.findAll({ where: { id_programme: id }, raw: true, transaction });
         await this.models.ProgrammeIntervenant.destroy({ where: { id_programme: id }, transaction });
-        await this._lierIntervenants(id, intervenants, transaction);
+        await this._lierIntervenants(id, intervenants, transaction, anciens);
       }
       await transaction.commit();
 
-      return { programme: await this._getProgrammeComplet(id) };
+      return { programme: await this._getProgrammeComplet(id), notifier };
     } catch (error) {
       try { await transaction.rollback(); } catch (e) { /* already rolled back */ }
       throw error;
@@ -461,21 +504,25 @@ class ProgrammeService extends BaseService {
    * (role_intervenant, sujet_intervention, ordre_intervention, duree_intervention) et les
    * noms courts (role, sujet, ordre, duree). Un même intervenant n'est relié qu'une fois.
    */
-  async _lierIntervenants(idProgramme, intervenants = [], transaction) {
+  async _lierIntervenants(idProgramme, intervenants = [], transaction, anciens = []) {
     const dejaLies = new Set();
     for (const [index, interv] of (intervenants || []).entries()) {
       const intervenantId = await this._resolveIntervenant(interv, transaction);
       if (dejaLies.has(intervenantId)) continue;
       dejaLies.add(intervenantId);
+      const ancien = anciens.find(a => Number(a.id_intervenant) === Number(intervenantId)) || {};
+      const conserves = Object.fromEntries(CHAMPS_INTERVENANT_CONSERVES
+        .filter(c => ancien[c] !== undefined).map(c => [c, ancien[c]]));
       await this.models.ProgrammeIntervenant.create({
+        ...conserves,
         id_programme: idProgramme,
         id_intervenant: intervenantId,
         role_intervenant: interv.role_intervenant || interv.role || 'principal',
         sujet_intervention: interv.sujet_intervention || interv.sujet || null,
         ordre_intervention: interv.ordre_intervention || interv.ordre || index + 1,
         duree_intervention: interv.duree_intervention || interv.duree || null,
-        biographie_courte: interv.biographie_courte || null,
-        statut_confirmation: interv.statut_confirmation || 'en_attente'
+        biographie_courte: interv.biographie_courte || ancien.biographie_courte || null,
+        statut_confirmation: interv.statut_confirmation || ancien.statut_confirmation || 'en_attente'
       }, { transaction });
     }
   }

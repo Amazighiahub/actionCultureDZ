@@ -46,12 +46,39 @@ Sans ces éléments, une reprise est impossible si le VPS est perdu. Vérifiez c
 
 ### Le serveur est perdu
 
-1. Préparez un nouveau VPS avec `scripts/setup-server.sh`.
-2. Récupérez le dépôt et replacez le fichier `.env`.
-3. Déchiffrez la dernière copie hors serveur avec la clé `age`, puis restaurez-la.
-4. Démarrez les services avec `docker compose -f docker-compose.prod.yml up -d`.
-5. Pointez le domaine vers le nouveau serveur et vérifiez le certificat.
-6. Mettez à jour les secrets GitHub Actions (adresse du serveur, clé SSH).
+Cette procédure n'a pas encore été répétée sur un serveur de secours : faites-le une fois avant d'en avoir besoin.
+
+1. **Préparer le serveur.** Lancez `scripts/setup-server.sh`, puis clonez le dépôt dans `/home/actionCultureDZ` (ce nom de dossier est attendu par le déploiement automatique). Vérifiez `git config core.fileMode false`, sinon un simple changement de droits bloque le déploiement.
+2. **Remettre le fichier `.env`** depuis le gestionnaire de mots de passe, puis `chmod 600 .env`.
+3. **Installer les outils de copie** : `age` et `rclone`, et replacer la clé de lecture seule du stockage hors serveur.
+4. **Construire et démarrer la base** :
+   ```bash
+   C="docker compose -f docker-compose.prod.yml"
+   $C build backend frontend
+   $C up -d mysql redis
+   ```
+5. **Restaurer la dernière copie.** Récupérez-la avec `rclone`, déchiffrez-la sur votre ordinateur avec la clé `age`, copiez le résultat sur le serveur, puis :
+   ```bash
+   SANS_SAUVEGARDE_AVANT=1 ./scripts/restaurer-sauvegarde.sh /chemin/db_nuit_....sql.gz
+   ```
+   Le script vérifie l'archive, demande le nom de la base, importe, puis lance les migrations.
+6. **Pointer le domaine** vers le nouveau serveur et attendre que le DNS réponde.
+7. **Obtenir le certificat.** nginx ne démarre pas sans certificat, et le volume est vide sur un serveur neuf :
+   ```bash
+   cp nginx/initial.conf nginx/prod.conf
+   $C up -d backend frontend nginx
+   $C run --rm --entrypoint certbot certbot certonly --webroot -w /var/www/certbot \
+     -d taladz.com -d www.taladz.com --email contact@taladz.com --agree-tos --no-eff-email
+   git checkout -- nginx/prod.conf
+   $C up -d
+   ```
+8. **Rétablir le déploiement automatique** : dans les secrets GitHub Actions, changez l'adresse du serveur, la clé SSH et `VPS_SSH_FINGERPRINT`.
+9. **Remettre la copie hors serveur** (tâche planifiée de `scripts/backup-offsite.sh`).
+10. **Contrôler** : une connexion, une fiche œuvre, une inscription à un événement, et l'envoi d'un e-mail.
+
+### Revenir en arrière après une mise en ligne ratée
+
+Le déploiement revient seul à la version précédente si le site ne répond plus. Pour une erreur découverte plus tard, annulez le commit fautif avec `git revert`, puis poussez sur `main`. Si une alerte de sécurité d'une dépendance bloque ce déploiement alors que le site est en panne, corrigez d'abord cette dépendance dans le même envoi.
 
 ## 5. Violation de données
 

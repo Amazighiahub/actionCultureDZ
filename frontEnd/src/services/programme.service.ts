@@ -142,6 +142,11 @@ class ProgrammeService {
     return httpClient.get<Programme>(API_ENDPOINTS.programmes.detail(id));
   }
 
+  // Toutes les langues, pour le formulaire de modification
+  async getDetailPourModification(id: number): Promise<ApiResponse<Programme>> {
+    return httpClient.get<Programme>(API_ENDPOINTS.programmes.detail(id), { i18n: 'all' });
+  }
+
   // Créer un programme
   async create(evenementId: number, data: CreateProgrammeData): Promise<ApiResponse<Programme>> {
     return httpClient.post<Programme>(
