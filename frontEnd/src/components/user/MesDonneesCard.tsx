@@ -64,9 +64,10 @@ export default function MesDonneesCard() {
       toast({ title: t('myData.deleteDone', 'Votre compte a été supprimé') });
       // Les cookies sont déjà effacés par le serveur : on nettoie l'état local
       await logout();
-    } catch {
+    } catch (e) {
+      // Le serveur donne la raison (mot de passe faux, événements à venir à annuler d'abord)
       toast({
-        title: t('myData.deleteFailed', 'Suppression impossible : vérifiez votre mot de passe'),
+        title: (e instanceof Error && e.message) || t('myData.deleteFailed', 'Suppression impossible : vérifiez votre mot de passe'),
         variant: 'destructive'
       });
     } finally {

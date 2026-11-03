@@ -207,6 +207,7 @@ describe('DashboardUserManagementService', () => {
 
     it('should deactivate users in batch via updateMany', async () => {
       mockUserRepo.updateMany.mockResolvedValue(true);
+      mockUserRepo.findWithRoles.mockImplementation(async id => ({ id_user: id, id_type_user: 2, Roles: [] }));
 
       const result = await service.bulkUserAction('deactivate', [1, 2], {}, 10);
 

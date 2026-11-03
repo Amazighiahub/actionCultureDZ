@@ -7,6 +7,11 @@
  */
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
+const champsPublics = (fiche) => {
+  const brut = fiche?.toJSON ? fiche.toJSON() : fiche;
+  return Object.fromEntries(PUBLIC_INTERVENANT_ATTRIBUTES.filter(c => brut?.[c] !== undefined).map(c => [c, brut[c]]));
+};
 const { translate, translateDeep } = require('../helpers/i18n');
 
 // Champs de la fiche qu'un professionnel peut modifier (pas l'e-mail, le téléphone ni le compte lié)
@@ -249,7 +254,8 @@ class IntervenantController extends BaseController {
       res.json({
         success: true,
         message: req.t('intervenant.updated'),
-        data: translateDeep(updated, lang)
+        // Champs publics seulement : e-mail, téléphone et naissance restaient dans cette réponse
+        data: translateDeep(champsPublics(updated), lang)
       });
     } catch (error) {
       if (error.code === 'USER_ALREADY_LINKED') {

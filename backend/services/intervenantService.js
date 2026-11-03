@@ -55,6 +55,8 @@ class IntervenantService extends BaseService {
     if (!intervenant) return { intervenant: null, peutModifier: false, raison: null };
     if (user?.isAdmin) return { intervenant, peutModifier: true, raison: null };
     if (intervenant.id_user) return { intervenant, peutModifier: false, raison: 'compte' };
+    // Fiche vérifiée par l'équipe : un organisateur ne la change pas en la reliant à son événement
+    if (intervenant.verifie) return { intervenant, peutModifier: false, raison: 'autre_organisateur' };
 
     // Comptes « responsables » de chaque usage : organisateur de l'événement, ou contributeur
     // qui a rattaché la personnalité à un site patrimonial
@@ -76,6 +78,15 @@ class IntervenantService extends BaseService {
         where: { id_intervenant: id }, attributes: ['id_contributeur'], raw: true
       });
       responsables.push(...sites.map(s => s.id_contributeur));
+    }
+    // Œuvres et articles qui citent cette personne : leurs auteurs comptent aussi
+    const citations = await Promise.all([this.models.OeuvreIntervenant, this.models.IntervenantArticle]
+      .filter(Boolean)
+      .map(m => m.findAll({ where: { id_intervenant: id }, attributes: ['id_oeuvre'], raw: true })));
+    const idsOeuvres = [...new Set(citations.flat().map(c => c.id_oeuvre))];
+    if (idsOeuvres.length && this.models.Oeuvre) {
+      const oeuvres = await this.models.Oeuvre.findAll({ where: { id_oeuvre: idsOeuvres }, attributes: ['saisi_par'], raw: true });
+      responsables.push(...oeuvres.map(o => o.saisi_par));
     }
     const tousLesSiens = responsables.length > 0 && responsables.every(r => Number(r) === Number(user?.id_user));
     return { intervenant, peutModifier: tousLesSiens, raison: tousLesSiens ? null : 'autre_organisateur' };

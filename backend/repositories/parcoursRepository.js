@@ -111,6 +111,7 @@ class ParcoursRepository extends BaseRepository {
   async searchParcours(query, options = {}) {
     return this.search(query, ['nom_parcours', 'description'], {
       ...options,
+      additionalWhere: { ...options.additionalWhere, statut: 'actif' },
       include: this._includesWithEtapes()
     });
   }

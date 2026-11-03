@@ -174,11 +174,20 @@ module.exports = (_models, authMiddleware) => {
    * Détail d'une organisation
    */
   router.get('/:id',
+    optionalAuth,
     param('id').isInt().withMessage((_, { req }) => req.t('validation.invalidId')),
     handleValidationErrors,
     async (req, res) => {
       try {
         const organisation = await get().findById(parseInt(req.params.id));
+        // Même règle que la vitrine : adresse et contacts d'une page non validée restent à son équipe
+        if (organisation.statut !== 'valide') {
+          const { userId, isModerator } = controller._droits(req);
+          const role = userId ? await get().repository.roleMembre(organisation.id_organisation, userId) : null;
+          if (!role && !isModerator) {
+            return res.status(404).json({ success: false, error: req.t ? req.t('common.notFound') : 'Not found' });
+          }
+        }
         res.json({ success: true, data: organisation });
       } catch (error) {
         if (error.code === 'NOT_FOUND') {

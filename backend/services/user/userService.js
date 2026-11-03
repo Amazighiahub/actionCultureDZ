@@ -425,6 +425,8 @@ class UserService extends BaseService {
 
     // Révoquer le refresh token pour forcer la re-authentification
     await this._clearRefreshToken(userId);
+    // Liens en attente aussi : un changement d'adresse demandé par un intrus ne doit pas survivre
+    await this.models?.EmailVerification?.invalidateUserTokens(userId);
 
     this.logger.info(`Mot de passe changé pour: ${userId}`);
 

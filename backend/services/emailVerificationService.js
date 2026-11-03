@@ -189,11 +189,17 @@ class EmailVerificationService {
       ip
     );
 
+    let envoye = false;
     try {
-      await emailService.sendPasswordResetEmail(user, verification.token);
+      envoye = (await emailService.sendPasswordResetEmail(user, verification.token))?.success !== false;
     } catch (error) {
       // Un échec d'envoi ne doit pas produire une erreur visible propre aux comptes existants
       logger.error('Envoi email de réinitialisation échoué:', error.message);
+    }
+    if (!envoye) {
+      // Lien jamais reçu : on le retire, sinon une nouvelle demande resterait bloquée 2 h
+      await verification.destroy?.().catch(() => {});
+      return { expiresIn: '2 heures', envoiEchoue: true };
     }
 
     return { expiresIn: '2 heures' };

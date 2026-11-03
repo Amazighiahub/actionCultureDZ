@@ -2004,6 +2004,7 @@
     "succes": "Work saved",
     "oeuvre_creee_succes": "Your work has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "brouillon_sauvegarde": "Your draft has been saved. You can edit and publish it later from your dashboard.",
+    "oeuvreNonSoumise": "Work saved as a draft but not sent to the team. Send it from your dashboard.",
     "articleNonSoumis": "Article saved as a draft but not sent to the team. Send it from your dashboard.",
     "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "uploadingMediaN": "Uploading media ({{current}}/{{total}}): {{percent}}%",
@@ -3339,7 +3340,7 @@
     "enLigne": {
       "titre": "Online event",
       "rejoindre": "Join the meeting",
-      "reserve": "Register: once the organiser has validated your registration, you will receive the meeting link by email and it will appear here."
+      "reserve": "The meeting link is sent to registrants as soon as the organiser validates their registration."
     }
   },
   "places": {
@@ -4291,6 +4292,7 @@
     "description": "Description",
     "photo": "Photo",
     "photoHint": "JPG, PNG. Max 5 MB",
+    "photoNonEnvoyee": "Service saved, but the photo could not be sent. Add it by editing the service.",
     "photoTooLarge": "Photo must not exceed 5 MB",
     "locationTitle": "Location",
     "locationDescription": "Link your service to a heritage site or enter an address",
@@ -5422,6 +5424,8 @@
     "zoomArriere": "Zoom out"
   },
   "wilaya": {
+    "erreurChargement": "This page could not be loaded. Please check your connection.",
+    "reessayer": "Try again",
     "toutes": "Wilayas",
     "toutesAide": "The writers, craftspeople, works, events and places of every Algerian wilaya.",
     "autres": "{{n}} shown out of {{total}}",

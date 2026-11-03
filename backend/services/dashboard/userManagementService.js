@@ -279,7 +279,7 @@ class DashboardUserManagementService {
     const verification = this.emailVerificationService || require('../serviceContainer').emailVerificationService;
     const envoi = await verification.requestPasswordReset(user.email, null);
     // rateLimited : un lien encore valide (2 h) a déjà été envoyé
-    return { success: true, lienEnvoye: !envoi?.userNotFound };
+    return { success: true, lienEnvoye: !envoi?.userNotFound && !envoi?.envoiEchoue };
   }
 
   /**
@@ -334,12 +334,23 @@ class DashboardUserManagementService {
 
     // Batch UPDATE pour deactivate/delete (1 seule query)
     if (action === 'deactivate') {
-      await this.userRepo.updateMany(
-        { id_user: { [Op.in]: userIds } },
-        { statut: 'inactif' }
-      );
-      results.success = userIds;
-      await this._invalidateUserCacheBulk(userIds);
+      // Ni soi-même ni un administrateur : on pouvait se couper l'accès d'un clic
+      const permis = [];
+      for (const userId of userIds) {
+        const user = await this.userRepo.findWithRoles(userId);
+        const estAdmin = user?.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR
+          || user?.Roles?.some(r => ['Admin', 'Super Admin', 'Administrateur'].includes(r.nom_role));
+        if (!user || estAdmin || Number(userId) === Number(adminId)) {
+          results.errors.push({ id: userId, error: 'CANNOT_DEACTIVATE' });
+        } else {
+          permis.push(userId);
+        }
+      }
+      if (permis.length) {
+        await this.userRepo.updateMany({ id_user: { [Op.in]: permis } }, { statut: 'inactif' });
+        await this._invalidateUserCacheBulk(permis);
+      }
+      results.success = permis;
       return results;
     }
 

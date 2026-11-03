@@ -41,7 +41,14 @@ class ArticleBlockService extends BaseService {
    */
   async getBlocksVisibles(articleId, articleType = 'article', user = null) {
     if (!EDITABLE_ARTICLE_TYPES.includes(articleType)) {
-      return { data: await this.repository.findByArticle(articleId, articleType) };
+      const tous = await this.repository.findByArticle(articleId, articleType);
+      if (articleType !== 'patrimoine' || !this.models?.Lieu) return { data: tous.filter(b => b.visible !== false) };
+      // Site non publié : ses blocs ne sont pas publics, et les blocs masqués restent à son équipe
+      const lieu = await this.models.Lieu.findByPk(articleId, { attributes: ['statut', 'id_createur'] });
+      if (!lieu) return { error: 'notFound' };
+      const gere = peutGerer(lieu.id_createur, { userId: user?.id_user ?? null, isModerator: estModeration(user) });
+      if (lieu.statut !== 'publie' && !gere) return { error: 'notFound' };
+      return { data: gere ? tous : tous.filter(b => b.visible !== false) };
     }
     const isScientifique = articleType === 'article_scientifique';
     const Model = isScientifique ? this.models?.ArticleScientifique : this.models?.Article;
@@ -88,6 +95,7 @@ class ArticleBlockService extends BaseService {
 
     const access = await this._checkCanEdit(id_article, article_type, user);
     if (access.error) return access;
+    if (!(await this._mediaAutorise(id_media, user))) return { error: 'forbidden' };
 
     const transaction = await this.sequelize.transaction();
 
@@ -129,6 +137,9 @@ class ArticleBlockService extends BaseService {
 
     const access = await this._checkCanEdit(id_article, article_type, user);
     if (access.error) return access;
+    for (const b of blocks) {
+      if (!(await this._mediaAutorise(b.id_media, user))) return { error: 'forbidden' };
+    }
 
     const transaction = await this.sequelize.transaction();
 
@@ -171,6 +182,8 @@ class ArticleBlockService extends BaseService {
 
     const access = await this._checkCanEdit(block.id_article, block.article_type, user);
     if (access.error) return access;
+    if (updates.id_media !== undefined && Number(updates.id_media) !== Number(block.id_media)
+        && !(await this._mediaAutorise(updates.id_media, user))) return { error: 'forbidden' };
 
     const transaction = await this.sequelize.transaction();
 
@@ -319,6 +332,17 @@ class ArticleBlockService extends BaseService {
    * propriétaire de l'œuvre parente (saisi_par) ou admin.
    * @returns {Promise<{error?: string}>} error = 'badRequest' | 'notFound' | 'forbidden'
    */
+  /** Un bloc ne reprend qu'un média de son auteur : sinon il révélait le fichier privé d'un autre compte */
+  async _mediaAutorise(idMedia, user) {
+    if (!idMedia || !this.models?.Media || estModeration(user)) return true;
+    const media = await this.models.Media.findByPk(idMedia, { attributes: ['metadata', 'id_oeuvre'] });
+    if (!media) return false;
+    if (media.metadata?.uploadedBy === user?.id_user) return true;
+    if (!media.id_oeuvre || !this.models.Oeuvre) return false;
+    const oeuvre = await this.models.Oeuvre.findByPk(media.id_oeuvre, { attributes: ['saisi_par'] });
+    return peutGerer(oeuvre?.saisi_par, { userId: user?.id_user ?? null, isModerator: false });
+  }
+
   async _checkCanEdit(idArticle, articleType, user) {
     if (!EDITABLE_ARTICLE_TYPES.includes(articleType)) return { error: 'badRequest' };
     if (user?.isAdmin) return {};

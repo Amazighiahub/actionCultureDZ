@@ -339,9 +339,17 @@ const AjouterServicePro: React.FC = () => {
         if (photoFile && serviceId) {
           const formDataPhoto = new FormData();
           formDataPhoto.append('image', photoFile);
-          const uploadRes = await httpClient.upload<{ url?: string }>(`/upload/image`, formDataPhoto);
-          if (uploadRes.success && uploadRes.data?.url) {
+          // Le service est déjà enregistré : un échec ici ne doit pas inviter à recliquer et créer un doublon
+          try {
+            const uploadRes = await httpClient.upload<{ url?: string }>(`/upload/image`, formDataPhoto);
+            if (!uploadRes.success || !uploadRes.data?.url) throw new Error(uploadRes.error);
             await httpClient.put<unknown>(`/services/${serviceId}`, { photo_url: uploadRes.data.url });
+          } catch {
+            toast({
+              title: t('toasts.warning'),
+              description: t('service.photoNonEnvoyee', "Service enregistré, mais la photo n'a pas pu être envoyée. Ajoutez-la en le modifiant."),
+              variant: 'destructive',
+            });
           }
         }
 

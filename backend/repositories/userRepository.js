@@ -98,7 +98,9 @@ class UserRepository extends BaseRepository {
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       where: {
         id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
-        statut: 'actif'
+        statut: 'actif',
+        profil_public: true,
+        accepte_conditions: true
       }
     });
     result.data.forEach(stripPrivateContact);
@@ -296,7 +298,8 @@ class UserRepository extends BaseRepository {
       ...(includePrivate ? {} : { attributes: PUBLIC_USER_PROFILE_ATTRIBUTES }),
       where: {
         [Op.or]: criteria,
-        ...(includePrivate ? {} : { statut: 'actif' }),
+        // Un profil privé ou une personne importée qui n'a rien accepté n'apparaît pas dans la recherche
+        ...(includePrivate ? {} : { statut: 'actif', profil_public: true, accepte_conditions: true }),
         ...options.where
       }
     });
@@ -741,7 +744,9 @@ class UserRepository extends BaseRepository {
       where: {
         wilaya_residence: parseInt(wilayaId),
         id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
-        statut: 'actif'
+        statut: 'actif',
+        profil_public: true,
+        accepte_conditions: true
       },
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       include: includes,

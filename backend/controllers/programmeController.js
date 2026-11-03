@@ -52,7 +52,8 @@ class ProgrammeController extends BaseController {
       const lang = req.lang || 'fr';
       const programme = await this.programmeService.getProgrammeById(req.params.id);
 
-      if (!programme) {
+      // Même règle que la liste : rien d'un événement en brouillon ou en attente pour le public
+      if (!programme || !(await this.programmeService.evenementVisible(programme.id_evenement, req.user))) {
         return res.status(404).json({ success: false, error: req.t('programme.notFound') });
       }
 

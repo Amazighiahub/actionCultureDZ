@@ -760,6 +760,12 @@ export function useAjouterOeuvre() {
     return details;
   }, [formData]);
 
+  const avertirSiNonSoumise = (res: { success: boolean }) => {
+    if (!res.success) {
+      toast({ title: t('toasts.warning'), description: t('ajouteroeuvre.oeuvreNonSoumise', "Œuvre enregistrée en brouillon, mais pas envoyée à l'équipe. Envoyez-la depuis votre tableau de bord."), variant: 'destructive' });
+    }
+  };
+
   const handleSubmit = useCallback(async (isDraft = false) => {
     // Protection synchrone contre le double-envoi (mobile double-tap)
     if (submittingRef.current) return;
@@ -890,7 +896,7 @@ export function useAjouterOeuvre() {
         // Si l'utilisateur a cliqué "Publier" (pas brouillon), soumettre automatiquement pour validation
         if (!isDraft && !isEditMode && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
           try {
-            await oeuvreService.submitForValidation(oeuvreResponse.data.oeuvre.id_oeuvre);
+            avertirSiNonSoumise(await oeuvreService.submitForValidation(oeuvreResponse.data.oeuvre.id_oeuvre));
           } catch (err) {
             console.warn('Soumission auto pour validation échouée:', err);
           }
@@ -933,7 +939,7 @@ export function useAjouterOeuvre() {
             // « Publier » demandé : envoi à la validation, comme sans délai dépassé (avant : restait en brouillon)
             if (!isDraft) {
               try {
-                await oeuvreService.submitForValidation(checkResult.data.id_oeuvre);
+                avertirSiNonSoumise(await oeuvreService.submitForValidation(checkResult.data.id_oeuvre));
               } catch (err) {
                 console.warn('Soumission pour validation échouée:', err);
               }

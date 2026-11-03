@@ -10,6 +10,7 @@ import { MapPin } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LoadingSkeleton } from '@/components/shared';
@@ -53,15 +54,26 @@ const CartesOeuvres: React.FC<{ oeuvres: OeuvreCarte[]; lang: string }> = ({ oeu
   </ItemGrid>
 );
 
+/** Panne ou réseau coupé : on ne dit pas que la wilaya n'existe pas, et on propose de réessayer */
+const ErreurChargement: React.FC<{ onReessayer: () => void }> = ({ onReessayer }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="text-center py-16">
+      <p className="mb-4">{t('wilaya.erreurChargement', 'Cette page n’a pas pu être chargée. Vérifiez votre connexion.')}</p>
+      <Button onClick={onReessayer}>{t('wilaya.reessayer', 'Réessayer')}</Button>
+    </div>
+  );
+};
+
 const ListeWilayas: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { data, isLoading } = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60 * 1000 });
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60 * 1000 });
   return (
     <>
       <SEOHead title={t('wilaya.toutes', 'Les wilayas')} description={t('wilaya.toutesAide', 'Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.')} />
       <h1 className="text-3xl font-bold mb-2">{t('wilaya.toutes', 'Les wilayas')}</h1>
       <p className="text-muted-foreground mb-6">{t('wilaya.toutesAide', 'Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.')}</p>
-      {isLoading ? <LoadingSkeleton /> : (
+      {isError ? <ErreurChargement onReessayer={() => refetch()} /> : isLoading ? <LoadingSkeleton /> : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {(data || []).map(w => (
             <li key={w.id_wilaya}>
@@ -79,9 +91,10 @@ const ListeWilayas: React.FC = () => {
 const FicheWilaya: React.FC<{ id: number }> = ({ id }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-  const { data, isLoading, isError } = useQuery({ queryKey: ['wilaya-vitrine', id], queryFn: () => wilayaVitrineService.vitrine(id) });
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['wilaya-vitrine', id], queryFn: () => wilayaVitrineService.vitrine(id) });
 
   if (isLoading) return <LoadingSkeleton />;
+  if (isError && (error as { status?: number }).status !== 404) return <ErreurChargement onReessayer={() => refetch()} />;
   if (isError || !data) {
     return (
       <div className="text-center py-16">

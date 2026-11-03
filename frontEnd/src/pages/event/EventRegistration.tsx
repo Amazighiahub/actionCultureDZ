@@ -305,7 +305,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     try {
       const success = await onRegister({
         ...(formulaireRemplaceBase ? {} : {
-          nombre_personnes: nombrePersonnes,
+          nombre_personnes: nombrePersonnes || 1,
           commentaire: commentaire.trim() || undefined
         }),
         oeuvres: selectedOeuvres.length > 0 ? selectedOeuvres : undefined,
@@ -653,8 +653,13 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     type="number"
                     min={1}
                     max={placesRestantes || 10}
-                    value={nombrePersonnes}
-                    onChange={(e) => setNombrePersonnes(parseInt(e.target.value) || 1)}
+                    value={nombrePersonnes || ''}
+                    // Vidé pendant la saisie (avant : revenait à 1, taper 2 donnait 12), 1 s'il reste vide
+                    onChange={(e) => {
+                      const valeur = parseInt(e.target.value, 10);
+                      setNombrePersonnes(Number.isNaN(valeur) ? 0 : Math.min(Math.max(valeur, 0), placesRestantes || 10));
+                    }}
+                    onBlur={() => setNombrePersonnes((n) => n || 1)}
                   />
                   {tarification.mode === 'payant' && nombrePersonnes > 1 && (
                     <p className="text-sm text-muted-foreground">

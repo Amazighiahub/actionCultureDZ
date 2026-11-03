@@ -58,6 +58,9 @@ export const wilayaVitrineService = {
   lieuxDeOeuvre: async (idOeuvre: number) =>
     (await httpClient.get<{ peut_relier: boolean; lieux: LieuDeOeuvre[] }>(`/patrimoine/oeuvre-lieux/${idOeuvre}`)).data
     ?? { peut_relier: false, lieux: [] },
-  relier: (idLieu: number, idOeuvre: number) => httpClient.post(`/patrimoine/${idLieu}/oeuvres-liees`, { id_oeuvre: idOeuvre }),
+  // httpClient rejette les erreurs : sans ce repli, le bouton restait bloqué sans aucun message
+  relier: (idLieu: number, idOeuvre: number) => httpClient.post(`/patrimoine/${idLieu}/oeuvres-liees`, { id_oeuvre: idOeuvre })
+    .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined })),
   retirer: (idLieu: number, idLien: number) => httpClient.delete(`/patrimoine/${idLieu}/pages/${idLien}`)
+    .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined }))
 };

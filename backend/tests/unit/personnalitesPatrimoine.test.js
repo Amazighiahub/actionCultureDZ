@@ -84,7 +84,7 @@ describe('IntervenantService — personnalités', () => {
       LieuIntervenant: { findAll: jest.fn().mockResolvedValue(sites.map(c => ({ id_contributeur: c }))) },
       Oeuvre: { findByPk: jest.fn() },
       TypeUser: { findByPk: jest.fn() },
-      OeuvreIntervenant: { findOne: jest.fn(), create: jest.fn(), destroy: jest.fn() }
+      OeuvreIntervenant: { findAll: jest.fn().mockResolvedValue([]), findOne: jest.fn(), create: jest.fn(), destroy: jest.fn() }
     };
     return svc;
   };

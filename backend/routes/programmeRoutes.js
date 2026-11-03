@@ -129,6 +129,7 @@ const initProgrammeRoutes = (models) => {
 
   // Détails d'un programme
   router.get('/:id', 
+    authMiddleware.optionalAuth,
     validationMiddleware.validateId('id'),
     programmeController.getProgrammeById.bind(programmeController)
   );

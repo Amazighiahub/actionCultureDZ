@@ -2007,6 +2007,7 @@
     "succes": "Œuvre enregistrée",
     "oeuvre_creee_succes": "Votre œuvre a été soumise avec succès. Elle sera visible publiquement après validation par un administrateur.",
     "brouillon_sauvegarde": "Votre brouillon a été sauvegardé. Vous pourrez le modifier et le publier plus tard depuis votre tableau de bord.",
+    "oeuvreNonSoumise": "Œuvre enregistrée en brouillon, mais pas envoyée à l'équipe. Envoyez-la depuis votre tableau de bord.",
     "articleNonSoumis": "Article enregistré en brouillon, mais pas envoyé à l'équipe. Envoyez-le depuis votre tableau de bord.",
     "article_cree_succes": "Votre article a été soumis avec succès. Il sera visible publiquement après validation par un administrateur.",
     "langueOriginale": "Langue originale de l'œuvre",
@@ -3344,7 +3345,7 @@
     "enLigne": {
       "titre": "Événement en ligne",
       "rejoindre": "Rejoindre la réunion",
-      "reserve": "Inscrivez-vous : une fois votre inscription validée par l’organisateur, vous recevrez le lien de la réunion par e-mail et il s’affichera ici."
+      "reserve": "Le lien de réunion est envoyé aux inscrits, dès que leur inscription est validée par l’organisateur."
     }
   },
   "places": {
@@ -4571,6 +4572,7 @@
     "description": "Description",
     "photo": "Photo",
     "photoHint": "JPG, PNG. Max 5 MB",
+    "photoNonEnvoyee": "Service enregistré, mais la photo n'a pas pu être envoyée. Ajoutez-la en le modifiant.",
     "photoTooLarge": "La photo ne doit pas dépasser 5 MB",
     "locationTitle": "Localisation",
     "locationDescription": "Associez votre service à un lieu patrimonial ou entrez une adresse",
@@ -5422,6 +5424,8 @@
     "zoomArriere": "Dézoomer"
   },
   "wilaya": {
+    "erreurChargement": "Cette page n’a pas pu être chargée. Vérifiez votre connexion.",
+    "reessayer": "Réessayer",
     "toutes": "Les wilayas",
     "toutesAide": "Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.",
     "autres": "{{n}} affichés sur {{total}}",

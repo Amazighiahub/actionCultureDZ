@@ -104,7 +104,15 @@ class IntervenantRepository extends BaseRepository {
         as: 'Programmes',
         through: { attributes: ['role_intervenant', 'ordre_intervention', 'duree_intervention'] },
         attributes: ['id_programme', 'titre', 'description'],
-        required: false
+        required: false,
+        // Programmes d'événements visibles seulement : la fiche est publique
+        include: this.models.Evenement ? [{
+          model: this.models.Evenement,
+          as: 'Evenement',
+          attributes: [],
+          required: true,
+          where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }
+        }] : []
       });
     }
 
