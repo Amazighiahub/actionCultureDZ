@@ -21,11 +21,14 @@ const { Op } = require('sequelize');
 const { listerChamps, verifierReponses } = require('./formulaireInscription');
 const { configAvecProfil, tarificationDe, montantInscription } = require('./tarification');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { budgetEnvoiGroupe } = require('../quotaEmail');
 
 const LIGNES_MAX = 500;
 const PLAFOND_INVITATIONS_JOUR = 1000;
 const STATUTS_SANS_IMPORT = ['brouillon', 'en_attente', 'annule', 'termine'];
 const INVITATION_HEURES = 7 * 24;
+// Par clic : l'envoi se fait pendant la requête, qui doit répondre avant le délai de nginx (60 s)
+const RELANCE_MAX_PAR_ENVOI = 40;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 const sansAccent = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -376,6 +379,39 @@ class ImportInscriptions {
   async _demanderConfirmation(user, evenement) {
     const envoi = await this.emailService.sendDemandeConfirmationInscription(user, evenement);
     return envoi?.success !== false;
+  }
+
+  /**
+   * Relance en une fois les participants qui n'ont pas fini : mot de passe non choisi, ou invitation
+   * sans réponse. Un lien encore valable est repris : celui du premier e-mail continue de marcher.
+   * @returns {Promise<{ concernes: number, envoyes: number, echecs: number, restants: number }>}
+   */
+  async renvoyerInvitations(idEvenement, utilisateur) {
+    const { evenement } = await this._evenement(idEvenement, utilisateur);
+    if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
+      throw Object.assign(new Error('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse'), { statusCode: 400 });
+    }
+    const inscriptions = await this.models.EvenementUser.findAll({
+      where: { id_evenement: evenement.id_evenement, statut_participation: { [Op.ne]: 'annule' } },
+      include: [{ model: this.models.User, as: 'User', required: true }]
+    });
+    const concernes = inscriptions.filter(i => !i.User.email_verifie || i.statut_participation === 'invitation');
+    // Part du quota du jour qui ne sert pas aux e-mails importants
+    const limite = Math.min(RELANCE_MAX_PAR_ENVOI, await budgetEnvoiGroupe());
+    const lot = concernes.slice(0, limite);
+    let envoyes = 0;
+    let echecs = 0;
+    for (const { User: user } of lot) {
+      try {
+        const ok = user.email_verifie
+          ? await this._demanderConfirmation(user, evenement)
+          : await this._inviter(user, evenement, { reprendre: true });
+        if (ok) envoyes++; else echecs++;
+      } catch {
+        echecs++;
+      }
+    }
+    return { concernes: concernes.length, envoyes, echecs, restants: concernes.length - lot.length };
   }
 
   /**

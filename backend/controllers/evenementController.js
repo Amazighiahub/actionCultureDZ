@@ -547,6 +547,16 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** Relance groupée des participants qui n'ont pas fini */
+  async renvoyerInvitations(req, res) {
+    try {
+      const data = await container.importInscriptionsService.renvoyerInvitations(parseInt(req.params.id), req.user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** Messages de l'organisateur à ses participants : nombres de destinataires et messages déjà envoyés */
   async listerMessagesParticipants(req, res) {
     try {

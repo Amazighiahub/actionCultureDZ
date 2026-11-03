@@ -3,6 +3,7 @@
  * Permet au professionnel de voir les participants, leurs œuvres soumises et leurs profils
  */
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '@/components/shared';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -186,6 +187,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const [profils, setProfils] = useState<{ valeur: string; label?: string | Record<string, string> }[]>([]);
   const [profilEnCours, setProfilEnCours] = useState<number | null>(null);
   const [renvoiEnCours, setRenvoiEnCours] = useState<number | null>(null);
+  const [relanceOuverte, setRelanceOuverte] = useState(false);
+  const [relanceEnCours, setRelanceEnCours] = useState(false);
 
   // État pour le dialogue de détails d'œuvre
   const [selectedOeuvre, setSelectedOeuvre] = useState<OeuvreSoumise | null>(null);
@@ -209,6 +212,27 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     } else {
       toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
     }
+  };
+
+  /** Même e-mail à tous ceux qui n'ont pas fini, avec un bilan (le quota du jour peut en laisser pour plus tard) */
+  const relancerTous = async () => {
+    setRelanceOuverte(false);
+    setRelanceEnCours(true);
+    const res = await httpClient.post<{ envoyes: number; echecs: number; restants: number }>(`/evenements/${evenementId}/participants/invitations`, {})
+      .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined, data: undefined }));
+    setRelanceEnCours(false);
+    if (!res.success || !res.data) {
+      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error'), variant: 'destructive' });
+      return;
+    }
+    const { envoyes, echecs, restants } = res.data;
+    toast({
+      title: t('pro.participants.invitation.relanceEnvoyee', '{{count}} e-mail(s) envoyé(s)', { count: envoyes }),
+      description: echecs || restants
+        ? t('pro.participants.invitation.relanceReste', '{{echecs}} échec(s), {{restants}} à relancer plus tard : cliquez de nouveau dans un moment.', { echecs, restants })
+        : undefined,
+      variant: echecs || restants ? 'destructive' : undefined,
+    });
   };
 
   const changerProfil = async (userId: number, profil: string) => {
@@ -378,6 +402,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     return Palette;
   };
 
+  // Même règle que la mention sous chaque nom
+  const aRelancer = participants.filter(p => p.statut_participation !== 'annule'
+    && (p.User?.email_verifie === false || p.statut_participation === 'invitation')).length;
+
   const filteredParticipants = participants.filter(p => {
     const matchSearch = !searchQuery || 
       `${p.User.nom} ${p.User.prenom} ${p.User.email}`.toLowerCase().includes(searchQuery.toLowerCase());
@@ -449,6 +477,14 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               : <Download className="h-4 w-4 me-2" aria-hidden="true" />}
             {t('pro.participants.exportExcel', 'Télécharger en Excel')}
           </Button>
+          {aRelancer > 0 && (
+            <Button variant="outline" onClick={() => setRelanceOuverte(true)} disabled={relanceEnCours}>
+              {relanceEnCours
+                ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />
+                : <Mail className="h-4 w-4 me-2" aria-hidden="true" />}
+              {t('pro.participants.invitation.relancer', 'Renvoyer à ceux qui n’ont pas fini ({{count}})', { count: aRelancer })}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setImportOuvert(true)}>
             <FileSpreadsheet className="h-4 w-4 me-2" aria-hidden="true" />
             {t('pro.participants.import.bouton', 'Importer une liste (Excel)')}
@@ -462,6 +498,14 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
           evenementId={evenementId}
           ouvert={messageOuvert}
           onFermer={() => setMessageOuvert(false)}
+        />
+        <ConfirmDialog
+          open={relanceOuverte}
+          onOpenChange={setRelanceOuverte}
+          title={t('pro.participants.invitation.relanceTitre', 'Renvoyer l’e-mail à {{count}} participant(s) ?', { count: aRelancer })}
+          description={t('pro.participants.invitation.relanceDesc', 'Chaque personne qui n’a pas fini recevra de nouveau l’e-mail pour choisir son mot de passe ou confirmer son inscription.')}
+          confirmLabel={t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
+          onConfirm={relancerTous}
         />
         <ImportInscriptionsDialog
           evenementId={evenementId}

@@ -135,6 +135,10 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.get('/:id/messages/:idMessage/programme.pdf', pdfLimiter, validateId(), validateId('idMessage'),
     asyncHandler((req, res) => evenementController.programmeMessage(req, res)));
 
+  // Même e-mail, en une fois, à tous les participants qui n'ont pas fini
+  router.post('/:id/participants/invitations', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+    asyncHandler((req, res) => evenementController.renvoyerInvitations(req, res)));
+
   // Email « Choisir mon mot de passe » renvoyé à un participant qui ne l'a pas encore fait
   router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, createContentLimiter, validateId(), validateId('userId'),
     asyncHandler((req, res) => evenementController.renvoyerInvitation(req, res)));

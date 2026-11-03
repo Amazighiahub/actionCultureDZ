@@ -3546,6 +3546,11 @@
         "envoyee": "Email sent",
         "envoyeeDesc": "A new link to choose a password, valid for 7 days, was sent to {{email}}.",
         "dejaChoisi": "Password already chosen",
+        "relancer": "Resend to those who have not finished ({{count}})",
+        "relanceEnvoyee": "{{count}} e-mail(s) sent",
+        "relanceReste": "{{echecs}} failed, {{restants}} to resend later: click again in a moment.",
+        "relanceTitre": "Resend the e-mail to {{count}} participant(s)?",
+        "relanceDesc": "Each person who has not finished will receive the e-mail again to choose their password or confirm their registration.",
         "inutile": "This person has already chosen their password"
       },
       "profil": {
