@@ -292,14 +292,14 @@ class EmailService {
           <p>L'organisateur de <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a transmis votre demande d'inscription
           sur <b>Tala DZ</b>, la plateforme de la culture algérienne. <b>Rien n'est fait sans votre accord</b> :</p>
           <ol>
-            <li>choisissez votre mot de passe (vous acceptez ainsi les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ) ;</li>
+            <li>choisissez le mot de passe de votre compte Tala DZ : il vous permettra d'<b>accéder à votre compte sur taladz.com</b> (vous acceptez ainsi les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ) ;</li>
             <li>sur la <a href="${encodeURI(pageEvenement)}">page de l'événement</a>, confirmez ou refusez votre inscription.</li>
           </ol>
           <p style="text-align: center; margin: 28px 0;">
-            <a href="${encodeURI(lien)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Choisir mon mot de passe</a>
+            <a href="${encodeURI(lien)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Choisir mon mot de passe Tala DZ</a>
           </p>
           <p>Une fois votre inscription confirmée, l'organisateur l'étudie et vous serez prévenu(e) de sa décision.</p>
-          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Votre identifiant est votre adresse email : ${this._escapeHtml(user.email)}.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Pour vous connecter sur taladz.com, votre identifiant est votre adresse e-mail : ${this._escapeHtml(user.email)}. Ce mot de passe sert uniquement sur taladz.com : ce n'est pas celui de votre boîte e-mail.</p>
           <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
@@ -394,23 +394,26 @@ class EmailService {
         html = template({
           prenom: this._prenom(user),
           resetUrl: resetUrl,
+          email: user.email,
+          loginUrl: `${process.env.FRONTEND_URL}/auth`,
         });
       } catch {
         // Template de secours
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Réinitialisation de mot de passe</h2>
+            <h2>Le mot de passe de votre compte Tala DZ</h2>
             <p>Bonjour ${this._escapeHtml(this._prenom(user))},</p>
-            <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous :</p>
-            <p><a href="${encodeURI(resetUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a></p>
-            <p>Ce lien est valable pendant 2 heures.</p>
-            <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+            <p>Ce message concerne votre compte sur <b>Tala DZ (taladz.com)</b>, la plateforme de la culture algérienne. Cliquez sur le lien ci-dessous pour choisir le mot de passe qui vous permettra d'accéder à votre compte sur taladz.com :</p>
+            <p><a href="${encodeURI(resetUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Choisir mon mot de passe Tala DZ</a></p>
+            <p>Ce lien est valable pendant 2 heures. Votre identifiant est votre adresse e-mail : ${this._escapeHtml(user.email)}.</p>
+            <p><b>Ce mot de passe sert uniquement sur taladz.com.</b> Ce n'est pas celui de votre boîte e-mail.</p>
+            <p>Si vous n'êtes pas à l'origine de ce message, ignorez-le : votre mot de passe Tala DZ actuel ne change pas.</p>
             <p>L'équipe Tala DZ</p>
           </div>
         `;
       }
 
-      return await this.sendEmail(user.email, 'Réinitialisation de votre mot de passe', html);
+      return await this.sendEmail(user.email, 'Votre mot de passe pour accéder à Tala DZ (taladz.com)', html);
     } catch (error) {
       logger.error("Erreur dans sendPasswordResetEmail:", error);
       return { success: false, error: error.message };
