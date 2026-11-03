@@ -283,27 +283,34 @@ class EmailService {
       const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement?.id_evenement}`;
       const nomEvenement = this._texte(evenement?.nom_evenement);
       const nom = this._prenom(user);
+      const connexion = `${process.env.FRONTEND_URL}/auth`;
       // Pas d'inscription d'office (audit V7 E2) : la personne choisit son mot de passe (elle accepte
       // alors Tala DZ), puis confirme elle-même son inscription sur la page de l'événement
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
-          <h2 style="color: #3A4224;">Confirmez votre inscription</h2>
+          <h2 style="color: #3A4224;">Votre accès à Tala DZ et votre inscription</h2>
           <p>Bonjour ${this._escapeHtml(nom)},</p>
           <p>L'organisateur de <b>${this._escapeHtml(nomEvenement || "l'événement")}</b> a transmis votre demande d'inscription
           sur <b>Tala DZ</b>, la plateforme de la culture algérienne. <b>Rien n'est fait sans votre accord</b> :</p>
           <ol>
-            <li>choisissez le mot de passe de votre compte Tala DZ : il vous permettra d'<b>accéder à votre compte sur taladz.com</b> (vous acceptez ainsi les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ) ;</li>
-            <li>sur la <a href="${encodeURI(pageEvenement)}">page de l'événement</a>, confirmez ou refusez votre inscription.</li>
+            <li>choisissez le mot de passe de votre compte Tala DZ (vous acceptez ainsi les <a href="${encodeURI(process.env.FRONTEND_URL + '/a-propos#conditions')}">conditions d'utilisation</a> de Tala DZ) ;</li>
+            <li>connectez-vous à Tala DZ avec ce mot de passe, puis, sur la <a href="${encodeURI(pageEvenement)}">page de l'événement</a>, confirmez ou refusez votre inscription.</li>
           </ol>
           <p style="text-align: center; margin: 28px 0;">
             <a href="${encodeURI(lien)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Choisir mon mot de passe Tala DZ</a>
           </p>
+          <div style="background: #f4efe3; border-radius: 8px; padding: 12px 16px; margin: 20px 0;">
+            <p style="margin: 0 0 8px;"><b>Ce mot de passe sert aussi à vous connecter à Tala DZ</b>, à chaque visite, pour retrouver votre compte et vos inscriptions. Gardez-le précieusement.</p>
+            <p style="margin: 0;">Pour vous connecter, allez sur <a href="${encodeURI(connexion)}">taladz.com</a> et saisissez :<br>
+            • votre adresse e-mail : <b>${this._escapeHtml(user.email)}</b><br>
+            • le mot de passe que vous aurez choisi.</p>
+          </div>
           <p>Une fois votre inscription confirmée, l'organisateur l'étudie et vous serez prévenu(e) de sa décision.</p>
-          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Pour vous connecter sur taladz.com, votre identifiant est votre adresse e-mail : ${this._escapeHtml(user.email)}. Ce mot de passe sert uniquement sur taladz.com : ce n'est pas celui de votre boîte e-mail.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Ce mot de passe sert uniquement sur taladz.com : ce n'est pas celui de votre boîte e-mail.</p>
           <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Confirmez votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Votre accès à Tala DZ et votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
     } catch (error) {
       logger.error('Erreur dans sendInvitationInscription:', error);
       return { success: false, error: error.message };
@@ -327,6 +334,7 @@ class EmailService {
           <p style="text-align: center; margin: 28px 0;">
             <a href="${encodeURI(pageEvenement)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Confirmer ou refuser</a>
           </p>
+          <p>Pour répondre, connectez-vous à <b>Tala DZ</b> (taladz.com) avec votre adresse e-mail <b>${this._escapeHtml(user.email)}</b> et votre mot de passe Tala DZ. Si vous l'avez oublié, utilisez « Mot de passe oublié » sur la page de connexion.</p>
           <p style="font-size: 14px; color: #6b6a63;">Vous n'êtes pas à l'origine de cette demande ? Cliquez sur « Refuser » sur la page de l'événement, ou ignorez ce message.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
