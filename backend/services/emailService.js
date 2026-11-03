@@ -275,7 +275,7 @@ class EmailService {
    */
   /**
    * Invitation d'une personne inscrite par un organisateur (liste importée) : sa demande est
-   * reçue, son espace est prêt, elle choisit son mot de passe (lien valable 7 jours).
+   * reçue, son espace est prêt, elle choisit son mot de passe (lien valable 8 jours).
    */
   async sendInvitationInscription(user, token, evenement) {
     try {
@@ -306,7 +306,7 @@ class EmailService {
             • le mot de passe que vous aurez choisi.</p>
           </div>
           <p>Une fois votre inscription confirmée, l'organisateur l'étudie et vous serez prévenu(e) de sa décision.</p>
-          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 7 jours. Ce mot de passe sert uniquement sur taladz.com : ce n'est pas celui de votre boîte e-mail.</p>
+          <p style="font-size: 14px; color: #6b6a63;">Ce lien est personnel et valable 8 jours. Ce mot de passe sert uniquement sur taladz.com : ce n'est pas celui de votre boîte e-mail.</p>
           <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;

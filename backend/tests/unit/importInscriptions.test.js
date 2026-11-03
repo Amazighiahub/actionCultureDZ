@@ -122,7 +122,7 @@ describe('Aperçu', () => {
 });
 
 describe('Import', () => {
-  it('lignes cochées : comptes visiteurs créés sans conditions acceptées ni profil public, invitations à confirmer, liens de 7 jours', async () => {
+  it('lignes cochées : comptes visiteurs créés sans conditions acceptées ni profil public, invitations à confirmer, liens de 8 jours', async () => {
     const m = modeles();
     const emailService = { sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) };
     const svc = new ImportInscriptions(m, { emailService, logger: { error: jest.fn() } });
@@ -131,7 +131,7 @@ describe('Import', () => {
     expect(m.crees[0].data).toMatchObject({ email: 'lydia.amrani@exemple.dz', id_type_user: 1, statut: 'actif', email_verifie: false, accepte_conditions: false, profil_public: false, nom: { fr: 'Amrani Lydia' } });
     expect(m.crees[0].options).toEqual({ hooks: false });
     expect(m.inscriptions[0]).toMatchObject({ id_evenement: 2, statut_participation: 'invitation', montant_du: 2000 });
-    expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 168);
+    expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 192);
     expect(emailService.sendInvitationInscription).toHaveBeenCalledTimes(3);
   });
 
@@ -168,11 +168,11 @@ describe('Renvoi de l’invitation', () => {
   };
   const emailService = () => ({ sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) });
 
-  it('compte sans mot de passe choisi : nouveau lien de 7 jours envoyé', async () => {
+  it('compte sans mot de passe choisi : nouveau lien de 8 jours envoyé', async () => {
     const m = avec({ id_user: 101, email: 'lydia.amrani@exemple.dz', email_verifie: false });
     const mail = emailService();
     await expect(new ImportInscriptions(m, { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR)).resolves.toEqual({ email: 'lydia.amrani@exemple.dz' });
-    expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 168);
+    expect(m.EmailVerification.createVerificationToken).toHaveBeenCalledWith(101, 'password_reset', { invitation: true }, null, 192);
     expect(mail.sendInvitationInscription).toHaveBeenCalledTimes(1);
   });
 

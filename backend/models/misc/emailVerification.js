@@ -70,7 +70,7 @@ module.exports = (sequelize) => {
    * @param {object} metadata - Données additionnelles (ex: { newEmail: '...' })
    * @param {string} ipAddress - Adresse IP de la requête
    * @param {number} [dureeHeures] - Durée de validité, si différente de celle du type
-   *   (invitation d'un participant importé : 7 jours)
+   *   (invitation d'un participant importé : 8 jours)
    */
   EmailVerification.createVerificationToken = async function(userId, type = 'email_verification', metadata = {}, ipAddress = null, dureeHeures = null) {
     const crypto = require('crypto');

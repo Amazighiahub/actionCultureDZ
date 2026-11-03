@@ -3621,7 +3621,7 @@
         "pasEncore": "Has not chosen a password yet",
         "renvoyer": "Resend the email",
         "envoyee": "Email sent",
-        "envoyeeDesc": "A new link to choose a password, valid for 7 days, was sent to {{email}}.",
+        "envoyeeDesc": "A new link to choose a password, valid for 8 days, was sent to {{email}}.",
         "dejaChoisi": "Password already chosen",
         "relancer": "Resend to those who have not finished ({{count}})",
         "relanceEnvoyee": "{{count}} e-mail(s) sent",
@@ -3662,7 +3662,7 @@
         "profilsManquants": "Choose the profile of {{n}} ticked person(s) before registering.",
         "descriptionInvitation": "The Excel workbook from your online form: one row per person, column titles on the first row. Each person receives an invitation and confirms their registration themselves; you then approve it.",
         "bilanInvites": "{{n}} person(s) invited, awaiting their confirmation",
-        "inviterEmail": "Send each person an email to confirm their registration (link valid 7 days for a new account)"
+        "inviterEmail": "Send each person an email to confirm their registration (link valid 8 days for a new account)"
       },
       "messages": {
         "bouton": "Message participants",

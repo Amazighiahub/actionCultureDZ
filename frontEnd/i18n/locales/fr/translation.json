@@ -3626,7 +3626,7 @@
         "pasEncore": "N’a pas encore choisi son mot de passe",
         "renvoyer": "Renvoyer l’email",
         "envoyee": "Email envoyé",
-        "envoyeeDesc": "Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}.",
+        "envoyeeDesc": "Un nouveau lien pour choisir son mot de passe, valable 8 jours, a été envoyé à {{email}}.",
         "dejaChoisi": "Mot de passe déjà choisi",
         "relancer": "Renvoyer à ceux qui n’ont pas fini ({{count}})",
         "relanceEnvoyee": "{{count}} e-mail(s) envoyé(s)",
@@ -3667,7 +3667,7 @@
         "profilsManquants": "Choisissez le profil de {{n}} personne(s) cochée(s) avant d’inscrire.",
         "descriptionInvitation": "Le classeur Excel de votre formulaire en ligne : une ligne par personne, les titres des colonnes sur la première ligne. Chaque personne reçoit une invitation et confirme elle-même son inscription ; vous la validez ensuite.",
         "bilanInvites": "{{n}} personne(s) invitée(s), en attente de leur confirmation",
-        "inviterEmail": "Envoyer à chaque personne un e-mail pour confirmer son inscription (lien valable 7 jours pour un nouveau compte)"
+        "inviterEmail": "Envoyer à chaque personne un e-mail pour confirmer son inscription (lien valable 8 jours pour un nouveau compte)"
       },
       "messages": {
         "bouton": "Écrire aux participants",

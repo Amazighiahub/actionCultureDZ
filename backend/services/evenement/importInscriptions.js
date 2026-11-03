@@ -5,7 +5,7 @@
  * Pour chaque ligne cochée :
  * - un compte visiteur est créé si l'email n'en a pas (sinon le compte existant est repris) ;
  *   sans mot de passe utilisable ni conditions acceptées : la personne les accepte en choisissant
- *   son mot de passe, grâce au lien d'invitation (valable 7 jours) ; compte non visible dans la
+ *   son mot de passe, grâce au lien d'invitation (valable 8 jours) ; compte non visible dans la
  *   recherche de membres (profil non public) ;
  * - elle n'est PAS inscrite d'office (audit V7 E2) : son inscription est une « invitation », sans place
  *   prise, qu'elle confirme ou refuse elle-même sur la page de l'événement ; une fois confirmée,
@@ -26,7 +26,7 @@ const { budgetEnvoiGroupe } = require('../quotaEmail');
 const LIGNES_MAX = 500;
 const PLAFOND_INVITATIONS_JOUR = 1000;
 const STATUTS_SANS_IMPORT = ['brouillon', 'en_attente', 'annule', 'termine'];
-const INVITATION_HEURES = 7 * 24;
+const INVITATION_HEURES = 8 * 24;
 // Par clic : l'envoi se fait pendant la requête, qui doit répondre avant le délai de nginx (60 s)
 const RELANCE_MAX_PAR_ENVOI = 40;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
@@ -364,13 +364,17 @@ class ImportInscriptions {
     }
   }
 
-  /** Email « Choisir mon mot de passe » (lien valable 7 jours) ; true si envoyé */
+  /** Email « Choisir mon mot de passe » (lien valable 8 jours) ; true si envoyé */
   async _inviter(user, evenement, { reprendre = false } = {}) {
-    // Déjà invité par un autre organisateur : son lien reste valable, il n'est pas annulé par ce nouvel envoi
+    // Lien encore valable : il n'est pas annulé, le premier e-mail continue de marcher, et il repart
+    // pour 8 jours afin que l'e-mail de relance dise vrai
     const actif = reprendre ? await this.models.EmailVerification.lienActif(user.id_user, 'password_reset') : null;
-    const jeton = actif?.metadata?.invitation
-      ? actif
-      : await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
+    let jeton = actif;
+    if (actif?.metadata?.invitation) {
+      await actif.update({ expires_at: new Date(Date.now() + INVITATION_HEURES * 3600 * 1000) });
+    } else {
+      jeton = await this.models.EmailVerification.createVerificationToken(user.id_user, 'password_reset', { invitation: true }, null, INVITATION_HEURES);
+    }
     const envoi = await this.emailService.sendInvitationInscription(user, jeton.token, evenement);
     return envoi?.success !== false;
   }
@@ -416,7 +420,7 @@ class ImportInscriptions {
 
   /**
    * Renvoie l'invitation à un participant inscrit qui n'a pas encore choisi son mot de passe
-   * (email perdu, lien expiré). Un nouveau lien remplace l'ancien pour 7 jours.
+   * (email perdu, lien expiré). Un nouveau lien remplace l'ancien pour 8 jours.
    */
   async renvoyerInvitation(idEvenement, idUser, utilisateur) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);

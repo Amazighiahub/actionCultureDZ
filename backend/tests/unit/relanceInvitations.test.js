@@ -44,12 +44,26 @@ describe('relance groupée des participants', () => {
     expect(emailService.sendDemandeConfirmationInscription).toHaveBeenCalledTimes(1);
   });
 
-  it('reprend un lien d’invitation encore valable', async () => {
+  it('reprend un lien d’invitation encore valable et lui redonne 8 jours', async () => {
     const { svc, emailService, models } = contexte([inscription(1, false)]);
-    models.EmailVerification.lienActif.mockResolvedValue({ token: 'ancien', metadata: { invitation: true } });
+    const update = jest.fn(async () => {});
+    models.EmailVerification.lienActif.mockResolvedValue({ token: 'ancien', metadata: { invitation: true }, update });
+    const avant = Date.now();
     await svc.renvoyerInvitations(2, organisateur);
     expect(models.EmailVerification.createVerificationToken).not.toHaveBeenCalled();
     expect(emailService.sendInvitationInscription.mock.calls[0][1]).toBe('ancien');
+    const fin = update.mock.calls[0][0].expires_at.getTime();
+    expect(fin).toBeGreaterThanOrEqual(avant + 8 * 24 * 3600 * 1000);
+    expect(fin).toBeLessThan(avant + 8 * 24 * 3600 * 1000 + 60000);
+  });
+
+  it('un lien ordinaire de mot de passe oublié n’est ni repris ni prolongé', async () => {
+    const { svc, emailService, models } = contexte([inscription(1, false)]);
+    const update = jest.fn(async () => {});
+    models.EmailVerification.lienActif.mockResolvedValue({ token: 'ordinaire', metadata: null, update });
+    await svc.renvoyerInvitations(2, organisateur);
+    expect(update).not.toHaveBeenCalled();
+    expect(emailService.sendInvitationInscription.mock.calls[0][1]).toBe('jeton');
   });
 
   it('s’arrête au quota du jour et annonce ce qui reste', async () => {

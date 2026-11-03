@@ -202,13 +202,13 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       .catch(() => setProfils([]));
   }, [evenementId]);
 
-  /** Email « Choisir mon mot de passe » renvoyé (nouveau lien de 7 jours) */
+  /** Email « Choisir mon mot de passe » renvoyé (nouveau lien de 8 jours) */
   const renvoyerInvitation = async (userId: number) => {
     setRenvoiEnCours(userId);
     const res = await httpClient.post<{ email: string }>(`/evenements/${evenementId}/participants/${userId}/invitation`, {});
     setRenvoiEnCours(null);
     if (res.success) {
-      toast({ title: t('pro.participants.invitation.envoyee', 'Email envoyé'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 7 jours, a été envoyé à {{email}}.', { email: res.data?.email || '' }) });
+      toast({ title: t('pro.participants.invitation.envoyee', 'Email envoyé'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 8 jours, a été envoyé à {{email}}.', { email: res.data?.email || '' }) });
     } else {
       toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
     }

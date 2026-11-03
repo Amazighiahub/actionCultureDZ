@@ -170,7 +170,7 @@ class EmailVerificationService {
       return { rateLimited: true };
     }
 
-    // Compte importé jamais activé : son invitation dure 7 jours et il l'a peut-être perdue. Le même lien
+    // Compte importé jamais activé : son invitation dure 8 jours et il l'a peut-être perdue. Le même lien
     // lui est renvoyé : n'importe qui peut saisir son adresse ici, cela ne doit pas annuler ce lien.
     const lienExistant = hasActive ? await this.models.EmailVerification.lienActif(user.id_user, 'password_reset') : null;
     if (lienExistant) {
