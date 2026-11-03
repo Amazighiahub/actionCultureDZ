@@ -18,10 +18,11 @@ async function suivre(models, idUser, idPro) {
     attributes: ['id_user'],
   });
   if (!pro) throw erreur('Ce professionnel est introuvable', 404);
-  await models.SuiviProfessionnel.findOrCreate({
+  const [, cree] = await models.SuiviProfessionnel.findOrCreate({
     where: { id_user: idUser, id_professionnel: idPro },
     defaults: { date_creation: new Date() },
   });
+  if (cree) await require('./messagesProfessionnels').prevenirNouvelAbonne(models, idPro);
 }
 
 async function nePlusSuivre(models, idUser, idPro) {
@@ -58,7 +59,7 @@ async function mesSuivis(models, idUser) {
  * Publication d'un contenu : une notification par abonné, par lots. Respecte le réglage « favoris » des
  * préférences et ne fait jamais échouer la publication.
  */
-async function prevenirAbonnes(models, idPro, { titre, message, url_action, type_notification, metadata }) {
+async function prevenirAbonnes(models, idPro, { titre, message, composer, url_action, type_notification, metadata }) {
   if (!models?.SuiviProfessionnel || !idPro) return 0;
   let prevenus = 0;
   try {
@@ -75,12 +76,12 @@ async function prevenirAbonnes(models, idPro, { titre, message, url_action, type
       dernier = lot.at(-1).id_suivi;
       const destinataires = await models.User.findAll({
         where: { id_user: lot.map(l => l.id_user), statut: 'actif', notifications_favoris: { [Op.ne]: false } },
-        attributes: ['id_user'],
+        attributes: ['id_user', 'prenom', 'langue_preferee'],
         raw: true,
       });
       if (destinataires.length) {
         await models.Notification.bulkCreate(destinataires.map(u => ({
-          id_user: u.id_user, type_notification, titre, message, url_action, metadata, priorite: 'normale', lu: false, email_envoye: false,
+          id_user: u.id_user, type_notification, ...(composer ? composer(u) : { titre, message }), url_action, metadata, priorite: 'normale', lu: false, email_envoye: false,
         })));
         prevenus += destinataires.length;
       }

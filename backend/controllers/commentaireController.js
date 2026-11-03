@@ -155,6 +155,7 @@ class CommentaireController extends BaseController {
         id_user: req.user.id_user,
         id_oeuvre: oeuvreId
       });
+      this._prevenirCommentaire(req, commentaire_parent_id, { oeuvreId });
 
       return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {
@@ -162,6 +163,14 @@ class CommentaireController extends BaseController {
       if (error.isOperational && error.statusCode < 500) error.message = req.t(error.message);
       return this._handleError(res, error);
     }
+  }
+
+  /** Notification en arrière-plan : elle ne retarde ni ne fait échouer le commentaire */
+  _prevenirCommentaire(req, idParent, cible) {
+    const models = require('../models');
+    require('../services/messagesProfessionnels').prevenirCommentaire(models.models || models, {
+      idAuteurCommentaire: req.user.id_user, idParent, ...cible,
+    }).catch(() => {});
   }
 
   /**
@@ -188,6 +197,7 @@ class CommentaireController extends BaseController {
         id_user: req.user.id_user,
         id_evenement: evenementId
       });
+      this._prevenirCommentaire(req, commentaire_parent_id, { evenementId });
 
       return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {

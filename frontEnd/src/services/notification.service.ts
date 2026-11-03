@@ -382,26 +382,6 @@ async getNotifications(
   }
 
   /**
-   * Demander la permission pour les notifications navigateur
-   */
-  async requestBrowserPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      return false;
-    }
-
-    if (window.Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (window.Notification.permission !== 'denied') {
-      const permission = await window.Notification.requestPermission();
-      return permission === 'granted';
-    }
-
-    return false;
-  }
-
-  /**
    * Afficher une notification navigateur
    */
   showBrowserNotification(notification: Notification): void {

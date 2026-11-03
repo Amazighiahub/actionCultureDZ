@@ -60,6 +60,23 @@ const initProfessionnelRoutes = (models) => {
   );
 
   // ========================================
+  // Messages déjà rédigés pour garder le lien avec ses abonnés et les participants de ses événements
+  const messagesPro = require('../services/messagesProfessionnels');
+  router.get('/messages-abonnes', async (req, res) => {
+    try {
+      res.json({ success: true, data: await messagesPro.options(models, req.user.id_user) });
+    } catch {
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
+    }
+  });
+  router.post('/messages-abonnes', async (req, res) => {
+    try {
+      const { modele, id_oeuvre, id_evenement } = req.body || {};
+      res.json({ success: true, data: await messagesPro.envoyer(models, req.user.id_user, { modele, id_oeuvre, id_evenement }) });
+    } catch (err) {
+      res.status(err.statusCode || 500).json({ success: false, error: err.statusCode ? err.message : req.t('common.serverError') });
+    }
+  });
   // GESTION DES ŒUVRES
   // ========================================
 

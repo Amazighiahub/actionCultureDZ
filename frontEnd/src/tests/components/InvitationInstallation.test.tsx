@@ -6,7 +6,8 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const etat = vi.hoisted(() => ({ connecte: true, proposee: true, iphone: false, installee: false }));
+const etat = vi.hoisted(() => ({ connecte: true, proposee: true, iphone: false, installee: false, possible: false, abonnement: null as unknown }));
+const activation = vi.hoisted(() => vi.fn(async () => 'active'));
 const lancer = vi.hoisted(() => vi.fn(async () => true));
 
 vi.mock('@/providers/PermissionsProvider', () => ({
@@ -17,6 +18,9 @@ vi.mock('@/utils/applicationMobile', () => ({
   estIphone: () => etat.iphone,
   installationProposee: () => etat.proposee,
   lancerInstallation: lancer,
+  abonnementActuel: async () => etat.abonnement,
+  activerNotifications: activation,
+  notificationsPossibles: () => etat.possible,
   suivreInstallation: () => () => undefined,
 }));
 vi.mock('react-i18next', async (original) => ({
@@ -41,7 +45,9 @@ vi.stubGlobal('localStorage', {
 beforeEach(() => {
   memoire.clear();
   lancer.mockClear();
-  Object.assign(etat, { connecte: true, proposee: true, iphone: false, installee: false });
+  Object.assign(etat, { connecte: true, proposee: true, iphone: false, installee: false, possible: false, abonnement: null });
+  activation.mockClear();
+  vi.stubGlobal('Notification', { permission: 'default' });
   telephone(true);
 });
 
@@ -82,5 +88,45 @@ describe('invitation à installer', () => {
     render(<InvitationInstallation />);
     await userEvent.setup().click(screen.getByRole('button', { name: /Installer/ }));
     expect(lancer).toHaveBeenCalledTimes(1);
+  });
+  describe('proposition de notifications', () => {
+    const PROPOSITION = 'Recevoir vos notifications sur ce téléphone ?';
+
+    test('apparaît une fois le site installé, et s’active en un clic', async () => {
+      Object.assign(etat, { installee: true, possible: true });
+      render(<InvitationInstallation />);
+      await screen.findByText(PROPOSITION);
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Activer' }));
+      expect(activation).toHaveBeenCalledTimes(1);
+    });
+
+    test('jamais si la personne est déjà abonnée', async () => {
+      Object.assign(etat, { installee: true, possible: true, abonnement: {} });
+      render(<InvitationInstallation />);
+      await new Promise((r) => { setTimeout(r, 20); });
+      expect(screen.queryByText(PROPOSITION)).not.toBeInTheDocument();
+    });
+
+    test('aussi pour une personne qui avait autorisé sans abonnement', async () => {
+      vi.stubGlobal('Notification', { permission: 'granted' });
+      Object.assign(etat, { installee: true, possible: true });
+      render(<InvitationInstallation />);
+      expect(await screen.findByText(PROPOSITION)).toBeInTheDocument();
+    });
+
+    test('jamais si la permission a déjà été refusée', async () => {
+      vi.stubGlobal('Notification', { permission: 'denied' });
+      Object.assign(etat, { installee: true, possible: true });
+      render(<InvitationInstallation />);
+      await new Promise((r) => { setTimeout(r, 20); });
+      expect(screen.queryByText(PROPOSITION)).not.toBeInTheDocument();
+    });
+
+    test('sur iPhone, seulement une fois sur l’écran d’accueil', async () => {
+      Object.assign(etat, { iphone: true, proposee: false, possible: true });
+      render(<InvitationInstallation />);
+      await new Promise((r) => { setTimeout(r, 20); });
+      expect(screen.queryByText(PROPOSITION)).not.toBeInTheDocument();
+    });
   });
 });

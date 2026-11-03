@@ -1,3 +1,5 @@
+import MessagesAbonnesCard from '@/components/pro/MessagesAbonnesCard';
+import { abonnementActuel, activerNotifications, notificationsPossibles } from '@/utils/applicationMobile';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -195,25 +197,33 @@ const DashboardPro = () => {
   const { formatPriceRange } = useLocalizedNumber();
   const { user: currentUser } = useAuth();
   const { td, safe } = useTranslateData();
-  const { notifications, summary, markAsRead, markAllAsRead, requestNotificationPermission } = useNotifications();
+  const { notifications, summary, markAsRead, markAllAsRead } = useNotifications();
   const [notifOpen, setNotifOpen] = useState(false);
   const unreadCount = summary?.nonLues ?? 0;
 
-  // Bannière permission push navigateur
+  // Bannière sur ordinateur (sur téléphone, c'est InvitationInstallation qui le propose après la connexion).
+  // Une personne qui avait déjà autorisé sans abonnement est aussi concernée : elle ne recevait rien.
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   useEffect(() => {
     const dismissed = localStorage.getItem('notif_permission_dismissed');
-    const permission = ('Notification' in window) ? window.Notification.permission : 'denied';
-    if (!dismissed && permission === 'default') {
-      setShowNotifBanner(true);
-    }
+    const telephone = window.matchMedia?.('(pointer: coarse)').matches === true;
+    if (dismissed || telephone || !notificationsPossibles() || window.Notification.permission === 'denied') return;
+    abonnementActuel().then((a) => setShowNotifBanner(!a)).catch(() => undefined);
   }, []);
 
   const handleEnableNotifications = async () => {
-    const granted = await requestNotificationPermission();
     setShowNotifBanner(false);
-    if (granted) {
-      toast({ title: t('notifications.permissionGranted', 'Notifications activées'), description: t('notifications.permissionGrantedDesc', 'Vous recevrez des alertes en temps réel.') });
+    const resultat = await activerNotifications().catch(() => 'indisponible' as const);
+    if (resultat === 'active') {
+      toast({ title: t('applicationMobile.activees', 'Notifications activées sur cet appareil') });
+    } else if (resultat === 'refusee') {
+      toast({
+        title: t('applicationMobile.refusees', 'Notifications bloquées'),
+        description: t('applicationMobile.refuseesAide', 'Autorisez-les dans les réglages de votre navigateur pour ce site, puis réessayez.'),
+        variant: 'destructive',
+      });
+    } else {
+      toast({ title: t('applicationMobile.indisponibles', 'Les notifications ne sont pas disponibles pour le moment.'), variant: 'destructive' });
     }
   };
   const handleDismissNotifBanner = (permanent: boolean) => {
@@ -607,7 +617,7 @@ const DashboardPro = () => {
               <div className="flex items-center gap-3">
                 <Bell className="h-5 w-5 text-primary shrink-0" />
                 <p className="text-sm">
-                  {t('notifications.browserBanner', 'Activez les notifications pour être alerté en temps réel de vos ventes, événements et messages.')}
+                  {t('notifications.browserBanner', 'Activez les notifications pour être prévenu de vos inscriptions, abonnés et commentaires.')}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -666,6 +676,8 @@ const DashboardPro = () => {
             null}
           </div>
         </div>
+
+        <MessagesAbonnesCard />
 
         {/* Zone principale avec onglets */}
         <Card>

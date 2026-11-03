@@ -214,8 +214,7 @@ class DashboardModerationService {
           const auteur = await this.models.User.findByPk(oeuvre.saisi_par, { attributes: ['nom', 'prenom'] });
           const qui = [texteLisible(auteur?.prenom), texteLisible(auteur?.nom)].filter(Boolean).join(' ') || 'Un professionnel que vous suivez';
           await require('../suivisProfessionnels').prevenirAbonnes(this.models, oeuvre.saisi_par, {
-            titre: 'Nouvelle publication',
-            message: `${qui} a publié « ${texteLisible(oeuvre.titre)} ».`,
+            composer: (personne) => require('../messagesProfessionnels').composer('publication', personne, qui, texteLisible(oeuvre.titre)),
             url_action: [4, 5].includes(oeuvre.id_type_oeuvre) ? `/articles/${oeuvreId}` : `/oeuvres/${oeuvreId}`,
             type_notification: 'nouvelle_oeuvre',
             metadata: { id_oeuvre: Number(oeuvreId) }

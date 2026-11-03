@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { socketService } from '../services/socketService';
 import type { SocketEvents } from '../services/socketService';
 import { notificationService } from '../services/notification.service';
+import { activerNotifications } from '@/utils/applicationMobile';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import { queryClient } from '@/lib/queryClient';
 
@@ -185,7 +186,8 @@ export function useNotifications(): UseNotificationsReturn {
   // Demander la permission pour les notifications navigateur
   const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
     try {
-      return await notificationService.requestBrowserPermission();
+      // Crée le vrai abonnement : la seule autorisation du navigateur ne fait arriver aucune notification
+      return (await activerNotifications()) === 'active';
     } catch (error) {
       return false;
     }

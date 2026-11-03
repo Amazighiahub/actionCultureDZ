@@ -992,8 +992,7 @@ class EvenementService extends BaseService {
       const organisateur = await this.models?.User?.findByPk(idOrganisateur, { attributes: ['nom', 'prenom'] });
       const qui = [texteLisible(organisateur?.prenom), texteLisible(organisateur?.nom)].filter(Boolean).join(' ') || 'Un professionnel que vous suivez';
       await require('../suivisProfessionnels').prevenirAbonnes(this.models, idOrganisateur, {
-        titre: 'Nouvel événement',
-        message: `${qui} organise « ${nom} ».`,
+        composer: (personne) => require('../messagesProfessionnels').composer('nouvelEvenement', personne, qui, nom),
         url_action: lien,
         type_notification: 'nouvel_evenement',
         metadata: { id_evenement: idEvenement }
