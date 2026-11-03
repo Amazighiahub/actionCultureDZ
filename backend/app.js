@@ -608,7 +608,7 @@ class App {
       }
       // Désinscription one-click (RFC 8058) : POST envoyé par la messagerie, sans jeton CSRF ;
       // protégé par la signature HMAC du lien.
-      if (req.path === '/users/newsletter/unsubscribe') {
+      if (req.path === '/users/newsletter/unsubscribe' || req.path === '/newsletter/desabonner') {
         return next();
       }
       return csrfVerifier(req, res, next);

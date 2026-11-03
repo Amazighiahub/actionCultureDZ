@@ -1,0 +1,105 @@
+/**
+ * Pied de page, visible de tous, sans compte : installer Tala DZ et s'abonner à la newsletter
+ * avec son e-mail seul. Le bouton d'installation n'apparaît que si le navigateur le permet.
+ */
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Download, Loader2, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { httpClient } from '@/services/httpClient';
+import { ConfirmDialog } from '@/components/shared';
+import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation } from '@/utils/applicationMobile';
+
+export function InstallerTalaDz() {
+  const { t } = useTranslation();
+  const [proposee, setProposee] = useState(installationProposee());
+  const [consignes, setConsignes] = useState(false);
+  useEffect(() => suivreInstallation(() => setProposee(installationProposee())), []);
+
+  if (estInstallee() || (!proposee && !estIphone())) return null;
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => (proposee ? lancerInstallation() : setConsignes(true))}>
+        <Download className="h-4 w-4 me-2" aria-hidden="true" />
+        {t('applicationMobile.installer', 'Installer Tala DZ')}
+      </Button>
+      <ConfirmDialog
+        open={consignes}
+        onOpenChange={setConsignes}
+        title={t('applicationMobile.installer', 'Installer Tala DZ')}
+        description={[
+          t('applicationMobile.iphone1', 'Ouvrez taladz.com dans Safari.'),
+          t('applicationMobile.iphone2', 'Touchez le bouton Partager, en bas de l’écran.'),
+          t('applicationMobile.iphone3', 'Choisissez « Sur l’écran d’accueil », puis « Ajouter ».'),
+        ].join(' ')}
+        confirmLabel={t('common.ok', 'OK')}
+        onConfirm={() => setConsignes(false)}
+      />
+    </>
+  );
+}
+
+export function InscriptionNewsletter() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [robot, setRobot] = useState('');
+  const [enCours, setEnCours] = useState(false);
+  const [envoye, setEnvoye] = useState(false);
+
+  const envoyer = async (e: FormEvent) => {
+    e.preventDefault();
+    setEnCours(true);
+    try {
+      const res = await httpClient.post<unknown>('/newsletter/inscription', { email, site_web: robot });
+      if (!res.success) throw new Error(res.error);
+      setEnvoye(true);
+    } catch (err) {
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: (err instanceof Error && err.message) || t('newsletter.echec', 'L’inscription n’a pas abouti. Réessayez.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  if (envoye) {
+    return <p className="text-sm" role="status">{t('newsletter.verifiez', 'Regardez vos e-mails, y compris les indésirables : cliquez sur le lien reçu pour confirmer votre inscription.')}</p>;
+  }
+  return (
+    <form onSubmit={envoyer} className="space-y-2">
+      <Label htmlFor="newsletter-email" className="font-medium">{t('newsletter.titre', 'Recevoir la newsletter')}</Label>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Input
+          id="newsletter-email"
+          type="email"
+          required
+          autoComplete="email"
+          dir="ltr"
+          placeholder={t('newsletter.adresse', 'Votre adresse e-mail')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button type="submit" disabled={enCours}>
+          {enCours
+            ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />
+            : <Mail className="h-4 w-4 me-2" aria-hidden="true" />}
+          {t('newsletter.sinscrire', 'S’inscrire')}
+        </Button>
+      </div>
+      {/* Invisible pour les personnes : seuls les robots le remplissent */}
+      <input type="text" name="site_web" value={robot} onChange={(e) => setRobot(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+      <p className="text-xs text-muted-foreground">
+        {t('newsletter.mention', 'Votre e-mail seul suffit. Désinscription possible dans chaque message.')}{' '}
+        <Link to="/a-propos#confidentialite" className="underline">{t('newsletter.confidentialite', 'Confidentialité')}</Link>
+      </p>
+    </form>
+  );
+}

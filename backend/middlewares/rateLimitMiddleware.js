@@ -349,6 +349,14 @@ const authRateLimitHandler = (req, res) => {
 };
 
 const endpointLimiters = {
+  // Inscription à la newsletter sans compte : chaque demande peut envoyer un e-mail
+  newsletter: rateLimit(withStore('newsletter', {
+    windowMs: 60 * 60 * 1000,
+    max: IS_PRODUCTION ? 20 : 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+  })),
   login: rateLimit(withStore('login', {
     windowMs: 60 * 60 * 1000,          // 1 heure
     // 50 échecs/h par adresse (comptés une seule fois depuis 2026-11) : une adresse mobile est partagée ;

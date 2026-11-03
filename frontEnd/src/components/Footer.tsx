@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { lienSommaireGuides } from '@/utils/lienGuide';
+import { InscriptionNewsletter, InstallerTalaDz } from '@/components/shared/PiedDePageApplication';
 
 const Footer = () => {
   const { t, i18n } = useTranslation();
@@ -145,6 +146,11 @@ const Footer = () => {
               </ul>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
+          <InscriptionNewsletter />
+          <InstallerTalaDz />
         </div>
 
         <Separator className="my-6 sm:my-8" />

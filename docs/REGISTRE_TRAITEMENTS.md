@@ -48,7 +48,7 @@
 |---|---|
 | **Finalité** | Envoi de la newsletter culturelle (événements, nouvelles œuvres, patrimoine) |
 | **Base légale** | Consentement explicite (case séparée, non pré-cochée) |
-| **Catégories de personnes** | Utilisateurs inscrits ayant coché la case newsletter |
+| **Catégories de personnes** | Utilisateurs inscrits ayant coché la case newsletter ; personnes sans compte ayant confirmé leur e-mail par le lien reçu (table `newsletter_abonne`, adresse seule) |
 | **Données collectées** | Adresse email |
 | **Destinataires** | Prestataire SMTP — **à confirmer** |
 | **Transfert hors UE/Algérie** | Selon le prestataire SMTP retenu (à confirmer) |

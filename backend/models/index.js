@@ -281,6 +281,9 @@ const loadModels = (sequelize) => {
   const notificationModel = loadModelSafely('./misc/notification', 'Notification', sequelize);
   if (notificationModel) models.Notification = notificationModel;
 
+  const newsletterAbonneModel = loadModelSafely('./misc/newsletterAbonne', 'NewsletterAbonne', sequelize);
+  if (newsletterAbonneModel) models.NewsletterAbonne = newsletterAbonneModel;
+
   const pushAbonnementModel = loadModelSafely('./misc/pushAbonnement', 'PushAbonnement', sequelize);
   if (pushAbonnementModel) models.PushAbonnement = pushAbonnementModel;
 

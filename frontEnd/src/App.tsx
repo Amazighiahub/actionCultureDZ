@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import InvitationInstallation from '@/components/shared/InvitationInstallation';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PermissionsProvider, usePermissionsContext } from "@/providers/PermissionsProvider";
 import { ProtectedRoute, AdminRoute, ProfessionalRoute } from "@/components/auth/ProtectedRoute";
@@ -56,6 +57,7 @@ const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const ConfirmEmailChange = React.lazy(() => import('./pages/ConfirmEmailChange'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const VerificationEmailEnvoyee = React.lazy(() => import('./pages/VerificationEmailEnvoyee'));
+const NewsletterConfirmer = React.lazy(() => import('./pages/NewsletterConfirmer'));
 
 // Dashboards
 const DashboardPro = React.lazy(() => import('./pages/DashboardPro'));
@@ -464,6 +466,7 @@ const App = () => (
             
             {/* Routes de vérification email */}
             <Route path="/verification-email-envoyee" element={<VerificationEmailEnvoyee />} />
+            <Route path="/newsletter/confirmer" element={<NewsletterConfirmer />} />
             <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
             <Route path="/confirm-email-change/:token" element={<ConfirmEmailChange />} />
 
@@ -472,6 +475,7 @@ const App = () => (
           </Routes>
           </Suspense>
 
+          <InvitationInstallation />
           <Toaster />
         </BrowserRouter>
       </PermissionsProvider>

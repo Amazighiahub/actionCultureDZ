@@ -1,5 +1,23 @@
 {
+  "newsletter": {
+    "titre": "Get the newsletter",
+    "adresse": "Your e-mail address",
+    "sinscrire": "Subscribe",
+    "mention": "Your e-mail is all we need. You can unsubscribe from any message.",
+    "confidentialite": "Privacy",
+    "verifiez": "Check your e-mails, including spam: click the link you received to confirm your subscription.",
+    "echec": "Your subscription did not go through. Please try again.",
+    "confirmerTexte": "Click to confirm that you want to receive the newsletter at this address.",
+    "confirmer": "Confirm my subscription",
+    "confirmee": "Done: you will receive the Tala DZ newsletter.",
+    "lienInvalide": "This link is no longer valid. Subscribe again from the bottom of the page.",
+    "retour": "Back to home"
+  },
   "applicationMobile": {
+    "invitationTitre": "Install Tala DZ on your phone",
+    "invitationTexte": "Open the site with one tap and receive your notifications: registration validated, reminder, event change.",
+    "invitationIphone": "In Safari, tap Share, then “Add to Home Screen”. You can then turn on notifications.",
+    "plusTard": "Later",
     "titre": "Tala DZ on your phone",
     "intro": "Open the site like an app and receive your notifications: registration validated, event change, reminder. E-mails are still sent.",
     "installer": "Install Tala DZ",

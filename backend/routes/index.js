@@ -26,6 +26,7 @@ const initServiceRoutes = require('./serviceRoutes');
 const initSignalementRoutes  = require('./signalementRoutes')
 const initTrackingRoutes = require('./trackingRoutes');
 const initEmailVerificationRoutes = require('./emailVerificationRoutes');
+const initNewsletterRoutes = require('./newsletterRoutes');
 // Routes admin intégrées dans les controllers principaux
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
@@ -495,6 +496,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
     
     { path: '/notifications', init: initNotificationRoutes, args: [models] },
+    { path: '/newsletter', init: initNewsletterRoutes, args: [models] },
     { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models, authMiddleware] },
     { path: '/programmes', init: initProgrammeRoutes, args: [models] },
     { path: '/professionnel', init: initProfessionnelRoutes, args: [models] },

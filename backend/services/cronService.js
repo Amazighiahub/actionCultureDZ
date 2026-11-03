@@ -197,6 +197,7 @@ class CronService {
    * 2. Nettoyer les tokens expirés
    */
   async cleanExpiredTokens() {
+    await require('./newsletterAbonnes').purgerNonConfirmes(this.models);
     if (!this.models?.EmailVerification) return;
 
     const result = await this.models.EmailVerification.destroy({
@@ -368,7 +369,38 @@ class CronService {
       if (users.length < BATCH_SIZE) break;
     }
 
-    const abonnes = await this.models.User.count({ where: newsletterWhere });
+    // Abonnés sans compte, après les comptes : une même adresse ne reçoit qu'un seul message
+    const { lienDesabonnement } = require('./newsletterAbonnes');
+    const sansCompteWhere = { statut: 'actif' };
+    let dernierId = 0;
+    while (this.models.NewsletterAbonne && budget > 0) {
+      const lot = await this.models.NewsletterAbonne.findAll({
+        where: { ...sansCompteWhere, id_abonne: { [Op.gt]: dernierId } },
+        attributes: ['id_abonne', 'email'],
+        order: [['id_abonne', 'ASC']],
+        limit: Math.min(BATCH_SIZE, budget),
+        raw: true
+      });
+      if (lot.length === 0) break;
+      dernierId = lot.at(-1).id_abonne;
+      const comptes = await this.models.User.findAll({
+        where: { ...newsletterWhere, email: lot.map(a => a.email) }, attributes: ['email'], raw: true
+      });
+      const dejaServis = new Set(comptes.map(c => c.email));
+      const emails = lot.filter(a => !dejaServis.has(a.email)).map(a => ({
+        to: a.email,
+        data: { nom: '', prenom: '', unsubscribe_url: lienDesabonnement(a.id_abonne) }
+      }));
+      if (emails.length) {
+        await this.services.emailQueueService.addBulkEmails(emails, template);
+        totalSent += emails.length;
+        budget -= emails.length;
+      }
+      if (lot.length < BATCH_SIZE) break;
+    }
+
+    const abonnes = await this.models.User.count({ where: newsletterWhere })
+      + (this.models.NewsletterAbonne ? await this.models.NewsletterAbonne.count({ where: sansCompteWhere }) : 0);
     if (abonnes > totalSent) {
       logger.warn(`📮 Newsletter : quota du jour atteint, ${abonnes - totalSent} abonné(s) non servi(s) cette semaine`);
     }

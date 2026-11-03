@@ -11,7 +11,8 @@ const secret = () => process.env.NEWSLETTER_SECRET || process.env.JWT_SECRET || 
 // Listes auxquelles on peut renoncer par lien : la newsletter (accord préalable) et les annonces
 // d'événements envoyées aux inscrits (refus possible à tout moment). Signatures distinctes :
 // un lien de l'une ne désinscrit pas de l'autre.
-const LISTES = { newsletter: 'newsletter', annonces: 'annonces' };
+// abonnes et abonneConfirm : newsletter sans compte (services/newsletterAbonnes.js)
+const LISTES = { newsletter: 'newsletter', annonces: 'annonces', abonnes: 'abonnes', abonneConfirm: 'abonne-confirm' };
 
 function signUnsubscribe(userId, liste = 'newsletter') {
   return crypto.createHmac('sha256', secret()).update(`${LISTES[liste] || 'newsletter'}-unsubscribe:${userId}`).digest('hex');
