@@ -9,13 +9,15 @@
  */
 const logger = require('../../utils/logger');
 
-async function isReferencedElsewhere(models, url) {
+async function isReferencedElsewhere(models, url, { sansMedias = false } = {}) {
   const checks = [
     models.User && models.User.unscoped().count({ where: { photo_url: url } }),
-    models.Media && models.Media.count({ where: { url } }),
+    !sansMedias && models.Media && models.Media.count({ where: { url } }),
     models.LieuMedia && models.LieuMedia.count({ where: { url } }),
     models.Intervenant && models.Intervenant.count({ where: { photo_url: url } }),
-    models.Service && models.Service.count({ where: { photo_url: url } })
+    models.Service && models.Service.count({ where: { photo_url: url } }),
+    models.Evenement && models.Evenement.count({ where: { image_url: url } }),
+    models.Organisation && models.Organisation.count({ where: { logo_url: url } })
   ].filter(Boolean);
   const counts = await Promise.all(checks);
   return counts.some(c => c > 0);

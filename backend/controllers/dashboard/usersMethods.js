@@ -188,7 +188,7 @@ const usersMethods = {
         change_role: 'Rôles mis à jour',
         validate: 'Utilisateurs validés'
       };
-      res.json({ success: true, message: `${messages[action] || 'Action effectuée'} pour ${results.success.length} utilisateurs` });
+      res.json({ success: true, message: `${messages[action] || 'Action effectuée'} pour ${results.success.length} utilisateurs`, data: results });
     } catch (error) {
       console.error('Erreur bulkUserAction:', error.message);
       res.status(500).json({ success: false, error: req.t('common.serverError') });

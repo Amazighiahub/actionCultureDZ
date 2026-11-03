@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('../user/userFileCleanup');
+const { annulerEvenementsAVenir } = require('../user/evenementsAVenir');
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
@@ -170,6 +171,7 @@ class DashboardUserManagementService {
     }
 
     if (hardDelete) {
+      await annulerEvenementsAVenir(this.models, userId, adminId);
       const result = await this.userRepo.hardDeleteUser(userId, {
         adminId,
         userEmail: user.email,

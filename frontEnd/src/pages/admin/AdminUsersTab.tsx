@@ -484,7 +484,7 @@ const AdminUsersTabContent: React.FC = () => {
         open={confirmDelete.open}
         onOpenChange={(open) => setConfirmDelete({ open })}
         title={t('admin.users.confirmDelete', 'Supprimer cet utilisateur ?')}
-        description={t('admin.users.confirmDeleteDesc', 'Cette action est irréversible. Toutes les données de l\'utilisateur seront supprimées.')}
+        description={t('admin.users.confirmDeleteDesc', 'Le compte sera effacé définitivement. Ses événements à venir seront annulés et les inscrits prévenus. Ses événements passés et ses œuvres resteront sur le site, sans auteur.')}
         variant="destructive"
         confirmLabel={t('common.delete', 'Supprimer')}
         onConfirm={() => {
@@ -510,7 +510,7 @@ const AdminUsersTabContent: React.FC = () => {
         open={confirmBulkDelete}
         onOpenChange={setConfirmBulkDelete}
         title={t('admin.users.confirmBulkDelete', 'Supprimer {{count}} utilisateur(s) ?', { count: selectedUserIds.length })}
-        description={t('admin.users.confirmBulkDeleteDesc', 'Cette action est irréversible.')}
+        description={t('admin.users.confirmBulkDeleteDesc', 'Les comptes seront effacés définitivement. Leurs événements à venir seront annulés et les inscrits prévenus. Leurs événements passés et leurs œuvres resteront sur le site, sans auteur.')}
         variant="destructive"
         confirmLabel={t('common.delete', 'Supprimer')}
         onConfirm={executeBulkDelete}

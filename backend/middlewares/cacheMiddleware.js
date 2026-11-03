@@ -250,6 +250,12 @@ function createInvalidateCacheMiddleware(patterns = []) {
 function publicHttpCache(maxAgeSeconds) {
   return (req, res, next) => {
     res.set('Cache-Control', `public, max-age=${maxAgeSeconds}, stale-while-revalidate=30`);
+    // Une erreur ne se garde pas : une panne de quelques secondes durerait plusieurs minutes chez le visiteur
+    const writeHead = res.writeHead;
+    res.writeHead = function (statusCode, ...args) {
+      if (statusCode >= 400) this.setHeader('Cache-Control', 'no-store');
+      return writeHead.call(this, statusCode, ...args);
+    };
     next();
   };
 }

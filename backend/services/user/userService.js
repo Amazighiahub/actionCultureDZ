@@ -20,7 +20,7 @@ const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('./userFileCleanup');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
-const { pasTermine } = require('../../helpers/finEvenement');
+const { evenementsAVenir, annulerEvenementsAVenir } = require('./evenementsAVenir');
 const { texteLisible } = require('../../helpers/i18n');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -452,15 +452,7 @@ class UserService extends BaseService {
       throw this._forbiddenError('Impossible de supprimer un compte administrateur');
     }
 
-    // Événements à venir de ce compte : annulés, inscrits prévenus (avant : ils restaient publiés au nom
-    // d'« Utilisateur supprimé », le rappel partait et plus personne ne pouvait les annuler)
-    const aVenir = await this._evenementsAVenir(id);
-    if (aVenir.length) {
-      const container = require('../serviceContainer');
-      for (const ev of aVenir) {
-        await container.evenementService.cancel(ev.id_evenement, adminId, 'Le compte de l’organisateur a été supprimé', { isAdmin: true });
-      }
-    }
+    await annulerEvenementsAVenir(this.models, id, adminId);
 
     // Suppression complète (données liées nettoyées) — un destroy direct échouait
     // sur les clés étrangères RESTRICT et laissait les données personnelles liées.
@@ -861,13 +853,7 @@ class UserService extends BaseService {
 
   /** Événements publiés et pas encore terminés organisés par ce compte */
   async _evenementsAVenir(userId) {
-    const { Evenement } = this.models || {};
-    if (!Evenement) return [];
-    const { Op } = require('sequelize');
-    return Evenement.findAll({
-      where: { id_user: userId, statut: ['publie', 'planifie', 'en_cours'], [Op.and]: [pasTermine(new Date())] },
-      attributes: ['id_evenement', 'nom_evenement']
-    });
+    return evenementsAVenir(this.models, userId);
   }
 
   /** Hash bcrypt factice (même coût que les vrais) pour égaliser le temps de réponse du login */

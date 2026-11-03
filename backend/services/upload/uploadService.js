@@ -10,6 +10,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const logger = require('../../utils/logger');
 const cloudinarySvc = require('../cloudinaryService');
+const { isReferencedElsewhere } = require('../user/userFileCleanup');
 
 class UploadService {
   constructor(models) {
@@ -170,6 +171,18 @@ class UploadService {
   }
 
   /**
+   * photo_url est modifiable par son titulaire, qui pouvait y mettre l'affiche d'un événement pour la
+   * faire effacer au changement de photo : seul un fichier envoyé par ce compte et utilisé nulle part
+   * ailleurs est effacé.
+   */
+  async _photoEffacable(url, userId) {
+    if (!this.models.Media) return false;
+    const medias = await this.models.Media.findAll({ where: { url }, attributes: ['metadata'] });
+    const siens = medias.length > 0 && medias.every(m => m.metadata?.uploadedBy === userId);
+    return siens && !(await isReferencedElsewhere(this.models, url, { sansMedias: true }));
+  }
+
+  /**
    * Upload et mise a jour photo de profil
    * @param {number} userId
    * @param {object} fileData - Donnees du fichier uploade (req.file)
@@ -188,7 +201,9 @@ class UploadService {
     // Supprimer l'ancienne photo Cloudinary si elle existe
     if (oldPhotoUrl && oldPhotoUrl !== fileUrl) {
       try {
-        if (cloudinarySvc.isCloudinaryUrl(oldPhotoUrl)) {
+        if (!(await this._photoEffacable(oldPhotoUrl, userId))) {
+          // Pas la sienne ou encore utilisée ailleurs : le fichier reste
+        } else if (cloudinarySvc.isCloudinaryUrl(oldPhotoUrl)) {
           const oldPublicId = cloudinarySvc.extractPublicId(oldPhotoUrl);
           if (oldPublicId) await cloudinarySvc.deleteAsset(oldPublicId, 'image');
         } else {

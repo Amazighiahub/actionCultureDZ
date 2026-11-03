@@ -573,6 +573,7 @@ export function useAjouterOeuvre() {
       }
 
       const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
+      let blocsEnregistres = true;
 
       const articleRecordId = (() => {
         const d = oeuvreResponse.data;
@@ -680,7 +681,19 @@ export function useAjouterOeuvre() {
 
         if (!blocksResponse.success) {
           console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
+          blocsEnregistres = false;
         }
+      }
+
+      // Créé en brouillon : sans cet envoi, l'article n'arrivait jamais à l'équipe malgré « soumis avec
+      // succès ». Blocs non enregistrés : il reste en brouillon, on n'envoie pas un article vide
+      const soumission = blocsEnregistres ? await oeuvreService.submitForValidation(oeuvreId) : { success: false };
+      if (!soumission.success) {
+        toast({
+          title: t('toasts.warning'),
+          description: t('ajouteroeuvre.articleNonSoumis', "Article enregistré en brouillon, mais pas envoyé à l'équipe. Envoyez-le depuis votre tableau de bord."),
+          variant: 'destructive',
+        });
       }
 
       if (cibleArticle) {
@@ -692,7 +705,9 @@ export function useAjouterOeuvre() {
         navigate(cibleArticle.retour);
         return;
       }
-      toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
+      if (soumission.success) {
+        toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
+      }
       navigate(`/articles/${oeuvreId}`);
 
     } catch (error: unknown) {

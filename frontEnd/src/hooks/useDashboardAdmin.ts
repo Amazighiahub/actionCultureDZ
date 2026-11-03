@@ -330,6 +330,8 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         });
         // Les deux listes (tous les utilisateurs, en attente) : le compte supprimé disparaît des deux
         await Promise.all([loadAllUsers(), loadPendingUsers()]);
+      } else {
+        toast({ title: t('toasts.error'), description: response.error || t('toasts.userDeleteFailed'), variant: "destructive" });
       }
     } catch (error) {
       toast({
@@ -419,10 +421,23 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
     try {
       const response = await adminService.bulkUserAction(userIds, action as 'activate' | 'deactivate' | 'delete' | 'change_role');
       if (response.success) {
-        toast({
-          title: t('toasts.success'),
-          description: t('toasts.bulkActionApplied', { action, count: userIds.length })
-        });
+        // Bilan du serveur : un administrateur coché n'est pas traité, le message ne doit pas le compter
+        const bilan = response.data as unknown as { success?: number[]; errors?: unknown[] } | undefined;
+        const refuses = bilan?.errors?.length ?? 0;
+        const traites = bilan?.success?.length ?? userIds.length;
+        if (traites > 0) {
+          toast({
+            title: t('toasts.success'),
+            description: t('toasts.bulkActionApplied', { action, count: traites })
+          });
+        }
+        if (refuses > 0) {
+          toast({
+            title: t('toasts.error'),
+            description: t('toasts.bulkActionPartial', '{{count}} compte(s) non traité(s), par exemple un administrateur ou votre propre compte.', { count: refuses }),
+            variant: "destructive"
+          });
+        }
         await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {

@@ -2759,11 +2759,9 @@
       "reactivate": "ⴰⵍⴻⵙ ⴰⵔⵎⴻⴷ",
       "suspend": "ⵃⴱⴻⵙ",
       "confirmDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵙⴻⵇⴷⴰⵛ-ⴰ?",
-      "confirmDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ. ⴰⴽⴽ ⵉⵙⴻⴼⴽⴰ ⵏ ⵓⵙⴻⵇⴷⴰⵛ ⴰⴷ ⵜⵜⵡⴰⴽⴽⵙⴻⵏ.",
       "confirmSuspend": "ⴰⴷ ⵜⵃⴻⴱⵙⴻⴹ ⴰⵙⴻⵇⴷⴰⵛ-ⴰ?",
       "confirmSuspendDesc": "ⴰⵙⴻⵇⴷⴰⵛ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵃⴱⴻⵙ ⵉ 7 ⵏ ⵡⵓⵙⵙⴰⵏ.",
       "confirmBulkDelete": "ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ {{count}} ⵏ ⵓⵙⴻⵇⴷⴰⵛ (ⵉⵙⴻⵇⴷⴰⵛⴻⵏ)?",
-      "confirmBulkDeleteDesc": "ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ ⵖⴻⵔ ⴷⴻⴼⴼⵉⵔ.",
       "types": {
         "visiteur": "ⵉⵏⴻⴱⴳⵉ",
         "guide": "ⴰⵎⵏⵉⵔ"

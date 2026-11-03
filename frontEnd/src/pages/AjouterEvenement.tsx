@@ -440,8 +440,9 @@ const AjouterEvenement = () => {
       toast({ title: t('common.error', 'Erreur'), description: t('validation.invalidFileType', 'Le fichier doit être une image'), variant: 'destructive' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: t('common.error', 'Erreur'), description: t('validation.fileTooLarge', 'Fichier trop volumineux (max 5 Mo)'), variant: 'destructive' });
+    // Réduite à l'envoi (prepareImageForUpload) : une photo de téléphone de 4 à 10 Mo est acceptée
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: t('common.error', 'Erreur'), description: t('validation.imageTropLourde', 'Image trop lourde (20 Mo au plus)'), variant: 'destructive' });
       return;
     }
     clearFieldError('affiche');
@@ -508,7 +509,16 @@ const AjouterEvenement = () => {
     }
     else if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
     fd.append('statut', statut);
-    if (affiche) fd.append('affiche', await prepareImageForUpload(affiche));
+    if (affiche) {
+      const image = await prepareImageForUpload(affiche);
+      // Le serveur refuse au-delà de 10 Mo : seule une image non réduite (GIF, ancien navigateur) y arrive
+      if (image.size > 10 * 1024 * 1024) {
+        toast({ title: t('common.error', 'Erreur'), description: t('validation.imageNonReduite', 'Cette image dépasse 10 Mo et ne peut pas être réduite. Choisissez-en une plus légère.'), variant: 'destructive' });
+        setIsSubmitting(false);
+        return;
+      }
+      fd.append('affiche', image);
+    }
 
     try {
       let response;

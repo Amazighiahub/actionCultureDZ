@@ -225,7 +225,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         nb_participants_max: data.nb_participants_max, // Conforme
         niveau_requis: data.niveau_requis, // Conforme
         materiel_requis: data.materiel_requis, // Conforme
-        notes_organisateur: data.notes_organisateur, // Conforme
+        // Le serveur ne renvoie jamais les notes à la lecture : vides en modification = on garde les anciennes
+        ...(editingProgramme && !data.notes_organisateur ? {} : { notes_organisateur: data.notes_organisateur }),
         traduction_disponible: data.traduction_disponible, // Conforme
         enregistrement_autorise: data.enregistrement_autorise, // Conforme
         diffusion_live: data.diffusion_live, // Conforme
@@ -450,7 +451,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     ordre: editingProgramme.ordre ?? 1,
                     nb_participants_max: editingProgramme.nb_participants_max,
                     niveau_requis: 'tous_niveaux',
-                    materiel_requis: [],
+                    materiel_requis: (Array.isArray(editingProgramme.materiel_requis) ? editingProgramme.materiel_requis : []) as unknown as string[],
+                    lieu_specifique: { fr: editingProgramme.lieu_specifique || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
                     langue_principale: 'fr',
                     traduction_disponible: false,
                     enregistrement_autorise: false,

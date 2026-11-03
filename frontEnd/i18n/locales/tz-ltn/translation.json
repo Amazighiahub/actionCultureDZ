@@ -2759,11 +2759,9 @@
       "reactivate": "Ales armed",
       "suspend": "Ḥbes",
       "confirmDelete": "Ad tekkseḍ aseqdac-a?",
-      "confirmDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir. Akk isefka n useqdac ad ttwakksen.",
       "confirmSuspend": "Ad tḥebseḍ aseqdac-a?",
       "confirmSuspendDesc": "Aseqdac ad yettwaḥbes i 7 n wussan.",
       "confirmBulkDelete": "Ad tekkseḍ {{count}} n useqdac (iseqdacen)?",
-      "confirmBulkDeleteDesc": "Tigawt-a ur tettuɣal ara ɣer deffir.",
       "types": {
         "visiteur": "Inebgi",
         "guide": "Amnir"

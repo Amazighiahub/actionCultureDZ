@@ -46,7 +46,10 @@ wait_healthy() {
     sleep 5
   done
   warn "$container n'est pas healthy apres ${timeout}s (statut: $status)"
-  docker logs --tail 80 "$container" || true
+  # Pas dans la sortie du déploiement : le dépôt est public, ces journaux y seraient lisibles
+  local journal="/tmp/deploiement-$container.log"
+  (umask 077; docker logs --tail 80 "$container" >"$journal" 2>&1) || true
+  warn "journaux de $container sur le serveur : $journal"
   return 1
 }
 

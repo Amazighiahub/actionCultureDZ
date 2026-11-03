@@ -11,6 +11,16 @@ const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration
 /** Nom lisible d'un service (nom multilingue) pour les notifications */
 const nomLisible = (nom) => texteLisible(nom) || 'Service';
 
+/** Valeur à comparer : vide = '', nombre = sa valeur (« 36.70000000 » = 36.7), multilingue sans ses langues vides */
+function valeurComparable(v) {
+  if (v === null || v === undefined || v === '') return '';
+  if (typeof v === 'object') {
+    return JSON.stringify(Object.entries(v).filter(([, x]) => x !== '' && x != null).sort(([a], [b]) => a.localeCompare(b)));
+  }
+  const n = Number(v);
+  return Number.isNaN(n) ? String(v) : String(n);
+}
+
 class ServiceService extends BaseService {
   constructor(serviceRepository, options = {}) {
     super(serviceRepository, options);
@@ -224,9 +234,10 @@ class ServiceService extends BaseService {
     // relecture) ; horaires, tarifs et disponibilité restent modifiables sans repasser en attente.
     const PUBLIC_FIELDS = ['nom', 'description', 'site_web', 'email', 'telephone', 'photo_url', 'adresse'];
     const POSITION = ['id_lieu', 'type_service', 'latitude', 'longitude'];
-    const positionChangee = POSITION.some(f => updateData[f] !== undefined && String(updateData[f]) !== String(existing[f] ?? ''));
-    if (!isModerator && existing.statut === 'valide'
-        && (PUBLIC_FIELDS.some(f => updateData[f] !== undefined) || positionChangee)) {
+    // Le formulaire renvoie tous les champs : on compare les valeurs, leur seule présence retirait le
+    // service du site à chaque changement d'horaire
+    const change = f => updateData[f] !== undefined && valeurComparable(updateData[f]) !== valeurComparable(existing[f]);
+    if (!isModerator && existing.statut === 'valide' && [...PUBLIC_FIELDS, ...POSITION].some(change)) {
       updateData.statut = 'en_attente';
     }
     // Un service refusé, corrigé par son propriétaire, repart en validation

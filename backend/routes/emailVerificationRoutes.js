@@ -13,10 +13,12 @@ module.exports = (models, authMiddleware) => {
   // ========================================================================
   
   const emailValidation = [
+    // Pas de normalizeEmail : il retire les points des adresses Gmail, le compte n'était plus trouvé
     body('email')
+      .trim()
       .isEmail()
-      .normalizeEmail()
       .withMessage((value, { req }) => req.t('validation.invalidEmail'))
+      .toLowerCase()
   ];
 
   const passwordResetValidation = [
@@ -39,9 +41,10 @@ module.exports = (models, authMiddleware) => {
 
   const emailChangeValidation = [
     body('newEmail')
+      .trim()
       .isEmail()
-      .normalizeEmail()
-      .withMessage((value, { req }) => req.t('validation.invalidEmail')),
+      .withMessage((value, { req }) => req.t('validation.invalidEmail'))
+      .toLowerCase(),
     body('password')
       .notEmpty()
       .withMessage((value, { req }) => req.t('validation.passwordRequired'))

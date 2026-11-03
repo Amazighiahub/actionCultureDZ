@@ -522,10 +522,10 @@ describe('AjouterEvenement', () => {
       await waitForDataLoad();
 
       const fileInput = document.getElementById('affiche-upload') as HTMLInputElement;
-      const hugeFile = createMockFile('huge.jpg', 20_000, 'image/jpeg');
+      const hugeFile = createMockFile('huge.jpg', 25_000, 'image/jpeg');
       await user.upload(fileInput, hugeFile);
 
-      // La validation client rejette les fichiers > 5 Mo avec un toast destructive
+      // La validation client rejette les fichiers > 20 Mo avec un toast destructive
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({ variant: 'destructive' })
@@ -533,6 +533,16 @@ describe('AjouterEvenement', () => {
       });
       // Pas de preview affiche
       expect(screen.queryByAltText(/aper[cç]u/i)).not.toBeInTheDocument();
+    });
+
+    test('accepte une photo de telephone de 8 Mo, reduite a l envoi', async () => {
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+
+      const fileInput = document.getElementById('affiche-upload') as HTMLInputElement;
+      await user.upload(fileInput, createMockFile('photo.jpg', 8_000, 'image/jpeg'));
+
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
     });
 
     test('en mode edition, l image existante est affichee sans re-upload obligatoire', async () => {

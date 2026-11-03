@@ -2007,6 +2007,7 @@
     "succes": "Œuvre enregistrée",
     "oeuvre_creee_succes": "Votre œuvre a été soumise avec succès. Elle sera visible publiquement après validation par un administrateur.",
     "brouillon_sauvegarde": "Votre brouillon a été sauvegardé. Vous pourrez le modifier et le publier plus tard depuis votre tableau de bord.",
+    "articleNonSoumis": "Article enregistré en brouillon, mais pas envoyé à l'équipe. Envoyez-le depuis votre tableau de bord.",
     "article_cree_succes": "Votre article a été soumis avec succès. Il sera visible publiquement après validation par un administrateur.",
     "langueOriginale": "Langue originale de l'œuvre",
     "choisirLangue": "-- Choisir la langue --",
@@ -2559,11 +2560,11 @@
       "reactivate": "Réactiver",
       "suspend": "Suspendre",
       "confirmDelete": "Supprimer cet utilisateur ?",
-      "confirmDeleteDesc": "Cette action est irréversible. Toutes les données de l'utilisateur seront supprimées.",
+      "confirmDeleteDesc": "Le compte sera effacé définitivement. Ses événements à venir seront annulés et les inscrits prévenus. Ses événements passés et ses œuvres resteront sur le site, sans auteur.",
       "confirmSuspend": "Suspendre cet utilisateur ?",
       "confirmSuspendDesc": "L'utilisateur sera suspendu pendant 7 jours.",
       "confirmBulkDelete": "Supprimer {{count}} utilisateur(s) ?",
-      "confirmBulkDeleteDesc": "Cette action est irréversible.",
+      "confirmBulkDeleteDesc": "Les comptes seront effacés définitivement. Leurs événements à venir seront annulés et les inscrits prévenus. Leurs événements passés et leurs œuvres resteront sur le site, sans auteur.",
       "statuses": {
         "actif": "Actif",
         "en_attente_validation": "En attente de validation",
@@ -4134,6 +4135,7 @@
     "userReactivateFailed": "Impossible de réactiver l'utilisateur",
     "passwordReset": "Mot de passe réinitialisé",
     "passwordResetFailed": "Impossible de réinitialiser le mot de passe",
+    "bulkActionPartial": "{{count}} compte(s) non traité(s), par exemple un administrateur ou votre propre compte.",
     "bulkActionApplied": "Action {{action}} appliquée à {{count}} utilisateurs",
     "bulkActionFailed": "Impossible d'appliquer l'action",
     "exportUsersDone": "Export des utilisateurs terminé",
@@ -4749,6 +4751,8 @@
     }
   },
   "validation": {
+    "imageTropLourde": "Image trop lourde (20 Mo au plus)",
+    "imageNonReduite": "Cette image dépasse 10 Mo et ne peut pas être réduite. Choisissez-en une plus légère.",
     "required": "Ce champ est requis",
     "frOrArRequired": "Au moins le français ou l'arabe est requis",
     "fixErrors": "Veuillez corriger les erreurs avant de soumettre",

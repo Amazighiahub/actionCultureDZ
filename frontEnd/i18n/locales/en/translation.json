@@ -2004,6 +2004,7 @@
     "succes": "Work saved",
     "oeuvre_creee_succes": "Your work has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "brouillon_sauvegarde": "Your draft has been saved. You can edit and publish it later from your dashboard.",
+    "articleNonSoumis": "Article saved as a draft but not sent to the team. Send it from your dashboard.",
     "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "uploadingMediaN": "Uploading media ({{current}}/{{total}}): {{percent}}%",
     "mediasFailedTitle": "Media not uploaded",
@@ -2798,11 +2799,11 @@
       "reactivate": "Reactivate",
       "suspend": "Suspend",
       "confirmDelete": "Delete this user?",
-      "confirmDeleteDesc": "This action cannot be undone. All of the user's data will be deleted.",
+      "confirmDeleteDesc": "The account will be permanently erased. Its upcoming events will be cancelled and registrants notified. Its past events and works will stay on the site, without an author.",
       "confirmSuspend": "Suspend this user?",
       "confirmSuspendDesc": "The user will be suspended for 7 days.",
       "confirmBulkDelete": "Delete {{count}} user(s)?",
-      "confirmBulkDeleteDesc": "This action cannot be undone.",
+      "confirmBulkDeleteDesc": "The accounts will be permanently erased. Their upcoming events will be cancelled and registrants notified. Their past events and works will stay on the site, without an author.",
       "statuses": {
         "actif": "Active",
         "en_attente_validation": "Awaiting validation",
@@ -4129,6 +4130,7 @@
     "userReactivateFailed": "Unable to reactivate user",
     "passwordReset": "Password reset",
     "passwordResetFailed": "Unable to reset password",
+    "bulkActionPartial": "{{count}} account(s) not processed, for example an administrator or your own account.",
     "bulkActionApplied": "Action {{action}} applied to {{count}} users",
     "bulkActionFailed": "Unable to apply action",
     "exportUsersDone": "Users export completed",
@@ -4469,6 +4471,8 @@
     }
   },
   "validation": {
+    "imageTropLourde": "Image too large (20 MB maximum)",
+    "imageNonReduite": "This image is over 10 MB and cannot be reduced. Please choose a lighter one.",
     "required": "This field is required",
     "frOrArRequired": "At least French or Arabic is required",
     "fixErrors": "Please fix the errors before submitting",

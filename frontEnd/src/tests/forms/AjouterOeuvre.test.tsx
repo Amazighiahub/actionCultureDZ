@@ -25,6 +25,7 @@ const {
   mockCheckIfTypeHasCategories,
   mockGetCategoriesForType,
   mockCreateOeuvre,
+  mockSubmitForValidation,
   mockCreateOeuvreFormData,
   mockCreateOeuvreWithMedias,
   mockUpdate,
@@ -40,6 +41,7 @@ const {
   mockCheckIfTypeHasCategories: vi.fn(),
   mockGetCategoriesForType: vi.fn(),
   mockCreateOeuvre: vi.fn(),
+  mockSubmitForValidation: vi.fn(),
   mockCreateOeuvreFormData: vi.fn(),
   mockCreateOeuvreWithMedias: vi.fn(),
   mockUpdate: vi.fn(),
@@ -137,6 +139,7 @@ vi.mock('@/services/metadata.service', () => ({
 vi.mock('@/services/oeuvre.service', () => ({
   oeuvreService: {
     createOeuvre: (...args: any[]) => mockCreateOeuvre(...args),
+    submitForValidation: (...args: any[]) => mockSubmitForValidation(...args),
     createOeuvreFormData: (...args: any[]) => mockCreateOeuvreFormData(...args),
     createOeuvreWithMedias: (...args: any[]) => mockCreateOeuvreWithMedias(...args),
     update: (...args: any[]) => mockUpdate(...args),
@@ -382,6 +385,7 @@ describe('AjouterOeuvre', () => {
     mockCheckIfTypeHasCategories.mockResolvedValue(false);
     mockGetCategoriesForType.mockResolvedValue({ success: true, data: [] });
     mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 } } });
+    mockSubmitForValidation.mockResolvedValue({ success: true, data: {} });
     mockCreateOeuvreFormData.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 } } });
     mockCreateOeuvreWithMedias.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 } } });
     mockUpdate.mockResolvedValue({ success: true, data: { id_oeuvre: 1 } });
@@ -467,6 +471,19 @@ describe('AjouterOeuvre', () => {
       await waitFor(() => expect(httpClient.post).toHaveBeenCalledWith('/patrimoine/69/pages', { id_oeuvre: 42, section_patrimoine: 'gastronomie' }));
       expect(mockCreateOeuvre).toHaveBeenCalledWith(expect.objectContaining({ id_type_oeuvre: 4 }));
       expect(mockNavigate).toHaveBeenCalledWith('/patrimoine/69');
+      expect(mockSubmitForValidation).toHaveBeenCalledWith(42);
+    });
+
+    test('un article dont l’envoi échoue reste en brouillon et l’auteur en est averti', async () => {
+      mockSearch = new URLSearchParams('lieu=69&section=gastronomie');
+      mockSubmitForValidation.mockResolvedValueOnce({ success: false, error: 'refus' });
+      const { httpClient } = await import('@/services/httpClient');
+      (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
+      render(<AjouterOeuvre />);
+
+      await user.click(await screen.findByRole('button', { name: 'Enregistrer l’article' }));
+      await waitFor(() => expect(mockSubmitForValidation).toHaveBeenCalledWith(42));
+      await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })));
     });
 
     test('les images de l’article sont envoyées dans le champ « medias » attendu par le serveur', async () => {
