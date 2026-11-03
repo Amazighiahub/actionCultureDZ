@@ -154,6 +154,16 @@ class SignalementRepository extends BaseRepository {
     }
   }
 
+  /** Compte visé par une sanction : la personne signalée, ou l'auteur du contenu signalé */
+  async auteurSignale(signalement) {
+    const { type_entite: type, id_entite: id } = signalement;
+    if (type === 'user') return id;
+    if (type === 'commentaire') return (await this.models.Commentaire?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
+    if (type === 'oeuvre') return (await this.models.Oeuvre?.findByPk(id, { attributes: ['saisi_par'] }))?.saisi_par || null;
+    if (type === 'evenement') return (await this.models.Evenement?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
+    return null;
+  }
+
   /**
    * Applique une action de moderation sur l'entite
    */
@@ -169,10 +179,14 @@ class SignalementRepository extends BaseRepository {
         break;
 
       case 'suspension_temporaire':
-      case 'suspension_permanente':
-        if (signalement.type_entite === 'user' && this.models.User) {
+      case 'suspension_permanente': {
+        // Le seul bouton « Signaler » du site vise un commentaire : c'est son auteur qui est sanctionné
+        // (avant : rien ne se passait, et le signalement était marqué « traité »)
+        const idAuteur = await this.auteurSignale(signalement);
+        if (!idAuteur) throw AppError.badRequest('Aucun compte à sanctionner pour ce signalement');
+        if (this.models.User) {
           // Un compte administrateur ne se sanctionne pas par un signalement
-          const cible = await this.models.User.findByPk(signalement.id_entite, {
+          const cible = await this.models.User.findByPk(idAuteur, {
             attributes: ['id_user', 'id_type_user'],
             include: this.models.Role ? [{ model: this.models.Role, as: 'Roles', attributes: ['nom_role'], through: { attributes: [] } }] : []
           });
@@ -183,14 +197,15 @@ class SignalementRepository extends BaseRepository {
           // Session coupée tout de suite (avant : encore valable 15 min en cache, et le renouvellement aussi)
           await this.models.User.update(
             { statut: newStatut, refresh_token: null, refresh_token_expires: null },
-            { where: { id_user: signalement.id_entite } }
+            { where: { id_user: idAuteur } }
           );
-          await invalidateUserSession(signalement.id_entite);
+          await invalidateUserSession(idAuteur);
         }
         break;
+      }
 
+      // L'avertissement lui-même est envoyé par SignalementService
       case 'avertissement':
-        // Future: envoyer email d'avertissement
         break;
     }
   }

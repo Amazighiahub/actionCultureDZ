@@ -129,6 +129,10 @@ class SignalementService extends BaseService {
       throw this._notFoundError(id);
     }
 
+    // L'action d'abord : si elle est refusée, le signalement ne doit pas passer pour « traité »
+    await this.repository.applyModerationAction(signalement, action_prise);
+    if (action_prise === 'avertissement') await this._avertirAuteur(signalement);
+
     // Mettre a jour le signalement
     await signalement.update({
       statut: 'traite',
@@ -138,10 +142,23 @@ class SignalementService extends BaseService {
       notes_moderation
     });
 
-    // Appliquer l'action sur l'entite
-    await this.repository.applyModerationAction(signalement, action_prise);
-
     return signalement;
+  }
+
+  /** Notification et e-mail à l'auteur : les notes de modération restent internes */
+  async _avertirAuteur(signalement) {
+    const idAuteur = await this.repository.auteurSignale(signalement);
+    if (!idAuteur) throw this._validationError('Aucun compte à avertir pour ce signalement');
+    const titre = 'Avertissement de l’équipe Tala DZ';
+    const message = 'Un de vos contenus a été signalé et ne respecte pas les règles du site. En cas de nouveau manquement, votre compte pourra être suspendu.';
+    const { notificationService, emailService } = require('../serviceContainer');
+    await notificationService.enregistrerNotificationsMultiples([{
+      id_user: idAuteur, type_notification: 'message_admin', titre, message, url_action: null, priorite: 'haute', lu: false
+    }]);
+    const auteur = await this.repository.models.User?.findByPk(idAuteur, { attributes: ['email'] });
+    if (auteur?.email) {
+      await emailService.sendEmail(auteur.email, titre, `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><h2>${titre}</h2><p>${message}</p><p style="color:#666;font-size:12px">L’équipe Tala DZ</p></div>`);
+    }
   }
 }
 

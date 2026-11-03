@@ -35,8 +35,10 @@ class ArtisanatRepository extends BaseRepository {
       if (this.models.Media) {
         oeuvreInclude.include.push({
           model: this.models.Media,
-          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
-          required: false
+          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url', 'id_oeuvre'],
+          required: false,
+          // Requête à part : jointes, les photos comptaient dans la limite par page et des produits disparaissaient
+          separate: true
         });
       }
       includes.push(oeuvreInclude);

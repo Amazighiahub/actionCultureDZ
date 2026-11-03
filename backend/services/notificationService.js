@@ -1,5 +1,7 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const logger = require('../utils/logger');
+const { budgetEnvoiGroupe } = require('./quotaEmail');
+const { lienPourEmail, STATUTS_AVEC_LIEN } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
 const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
 const emailService = require('./emailService');
@@ -255,7 +257,7 @@ class NotificationService {
   /**
    * Date ou lieu d'un événement changés : tous les inscrits sont prévenus (e-mail et notification),
    * comme pour une annulation : ils risqueraient sinon de venir au mauvais endroit ou au mauvais moment.
-   * @param {{ date: boolean, lieu: boolean }} changements
+   * @param {{ date: boolean, lieu: boolean, lien?: boolean }} changements
    */
   async notifierChangementEvenement(evenementId, changements) {
     const evenement = await this.models.Evenement.findByPk(evenementId, {
@@ -275,17 +277,26 @@ class NotificationService {
     const heure = sansHeure ? '' : debut.toLocaleTimeString('fr-FR', { ...enAlgerie, hour: '2-digit', minute: '2-digit' });
     const lieu = [this._str(evenement.Lieu?.nom), this._str(evenement.Lieu?.adresse)].filter(Boolean).join(', ');
     const nomEvenement = this._str(evenement.nom_evenement);
+    const nouveauLien = changements.lien ? lienPourEmail(evenement) : null;
     const nouveautes = [
       ...(changements.date ? [`Nouvelle date : ${date}${heure ? ` à ${heure}` : ''}`] : []),
-      ...(changements.lieu && lieu ? [`Nouveau lieu : ${lieu}`] : [])
+      ...(changements.lieu && lieu ? [`Nouveau lieu : ${lieu}`] : []),
+      ...(changements.lieu && !lieu && evenement.url_virtuel ? ['Cet événement se déroule maintenant en ligne'] : []),
+      ...(changements.lien && !nouveauLien ? ['Le lien de réunion n’est plus valable'] : [])
     ];
+    // Le lien reste réservé aux inscriptions acceptées, y compris dans cet e-mail
+    const lignesPour = (participant) => [...nouveautes, STATUTS_AVEC_LIEN.includes(participant.statut_participation)
+      ? `Nouveau lien de réunion : ${nouveauLien}`
+      : 'Le lien de réunion vous sera envoyé à la validation de votre inscription'];
+    const resume = [...nouveautes, ...(nouveauLien ? ['Le lien de réunion a changé'] : [])];
+    if (resume.length === 0) return { notified: 0 };
 
-    const results = await this.emailService.notifierChangementEvenement(participants, evenement, nouveautes);
+    const results = await this.emailService.notifierChangementEvenement(participants, evenement, nouveauLien ? lignesPour : nouveautes);
     await this.enregistrerNotificationsMultiples(participants.map(participant => ({
       id_user: participant.id_user,
       type_notification: 'modification_programme',
       titre: 'Événement modifié',
-      message: `« ${nomEvenement} » a changé. ${nouveautes.join('. ')}`,
+      message: `« ${nomEvenement} » a changé. ${resume.join('. ')}`,
       id_evenement: evenementId,
       url_action: `/evenements/${evenementId}`,
       email_envoye: results.find(r => r.email === participant.User?.email)?.result?.success || false
@@ -517,7 +528,7 @@ class NotificationService {
       }
 
       // Envoyer les emails
-      const results = await this.emailService.notifierNouvelEvenement(users, evenement);
+      const results = await this.emailService.notifierNouvelEvenement(users.slice(0, await budgetEnvoiGroupe()), evenement);
 
       // SMS + WhatsApp pour chaque utilisateur
       const nomEvt = this._str(evenement.nom_evenement);
@@ -755,7 +766,13 @@ class NotificationService {
    * lien « Ne plus recevoir ces annonces ». Envoi un par un avec une courte pause.
    * @returns {Promise<{ envoyes: number, echecs: number }>}
    */
-  async _envoyerAnnonceParEmail(destinataires, { title, message }, { pauseMs = 300, direct = false } = {}) {
+  async _envoyerAnnonceParEmail(tousLesDestinataires, { title, message }, { pauseMs = 300, direct = false } = {}) {
+    // Une annonce s'arrête à la part du quota qui ne sert pas aux e-mails importants, et le dit
+    const budget = direct ? tousLesDestinataires.length : await budgetEnvoiGroupe();
+    const destinataires = tousLesDestinataires.slice(0, budget);
+    const horsQuota = tousLesDestinataires.length - destinataires.length;
+    const erreurQuota = horsQuota ? `Quota journalier d'e-mails atteint : ${horsQuota} destinataire(s) non servi(s)` : null;
+    if (horsQuota) logger.warn(`Annonce « ${title} » : ${erreurQuota}`);
     const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const avecLiens = (texte) => esc(texte).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#6b6b2e">${url}</a>`);
     const html = `
@@ -787,7 +804,7 @@ class NotificationService {
         }
       }
       logger.info(`Annonce « ${title} » : ${enFile} e-mail(s) mis en file d’envoi`);
-      return { envoyes: enFile, echecs: destinataires.length - enFile, erreur: null };
+      return { envoyes: enFile, echecs: tousLesDestinataires.length - enFile, erreur: erreurQuota };
     }
 
     let envoyes = 0;
@@ -799,7 +816,7 @@ class NotificationService {
         const res = await this.emailService.sendEmail(
           user.email, title, withUnsubscribeFooter(html, url, 'annonces'), null,
           `${title}\n\n${message}\n\n--\nTala DZ — taladz.com\nNe plus recevoir ces annonces : ${url}`,
-          { headers: unsubscribeHeaders(url) }
+          { headers: unsubscribeHeaders(url), sansRelance: direct }
         );
         if (res && res.success === false) {
           echecs++;
@@ -816,7 +833,7 @@ class NotificationService {
       if (pauseMs && index < destinataires.length - 1) await new Promise(resolve => setTimeout(resolve, pauseMs));
     }
     logger.info(`Annonce « ${title} » : ${envoyes} e-mail(s) envoyé(s), ${echecs} échec(s)`);
-    return { envoyes, echecs, erreur: derniereErreur };
+    return { envoyes, echecs: echecs + horsQuota, erreur: erreurQuota || derniereErreur };
   }
 
   /**

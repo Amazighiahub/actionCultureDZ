@@ -2,6 +2,7 @@
 const logger = require('../utils/logger');
 const { lienPourEmail } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
+const { compterEnvoi } = require('./quotaEmail');
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
@@ -193,11 +194,32 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
+      await compterEnvoi();
       logger.info(`Email envoyé. ID: ${result.messageId} → ${maskEmail(to)}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
       logger.error('Erreur envoi email:', error.message);
+      if (!options.sansRelance && !attachments && await this._relancerPlusTard({ to, subject, html, texteBrut: text, headers })) {
+        return { success: true, enAttente: true };
+      }
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Refus de la messagerie (panne, quota du jour atteint) : l'e-mail repart plus tard par la file, pendant
+   * environ 2 h 30. Avant : perdu, un lien de validation ou de mot de passe oublié n'arrivait jamais.
+   * @returns {Promise<boolean>} vrai si l'e-mail est bien en file
+   */
+  async _relancerPlusTard(donnees) {
+    try {
+      const file = require('./emailQueueService');
+      if (!file?.isInitialized) return false;
+      const res = await file.addEmail(donnees, { delay: 5 * 60 * 1000, attempts: 6, backoff: { type: 'exponential', delay: 5 * 60 * 1000 } });
+      return !!res?.jobId;
+    } catch (err) {
+      logger.warn(`Relance impossible pour ${maskEmail(donnees.to)}: ${err.message}`);
+      return false;
     }
   }
 
@@ -722,6 +744,8 @@ class EmailService {
    */
   /** Date ou lieu d'un événement changés : e-mail aux inscrits */
   async notifierChangementEvenement(participants, evenement, nouveautes) {
+    // nouveautes : liste commune, ou fonction par participant (le lien de réunion n'est pas pour tous)
+    const lignesPour = (participant) => (typeof nouveautes === 'function' ? nouveautes(participant) : nouveautes);
     const nomEvenementStr = texteLisible(evenement.nom_evenement);
     const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
     const esc = this._escapeHtml.bind(this);
@@ -735,7 +759,7 @@ class EmailService {
             <p>Bonjour ${esc(this._prenom(user))},</p>
             <p>L'événement <strong>${esc(nomEvenementStr)}</strong>, auquel vous êtes inscrit(e), a changé :</p>
             <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              ${nouveautes.map(n => `<p style="margin: 4px 0;"><strong>${esc(n)}</strong></p>`).join('')}
+              ${lignesPour(participant).map(n => `<p style="margin: 4px 0;"><strong>${esc(n)}</strong></p>`).join('')}
             </div>
             <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
             <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>

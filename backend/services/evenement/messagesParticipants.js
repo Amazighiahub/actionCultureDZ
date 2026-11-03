@@ -7,6 +7,7 @@
  * en arrière-plan ; le message est gardé avec le nombre d'emails envoyés.
  */
 const crypto = require('crypto');
+const { budgetEnvoiGroupe } = require('../quotaEmail');
 const { Op } = require('sequelize');
 
 /** À qui : « tous » = toute personne inscrite sauf les annulés / refusés */
@@ -197,9 +198,11 @@ class MessagesParticipants {
   }
 
   /** Un email après l'autre (avec une courte pause) ; le bilan est gardé avec le message */
-  async _envoyerEmails(enregistre, destinataires, evenement, m) {
+  async _envoyerEmails(enregistre, tousLesDestinataires, evenement, m) {
+    // S'arrête à la part du quota qui ne sert pas aux e-mails importants ; le reste compte en échecs
+    const destinataires = tousLesDestinataires.slice(0, await budgetEnvoiGroupe());
     let envoyes = 0;
-    let echecs = 0;
+    let echecs = tousLesDestinataires.length - destinataires.length;
     for (const [index, user] of destinataires.entries()) {
       try {
         const res = await this.emailService.sendMessageParticipant(user, { evenement, ...m });

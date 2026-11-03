@@ -403,8 +403,12 @@ class EvenementService extends BaseService {
       if (['publie', 'planifie', 'en_cours'].includes(existing.statut)) {
         const dateChangee = updateData.date_debut
           && new Date(updateData.date_debut).getTime() !== new Date(existing.date_debut).getTime();
-        const lieuChange = updateData.id_lieu && Number(updateData.id_lieu) !== Number(existing.id_lieu);
-        if (dateChangee || lieuChange) changements = { date: !!dateChangee, lieu: !!lieuChange };
+        // id_lieu à null compte aussi : un événement passé en ligne perd son lieu, les inscrits doivent le savoir
+        const lieuChange = updateData.id_lieu !== undefined && Number(updateData.id_lieu || 0) !== Number(existing.id_lieu || 0);
+        const lienChange = String(finalUrlVirtuel || '').trim() !== String(existing.url_virtuel || '').trim();
+        if (dateChangee || lieuChange || lienChange) {
+          changements = { date: !!dateChangee, lieu: lieuChange, lien: lienChange };
+        }
       }
 
       await this.repository.update(id, updateData, { transaction });

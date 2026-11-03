@@ -238,6 +238,10 @@ class ArtisanatService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez pas supprimer cet artisanat');
     }
 
+    // L'œuvre et ses photos partent aussi : retirer seulement cette fiche laissait le produit public
+    if (existing.id_oeuvre) {
+      await require('../serviceContainer').oeuvreService.delete(existing.id_oeuvre, userId, true);
+    }
     await this.repository.delete(id);
     this.logger.info(`Artisanat supprimé: ${id} par user: ${userId}`);
     return true;

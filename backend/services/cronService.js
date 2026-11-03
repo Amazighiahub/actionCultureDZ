@@ -322,6 +322,11 @@ class CronService {
       }) || []
     ]);
 
+    if (newEvents.length === 0 && newOeuvres.length === 0) {
+      logger.info('📮 Newsletter non envoyée : rien de nouveau cette semaine');
+      return;
+    }
+
     const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
     // {{unsubscribe_url}} est remplacé par le lien signé propre à chaque destinataire
     const template = {
@@ -336,17 +341,20 @@ class CronService {
     let offset = 0;
     let totalSent = 0;
     const newsletterWhere = { accepte_newsletter: true, statut: 'actif', email_verifie: true };
+    // Part du quota du jour qui ne sert pas aux e-mails importants
+    let budget = await require('./quotaEmail').budgetEnvoiGroupe();
 
-    while (true) {
+    while (budget > 0) {
       const users = await this.models.User.findAll({
         where: newsletterWhere,
         attributes: ['id_user', 'email', 'nom', 'prenom'],
         order: [['id_user', 'ASC']],
-        limit: BATCH_SIZE,
+        limit: Math.min(BATCH_SIZE, budget),
         offset
       });
 
       if (users.length === 0) break;
+      budget -= users.length;
 
       const emails = users.map(user => ({
         to: user.email,
@@ -360,7 +368,11 @@ class CronService {
       if (users.length < BATCH_SIZE) break;
     }
 
-    logger.info(`📮 Newsletter envoyée à ${totalSent} abonnés`);
+    const abonnes = await this.models.User.count({ where: newsletterWhere });
+    if (abonnes > totalSent) {
+      logger.warn(`📮 Newsletter : quota du jour atteint, ${abonnes - totalSent} abonné(s) non servi(s) cette semaine`);
+    }
+    logger.info(`📮 Newsletter mise en file pour ${totalSent} abonnés`);
   }
 
   /**

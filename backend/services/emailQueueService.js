@@ -49,8 +49,12 @@ class EmailQueueService {
   async initialize() {
     try {
       // Queue principale pour les emails
-      // Au plus 5 e-mails par seconde : envoyés tous ensemble, une partie était refusée par la messagerie
-      this.queues.email = new Bull('email-queue', this.redisConfig, { limiter: { max: 5, duration: 1000 } });
+      // Au plus 5 e-mails par seconde : envoyés tous ensemble, une partie était refusée par la messagerie.
+      // Avec une configuration en objet, Bull ignore un 3e argument : la limite doit être dans cet objet.
+      const limiter = { max: 5, duration: 1000 };
+      this.queues.email = typeof this.redisConfig === 'string'
+        ? new Bull('email-queue', this.redisConfig, { limiter })
+        : new Bull('email-queue', { ...this.redisConfig, limiter });
       
       // Queue pour les notifications
       this.queues.notification = new Bull('notification-queue', this.redisConfig);
@@ -88,7 +92,8 @@ class EmailQueueService {
 
       const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
       // texteBrut / headers : version texte et en-têtes de désabonnement (annonces de l'administration)
-      const result = await emailService.sendEmail(to, subject, body, attachments, texteBrut || null, headers ? { headers } : {});
+      // sansRelance : c'est déjà une tâche de la file, avec ses propres nouveaux essais
+      const result = await emailService.sendEmail(to, subject, body, attachments, texteBrut || null, { ...(headers ? { headers } : {}), sansRelance: true });
 
       if (!result.success) {
         throw new Error(result.error || 'Échec envoi email');
@@ -125,7 +130,8 @@ class EmailQueueService {
     });
 
     // Processeur pour emails en masse
-    this.queues.bulk.process('send-bulk', 10, async (job) => {
+    // Un lot à la fois : 10 lots de 100 en parallèle dépassaient largement la limite de la messagerie
+    this.queues.bulk.process('send-bulk', 1, async (job) => {
       const { emails, template } = job.data;
       const results = [];
 
@@ -164,6 +170,8 @@ class EmailQueueService {
         }
       }
       
+      const echecs = results.filter(r => !r.success).length;
+      if (echecs) logger.warn(`Envoi groupé #${job.id} : ${echecs} e-mail(s) refusé(s) sur ${results.length}`);
       return results;
     });
   }
@@ -218,7 +226,9 @@ class EmailQueueService {
         emailData.to,
         emailData.subject,
         body,
-        emailData.attachments
+        emailData.attachments,
+        null,
+        { sansRelance: true }
       );
     }
 
@@ -248,7 +258,7 @@ class EmailQueueService {
       Promise.resolve(ajout).then((job) => job?.remove?.()).catch(() => {});
       const corps = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
       return emailService.sendEmail(emailData.to, emailData.subject, corps, emailData.attachments, emailData.texteBrut || null,
-        emailData.headers ? { headers: emailData.headers } : {});
+        { ...(emailData.headers ? { headers: emailData.headers } : {}), sansRelance: true });
     } finally {
       clearTimeout(minuteur);
     }
