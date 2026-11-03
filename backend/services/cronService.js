@@ -317,7 +317,7 @@ class CronService {
           date_creation: { [Op.gte]: lastWeek },
           statut: 'publie'
         },
-        attributes: ['id_oeuvre', 'titre', 'date_creation'],
+        attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre', 'date_creation'],
         limit: 5,
         order: [['date_creation', 'DESC']]
       }) || []
@@ -331,8 +331,8 @@ class CronService {
     const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
     // {{unsubscribe_url}} est remplacé par le lien signé propre à chaque destinataire
     const template = {
-      subject: '📰 Votre newsletter Tala DZ',
-      text: `Découvrez les nouveautés de la semaine sur Tala DZ...`,
+      subject: 'Les nouveautés de la semaine sur Tala DZ',
+      text: `Découvrez les nouveautés de la semaine sur Tala DZ : ${process.env.FRONTEND_URL || 'https://taladz.com'}`,
       html: withUnsubscribeFooter(this.generateNewsletterHtml(newEvents, newOeuvres), '{{unsubscribe_url}}'),
       headers: unsubscribeHeaders('{{unsubscribe_url}}')
     };
@@ -601,18 +601,27 @@ class CronService {
     // Titres saisis par les utilisateurs : multilingues et échappés (pas de HTML injecté dans l'email)
     const label = (v) => {
       const text = v && typeof v === 'object' ? (v.fr || Object.values(v).find(Boolean) || '') : (v || '');
-      return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      return String(text).replace(/[&<>"'{}]/g, c => `&#${c.charCodeAt(0)};`);
     };
+    const base = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+    const lien = (chemin, texte, detail = '') => `<li style="margin:8px 0"><a href="${base}${chemin}" style="color:#3A4224;font-weight:bold">${texte}</a>${detail}</li>`;
+    const date = (d) => {
+      const jour = d ? new Date(d) : null;
+      return jour && !Number.isNaN(jour.getTime())
+        ? ` <span style="color:#6b6a63">(${jour.toLocaleDateString('fr-FR', { timeZone: 'Africa/Algiers', day: 'numeric', month: 'long', year: 'numeric' })})</span>`
+        : '';
+    };
+    const section = (titre, lignes) => (lignes.length
+      ? `<h3 style="color:#3A4224;margin:24px 0 8px">${titre}</h3><ul style="padding-inline-start:20px;margin:0">${lignes.join('')}</ul>`
+      : '');
     return `
-      <h2>Les nouveautés de la semaine</h2>
-      <h3>Nouveaux événements</h3>
-      <ul>
-        ${events.map(e => `<li>${label(e.nom_evenement)}</li>`).join('')}
-      </ul>
-      <h3>Nouvelles œuvres</h3>
-      <ul>
-        ${oeuvres.map(o => `<li>${label(o.titre)}</li>`).join('')}
-      </ul>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#2b2a26">
+        <h2 style="color:#3A4224">Les nouveautés de la semaine sur Tala DZ</h2>
+        <p>Voici ce qui a été ajouté cette semaine sur taladz.com, la plateforme de la culture algérienne.</p>
+        ${section('Nouveaux événements', events.map(e => lien(`/evenements/${e.id_evenement}`, label(e.nom_evenement), date(e.date_debut))))}
+        ${section('Nouvelles œuvres', oeuvres.map(o => lien(`${[4, 5].includes(o.id_type_oeuvre) ? '/articles' : '/oeuvres'}/${o.id_oeuvre}`, label(o.titre))))}
+        <p style="margin:28px 0"><a href="${base}/" style="background-color:#3A4224;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold">Découvrir Tala DZ</a></p>
+      </div>
     `;
   }
 
