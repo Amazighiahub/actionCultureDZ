@@ -92,6 +92,35 @@
     "rechercherOeuvre": "Title or author name…",
     "rechercherArtisanat": "Product or craftsperson name…"
   },
+  "liens": {
+    "titre": "In the press and online",
+    "aPropos": "About:",
+    "gestionTitre": "Press articles and links",
+    "ajouter": "Add a link",
+    "aide": "Press articles, YouTube, Instagram, TikTok, Facebook: they appear on your portfolio and, if you choose, on the related work or event.",
+    "adresse": "Paste the link",
+    "reconnu": "Recognised:",
+    "titreLien": "Title (optional)",
+    "source": "Newspaper or media (optional)",
+    "sourceAide": "E.g. El Watan, APS, Radio Algérie",
+    "date": "Date (optional)",
+    "rattacher": "Attach to",
+    "portfolioSeul": "Only my portfolio",
+    "mesOeuvres": "My works, articles and crafts",
+    "mesEvenements": "My events",
+    "aucun": "No links yet. Add your press articles and videos to enrich your page.",
+    "enregistre": "Link saved",
+    "retirer": "Remove",
+    "lienInvalide": "Invalid link: it must start with https://",
+    "incitation": "Complete your page: add your press articles and your YouTube, Instagram, TikTok or Facebook links.",
+    "types": {
+      "presse": "Press article",
+      "youtube": "YouTube",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "facebook": "Facebook"
+    }
+  },
   "auth": {
     "mustBeConnected": "You must be logged in",
     "required": "Required",

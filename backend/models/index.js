@@ -293,6 +293,9 @@ const loadModels = (sequelize) => {
   const sessionConnexionModel = loadModelSafely('./users/sessionConnexion', 'SessionConnexion', sequelize);
   if (sessionConnexionModel) models.SessionConnexion = sessionConnexionModel;
 
+  const lienExterneModel = loadModelSafely('./misc/lienExterne', 'LienExterne', sequelize);
+  if (lienExterneModel) models.LienExterne = lienExterneModel;
+
   const auditLogModel = loadModelSafely('./misc/auditLog', 'AuditLog', sequelize);
   if (auditLogModel) models.AuditLog = auditLogModel;
 

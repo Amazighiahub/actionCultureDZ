@@ -42,6 +42,7 @@ import {
 
 // Services
 import { oeuvreService } from '@/services/oeuvre.service';
+import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { favoriService } from '@/services/favori.service';
 import { commentaireService } from '@/services/commentaire.service';
@@ -813,6 +814,8 @@ const ArticleViewPage: React.FC = () => {
           </div>
         }
       </article>
+
+      {oeuvre?.id_oeuvre && <LiensDuContenu type="oeuvre" id={oeuvre.id_oeuvre} className="max-w-3xl mx-auto mt-10 px-4" />}
 
       {/* Retour vers les lieux et personnalités de l'article */}
       {contexte && (contexte.lieux.length > 0 || contexte.personnalites.length > 0) &&

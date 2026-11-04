@@ -33,6 +33,7 @@ import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { rafraichirFavoris } from '@/lib/queryClient';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import BoutonSuivre from '@/components/shared/BoutonSuivre';
+import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
 
 interface ArtisanatData {
@@ -603,6 +604,7 @@ const ArtisanatDetail: React.FC = () => {
             </div>
           </div>
 
+          {Oeuvre?.id_oeuvre && <LiensDuContenu type="oeuvre" id={Oeuvre.id_oeuvre} className="mt-12" />}
           {Oeuvre?.id_oeuvre && <LieuxDeOeuvre oeuvreId={Oeuvre.id_oeuvre} />}
 
           {/* Commentaires sur le produit : même affichage et même envoi que pour une œuvre */}

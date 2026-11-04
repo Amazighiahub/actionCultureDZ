@@ -28,6 +28,7 @@ const EventInfo = React.lazy(() => import('./event/EventInfo'));
 const EventDocuments = React.lazy(() => import('@/components/event/EventDocuments'));
 const EventProgram = React.lazy(() => import('./event/EventProgram'));
 const EventGallery = React.lazy(() => import('./event/EventGallery'));
+import { LiensDuContenu } from '@/components/shared/LiensExternes';
 const EventComments = React.lazy(() => import('./event/EventComments'));
 const EventOrganizers = React.lazy(() => import('./event/EventOrganizers'));
 const EventRegistration = React.lazy(() => import('./event/EventRegistration'));
@@ -237,6 +238,8 @@ const EventDetailsPage: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 )}
+
+                {activeTab === 'info' && <LiensDuContenu type="evenement" id={event.id_evenement} className="mt-8" />}
 
                 {activeTab === 'comments' && (
                   <ErrorBoundary>

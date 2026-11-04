@@ -28,7 +28,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { idFromSlug, professionnelPath, evenementPath } from '@/utils/slug';
-import { ListeArticlesPresse, lireArticlesPresse } from '@/components/shared/ArticlesPresse';
+import { ListeLiens, type LienExterne } from '@/components/shared/LiensExternes';
 import { ItemCard, ItemGrid as Grid, firstImage, type MediaItem } from '@/components/shared/ItemCard';
 
 // Types d'œuvres « articles » (page /articles/:id)
@@ -53,7 +53,6 @@ interface Portfolio {
     specialites?: string[] | string | null;
     site_web?: string | null;
     reseaux_sociaux?: SocialLinksValue;
-    articles_presse?: unknown;
     email?: string | null;
     telephone?: string | null;
     TypeUser?: { nom_type: string };
@@ -63,6 +62,7 @@ interface Portfolio {
   artisanats: Array<{ id_artisanat: number; prix?: number | null; Oeuvre: { titre: string; Media?: MediaItem[] } }>;
   evenements: Array<{ id_evenement: number; nom_evenement: string; date_debut?: string; date_fin?: string; image_url?: string | null; statut: string }>;
   services: Array<{ id: number; nom: string; type_service?: string; description?: string | null; photo_url?: string | null }>;
+  liens?: LienExterne[];
   /** Vrai si le visiteur connecté est le professionnel lui-même */
   estProprietaire?: boolean;
 }
@@ -251,11 +251,11 @@ const ProfessionnelPortfolio: React.FC = () => {
           </section>
         )}
 
-        {/* Articles de presse (saisis dans le profil) */}
-        {lireArticlesPresse(profil.articles_presse).length > 0 && (
-          <section aria-labelledby="presse-titre" className="max-w-3xl">
-            <h2 id="presse-titre" className="text-xl font-semibold mb-3">{t('portfolio.presse', 'Dans la presse')}</h2>
-            <ListeArticlesPresse articles={lireArticlesPresse(profil.articles_presse)} siVide="" />
+        {/* Articles de presse, YouTube, Instagram, TikTok, Facebook : de simples liens */}
+        {!!data.liens?.length && (
+          <section aria-labelledby="liens-titre" className="max-w-3xl">
+            <h2 id="liens-titre" className="text-xl font-semibold mb-3">{t('liens.titre', 'Dans la presse et en ligne')}</h2>
+            <ListeLiens liens={data.liens} avecCible />
           </section>
         )}
 

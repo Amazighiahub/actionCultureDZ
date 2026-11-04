@@ -216,7 +216,9 @@ class UserRepository extends BaseRepository {
       oeuvres: plain(oeuvres),
       artisanats: plain(artisanats),
       evenements: plain(evenements),
-      services: plain(services)
+      services: plain(services),
+      // Articles de presse, YouTube, Instagram, TikTok, Facebook
+      liens: this.models.LienExterne ? await require('../services/liensExternes').liensDuPortfolio(this.models, userId) : []
     };
   }
 

@@ -92,6 +92,35 @@
     "rechercherOeuvre": "Titre ou nom de l’auteur…",
     "rechercherArtisanat": "Produit ou nom de l’artisan…"
   },
+  "liens": {
+    "titre": "Dans la presse et en ligne",
+    "aPropos": "À propos de :",
+    "gestionTitre": "Articles de presse et liens",
+    "ajouter": "Ajouter un lien",
+    "aide": "Articles de presse, YouTube, Instagram, TikTok, Facebook : ils apparaissent sur votre portfolio et, si vous le choisissez, sur l’œuvre ou l’événement concerné.",
+    "adresse": "Collez le lien",
+    "reconnu": "Reconnu :",
+    "titreLien": "Titre (facultatif)",
+    "source": "Journal ou média (facultatif)",
+    "sourceAide": "Ex. : El Watan, APS, Radio Algérie",
+    "date": "Date (facultatif)",
+    "rattacher": "Rattacher à",
+    "portfolioSeul": "Seulement mon portfolio",
+    "mesOeuvres": "Mes œuvres, articles et artisanat",
+    "mesEvenements": "Mes événements",
+    "aucun": "Aucun lien pour l’instant. Ajoutez vos articles de presse et vos vidéos pour enrichir votre page.",
+    "enregistre": "Lien enregistré",
+    "retirer": "Retirer",
+    "lienInvalide": "Lien invalide : il doit commencer par https://",
+    "incitation": "Complétez votre page : ajoutez vos articles de presse et vos liens YouTube, Instagram, TikTok ou Facebook.",
+    "types": {
+      "presse": "Article de presse",
+      "youtube": "YouTube",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "facebook": "Facebook"
+    }
+  },
   "auth": {
     "mustBeConnected": "Vous devez être connecté",
     "required": "Requis",

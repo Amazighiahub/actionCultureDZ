@@ -52,6 +52,7 @@ import type { Intervenant } from '@/types/models/intervenant.types';
 import { getSafeRedirectPath, safeExternalUrl } from '@/utils/safeUrl';
 import { evenementPath } from '@/utils/slug';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
+import { LiensDuContenu } from '@/components/shared/LiensExternes';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -768,6 +769,7 @@ const OeuvreDetailPage: React.FC = () => {
             </TabsContent>
           </Tabs>
 
+          <LiensDuContenu type="oeuvre" id={oeuvre.id_oeuvre} className="mt-12" />
           <LieuxDeOeuvre oeuvreId={oeuvre.id_oeuvre} />
 
           {/* Section Actions - Toujours visible */}

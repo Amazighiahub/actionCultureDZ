@@ -679,6 +679,12 @@ const DashboardPro = () => {
 
         <MessagesAbonnesCard />
 
+        {/* Inciter à compléter sa page : la fonction existait, presque personne ne la trouvait */}
+        <p className="mb-6 rounded-lg border bg-card p-4 text-sm">
+          {t('liens.incitation', 'Complétez votre page : ajoutez vos articles de presse et vos liens YouTube, Instagram, TikTok ou Facebook.')}{' '}
+          <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('liens.ajouter', 'Ajouter un lien')}</Link>
+        </p>
+
         {/* Zone principale avec onglets */}
         <Card>
           <CardContent className="p-0">
