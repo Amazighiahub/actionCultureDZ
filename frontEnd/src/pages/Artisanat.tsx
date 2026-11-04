@@ -182,8 +182,8 @@ const Artisanat: React.FC = () => {
               <div className="relative flex-1">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
-                  aria-label={t('artisanat.searchPlaceholder', 'Rechercher un produit artisanal...')}
-                  placeholder={t('artisanat.searchPlaceholder', 'Rechercher un produit artisanal...')}
+                  aria-label={t('professionnels.rechercherArtisanat', 'Produit ou nom de l’artisan…')}
+                  placeholder={t('professionnels.rechercherArtisanat', 'Produit ou nom de l’artisan…')}
                   value={searchQuery}
                   onChange={(e) => setSearchQueryLocal(e.target.value)}
                   className="ps-9"

@@ -51,6 +51,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
                    artisanat.image_url ||
                    '/images/placeholder-artisanat.svg';
   const artisan = artisanat.Oeuvre?.Saiseur || artisanat.artisan;
+  const description = getLocalizedText((artisanat.Oeuvre as { description?: unknown } | undefined)?.description ?? artisanat.description) || '';
   const materiau = getLocalizedText(artisanat.Materiau?.nom) || '';
   const technique = getLocalizedText(artisanat.Technique?.nom) || '';
   const prix = artisanat.prix || artisanat.prix_min;
@@ -162,6 +163,11 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
           <p className="text-sm text-muted-foreground mb-2">
             {getLocalizedText(artisan.prenom)} {getLocalizedText(artisan.nom)}
           </p>
+        )}
+
+        {/* Description */}
+        {description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{description}</p>
         )}
 
         {/* Tags */}

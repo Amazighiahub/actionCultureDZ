@@ -5,6 +5,7 @@
 
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
+const { conditionAuteurOeuvre } = require('./rechercheNom');
 
 class ArtisanatRepository extends BaseRepository {
   constructor(models) {
@@ -125,9 +126,17 @@ class ArtisanatRepository extends BaseRepository {
    * Détail complet
    */
   async findWithFullDetails(id) {
-    return this.model.findByPk(id, {
-      include: this._defaultIncludes()
-    });
+    const includes = this._defaultIncludes();
+    const saiseur = includes.find(i => i.model === this.models.Oeuvre)?.include?.find(i => i.as === 'Saiseur');
+    if (saiseur) saiseur.attributes = [...saiseur.attributes, 'biographie', 'profil_public'];
+    const artisanat = await this.model.findByPk(id, { include: includes });
+    // La présentation de l'artisan suit le choix de son profil, public ou non
+    const artisan = artisanat?.Oeuvre?.Saiseur;
+    if (artisan) {
+      if (!artisan.profil_public) artisan.setDataValue('biographie', null);
+      artisan.setDataValue('profil_public', undefined);
+    }
+    return artisanat;
   }
 
   /**
@@ -146,10 +155,15 @@ class ArtisanatRepository extends BaseRepository {
     if (oeuvreInc) {
       const champs = ['titre', 'description'].flatMap(champ =>
         ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
+      // Ou le nom de l'artisan
+      const auteur = conditionAuteurOeuvre(this.model.sequelize, query);
       oeuvreInc.where = {
         statut: 'publie',
-        [Op.or]: champs.map(([champ, langue]) => this.model.sequelize.literal(
-          `JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
+        [Op.or]: [
+          ...champs.map(([champ, langue]) => this.model.sequelize.literal(
+            `JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`)),
+          ...(auteur ? [this.model.sequelize.literal(auteur)] : [])
+        ]
       };
     }
 

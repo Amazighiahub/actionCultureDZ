@@ -76,7 +76,21 @@
     "iphone4": "Ouvrez Tala DZ depuis son icône, puis revenez ici pour activer les notifications.",
     "android1": "Ouvrez taladz.com dans Chrome (si vous êtes dans Facebook, ouvrez d’abord le lien dans Chrome).",
     "android2": "Touchez les trois points, en haut à droite.",
-    "android3": "Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil »."
+    "android3": "Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».",
+    "connexionTitre": "Connectez-vous pour recevoir vos notifications",
+    "connexionTexte": "Connectez-vous une fois dans l’application : vous resterez connecté sur ce téléphone.",
+    "seConnecter": "Se connecter"
+  },
+  "professionnels": {
+    "menu": "Professionnels",
+    "titre": "Professionnels de la culture",
+    "sousTitre": "Retrouvez un auteur, un artisan, un écrivain, un artiste ou un chercheur, et découvrez son travail.",
+    "rechercher": "Rechercher par nom…",
+    "metier": "Métier",
+    "tousMetiers": "Tous les métiers",
+    "aucun": "Aucun professionnel ne correspond à votre recherche",
+    "rechercherOeuvre": "Titre ou nom de l’auteur…",
+    "rechercherArtisanat": "Produit ou nom de l’artisan…"
   },
   "auth": {
     "mustBeConnected": "Vous devez être connecté",

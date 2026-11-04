@@ -69,6 +69,7 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/a-propos', 'monthly', '0.6');
       // Rubriques absentes jusqu'ici du plan du site
       urls += urlBlock('/organisations', 'weekly', '0.8');
+      urls += urlBlock('/professionnels', 'weekly', '0.8');
       urls += urlBlock('/patrimoine/services', 'weekly', '0.7');
       urls += urlBlock('/artisanat/gastronomie', 'weekly', '0.7');
       // Pages de wilaya : seulement celles qui ont au moins un site publié (pas de pages vides)

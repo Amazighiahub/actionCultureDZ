@@ -358,8 +358,8 @@ const Oeuvres: React.FC = () => {
               <div className="relative flex-1">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
-                  aria-label={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
-                  placeholder={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
+                  aria-label={t('professionnels.rechercherOeuvre', 'Titre ou nom de l’auteur…')}
+                  placeholder={t('professionnels.rechercherOeuvre', 'Titre ou nom de l’auteur…')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="ps-9"

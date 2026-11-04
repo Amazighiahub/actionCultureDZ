@@ -5,6 +5,7 @@
 const BaseRepository = require('./baseRepository');
 const { Op, fn, col, literal } = require('sequelize');
 const subtypeRegistry = require('../services/oeuvre/subtypes/subtypeRegistry');
+const { conditionAuteurOeuvre } = require('./rechercheNom');
 
 /**
  * Catalogue des Œuvres : sans les plats. Un article de la section Gastronomie d'un lieu (la rechta…)
@@ -161,7 +162,9 @@ class OeuvreRepository extends BaseRepository {
       // Colonne texte_recherche (migration 20261120) : titres et descriptions dans les 5 langues,
       // comparés sans accents ni majuscules, calculés à l'écriture (plus 10 JSON_EXTRACT par œuvre et par recherche)
       const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
-      where[Op.and] = [...(where[Op.and] || []), literal(`\`Oeuvre\`.\`texte_recherche\` LIKE ${pattern}`)];
+      // Ou le nom de l'auteur : un écrivain se cherche aussi par son nom
+      const auteur = conditionAuteurOeuvre(this.model.sequelize, query);
+      where[Op.and] = [...(where[Op.and] || []), literal(`(\`Oeuvre\`.\`texte_recherche\` LIKE ${pattern}${auteur ? ` OR ${auteur}` : ''})`)];
     }
 
     // Filtres

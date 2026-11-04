@@ -6,7 +6,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { useFormatDate } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft, MapPin, Phone, Mail, Heart,
   Share2, Ruler, Scale, Palette, Hammer, Calendar,
-  User, Package, Eye, MessageCircle, ChevronLeft, ChevronRight, Star
+  User, Package, Eye, MessageCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 import { artisanatService } from '@/services/artisanat.service';
@@ -33,6 +32,8 @@ import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { rafraichirFavoris } from '@/lib/queryClient';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
+import BoutonSuivre from '@/components/shared/BoutonSuivre';
+import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
 
 interface ArtisanatData {
   id: number;
@@ -110,7 +111,6 @@ const ArtisanatDetail: React.FC = () => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
-  const { formatDate: formatDateLocale } = useFormatDate();
 
   const [artisanat, setArtisanat] = useState<ArtisanatData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ const ArtisanatDetail: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: unknown }>({ open: false, type: '', item: null });
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: utilisateur } = useAuth();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -543,7 +543,9 @@ const ArtisanatDetail: React.FC = () => {
                       </Avatar>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">
-                          {td(artisan.prenom)} {td(artisan.nom)}
+                          <Link to={`/professionnels/${artisan.id_user}`} className="hover:text-primary hover:underline">
+                            {td(artisan.prenom)} {td(artisan.nom)}
+                          </Link>
                         </h3>
                         {artisan.Wilaya && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -559,7 +561,8 @@ const ArtisanatDetail: React.FC = () => {
                             </p>
                           </div>
                         )}
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {utilisateur?.id_user !== artisan.id_user && <BoutonSuivre idProfessionnel={artisan.id_user} />}
                           {artisan.telephone && (
                             <Button variant="outline" size="sm" asChild>
                               <a href={`tel:${artisan.telephone}`}>
@@ -602,57 +605,20 @@ const ArtisanatDetail: React.FC = () => {
 
           {Oeuvre?.id_oeuvre && <LieuxDeOeuvre oeuvreId={Oeuvre.id_oeuvre} />}
 
-          {/* Commentaires sur l'œuvre */}
-          {Oeuvre?.Commentaires && Oeuvre.Commentaires.length > 0 && (
+          {/* Commentaires sur le produit : même affichage et même envoi que pour une œuvre */}
+          {Oeuvre?.id_oeuvre && (
             <section className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">
-                {t('artisanat.comments', 'Commentaires')} ({Oeuvre.Commentaires.length})
-              </h2>
-              <div className="space-y-4">
-                {Oeuvre.Commentaires.map((commentaire) => (
-                  <Card key={commentaire.id_commentaire}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={commentaire.photo_url} />
-                          <AvatarFallback>
-                            {commentaire.prenom_user?.[0]}{commentaire.nom_user?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-medium">
-                              {td(commentaire.prenom_user)} {td(commentaire.nom_user)}
-                            </h4>
-                            {commentaire.note && (
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium">{commentaire.note}</span>
-                              </div>
-                            )}
-                            <span className="text-sm text-muted-foreground">
-                              {formatDateLocale(commentaire.date_creation)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {td(commentaire.commentaire)}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <CommentairesOeuvre oeuvreId={Oeuvre.id_oeuvre} />
             </section>
           )}
 
           {/* Autres œuvres de l'artisan */}
+          {autres_oeuvres_artisan && autres_oeuvres_artisan.length > 0 && (
           <section className="mt-12">
             <h2 className="text-2xl font-bold mb-6">
               {t('artisanat.artisanWorks', 'Autres œuvres de l\'artisan')}
             </h2>
-            
-            {autres_oeuvres_artisan && autres_oeuvres_artisan.length > 0 ? (
+
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {autres_oeuvres_artisan.slice(0, 6).map((oeuvre) => (
                   <Link
@@ -680,13 +646,8 @@ const ArtisanatDetail: React.FC = () => {
                   </Link>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>{t('artisanat.noOtherWorks', 'Cet artisan n\'a pas d\'autres œuvres pour le moment')}</p>
-              </div>
-            )}
           </section>
+          )}
 
           {/* Autres créations similaires */}
           {similaires && similaires.length > 0 && (

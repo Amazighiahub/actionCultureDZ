@@ -10,6 +10,7 @@ const crypto = require('crypto');
 // Compte réservé « Utilisateur supprimé » (voir _getDeletedUserSentinel)
 const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
 const { PUBLIC_USER_PROFILE_ATTRIBUTES, PROFESSIONAL_TYPE_IDS, stripPrivateContact } = require('../constants/publicAttributes');
+const { conditionNom } = require('./rechercheNom');
 
 
 class UserRepository extends BaseRepository {
@@ -91,16 +92,22 @@ class UserRepository extends BaseRepository {
   /**
    * Trouve les professionnels validés
    */
-  async findValidatedProfessionals(options = {}) {
+  async findValidatedProfessionals({ q, type, wilaya, ...options } = {}) {
     // Route publique : uniquement le profil public, contact selon les préférences
+    const typeDemande = Number(type);
+    const wilayaDemandee = Number(wilaya);
+    const nom = conditionNom(this.model.sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`' });
     const result = await this.findAll({
       ...options,
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       where: {
-        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
+        // Un type qui n'est pas un métier (visiteur, administrateur) ne filtre rien et n'ouvre rien
+        id_type_user: PROFESSIONAL_TYPE_IDS.includes(typeDemande) ? typeDemande : { [Op.in]: PROFESSIONAL_TYPE_IDS },
         statut: 'actif',
         profil_public: true,
-        accepte_conditions: true
+        accepte_conditions: true,
+        ...(Number.isInteger(wilayaDemandee) && wilayaDemandee > 0 ? { wilaya_residence: wilayaDemandee } : {}),
+        ...(nom ? { [Op.and]: [this.model.sequelize.literal(`(${nom})`)] } : {})
       }
     });
     result.data.forEach(stripPrivateContact);

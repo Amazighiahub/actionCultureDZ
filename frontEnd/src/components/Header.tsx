@@ -110,6 +110,7 @@ const Header = () => {
     { icon: MapPin, label: t('header.nav.heritage'), href: '/patrimoine' },
     { icon: Palette, label: t('header.nav.works'), href: '/oeuvres' },
     { icon: Hammer, label: t('header.nav.crafts'), href: '/artisanat' },
+    { icon: Users, label: t('professionnels.menu', 'Professionnels'), href: '/professionnels' },
     { icon: Info, label: t('header.nav.about'), href: '/a-propos' },
   ];
 
