@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import {
   abonnementActuel, activerNotifications, estInstallee, estIphone, installationProposee,
-  lancerInstallation, notificationsPossibles, suivreInstallation,
+  lancerInstallation, notificationsPossibles, suivreInstallation, surTelephone,
 } from '@/utils/applicationMobile';
 
 const CLE_INSTALLATION = 'taladz-installation-plus-tard';
@@ -33,7 +33,6 @@ const faireTaire = (cle: string) => {
     // Stockage indisponible : la proposition pourra revenir à la prochaine visite
   }
 };
-const surTelephone = () => window.matchMedia?.('(pointer: coarse)').matches === true;
 
 export default function InvitationInstallation() {
   const { t } = useTranslation();

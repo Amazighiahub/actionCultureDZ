@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import {
   abonnementActuel, activerNotifications, desactiverNotifications, estInstallee, estIphone,
-  installationProposee, lancerInstallation, notificationsPossibles, rattacherAppareil, suivreInstallation,
+  installationProposee, lancerInstallation, notificationsPossibles, rattacherAppareil, suivreInstallation, surTelephone,
 } from '@/utils/applicationMobile';
 
 export default function ApplicationMobileCard() {
@@ -86,6 +86,14 @@ export default function ApplicationMobileCard() {
             <li>{t('applicationMobile.iphone2', 'Touchez le bouton Partager, en bas de l’écran.')}</li>
             <li>{t('applicationMobile.iphone3', 'Choisissez « Sur l’écran d’accueil », puis « Ajouter ».')}</li>
             <li>{t('applicationMobile.iphone4', 'Ouvrez Tala DZ depuis son icône, puis revenez ici pour activer les notifications.')}</li>
+          </ol>
+        )}
+
+        {!installee && !proposee && !iphone && surTelephone() && (
+          <ol className="list-decimal ps-5 text-sm space-y-1">
+            <li>{t('applicationMobile.android1', 'Ouvrez taladz.com dans Chrome (si vous êtes dans Facebook, ouvrez d’abord le lien dans Chrome).')}</li>
+            <li>{t('applicationMobile.android2', 'Touchez les trois points, en haut à droite.')}</li>
+            <li>{t('applicationMobile.android3', 'Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».')}</li>
           </ol>
         )}
 

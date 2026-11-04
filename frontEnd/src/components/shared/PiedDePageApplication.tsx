@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
 import { ConfirmDialog } from '@/components/shared';
-import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation } from '@/utils/applicationMobile';
+import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation, surTelephone } from '@/utils/applicationMobile';
 
 export function InstallerTalaDz() {
   const { t } = useTranslation();
@@ -21,7 +21,20 @@ export function InstallerTalaDz() {
   const [consignes, setConsignes] = useState(false);
   useEffect(() => suivreInstallation(() => setProposee(installationProposee())), []);
 
-  if (estInstallee() || (!proposee && !estIphone())) return null;
+  // Sur téléphone, le bouton reste visible même si le navigateur ne propose rien
+  // (Facebook, première visite sur Chrome, proposition déjà refusée) : il donne alors les gestes à faire.
+  if (estInstallee() || (!proposee && !surTelephone() && !estIphone())) return null;
+  const etapes = estIphone()
+    ? [
+      t('applicationMobile.iphone1', 'Ouvrez taladz.com dans Safari.'),
+      t('applicationMobile.iphone2', 'Touchez le bouton Partager, en bas de l’écran.'),
+      t('applicationMobile.iphone3', 'Choisissez « Sur l’écran d’accueil », puis « Ajouter ».'),
+    ]
+    : [
+      t('applicationMobile.android1', 'Ouvrez taladz.com dans Chrome (si vous êtes dans Facebook, ouvrez d’abord le lien dans Chrome).'),
+      t('applicationMobile.android2', 'Touchez les trois points, en haut à droite.'),
+      t('applicationMobile.android3', 'Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».'),
+    ];
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => (proposee ? lancerInstallation() : setConsignes(true))}>
@@ -32,11 +45,7 @@ export function InstallerTalaDz() {
         open={consignes}
         onOpenChange={setConsignes}
         title={t('applicationMobile.installer', 'Installer Tala DZ')}
-        description={[
-          t('applicationMobile.iphone1', 'Ouvrez taladz.com dans Safari.'),
-          t('applicationMobile.iphone2', 'Touchez le bouton Partager, en bas de l’écran.'),
-          t('applicationMobile.iphone3', 'Choisissez « Sur l’écran d’accueil », puis « Ajouter ».'),
-        ].join(' ')}
+        description={etapes.join(' ')}
         confirmLabel={t('common.ok', 'OK')}
         onConfirm={() => setConsignes(false)}
       />

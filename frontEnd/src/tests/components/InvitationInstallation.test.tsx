@@ -22,6 +22,7 @@ vi.mock('@/utils/applicationMobile', () => ({
   activerNotifications: activation,
   notificationsPossibles: () => etat.possible,
   suivreInstallation: () => () => undefined,
+  surTelephone: () => window.matchMedia('(pointer: coarse)').matches,
 }));
 vi.mock('react-i18next', async (original) => ({
   ...(await original<typeof import('react-i18next')>()),

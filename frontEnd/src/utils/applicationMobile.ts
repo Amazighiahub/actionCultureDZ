@@ -41,6 +41,8 @@ export const estInstallee = () => window.matchMedia?.('(display-mode: standalone
 export const estIphone = () => /iphone|ipad|ipod/i.test(navigator.userAgent)
   || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
+export const surTelephone = () => window.matchMedia?.('(pointer: coarse)').matches === true;
+
 export async function lancerInstallation(): Promise<boolean> {
   if (!invitation) return false;
   await invitation.prompt();

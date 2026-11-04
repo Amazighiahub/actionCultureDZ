@@ -73,7 +73,10 @@
     "iphone1": "Ouvrez taladz.com dans Safari.",
     "iphone2": "Touchez le bouton Partager, en bas de l’écran.",
     "iphone3": "Choisissez « Sur l’écran d’accueil », puis « Ajouter ».",
-    "iphone4": "Ouvrez Tala DZ depuis son icône, puis revenez ici pour activer les notifications."
+    "iphone4": "Ouvrez Tala DZ depuis son icône, puis revenez ici pour activer les notifications.",
+    "android1": "Ouvrez taladz.com dans Chrome (si vous êtes dans Facebook, ouvrez d’abord le lien dans Chrome).",
+    "android2": "Touchez les trois points, en haut à droite.",
+    "android3": "Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil »."
   },
   "auth": {
     "mustBeConnected": "Vous devez être connecté",

@@ -73,7 +73,10 @@
     "iphone1": "Open taladz.com in Safari.",
     "iphone2": "Tap the Share button at the bottom of the screen.",
     "iphone3": "Choose “Add to Home Screen”, then “Add”.",
-    "iphone4": "Open Tala DZ from its icon, then come back here to turn on notifications."
+    "iphone4": "Open Tala DZ from its icon, then come back here to turn on notifications.",
+    "android1": "Open taladz.com in Chrome (if you are inside Facebook, first open the link in Chrome).",
+    "android2": "Tap the three dots at the top right.",
+    "android3": "Choose “Install app” or “Add to Home screen”."
   },
   "auth": {
     "mustBeConnected": "You must be logged in",
