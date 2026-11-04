@@ -52,6 +52,33 @@ beforeEach(() => {
   telephone(true);
 });
 
+describe('application installée mais personne connectée', () => {
+  const CONNEXION = 'Connectez-vous pour recevoir vos notifications';
+
+  test('elle est invitée à se connecter pour recevoir ses notifications', () => {
+    Object.assign(etat, { connecte: false, installee: true });
+    render(<InvitationInstallation />);
+    expect(screen.getByText(CONNEXION)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Se connecter' })).toHaveAttribute('href', '/auth');
+  });
+
+  test('« Plus tard » la fait taire', async () => {
+    Object.assign(etat, { connecte: false, installee: true });
+    const { unmount } = render(<InvitationInstallation />);
+    await userEvent.click(screen.getByRole('button', { name: 'Plus tard' }));
+    expect(screen.queryByText(CONNEXION)).not.toBeInTheDocument();
+    unmount();
+    render(<InvitationInstallation />);
+    expect(screen.queryByText(CONNEXION)).not.toBeInTheDocument();
+  });
+
+  test('rien si le site n’est pas installé', () => {
+    etat.connecte = false;
+    render(<InvitationInstallation />);
+    expect(screen.queryByText(CONNEXION)).not.toBeInTheDocument();
+  });
+});
+
 describe('invitation à installer', () => {
   test('apparaît pour une personne connectée sur téléphone', () => {
     render(<InvitationInstallation />);

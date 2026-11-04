@@ -199,6 +199,7 @@ class SignalementRepository extends BaseRepository {
             { statut: newStatut, refresh_token: null, refresh_token_expires: null },
             { where: { id_user: idAuteur } }
           );
+          await this.models.SessionConnexion?.destroy({ where: { id_user: idAuteur } });
           await invalidateUserSession(idAuteur);
         }
         break;

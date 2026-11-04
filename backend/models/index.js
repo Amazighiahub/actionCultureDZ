@@ -290,6 +290,9 @@ const loadModels = (sequelize) => {
   const pushAbonnementModel = loadModelSafely('./misc/pushAbonnement', 'PushAbonnement', sequelize);
   if (pushAbonnementModel) models.PushAbonnement = pushAbonnementModel;
 
+  const sessionConnexionModel = loadModelSafely('./users/sessionConnexion', 'SessionConnexion', sequelize);
+  if (sessionConnexionModel) models.SessionConnexion = sessionConnexionModel;
+
   const auditLogModel = loadModelSafely('./misc/auditLog', 'AuditLog', sequelize);
   if (auditLogModel) models.AuditLog = auditLogModel;
 

@@ -63,8 +63,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     } catch (err) {
       setError(err as Error);
       console.error('Failed to load user:', err);
-      // Nettoyer le cache local pour éviter une boucle de redirection
-      authService.clearSession();
+      // Seul un refus du serveur met fin à la session. Réseau coupé à l'ouverture de l'application :
+      // le repère reste, et la prochaine tentative retrouve la personne connectée.
+      const refus = err as { status?: number; response?: { status?: number } };
+      if ((refus.status ?? refus.response?.status) === 401) authService.clearSession();
       setUser(null);
       permissionsService.setCurrentUser(null);
     } finally {
@@ -75,6 +77,15 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   // Initialiser au montage
   useEffect(() => {
     loadUser();
+  }, []);
+
+  // Le réseau revient : retrouver la session si l'ouverture a échoué faute de connexion
+  useEffect(() => {
+    const auRetour = () => {
+      if (authService.hasSessionHint() && !authService.getCurrentUserFromCache()) loadUser();
+    };
+    window.addEventListener('online', auRetour);
+    return () => window.removeEventListener('online', auRetour);
   }, []);
 
   // Observer les changements de token

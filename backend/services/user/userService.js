@@ -16,6 +16,7 @@ const CreateUserDTO = require('../../dto/user/createUserDTO');
 const UpdateUserDTO = require('../../dto/user/updateUserDTO');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('./userFileCleanup');
@@ -23,7 +24,10 @@ const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { evenementsAVenir, annulerEvenementsAVenir } = require('./evenementsAVenir');
 const { texteLisible } = require('../../helpers/i18n');
 
-const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const REFRESH_TOKEN_EXPIRY_DAYS = 90;
+// Jeton précédent encore accepté : la réponse du renouvellement a pu se perdre sur un réseau mobile
+const JETON_PRECEDENT_MINUTES = 10;
+const SESSIONS_MAX_PAR_PERSONNE = 10;
 
 class UserService extends BaseService {
   constructor(userRepository, options = {}) {
@@ -78,9 +82,9 @@ class UserService extends BaseService {
     const result = await this.repository.withTransaction(async (transaction) => {
       const newUser = await this.repository.create(entityData, { transaction });
 
-      const token = this._generateToken(newUser);
       const refreshToken = this._generateRefreshToken();
-      await this._saveRefreshToken(newUser.id_user, refreshToken, transaction);
+      const session = await this._saveRefreshToken(newUser.id_user, refreshToken, transaction);
+      const token = this._generateToken(newUser, session.id_session);
 
       const userDTO = UserDTO.fromEntity(newUser);
 
@@ -160,9 +164,9 @@ class UserService extends BaseService {
     await this.repository.updateLastLogin(user.id_user);
 
     // 5. Générer les tokens
-    const token = this._generateToken(user);
     const refreshToken = this._generateRefreshToken();
-    await this._saveRefreshToken(user.id_user, refreshToken);
+    const session = await this._saveRefreshToken(user.id_user, refreshToken);
+    const token = this._generateToken(user, session.id_session);
 
     // 6. Transformer en DTO
     const userDTO = UserDTO.fromEntity(user);
@@ -189,25 +193,42 @@ class UserService extends BaseService {
     const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
     const result = await this.repository.withTransaction(async (transaction) => {
-      const user = await this.repository.findByRefreshToken(hashedToken, {
+      const { SessionConnexion } = this.models;
+      const maintenant = new Date();
+      let session = await SessionConnexion.findOne({
+        where: {
+          [Op.or]: [
+            { jeton_hash: hashedToken },
+            { jeton_precedent_hash: hashedToken, precedent_jusqua: { [Op.gt]: maintenant } }
+          ]
+        },
         transaction,
         lock: transaction.LOCK.UPDATE
       });
 
-      if (!user) {
-        this.logger.warn(`Refresh token invalide ou déjà consommé — possible réutilisation`);
-        throw this._unauthorizedError('Refresh token invalide');
-      }
-
-      // Invalider immédiatement le token avant tout traitement
-      await this.repository.update(user.id_user, {
-        refresh_token: '__consumed__',
-        refresh_token_expires: new Date()
-      }, { transaction });
-
-      if (new Date() > new Date(user.refresh_token_expires)) {
-        await this._clearRefreshToken(user.id_user, { transaction });
-        throw this._unauthorizedError('Refresh token expiré');
+      let user;
+      if (session) {
+        user = await this.repository.model.unscoped().findByPk(session.id_user, { transaction });
+        if (!user || maintenant > new Date(session.expire_le)) {
+          this.logger.warn('Session de connexion expirée');
+          throw this._unauthorizedError('Refresh token expiré');
+        }
+        // Mot de passe changé après l'ouverture de cette connexion (comparaison à la seconde, comme en base)
+        const ouverte = Math.floor(new Date(session.date_creation).getTime() / 1000);
+        if (user.password_changed_at && ouverte < Math.floor(new Date(user.password_changed_at).getTime() / 1000)) {
+          throw this._unauthorizedError('Refresh token invalide');
+        }
+      } else {
+        // Connexion ouverte avant la séparation par appareil : elle continue sans redemander le mot de passe
+        user = await this.repository.findByRefreshToken(hashedToken, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!user) {
+          this.logger.warn(`Refresh token invalide ou déjà consommé — possible réutilisation`);
+          throw this._unauthorizedError('Refresh token invalide');
+        }
+        if (maintenant > new Date(user.refresh_token_expires)) {
+          throw this._unauthorizedError('Refresh token expiré');
+        }
+        await this.repository.update(user.id_user, { refresh_token: null, refresh_token_expires: null }, { transaction });
       }
 
       if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
@@ -230,9 +251,20 @@ class UserService extends BaseService {
         }
       }
 
-      const newAccessToken = this._generateToken(user);
       const newRefreshToken = this._generateRefreshToken();
-      await this._saveRefreshToken(user.id_user, newRefreshToken, transaction);
+      const nouveauHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+      if (session) {
+        // Le jeton reçu a pu être l'ancien : le dernier émis reste alors valable quelques minutes à sa place
+        await session.update({
+          jeton_precedent_hash: session.jeton_hash,
+          precedent_jusqua: new Date(maintenant.getTime() + JETON_PRECEDENT_MINUTES * 60000),
+          jeton_hash: nouveauHash,
+          expire_le: this._finDeSession()
+        }, { transaction });
+      } else {
+        session = await this._saveRefreshToken(user.id_user, newRefreshToken, transaction);
+      }
+      const newAccessToken = this._generateToken(user, session.id_session);
 
       return { user, newAccessToken, newRefreshToken };
     });
@@ -881,12 +913,18 @@ class UserService extends BaseService {
   }
 
   /**
-   * Révoque le refresh token d'un utilisateur (pour le logout)
+   * Révoque la connexion de cet appareil (déconnexion). Sans numéro de session (jeton plus ancien) :
+   * toutes les connexions de la personne, comme avant.
    * @param {number} userId
+   * @param {number} [idSession]
    * @returns {Promise<void>}
    */
-  async revokeRefreshToken(userId) {
-    await this._clearRefreshToken(userId);
+  async revokeRefreshToken(userId, idSession) {
+    if (idSession) {
+      await this.models.SessionConnexion.destroy({ where: { id_session: idSession, id_user: userId } });
+    } else {
+      await this._clearRefreshToken(userId);
+    }
     this.logger.info(`Refresh token révoqué pour: ${userId}`);
   }
 
@@ -894,7 +932,7 @@ class UserService extends BaseService {
    * Génère un token JWT
    * @private
    */
-  _generateToken(user) {
+  _generateToken(user, idSession) {
     // Delegue au helper central : ajoute jti (UUID v4), issuer et audience.
     // On conserve la signature de retour (string) pour ne pas casser les
     // callers historiques (register/login/verifyEmail/refreshSession).
@@ -903,6 +941,8 @@ class UserService extends BaseService {
         userId: user.id_user,
         email: user.email,
         typeUser: user.id_type_user,
+        // Connexion de cet appareil : la déconnexion ne coupe qu'elle
+        ...(idSession ? { sid: idSession } : {}),
         // Omettre pwdAt si null — 0 serait falsy et annulerait la vérification côté middleware
         ...(user.password_changed_at ? {
           pwdAt: Math.floor(new Date(user.password_changed_at).getTime() / 1000)
@@ -922,26 +962,52 @@ class UserService extends BaseService {
   }
 
   /**
-   * Persiste le refresh token hashé avec une date d'expiration
+   * Date de fin d'une connexion : repoussée à chaque renouvellement
    * @private
    */
-  async _saveRefreshToken(userId, refreshToken, transaction = null) {
-    const expires = new Date();
-    expires.setDate(expires.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+  _finDeSession() {
+    const fin = new Date();
+    fin.setDate(fin.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+    return fin;
+  }
 
-    const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  /**
+   * Ouvre une connexion pour cet appareil, sans toucher à celles des autres appareils
+   * @private
+   * @returns {Promise<{id_session: number}>}
+   */
+  async _saveRefreshToken(userId, refreshToken, transaction = null) {
+    const { SessionConnexion } = this.models;
     const options = transaction ? { transaction } : {};
-    await this.repository.update(userId, {
-      refresh_token: hashedToken,
-      refresh_token_expires: expires
+    const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+    await SessionConnexion.destroy({ where: { expire_le: { [Op.lt]: new Date() } }, ...options });
+    // Au-delà de la limite, la connexion la plus ancienne se ferme
+    const anciennes = await SessionConnexion.findAll({
+      where: { id_user: userId },
+      attributes: ['id_session'],
+      order: [['id_session', 'DESC']],
+      offset: SESSIONS_MAX_PAR_PERSONNE - 1,
+      limit: 100,
+      ...options
+    });
+    if (anciennes.length) {
+      await SessionConnexion.destroy({ where: { id_session: anciennes.map((s) => s.id_session) }, ...options });
+    }
+
+    return SessionConnexion.create({
+      id_user: userId,
+      jeton_hash: hashedToken,
+      expire_le: this._finDeSession()
     }, options);
   }
 
   /**
-   * Efface le refresh token d'un utilisateur
+   * Coupe toutes les connexions d'une personne, sur tous ses appareils
    * @private
    */
   async _clearRefreshToken(userId, options = {}) {
+    await this.models.SessionConnexion.destroy({ where: { id_user: userId }, ...options });
     await this.repository.update(userId, {
       refresh_token: null,
       refresh_token_expires: null

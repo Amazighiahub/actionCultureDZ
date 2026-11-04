@@ -117,7 +117,10 @@ class AuthController extends BaseController {
     // 1) Revocation refresh token + invalidation cache session (best-effort).
     try {
       if (req.user?.id_user) {
-        await this.userService.revokeRefreshToken(req.user.id_user);
+        // Seulement cet appareil : le téléphone reste connecté quand on se déconnecte de l'ordinateur
+        const acces = req.cookies?.access_token;
+        const idSession = acces ? require('jsonwebtoken').decode(acces)?.sid : undefined;
+        await this.userService.revokeRefreshToken(req.user.id_user, idSession);
         const authMw = require('../middlewares/authMiddleware')(require('../models'));
         await authMw.invalidateUserCache(req.user.id_user).catch(() => {});
       }

@@ -14,13 +14,13 @@
  *   Fallback : 1h.
  *
  * Refresh token :
- *   TTL fixe cote cookie : 7 jours.
+ *   TTL cote cookie : 90 jours, renouveles a chaque ouverture (rester connecte sur son telephone).
  *   Path scopa a /api/users/refresh-token pour limiter l'exposition.
  */
 
 const UNIT_TO_MS = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
 const DEFAULT_MAX_AGE_MS = 15 * 60 * 1000;
-const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const REFRESH_COOKIE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const REFRESH_COOKIE_PATH = '/api/users/refresh-token';
 const ACCESS_COOKIE_PATH = '/';
 

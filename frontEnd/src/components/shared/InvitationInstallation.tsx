@@ -37,7 +37,7 @@ const faireTaire = (cle: string) => {
 export default function InvitationInstallation() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { isAuthenticated } = usePermissionsContext();
+  const { isAuthenticated, loading } = usePermissionsContext();
   const [proposee, setProposee] = useState(installationProposee());
   const [installationFermee, setInstallationFermee] = useState(enSilence(CLE_INSTALLATION));
   const [notificationsFermees, setNotificationsFermees] = useState(enSilence(CLE_NOTIFICATIONS));
@@ -50,7 +50,35 @@ export default function InvitationInstallation() {
     abonnementActuel().then((a) => setAbonne(!!a)).catch(() => setAbonne(true));
   }, [isAuthenticated]);
 
-  if (!isAuthenticated || !surTelephone()) return null;
+  if (!surTelephone() || loading) return null;
+
+  // Application installée mais personne connectée (sur iPhone, elle ne partage pas la connexion de Safari) :
+  // sans compte, les notifications ne peuvent pas lui parvenir, donc on le lui dit
+  if (!isAuthenticated) {
+    if (!estInstallee() || notificationsFermees || window.location.pathname.startsWith('/auth')) return null;
+    return (
+      <aside
+        aria-label={t('applicationMobile.titre', 'Tala DZ sur votre téléphone')}
+        className="fixed inset-x-3 bottom-3 z-40 rounded-lg border bg-card p-4 shadow-lg print:hidden"
+      >
+        <p className="flex items-center gap-2 font-medium">
+          <Bell className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {t('applicationMobile.connexionTitre', 'Connectez-vous pour recevoir vos notifications')}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t('applicationMobile.connexionTexte', 'Connectez-vous une fois dans l’application : vous resterez connecté sur ce téléphone.')}
+        </p>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => { faireTaire(CLE_NOTIFICATIONS); setNotificationsFermees(true); }}>
+            {t('applicationMobile.plusTard', 'Plus tard')}
+          </Button>
+          <Button size="sm" asChild>
+            <a href="/auth">{t('applicationMobile.seConnecter', 'Se connecter')}</a>
+          </Button>
+        </div>
+      </aside>
+    );
+  }
 
   const iphone = estIphone();
   const installee = estInstallee();

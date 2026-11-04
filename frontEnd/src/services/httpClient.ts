@@ -467,8 +467,11 @@ class HttpClient {
             }
             return this.axiosInstance(originalRequest);
           } catch (refreshError) {
-            // Token refresh a échoué, rediriger vers login (sauf vérification silencieuse)
-            if (!originalRequest._silentAuth) this.handleAuthError();
+            // Token refresh a échoué, rediriger vers login (sauf vérification silencieuse).
+            // Réseau coupé ou serveur indisponible : la connexion reste valable, on ne déconnecte pas.
+            const statut = axios.isAxiosError(refreshError) ? refreshError.response?.status : 401;
+            const coupure = !statut || statut >= 500 || statut === 429;
+            if (!originalRequest._silentAuth && !coupure) this.handleAuthError();
             return Promise.reject(refreshError);
           }
         }
