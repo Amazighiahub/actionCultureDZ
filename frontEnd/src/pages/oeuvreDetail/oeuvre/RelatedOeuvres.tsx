@@ -17,6 +17,7 @@ import { LazyImage } from '@/components/shared';
 import { oeuvreService } from '@/services/oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
+import { oeuvrePath } from '@/utils/slug';
 
 interface RelatedOeuvresProps {
   oeuvreId: number;
@@ -36,7 +37,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
   const lang = (i18n.language || 'fr') as SupportedLanguage;
 
   return (
-    <Link to={`/oeuvres/${oeuvre.id_oeuvre}`} onClick={scrollToTop} className={CARD_LINK_CLASS}>
+    <Link to={oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, oeuvre.id_type_oeuvre)} onClick={scrollToTop} className={CARD_LINK_CLASS}>
       <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer group">
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden">

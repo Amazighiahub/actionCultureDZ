@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { montantInscription, prixAConvenir, tarificationDe, PRESENCE_PARTIELLE } from '@/utils/tarifEvenement';
+import PaiementInscription from '@/components/event/PaiementInscription';
 import { finEffective } from '@/utils/statutEvenement';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -589,6 +590,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 </p>
               </div>
             )}
+            <PaiementInscription idEvenement={event.id_evenement} />
             <Button
               variant="destructive"
               className="w-full"
@@ -640,6 +642,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                           {partiel && <span className="text-muted-foreground"> {t('events.tarif.partielInfo', '(présence partielle, {{pourcent}} % du prix)', { pourcent: tarification.partiel_pourcent })}</span>}
                         </>)}
                   </div>
+                )}
+
+                {/* Paiement direct à l'organisateur : dit avant l'inscription */}
+                {tarification.mode !== 'gratuit' && (
+                  <p className="text-xs text-muted-foreground">{t('paiement.mention', 'Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.')}</p>
                 )}
 
                 {!formulaireRemplaceBase && (<>

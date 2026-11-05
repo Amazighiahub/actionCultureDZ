@@ -26,6 +26,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { cleSectionPatrimoine } from '@/services/patrimoineArticles.service';
 import i18n from 'i18next';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -164,6 +165,7 @@ const AjouterOeuvre: React.FC = () => {
                   </div>
                 }
               />
+              <ConseilReferencement type="oeuvre" className="mb-6" />
 
               {!isAuthenticated &&
               <Alert className="mb-6">

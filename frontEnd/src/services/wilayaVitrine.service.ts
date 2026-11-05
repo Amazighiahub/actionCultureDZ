@@ -1,5 +1,6 @@
 /** Page d'une wilaya, et liens entre une œuvre et un lieu */
 import { httpClient } from '@/services/httpClient';
+import { oeuvrePath, artisanatPath } from '@/utils/slug';
 
 export interface ListeTotal<T> { liste: T[]; total: number }
 
@@ -45,10 +46,9 @@ export interface VitrineWilaya {
 export interface LieuDeOeuvre { id_lien: number; id_lieu: number; nom: unknown; peut_retirer: boolean }
 
 /** Adresse de la fiche : chaque genre d'œuvre a la sienne */
-export const lienOeuvre = (o: Pick<OeuvreCarte, 'id_oeuvre' | 'id_type_oeuvre' | 'id_artisanat'>): string => {
-  if ([4, 5].includes(o.id_type_oeuvre)) return `/articles/${o.id_oeuvre}`;
-  if (o.id_artisanat) return `/artisanat/${o.id_artisanat}`;
-  return `/oeuvres/${o.id_oeuvre}`;
+export const lienOeuvre = (o: Pick<OeuvreCarte, 'id_oeuvre' | 'id_type_oeuvre' | 'id_artisanat'> & { titre?: unknown }): string => {
+  if (o.id_artisanat) return artisanatPath(o.id_artisanat, o.titre);
+  return oeuvrePath(o.id_oeuvre, o.titre, o.id_type_oeuvre);
 };
 
 export const wilayaVitrineService = {

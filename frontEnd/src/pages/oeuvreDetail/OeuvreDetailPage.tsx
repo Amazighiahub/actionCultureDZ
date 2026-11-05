@@ -51,9 +51,10 @@ import type { Evenement } from '@/types/models/evenement.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import type { Intervenant } from '@/types/models/intervenant.types';
 import { getSafeRedirectPath } from '@/utils/safeUrl';
-import { evenementPath } from '@/utils/slug';
+import { evenementPath, professionnelPath } from '@/utils/slug';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
+import { idFromSlug, oeuvrePath, artisanatPath } from '@/utils/slug';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -149,7 +150,7 @@ const OeuvreDetailPage: React.FC = () => {
     toggleFavorite,
     addComment,
     rafraichirCommentaires
-  } = useOeuvreDetails(id ? parseInt(id) : 0);
+  } = useOeuvreDetails(idFromSlug(id) ?? 0);
 
   // Mémoriser seoKeywords et seoJsonLd pour stabiliser les références entre renders
   // (sinon SEOHead boucle son useEffect et bloque la navigation entre pages)
@@ -171,7 +172,7 @@ const OeuvreDetailPage: React.FC = () => {
       buildBreadcrumbJsonLd([
         { name: t('nav.home', 'Accueil'), url: '/' },
         { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
-        { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
+        { name: getTranslation(oeuvre.titre, lang) || '', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre) },
       ]),
     ];
   }, [oeuvre, lang, t]);
@@ -190,11 +191,16 @@ const OeuvreDetailPage: React.FC = () => {
   // pour un artisanat (type 7) : une seule adresse par contenu
   useEffect(() => {
     if (oeuvre && (oeuvre.id_type_oeuvre === 4 || oeuvre.id_type_oeuvre === 5)) {
-      navigate(`/articles/${oeuvre.id_oeuvre}`, { replace: true });
+      navigate(oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, oeuvre.id_type_oeuvre), { replace: true });
     }
     const idArtisanat = (oeuvre as { Artisanat?: { id_artisanat?: number } } | null)?.Artisanat?.id_artisanat;
     if (oeuvre && oeuvre.id_type_oeuvre === 7 && idArtisanat) {
-      navigate(`/artisanat/${idArtisanat}`, { replace: true });
+      navigate(artisanatPath(idArtisanat, oeuvre.titre), { replace: true });
+    }
+    // Adresse lisible et partageable : /oeuvres/125 -> /oeuvres/125-zajeljazz
+    if (oeuvre && ![4, 5, 7].includes(oeuvre.id_type_oeuvre)) {
+      const canonique = oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre);
+      if (`/oeuvres/${id}` !== canonique) navigate(canonique + window.location.search + window.location.hash, { replace: true });
     }
   }, [oeuvre, navigate]);
 
@@ -417,6 +423,22 @@ const OeuvreDetailPage: React.FC = () => {
           favoriteLoading={favoriteLoading}
           onToggleFavorite={handleToggleFavorite}
         />
+
+        {/* Lien vers le créateur : les visiteurs et les moteurs de recherche relient l'œuvre à sa fiche */}
+        {(() => {
+          const createur = (oeuvre as { Saiseur?: { id_user: number; nom?: unknown; prenom?: unknown; id_type_user?: number } }).Saiseur;
+          if (!createur || !createur.id_type_user || [1, 29].includes(createur.id_type_user)) return null;
+          const nomCreateur = `${getTranslation(createur.prenom as never, lang) || ''} ${getTranslation(createur.nom as never, lang) || ''}`.trim();
+          return (
+            <div className="container max-w-6xl pt-6">
+              <Link to={professionnelPath(createur.id_user, getTranslation(createur.prenom as never, 'fr'), getTranslation(createur.nom as never, 'fr'))}
+                className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm hover:border-primary">
+                {t('oeuvre.parCreateur', 'Une œuvre de {{nom}}', { nom: nomCreateur })}
+                <span className="font-medium text-primary">· {t('oeuvre.voirPortfolio', 'Voir son portfolio')}</span>
+              </Link>
+            </div>
+          );
+        })()}
 
         {/* Section détaillée style galerie pour Œuvre d'Art et Artisanat */}
         {(oeuvre.id_type_oeuvre === 6 || oeuvre.id_type_oeuvre === 7) && (() => {
@@ -698,7 +720,7 @@ const OeuvreDetailPage: React.FC = () => {
                       {oeuvresAuteur.map((oeuvreAuteur) => (
                         <Link
                           key={oeuvreAuteur.id_oeuvre}
-                          to={`/oeuvres/${oeuvreAuteur.id_oeuvre}`}
+                          to={oeuvrePath(oeuvreAuteur.id_oeuvre, oeuvreAuteur.titre, oeuvreAuteur.id_type_oeuvre)}
                           className="group"
                         >
                           <div className="flex items-start space-x-4 rtl:space-x-reverse p-4 rounded-lg border hover:bg-muted transition-all duration-200">

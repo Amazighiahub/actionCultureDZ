@@ -77,6 +77,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 import Header from '@/components/Header';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { rafraichirFavoris } from '@/lib/queryClient';
+import { idFromSlug, oeuvrePath } from '@/utils/slug';
 
 // Nom de chaque langue écrit dans cette langue
 const NOMS_LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
@@ -228,7 +229,13 @@ const ArticleViewPage: React.FC = () => {
   const { formatDate: hookFormatDate } = useFormatDate();
   const { toast } = useToast();
 
-  const articleId = parseInt(id || '0');
+  const articleId = idFromSlug(id) ?? 0;
+  // Adresse lisible et partageable : /articles/40 -> /articles/40-titre-de-l-article
+  useEffect(() => {
+    if (!oeuvre || ![4, 5].includes(oeuvre.id_type_oeuvre as number)) return;
+    const canonique = oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4);
+    if (`/articles/${id}` !== canonique) navigate(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [oeuvre, id, navigate]);
   const isScientific = oeuvre?.id_type_oeuvre === 5;
   const articleData = oeuvre ? getArticleData(oeuvre, isScientific) : { type: 'none' as const, data: null };
 
@@ -653,7 +660,7 @@ const ArticleViewPage: React.FC = () => {
             buildBreadcrumbJsonLd([
               { name: 'Accueil', url: '/' },
               { name: 'Oeuvres', url: '/oeuvres' },
-              { name: oeuvre.titre || 'Article', url: `/articles/${oeuvre.id_oeuvre}` },
+              { name: oeuvre.titre || 'Article', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4) },
             ]),
           ]}
         />

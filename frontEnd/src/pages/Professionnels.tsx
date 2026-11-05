@@ -186,7 +186,12 @@ const Professionnels: React.FC = () => {
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <h2 className="font-semibold text-lg [overflow-wrap:anywhere]">{prenom} {nom}</h2>
-                            {metier && <Badge variant="secondary" className="mt-1 capitalize">{metier}</Badge>}
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {metier && <Badge variant="secondary" className="capitalize">{metier}</Badge>}
+                              {(Array.isArray((p as unknown as { specialites?: unknown }).specialites) ? (p as unknown as { specialites: unknown[] }).specialites : [])
+                                .filter((s): s is string => typeof s === 'string').slice(0, 3)
+                                .map((s) => <Badge key={s} variant="outline">{s}</Badge>)}
+                            </div>
                             {bio && <p className="mt-2 text-sm text-muted-foreground line-clamp-2 [overflow-wrap:anywhere]">{bio}</p>}
                           </div>
                         </CardContent>
