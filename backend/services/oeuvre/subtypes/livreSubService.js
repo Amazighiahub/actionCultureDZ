@@ -26,6 +26,22 @@ function normaliserIsbn(valeur) {
 /** Nombre de pages : vide ou illisible → null */
 const lirePages = (v) => BaseSubtypeService.nombre(v, true);
 
+const EXTRAIT_MAX = 20000;
+/**
+ * Extrait saisi → valeur enregistrée : texte seul (affiché tel quel, jamais comme du HTML),
+ * espaces de début et de fin retirés, vide → null.
+ * @returns {string|null|undefined} undefined si le champ est absent (ne rien changer)
+ */
+function normaliserExtrait(valeur) {
+  if (valeur === undefined) return undefined;
+  if (valeur === null) return null;
+  if (typeof valeur !== 'string') throw AppError.badRequest('Extrait invalide');
+  const texte = valeur.replace(/\r\n?/g, '\n').trim();
+  if (!texte) return null;
+  if (texte.length > EXTRAIT_MAX) throw AppError.badRequest(`Extrait trop long : ${EXTRAIT_MAX} caractères au plus`);
+  return texte;
+}
+
 class LivreSubService extends BaseSubtypeService {
   constructor(models) {
     super('Livre', models, LivreDTO);
@@ -36,7 +52,8 @@ class LivreSubService extends BaseSubtypeService {
       id_oeuvre: oeuvreId,
       isbn: normaliserIsbn(ds.isbn) ?? null,
       nb_pages: ds.nb_pages != null ? lirePages(ds.nb_pages) : null,
-      id_genre: ds.id_genre || null
+      id_genre: ds.id_genre || null,
+      extrait: normaliserExtrait(ds.extrait) ?? null
     };
   }
 
@@ -45,9 +62,11 @@ class LivreSubService extends BaseSubtypeService {
     if (ds.isbn !== undefined) data.isbn = normaliserIsbn(ds.isbn);
     if (ds.nb_pages !== undefined) data.nb_pages = lirePages(ds.nb_pages);
     if (ds.id_genre !== undefined) data.id_genre = ds.id_genre;
+    if (ds.extrait !== undefined) data.extrait = normaliserExtrait(ds.extrait);
     return data;
   }
 }
 
 module.exports = LivreSubService;
 module.exports.normaliserIsbn = normaliserIsbn;
+module.exports.normaliserExtrait = normaliserExtrait;

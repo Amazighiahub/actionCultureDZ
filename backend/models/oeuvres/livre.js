@@ -23,6 +23,11 @@ module.exports = (sequelize) => {
     nb_pages: {
       type: DataTypes.INTEGER
     },
+    // Quelques pages saisies par l'écrivain, affichées par « Lire un extrait »
+    extrait: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     id_genre: {
       type: DataTypes.INTEGER,
       references: {

@@ -2,7 +2,7 @@
  * HeroLivre - Hero section spécifique au type Livre
  * Effet flip 3D couverture avant/arrière
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,6 +37,9 @@ interface HeroLivreProps {
   shareButton: React.ReactNode;
 }
 
+/** Ouvre la fenêtre de l'extrait depuis un autre bouton de la page */
+export const EVENEMENT_LIRE_EXTRAIT = 'tala:lire-extrait';
+
 const HeroLivre: React.FC<HeroLivreProps> = ({
   oeuvre, medias, mainImage, titre, description, typeOeuvre,
   mainContributors, gt, viewCount, commentsCount,
@@ -49,6 +52,14 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [showExcerpt, setShowExcerpt] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
+  // Extrait saisi par l'écrivain (avant : le bouton montrait le résumé)
+  const extrait = String((oeuvre as { Livre?: { extrait?: string | null } }).Livre?.extrait || '').trim();
+  // Le bouton « Lire un extrait » plus bas sur la page ouvre la même fenêtre
+  useEffect(() => {
+    const ouvrir = () => setShowExcerpt(true);
+    window.addEventListener(EVENEMENT_LIRE_EXTRAIT, ouvrir);
+    return () => window.removeEventListener(EVENEMENT_LIRE_EXTRAIT, ouvrir);
+  }, []);
 
   return (
     <div className="relative bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 min-h-[500px]">
@@ -244,11 +255,13 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               </div>
             )}
 
+            {extrait && (
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
               <Button size="lg" className="shadow-lg" onClick={() => setShowExcerpt(true)}>
                 <Eye className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />{t('works.actions.readExcerpt', 'Lire un extrait')}
               </Button>
             </div>
+            )}
 
             {/* Modal Extrait */}
             <Dialog open={showExcerpt} onOpenChange={setShowExcerpt}>
@@ -259,8 +272,8 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                   </DialogTitle>
                 </DialogHeader>
                 <div className="mt-4">
-                  {oeuvre.description ? (
-                    <div dir="auto" className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap">{description}</div>
+                  {extrait ? (
+                    <div dir="auto" className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap font-serif text-base">{extrait}</div>
                   ) : (
                     <p className="text-muted-foreground text-center py-8">{t('works.excerpt.noContent', "Aucun contenu disponible pour cet ouvrage.")}</p>
                   )}

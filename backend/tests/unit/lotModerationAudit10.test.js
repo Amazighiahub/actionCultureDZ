@@ -135,3 +135,26 @@ describe('couverture d’une œuvre', () => {
     expect(OeuvreDTO._addComputedFields({ Media: [image, principale] }).image_url).toBe(principale.url);
   });
 });
+
+describe('extrait d’un livre', () => {
+  const LivreSubService = require('../../services/oeuvre/subtypes/livreSubService');
+  const { normaliserExtrait } = LivreSubService;
+  const svc = new LivreSubService({});
+
+  it('texte nettoyé, vide effacé, absent inchangé', () => {
+    expect(normaliserExtrait('  Il était une fois\r\nune ville.  ')).toBe('Il était une fois\nune ville.');
+    expect(normaliserExtrait('   ')).toBeNull();
+    expect(normaliserExtrait(undefined)).toBeUndefined();
+  });
+
+  it('trop long ou autre chose que du texte : refusé', () => {
+    expect(() => normaliserExtrait('x'.repeat(20001))).toThrow();
+    expect(() => normaliserExtrait({ fr: 'x' })).toThrow();
+  });
+
+  it('création et modification : l’extrait est enregistré, effacé si vidé', () => {
+    expect(svc._buildCreateData(4, { extrait: 'Page 1' }).extrait).toBe('Page 1');
+    expect(svc._buildUpdateData({ extrait: '' })).toEqual({ extrait: null });
+    expect(svc._buildUpdateData({ isbn: undefined })).not.toHaveProperty('extrait');
+  });
+});

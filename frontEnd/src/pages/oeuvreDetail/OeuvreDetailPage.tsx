@@ -33,6 +33,7 @@ import { getTranslation, type SupportedLanguage } from '@/types/common/multiling
 import { HeroSection } from '@/components/oeuvre/HeroSection';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getMainImage } from '@/types/models/media-extended.types';
+import { EVENEMENT_LIRE_EXTRAIT } from '@/components/oeuvre/HeroLivre';
 
 // Hook personnalisé
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
@@ -49,7 +50,7 @@ import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import type { Intervenant } from '@/types/models/intervenant.types';
-import { getSafeRedirectPath, safeExternalUrl } from '@/utils/safeUrl';
+import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { evenementPath } from '@/utils/slug';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
@@ -318,16 +319,10 @@ const OeuvreDetailPage: React.FC = () => {
     }
   };
 
-  // Lire un extrait
+  // Lire un extrait : la fenêtre de l'extrait, en haut de la page
+  const extraitLivre = String((oeuvre?.Livre as unknown as { extrait?: string | null } | undefined)?.extrait || '').trim();
   const handleLireExtrait = () => {
-    const livreExtrait = safeExternalUrl((oeuvre?.Livre as unknown as { url_extrait?: string })?.url_extrait);
-    if (livreExtrait) {
-      window.open(livreExtrait, '_blank', 'noopener,noreferrer');
-    } else {
-      // Scroll vers la section description qui contient l'extrait
-      setActiveTab('description');
-      window.scrollTo({ top: 400, behavior: 'smooth' });
-    }
+    window.dispatchEvent(new Event(EVENEMENT_LIRE_EXTRAIT));
   };
 
   // Format date
@@ -783,7 +778,7 @@ const OeuvreDetailPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-6">
-              <div className={`grid gap-4 ${oeuvre.Livre ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+              <div className={`grid gap-4 ${extraitLivre ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                 <Button size="lg" className="w-full" variant="default" onClick={handleRecommander}>
                   <ThumbsUp className="h-5 w-5 me-2" />
                   {t('oeuvredetailpage.recommander', 'Recommander')}
@@ -792,7 +787,7 @@ const OeuvreDetailPage: React.FC = () => {
                   <MessageCircle className="h-5 w-5 me-2" />
                   {t('oeuvredetailpage.crire_avis', 'Écrire un avis')}
                 </Button>
-                {oeuvre.Livre && (
+                {extraitLivre && (
                   <Button variant="outline" size="lg" className="w-full" onClick={handleLireExtrait}>
                     <BookOpen className="h-5 w-5 me-2" />
                     {t('oeuvredetailpage.lire_extrait', 'Lire un extrait')}

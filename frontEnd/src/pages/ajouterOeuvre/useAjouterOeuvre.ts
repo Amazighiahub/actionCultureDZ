@@ -235,6 +235,7 @@ export function useAjouterOeuvre() {
           prix: (artisanatData['prix'] ?? oeuvre.prix) as number | undefined,
           // Livre
           isbn: (livreData['isbn'] ?? oeuvre['isbn']) as string | undefined,
+          extrait: (livreData['extrait'] ?? undefined) as string | undefined,
           nb_pages: (livreData['nb_pages'] ?? oeuvre['nb_pages']) as number | undefined,
           // Film
           duree_minutes: (filmData['duree_minutes'] ?? oeuvre['duree_minutes']) as number | undefined,
@@ -687,7 +688,8 @@ export function useAjouterOeuvre() {
     // Utiliser id_type_oeuvre (numérique) au lieu de nom_type (traduit selon la langue)
     switch (typeOeuvre.id_type_oeuvre) {
       case 1: // Livre
-        details.livre = { isbn: formData.isbn, nb_pages: formData.nb_pages };
+        // Champ vidé : chaîne vide, effacée par le serveur (absent, l'ancien extrait restait)
+        details.livre = { isbn: formData.isbn, nb_pages: formData.nb_pages, extrait: formData.extrait ?? '' };
         break;
       case 2: // Film
         details.film = { duree_minutes: formData.duree_minutes, realisateur: formData.realisateur };

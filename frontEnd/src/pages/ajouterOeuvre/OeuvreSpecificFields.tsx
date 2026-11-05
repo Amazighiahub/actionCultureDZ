@@ -304,6 +304,22 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           value={formData.nb_pages || ''}
           onChange={(e) => handleInputChange('nb_pages', nombreOuVide(e.target.value, true))} />
         </div>
+        {/* Les lecteurs le lisent avec « Lire un extrait » sur la page du livre */}
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="extrait">{t('ajouteroeuvre.extrait', 'Extrait du livre')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <Textarea
+          id="extrait"
+          dir="auto"
+          rows={8}
+          maxLength={20000}
+          placeholder={t('ajouteroeuvre.extraitPlaceholder', 'Copiez ici quelques pages : le début du livre, un chapitre, un poème…')}
+          value={formData.extrait || ''}
+          aria-describedby="extrait-helper"
+          onChange={(e) => handleInputChange('extrait', e.target.value)} />
+          <p id="extrait-helper" className="text-xs text-muted-foreground">
+            {t('ajouteroeuvre.extraitAide', 'Donnez envie de lire la suite. Ne mettez pas le livre entier.')} {(formData.extrait || '').length}/20000
+          </p>
+        </div>
       </div>,
 
     2: /* Film */

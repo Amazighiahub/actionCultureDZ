@@ -2572,6 +2572,9 @@
     "titreCourt": "حول"
   },
   "ajouteroeuvre": {
+    "extrait": "مقتطف من الكتاب",
+    "extraitPlaceholder": "انسخوا هنا بضع صفحات: بداية الكتاب، فصلًا، قصيدة…",
+    "extraitAide": "شوّقوا القارئ لمعرفة البقية. لا تضعوا الكتاب كاملًا.",
     "chargement_des_catgories": "جاري تحميل الفئات...",
     "catgories": "الفئات",
     "aucune_catgorie_disponible": "لا توجد فئات متاحة لهذا النوع من الأعمال.",

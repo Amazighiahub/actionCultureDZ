@@ -1991,6 +1991,9 @@
     "titreCourt": "About"
   },
   "ajouteroeuvre": {
+    "extrait": "Book excerpt",
+    "extraitPlaceholder": "Paste a few pages here: the opening, a chapter, a poem…",
+    "extraitAide": "Make readers want more. Do not paste the whole book.",
     "chargement_des_catgories": "Loading categories...",
     "catgories": "Categories",
     "aucune_catgorie_disponible": "No categories available for this type of work.",

@@ -2017,6 +2017,9 @@
     "titreCourt": "À propos"
   },
   "ajouteroeuvre": {
+    "extrait": "Extrait du livre",
+    "extraitPlaceholder": "Copiez ici quelques pages : le début du livre, un chapitre, un poème…",
+    "extraitAide": "Donnez envie de lire la suite. Ne mettez pas le livre entier.",
     "chargement_des_catgories": "Chargement des catégories...",
     "catgories": "Catégories",
     "aucune_catgorie_disponible": "Aucune catégorie disponible pour ce type d'œuvre.",

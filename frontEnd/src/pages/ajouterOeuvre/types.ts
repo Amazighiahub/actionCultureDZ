@@ -61,6 +61,8 @@ export interface FormData {
 
   // Champs spécifiques selon le type
   isbn?: string;
+  /** Extrait du livre, quelques pages */
+  extrait?: string;
   nb_pages?: number;
   duree_minutes?: number;
   realisateur?: string;
