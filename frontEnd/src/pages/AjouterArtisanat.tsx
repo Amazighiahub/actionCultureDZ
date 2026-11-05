@@ -27,6 +27,7 @@ import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 type MultiLangText = {
   fr: string;
@@ -339,6 +340,7 @@ const AjouterArtisanat: React.FC = () => {
           title={isEditMode ? t('ajouterArtisanat.editTitle', 'Modifier l’artisanat') : t('ajouterArtisanat.title', 'Ajouter un artisanat')}
           subtitle={isEditMode ? t('ajouterArtisanat.editSubtitle', 'Corrigez ou complétez votre produit, puis enregistrez.') : t('ajouterArtisanat.subtitle', 'Partagez votre savoir-faire artisanal')}
         />
+        <ConseilReferencement type="artisanat" className="mb-6" />
 
         {/* Success message */}
         {success && (

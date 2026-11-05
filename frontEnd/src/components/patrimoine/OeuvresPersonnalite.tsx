@@ -10,6 +10,7 @@ import { BookOpen, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { httpClient } from '@/services/httpClient';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { oeuvrePath } from '@/utils/slug';
 
 type Texte = string | Record<string, string | undefined> | null | undefined;
 interface OeuvreCourte { id_oeuvre: number; titre: Texte; annee_creation?: number | null }
@@ -48,7 +49,7 @@ const OeuvresPersonnalite: React.FC<Props> = ({ idIntervenant, peutAjouter }) =>
         <ul className="divide-y rounded-md border">
           {oeuvres.map(o => (
             <li key={o.id_oeuvre}>
-              <Link to={`/oeuvres/${o.id_oeuvre}`} className="block px-3 py-2 text-sm hover:bg-muted">
+              <Link to={oeuvrePath(o.id_oeuvre, o.titre)} className="block px-3 py-2 text-sm hover:bg-muted">
                 {texteLangue(o.titre, i18n.language)}
                 {o.annee_creation ? <span className="text-muted-foreground"> · {o.annee_creation}</span> : null}
               </Link>

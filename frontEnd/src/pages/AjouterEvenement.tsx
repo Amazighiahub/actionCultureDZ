@@ -40,6 +40,7 @@ import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 import DocumentsEvenementChoix, { envoyerDocumentsEvenement, type DocumentChoisi } from '@/components/event/DocumentsEvenementChoix';
 import DocumentsEvenementGestion from '@/components/event/DocumentsEvenementGestion';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -670,6 +671,7 @@ const AjouterEvenement = () => {
             title={isEditMode ? t('events.edit.title', 'Modifier l’événement') : t('events.create.title')}
             subtitle={isEditMode ? t('events.edit.subtitle', 'Les modifications sont visibles dès l’enregistrement.') : t('events.create.subtitle')}
           />
+          <ConseilReferencement type="evenement" className="mb-6" />
 
           <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)}>
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>

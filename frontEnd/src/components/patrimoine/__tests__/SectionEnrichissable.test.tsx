@@ -65,7 +65,7 @@ describe('SectionEnrichissable — articles de la section', () => {
     render(<SectionEnrichissable {...props} content={{ fr: 'Rechta, chorba frik' }}
       pages={[page(1, 'publie'), page(2, 'brouillon', { titre: { fr: 'Le bourek' } })]} />);
     expect(screen.getByText('En savoir plus')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /La rechta/ })).toHaveAttribute('href', '/articles/101');
+    expect(screen.getByRole('link', { name: /La rechta/ })).toHaveAttribute('href', expect.stringMatching(/^\/articles\/101(-[a-z0-9-]+)?$/));
     expect(screen.getByRole('link', { name: /Le bourek/ })).toHaveTextContent('En attente de validation');
   });
 

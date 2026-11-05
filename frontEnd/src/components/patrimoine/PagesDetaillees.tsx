@@ -14,6 +14,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import type { ApiResponse } from '@/config/api';
 import type { CarteArticle } from '@/services/patrimoineArticles.service';
+import { oeuvrePath } from '@/utils/slug';
 
 interface Props {
   pages: CarteArticle[];
@@ -59,7 +60,7 @@ const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChang
           const resume = texteLangue(page.resume, i18n.language);
           return (
             <li key={page.id_lien} className="relative group rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
-              <Link to={`/articles/${page.id_oeuvre}`} className="flex gap-3 p-3 h-full">
+              <Link to={oeuvrePath(page.id_oeuvre, page.titre, 4)} className="flex gap-3 p-3 h-full">
                 {page.image ? (
                   <img src={getAssetUrl(page.image, { width: 240 })} alt="" loading="lazy" decoding="async" className="h-20 w-20 shrink-0 rounded-md object-cover" />
                 ) : (
