@@ -28,7 +28,7 @@ const VisibiliteFiche: React.FC = () => {
 
   useEffect(() => {
     httpClient.get<{ score: number; points: Point[] }>('/paiement/visibilite')
-      .then((r) => { if (r.success && r.data) setDonnees(r.data); })
+      .then((r) => { if (r?.success && r.data) setDonnees(r.data); })
       .catch(() => {});
   }, []);
 

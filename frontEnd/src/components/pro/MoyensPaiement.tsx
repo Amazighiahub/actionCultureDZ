@@ -29,12 +29,12 @@ const MoyensPaiement: React.FC = () => {
 
   useEffect(() => {
     paiementService.mesMoyens().then((r) => {
-      if (r.success && r.data) {
+      if (r?.success && r.data) {
         setMoyens({ ...VIDE, ...Object.fromEntries(Object.entries(r.data).map(([k, v]) => [k, v ?? (k === 'especes' ? false : '')])) });
         setRenseigne(true);
       }
       setChargement(false);
-    });
+    }).catch(() => setChargement(false));
   }, []);
 
   const champ = (cle: keyof Moyens) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -45,7 +45,7 @@ const MoyensPaiement: React.FC = () => {
     setErreur(null);
     const r = await paiementService.enregistrerMoyens(moyens);
     setEnvoi(false);
-    if (!r.success) { setErreur(r.error || t('common.error', 'Erreur')); return; }
+    if (!r?.success) { setErreur(r?.error || t('common.error', 'Erreur')); return; }
     setRenseigne(!!r.data);
     toast({ title: t('paiement.moyens.enregistres', 'Moyens de paiement enregistrés') });
   };

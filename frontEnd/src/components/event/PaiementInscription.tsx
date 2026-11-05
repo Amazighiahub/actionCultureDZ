@@ -15,7 +15,8 @@ const PaiementInscription: React.FC<{ idEvenement: number }> = ({ idEvenement })
 
   useEffect(() => {
     let actif = true;
-    paiementService.paiementEvenement(idEvenement).then((r) => { if (actif && r.success && r.data) setP(r.data); });
+    // Réponse absente ou en erreur : rien n'est affiché (jamais une page cassée)
+    paiementService.paiementEvenement(idEvenement).then((r) => { if (actif && r?.success && r.data) setP(r.data); }).catch(() => {});
     return () => { actif = false; };
   }, [idEvenement]);
 

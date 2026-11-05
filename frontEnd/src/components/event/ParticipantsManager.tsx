@@ -256,8 +256,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     setPaiementEnCours(idParticipant);
     const r = await paiementService.confirmerPaiement(evenementId, idParticipant, recu);
     setPaiementEnCours(null);
-    if (!r.success) {
-      toast({ title: t('common.error', 'Erreur'), description: r.error, variant: 'destructive' });
+    if (!r?.success) {
+      toast({ title: t('common.error', 'Erreur'), description: r?.error, variant: 'destructive' });
       return;
     }
     toast({ title: recu ? t('paiement.orga.confirme', 'Paiement enregistré : le participant est prévenu') : t('paiement.orga.corrige', 'Paiement retiré') });
