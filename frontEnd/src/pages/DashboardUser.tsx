@@ -24,6 +24,7 @@ import {
   CheckCircle,
   AlertCircle,
   Pencil,
+  Hammer,
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -121,7 +122,7 @@ const DashboardUser = () => {
       favoriId: fav.id_favori,
       titre: fav.entite?.titre || 'Sans titre',
       type: fav.entite?.TypeOeuvre?.nom_type || 'Œuvre',
-      auteur: fav.entite?.Users?.[0]?.nom || fav.entite?.auteur || 'Auteur inconnu',
+      auteur: fav.entite?.Users?.[0]?.nom || fav.entite?.auteur || '',
       ajouteLe: fav.date_ajout || fav.date_creation
     })) || [],
     evenements: groupedFavoris?.evenements?.map(fav => ({
@@ -138,6 +139,13 @@ const DashboardUser = () => {
       nom: fav.entite?.nom || 'Sans nom',
       type: fav.entite?.type_lieu || 'Site',
       wilaya: fav.entite?.Commune?.Daira?.Wilaya?.nom || fav.entite?.wilaya || '',
+      ajouteLe: fav.date_ajout || fav.date_creation
+    })) || [],
+    artisanats: groupedFavoris?.artisanats?.map(fav => ({
+      id: fav.id_entite,
+      favoriId: fav.id_favori,
+      titre: (fav.entite as { Oeuvre?: { titre?: string } } | undefined)?.Oeuvre?.titre || 'Sans titre',
+      materiau: (fav.entite as { Materiau?: { nom?: string } } | undefined)?.Materiau?.nom || '',
       ajouteLe: fav.date_ajout || fav.date_creation
     })) || []
   };
@@ -304,7 +312,7 @@ const DashboardUser = () => {
                         <div className="space-y-1">
                           <h3 className="font-semibold">{oeuvre.titre}</h3>
                           <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                            {oeuvre.type} {t("dashboarduser.par")} {oeuvre.auteur}
+                            {oeuvre.type}{oeuvre.auteur ? ` ${t("dashboarduser.par")} ${oeuvre.auteur}` : ''}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
@@ -331,6 +339,51 @@ const DashboardUser = () => {
                   <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucune_uvre_favorite")}</p>
                   <Button variant="outline" className="mt-4" asChild><Link to="/oeuvres">{t("dashboarduser.explorer_les_uvres")}</Link></Button>
+                </Card>
+              )}
+            </div>
+
+            {/* Artisanat favori */}
+            <div>
+              <h2 className="text-2xl font-semibold font-serif mb-4">{t('dashboarduser.artisanatFavori', 'Artisanat favori')}</h2>
+              {loading ? (
+                <div className="grid gap-4">
+                  <Skeleton className="h-20" />
+                </div>
+              ) : mesFavoris.artisanats.length > 0 ? (
+                <div className="grid gap-4">
+                  {mesFavoris.artisanats.map((produit) => (
+                    <Card key={produit.id} className="p-4 hover-lift">
+                      <div className="flex justify-between items-center">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold">{produit.titre}</h3>
+                          {produit.materiau && <p className="text-xs sm:text-sm text-muted-foreground truncate">{produit.materiau}</p>}
+                          <p className="text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
+                            {produit.ajouteLe ? formatDate(produit.ajouteLe) : '-'}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" asChild><Link to={`/artisanat/${produit.id}`}>{t("dashboarduser.voir_2")}</Link></Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            aria-label={t('favoris.toggle', 'Ajouter/Retirer des favoris')}
+                            onClick={() => handleRemoveFavorite(produit.favoriId)}
+                          >
+                            <Heart className="h-4 w-4 fill-current" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-8 text-center">
+                  <Hammer className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('dashboarduser.aucunArtisanatFavori', 'Aucun produit artisanal en favori')}</p>
+                  <Button variant="outline" className="mt-4" asChild><Link to="/artisanat">{t('dashboarduser.explorerArtisanat', 'Découvrir l’artisanat')}</Link></Button>
                 </Card>
               )}
             </div>

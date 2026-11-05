@@ -58,7 +58,8 @@ class FavoriService {
   }
 
   async getAllGrouped(): Promise<ApiResponse<GroupedFavoris>> {
-    const response = await httpClient.get<Favori[]>(API_ENDPOINTS.favoris.list);
+    // Tous les types confondus : à 12 par défaut, les favoris suivants n'apparaissaient jamais
+    const response = await httpClient.get<Favori[]>(API_ENDPOINTS.favoris.list, { limit: 100 });
     if (response.success && response.data) {
       const grouped: GroupedFavoris = {
         oeuvres: [],

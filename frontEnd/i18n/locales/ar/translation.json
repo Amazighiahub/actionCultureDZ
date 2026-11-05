@@ -1961,6 +1961,9 @@
     "searchPlaceholder": "البحث عن فعالية..."
   },
   "dashboarduser": {
+    "artisanatFavori": "الحرف المفضلة",
+    "aucunArtisanatFavori": "لا يوجد منتج حرفي في المفضلة",
+    "explorerArtisanat": "اكتشفوا الحرف",
     "mon_espace_personnel": "مساحتي الشخصية",
     "bienvenue": "مرحباً",
     "grez_votre_profil": "! قم بإدارة ملفك الشخصي ومفضلاتك",

@@ -1398,6 +1398,9 @@
     "dtails_vnement": "Event details"
   },
   "dashboarduser": {
+    "artisanatFavori": "Favourite crafts",
+    "aucunArtisanatFavori": "No craft product in your favourites",
+    "explorerArtisanat": "Discover crafts",
     "mon_espace_personnel": "My personal space",
     "bienvenue": "Welcome",
     "grez_votre_profil": "! Manage your profile and favorites",

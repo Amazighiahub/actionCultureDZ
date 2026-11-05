@@ -1423,6 +1423,9 @@
     "dtails_vnement": "Détails événement"
   },
   "dashboarduser": {
+    "artisanatFavori": "Artisanat favori",
+    "aucunArtisanatFavori": "Aucun produit artisanal en favori",
+    "explorerArtisanat": "Découvrir l’artisanat",
     "mon_espace_personnel": "Mon espace personnel",
     "bienvenue": "Bienvenue",
     "grez_votre_profil": "! Gérez votre profil et vos favoris",
