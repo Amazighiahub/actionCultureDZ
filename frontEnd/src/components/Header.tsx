@@ -316,6 +316,16 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* Un administrateur peut aussi publier : son tableau professionnel reste accessible */}
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/dashboard-pro" className="flex items-center gap-2 min-h-[44px]">
+                          <Palette className="h-4 w-4" />
+                          <span>{t('header.userMenu.proDashboard')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
                     {portfolioLink && (
                       <DropdownMenuItem asChild>
                         <Link to={portfolioLink} className="flex items-center gap-2 min-h-[44px]">
@@ -516,6 +526,17 @@ const Header = () => {
                       {isAdmin ? t('header.userMenu.administration') : isProfessional && !needsValidation ? t('header.userMenu.proDashboard') : t('header.userMenu.mySpace')}
                     </span>
                   </Link>
+
+                  {isAdmin && (
+                    <Link
+                      to="/dashboard-pro"
+                      className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px]"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Palette className="h-5 w-5 flex-shrink-0" />
+                      <span>{t('header.userMenu.proDashboard')}</span>
+                    </Link>
+                  )}
 
                   {portfolioLink && (
                     <Link
