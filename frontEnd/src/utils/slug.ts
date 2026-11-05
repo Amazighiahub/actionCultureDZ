@@ -36,6 +36,24 @@ export function organisationPath(id: number, nom?: unknown): string {
   return `/organisations/${id}${slug ? `-${slug}` : ''}`;
 }
 
+/** Texte d'un titre multilingue pour l'adresse (français de préférence) */
+const texteAdresse = (v: unknown): string => typeof v === 'string' ? v
+  : v && typeof v === 'object' ? ((v as Record<string, string | undefined>).fr || Object.values(v as Record<string, string | undefined>).find(Boolean) || '')
+  : '';
+
+/** Adresse publique d'une œuvre : « /oeuvres/125-zajeljazz » ; un article : « /articles/… » */
+export function oeuvrePath(id: number, titre?: unknown, idType?: number | null): string {
+  const slug = slugify(texteAdresse(titre));
+  const base = idType === 4 || idType === 5 ? 'articles' : 'oeuvres';
+  return `/${base}/${id}${slug ? `-${slug}` : ''}`;
+}
+
+/** Adresse publique d'un produit artisanal : « /artisanat/12-tapis-de-ghardaia » */
+export function artisanatPath(id: number, titre?: unknown): string {
+  const slug = slugify(texteAdresse(titre));
+  return `/artisanat/${id}${slug ? `-${slug}` : ''}`;
+}
+
 /**
  * Adresse publique d'un événement : « /evenements/1-salon-de-la-poterie-traditionnelle-d-ait-smail ».
  * Le nom (français de préférence) rend le lien partagé lisible ; seul le numéro compte.
