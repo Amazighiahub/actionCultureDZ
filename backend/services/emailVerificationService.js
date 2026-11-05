@@ -319,7 +319,8 @@ class EmailVerificationService {
       throw err;
     }
 
-    const user = await this.models.User.findByPk(userId);
+    // unscoped : le mot de passe est exclu par défaut, et la comparaison échouait toujours
+    const user = await this.models.User.unscoped().findByPk(userId);
 
     const bcrypt = require('bcrypt');
     const isValidPassword = await bcrypt.compare(password, user.password);

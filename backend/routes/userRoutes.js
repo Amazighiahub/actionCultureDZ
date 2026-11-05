@@ -109,7 +109,9 @@ const initUserRoutes = (models, authMiddleware) => {
   // ROUTES AUTHENTIFIÉES
   // ============================================================================
 
-  router.post('/logout', authenticate, asyncHandler((req, res) => authController.logout(req, res)));
+  // Sans jeton d'accès valide aussi : la déconnexion doit couper la session et effacer les cookies
+  router.post('/logout', optionalAuth, asyncHandler((req, res) => authController.logout(req, res)));
+  router.post('/refresh-token/deconnexion', optionalAuth, asyncHandler((req, res) => authController.logout(req, res)));
 
   // Profil (userProfileController)
   router.get('/profile', authenticate, asyncHandler((req, res) => userProfileController.getProfile(req, res)));

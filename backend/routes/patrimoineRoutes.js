@@ -45,7 +45,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
   // Routes mobile (AVANT /:id pour éviter que "mobile" soit pris comme id)
   router.get('/mobile/nearby', patrimoineController.wrap('getMobileNearby'));
-  router.post('/mobile/qr-scan', patrimoineController.wrap('scanQRCode'));
+  router.post('/mobile/qr-scan', optionalAuth, patrimoineController.wrap('scanQRCode'));
   router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
   // Cache HTTP des listes publiques (les sites changent rarement)
@@ -191,7 +191,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   }
 
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
-  router.get('/:id/articles', validateId(), patrimoineController.wrap('blocs'));
+  router.get('/:id/articles', optionalAuth, validateId(), patrimoineController.wrap('blocs'));
 
   // Articles : modération et professionnels validés (comme la modification du site)
   router.post('/:id/articles', authenticate, requireModerationOuPro, validateId(),

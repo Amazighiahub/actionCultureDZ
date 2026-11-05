@@ -126,7 +126,7 @@ const AjouterOeuvre: React.FC = () => {
               </AlertDescription>
             </Alert>
           }
-          {useArticleEditor && formData.id_type_oeuvre > 0 && showEditorChoice ?
+          {useArticleEditor && !isEditMode && formData.id_type_oeuvre > 0 && showEditorChoice ?
           <ArticleEditor
             initialData={{
               titre: formData.titre.fr || '',
@@ -216,11 +216,11 @@ const AjouterOeuvre: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {formData.id_type_oeuvre > 0 && showEditorChoice &&
+                {!isEditMode && formData.id_type_oeuvre > 0 && showEditorChoice &&
                 <EditorModeSelector metadata={metadata} formData={formData} showEditorChoice={showEditorChoice} useArticleEditor={useArticleEditor} setUseArticleEditor={setUseArticleEditor} />
                 }
 
-                {formData.id_type_oeuvre > 0 && !useArticleEditor &&
+                {formData.id_type_oeuvre > 0 && (isEditMode || !useArticleEditor) &&
                 <>
                     {/* Informations générales */}
                     <Card className="shadow-cultural">

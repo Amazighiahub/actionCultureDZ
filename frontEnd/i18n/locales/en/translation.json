@@ -122,6 +122,7 @@
     }
   },
   "auth": {
+    "reprise": {"titre": "Unable to reach the server", "texte": "You are still signed in. Check your network: the page will come back on its own as soon as possible.", "reessayer": "Try again"},
     "mustBeConnected": "You must be logged in",
     "required": "Required",
     "title": "Login & Registration",

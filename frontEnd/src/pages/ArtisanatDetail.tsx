@@ -37,7 +37,8 @@ import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
 
 interface ArtisanatData {
-  id: number;
+  id_artisanat: number;
+  id?: number;
   nom: string;
   description: string;
   id_materiau: number;
@@ -193,7 +194,7 @@ const ArtisanatDetail: React.FC = () => {
     if (!artisanat || favoriteLoading) return;
     setFavoriteLoading(true);
     try {
-      const result = await favoriService.toggle('artisanat', artisanat.id);
+      const result = await favoriService.toggle('artisanat', artisanat.id_artisanat);
       if (result.success) {
         const added = result.data?.added ?? !isFavorite;
         setIsFavorite(added);
@@ -300,7 +301,7 @@ const ArtisanatDetail: React.FC = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Artisanat', url: '/artisanat' },
-            { name: td(artisanat?.Oeuvre?.titre) || 'Détail', url: `/artisanat/${artisanat.id}` },
+            { name: td(artisanat?.Oeuvre?.titre) || 'Détail', url: `/artisanat/${artisanat.id_artisanat}` },
           ]),
         ]}
       />

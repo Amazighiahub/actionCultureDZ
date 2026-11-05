@@ -421,6 +421,9 @@ class UserRepository extends BaseRepository {
       ? new Date(now.getTime() + duree * 24 * 60 * 60 * 1000)
       : null;
 
+    // Sinon, un cookie volé redevient utilisable à la réactivation du compte
+    await this.models.SessionConnexion?.destroy({ where: { id_user: userId } });
+
     return this.update(userId, {
       statut: 'suspendu',
       suspension_motif: motif,
@@ -665,6 +668,13 @@ class UserRepository extends BaseRepository {
           });
         }
       }
+
+      // Coordonnées de la personne : elles ne restent pas sur ses événements, ni dans la newsletter
+      if (m.Evenement) {
+        await m.Evenement.update({ contact_email: null, contact_telephone: null },
+          { where: { id_user: userId }, ...tx, ...UPDATE });
+      }
+      if (m.NewsletterAbonne) await m.NewsletterAbonne.destroy({ where: { email: user.email }, ...tx });
 
       // 2. Contenus qui exigent un auteur : rattachés au compte « Utilisateur supprimé »
       await reassign(m.Evenement, 'id_user');

@@ -1,5 +1,5 @@
 // providers/PermissionsProvider.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { authService } from '@/services/auth.service';
 import { permissionsService } from '@/services/permissions.service';
 import type { CurrentUser } from '@/services/auth.service';
@@ -11,6 +11,8 @@ interface PermissionsContextType {
   
   // État authentification
   isAuthenticated: boolean;
+  /** Repère de session présent mais serveur injoignable : ni connecté confirmé, ni déconnecté */
+  sessionIncertaine: boolean;
   
   // Rôles
   isAdmin: boolean;
@@ -36,10 +38,15 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [sessionIncertaine, setSessionIncertaine] = useState(false);
+  // Le premier chargement seul affiche l'attente : un rafraîchissement ne démonte pas la page ouverte
+  const dejaCharge = useRef(false);
+  const utilisateurActuel = useRef<CurrentUser | null>(null);
+  useEffect(() => { utilisateurActuel.current = user; }, [user]);
 
   const loadUser = async () => {
     try {
-      setLoading(true);
+      if (!dejaCharge.current) setLoading(true);
       setError(null);
       
       // Rechargement de page : l'utilisateur en mémoire est perdu, mais le repère de session
@@ -48,16 +55,19 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         const response = await authService.getCurrentUser({ silentAuth: true });
         if (response.success && response.data) {
           setUser(response.data);
+          setSessionIncertaine(false);
           // Initialiser le service de permissions avec l'utilisateur
           permissionsService.setCurrentUser(response.data);
         } else {
           // Session invalide côté serveur — nettoyer le cache local et le repère de session
           authService.clearSession();
+          setSessionIncertaine(false);
           setUser(null);
           permissionsService.setCurrentUser(null);
         }
       } else {
         setUser(null);
+        setSessionIncertaine(false);
         permissionsService.setCurrentUser(null);
       }
     } catch (err) {
@@ -66,10 +76,18 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
       // Seul un refus du serveur met fin à la session. Réseau coupé à l'ouverture de l'application :
       // le repère reste, et la prochaine tentative retrouve la personne connectée.
       const refus = err as { status?: number; response?: { status?: number } };
-      if ((refus.status ?? refus.response?.status) === 401) authService.clearSession();
-      setUser(null);
-      permissionsService.setCurrentUser(null);
+      if ((refus.status ?? refus.response?.status) === 401) {
+        authService.clearSession();
+        setSessionIncertaine(false);
+        setUser(null);
+        permissionsService.setCurrentUser(null);
+      } else if (!utilisateurActuel.current) {
+        // Rien à afficher pour l'instant ; une personne déjà affichée le reste
+        setSessionIncertaine(authService.hasSessionHint());
+        permissionsService.setCurrentUser(null);
+      }
     } finally {
+      dejaCharge.current = true;
       setLoading(false);
     }
   };
@@ -87,6 +105,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     window.addEventListener('online', auRetour);
     return () => window.removeEventListener('online', auRetour);
   }, []);
+
+  // « online » ne se déclenche pas pour un réseau faible ou un serveur indisponible : nouvel essai régulier
+  useEffect(() => {
+    if (!sessionIncertaine) return undefined;
+    const minuteur = window.setInterval(() => { loadUser(); }, 20000);
+    return () => window.clearInterval(minuteur);
+  }, [sessionIncertaine]);
 
   // Observer les changements de token
   useEffect(() => {
@@ -128,6 +153,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     loading,
     error,
     isAuthenticated,
+    sessionIncertaine,
     isAdmin,
     isProfessional,
     isVisitor,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -13,6 +14,7 @@ import RegisterFormComponent from '@/pages/auth/RegisterForm';
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { direction } = useRTL();
   const { isAuthenticated } = useAuth();
@@ -20,9 +22,12 @@ const Auth = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      const depuis = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+      const cible = getSafeRedirectPath(new URLSearchParams(location.search).get('redirect'))
+        ?? getSafeRedirectPath(depuis?.pathname ? `${depuis.pathname}${depuis.search || ''}` : null);
+      navigate(cible || '/', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.search, location.state]);
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>

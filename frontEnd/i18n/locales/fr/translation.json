@@ -122,6 +122,7 @@
     }
   },
   "auth": {
+    "reprise": {"titre": "Connexion au serveur impossible", "texte": "Vous restez connecté. Vérifiez votre réseau : la page reviendra toute seule dès que possible.", "reessayer": "Réessayer"},
     "mustBeConnected": "Vous devez être connecté",
     "required": "Requis",
     "login": {

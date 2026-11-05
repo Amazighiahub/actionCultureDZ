@@ -58,6 +58,17 @@ class CronService {
   /**
    * Planifier toutes les tâches
    */
+  /** Fin de suspension atteinte : le compte redevient actif. Une suspension sans date reste en place. */
+  async leverSuspensions() {
+    const { Op } = require('sequelize');
+    const [nombre] = await this.models.User.update(
+      { statut: 'actif', suspension_jusqu_au: null },
+      { where: { statut: 'suspendu', suspension_jusqu_au: { [Op.ne]: null, [Op.lte]: new Date() } } }
+    );
+    if (nombre) logger.info(`${nombre} suspension(s) temporaire(s) levée(s)`);
+    return nombre;
+  }
+
   scheduleJobs() {
     // 1. Rappels « c'est demain » - Tous les jours à 9 h, heure d'Algérie
     // Toutes les heures de 9 h à 20 h : un serveur redémarré ou une panne d'envoi à 9 h ne fait plus
@@ -66,6 +77,9 @@ class CronService {
 
     // 2. Nettoyage des tokens expirés - Tous les jours à 3h
     this.scheduleJob('clean-expired-tokens', '0 3 * * *', () => this.cleanExpiredTokens());
+
+    // Suspensions temporaires arrivées à leur terme - Toutes les heures
+    this.scheduleJob('lever-suspensions', '5 * * * *', () => this.leverSuspensions());
 
     // 3. Nettoyage des vieilles notifications - Tous les dimanches à 2h
     this.scheduleJob('clean-old-notifications', '0 2 * * 0', () => this.cleanOldNotifications());

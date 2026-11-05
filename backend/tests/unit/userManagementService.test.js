@@ -300,13 +300,12 @@ describe('DashboardUserManagementService', () => {
     it('should suspend user with reason', async () => {
       const mockUser = { id_user: 1, reload: jest.fn() };
       mockUserRepo.findById.mockResolvedValue(mockUser);
-      mockUserRepo.update.mockResolvedValue(mockUser);
+      mockUserRepo.suspend = jest.fn().mockResolvedValue(mockUser);
 
-      const result = await service.suspendUserAction(1, { raison: 'Abus', duree: 30 });
+      const result = await service.suspendUserAction(1, { raison: 'Abus', duree: 30, suspendu_par: 2 });
 
-      expect(mockUserRepo.update).toHaveBeenCalledWith(1, expect.objectContaining({
-        statut: 'suspendu', raison_suspension: 'Abus', duree_suspension: 30
-      }));
+      // Colonnes réelles du modèle : motif, date de fin et auteur
+      expect(mockUserRepo.suspend).toHaveBeenCalledWith(1, 2, 30, 'Abus');
       expect(result.message).toBe('Utilisateur suspendu');
     });
   });

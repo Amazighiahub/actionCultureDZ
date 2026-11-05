@@ -4,6 +4,7 @@
  * Rien n'est écrit avant « Importer » ; un fichier réimporté met à jour sans dupliquer.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -66,7 +67,7 @@ const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenCha
       const liste: SiteOption[] = (res.data || [])
         .filter(s => typeof s.id_lieu === 'number')
         .map(s => ({ id: s.id_lieu as number, nom: getLocalizedText(s.nom, i18n.language) || `#${s.id_lieu}` }))
-        .sort((a, b) => a.nom.localeCompare(b.nom, i18n.language));
+        .sort((a, b) => a.nom.localeCompare(b.nom, getDateLocale(i18n.language)));
       setSites(liste);
     }).catch(() => setSites([]));
   }, [open, mode, sites.length, i18n.language]);

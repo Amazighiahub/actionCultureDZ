@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { ConfirmDialog } from '@/components/shared';
 import { httpClient } from '@/services/httpClient';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
 type Modele = 'oeuvre' | 'evenement' | 'profil' | 'suivre';
@@ -125,7 +126,7 @@ export default function MessagesAbonnesCard() {
 
         {options.prochain_envoi && (
           <p className="text-sm text-muted-foreground" role="status">
-            {t('messagesPro.attente', 'Un message par jour : vous pourrez en envoyer un autre le {{date}}.', { date: new Date(options.prochain_envoi).toLocaleString(i18n.language) })}
+            {t('messagesPro.attente', 'Un message par jour : vous pourrez en envoyer un autre le {{date}}.', { date: new Date(options.prochain_envoi).toLocaleString(getDateLocale(i18n.language)) })}
           </p>
         )}
         {!options.prochain_envoi && destinataires === 0 && (

@@ -37,7 +37,7 @@ const faireTaire = (cle: string) => {
 export default function InvitationInstallation() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { isAuthenticated, loading } = usePermissionsContext();
+  const { isAuthenticated, loading, sessionIncertaine } = usePermissionsContext();
   const [proposee, setProposee] = useState(installationProposee());
   const [installationFermee, setInstallationFermee] = useState(enSilence(CLE_INSTALLATION));
   const [notificationsFermees, setNotificationsFermees] = useState(enSilence(CLE_NOTIFICATIONS));
@@ -50,7 +50,7 @@ export default function InvitationInstallation() {
     abonnementActuel().then((a) => setAbonne(!!a)).catch(() => setAbonne(true));
   }, [isAuthenticated]);
 
-  if (!surTelephone() || loading) return null;
+  if (!surTelephone() || loading || sessionIncertaine) return null;
 
   // Application installée mais personne connectée (sur iPhone, elle ne partage pas la connexion de Safari) :
   // sans compte, les notifications ne peuvent pas lui parvenir, donc on le lui dit

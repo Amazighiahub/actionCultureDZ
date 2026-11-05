@@ -314,7 +314,8 @@ export const API_ENDPOINTS = {
     // Authentification
     register: '/users/register',
     login: '/users/login',
-    logout: '/users/logout',
+    // Sous /refresh-token : seul chemin où le navigateur envoie le cookie de cette connexion
+    logout: '/users/refresh-token/deconnexion',
     verifyEmail: (token: string) => `/email-verification/verify/${token}`,
     forgotPassword: '/email-verification/request-password-reset',
     resetPassword: '/email-verification/reset-password',

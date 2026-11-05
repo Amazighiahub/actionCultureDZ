@@ -197,7 +197,10 @@ const initLieuRoutes = (models) => {
   router.post('/',
     authMiddleware.authenticate,
     authMiddleware.requireVerifiedEmail,
-    authMiddleware.requireRole(['Professionnel', 'Contributeur', 'Modérateur', 'Administrateur']),
+    // Un professionnel n'a pas forcément le rôle en base : son statut vient de son type de compte
+    (req, res, next) => ((req.user?.roleNames || []).some((r) => ['Contributeur', 'Modérateur'].includes(r))
+      ? next()
+      : authMiddleware.requireValidatedProfessional(req, res, next)),
     createLieuValidation,
     validationMiddleware.handleValidationErrors,
     lieuController.createLieu.bind(lieuController)

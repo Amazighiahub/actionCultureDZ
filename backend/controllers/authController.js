@@ -116,6 +116,9 @@ class AuthController extends BaseController {
   async logout(req, res) {
     // 1) Revocation refresh token + invalidation cache session (best-effort).
     try {
+      if (req.cookies?.refresh_token) {
+        await this.userService.revokeParJeton(req.cookies.refresh_token);
+      }
       if (req.user?.id_user) {
         // Seulement cet appareil : le téléphone reste connecté quand on se déconnecte de l'ordinateur
         const acces = req.cookies?.access_token;

@@ -929,6 +929,23 @@ class UserService extends BaseService {
   }
 
   /**
+   * Coupe la connexion désignée par son cookie : la déconnexion fonctionne même jeton d'accès expiré.
+   * @param {string} jeton
+   */
+  async revokeParJeton(jeton) {
+    if (typeof jeton !== 'string' || !jeton) return;
+    const empreinte = crypto.createHash('sha256').update(jeton).digest('hex');
+    await this.models.SessionConnexion.destroy({
+      where: { [Op.or]: [{ jeton_hash: empreinte }, { jeton_precedent_hash: empreinte }] }
+    });
+    // Connexion ouverte avant la séparation par appareil
+    await this.repository.model.unscoped().update(
+      { refresh_token: null, refresh_token_expires: null },
+      { where: { refresh_token: empreinte } }
+    );
+  }
+
+  /**
    * Génère un token JWT
    * @private
    */

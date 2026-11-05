@@ -25,8 +25,8 @@ vi.mock('@/services/permissions.service', () => {
 import { PermissionsProvider, usePermissionsContext } from '@/providers/PermissionsProvider';
 
 const Etat = () => {
-  const { isAuthenticated, loading } = usePermissionsContext();
-  return <p>{loading ? 'chargement' : isAuthenticated ? 'connecte' : 'non-connecte'}</p>;
+  const { isAuthenticated, loading, sessionIncertaine } = usePermissionsContext();
+  return <p data-incertaine={String(sessionIncertaine)}>{loading ? 'chargement' : isAuthenticated ? 'connecte' : 'non-connecte'}</p>;
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -40,6 +40,8 @@ describe('session au démarrage', () => {
     auth.getCurrentUser.mockRejectedValue(new Error('Network Error'));
     await ouvrir();
     expect(auth.clearSession).not.toHaveBeenCalled();
+    // Ni connectée ni déconnectée : pas de renvoi vers la page de connexion
+    expect(screen.getByText('non-connecte')).toHaveAttribute('data-incertaine', 'true');
   });
 
   test('serveur indisponible : le repère de session reste', async () => {
@@ -52,6 +54,7 @@ describe('session au démarrage', () => {
     auth.getCurrentUser.mockRejectedValue(Object.assign(new Error('Refusé'), { status: 401 }));
     await ouvrir();
     expect(auth.clearSession).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('non-connecte')).toHaveAttribute('data-incertaine', 'false');
   });
 
   test('le réseau revient : la personne est retrouvée', async () => {

@@ -79,8 +79,8 @@ class PatrimoineController extends BaseController {
    * visiteur n'en est ni le créateur ni modérateur : on répond alors 404, comme pour un
    * site inexistant (taper un numéro ne doit pas révéler un site non publié).
    */
-  async _findVisibleSite(req) {
-    const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+  async _findVisibleSite(req, id = parseInt(req.params.id)) {
+    const site = await this.patrimoineService.findWithFullDetails(id);
     const raw = site?._raw || site;
     if (raw && raw.statut && raw.statut !== 'publie' && !this._canSeeUnpublished(req, raw.id_createur)) {
       return null;
@@ -284,6 +284,10 @@ class PatrimoineController extends BaseController {
 
   // Blocs d'article du site (éditeur riche, par section)
   async blocs(req, res) {
+    const lieu = await this._models.Lieu.findByPk(parseInt(req.params.id), { attributes: ['statut', 'id_createur'] });
+    if (lieu && lieu.statut && lieu.statut !== 'publie' && !this._canSeeUnpublished(req, lieu.id_createur)) {
+      return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    }
     res.json({ success: true, data: await elements.blocs(this._models, parseInt(req.params.id, 10), req.query.section) });
   }
 
@@ -576,7 +580,9 @@ class PatrimoineController extends BaseController {
     if (isNaN(id)) {
       throw AppError.notFound('Site patrimoine');
     }
-    const site = await this.patrimoineService.findWithFullDetails(id);
+    // Même règle que la fiche : un site non publié n'est pas lisible par un simple scan
+    const site = await this._findVisibleSite(req, id);
+    if (!site) throw AppError.notFound('Site patrimoine');
     res.json({ success: true, data: site.toDetailJSON(req.lang) });
   }
 

@@ -50,7 +50,8 @@ export function useAuth(): UseAuthReturn {
         if (userResponse.success && userResponse.data) {
           const currentUser = userResponse.data;
 
-          const stateFrom = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+          const depuis = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+          const stateFrom = depuis?.pathname ? `${depuis.pathname}${depuis.search || ''}` : undefined;
           const redirectFromQuery = new URLSearchParams(location.search).get('redirect');
           // Chemins internes uniquement (pas de redirection ouverte vers un autre site)
           const redirectTarget = getSafeRedirectPath(redirectFromQuery) ?? getSafeRedirectPath(stateFrom);

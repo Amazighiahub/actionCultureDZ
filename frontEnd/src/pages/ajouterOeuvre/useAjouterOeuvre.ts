@@ -232,7 +232,8 @@ export function useAjouterOeuvre() {
             return String(t);
           }).filter(Boolean) || [],
           annee_creation: oeuvre.annee_creation,
-          prix: oeuvre.prix,
+          // Un artisanat porte son prix sur sa propre fiche, pas sur l'œuvre
+          prix: (artisanatData['prix'] ?? oeuvre.prix) as number | undefined,
           // Livre
           isbn: (livreData['isbn'] ?? oeuvre['isbn']) as string | undefined,
           nb_pages: (livreData['nb_pages'] ?? oeuvre['nb_pages']) as number | undefined,

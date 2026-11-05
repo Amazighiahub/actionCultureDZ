@@ -7,7 +7,8 @@ import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Lock, Clock } from 'lucide-react';
+import { AlertCircle, Lock, Clock, WifiOff } from 'lucide-react';
+import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import { useTranslation } from 'react-i18next';
 
 interface ProtectedRouteProps {
@@ -30,6 +31,7 @@ export function ProtectedRoute({
   const location = useLocation();
   const { isAuthenticated, loading, logout } = useAuth();
   const { isAdmin, isProfessional, needsValidation } = usePermissions();
+  const { sessionIncertaine, refreshPermissions } = usePermissionsContext();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -49,13 +51,13 @@ export function ProtectedRoute({
     logout();
   }, [toast, t, logout]);
 
-  // Idle timeout: 30 min inactivity, warn 2 min before
+  // Comptes administrateurs seulement : les autres restent connectés sur leur appareil (90 jours)
   useIdleTimeout({
     timeout: 30 * 60 * 1000,
     warningBefore: 2 * 60 * 1000,
     onWarning: handleIdleWarning,
     onIdle: handleIdleLogout,
-    enabled: isAuthenticated && requireAuth,
+    enabled: isAuthenticated && requireAuth && isAdmin,
   });
 
   // Afficher un loader pendant le chargement
@@ -65,6 +67,26 @@ export function ProtectedRoute({
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>);
 
+  }
+
+  // Réseau coupé ou serveur indisponible : la session reste valable, on ne renvoie pas vers la connexion
+  if (requireAuth && !isAuthenticated && sessionIncertaine) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" role="status">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <WifiOff className="h-5 w-5" aria-hidden="true" />
+              {t('auth.reprise.titre', 'Connexion au serveur impossible')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">{t('auth.reprise.texte', 'Vous restez connecté. Vérifiez votre réseau : la page reviendra toute seule dès que possible.')}</p>
+            <Button onClick={() => refreshPermissions()} className="w-full">{t('auth.reprise.reessayer', 'Réessayer')}</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Vérifier l'authentification

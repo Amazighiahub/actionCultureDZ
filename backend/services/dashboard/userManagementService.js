@@ -469,10 +469,12 @@ class DashboardUserManagementService {
    * @returns {Object} { message, data }
    */
   async suspendUserAction(userId, data) {
-    const { raison, duree } = data;
+    const { raison, duree, suspendu_par: suspenduPar } = data;
     const user = await this.userRepo.findById(userId);
     if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
-    await this.userRepo.update(userId, { statut: 'suspendu', date_suspension: new Date(), raison_suspension: raison, duree_suspension: duree || null });
+    if (user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR) throw erreurHttp('Un compte administrateur ne peut pas être suspendu ainsi', 403);
+    // Colonnes réelles : motif, fin et auteur étaient perdus, et la suspension ne prenait jamais fin
+    await this.userRepo.suspend(userId, suspenduPar, Number(duree) || 0, raison);
     await this._invalidateUserCache(userId);
     await user.reload();
     return { message: 'Utilisateur suspendu', data: user };
