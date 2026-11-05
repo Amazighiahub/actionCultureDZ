@@ -36,17 +36,20 @@ interface OeuvreCommentsProps {
   comments: Comment[];
   onAddComment: (content: string, rating?: number) => Promise<boolean>;
   oeuvreId: number;
+  /** Après une modification, suppression ou un masquage : recharger la liste */
+  onChange?: () => void;
 }
 
 // StarRating importé depuis composant partagé
 import StarRating from '@/components/shared/StarRating';
+import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
 
 // Item commentaire
 /** Note d'un avis (le serveur la renvoie dans note_qualite) ; 0 si aucune */
 const noteOf = (c: { note?: number | null; note_qualite?: number | null }): number =>
   Number(c.note_qualite ?? c.note) || 0;
 
-const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
+const CommentItem: React.FC<{ comment: Comment; onChange?: () => void }> = ({ comment, onChange }) => {
   const { formatDate } = useLocalizedDate();
   const user = comment.User;
 
@@ -72,6 +75,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
               <span>{formatDate(comment.date_creation, { relative: true })}</span>
             </div>
           </div>
+          <ActionsCommentaire commentaire={comment} onChange={onChange} />
         </div>
         <p className="mt-2 text-sm whitespace-pre-line">{comment.contenu}</p>
       </div>
@@ -80,7 +84,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
 };
 
 // Composant principal
-const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId: _oeuvreId }) => {
+const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId: _oeuvreId, onChange }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -243,7 +247,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
           <div className="space-y-6">
             {comments.map((comment, index) => (
               <React.Fragment key={comment.id_commentaire || comment.id || index}>
-                <CommentItem comment={comment} />
+                <CommentItem comment={comment} onChange={onChange} />
                 {index < comments.length - 1 && <Separator />}
               </React.Fragment>
             ))}

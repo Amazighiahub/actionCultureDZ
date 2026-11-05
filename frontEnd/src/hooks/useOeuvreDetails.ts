@@ -288,6 +288,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     medias: mediasQuery.data as Media[] | undefined,
     contributeurs,
     comments: commentsQuery.data as Comment[] | undefined,
+    rafraichirCommentaires: () => queryClient.invalidateQueries({ queryKey: commentsKey }),
     relatedEvents: eventsQuery.data as Evenement[] | undefined,
 
     // États de chargement

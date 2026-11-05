@@ -1,6 +1,7 @@
 import type { MediaEnregistre } from './MediasEnregistres';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { detailsArticle, liensArticle, nomDuTag } from '@/utils/donneesArticle';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -208,6 +209,11 @@ export function useAjouterOeuvre() {
         const titre = oeuvre.titre;
         const description = oeuvre.description;
         const rawCategories = (oeuvre.Categories ?? (oeuvre as unknown as Record<string, unknown>).categories ?? []) as Array<Categorie | number>;
+        // Un article se modifie dans son éditeur (texte en blocs, images), pas dans ce formulaire
+        if (oeuvre.id_type_oeuvre === 4 || oeuvre.id_type_oeuvre === 5) {
+          navigate(`/editer-article/${editId}`, { replace: true });
+          return;
+        }
         const rawTags = (oeuvre.Tags ?? (oeuvre as unknown as Record<string, unknown>).tags ?? []) as Array<TagMotCle | string>;
         // Extraire les données des sous-types depuis les associations Sequelize
         const livreData = (oeuvre['Livre'] ?? oeuvre['livre'] ?? {}) as Record<string, unknown>;
@@ -223,14 +229,7 @@ export function useAjouterOeuvre() {
           id_type_oeuvre: oeuvre.id_type_oeuvre || 0,
           id_langue: oeuvre.id_langue || 1,
           categories: rawCategories.map((c) => typeof c === 'object' && c !== null ? c.id_categorie : c) || [],
-          tags: rawTags.map((t) => {
-            if (typeof t === 'object' && t !== null && 'nom' in t) {
-              const nom = (t as TagMotCle).nom;
-              if (typeof nom === 'string') return nom;
-              if (nom && typeof nom === 'object') return nom.fr || nom.ar || nom.en || Object.values(nom)[0] || '';
-            }
-            return String(t);
-          }).filter(Boolean) || [],
+          tags: rawTags.map(nomDuTag).filter(Boolean),
           annee_creation: oeuvre.annee_creation,
           // Un artisanat porte son prix sur sa propre fiche, pas sur l'œuvre
           prix: (artisanatData['prix'] ?? oeuvre.prix) as number | undefined,
@@ -512,45 +511,7 @@ export function useAjouterOeuvre() {
       const isScientific = articleFormData.type === 'article_scientifique';
       const id_type_oeuvre = isScientific ? 5 : 4;
 
-      const details_specifiques: DetailsSpecifiques = {};
-      if (isScientific) {
-        details_specifiques.article_scientifique = {
-          journal: articleFormData.journal || undefined,
-          doi: articleFormData.doi || undefined,
-          volume: articleFormData.volume || undefined,
-          numero: articleFormData.numero || undefined,
-          pages: articleFormData.pages || undefined,
-          peer_reviewed: articleFormData.peer_reviewed || false,
-        };
-      } else {
-        details_specifiques.article = {
-          auteur: articleFormData.auteur || undefined,
-          source: articleFormData.source || undefined,
-          resume: articleFormData.resume || undefined,
-          url_source: articleFormData.url_source || undefined,
-        };
-      }
-
-      const utilisateurs_inscrits = contribs?.contributeurs?.map((c: ContributeurOeuvre) => ({
-        id_user: c.id_user,
-        id_type_user: c.id_type_user,
-        personnage: c.personnage || c.description_role || ''
-      })) || [];
-
-      const intervenants_existants = contribs?.existants?.map((c: IntervenantExistant) => ({
-        id_intervenant: c.id_intervenant,
-        id_type_user: c.id_type_user,
-        personnage: c.personnage || ''
-      })) || [];
-
-      const nouveaux_intervenants = contribs?.nouveaux?.map((c: NouvelIntervenant) => ({
-        nom: c.nom,
-        prenom: c.prenom,
-        role: c.personnage || 'Contributeur',
-        id_type_user: c.id_type_user
-      })) || [];
-
-      const editeursData = eds?.map((e: EditeurOeuvre | number) => typeof e === 'object' ? e : { id_editeur: e }) || [];
+      const details_specifiques = detailsArticle(articleFormData as unknown as Record<string, unknown>) as DetailsSpecifiques;
 
       const oeuvreData = {
         titre: typeof articleFormData.titre === 'string' ? { fr: articleFormData.titre } : articleFormData.titre,
@@ -561,10 +522,7 @@ export function useAjouterOeuvre() {
         categories: articleFormData.categories || [],
         tags: articleFormData.tags || [],
         details_specifiques,
-        utilisateurs_inscrits,
-        intervenants_non_inscrits: intervenants_existants,
-        nouveaux_intervenants,
-        editeurs: editeursData,
+        ...liensArticle(contribs, eds),
       } as CreateOeuvreBackendDTO;
 
       const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);

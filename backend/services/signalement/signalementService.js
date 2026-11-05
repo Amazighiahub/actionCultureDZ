@@ -128,6 +128,10 @@ class SignalementService extends BaseService {
     if (!signalement) {
       throw this._notFoundError(id);
     }
+    // Deux onglets ou deux administrateurs : pas de seconde sanction ni de second e-mail
+    if (signalement.statut === 'traite' || signalement.statut === 'rejete') {
+      throw this._conflictError('Ce signalement a déjà été traité');
+    }
 
     // L'action d'abord : si elle est refusée, le signalement ne doit pas passer pour « traité »
     await this.repository.applyModerationAction(signalement, action_prise);
@@ -141,6 +145,7 @@ class SignalementService extends BaseService {
       action_prise,
       notes_moderation
     });
+    await this.repository.cloreSignalementsSimilaires?.(signalement, { action_prise, id_moderateur: moderateurId });
 
     return signalement;
   }

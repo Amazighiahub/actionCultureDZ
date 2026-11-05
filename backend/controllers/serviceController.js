@@ -192,7 +192,9 @@ class ServiceController extends BaseController {
   async listForModeration(req, res) {
     try {
       const { page, limit } = this._paginate(req);
-      const result = await this.serviceService.findForModeration({ page, limit, statut: req.query.statut });
+      const result = await this.serviceService.findForModeration({
+        page, limit, statut: req.query.statut, type_service: req.query.type_service, q: req.query.q
+      });
       res.json({
         success: true,
         data: result.data.map(s => s.toAdminJSON(req.lang)),

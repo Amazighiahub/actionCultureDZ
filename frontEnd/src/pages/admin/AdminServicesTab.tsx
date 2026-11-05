@@ -45,6 +45,8 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { Pagination } from '@/components/shared/Pagination';
+import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 
 // Valeurs du champ type_service (modèle Service)
 const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'];
@@ -72,23 +74,20 @@ const AdminServicesTab: React.FC = () => {
     errorServices,
     deleteService,
     validateService,
+    attenteServices: enAttente,
+    loadServices,
     refreshAll
   } = useDashboardAdmin('services');
 
-  const tous = (services?.items || []) as any[];
-  const enAttente = tous.filter((s) => s.statut === 'en_attente').length;
+  const totalPages = services?.pagination?.pages ?? 1;
+  const { page, setPage } = useListeServeur({
+    q: termeRecherche(debouncedSearch),
+    type_service: filtreChoisi(typeFilter),
+    statut: filtreChoisi(statutFilter),
+  }, loadServices, totalPages);
 
-  const filteredServices = React.useMemo(() => tous.filter((service: any) => {
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      const nom = getLocalizedText(service.nom, currentLang).toLowerCase();
-      const lieu = getLocalizedText(service.Lieu?.nom, currentLang).toLowerCase();
-      if (!nom.includes(q) && !lieu.includes(q)) return false;
-    }
-    if (typeFilter !== 'tous' && service.type_service !== typeFilter) return false;
-    if (statutFilter !== 'tous' && service.statut !== statutFilter) return false;
-    return true;
-  }), [tous, debouncedSearch, typeFilter, statutFilter, currentLang]);
+  // Recherche, type et statut sont filtrés par le serveur, sur tous les services
+  const filteredServices = (services?.items || []) as any[];
 
   const hasActiveFilters = searchQuery || typeFilter !== 'tous' || statutFilter !== 'tous';
 
@@ -108,7 +107,7 @@ const AdminServicesTab: React.FC = () => {
             {t('admin.services.title', 'Gestion des services')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.services.count', '{{count}} service(s)', { count: filteredServices.length })}
+            {t('admin.services.count', '{{count}} service(s)', { count: services?.pagination?.total ?? filteredServices.length })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
@@ -287,6 +286,8 @@ const AdminServicesTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={!!refus} onOpenChange={(open) => { if (!open) setRefus(null); }}>
         <DialogContent className="sm:max-w-md">

@@ -229,7 +229,9 @@ module.exports = (models, middlewares = {}) => {
     validateId(),
     requireRole('Administrateur', 'Moderateur'),
     [
-      body('statut').isIn(['publie', 'masque', 'supprime', 'signale']).withMessage('Statut invalide')
+      // Statuts du modèle : « masque » et « signale » n'y sont pas, ils finissaient en erreur 500.
+      // Masquer un commentaire = « rejete » (il disparaît du site, et peut être rétabli)
+      body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage('Statut invalide')
     ],
     handleValidationErrors,
     async (req, res) => {

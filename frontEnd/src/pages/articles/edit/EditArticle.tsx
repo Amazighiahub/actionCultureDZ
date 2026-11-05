@@ -1,5 +1,5 @@
-// pages/EditArticle.tsx
-import React, { useState, useEffect } from 'react';
+// pages/EditArticle.tsx - Modifier un article, publié ou non (titre, texte, images, métadonnées)
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import ArticleEditor from '@/components/article/ArticleEditor';
@@ -7,13 +7,17 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
+import { detailsArticle, liensArticle, nomDuTag } from '@/utils/donneesArticle';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();
@@ -24,6 +28,9 @@ const EditArticle: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user, isAdmin } = useAuth();
+  // Identifiant de la fiche article, qui porte les blocs (différent de celui de l'œuvre)
+  const idFicheArticle = useRef<number | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -35,20 +42,28 @@ const EditArticle: React.FC = () => {
     try {
       setLoading(true);
 
-      // Charger l'œuvre
-      const response = await oeuvreService.getOeuvreById(parseInt(id!));
+      // Toutes les langues : avec la version traduite, la traduction était réenregistrée comme texte français
+      const response = await oeuvreService.getForEdit(parseInt(id!, 10));
 
       if (response.success && response.data) {
-        const oeuvre = response.data as Record<string, unknown>;
+        const oeuvre = response.data as any;
 
         // Vérifier que c'est un article (type 4 ou 5)
         if (oeuvre.id_type_oeuvre !== 4 && oeuvre.id_type_oeuvre !== 5) {
-          setError("Cette œuvre n'est pas un article");
+          setError(t('article_articleeditor.pasUnArticle', "Cette œuvre n'est pas un article"));
+          return;
+        }
+
+        // L'article de quelqu'un d'autre se corrige par une proposition, validée par son auteur
+        if (user && !isAdmin && oeuvre.saisi_par !== user.id_user) {
+          navigate(`/articles/${id}/proposer`, { replace: true });
           return;
         }
 
         const isScientific = oeuvre.id_type_oeuvre === 5;
-        const articleType = isScientific ? 'article_scientifique' : 'article';
+        idFicheArticle.current = isScientific
+          ? oeuvre.ArticleScientifique?.id_article_scientifique ?? null
+          : oeuvre.Article?.id_article ?? null;
 
         // Données initiales ; les blocs du contenu sont chargés par l'éditeur (articleId)
         setInitialData({
@@ -56,142 +71,90 @@ const EditArticle: React.FC = () => {
           titre: oeuvre.titre,
           description: oeuvre.description,
           id_langue: oeuvre.id_langue,
-          categories: (oeuvre.Categories as Array<Record<string, unknown>> | undefined)?.map((c) => c.id_categorie) || [],
-          tags: (oeuvre.Tags as Array<Record<string, unknown>> | undefined)?.map((t) => t.nom) || [],
-          type: articleType,
-          // Champs spécifiques — accès sécurisé
-          auteur: oeuvre.Article?.auteur || null,
-          resume: oeuvre.ArticleScientifique?.resume || null,
-          url_source: oeuvre.ArticleScientifique?.url_hal || null,
-          journal: oeuvre.ArticleScientifique?.journal || null,
-          doi: oeuvre.ArticleScientifique?.doi || null,
-          pages: oeuvre.ArticleScientifique?.pages || null,
-          volume: oeuvre.ArticleScientifique?.volume || null,
-          numero: oeuvre.ArticleScientifique?.numero || null,
-          peer_reviewed: oeuvre.ArticleScientifique?.peer_reviewed || false
+          categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
+          tags: (oeuvre.Tags || []).map(nomDuTag).filter(Boolean),
+          type: isScientific ? 'article_scientifique' : 'article',
         });
       } else {
-        setError("Article non trouvé");
+        setError(t('article_articleeditor.introuvable', 'Article non trouvé'));
       }
-    } catch (error) {
-      console.error('Erreur:', error);
+    } catch (err) {
+      console.error('Erreur:', err);
       setError(t('common.loadError', "Error loading article"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = async (response: Record<string, unknown>) => {
-    const oeuvreId = parseInt(id!);
-    const { formData: articleFormData, blocks } = response.article;
-    const isScientific = articleFormData.type === 'article_scientifique';
-    const articleType = isScientific ? 'article_scientifique' : 'article';
+  /** Image ajoutée dans un bloc : envoyée d'abord, pour ne rien modifier si cet envoi échoue */
+  const envoyerImage = async (fichier: File, oeuvreId: number, numeroBloc: number): Promise<number> => {
+    const formData = new FormData();
+    // Champ « medias » attendu par le serveur (avec « files », chaque image était refusée)
+    formData.append('medias', await prepareImageForUpload(fichier));
+    const envoi = await httpClient.postFormData<any>(`/oeuvres/${oeuvreId}/medias/upload`, formData);
+    const medias = Array.isArray(envoi.data) ? envoi.data : [envoi.data];
+    if (!envoi.success || !medias[0]?.id_media) {
+      throw new Error(t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: numeroBloc }));
+    }
+    return medias[0].id_media;
+  };
 
+  // Une erreur remonte à l'éditeur : il l'affiche et la saisie reste à l'écran (avant : « succès » malgré un échec)
+  const handleSave = async (response: Record<string, any>) => {
+    const oeuvreId = parseInt(id!, 10);
+    const { formData, blocks, contributeurs, editeurs } = response.article;
+    const articleType = formData.type === 'article_scientifique' ? 'article_scientifique' : 'article';
 
     try {
-      // 1. Mettre à jour les métadonnées de l'oeuvre
-      const updateData: Record<string, unknown> = {
-        titre: articleFormData.titre,
-        description: articleFormData.description,
-      };
-      if (articleFormData.categories?.length > 0) {
-        updateData.categories = articleFormData.categories;
+      // Article sans bloc : refusé (le contenu n'a peut-être pas pu être chargé, il ne doit pas être effacé)
+      if (!blocks?.length) {
+        throw new Error(t('article_articleeditor.contenuVide', 'L’article doit garder au moins un bloc de contenu.'));
       }
-      if (articleFormData.tags?.length > 0) {
-        updateData.tags = articleFormData.tags;
+      if (!idFicheArticle.current) {
+        throw new Error(t('toasts.articleBlocksIdMissing'));
       }
-      await oeuvreService.updateOeuvre(oeuvreId, updateData);
 
-      // 2. Sauvegarder les blocs
-      if (blocks && blocks.length > 0) {
-        // Récupérer l'ID de l'article spécifique
-        const oeuvreDetail = await oeuvreService.getOeuvreById(oeuvreId);
-        const od = oeuvreDetail.data as Record<string, Record<string, unknown>> | undefined;
-        let articleRecordId: number | undefined;
-        if (isScientific) {
-          articleRecordId = od?.ArticleScientifique?.id_article_scientifique
-            || od?.article_scientifique?.id_article_scientifique;
-        } else {
-          articleRecordId = od?.Article?.id_article
-            || od?.article?.id_article;
-        }
+      // 1. Nouvelles images
+      const blocsPrets: any[] = [];
+      for (let index = 0; index < blocks.length; index++) {
+        const block = blocks[index];
+        const { tempFile, ...metadata } = block.metadata || {};
+        const id_media = block.type_block === 'image' && tempFile instanceof File
+          ? await envoyerImage(tempFile, oeuvreId, index + 1)
+          : block.id_media || block.media?.id_media || null;
+        blocsPrets.push({
+          id_article: idFicheArticle.current,
+          type_block: block.type_block,
+          contenu: block.contenu || '',
+          contenu_json: block.contenu_json || null,
+          metadata,
+          id_media,
+          ordre: index,
+          visible: block.visible !== false,
+        });
+      }
 
-        if (!articleRecordId) {
-          console.error('❌ ID article spécifique introuvable pour oeuvre:', oeuvreId);
-          toast({
-            title: t('toasts.warning'),
-            description: t('toasts.articleBlocksIdMissing'),
-            variant: 'destructive',
-          });
-        } else {
+      // 2. Titre, description, catégories, mots-clés, champs de l'article, intervenants ajoutés
+      const miseAJour = await oeuvreService.updateOeuvre(oeuvreId, {
+        titre: formData.titre,
+        description: formData.description,
+        categories: formData.categories,
+        tags: formData.tags,
+        details_specifiques: detailsArticle(formData, { modification: true }),
+        ...liensArticle(contributeurs, editeurs),
+      } as any);
+      if (!miseAJour.success) {
+        throw new Error(miseAJour.error || t('toasts.updateError'));
+      }
 
-          // 2a. Upload des nouvelles images (blocs avec tempFile)
-          const blocksWithMedia = await Promise.all(
-            blocks.map(async (block: Record<string, unknown>, index: number) => {
-              let id_media = block.id_media || block.media?.id_media || null;
-
-              if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
-                try {
-                  // Champ « medias » attendu par le serveur (avec « files », chaque image était refusée)
-                  const formData = new FormData();
-                  formData.append('medias', await prepareImageForUpload(block.metadata.tempFile));
-                  const uploadResult = await httpClient.postFormData<Record<string, unknown>>(
-                    `/oeuvres/${oeuvreId}/medias/upload`,
-                    formData
-                  );
-                  if (uploadResult.success && uploadResult.data) {
-                    const medias = Array.isArray(uploadResult.data) ? uploadResult.data : [uploadResult.data];
-                    if (medias[0]?.id_media) {
-                      id_media = medias[0].id_media;
-                    }
-                  }
-                } catch (uploadErr) {
-                  console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
-                  toast({
-                    title: t('toasts.warning'),
-                    description: t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: index + 1 }),
-                    variant: 'destructive',
-                  });
-                }
-              }
-
-              return { block, id_media, index };
-            })
-          );
-
-          // 2b. Préparer les blocs à sauvegarder
-          const blocksToSave = blocksWithMedia.map(({ block, id_media, index }) => {
-            const cleanMetadata = block.metadata ? { ...block.metadata } : {};
-            delete cleanMetadata.tempFile;
-
-            return {
-              type_block: block.type_block,
-              contenu: block.contenu || '',
-              contenu_json: block.contenu_json || null,
-              metadata: cleanMetadata,
-              id_media,
-              ordre: index,
-              visible: true,
-            };
-          });
-
-          // 2c. Créer les nouveaux blocs (createMultipleBlocks supprime automatiquement les anciens)
-          const blocksResponse = await articleBlockService.createMultipleBlocks({
-            id_article: articleRecordId,
-            article_type: articleType,
-            blocks: blocksToSave.map((b) => ({ ...b, id_article: articleRecordId })),
-          });
-
-          if (!blocksResponse.success) {
-            console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
-            toast({
-              title: t('toasts.warning'),
-              description: t('toasts.articleBlocksSaveFailed'),
-              variant: 'destructive',
-            });
-          } else {
-          }
-        }
+      // 3. Blocs (la route remplace les anciens en une seule transaction)
+      const enregistrement = await articleBlockService.createMultipleBlocks({
+        id_article: idFicheArticle.current,
+        article_type: articleType,
+        blocks: blocsPrets,
+      } as any);
+      if (!enregistrement.success) {
+        throw new Error(enregistrement.error || t('toasts.articleBlocksSaveFailed'));
       }
 
       rafraichirTableauDeBord();
@@ -199,9 +162,7 @@ const EditArticle: React.FC = () => {
         title: t('common.success', 'Succès'),
         description: t('article.updateSuccess', 'Article mis à jour avec succès !'),
       });
-
       naviguerPlusTard(`/articles/${id}`, 1000);
-
     } catch (err: unknown) {
       console.error('❌ Erreur mise à jour article:', err);
       toast({
@@ -209,6 +170,7 @@ const EditArticle: React.FC = () => {
         description: err instanceof Error ? err.message : t('toasts.updateError'),
         variant: 'destructive',
       });
+      throw err;
     }
   };
 
@@ -233,14 +195,14 @@ const EditArticle: React.FC = () => {
               size="sm"
               onClick={() => navigate('/dashboard-pro')}
               className="mb-4">
-              
+
               <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("articles_editarticle.retour_dashboard")}
 
             </Button>
-            
+
             <Alert variant="destructive">
               <AlertDescription>
-                {error || "Article non trouvé"}
+                {error || t('article_articleeditor.introuvable', 'Article non trouvé')}
               </AlertDescription>
             </Alert>
           </div>
@@ -259,9 +221,9 @@ const EditArticle: React.FC = () => {
           <ArticleEditor
             articleId={parseInt(id!, 10)}
             initialData={initialData}
-            onBack={() => navigate('/dashboard-pro')}
+            onBack={() => navigate(-1)}
             onSave={handleSave} />
-          
+
         </div>
       </div>
     </div>);

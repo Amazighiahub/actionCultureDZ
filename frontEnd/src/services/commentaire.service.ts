@@ -244,6 +244,19 @@ class CommentaireService {
   }
 
   /**
+   * Signaler un commentaire à l'équipe (message du serveur en cas de refus : déjà signalé, e-mail non vérifié…)
+   */
+  async signalerCommentaire(id: number, motif: string, description?: string): Promise<ApiResponse<void>> {
+    try {
+      return await httpClient.post<void>('/signalements', {
+        type_entite: 'commentaire', id_entite: id, motif, ...(description ? { description } : {})
+      });
+    } catch (error: unknown) {
+      return { success: false, error: error instanceof Error ? error.message : 'Erreur inconnue' };
+    }
+  }
+
+  /**
    * Modérer un commentaire (admin)
    */
   async moderateCommentaire(

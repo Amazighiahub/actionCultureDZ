@@ -19,7 +19,6 @@
 #                     (défaut : eventculture-backend, ou aucun si MYSQL_CONTAINER est changé)
 #   DB_NAME, MYSQL_ROOT_PASSWORD   lus dans .env s'ils ne sont pas déjà définis
 #   SANS_MIGRATIONS=1  ne lance pas les migrations après l'import (essai sur une base jetable)
-#   SANS_MIGRATIONS=1  ne lance pas les migrations après l'import (essai sur une base jetable)
 #   SANS_SAUVEGARDE_AVANT=1        ne pas sauvegarder l'état actuel (base vide, essai)
 #   CONFIRMER=<nom de la base>     confirmation sans question (essai automatisé)
 # Le mot de passe n'est jamais affiché ni passé en ligne de commande.
@@ -108,12 +107,6 @@ if ! zcat "$FICHIER" | mysql_import; then
 fi
 TABLES="$(mysql_cible -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$DB_NAME'")"
 log "restauration terminée : $TABLES tables dans « $DB_NAME »"
-# Sauvegarde plus ancienne que le code : sans ses migrations, certaines requêtes échoueraient
-if [ "${SANS_MIGRATIONS:-0}" != "1" ]; then
-  log "mise à niveau de la structure (migrations)"
-  docker compose -f docker-compose.prod.yml run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate \
-    || fail "migrations échouées : le backend reste arrêté, voir le message ci-dessus"
-fi
 # Sauvegarde plus ancienne que le code : sans ses migrations, certaines requêtes échoueraient
 if [ "${SANS_MIGRATIONS:-0}" != "1" ]; then
   log "mise à niveau de la structure (migrations)"

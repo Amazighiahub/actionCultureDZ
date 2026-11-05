@@ -5,6 +5,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { conditionRecherche } = require('../utils/multiLangSearchBuilder');
 const { lienPour } = require('../utils/lienEnLigne');
 const { servirPdf } = require('../utils/servirPdf');
 const QRCode = require('qrcode');
@@ -228,10 +229,12 @@ class EvenementController extends BaseController {
 
   async listAll(req, res) {
     try {
-      const { statut } = req.query;
+      const { statut, q } = req.query;
       const { page, limit } = this._paginate(req);
-      const options = { page, limit };
-      if (statut) options.where = { statut };
+      const options = { page, limit, where: {} };
+      if (statut) options.where.statut = statut;
+      const recherche = conditionRecherche(this.evenementService.repository.model.sequelize, 'nom_evenement', q, 'Evenement');
+      if (recherche) Object.assign(options.where, recherche);
 
       const result = await this.evenementService.findAll(options);
       res.json({

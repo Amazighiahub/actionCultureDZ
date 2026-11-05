@@ -146,7 +146,7 @@ describe('suppression d’un produit d’artisanat', () => {
 describe('sanction depuis un signalement', () => {
   const contexte = (cible = { id_user: 12, id_type_user: 1, Roles: [] }) => {
     const repo = new SignalementRepository({
-      Signalement: {}, Role: {},
+      Signalement: { update: jest.fn(async () => [0]) }, Role: {},
       Commentaire: { findByPk: jest.fn(async () => ({ id_user: 12 })) },
       User: { findByPk: jest.fn(async () => ({ ...cible, email: 'auteur@example.com' })), update: jest.fn(async () => [1]) },
     });

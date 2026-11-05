@@ -6,6 +6,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { conditionRecherche } = require('../utils/multiLangSearchBuilder');
 
 class OeuvreController extends BaseController {
   /**
@@ -320,10 +321,12 @@ class OeuvreController extends BaseController {
    */
   async listAll(req, res) {
     try {
-      const { statut } = req.query;
+      const { statut, q } = req.query;
       const { page, limit } = this._paginate(req);
-      const options = { page, limit };
-      if (statut) options.where = { statut };
+      const options = { page, limit, where: {} };
+      if (statut) options.where.statut = statut;
+      const recherche = conditionRecherche(this.oeuvreService.repository.model.sequelize, 'titre', q, 'Oeuvre');
+      if (recherche) Object.assign(options.where, recherche);
 
       const result = await this.oeuvreService.findAll(options);
 

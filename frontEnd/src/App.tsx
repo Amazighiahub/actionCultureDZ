@@ -273,7 +273,7 @@ const App = () => (
               path="/editer-article/:id" 
               element={
                 <ProfessionalRoute>
-                  <EditArticle />
+                  <ErrorBoundary><EditArticle /></ErrorBoundary>
                 </ProfessionalRoute>
               } 
             />

@@ -1393,7 +1393,11 @@
       "searchPlaceholder": "البحث عن بلاغ...",
       "noReportsDesc": "لا يوجد بلاغ يطابق معاييرك",
       "confirmRemove": "حذف هذا المحتوى؟",
-      "confirmRemoveDesc": "سيتم حذف المحتوى المُبلَّغ عنه نهائيًا.",
+      "contenuDisparu": "هذا المحتوى لم يعد موجودًا.",
+      "auteurContenu": "الكاتب: {{nom}}",
+      "voirContenu": "عرض على الموقع",
+      "precisionSignalant": "توضيح من صاحب البلاغ",
+      "confirmRemoveDesc": "سيُسحب المحتوى المبلَّغ عنه من الموقع. يبقى محفوظًا في قاعدة البيانات، ويمكن للفريق التقني استعادته.",
       "confirmSuspend": "تعليق هذا المستخدم؟",
       "confirmSuspendDesc": "لن يتمكن صاحب المحتوى من تسجيل الدخول طوال مدة التعليق."
     },
@@ -1575,6 +1579,19 @@
         "rejete": "مرفوض"
       },
       "types": {
+        "ecrivain": "كاتب",
+        "journaliste": "صحفي",
+        "scientifique": "باحث",
+        "acteur": "ممثل",
+        "realisateur": "مخرج",
+        "musicien": "موسيقي",
+        "photographe": "مصوّر",
+        "danseur": "راقص",
+        "sculpteur": "نحّات",
+        "autre": "آخر",
+        "poete": "شاعر",
+        "conteur": "حكواتي",
+        "administrateur": "مدير",
         "visiteur": "زائر",
         "artiste": "فنان",
         "organisateur": "منظم",
@@ -1583,6 +1600,7 @@
       }
     },
     "oeuvres": {
+      "pendingCount": "{{count}} عمل بانتظار التحقق",
       "title": "إدارة الأعمال",
       "count": "{{count}} عمل(أعمال)",
       "searchPlaceholder": "البحث بالعنوان...",
@@ -3070,6 +3088,9 @@
     "min_total": "دقيقة إجمالي"
   },
   "article_articleeditor": {
+    "contenuVide": "يجب أن يحتفظ المقال بكتلة محتوى واحدة على الأقل.",
+    "pasUnArticle": "هذا العمل ليس مقالًا",
+    "introuvable": "المقال غير موجود",
     "placeholder_entrez_votre_texte": "أدخل النص...",
     "titre": "العنوان 1 (H1)",
     "titre_1": "العنوان 2 (H2)",
@@ -3205,6 +3226,7 @@
     "constantine": "قسنطينة"
   },
   "comments": {
+    "actions": {"modifier": "تعديل", "modifie": "تم تعديل التعليق", "modifierTitre": "تعديل تعليقكم", "modifierAide": "يحلّ النص الجديد محلّ النص القديم.", "supprimer": "حذف", "supprime": "تم حذف التعليق", "supprimerTitre": "حذف هذا التعليق؟", "supprimerAide": "سيختفي من الموقع.", "masquer": "إخفاء", "masque": "تم إخفاء التعليق", "masquerTitre": "إخفاء هذا التعليق؟", "masquerAide": "لن يظهر على الموقع، لكنه لن يُمحى.", "signalerTitre": "الإبلاغ عن هذا التعليق", "signalerAide": "سيطّلع فريق ثالا دي زد على بلاغكم. لن يعرف الشخص أنكم من أبلغ عنه.", "motif": "السبب", "motifChoisir": "اختيار سبب", "motifRequis": "يرجى اختيار سبب", "precision": "توضيح (اختياري)", "envoyer": "إرسال البلاغ"},
     "title": "التعليقات",
     "reviews": "المراجعات",
     "addComment": "إضافة تعليق",

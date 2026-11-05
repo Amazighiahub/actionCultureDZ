@@ -46,6 +46,8 @@ import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { favoriService } from '@/services/favori.service';
 import { commentaireService } from '@/services/commentaire.service';
+import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
+import { Pencil } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
@@ -221,7 +223,7 @@ const ArticleViewPage: React.FC = () => {
   // Lien d'une notification (?proposition=…) : ouvre la proposition à examiner
   const [searchParams] = useSearchParams();
   const propositionAOuvrir = parseInt(searchParams.get('proposition') || '', 10) || null;
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t, i18n } = useTranslation();
   const { formatDate: hookFormatDate } = useFormatDate();
   const { toast } = useToast();
@@ -309,11 +311,7 @@ const ArticleViewPage: React.FC = () => {
         setBlocks(blocksResponse.data.sort((a, b) => (a.ordre || 0) - (b.ordre || 0)));
       }
 
-      // Charger les commentaires
-      const commentsResponse = await commentaireService.getCommentairesOeuvre(articleId);
-      if (commentsResponse.success && commentsResponse.data) {
-        setCommentaires(Array.isArray(commentsResponse.data) ? commentsResponse.data : []);
-      }
+      await chargerCommentaires();
 
       // Tracker la vue
       oeuvreService.trackView(articleId);
@@ -366,6 +364,14 @@ const ArticleViewPage: React.FC = () => {
   };
 
   // Fonctions pour le système de commentaires
+  // (la réponse est paginée : en attendant un tableau, aucun commentaire d'article ne s'affichait)
+  async function chargerCommentaires() {
+    const reponse = await commentaireService.getCommentairesOeuvre(articleId);
+    if (reponse.success && reponse.data) {
+      setCommentaires((reponse.data.items || []) as unknown as Commentaire[]);
+    }
+  }
+
   const handleSubmitComment = async () => {
     if (!oeuvre || !commentContent.trim()) return;
 
@@ -627,7 +633,9 @@ const ArticleViewPage: React.FC = () => {
 
   const contributeurs = extractContributeurs();
   // Compléter ou corriger l'article de quelqu'un d'autre : proposition validée par l'auteur ou l'administration
-  const peutProposer = !!user && oeuvre.statut === 'publie' && user.id_user !== oeuvre.saisi_par;
+  const peutProposer = !!user && oeuvre.statut === 'publie' && user.id_user !== oeuvre.saisi_par && !isAdmin;
+  // L'auteur et l'administration corrigent directement, même après la publication
+  const peutModifier = !!user && (user.id_user === oeuvre.saisi_par || !!isAdmin);
   const chapeau = getLocalizedText(oeuvre.description)?.trim()
     || (!isScientific ? articleHelpers.getResume(articleData) : undefined);
 
@@ -688,6 +696,14 @@ const ArticleViewPage: React.FC = () => {
                 
                 <Share2 className="h-4 w-4" />
               </Button>
+              {peutModifier &&
+              <Button asChild size="sm" variant="outline" className="me-1">
+                  <Link to={`/editer-article/${oeuvre.id_oeuvre}`}>
+                    <Pencil className="h-4 w-4 sm:me-1.5" aria-hidden="true" />
+                    <span className="hidden sm:inline">{t('article_articleeditor.modifierArticle', 'Modifier l\'article')}</span>
+                  </Link>
+                </Button>
+              }
               {peutProposer &&
               <Button asChild size="sm" variant="outline" className="me-1">
                   <Link to={`/articles/${oeuvre.id_oeuvre}/proposer`}>
@@ -986,6 +1002,7 @@ const ArticleViewPage: React.FC = () => {
                                 {formatDate(comment.date_creation)}
                               </p>
                             </div>
+                            <ActionsCommentaire commentaire={comment} onChange={chargerCommentaires} />
                             {comment.note_qualite &&
                       <div className="flex items-center space-x-1 rtl:space-x-reverse">
                                 {[...Array(5)].map((_, i) =>
@@ -1032,6 +1049,7 @@ const ArticleViewPage: React.FC = () => {
                                       <span className="text-xs text-muted-foreground">
                                         {formatDate(reponse.date_creation)}
                                       </span>
+                                      <ActionsCommentaire commentaire={reponse} onChange={chargerCommentaires} />
                                     </div>
                                     <p className="text-sm mt-1">{reponse.contenu}</p>
                                   </div>

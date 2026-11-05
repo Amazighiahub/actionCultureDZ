@@ -37,6 +37,8 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { Pagination } from '@/components/shared/Pagination';
+import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 
 // Helper pour extraire le texte multilingue
 
@@ -79,43 +81,20 @@ const AdminOeuvresTab: React.FC = () => {
     errorOeuvres,
     validateOeuvre,
     deleteOeuvre,
+    loadOeuvres,
     refreshAll
   } = useDashboardAdmin('oeuvres');
+  const totalPages = oeuvres?.pagination?.pages ?? 1;
+  const { page, setPage } = useListeServeur(
+    { q: termeRecherche(debouncedSearch), statut: filtreChoisi(statusFilter) },
+    loadOeuvres, totalPages
+  );
+  const aValider = pendingOeuvres?.pagination?.total ?? 0;
   // Œuvre dont on saisit le motif de refus
   const [aRefuser, setARefuser] = useState<number | null>(null);
 
-  // Combiner œuvres et œuvres en attente
-  const allOeuvres = React.useMemo(() => {
-    const combined = [...(oeuvres?.items || []), ...(pendingOeuvres?.items || [])];
-    // Dédupliquer par id
-    const unique = combined.filter((oeuvre, index, self) =>
-      index === self.findIndex(o => o.id_oeuvre === oeuvre.id_oeuvre)
-    );
-    return unique;
-  }, [oeuvres, pendingOeuvres]);
-
-  // Filtrer les œuvres
-  const filteredOeuvres = React.useMemo(() => {
-    return allOeuvres.filter((oeuvre: any) => {
-      // Filtre de recherche
-      if (debouncedSearch) {
-        const searchLower = debouncedSearch.toLowerCase();
-        const titre = getLocalizedText(oeuvre.titre, currentLang);
-        const description = getLocalizedText(oeuvre.description, currentLang);
-        const matchesSearch =
-          titre.toLowerCase().includes(searchLower) ||
-          description.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-
-      // Filtre de statut
-      if (statusFilter !== 'tous' && oeuvre.statut !== statusFilter) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [allOeuvres, debouncedSearch, statusFilter, currentLang]);
+  // Recherche et statut sont filtrés par le serveur, sur toutes les œuvres
+  const filteredOeuvres = oeuvres?.items || [];
 
   const hasActiveFilters = searchQuery || statusFilter !== 'tous';
 
@@ -141,7 +120,7 @@ const AdminOeuvresTab: React.FC = () => {
             {t('admin.oeuvres.title', 'Gestion des œuvres')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.oeuvres.count', '{{count}} œuvre(s)', { count: filteredOeuvres.length })}
+            {t('admin.oeuvres.count', '{{count}} œuvre(s)', { count: oeuvres?.pagination?.total ?? filteredOeuvres.length })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
@@ -149,6 +128,18 @@ const AdminOeuvresTab: React.FC = () => {
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
+
+      {/* Œuvres envoyées par les professionnels, à valider */}
+      {aValider > 0 && statusFilter !== 'en_attente' && (
+        <button
+          type="button"
+          onClick={() => setStatusFilter('en_attente')}
+          className="w-full text-start rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 hover:bg-amber-100"
+        >
+          <span className="font-semibold">{t('admin.oeuvres.pendingCount', '{{count}} œuvre(s) à valider', { count: aValider })}</span>
+          {' · '}{t('admin.events.pendingShow', 'Afficher')}
+        </button>
+      )}
 
       {/* Filtres */}
       <Card>
@@ -292,6 +283,7 @@ const AdminOeuvresTab: React.FC = () => {
           </div>
         </Card>
       )}
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       <ConfirmDialog
         open={confirmDelete.open}
         onOpenChange={(open) => !isDeleting && setConfirmDelete({ open })}

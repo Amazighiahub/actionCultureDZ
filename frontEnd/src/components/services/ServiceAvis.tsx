@@ -16,6 +16,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { commentaireService, type AvisService } from '@/services/commentaire.service';
+import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
 
 const auteur = (a: AvisService) => a.User ? `${getLocalizedText(a.User.prenom)} ${getLocalizedText(a.User.nom)}`.trim() : '';
 
@@ -83,6 +84,7 @@ const ServiceAvis: React.FC<{ serviceId: number; proprietaireId?: number | null 
 
   const estProprietaire = !!user && !!proprietaireId && Number(user.id_user) === Number(proprietaireId);
   const dejaDonne = !!user && avis.some(a => Number(a.id_user) === Number(user.id_user));
+  const rafraichir = () => queryClient.invalidateQueries({ queryKey: cle });
 
   const publier = async (contenu: string, noteDonnee?: number, parent?: number) => {
     try {
@@ -143,16 +145,20 @@ const ServiceAvis: React.FC<{ serviceId: number; proprietaireId?: number | null 
                 <span className="font-medium">{auteur(a) || t('common.anonymous', 'Anonyme')}</span>
                 {Number(a.note_qualite) > 0 && <StarRating value={Number(a.note_qualite)} readonly size="sm" />}
                 <span className="text-sm text-muted-foreground">{formatDate(a.date_creation, { relative: true })}</span>
+                <span className="ms-auto"><ActionsCommentaire commentaire={a} onChange={rafraichir} /></span>
               </div>
               <p className="mt-2 whitespace-pre-line" dir="auto">{a.contenu}</p>
 
               {(a.Reponses || []).map(r => (
                 <div key={r.id_commentaire} className="mt-3 ms-4 ps-4 border-s-2 border-primary/30">
-                  <p className="text-sm font-medium">
-                    {Number(r.id_user) === Number(proprietaireId)
-                      ? t('servicesVisiteurs.avis.reponsePro', 'Réponse du professionnel')
-                      : auteur(r)}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">
+                      {Number(r.id_user) === Number(proprietaireId)
+                        ? t('servicesVisiteurs.avis.reponsePro', 'Réponse du professionnel')
+                        : auteur(r)}
+                    </p>
+                    <ActionsCommentaire commentaire={r} onChange={rafraichir} />
+                  </div>
                   <p className="text-sm mt-1 whitespace-pre-line" dir="auto">{r.contenu}</p>
                 </div>
               ))}

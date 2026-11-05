@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  AlertTriangle, AlertCircle, CheckCircle, XCircle, Shield,
+  AlertTriangle, AlertCircle, CheckCircle, ExternalLink, Shield,
   MessageSquare, Flag, Clock, User, FileText,
   Search, RefreshCw, X, Ban, Trash2
 } from 'lucide-react';
@@ -21,18 +21,16 @@ import { ConfirmDialog, EmptyState, LoadingSkeleton } from '@/components/shared'
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useListeServeur, filtreChoisi } from '@/hooks/useListeServeur';
+import { MOTIFS_SIGNALEMENT } from '@/utils/motifsSignalement';
+import { Pagination } from '@/components/shared/Pagination';
 
-// Valeurs du motif de signalement (ENUM signalement.motif)
-const RAISONS_SIGNALEMENT_CONFIG: Record<string, string> = {
-  contenu_inapproprie: 'admin.moderation.reasons.inappropriateContent',
-  spam: 'admin.moderation.reasons.spam',
-  harcelement: 'admin.moderation.reasons.harassment',
-  violation_droits: 'admin.moderation.reasons.copyright',
-  faux_contenu: 'admin.moderation.reasons.falseInformation',
-  incitation_haine: 'admin.moderation.reasons.hateSpeech',
-  contenu_illegal: 'admin.moderation.reasons.illegalContent',
-  autre: 'admin.moderation.reasons.other'
-};
+// Libellé de chaque motif de signalement
+const RAISONS_SIGNALEMENT_CONFIG: Record<string, string> = Object.fromEntries(
+  MOTIFS_SIGNALEMENT.map(({ valeur, cle }) => [valeur, cle])
+);
+// Recherche dans la page : ces champs peuvent manquer, ou ne pas être du texte
+const enTexte = (v: unknown): string => (typeof v === 'string' ? v : '').toLowerCase();
 
 const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'artisanat', 'user'];
 
@@ -52,8 +50,14 @@ const AdminModerationTab: React.FC = () => {
     loadingModeration,
     errorModeration,
     moderateSignalement,
+    loadModerationQueue,
     refreshAll
   } = useDashboardAdmin('moderation');
+
+  const totalPages = (moderationQueue?.pagination as any)?.pages ?? 1;
+  // Le type est filtré par le serveur ; la recherche porte sur la page affichée
+  const { page, setPage } = useListeServeur({ type: filtreChoisi(typeFilter) }, loadModerationQueue, totalPages);
+  const compteurs = (moderationQueue as any)?.compteurs;
 
   // Filtrer les signalements
   const filteredSignalements = React.useMemo(() => {
@@ -63,24 +67,16 @@ const AdminModerationTab: React.FC = () => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
-        const title = (item.entity_title || '').toLowerCase();
-        const reason = (item.reason || '').toLowerCase();
-        const reporter = (item.reported_by?.nom || '').toLowerCase();
-        const matchesSearch =
-          title.includes(searchLower) ||
-          reason.includes(searchLower) ||
-          reporter.includes(searchLower);
+        const matchesSearch = [
+          item.entity_title, item.entity_content, item.reason, item.description,
+          item.reported_by?.nom, item.entity_author?.nom
+        ].some((champ) => enTexte(champ).includes(searchLower));
         if (!matchesSearch) return false;
-      }
-
-      // Filtre de type
-      if (typeFilter !== 'tous') {
-        if (item.type !== typeFilter) return false;
       }
 
       return true;
     });
-  }, [moderationQueue, debouncedSearch, typeFilter]);
+  }, [moderationQueue, debouncedSearch]);
 
   const hasActiveFilters = searchQuery || typeFilter !== 'tous';
 
@@ -103,7 +99,7 @@ const AdminModerationTab: React.FC = () => {
     await moderateSignalement({ signalementId, action });
   };
 
-  const totalCount = moderationQueue?.items?.length ?? 0;
+  const totalCount = compteurs?.total ?? moderationQueue?.items?.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -115,7 +111,7 @@ const AdminModerationTab: React.FC = () => {
             {t('admin.moderation.title', 'Modération')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.moderation.count', '{{count}} signalement(s) en attente', { count: filteredSignalements.length })}
+            {t('admin.moderation.count', '{{count}} signalement(s) en attente', { count: totalCount })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
@@ -145,7 +141,7 @@ const AdminModerationTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">{t('admin.moderation.commentReports', 'Commentaires')}</p>
               <p className="text-2xl font-bold">
-                {moderationQueue?.items?.filter((s: any) => s.type === 'commentaire').length ?? 0}
+                {compteurs?.commentaire ?? moderationQueue?.items?.filter((s: any) => s.type === 'commentaire').length ?? 0}
               </p>
             </div>
           </CardContent>
@@ -158,7 +154,7 @@ const AdminModerationTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">{t('admin.moderation.contentReports', 'Contenus')}</p>
               <p className="text-2xl font-bold">
-                {moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement').length ?? 0}
+                {compteurs?.contenu ?? moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement' || s.type === 'artisanat').length ?? 0}
               </p>
             </div>
           </CardContent>
@@ -245,13 +241,48 @@ const AdminModerationTab: React.FC = () => {
                         </Badge>
                       </div>
 
-                      {signalement.entity_title && (
-                        <Alert className="mt-2 mb-2 bg-muted/50">
-                          <AlertDescription className="text-sm">
-                            <strong>{t('admin.moderation.concernedElement', 'Élément concerné')}:</strong>{' '}
-                            {signalement.entity_title}
-                          </AlertDescription>
-                        </Alert>
+                      {/* Ce qui est signalé : à lire avant de décider */}
+                      <Alert className="mt-2 mb-2 bg-muted/50">
+                        <AlertDescription className="text-sm space-y-1">
+                          {signalement.entity_missing ? (
+                            <p>{t('admin.moderation.contenuDisparu', 'Ce contenu n’existe plus.')}</p>
+                          ) : (
+                            <>
+                              {signalement.entity_title && (
+                                <p>
+                                  <strong>{t('admin.moderation.concernedElement', 'Élément concerné')}:</strong>{' '}
+                                  {signalement.entity_title}
+                                </p>
+                              )}
+                              {signalement.entity_content && (
+                                <p dir="auto" className="whitespace-pre-line">{signalement.entity_content}</p>
+                              )}
+                              {signalement.entity_author?.nom && (
+                                <p className="text-xs text-muted-foreground">
+                                  {t('admin.moderation.auteurContenu', 'Auteur : {{nom}}', { nom: signalement.entity_author.nom })}
+                                </p>
+                              )}
+                              {signalement.entity_link && (
+                                <a
+                                  href={signalement.entity_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline underline-offset-4"
+                                >
+                                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                                  {t('admin.moderation.voirContenu', 'Voir sur le site')}
+                                </a>
+                              )}
+                            </>
+                          )}
+                        </AlertDescription>
+                      </Alert>
+
+                      {signalement.description && (
+                        <p dir="auto" className="text-sm mb-2">
+                          <strong>{t('admin.moderation.precisionSignalant', 'Précision de la personne qui signale')}:</strong>{' '}
+                          {signalement.description}
+                        </p>
                       )}
 
                       <div className="text-xs text-muted-foreground">
@@ -284,6 +315,7 @@ const AdminModerationTab: React.FC = () => {
                         <AlertTriangle className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.warn', 'Avertir')}
                       </Button>
+                      {signalement.type !== 'user' && !signalement.entity_missing && (
                       <Button
                         size="sm"
                         variant="destructive"
@@ -293,6 +325,7 @@ const AdminModerationTab: React.FC = () => {
                         <Trash2 className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.removeContentShort', 'Supprimer')}
                       </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="destructive"
@@ -311,6 +344,8 @@ const AdminModerationTab: React.FC = () => {
         </div>
       )}
 
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+
       <ConfirmDialog
         open={pendingAction !== null}
         onOpenChange={(open) => { if (!open) setPendingAction(null); }}
@@ -319,7 +354,7 @@ const AdminModerationTab: React.FC = () => {
           : t('admin.moderation.confirmRemove', 'Supprimer ce contenu ?')}
         description={pendingAction?.action === 'suspension_temporaire'
           ? t('admin.moderation.confirmSuspendDesc', "L'auteur du contenu ne pourra plus se connecter pendant la suspension.")
-          : t('admin.moderation.confirmRemoveDesc', 'Le contenu signalé sera supprimé définitivement.')}
+          : t('admin.moderation.confirmRemoveDesc', 'Le contenu signalé sera retiré du site. Il reste conservé en base : l’équipe technique peut le rétablir.')}
         confirmLabel={pendingAction?.action === 'suspension_temporaire'
           ? t('admin.moderation.actions.suspendShort', 'Suspendre')
           : t('admin.moderation.actions.removeContentShort', 'Supprimer')}

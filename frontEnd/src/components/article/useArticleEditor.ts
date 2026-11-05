@@ -26,6 +26,7 @@ import type {
 
 import { generateBlockUid } from './articleEditor.constants';
 import { LANGUES_ARTICLE, langueOrigine } from '@/utils/traductionBlocs';
+import { nomDuTag } from '@/utils/donneesArticle';
 
 // Template scientifique pour les nouveaux articles scientifiques
 const SCIENTIFIC_TEMPLATE: ArticleBlock[] = [
@@ -158,7 +159,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     if (!articleId) return;
     setLoading(true);
     try {
-      const oeuvreResponse = await oeuvreService.getOeuvreById(Number(articleId));
+      // Toutes les langues : la version traduite aurait été réenregistrée comme texte français
+      const oeuvreResponse = await oeuvreService.getForEdit(Number(articleId));
       if (oeuvreResponse.success && oeuvreResponse.data) {
         const oeuvre = oeuvreResponse.data as any;
 
@@ -191,9 +193,11 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
           id_langue: oeuvre.id_langue,
           annee_creation: oeuvre.annee_creation,
           categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
-          tags: oeuvre.Tags?.map((t: any) => t.nom) || [],
+          tags: (oeuvre.Tags || []).map(nomDuTag).filter(Boolean),
           type: articleType,
-          ...articleData
+          ...articleData,
+          // Article scientifique : le lien source est enregistré dans url_hal
+          url_source: articleData?.url_source ?? articleData?.url_hal ?? undefined
         });
 
         const blocksResponse = await articleBlockService.getBlocksByArticle(
@@ -333,7 +337,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
       setFieldErrors(errs);
       if (Object.keys(errs).length > 0) {
-        setActiveTab('content');
+        // Les catégories se choisissent dans l'onglet Métadonnées
+        setActiveTab(errs.titre || errs.description ? 'content' : 'metadata');
         throw new Error(Object.values(errs)[0]);
       }
 

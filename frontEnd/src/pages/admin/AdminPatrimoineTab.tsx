@@ -34,6 +34,8 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { Pagination } from '@/components/shared/Pagination';
+import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 import { adminService } from '@/services/admin.service';
 import { useToast } from '@/components/ui/use-toast';
 import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
@@ -65,36 +67,18 @@ const AdminPatrimoineTab: React.FC = () => {
     patrimoineItems,
     loadingPatrimoine,
     errorPatrimoine,
+    loadPatrimoineItems,
     refreshAll
   } = useDashboardAdmin('patrimoine');
 
-  // Filtrer les patrimoines
-  const filteredPatrimoines = React.useMemo(() => {
-    if (!patrimoineItems?.items) return [];
+  const totalPages = patrimoineItems?.pagination?.pages ?? 1;
+  const { page, setPage } = useListeServeur(
+    { q: termeRecherche(debouncedSearch), typePatrimoine: filtreChoisi(typeFilter) },
+    loadPatrimoineItems, totalPages
+  );
 
-    return patrimoineItems.items.filter((item: any) => {
-      // Filtre de recherche
-      if (debouncedSearch) {
-        const searchLower = debouncedSearch.toLowerCase();
-        const nom = getLocalizedText(item.nom, currentLang);
-        const description = getLocalizedText(item.description, currentLang);
-        const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';
-        const matchesSearch =
-          nom.toLowerCase().includes(searchLower) ||
-          description.toLowerCase().includes(searchLower) ||
-          wilaya.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-
-      // Filtre de type
-      if (typeFilter !== 'tous') {
-        const itemType = item.type || item.typePatrimoine || '';
-        if (itemType !== typeFilter) return false;
-      }
-
-      return true;
-    });
-  }, [patrimoineItems, debouncedSearch, typeFilter, currentLang]);
+  // Recherche et type sont filtrés par le serveur, sur tous les sites
+  const filteredPatrimoines = patrimoineItems?.items || [];
 
   const hasActiveFilters = searchQuery || typeFilter !== 'tous';
 
@@ -146,7 +130,7 @@ const AdminPatrimoineTab: React.FC = () => {
             {t('admin.patrimoine.title', 'Gestion du patrimoine')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.patrimoine.count', '{{count}} site(s)', { count: filteredPatrimoines.length })}
+            {t('admin.patrimoine.count', '{{count}} site(s)', { count: patrimoineItems?.pagination?.total ?? filteredPatrimoines.length })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -297,6 +281,8 @@ const AdminPatrimoineTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 
       <ImportReleveDialog open={importOpen} onOpenChange={setImportOpen} onImported={refreshAll} />
 

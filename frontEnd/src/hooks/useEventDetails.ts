@@ -382,6 +382,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     programs: programsQuery.data as Programme[] | undefined,
     medias: mediasQuery.data as Media[] | undefined,
     comments: commentsQuery.data as Comment[] | undefined,
+    rafraichirCommentaires: () => queryClient.invalidateQueries({ queryKey: commentsKey }),
     publicParticipants: participantsQuery.data ?? { participants: [], total: 0 },
     organizers: extractOrganizers(),
 

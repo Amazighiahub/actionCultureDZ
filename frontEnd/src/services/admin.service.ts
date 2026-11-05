@@ -238,8 +238,9 @@ class AdminService {
   }
 
   // Patrimoine
-  async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<Lieu>>> {
-    return httpClient.getPaginated<Lieu>('/patrimoine', params);
+  async getPatrimoineItems(params?: PatrimoineFilters & { q?: string; typePatrimoine?: string }): Promise<ApiResponse<PaginatedResponse<Lieu>>> {
+    // La recherche a sa propre route ; la liste simple ignore « q »
+    return httpClient.getPaginated<Lieu>(params?.q ? '/patrimoine/search' : '/patrimoine', params);
   }
 
   async updatePatrimoine(patrimoineId: number, data: Partial<Lieu>): Promise<ApiResponse<Lieu>> {
@@ -253,7 +254,7 @@ class AdminService {
   // Services
   /** Services des professionnels, tous statuts (GET /services ne renvoie que les services validés) */
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<Service>>> {
-    return httpClient.getPaginated<Service>('/services/admin/list', { limit: 100, ...params });
+    return httpClient.getPaginated<Service>('/services/admin/list', params);
   }
 
   async getServiceDetails(serviceId: number): Promise<ApiResponse<Service>> {

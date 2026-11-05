@@ -610,6 +610,7 @@
     "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom."
   },
   "comments": {
+    "actions": {"modifier": "Modifier", "modifie": "Commentaire modifié", "modifierTitre": "Modifier votre commentaire", "modifierAide": "Le nouveau texte remplace l’ancien.", "supprimer": "Supprimer", "supprime": "Commentaire supprimé", "supprimerTitre": "Supprimer ce commentaire ?", "supprimerAide": "Il disparaîtra du site.", "masquer": "Masquer", "masque": "Commentaire masqué", "masquerTitre": "Masquer ce commentaire ?", "masquerAide": "Il ne sera plus visible sur le site, sans être effacé.", "signalerTitre": "Signaler ce commentaire", "signalerAide": "L’équipe Tala DZ lira votre signalement. La personne ne saura pas que c’est vous.", "motif": "Motif", "motifChoisir": "Choisir un motif", "motifRequis": "Choisissez un motif", "precision": "Précision (facultatif)", "envoyer": "Envoyer le signalement"},
     "title": "Commentaires",
     "reviews": "Avis",
     "addComment": "Ajouter un commentaire",
@@ -2532,6 +2533,9 @@
     "min_total": "min total"
   },
   "article_articleeditor": {
+    "contenuVide": "L’article doit garder au moins un bloc de contenu.",
+    "pasUnArticle": "Cette œuvre n’est pas un article",
+    "introuvable": "Article non trouvé",
     "placeholder_entrez_votre_texte": "Entrez votre texte...",
     "titre": "Titre 1 (H1)",
     "titre_1": "Titre 2 (H2)",
@@ -2706,6 +2710,19 @@
         "rejete": "Refusé"
       },
       "types": {
+        "ecrivain": "Écrivain",
+        "journaliste": "Journaliste",
+        "scientifique": "Scientifique",
+        "acteur": "Acteur",
+        "realisateur": "Réalisateur",
+        "musicien": "Musicien",
+        "photographe": "Photographe",
+        "danseur": "Danseur",
+        "sculpteur": "Sculpteur",
+        "autre": "Autre",
+        "poete": "Poète",
+        "conteur": "Conteur",
+        "administrateur": "Administrateur",
         "visiteur": "Visiteur",
         "artiste": "Artiste",
         "organisateur": "Organisateur",
@@ -2714,6 +2731,7 @@
       }
     },
     "oeuvres": {
+      "pendingCount": "{{count}} œuvre(s) à valider",
       "title": "Gestion des œuvres",
       "count": "{{count}} œuvre(s)",
       "searchPlaceholder": "Rechercher par titre...",
@@ -2927,7 +2945,11 @@
       "searchPlaceholder": "Rechercher un signalement...",
       "noReportsDesc": "Aucun signalement ne correspond à vos critères",
       "confirmRemove": "Supprimer ce contenu ?",
-      "confirmRemoveDesc": "Le contenu signalé sera supprimé définitivement.",
+      "contenuDisparu": "Ce contenu n’existe plus.",
+      "auteurContenu": "Auteur : {{nom}}",
+      "voirContenu": "Voir sur le site",
+      "precisionSignalant": "Précision de la personne qui signale",
+      "confirmRemoveDesc": "Le contenu signalé sera retiré du site. Il reste conservé en base : l’équipe technique peut le rétablir.",
       "confirmSuspend": "Suspendre cet utilisateur ?",
       "confirmSuspendDesc": "L'auteur du contenu ne pourra plus se connecter pendant la suspension."
     },

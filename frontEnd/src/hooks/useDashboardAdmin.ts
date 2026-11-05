@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
 import { evenementService } from '@/services/evenement.service';
+import { TAILLE_PAGE_ADMIN } from '@/hooks/useListeServeur';
 import type { PaginatedResponse } from '@/config/api';
 import type { Oeuvre, Evenement, Lieu } from '@/types';
 import type { Service } from '@/types/models/lieux-details.types';
@@ -22,6 +23,13 @@ import type {
   PatrimoineFilters,
   ServiceFilters
 } from '@/services/admin.service';
+
+/** Pagination de la réponse, quelle que soit sa forme (« pages » ou « totalPages », dans data ou à côté) */
+const paginationDe = (response: any, raw: any, nbLignes: number, limit = TAILLE_PAGE_ADMIN) => {
+  const p = response?.pagination || raw?.pagination;
+  if (!p) return { total: nbLignes, page: 1, limit, pages: 1 } as any;
+  return { ...p, pages: p.pages ?? p.totalPages ?? 1 };
+};
 
 // Types pour les filtres
 export type { OeuvreFilters, EvenementFilters, PatrimoineFilters, ServiceFilters };
@@ -88,11 +96,20 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   const [loadingPatrimoine, setLoadingPatrimoine] = useState(false);
   const [loadingServices, setLoadingServices] = useState(false);
 
-  // Refs pour éviter les boucles infinies dans useCallback (ref-based guard)
-  const loadingOeuvresRef = useRef(false);
-  const loadingEvenementsRef = useRef(false);
-  const loadingPatrimoineRef = useRef(false);
-  const loadingServicesRef = useRef(false);
+  // Derniers filtres de chaque liste : recharger après une action ne doit pas ramener à la page 1 sans filtre
+  const derniersFiltres = useRef<Record<string, any>>({});
+  // Seule la réponse à la dernière demande compte (filtre changé pendant un chargement)
+  const demandes = useRef<Record<string, number>>({});
+  const nouvelleDemande = (liste: string, params: any) => {
+    const filtres = params ?? derniersFiltres.current[liste] ?? {};
+    derniersFiltres.current[liste] = filtres;
+    const numero = (demandes.current[liste] || 0) + 1;
+    demandes.current[liste] = numero;
+    return { filtres: { page: 1, limit: TAILLE_PAGE_ADMIN, ...filtres }, aJour: () => demandes.current[liste] === numero };
+  };
+  // À valider, toutes pages confondues (compté dans la page affichée, le nombre était faux)
+  const [attenteEvenements, setAttenteEvenements] = useState(0);
+  const [attenteServices, setAttenteServices] = useState(0);
 
   // États d'erreur
   const [errorOverview, setErrorOverview] = useState<string | null>(null);
@@ -187,18 +204,20 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   };
 
   const loadAllUsers = async (params?: { page?: number; limit?: number; statut?: string; statut_validation?: string; type_user?: string; search?: string }) => {
+    const { filtres, aJour } = nouvelleDemande('users', params);
     setLoadingAllUsers(true);
     setErrorAllUsers(null);
     try {
-      const response = await adminService.getAllUsers({ page: 1, limit: 100, ...params });
-      if (response.success && response.data) {
+      const response = await adminService.getAllUsers(filtres);
+      if (aJour() && response.success && response.data) {
         const raw = response.data as any;
-        setAllUsers({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 100, pages: 1 } });
+        const items = raw.items || raw.data || [];
+        setAllUsers({ items, pagination: paginationDe(response, raw, items.length) });
       }
     } catch (error) {
-      setErrorAllUsers(t('toasts.loadUsersFailed', 'Erreur lors du chargement des utilisateurs'));
+      if (aJour()) setErrorAllUsers(t('toasts.loadUsersFailed', 'Erreur lors du chargement des utilisateurs'));
     } finally {
-      setLoadingAllUsers(false);
+      if (aJour()) setLoadingAllUsers(false);
     }
   };
 
@@ -206,7 +225,8 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
     setLoadingPendingUsers(true);
     setErrorPendingUsers(null);
     try {
-      const response = await adminService.getPendingUsers({ page: 1, limit: 100 });
+      // Cinq pour la vue d'ensemble ; le nombre total vient de la pagination
+      const response = await adminService.getPendingUsers({ page: 1, limit: 5 });
       if (response.success && response.data) {
         setPendingUsers(response.data);
       }
@@ -221,10 +241,11 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
     setLoadingPendingOeuvres(true);
     setErrorPendingOeuvres(null);
     try {
-      const response = await adminService.getPendingOeuvres({ page: 1, limit: 100 });
+      const response = await adminService.getPendingOeuvres({ page: 1, limit: 5 });
       if (response.success && response.data) {
         const raw = response.data as any;
-        setPendingOeuvres({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 100, pages: 1 } });
+        const items = raw.items || raw.data || [];
+        setPendingOeuvres({ items, pagination: paginationDe(response, raw, items.length, 5) });
       }
     } catch (error) {
       setErrorPendingOeuvres(t('toasts.loadPendingOeuvresFailed', 'Erreur lors du chargement des œuvres en attente'));
@@ -233,18 +254,19 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
     }
   };
 
-  const loadModerationQueue = async () => {
+  const loadModerationQueue = async (params?: { page?: number; limit?: number; type?: string }) => {
+    const { filtres, aJour } = nouvelleDemande('moderation', params);
     setLoadingModeration(true);
     setErrorModeration(null);
     try {
-      const response = await adminService.getModerationQueue({ page: 1, limit: 100 });
-      if (response.success && response.data) {
+      const response = await adminService.getModerationQueue(filtres);
+      if (aJour() && response.success && response.data) {
         setModerationQueue(response.data);
       }
     } catch (error) {
-      setErrorModeration(t('toasts.loadModerationFailed', 'Erreur lors du chargement de la modération'));
+      if (aJour()) setErrorModeration(t('toasts.loadModerationFailed', 'Erreur lors du chargement de la modération'));
     } finally {
-      setLoadingModeration(false);
+      if (aJour()) setLoadingModeration(false);
     }
   };
 
@@ -289,8 +311,8 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         };
       });
       
-      // Rafraîchir aussi la liste complète
-      await loadAllUsers();
+      // Rafraîchir aussi la liste complète et le compteur
+      await Promise.all([loadAllUsers(), loadPendingUsers()]);
     }
   } catch (error) {
     toast({
@@ -574,23 +596,20 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
   };
 
   
-const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
-  if (loadingOeuvresRef.current) return;
-  loadingOeuvresRef.current = true;
+const loadOeuvres = useCallback(async (params?: OeuvreFilters & { q?: string }) => {
+  const { filtres: filters, aJour } = nouvelleDemande('oeuvres', params);
   setLoadingOeuvres(true);
   setErrorOeuvres(null);
   try {
     const response = await adminService.getOeuvres(filters);
 
-    if (response.success && response.data) {
+    if (aJour() && response.success && response.data) {
       const raw = response.data as any;
       const items = Array.isArray(raw) ? raw : (raw.items || raw.oeuvres || raw.data || []);
-      setOeuvres({
-        items,
-        pagination: Array.isArray(raw) ? { total: items.length, page: 1, limit: items.length, pages: 1 } : (raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 })
-      });
+      setOeuvres({ items, pagination: paginationDe(response, raw, items.length) });
     }
   } catch (error: unknown) {
+    if (!aJour()) return;
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
     if (status !== 401) {
       setErrorOeuvres(t('toasts.loadOeuvresFailed'));
@@ -603,25 +622,28 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
 
     setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
-    loadingOeuvresRef.current = false;
-    setLoadingOeuvres(false);
+    if (aJour()) setLoadingOeuvres(false);
   }
 }, [toast]);
 
-const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
-  if (loadingEvenementsRef.current) return;
-  loadingEvenementsRef.current = true;
+const loadEvenements = useCallback(async (params?: EvenementFilters & { q?: string }) => {
+  const { filtres: filters, aJour } = nouvelleDemande('evenements', params);
   setLoadingEvenements(true);
   setErrorEvenements(null);
   try {
-    const response = await adminService.getEvenements(filters);
+    const [response, attente] = await Promise.all([
+      adminService.getEvenements(filters),
+      adminService.getEvenements({ statut: 'en_attente', page: 1, limit: 1 }).catch(() => null)
+    ]);
 
-    if (response.success && response.data) {
+    if (aJour() && response.success && response.data) {
       const raw = response.data as any;
       const items = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
-      setEvenements({ items, pagination: response.pagination || raw.pagination || { total: items.length, page: 1, limit: 20, pages: 1 } });
+      setEvenements({ items, pagination: paginationDe(response, raw, items.length) });
+      setAttenteEvenements(Number((attente as any)?.pagination?.total) || 0);
     }
   } catch (error: unknown) {
+    if (!aJour()) return;
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
     if (status !== 401) {
       setErrorEvenements(t('toasts.loadEventsFailed'));
@@ -634,26 +656,24 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
 
     setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
-    loadingEvenementsRef.current = false;
-    setLoadingEvenements(false);
+    if (aJour()) setLoadingEvenements(false);
   }
 }, [toast]);
 
-const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
-  if (loadingPatrimoineRef.current) return;
-  loadingPatrimoineRef.current = true;
+const loadPatrimoineItems = useCallback(async (params?: PatrimoineFilters & { q?: string; typePatrimoine?: string }) => {
+  const { filtres: filters, aJour } = nouvelleDemande('patrimoine', params);
   setLoadingPatrimoine(true);
   setErrorPatrimoine(null);
   try {
     const response = await adminService.getPatrimoineItems(filters);
 
-    if (response.success) {
+    if (aJour() && response.success) {
       const raw = response.data as any;
       const items = Array.isArray(raw) ? raw : (raw?.items || raw?.data || raw?.sites || []);
-      const pagination = (response as any).pagination || raw?.pagination || { total: 0, page: 1, limit: 20, pages: 1 };
-      setPatrimoineItems({ items, pagination });
+      setPatrimoineItems({ items, pagination: paginationDe(response, raw, items.length) });
     }
   } catch (error: unknown) {
+    if (!aJour()) return;
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
     if (status !== 401) {
       setErrorPatrimoine(t('toasts.loadPatrimoineFailed'));
@@ -666,27 +686,29 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
 
     setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
-    loadingPatrimoineRef.current = false;
-    setLoadingPatrimoine(false);
+    if (aJour()) setLoadingPatrimoine(false);
   }
 }, [toast]);
 
-const loadServices = useCallback(async (filters?: ServiceFilters) => {
-  if (loadingServicesRef.current) return;
-  loadingServicesRef.current = true;
+const loadServices = useCallback(async (params?: ServiceFilters & { q?: string }) => {
+  const { filtres: filters, aJour } = nouvelleDemande('services', params);
   setLoadingServices(true);
   setErrorServices(null);
   try {
-    const response = await adminService.getServices(filters);
+    const [response, attente] = await Promise.all([
+      adminService.getServices(filters),
+      adminService.getServices({ statut: 'en_attente', page: 1, limit: 1 }).catch(() => null)
+    ]);
 
-    if (response.success && response.data) {
+    if (aJour() && response.success && response.data) {
       // Le serveur renvoie { data: [services], pagination }
       const raw = response.data as any;
       const items = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
-      const pagination = (response as any).pagination || raw.pagination || { total: items.length, page: 1, limit: 100, pages: 1 };
-      setServices({ items, pagination });
+      setServices({ items, pagination: paginationDe(response, raw, items.length) });
+      setAttenteServices(Number((attente as any)?.pagination?.total) || 0);
     }
   } catch (error: unknown) {
+    if (!aJour()) return;
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
     if (status !== 401) {
       setErrorServices(t('toasts.loadServicesFailed'));
@@ -699,8 +721,7 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
 
     setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
-    loadingServicesRef.current = false;
-    setLoadingServices(false);
+    if (aJour()) setLoadingServices(false);
   }
 }, [toast]);
 
@@ -840,7 +861,8 @@ const validateService = async (serviceId: number, validated: boolean, motif?: st
     } catch (error) {
       toast({
         title: t('toasts.error'),
-        description: t('toasts.signalementProcessFailed'),
+        // Message du serveur (compte administrateur, signalement déjà traité…) plutôt qu'un échec générique
+        description: error instanceof Error && error.message ? error.message : t('toasts.signalementProcessFailed'),
         variant: "destructive"
       });
     }
@@ -936,6 +958,8 @@ const validateService = async (serviceId: number, validated: boolean, motif?: st
     moderationQueue,
     alerts,
     oeuvres,
+    attenteEvenements,
+    attenteServices,
     evenements,
     patrimoineItems,
     services,
@@ -999,6 +1023,7 @@ const validateService = async (serviceId: number, validated: boolean, motif?: st
     clearCache,
     
     // Fonctions de chargement
+    loadModerationQueue,
     loadAllUsers,
     loadOeuvres,
     loadEvenements,

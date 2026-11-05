@@ -37,6 +37,8 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { adminService } from '@/services/admin.service';
+import { Pagination } from '@/components/shared/Pagination';
+import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
 import { getLocalizedText } from '@/utils/getLocalizedText';
@@ -52,7 +54,11 @@ const etatValidation = (user: { statut?: string; statut_validation?: string }): 
   || (user.statut === 'en_attente_validation' ? 'en_attente'
     : user.statut === 'actif' ? 'valide'
     : user.statut === 'rejete' ? 'rejete' : (user.statut || ''));
-const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'artisan'];
+// Types de compte et leur identifiant en base (le serveur filtre par identifiant)
+const TYPES_COMPTE: Record<string, number> = { visiteur: 1, ecrivain: 2, journaliste: 3, scientifique: 4, acteur: 5, artiste: 6, artisan: 7, realisateur: 8, musicien: 9, photographe: 10, danseur: 11, sculpteur: 12, autre: 13, poete: 14, conteur: 15, administrateur: 29 };
+const TYPE_OPTIONS = ['tous', ...Object.keys(TYPES_COMPTE)];
+// Validation : déduite du statut du compte
+const STATUT_DE_VALIDATION: Record<string, string> = { en_attente: 'en_attente_validation', valide: 'actif', rejete: 'rejete' };
 
 // Contrôle d'accès séparé du contenu : un return avant les hooks du contenu faisait
 // varier leur nombre d'un rendu à l'autre (règle des hooks React, risque de plantage)
@@ -119,8 +125,16 @@ const AdminUsersTabContent: React.FC = () => {
     reactivateUser,
     verifyEmailManually,
     bulkUserAction,
+    loadAllUsers,
     refreshAll
   } = useDashboardAdmin('users');
+
+  const totalPages = allUsers?.pagination?.pages ?? 1;
+  const { page, setPage } = useListeServeur({
+    search: termeRecherche(debouncedSearch),
+    statut: filtreChoisi(statusFilter) ?? STATUT_DE_VALIDATION[validationFilter],
+    type_user: TYPES_COMPTE[typeFilter] ? String(TYPES_COMPTE[typeFilter]) : undefined,
+  }, loadAllUsers, totalPages);
 
   const toggleSelectUser = (userId: number) => {
     setSelectedUserIds(prev =>
@@ -158,41 +172,10 @@ const AdminUsersTabContent: React.FC = () => {
     }
   };
 
-  // Filtrer les utilisateurs
-  const filteredUsers = React.useMemo(() => {
-    if (!allUsers?.items) return [];
-
-    return allUsers.items.filter((user: any) => {
-      // Filtre de recherche
-      if (debouncedSearch) {
-        const searchLower = debouncedSearch.toLowerCase();
-        const nom = getLocalizedText(user.nom);
-        const prenom = getLocalizedText(user.prenom);
-        const matchesSearch =
-          nom.toLowerCase().includes(searchLower) ||
-          prenom.toLowerCase().includes(searchLower) ||
-          user.email?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-
-      // Filtre de statut
-      if (statusFilter !== 'tous' && user.statut !== statusFilter) {
-        return false;
-      }
-
-      // Filtre de validation
-      if (validationFilter !== 'tous' && etatValidation(user) !== validationFilter) {
-        return false;
-      }
-
-      // Filtre de type
-      if (typeFilter !== 'tous' && getLocalizedText(user.TypeUser?.nom_type || user.type_user) !== typeFilter) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [allUsers, debouncedSearch, statusFilter, validationFilter, typeFilter]);
+  // Recherche, statut et type sont filtrés par le serveur ; statut et validation choisis ensemble : les deux s'appliquent
+  const filteredUsers = React.useMemo(() => (allUsers?.items || []).filter((user: any) =>
+    validationFilter === 'tous' || etatValidation(user) === validationFilter
+  ), [allUsers, validationFilter]);
 
   const hasActiveFilters = searchQuery || statusFilter !== 'tous' || validationFilter !== 'tous' || typeFilter !== 'tous';
 
@@ -213,7 +196,7 @@ const AdminUsersTabContent: React.FC = () => {
             {t('admin.users.title', 'Gestion des utilisateurs')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.users.count', '{{count}} utilisateur(s)', { count: filteredUsers.length })}
+            {t('admin.users.count', '{{count}} utilisateur(s)', { count: allUsers?.pagination?.total ?? filteredUsers.length })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -480,6 +463,7 @@ const AdminUsersTabContent: React.FC = () => {
           ))}
         </div>
       )}
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={(p) => { setSelectedUserIds([]); setPage(p); }} />
       <ConfirmDialog
         open={confirmDelete.open}
         onOpenChange={(open) => setConfirmDelete({ open })}

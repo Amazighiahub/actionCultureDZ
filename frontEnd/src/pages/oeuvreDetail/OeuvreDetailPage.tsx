@@ -146,7 +146,8 @@ const OeuvreDetailPage: React.FC = () => {
     error,
     isFavorite,
     toggleFavorite,
-    addComment
+    addComment,
+    rafraichirCommentaires
   } = useOeuvreDetails(id ? parseInt(id) : 0);
 
   // Mémoriser seoKeywords et seoJsonLd pour stabiliser les références entre renders
@@ -763,6 +764,7 @@ const OeuvreDetailPage: React.FC = () => {
                     comments={comments || []}
                     onAddComment={addComment}
                     oeuvreId={oeuvre.id_oeuvre}
+                    onChange={rafraichirCommentaires}
                   />
                 </Suspense>
               </ErrorBoundary>

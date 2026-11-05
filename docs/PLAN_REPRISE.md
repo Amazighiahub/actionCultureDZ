@@ -46,7 +46,7 @@ Sans ces éléments, une reprise est impossible si le VPS est perdu. Vérifiez c
 
 ### Le serveur est perdu
 
-Cette procédure n'a pas encore été répétée sur un serveur de secours : faites-le une fois avant d'en avoir besoin.
+Cette procédure complète n'a pas encore été répétée sur un serveur de secours : faites-le une fois avant d'en avoir besoin. La partie « restauration de la base » se vérifie chaque mois (section 5).
 
 1. **Préparer le serveur.** Lancez `scripts/setup-server.sh`, puis clonez le dépôt dans `/home/actionCultureDZ` (ce nom de dossier est attendu par le déploiement automatique). Vérifiez `git config core.fileMode false`, sinon un simple changement de droits bloque le déploiement.
 2. **Remettre le fichier `.env`** depuis le gestionnaire de mots de passe, puis `chmod 600 .env`.
@@ -80,7 +80,43 @@ Cette procédure n'a pas encore été répétée sur un serveur de secours : fai
 
 Le déploiement revient seul à la version précédente si le site ne répond plus. Pour une erreur découverte plus tard, annulez le commit fautif avec `git revert`, puis poussez sur `main`. Si une alerte de sécurité d'une dépendance bloque ce déploiement alors que le site est en panne, corrigez d'abord cette dépendance dans le même envoi.
 
-## 5. Violation de données
+## 5. Exercice de reprise
+
+Une sauvegarde qu'on n'a jamais restaurée n'est pas une garantie. À faire une fois par mois, et après tout changement de base ou de sauvegarde.
+
+Sur le serveur, depuis le dossier du projet :
+
+```bash
+bash scripts/exercice-reprise.sh --comparer
+```
+
+Le script restaure la dernière sauvegarde de nuit dans une base jetable, sans réseau, supprimée à la fin. Il ne touche ni au site, ni à la base en ligne, ni aux sauvegardes, et n'affiche que des totaux par table. Il contrôle aussi l'âge des sauvegardes, l'archive des fichiers envoyés et la présence de la copie hors serveur. Comptez un peu de mémoire en plus (1 Go au plus) : lancez-le de préférence la nuit.
+
+Une fois par an, sur votre ordinateur, testez aussi le déchiffrement d'une copie hors serveur avec la clé `age`. Le serveur ne peut pas le faire : il n'a volontairement pas la clé.
+
+| Date | Où | Résultat |
+|---|---|---|
+| 2026-11-05 | Poste de développement, base locale | Réussi : 82 tables sur 82, 3 725 lignes, textes arabes intacts, import en 26 s. Ne prouve pas encore que les sauvegardes du serveur sont bonnes |
+| À faire | Serveur de production | |
+
+## 6. Supervision
+
+| Quoi | Comment | Qui est prévenu |
+|---|---|---|
+| Site en panne, base injoignable, certificat proche de sa fin | `.github/workflows/surveillance.yml`, toutes les 15 minutes, depuis l'extérieur (`scripts/sonde-site.sh`) | Issue GitHub ouverte et fermée seule ; e-mail de GitHub aux personnes qui suivent le dépôt |
+| Erreurs du serveur | Sentry, si `SENTRY_DSN` est rempli dans `.env` | Sentry |
+| Copie hors serveur en échec ou absente | `BACKUP_ALERT_URL` (service de type healthchecks.io), à remplir dans `/etc/eventculture-backup.env` | Ce service, qui alerte aussi si le signal n'arrive pas |
+| Pages lentes | Journal nginx : `rt=` temps total, `urt=` temps du serveur d'application | À consulter en cas de lenteur |
+
+Attention : GitHub suspend les tâches planifiées après 60 jours sans activité sur le dépôt, et les lance parfois avec du retard. Un service externe de surveillance gratuit reste un bon complément.
+
+Requêtes les plus lentes du jour :
+
+```bash
+docker compose -f docker-compose.prod.yml logs --since 24h nginx | grep -oE '"(GET|POST|PUT|PATCH|DELETE) [^ ]+ .* rt=[0-9.]+' | sed -E 's/"([A-Z]+) ([^ ?]+).* rt=([0-9.]+)/  /' | sort -rn | head -20
+```
+
+## 7. Violation de données
 
 Exemples : base copiée, compte administrateur volé, sauvegarde exposée, fuite dans un journal.
 

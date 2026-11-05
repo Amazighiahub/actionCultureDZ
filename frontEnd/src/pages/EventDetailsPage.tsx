@@ -68,6 +68,7 @@ const EventDetailsPage: React.FC = () => {
     isFavorite,
     toggleFavorite,
     addComment,
+    rafraichirCommentaires,
     registerToEvent,
     unregisterFromEvent,
     isRegistered,
@@ -248,6 +249,7 @@ const EventDetailsPage: React.FC = () => {
                         comments={comments || []}
                         onAddComment={addComment}
                         eventId={event.id_evenement}
+                        onChange={rafraichirCommentaires}
                       />
                     </Suspense>
                   </ErrorBoundary>

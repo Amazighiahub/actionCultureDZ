@@ -9,22 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
-  MessageCircle, Star, ThumbsUp, Reply, MoreVertical,
+  MessageCircle, Star, ThumbsUp, Reply,
   Send, AlertCircle, User, Clock, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
-import { httpClient } from '@/services/httpClient';
+import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
 
 interface Comment {
   id_commentaire?: number;
@@ -53,6 +47,8 @@ interface EventCommentsProps {
   comments: Comment[];
   onAddComment: (content: string, rating?: number) => Promise<boolean>;
   eventId: number;
+  /** Après une modification, suppression ou un masquage : recharger la liste */
+  onChange?: () => void;
 }
 
 // StarRating importé depuis composant partagé
@@ -63,7 +59,7 @@ interface CommentItemProps {
   comment: Comment;
   onLike?: (id: number) => void;
   onReply?: (id: number) => void;
-  onReport?: (id: number) => void;
+  onChange?: () => void;
 }
 
 /** Note d'un avis (le serveur la renvoie dans note_qualite) ; 0 si aucune */
@@ -74,7 +70,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   comment,
   onLike,
   onReply,
-  onReport
+  onChange
 }) => {
   const { t } = useTranslation();
   const { formatDate } = useLocalizedDate();
@@ -117,21 +113,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
           </div>
 
           {/* Menu actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.moreOptions', 'Plus d\'options')}>
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {onReport && (
-                <DropdownMenuItem onClick={() => onReport(commentId!)}>
-                  <AlertCircle className="h-4 w-4 me-2" />
-                  {t('common.report', 'Signaler')}
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ActionsCommentaire commentaire={comment} onChange={onChange} />
         </div>
 
         {/* Texte du commentaire */}
@@ -180,7 +162,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 key={reply.id_commentaire || reply.id}
                 comment={reply}
                 onLike={onLike}
-                onReport={onReport}
+                onChange={onChange}
               />
             ))}
           </div>
@@ -194,7 +176,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
 const EventComments: React.FC<EventCommentsProps> = ({
   comments,
   onAddComment,
-  eventId: _eventId
+  eventId: _eventId,
+  onChange
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
@@ -204,20 +187,6 @@ const EventComments: React.FC<EventCommentsProps> = ({
   const [rating, setRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Signaler un commentaire
-  const handleReport = async (commentId: number) => {
-    try {
-      await httpClient.post('/signalements', {
-        type_entite: 'commentaire',
-        id_entite: commentId,
-        motif: 'contenu_inapproprie',
-      });
-      alert(t('comments.reportSuccess', 'Signalement envoyé. Merci.'));
-    } catch {
-      alert(t('comments.reportError', 'Erreur lors du signalement.'));
-    }
-  };
 
   // Calculer la moyenne des notes
   // (protégé : sans aucune note, la division donnait NaN)
@@ -400,7 +369,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
           <div className="space-y-6">
             {comments.map((comment, index) => (
               <React.Fragment key={comment.id_commentaire || comment.id || index}>
-                <CommentItem comment={comment} onReport={isAuthenticated ? handleReport : undefined} />
+                <CommentItem comment={comment} onChange={onChange} />
                 {index < comments.length - 1 && <Separator />}
               </React.Fragment>
             ))}

@@ -2507,6 +2507,9 @@
     "min_total": "min total"
   },
   "article_articleeditor": {
+    "contenuVide": "The article must keep at least one content block.",
+    "pasUnArticle": "This work is not an article",
+    "introuvable": "Article not found",
     "placeholder_entrez_votre_texte": "Enter your text...",
     "titre": "Heading 1 (H1)",
     "titre_1": "Heading 2 (H2)",
@@ -2763,7 +2766,11 @@
       "searchPlaceholder": "Search reports...",
       "noReportsDesc": "No reports match your criteria",
       "confirmRemove": "Delete this content?",
-      "confirmRemoveDesc": "The reported content will be permanently deleted.",
+      "contenuDisparu": "This content no longer exists.",
+      "auteurContenu": "Author: {{nom}}",
+      "voirContenu": "View on the site",
+      "precisionSignalant": "Details from the person reporting",
+      "confirmRemoveDesc": "The reported content will be removed from the site. It stays in the database: the technical team can restore it.",
       "confirmSuspend": "Suspend this user?",
       "confirmSuspendDesc": "The author will not be able to sign in during the suspension."
     },
@@ -2945,6 +2952,19 @@
         "rejete": "Rejected"
       },
       "types": {
+        "ecrivain": "Writer",
+        "journaliste": "Journalist",
+        "scientifique": "Scientist",
+        "acteur": "Actor",
+        "realisateur": "Director",
+        "musicien": "Musician",
+        "photographe": "Photographer",
+        "danseur": "Dancer",
+        "sculpteur": "Sculptor",
+        "autre": "Other",
+        "poete": "Poet",
+        "conteur": "Storyteller",
+        "administrateur": "Administrator",
         "visiteur": "Visitor",
         "artiste": "Artist",
         "organisateur": "Organiser",
@@ -2953,6 +2973,7 @@
       }
     },
     "oeuvres": {
+      "pendingCount": "{{count}} work(s) to validate",
       "title": "Works Management",
       "count": "{{count}} work(s)",
       "searchPlaceholder": "Search by title...",
@@ -3087,6 +3108,7 @@
     "constantine": "Constantine"
   },
   "comments": {
+    "actions": {"modifier": "Edit", "modifie": "Comment updated", "modifierTitre": "Edit your comment", "modifierAide": "The new text replaces the old one.", "supprimer": "Delete", "supprime": "Comment deleted", "supprimerTitre": "Delete this comment?", "supprimerAide": "It will disappear from the site.", "masquer": "Hide", "masque": "Comment hidden", "masquerTitre": "Hide this comment?", "masquerAide": "It will no longer appear on the site, but it will not be erased.", "signalerTitre": "Report this comment", "signalerAide": "The Tala DZ team will read your report. The person will not know it was you.", "motif": "Reason", "motifChoisir": "Choose a reason", "motifRequis": "Please choose a reason", "precision": "Details (optional)", "envoyer": "Send the report"},
     "title": "Comments",
     "reviews": "Reviews",
     "addComment": "Add comment",

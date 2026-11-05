@@ -1,0 +1,68 @@
+# Surveillance de taladz.com depuis l'extérieur, toutes les 15 minutes.
+# Panne confirmée : une « issue » GitHub s'ouvre, et GitHub prévient par e-mail les personnes qui
+# suivent le dépôt. Retour à la normale : elle se ferme seule. Le dépôt étant public, l'alerte
+# ne contient que l'état des pages publiques.
+# Essai de l'alerte : Actions > Surveillance du site > Run workflow, en cochant « essai ».
+name: Surveillance du site
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      essai:
+        description: "Simuler une panne pour tester l alerte : le contrôle normal suivant la referme"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+# Pas deux contrôles en même temps : ils ouvriraient deux alertes
+concurrency:
+  group: surveillance
+  cancel-in-progress: false
+
+env:
+  TITRE_ALERTE: "[Surveillance] taladz.com en panne"
+
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    # Panne totale : 4 contrôles, 3 essais chacun, 1 minute entre deux
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Contrôler le site
+        id: sonde
+        env:
+          SONDE_RAPPORT: rapport.md
+          # Essai : une adresse qui n'existe pas, sans longue attente
+          SONDE_ATTENTE: ${{ inputs.essai && '1' || '60' }}
+        run: |
+          set +e
+          ADRESSE="${{ inputs.essai && 'https://essai-panne.taladz.com' || 'https://taladz.com' }}"
+          bash scripts/sonde-site.sh "$ADRESSE"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat rapport.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Ouvrir ou fermer l'alerte
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CODE: ${{ steps.sonde.outputs.code }}
+        run: |
+          OUVERTE="$(gh issue list --state open --search "in:title \"$TITRE_ALERTE\"" --json number --jq '.[0].number // empty')"
+          if [ "$CODE" != "0" ]; then
+            if [ -z "$OUVERTE" ]; then
+              gh issue create --title "$TITRE_ALERTE" --body-file rapport.md
+            else
+              echo "Alerte déjà ouverte : n° $OUVERTE"
+            fi
+            # Contrôle en rouge : visible aussi dans l'onglet Actions
+            exit 1
+          fi
+          if [ -n "$OUVERTE" ]; then
+            gh issue close "$OUVERTE" --comment "Le site répond de nouveau normalement."
+          fi

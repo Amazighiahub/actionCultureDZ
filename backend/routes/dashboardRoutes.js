@@ -323,6 +323,11 @@ const initDashboardRoutes = (models) => {
   // ========================================
 
   router.get('/moderation/queue',
+    validationMiddleware.validatePagination,
+    [
+      query('type').optional().isIn(['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat']).withMessage((value, { req }) => req.t('validation.invalidType'))
+    ],
+    validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(60),
     auditMiddleware.logAction('VIEW_MODERATION_QUEUE'),
     dashboardController.getModerationQueue
@@ -331,7 +336,7 @@ const initDashboardRoutes = (models) => {
   router.get('/moderation/signalements',
     validationMiddleware.validatePagination,
     [
-      query('type').optional().isIn(['commentaire', 'oeuvre', 'evenement', 'user']).withMessage((value, { req }) => req.t('validation.invalidType')),
+      query('type').optional().isIn(['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat']).withMessage((value, { req }) => req.t('validation.invalidType')),
       query('priorite').optional().isIn(['basse', 'normale', 'haute', 'urgente']).withMessage((value, { req }) => req.t('validation.invalidPriority')),
       query('statut').optional().isIn(['en_attente', 'en_cours', 'traite']).withMessage((value, { req }) => req.t('validation.invalidStatus'))
     ],
@@ -422,6 +427,8 @@ const initDashboardRoutes = (models) => {
 
   // Modération d'un signalement
   router.patch('/signalements/:id/moderate',
+    // Sinon le signalement traité restait affiché une minute (liste en cache)
+    cacheMiddleware.invalidateCache(['/dashboard/moderation', '/dashboard/overview']),
     validationMiddleware.validateId('id'),
     [
       body('action')

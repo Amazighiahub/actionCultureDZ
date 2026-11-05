@@ -14,7 +14,8 @@
 # Configuration (fichier /etc/eventculture-backup.env, chmod 600) :
 #   BACKUP_AGE_RECIPIENT=age1xxxxxxxx          # clé publique age
 #   BACKUP_RCLONE_DEST=monremote:mon-bucket/eventculture
-#   BACKUP_ALERT_URL=https://hc-ping.com/xxx    # optionnel : ping en cas de succès (healthchecks.io)
+#   BACKUP_ALERT_URL=https://hc-ping.com/xxx    # optionnel : ping en cas de succès, <adresse>/fail en cas
+#                                               # d'échec (healthchecks.io) ; sans ping attendu, le service alerte
 #   BACKUP_OFFSITE_UPLOADS=0                    # optionnel : ne pas copier l'archive des uploads
 #
 # Restauration :
@@ -28,7 +29,12 @@ CONTAINER="${BACKUP_CONTAINER:-eventculture-backup}"
 MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 
 log() { echo "[offsite $(date '+%F %T')] $*"; }
-fail() { log "ERREUR: $*" >&2; exit 1; }
+# Une copie en échec doit se voir ailleurs que dans un journal que personne ne lit
+signaler_echec() {
+  [ -z "${BACKUP_ALERT_URL:-}" ] || curl -fsS --max-time 10 "${BACKUP_ALERT_URL%/}/fail" >/dev/null 2>&1 || true
+}
+fail() { log "ERREUR: $*" >&2; signaler_echec; exit 1; }
+trap 'log "ERREUR: commande en échec, ligne $LINENO" >&2; signaler_echec' ERR
 
 [ -r "$CONF" ] || fail "configuration absente : $CONF (voir l'en-tête du script)"
 # shellcheck disable=SC1090
@@ -65,16 +71,26 @@ if [ "${BACKUP_OFFSITE_UPLOADS:-1}" = "1" ]; then
   UPLOADS="$(docker exec "$CONTAINER" sh -c 'ls -1t /backups/uploads_*.tar.gz 2>/dev/null | head -n 1')"
   if [ -n "$UPLOADS" ]; then
     UNAME="$(basename "$UPLOADS")"
-    if docker cp "$CONTAINER:$UPLOADS" "$WORK/$UNAME" && gzip -t "$WORK/$UNAME"        && age -r "$BACKUP_AGE_RECIPIENT" -o "$WORK/$UNAME.age" "$WORK/$UNAME"        && rclone copy "$WORK/$UNAME.age" "$BACKUP_RCLONE_DEST" --immutable; then
+    # Archive d'une nuit ancienne : ne pas la recopier en silence (la panne resterait invisible)
+    UPLOADS_AGE="$(docker exec "$CONTAINER" sh -c "echo \$(( (\$(date +%s) - \$(stat -c %Y '$UPLOADS')) / 3600 ))")"
+    if [ "$UPLOADS_AGE" -gt "$MAX_AGE_HOURS" ]; then
+      log "ATTENTION : archive des uploads vieille de ${UPLOADS_AGE}h, non copiée ($UNAME)"
+      UPLOADS_EN_ECHEC=1
+    elif docker cp "$CONTAINER:$UPLOADS" "$WORK/$UNAME" && gzip -t "$WORK/$UNAME"        && age -r "$BACKUP_AGE_RECIPIENT" -o "$WORK/$UNAME.age" "$WORK/$UNAME"        && rclone copy "$WORK/$UNAME.age" "$BACKUP_RCLONE_DEST" --immutable; then
       log "OK : $UNAME.age -> $BACKUP_RCLONE_DEST"
     else
       log "ATTENTION : copie des uploads échouée ($UNAME)"
       UPLOADS_EN_ECHEC=1
     fi
+  else
+    log "ATTENTION : aucune archive des uploads à copier"
+    UPLOADS_EN_ECHEC=1
   fi
 fi
 
 # Pas de signal « tout va bien » si une partie de la copie a échoué
-if [ -n "${BACKUP_ALERT_URL:-}" ] && [ -z "${UPLOADS_EN_ECHEC:-}" ]; then
+if [ -n "${UPLOADS_EN_ECHEC:-}" ]; then
+  signaler_echec
+elif [ -n "${BACKUP_ALERT_URL:-}" ]; then
   curl -fsS --max-time 10 "$BACKUP_ALERT_URL" >/dev/null || log "ping de supervision échoué"
 fi

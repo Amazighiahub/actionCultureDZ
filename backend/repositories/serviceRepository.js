@@ -6,6 +6,7 @@
 const BaseRepository = require('./baseRepository');
 const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
+const { conditionRecherche } = require('../utils/multiLangSearchBuilder');
 
 class ServiceRepository extends BaseRepository {
   constructor(models) {
@@ -144,9 +145,12 @@ class ServiceRepository extends BaseRepository {
   /**
    * Services des professionnels pour la modération (équipements des sites exclus), par statut
    */
-  async findForModeration({ statut, ...options } = {}) {
+  async findForModeration({ statut, type_service, q, ...options } = {}) {
     const where = { id_user: { [Op.ne]: null } };
     if (['en_attente', 'valide', 'rejete'].includes(statut)) where.statut = statut;
+    if (typeof type_service === 'string' && type_service) where.type_service = type_service;
+    const recherche = conditionRecherche(this.model.sequelize, 'nom', q, 'Service');
+    if (recherche) Object.assign(where, recherche);
     return this.findAll({
       ...options,
       where,

@@ -276,9 +276,20 @@ function buildGeographicFilter(sequelize, models, params = {}) {
   return { where, includes };
 }
 
+/**
+ * Condition de recherche d'une liste, à fusionner dans son where : toutes les langues ;
+ * null si moins de 2 caractères. Réservé aux listes d'administration (parcours de la table).
+ */
+function conditionRecherche(sequelize, champ, terme, table) {
+  if (typeof terme !== 'string' || terme.trim().length < 2) return null;
+  const { sanitizeLike } = require('./sanitize');
+  return { [Op.or]: buildMultiLangSearch(sequelize, champ, sanitizeLike(terme.trim()), table) };
+}
+
 module.exports = {
   // Fonctions principales
   buildMultiLangSearch,
+  conditionRecherche,
   buildMultiFieldSearch,
   buildMultiLangOrder,
   buildTranslatedAttribute,

@@ -59,7 +59,8 @@ export default function CommentairesOeuvre({ oeuvreId }: { oeuvreId: number }) {
 
   return (
     <Suspense fallback={null}>
-      <OeuvreComments comments={Array.isArray(data) ? data : []} onAddComment={ajouter} oeuvreId={oeuvreId} />
+      <OeuvreComments comments={Array.isArray(data) ? data : []} onAddComment={ajouter} oeuvreId={oeuvreId}
+        onChange={() => queryClient.invalidateQueries({ queryKey: cle })} />
     </Suspense>
   );
 }

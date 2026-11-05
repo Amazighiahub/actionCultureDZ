@@ -5,6 +5,9 @@
 const { Op } = require('sequelize');
 const { texteLisible } = require('../../helpers/i18n');
 const { notifier } = require('../../utils/notifierModeration');
+const { apercuSignale } = require('../signalement/apercuSignale');
+
+const TYPES_SIGNALEMENT = ['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat'];
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
@@ -49,13 +52,14 @@ class DashboardModerationService {
 
   /**
    * Récupère les œuvres en attente de validation (dashboard)
-   * Inclut brouillons, auteur et premier media
+   * Inclut l'auteur et le premier media. Pas les brouillons : personne ne peut les valider, et ils
+   * gonflaient le compteur « à valider ».
    */
   async getPendingOeuvres({ page = 1, limit = 10 } = {}) {
     const offset = (page - 1) * limit;
 
     const oeuvres = await this.models.Oeuvre.findAndCountAll({
-      where: { statut: { [Op.in]: ['en_attente', 'brouillon'] } },
+      where: { statut: 'en_attente' },
       include: [
         { model: this.models.User, as: 'Saiseur', attributes: ['id_user', 'nom', 'prenom', 'email'] },
         { model: this.models.Media, limit: 1, attributes: ['url', 'type_media'] }
@@ -104,23 +108,44 @@ class DashboardModerationService {
   /**
    * File de modération des signalements paginée (dashboard)
    */
-  async getSignalementsModerationQueue({ page = 1, limit = 10 } = {}) {
+  async getSignalementsModerationQueue({ page = 1, limit = 10, type } = {}) {
     const offset = (page - 1) * limit;
+    const where = { statut: 'en_attente' };
+    if (TYPES_SIGNALEMENT.includes(type)) where.type_entite = type;
 
     const signalements = await this.models.Signalement.findAndCountAll({
-      where: { statut: 'en_attente' },
-      include: [{ model: this.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }],
+      where,
+      include: [{ model: this.models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom'] }],
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['priorite', 'DESC'], ['date_signalement', 'ASC']]
     });
 
-    const items = signalements.rows.map(s => ({
-      id: s.id_signalement, type: s.type_entite, entity_id: s.id_entite,
-      entity_title: s.titre || 'Non disponible', reason: s.motif,
-      reported_by: s.Signalant ? { id: s.Signalant.id_user, nom: s.Signalant.nom } : null,
-      date_signalement: s.date_signalement, status: s.statut
+    const items = await Promise.all(signalements.rows.map(async (s) => {
+      const apercu = await apercuSignale(this.models, s.type_entite, s.id_entite);
+      return {
+        id: s.id_signalement, type: s.type_entite, entity_id: s.id_entite,
+        entity_title: apercu?.titre || null, entity_content: apercu?.contenu || null,
+        entity_link: apercu?.lien || null, entity_status: apercu?.statut || null,
+        entity_author: apercu?.auteur || null, entity_missing: !apercu,
+        reason: s.motif, description: s.description || null, priority: s.priorite,
+        reported_by: s.Signalant ? {
+          id: s.Signalant.id_user,
+          nom: [texteLisible(s.Signalant.prenom), texteLisible(s.Signalant.nom)].filter(Boolean).join(' ')
+        } : null,
+        date_signalement: s.date_signalement, status: s.statut
+      };
     }));
+
+    // Compteurs de toute la file (pas seulement de la page affichée)
+    const parType = await this.models.Signalement.count({ where: { statut: 'en_attente' }, group: ['type_entite'] });
+    const compteurs = { total: 0, commentaire: 0, contenu: 0, compte: 0 };
+    for (const { type_entite: t, count: n } of parType || []) {
+      compteurs.total += Number(n);
+      if (t === 'commentaire') compteurs.commentaire += Number(n);
+      else if (t === 'user') compteurs.compte += Number(n);
+      else compteurs.contenu += Number(n);
+    }
 
     const parsedPage = parseInt(page);
     const parsedLimit = parseInt(limit);
@@ -128,6 +153,7 @@ class DashboardModerationService {
 
     return {
       items,
+      compteurs,
       pagination: { total: signalements.count, page: parsedPage, pages, limit: parsedLimit, hasNext: parsedPage < pages, hasPrev: parsedPage > 1 }
     };
   }

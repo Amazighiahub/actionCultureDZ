@@ -18,8 +18,8 @@ const moderationMethods = {
 
   async getModerationQueue(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const data = await container.moderationService.getSignalementsModerationQueue({ page, limit });
+      const { page = 1, limit = 10, type } = req.query;
+      const data = await container.moderationService.getSignalementsModerationQueue({ page, limit, type });
       res.json({ success: true, data });
     } catch (error) {
       console.error('Erreur getModerationQueue:', error.message);
@@ -116,6 +116,11 @@ const moderationMethods = {
       { action_prise: data.action, notes_moderation: data.notes },
       moderatorId
     );
+    // Contenu retiré : il ne doit plus rester dans les listes publiques en cache
+    if (data.action === 'suppression_contenu') {
+      try { container.oeuvreService.cache.invalidate(); } catch (_) { /* cache optionnel */ }
+      try { container.evenementService.cache.invalidate(); } catch (_) { /* cache optionnel */ }
+    }
     return { message: req ? req.t('admin.reportProcessed') : 'Signalement traité', data: signalement };
   },
 

@@ -108,6 +108,10 @@ class SignalementRepository extends BaseRepository {
       },
       user: { model: this.models.User, pk: 'id_user' },
       commentaire: { model: this.models.Commentaire, pk: 'id_commentaire', where: { statut: 'publie' } },
+      artisanat: {
+        model: this.models.Artisanat, pk: 'id_artisanat',
+        include: this.models.Oeuvre ? [{ model: this.models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }] : undefined
+      },
     };
 
     const entry = modelMap[type];
@@ -115,7 +119,8 @@ class SignalementRepository extends BaseRepository {
 
     const entity = await entry.model.findOne({
       where: { [entry.pk]: id, ...(entry.where || {}) },
-      attributes: [entry.pk]
+      attributes: [entry.pk],
+      ...(entry.include ? { include: entry.include } : {})
     });
     return !!entity;
   }
@@ -161,7 +166,47 @@ class SignalementRepository extends BaseRepository {
     if (type === 'commentaire') return (await this.models.Commentaire?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
     if (type === 'oeuvre') return (await this.models.Oeuvre?.findByPk(id, { attributes: ['saisi_par'] }))?.saisi_par || null;
     if (type === 'evenement') return (await this.models.Evenement?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
+    if (type === 'artisanat') {
+      const a = await this.models.Artisanat?.findByPk(id, { attributes: ['id_oeuvre'] });
+      return a?.id_oeuvre ? (await this.models.Oeuvre?.findByPk(a.id_oeuvre, { attributes: ['saisi_par'] }))?.saisi_par || null : null;
+    }
     return null;
+  }
+
+  /**
+   * Retire le contenu du site sans l'effacer (l'annulation reste possible en base) :
+   * œuvre et artisanat « supprimés », événement remis en brouillon (il n'a pas de statut supprimé).
+   * Avant : seul un commentaire était retiré, les autres restaient en ligne, signalement « traité ».
+   */
+  async _retirerContenu(type, id) {
+    // Sur la fiche chargée : en mise à jour groupée, le contrôle du modèle Commentaire (rattachement à
+    // une œuvre, un événement ou un service) ne voit pas ces champs et refuse tout
+    const retirer = async (Modele, cle, statut) => {
+      const fiche = await Modele?.findByPk(cle);
+      if (fiche) await fiche.update({ statut });
+    };
+    switch (type) {
+      case 'commentaire':
+        return retirer(this.models.Commentaire, id, 'supprime');
+      case 'oeuvre':
+        return retirer(this.models.Oeuvre, id, 'supprime');
+      case 'artisanat': {
+        const a = await this.models.Artisanat?.findByPk(id, { attributes: ['id_oeuvre'] });
+        return a?.id_oeuvre ? retirer(this.models.Oeuvre, a.id_oeuvre, 'supprime') : undefined;
+      }
+      case 'evenement':
+        return retirer(this.models.Evenement, id, 'brouillon');
+      default:
+        throw AppError.badRequest('Un compte ne se retire pas comme un contenu : utilisez la suspension');
+    }
+  }
+
+  /** Les autres signalements du même contenu sont réglés par la même décision */
+  async cloreSignalementsSimilaires(signalement, { action_prise, id_moderateur }) {
+    await this.model.update(
+      { statut: 'traite', action_prise, id_moderateur, date_traitement: new Date() },
+      { where: { type_entite: signalement.type_entite, id_entite: signalement.id_entite, statut: 'en_attente' } }
+    );
   }
 
   /**
@@ -170,12 +215,7 @@ class SignalementRepository extends BaseRepository {
   async applyModerationAction(signalement, action) {
     switch (action) {
       case 'suppression_contenu':
-        if (signalement.type_entite === 'commentaire' && this.models.Commentaire) {
-          await this.models.Commentaire.update(
-            { statut: 'supprime' },
-            { where: { id_commentaire: signalement.id_entite } }
-          );
-        }
+        await this._retirerContenu(signalement.type_entite, signalement.id_entite);
         break;
 
       case 'suspension_temporaire':

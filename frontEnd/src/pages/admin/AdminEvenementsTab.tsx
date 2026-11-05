@@ -41,6 +41,8 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { heureEvenement } from '@/utils/dateHeureEvenement';
+import { Pagination } from '@/components/shared/Pagination';
+import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 
 // Helper pour extraire le texte multilingue
 
@@ -71,35 +73,19 @@ const AdminEvenementsTab: React.FC = () => {
     deleteEvenement,
     cancelEvenement,
     updateEvenementStatus,
+    attenteEvenements: enAttente,
+    loadEvenements,
     refreshAll
   } = useDashboardAdmin('evenements');
 
-  const enAttente = (evenements?.items || []).filter((e: any) => e.statut === 'en_attente').length;
+  const totalPages = evenements?.pagination?.pages ?? 1;
+  const { page, setPage } = useListeServeur(
+    { q: termeRecherche(debouncedSearch), statut: filtreChoisi(statusFilter) },
+    loadEvenements, totalPages
+  );
 
-  // Filtrer les événements
-  const filteredEvents = React.useMemo(() => {
-    if (!evenements?.items) return [];
-
-    return evenements.items.filter((event: any) => {
-      // Filtre de recherche
-      if (debouncedSearch) {
-        const searchLower = debouncedSearch.toLowerCase();
-        const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang);
-        const description = getLocalizedText(event.description, currentLang);
-        const matchesSearch =
-          nom.toLowerCase().includes(searchLower) ||
-          description.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-
-      // Filtre de statut
-      if (statusFilter !== 'tous' && event.statut !== statusFilter) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [evenements, debouncedSearch, statusFilter, currentLang]);
+  // Recherche et statut sont filtrés par le serveur, sur tous les événements
+  const filteredEvents = evenements?.items || [];
 
   const hasActiveFilters = searchQuery || statusFilter !== 'tous';
 
@@ -127,7 +113,7 @@ const AdminEvenementsTab: React.FC = () => {
             {t('admin.events.title', 'Gestion des événements')}
           </h2>
           <p className="text-muted-foreground">
-            {t('admin.events.count', '{{count}} événement(s)', { count: filteredEvents.length })}
+            {t('admin.events.count', '{{count}} événement(s)', { count: evenements?.pagination?.total ?? filteredEvents.length })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
@@ -329,6 +315,7 @@ const AdminEvenementsTab: React.FC = () => {
           })}
         </div>
       )}
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       <Dialog open={!!refus} onOpenChange={(open) => { if (!open) setRefus(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

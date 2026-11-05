@@ -227,7 +227,7 @@ const AdminOverview: React.FC = () => {
               {t('admin.pending.users', 'Utilisateurs en attente')}
               {pendingUsers?.items?.length > 0 && (
                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  {pendingUsers.items.length}
+                  {pendingUsers.pagination?.total ?? pendingUsers.items.length}
                 </Badge>
               )}
             </CardTitle>
@@ -251,9 +251,9 @@ const AdminOverview: React.FC = () => {
                     onReject={() => validateUser({ userId: user.id_user, validated: false })}
                   />
                 ))}
-                {pendingUsers.items.length > 5 && (
+                {(pendingUsers.pagination?.total ?? 0) > 5 && (
                   <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=users')}>
-                    {t('admin.pending.viewAll', { count: pendingUsers.items.length })}
+                    {t('admin.pending.viewAll', { count: pendingUsers.pagination?.total })}
                     <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                   </Button>
                 )}
@@ -275,7 +275,7 @@ const AdminOverview: React.FC = () => {
               {t('admin.pending.works', 'Œuvres en attente')}
               {pendingOeuvres?.items?.length > 0 && (
                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  {pendingOeuvres.items.length}
+                  {pendingOeuvres.pagination?.total ?? pendingOeuvres.items.length}
                 </Badge>
               )}
             </CardTitle>
@@ -299,9 +299,9 @@ const AdminOverview: React.FC = () => {
                     onReject={() => setARefuser(oeuvre.id_oeuvre)}
                   />
                 ))}
-                {pendingOeuvres.items.length > 5 && (
+                {(pendingOeuvres.pagination?.total ?? 0) > 5 && (
                   <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=oeuvres')}>
-                    {t('admin.pending.viewAllWorks', { count: pendingOeuvres.items.length })}
+                    {t('admin.pending.viewAllWorks', { count: pendingOeuvres.pagination?.total })}
                     <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                   </Button>
                 )}
