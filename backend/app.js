@@ -495,6 +495,12 @@ class App {
     // Aperçus des pages de détail pour les réseaux sociaux (nginx y envoie leurs robots)
     const initOgRoutes = require('./routes/ogRoutes');
     this.app.use('/api/og', initOgRoutes(this.models));
+    // Fichier de vérification IndexNow : prouve à Bing que les signalements viennent bien du site
+    this.app.get('/api/indexnow/:fichier', (req, res) => {
+      const { CLE } = require('./services/indexNow');
+      if (req.params.fichier !== `${CLE}.txt`) return res.status(404).end();
+      res.type('text/plain').send(CLE);
+    });
 
     // ⚡ Route pour obtenir les langues supportées (i18n)
     this.app.get('/api/languages', (req, res) => {

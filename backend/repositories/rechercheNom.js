@@ -5,12 +5,14 @@
  */
 const champ = (colonne) => `CAST(JSON_EXTRACT(${colonne}, '$.*') AS CHAR) COLLATE utf8mb4_0900_ai_ci`;
 
-function conditionNom(sequelize, texte, { nom, prenom }) {
+function conditionNom(sequelize, texte, { nom, prenom, autres = [] }) {
   const mots = String(texte || '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
   if (!mots.length) return null;
   return mots.map((mot) => {
     const motif = sequelize.escape(`%${mot.replace(/[\\%_]/g, '\\$&')}%`);
-    return `(${champ(nom)} LIKE ${motif} OR ${champ(prenom)} LIKE ${motif})`;
+    // autres : expressions SQL fixes (jamais saisies par le visiteur), par exemple les métiers
+    const plus = autres.map((expr) => ` OR ${expr} LIKE ${motif}`).join('');
+    return `(${champ(nom)} LIKE ${motif} OR ${champ(prenom)} LIKE ${motif}${plus})`;
   }).join(' AND ');
 }
 

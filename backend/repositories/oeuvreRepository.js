@@ -27,7 +27,8 @@ class OeuvreRepository extends BaseRepository {
       {
         model: this.models.User,
         as: 'Saiseur',
-        attributes: ['id_user', 'nom', 'prenom', 'photo_url']
+        // Type : le lien vers le portfolio n'est montré que pour un professionnel
+        attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'id_type_user']
       },
       {
         model: this.models.TypeOeuvre,

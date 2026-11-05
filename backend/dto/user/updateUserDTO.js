@@ -55,6 +55,9 @@ class UpdateUserDTO extends BaseDTO {
     if (data.articles_presse !== undefined) {
       this.articlesPresse = UpdateUserDTO.normalizeArticlesPresse(data.articles_presse);
     }
+    if (data.specialites !== undefined) {
+      this.specialites = UpdateUserDTO.normalizeSpecialites(data.specialites);
+    }
     if (data.accepte_newsletter !== undefined || data.accepteNewsletter !== undefined) {
       this.accepteNewsletter = BaseDTO.toBool(data.accepte_newsletter ?? data.accepteNewsletter);
     }
@@ -92,6 +95,26 @@ class UpdateUserDTO extends BaseDTO {
    * Articles de presse : au plus 20, champs nettoyés et bornés ; une ligne sans lien est ignorée.
    * Les adresses sont vérifiées par validate().
    */
+  /**
+   * Métiers et compétences (« peintre », « poétesse », « art-thérapeute »…) : 8 au plus, 40 caractères
+   * chacun, sans doublon ; autre chose qu'une liste de textes : liste vide.
+   */
+  static normalizeSpecialites(value) {
+    if (!Array.isArray(value)) return [];
+    const vus = new Set();
+    const liste = [];
+    for (const v of value) {
+      if (typeof v !== 'string') continue;
+      const s = v.replace(/\s+/g, ' ').trim().slice(0, 40);
+      const cle = s.toLowerCase();
+      if (!s || vus.has(cle)) continue;
+      vus.add(cle);
+      liste.push(s);
+      if (liste.length === 8) break;
+    }
+    return liste;
+  }
+
   static normalizeArticlesPresse(value) {
     let liste = value;
     if (typeof liste === 'string') {
@@ -134,6 +157,7 @@ class UpdateUserDTO extends BaseDTO {
     if (this.photoUrl !== undefined) entity.photo_url = this.photoUrl;
     if (this.reseauxSociaux !== undefined) entity.reseaux_sociaux = this.reseauxSociaux;
     if (this.articlesPresse !== undefined) entity.articles_presse = this.articlesPresse;
+    if (this.specialites !== undefined) entity.specialites = this.specialites;
     if (this.accepteNewsletter !== undefined) entity.accepte_newsletter = this.accepteNewsletter;
     if (this.languePreferee !== undefined) entity.langue_preferee = this.languePreferee;
     if (this.themePrefere !== undefined) entity.theme_prefere = this.themePrefere;

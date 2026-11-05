@@ -61,6 +61,11 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       comment: 'Date de validation de la participation'
     },
+    // Paiement direct à l'organisateur, confirmé par lui (Tala DZ n'encaisse rien)
+    date_paiement: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     valide_par: {
       type: DataTypes.INTEGER,
       references: {

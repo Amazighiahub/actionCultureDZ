@@ -285,6 +285,12 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: 'Articles de presse [{titre, media, url, date}] affichés sur le portfolio public'
     },
+    // Comment le professionnel veut être payé (services/paiementDirect.js) : jamais public,
+    // montré seulement à ses participants et acheteurs
+    moyens_paiement: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
 
     // =============================================================================
     // VÉRIFICATIONS ET CERTIFICATIONS
@@ -384,7 +390,9 @@ module.exports = (sequelize) => {
     defaultScope: {
       attributes: {
         exclude: ['password', 'refresh_token', 'refresh_token_expires',
-                  'ip_inscription', 'ip_acceptation_conditions']
+                  'ip_inscription', 'ip_acceptation_conditions',
+                  // Coordonnées de paiement : lues seulement par services/paiementDirect.js
+                  'moyens_paiement']
       }
     },
 

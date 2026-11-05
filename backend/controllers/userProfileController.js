@@ -58,6 +58,11 @@ class UserProfileController extends BaseController {
         req.body,
         req.user.id_user
       );
+      // Portfolio public modifié (biographie, photo, liens…) : Bing est prévenu
+      if (req.user.isProfessionnel && req.user.statut === 'actif' && user?.profil_public !== false) {
+        const { professionnelPath } = require('../utils/slug');
+        require('../services/indexNow').signalerPlusTard(professionnelPath(req.user.id_user, user?.prenom ?? req.user.prenom, user?.nom ?? req.user.nom));
+      }
       res.json({
         success: true,
         message: req.t('user.profileUpdated'),
