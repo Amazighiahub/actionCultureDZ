@@ -64,6 +64,8 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 const GestionEvenement = React.lazy(() => import('@/components/event/GestionEvenement'));
 import { oeuvreService } from '@/services/oeuvre.service';
 import SEOHead from '@/components/SEOHead';
+import MoyensPaiement from '@/components/pro/MoyensPaiement';
+import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
 interface DashboardItem {
@@ -680,6 +682,8 @@ const DashboardPro = () => {
         <MessagesAbonnesCard />
 
         {/* Inciter à compléter sa page : la fonction existait, presque personne ne la trouvait */}
+        {/* Ce qui aide à être trouvé sur Google, Bing et ChatGPT */}
+        <VisibiliteFiche />
         <p className="mb-6 rounded-lg border bg-card p-4 text-sm">
           {t('liens.incitation', 'Complétez votre page : ajoutez vos articles de presse et vos liens YouTube, Instagram, TikTok ou Facebook.')}{' '}
           <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('liens.ajouter', 'Ajouter un lien')}</Link>
@@ -776,6 +780,8 @@ const DashboardPro = () => {
 
               {/* Les autres onglets suivent le même pattern... */}
               <TabsContent value="evenements" className="p-6 m-0">
+                {/* Paiement direct par les participants : Tala DZ n'encaisse rien */}
+                <MoyensPaiement />
                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_vnements")} ({filterBySearch(mesEvenements?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-evenement">

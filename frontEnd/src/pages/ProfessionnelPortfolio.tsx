@@ -27,7 +27,7 @@ import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { idFromSlug, professionnelPath, evenementPath } from '@/utils/slug';
+import { idFromSlug, professionnelPath, evenementPath, oeuvrePath, artisanatPath } from '@/utils/slug';
 import { ListeLiens, type LienExterne } from '@/components/shared/LiensExternes';
 import { ItemCard, ItemGrid as Grid, firstImage, type MediaItem } from '@/components/shared/ItemCard';
 
@@ -277,7 +277,7 @@ const ProfessionnelPortfolio: React.FC = () => {
               <TabsContent value="oeuvres" className="mt-6">
                 <Grid>
                   {works.map((o) => (
-                    <ItemCard key={o.id_oeuvre} to={`/oeuvres/${o.id_oeuvre}`} title={o.titre} image={firstImage(o.Media)}
+                    <ItemCard key={o.id_oeuvre} to={oeuvrePath(o.id_oeuvre, o.titre, o.id_type_oeuvre)} title={o.titre} image={firstImage(o.Media)}
                       badge={o.TypeOeuvre?.nom_type} subtitle={o.annee_creation ? String(o.annee_creation) : undefined} />
                   ))}
                 </Grid>
@@ -285,7 +285,7 @@ const ProfessionnelPortfolio: React.FC = () => {
               <TabsContent value="articles" className="mt-6">
                 <Grid>
                   {articles.map((o) => (
-                    <ItemCard key={o.id_oeuvre} to={`/articles/${o.id_oeuvre}`} title={o.titre} image={firstImage(o.Media)}
+                    <ItemCard key={o.id_oeuvre} to={oeuvrePath(o.id_oeuvre, o.titre, 4)} title={o.titre} image={firstImage(o.Media)}
                       badge={o.TypeOeuvre?.nom_type} subtitle={o.annee_creation ? String(o.annee_creation) : undefined} />
                   ))}
                 </Grid>
@@ -293,7 +293,7 @@ const ProfessionnelPortfolio: React.FC = () => {
               <TabsContent value="artisanat" className="mt-6">
                 <Grid>
                   {data.artisanats.map((a) => (
-                    <ItemCard key={a.id_artisanat} to={`/artisanat/${a.id_artisanat}`} title={a.Oeuvre.titre} image={firstImage(a.Oeuvre.Media)}
+                    <ItemCard key={a.id_artisanat} to={artisanatPath(a.id_artisanat, a.Oeuvre.titre)} title={a.Oeuvre.titre} image={firstImage(a.Oeuvre.Media)}
                       subtitle={a.prix ? formatPrice(Number(a.prix), undefined, false) : undefined} />
                   ))}
                 </Grid>

@@ -41,6 +41,7 @@ import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -326,6 +327,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
           subtitle={t('patrimoine.create.subtitle', 'Créez rapidement, enrichissez ensuite')}
           className="mb-4"
         />
+        <ConseilReferencement type="lieu" className="mb-6" />
         {parentId && (
           <Alert className={`mb-4 ${parentError ? 'border-destructive' : 'border-primary/30 bg-primary/5'}`}>
             <Footprints className="h-4 w-4" />

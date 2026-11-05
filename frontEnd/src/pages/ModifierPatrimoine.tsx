@@ -33,6 +33,7 @@ import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/compon
 import { mentionCredit, type CreditPhoto, type LicencePhoto } from '@/utils/creditPhoto';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -260,7 +261,8 @@ const ModifierPatrimoine: React.FC = () => {
           subtitle={typeof form.nom === 'object' ? (form.nom[i18n.language] || form.nom.fr || form.nom.ar || '') : ''}
           aside={site && (
             <Button variant="outline" size="sm" asChild>
-              <Link to={`/patrimoine/${siteId}`}><Eye className="h-4 w-4 me-2" />{t('patrimoine.edit.viewPage', 'Voir la page')}</Link>
+              <Link to={`/patrimoine/${siteId}`}><Eye className="h-4 w-4 me-2" />
+        <ConseilReferencement type="lieu" className="mb-6" />{t('patrimoine.edit.viewPage', 'Voir la page')}</Link>
             </Button>
           )}
         />

@@ -35,6 +35,7 @@ import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import BoutonSuivre from '@/components/shared/BoutonSuivre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
+import { idFromSlug, artisanatPath } from '@/utils/slug';
 
 interface ArtisanatData {
   id_artisanat: number;
@@ -126,10 +127,16 @@ const ArtisanatDetail: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (id) {
-      loadArtisanat(parseInt(id));
+      loadArtisanat(idFromSlug(id) ?? 0);
     }
   }, [id]);
-  useChangementLangue(() => { if (id) loadArtisanat(parseInt(id)); });
+  useChangementLangue(() => { if (id) loadArtisanat(idFromSlug(id) ?? 0); });
+  // Adresse lisible et partageable : /artisanat/12 -> /artisanat/12-tapis-de-ghardaia
+  useEffect(() => {
+    if (!artisanat?.id_artisanat) return;
+    const canonique = artisanatPath(artisanat.id_artisanat, artisanat.Oeuvre?.titre);
+    if (`/artisanat/${id}` !== canonique) navigate(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [artisanat, id, navigate]);
 
   const loadArtisanat = async (artisanatId: number) => {
     try {
@@ -301,7 +308,7 @@ const ArtisanatDetail: React.FC = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Artisanat', url: '/artisanat' },
-            { name: td(artisanat?.Oeuvre?.titre) || 'Détail', url: `/artisanat/${artisanat.id_artisanat}` },
+            { name: td(artisanat?.Oeuvre?.titre) || 'Détail', url: artisanatPath(artisanat.id_artisanat, artisanat?.Oeuvre?.titre) },
           ]),
         ]}
       />

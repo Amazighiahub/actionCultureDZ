@@ -45,6 +45,7 @@ import { httpClient } from '@/services/httpClient';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+import { oeuvrePath } from '@/utils/slug';
 
 // Icônes par type
 const TYPE_ICONS: Record<string, React.ElementType> = {
@@ -83,7 +84,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
 
   const typeCode = oeuvre.TypeOeuvre?.code?.toLowerCase() || oeuvre.type?.toLowerCase() || 'default';
   const TypeIcon = TYPE_ICONS[typeCode] || TYPE_ICONS.default;
-  const oeuvreUrl = `/oeuvres/${oeuvre.id_oeuvre}`;
+  const oeuvreUrl = oeuvrePath(Number(oeuvre.id_oeuvre), oeuvre.titre, oeuvre.id_type_oeuvre as number | undefined);
   const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(oeuvre.id_oeuvre as number));
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {

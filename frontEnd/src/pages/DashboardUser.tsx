@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import MotsClesInput from '@/components/shared/MotsClesInput';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,6 +47,13 @@ import type { GroupedFavoris } from '@/services/favori.service';
 import SEOHead from '@/components/SEOHead';
 import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
+
+/** Métiers enregistrés (liste, ou texte JSON pour d'anciennes données) */
+const lireSpecialites = (v: unknown): string[] => {
+  const liste = typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch { return []; } })() : v;
+  return Array.isArray(liste) ? liste.filter((s): s is string => typeof s === 'string' && !!s.trim()) : [];
+};
 
 const DashboardUser = () => {
   const { user } = useAuth();
@@ -597,6 +605,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     biographie: '',
     site_web: '',
     reseaux_sociaux: {} as Record<string, string>,
+    specialites: [] as string[],
   });
   // Erreurs de saisie des liens (site web / réseaux), par champ
   const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
@@ -611,6 +620,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
       site_web: user?.site_web || '',
       reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
+      specialites: lireSpecialites((user as { specialites?: unknown } | null)?.specialites),
     });
     setLinkErrors({});
     setEditing(true);
@@ -644,6 +654,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         ...(isProfessional ? {
           site_web: form.site_web.trim(),
           reseaux_sociaux: form.reseaux_sociaux,
+          specialites: form.specialites,
         } : {}),
       });
       if (response.success) {
@@ -787,8 +798,27 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">{t("dashboarduser.biographie", "Biographie")}</label>
+            {/* Plusieurs métiers (artiste et poétesse…) : montrés sur le portfolio, cherchés dans l'annuaire */}
+            {isProfessional && (
+              <div className="mb-4">
+                <label htmlFor="specialites" className="block text-sm font-medium mb-1">{t('profile.specialites', 'Vos métiers et compétences')}</label>
+                <p className="text-xs text-muted-foreground mb-2">{t('profile.specialitesAide', 'Par exemple : Artiste peintre, Poétesse, Conteuse, Art-thérapeute. 8 au plus. On vous trouvera aussi par ces mots.')}</p>
+                {editing ? (
+                  <MotsClesInput id="specialites" value={form.specialites} max={8}
+                    onChange={(liste: string[]) => setForm((f) => ({ ...f, specialites: liste }))}
+                    placeholder={t('profile.specialitesPlaceholder', 'Ajouter un métier ou une compétence')}
+                    addLabel={t('profile.specialitesAjouter', 'Ajouter')}
+                    removeLabel={(s: string) => t('profile.specialitesRetirer', 'Retirer {{s}}', { s })} />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {lireSpecialites((user as { specialites?: unknown } | null)?.specialites).map((s) => <Badge key={s} variant="outline">{s}</Badge>)}
+                    {lireSpecialites((user as { specialites?: unknown } | null)?.specialites).length === 0 && <span className="text-sm text-muted-foreground">{t('profile.specialitesVide', 'Aucun métier indiqué')}</span>}
+                  </div>
+                )}
+              </div>
+            )}
             {editing ? (
-              <textarea className="w-full p-3 border rounded-lg min-h-[120px]" value={form.biographie} onChange={(e) => setForm(f => ({...f, biographie: e.target.value}))} placeholder={t('dashboarduser.biographiePlaceholder', 'Décrivez-vous en quelques lignes...')} />
+              <><textarea className="w-full p-3 border rounded-lg min-h-[120px]" value={form.biographie} onChange={(e) => setForm(f => ({...f, biographie: e.target.value}))} placeholder={t('dashboarduser.biographiePlaceholder', 'Décrivez-vous en quelques lignes...')} />{isProfessional && <ConseilReferencement type="profil" className="mt-3" />}</>
             ) : (
               <div className="p-3 border rounded-lg bg-muted min-h-[80px]">
                 {displayName(user?.biographie) || <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}

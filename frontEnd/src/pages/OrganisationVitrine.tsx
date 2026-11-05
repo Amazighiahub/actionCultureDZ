@@ -25,7 +25,7 @@ import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { idFromSlug, professionnelPath, evenementPath, organisationPath } from '@/utils/slug';
+import { idFromSlug, professionnelPath, evenementPath, organisationPath, oeuvrePath } from '@/utils/slug';
 import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { styleCategorie } from '@/components/organisations/categoriesOrganisation';
 import DemandeResponsable from '@/components/organisations/DemandeResponsable';
@@ -242,7 +242,7 @@ const OrganisationVitrine: React.FC = () => {
               <TabsContent value="oeuvres" className="mt-6">
                 <ItemGrid>
                   {org.oeuvres.map(o => (
-                    <ItemCard key={o.id_oeuvre} to={`/oeuvres/${o.id_oeuvre}`} title={getLocalizedText(o.titre, lang)}
+                    <ItemCard key={o.id_oeuvre} to={oeuvrePath(o.id_oeuvre, o.titre)} title={getLocalizedText(o.titre, lang)}
                       image={firstImage(o.Media)} subtitle={o.annee_creation ? String(o.annee_creation) : undefined} />
                   ))}
                 </ItemGrid>
