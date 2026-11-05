@@ -61,7 +61,7 @@ describe('À lire (derniers articles)', () => {
     expect(screen.getByText(/Casbah d’Alger ›/)).toBeInTheDocument();
     expect(screen.getByText('El Hadj M’hamed El Anka')).toBeInTheDocument();
     expect(screen.getByText('Équipe Tala DZ')).toBeInTheDocument();
-    expect(screen.getAllByRole('link').map(a => a.getAttribute('href'))).toEqual(['/articles/58', '/articles/59']);
+    expect(screen.getAllByRole('link').map(a => a.getAttribute('href'))).toEqual(['/articles/58-la-rechta-le-fil-des-jours-de-fete', '/articles/59-el-anka-la-voix-de-la-casbah']);
   });
 
   test('aucun article publié : la section n’apparaît pas', async () => {

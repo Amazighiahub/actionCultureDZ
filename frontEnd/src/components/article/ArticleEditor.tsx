@@ -23,6 +23,7 @@ import ArticlePreview from './ArticlePreview';
 import { useArticleEditor } from './useArticleEditor';
 import { useUnsavedChanges, confirmerSortie } from '@/hooks/useUnsavedChanges';
 import { avancement, blocDansLaLangue } from '@/utils/traductionBlocs';
+import ConseilReferencement from '@/components/pro/ConseilReferencement';
 
 const LANG_OPTIONS = [
   { code: 'fr', label: 'Français' },
@@ -112,6 +113,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
 
             {/* Tab: Content */}
             <TabsContent value="content" className="space-y-6">
+              <ConseilReferencement type="article" />
               <Card>
                 <CardHeader>
                   <CardTitle>{t("article_articleeditor.informations_principales")}</CardTitle>

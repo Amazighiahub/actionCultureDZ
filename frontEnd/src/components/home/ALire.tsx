@@ -14,6 +14,7 @@ import { cleSectionPatrimoine, type CarteArticle } from '@/services/patrimoineAr
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import EnTeteSection from './EnTeteSection';
+import { oeuvrePath } from '@/utils/slug';
 
 type TexteMulti = string | Record<string, string | undefined> | null;
 interface ArticleALire extends Omit<CarteArticle, 'id_lien' | 'peut_retirer'> {
@@ -70,7 +71,7 @@ const ALire: React.FC = () => {
         ) : (
           <div className="grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <article className="group">
-              <Link to={`/articles/${une.id_oeuvre}`} className="block">
+              <Link to={oeuvrePath(une.id_oeuvre, une.titre, 4)} className="block">
                 <div className="overflow-hidden rounded-2xl aspect-[16/10]"><Vignette image={une.image} grand /></div>
                 <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">{fil(une)}</p>
                 <h3 className="mt-2 font-serif text-2xl md:text-3xl font-bold leading-tight group-hover:text-primary transition-colors">{texteLangue(une.titre, lang)}</h3>
@@ -83,7 +84,7 @@ const ALire: React.FC = () => {
               <ul className="space-y-6 self-start">
                 {autres.map(a => (
                   <li key={a.id_oeuvre}>
-                    <Link to={`/articles/${a.id_oeuvre}`} className="group grid grid-cols-[112px_1fr] sm:grid-cols-[150px_1fr] gap-4 items-start">
+                    <Link to={oeuvrePath(a.id_oeuvre, a.titre, 4)} className="group grid grid-cols-[112px_1fr] sm:grid-cols-[150px_1fr] gap-4 items-start">
                       <div className="overflow-hidden rounded-xl aspect-[4/3]"><Vignette image={a.image} /></div>
                       <div className="min-w-0">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary truncate">{fil(a)}</p>

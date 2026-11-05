@@ -55,6 +55,7 @@ import {
 import ImportInscriptionsDialog from './ImportInscriptionsDialog';
 import MessageParticipantsDialog from './MessageParticipantsDialog';
 import { httpClient } from '@/services/httpClient';
+import { paiementService } from '@/services/paiement.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useToast } from '@/components/ui/use-toast';
@@ -104,6 +105,8 @@ interface Participant {
   notes?: string;
   /** Montant calculé à l'inscription (profil, présence, nombre de personnes) ; null : gratuit ou inconnu */
   montant_du?: number | string | null;
+  /** Paiement reçu par l'organisateur (paiement direct, hors Tala DZ) */
+  date_paiement?: string | null;
   reponses_inscription?: Reponses | null;
   User: {
     id_user: number;
@@ -172,6 +175,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const { toast } = useToast();
 
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [paiementEnCours, setPaiementEnCours] = useState<number | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -245,6 +249,19 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     } else {
       toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
     }
+  };
+
+  // « Paiement reçu » : une inscription en attente est confirmée en même temps, et la personne prévenue
+  const basculerPaiement = async (idParticipant: number, recu: boolean) => {
+    setPaiementEnCours(idParticipant);
+    const r = await paiementService.confirmerPaiement(evenementId, idParticipant, recu);
+    setPaiementEnCours(null);
+    if (!r.success) {
+      toast({ title: t('common.error', 'Erreur'), description: r.error, variant: 'destructive' });
+      return;
+    }
+    toast({ title: recu ? t('paiement.orga.confirme', 'Paiement enregistré : le participant est prévenu') : t('paiement.orga.corrige', 'Paiement retiré') });
+    await loadParticipants();
   };
 
   const loadParticipants = async () => {
@@ -617,6 +634,32 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             <span className="text-muted-foreground"> · {t('pro.participants.partielle', 'présence partielle')}</span>
                           )}
                         </p>
+                      )}
+                      {/* Paiement direct : l'organisateur indique qu'il a reçu l'argent (Tala DZ n'encaisse rien) */}
+                      {Number(participant.montant_du) > 0 && !['annule', 'invitation'].includes(participant.statut_participation) && (
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm">
+                          {participant.date_paiement ? (
+                            <>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                <CheckCircle className="h-3 w-3 me-1" aria-hidden="true" />
+                                {t('paiement.orga.recuLe', 'Payé le {{date}}', { date: formatDate(participant.date_paiement, { dateStyle: 'medium' }) })}
+                              </Badge>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" disabled={paiementEnCours === participant.id_user}
+                                onClick={() => basculerPaiement(participant.id_user, false)}>
+                                {t('paiement.orga.annuler', 'Ce n’est pas payé')}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-amber-700">{t('paiement.orga.enAttente', 'Paiement en attente')}</span>
+                              <Button variant="outline" size="sm" className="h-7" disabled={paiementEnCours === participant.id_user}
+                                onClick={() => basculerPaiement(participant.id_user, true)}>
+                                {paiementEnCours === participant.id_user ? <Loader2 className="h-3 w-3 me-1 animate-spin" aria-hidden="true" /> : <CheckCircle className="h-3 w-3 me-1" aria-hidden="true" />}
+                                {t('paiement.orga.recu', 'Paiement reçu')}
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       )}
                       {profils.length > 0 && participant.statut_participation !== 'annule' && (() => {
                         const actuel = participant.reponses_inscription?.profil;

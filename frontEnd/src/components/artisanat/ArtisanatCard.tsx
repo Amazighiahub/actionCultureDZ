@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { favoriService } from '@/services/favori.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+import { artisanatPath } from '@/utils/slug';
 
 
 // Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
@@ -57,7 +58,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const prix = artisanat.prix || artisanat.prix_min;
   const id = artisanat.id_artisanat || artisanat.id;
   const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(id as number));
-  const artisanatUrl = `/artisanat/${id}`;
+  const artisanatUrl = artisanatPath(Number(id), rawTitre);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -9,6 +9,7 @@ import { MapPin, Utensils } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { LazyImage } from '@/components/shared';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { oeuvrePath } from '@/utils/slug';
 
 type Texte = string | Record<string, string | undefined> | null;
 export interface Wilaya { id_wilaya: number; nom?: string; wilaya_name_ascii?: string; codeW?: number }
@@ -44,7 +45,7 @@ const PlatCard: React.FC<{ plat: Plat }> = ({ plat }) => {
       </div>
       <CardContent className="p-4">
         <h3 className="font-serif text-lg font-semibold leading-snug line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-          <Link to={`/articles/${plat.id_oeuvre}`} className={STRETCHED_LINK_CLASS}>{titre}</Link>
+          <Link to={oeuvrePath(plat.id_oeuvre, titre, 4)} className={STRETCHED_LINK_CLASS}>{titre}</Link>
         </h3>
         {lieu && (
           <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
