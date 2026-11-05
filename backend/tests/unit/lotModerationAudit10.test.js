@@ -114,3 +114,24 @@ describe('recherche des listes admin', () => {
     expect(c[Op.or].length).toBeGreaterThan(1);
   });
 });
+
+describe('couverture d’une œuvre', () => {
+  const OeuvreDTO = require('../../dto/oeuvre/oeuvreDTO');
+  const doc = { url: 'https://example.com/article.pdf', type_media: 'document' };
+  const image = { url: 'https://example.com/couverture.jpg', type_media: 'image' };
+
+  it('un document joint n’est jamais pris pour la couverture', () => {
+    const d = OeuvreDTO._addComputedFields({ Media: [doc] });
+    expect(d.image_url).toBeUndefined();
+    expect(d.image_principale).toBeUndefined();
+  });
+
+  it('une image ajoutée après des documents devient la couverture', () => {
+    expect(OeuvreDTO._addComputedFields({ Media: [doc, doc, image] }).image_url).toBe(image.url);
+  });
+
+  it('l’image principale reste prioritaire', () => {
+    const principale = { ...image, url: 'https://example.com/principale.jpg', is_Principale: true };
+    expect(OeuvreDTO._addComputedFields({ Media: [image, principale] }).image_url).toBe(principale.url);
+  });
+});

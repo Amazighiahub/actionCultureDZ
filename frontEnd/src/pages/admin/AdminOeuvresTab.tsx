@@ -231,8 +231,8 @@ const AdminOeuvresTab: React.FC = () => {
                       <td className="p-3 text-sm text-muted-foreground">{oeuvre.id_oeuvre}</td>
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          {oeuvre.Media?.[0]?.url || oeuvre.image_url ? (
-                            <img loading="lazy" decoding="async" src={getAssetUrl(oeuvre.Media?.[0]?.url || oeuvre.image_url)} alt="" className="w-10 h-10 rounded object-cover" />
+                          {oeuvre.image_url ? (
+                            <img loading="lazy" decoding="async" src={getAssetUrl(oeuvre.image_url)} alt="" className="w-10 h-10 rounded object-cover" />
                           ) : (
                             <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                               <BookOpen className="h-4 w-4 text-muted-foreground" />

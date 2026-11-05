@@ -134,8 +134,10 @@ class OeuvreDTO extends BaseDTO {
   static _addComputedFields(data) {
     if (!data) return data;
     // image_url / image_principale depuis Media[]
-    if (Array.isArray(data.Media) && data.Media.length > 0) {
-      const principal = data.Media.find(m => m.is_Principale) || data.Media[0];
+    // Images seulement : un PDF joint (article de presse…) n'est pas une couverture, l'image restait cassée
+    const images = Array.isArray(data.Media) ? data.Media.filter(m => m.type_media === 'image') : [];
+    if (images.length > 0) {
+      const principal = images.find(m => m.is_Principale) || images[0];
       if (!data.image_url) data.image_url = principal.url;
       if (!data.image_principale) data.image_principale = principal.url;
     }
