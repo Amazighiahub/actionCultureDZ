@@ -47,4 +47,20 @@ function organisationPath(id, nom) {
   return `/organisations/${id}${slug ? `-${slug}` : ''}`;
 }
 
-module.exports = { slugify, plainText, professionnelPath, evenementPath, organisationPath };
+/**
+ * Chemin public d'une œuvre : /oeuvres/125-zajeljazz ; un article a sa propre page (/articles/…).
+ * @param {number} [idType] type de l'œuvre (4 et 5 : articles)
+ */
+function oeuvrePath(id, titre, idType) {
+  const slug = slugify(plainText(titre));
+  const base = [4, 5].includes(Number(idType)) ? 'articles' : 'oeuvres';
+  return `/${base}/${id}${slug ? `-${slug}` : ''}`;
+}
+
+/** Chemin public d'un produit artisanal : /artisanat/12-tapis-de-ghardaia (titre de son œuvre) */
+function artisanatPath(id, titre) {
+  const slug = slugify(plainText(titre));
+  return `/artisanat/${id}${slug ? `-${slug}` : ''}`;
+}
+
+module.exports = { slugify, plainText, professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath };

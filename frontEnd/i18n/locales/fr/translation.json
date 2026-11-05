@@ -3137,6 +3137,8 @@
     "constantine": "Constantine"
   },
   "oeuvre": {
+    "parCreateur": "Une œuvre de {{nom}}",
+    "voirPortfolio": "Voir son portfolio",
     "addToFavorites": "Ajouter aux favoris",
     "awards": "Récompenses",
     "backToList": "Retour à la liste",
@@ -5253,6 +5255,12 @@
     "skipToContent": "Aller au contenu principal"
   },
   "profile": {
+    "specialites": "Vos métiers et compétences",
+    "specialitesAide": "Par exemple : Artiste peintre, Poétesse, Conteuse, Art-thérapeute. 8 au plus. On vous trouvera aussi par ces mots.",
+    "specialitesPlaceholder": "Ajouter un métier ou une compétence",
+    "specialitesAjouter": "Ajouter",
+    "specialitesRetirer": "Retirer {{s}}",
+    "specialitesVide": "Aucun métier indiqué",
     "socialLinks": "Site web et réseaux sociaux",
     "socialOf": "{{network}} de {{name}}",
     "socialInvalid": "Lien {{network}} invalide (ex. : {{example}})",
@@ -5549,6 +5557,69 @@
     "synthetiseur": "Synthétiseur"
   },
   "seo": {
+    "conseils": {
+      "titre": "Conseils pour être bien trouvé sur Google",
+      "oeuvre": {
+        "0": "Titre : le vrai titre, écrit comme on le chercherait sur Google.",
+        "1": "Résumé : au moins 3 ou 4 phrases. De quoi parle l’œuvre, quand et où elle a été créée, pour qui.",
+        "2": "Glissez les mots que les gens tapent : la ville ou la région, le genre (roman, poésie, chaâbi, peinture…).",
+        "3": "Une photo nette, bien éclairée : la couverture, l’affiche ou l’œuvre de face.",
+        "4": "Si vous le pouvez, écrivez aussi le titre et le résumé en arabe ou en anglais : vous serez trouvé dans ces langues."
+      },
+      "artisanat": {
+        "0": "Nom précis : l’objet, la matière et la région. Par exemple : « Tapis de Ghardaïa en laine ».",
+        "1": "Description : la technique, le temps de fabrication, l’histoire du motif, l’usage.",
+        "2": "Indiquez les dimensions, le poids et le prix : les acheteurs les cherchent.",
+        "3": "Plusieurs photos nettes : l’objet entier, un détail, et l’objet en situation."
+      },
+      "evenement": {
+        "0": "Nom clair, avec la ville si possible. Par exemple : « Salon du livre de Béjaïa ».",
+        "1": "Choisissez le lieu exact : l’événement apparaît alors sur la carte et dans les recherches de la wilaya.",
+        "2": "Description : le programme, les invités, le public visé, le prix.",
+        "3": "Ajoutez une affiche ou une photo : un événement sans image est rarement ouvert."
+      },
+      "article": {
+        "0": "Un titre qui annonce le sujet, pas une simple formule.",
+        "1": "Un chapeau de deux phrases qui résume l’article : c’est souvent lui que Google affiche.",
+        "2": "Des intertitres pour découper le texte, et des noms de lieux, de personnes et de dates précis.",
+        "3": "Citez vos sources et ajoutez des liens : ils renforcent la confiance des lecteurs et des moteurs."
+      },
+      "lieu": {
+        "0": "Le nom officiel du lieu, et ses autres noms s’il en a (en arabe, en tamazight, nom populaire).",
+        "1": "La commune exacte et la position sur la carte.",
+        "2": "Son histoire, ce qu’on peut y voir, les horaires et l’accès.",
+        "3": "Des photos récentes et nettes."
+      },
+      "profil": {
+        "0": "Biographie d’au moins 300 caractères : votre métier, votre ville, vos œuvres principales, vos prix ou expositions.",
+        "1": "Utilisez partout le même nom (site, réseaux, presse) : les moteurs relient ainsi vos pages entre elles.",
+        "2": "Une photo de vous nette, de face.",
+        "3": "Ajoutez vos articles de presse et vos réseaux (YouTube, Instagram, Facebook…) dans « Dans la presse et en ligne »."
+      }
+    },
+    "visibilite": {
+      "metiers": "Métiers et compétences indiqués",
+      "metiersAfaire": "Indiquez vos métiers et compétences (artiste, poétesse…) : on vous trouve aussi par eux",
+      "titre": "Votre fiche est complète à {{score}} %",
+      "resume": "Plus elle est complète, mieux on vous trouve sur Google, Bing et ChatGPT. Encore {{n}} point(s) à améliorer.",
+      "corriger": "Corriger",
+      "public": "Votre profil est public",
+      "publicAfaire": "Votre profil est privé : les moteurs de recherche ne le voient pas",
+      "photo": "Photo de profil",
+      "photoAfaire": "Ajoutez une photo de vous, nette et de face",
+      "bio": "Biographie complète",
+      "bioAfaire": "Biographie d’au moins {{min}} caractères (vous en avez {{n}}) : métier, ville, œuvres principales",
+      "wilaya": "Wilaya indiquée",
+      "wilayaAfaire": "Indiquez votre wilaya : on vous trouve aussi par ville",
+      "contenu": "Au moins une œuvre ou un événement en ligne",
+      "contenuAfaire": "Publiez une première œuvre, un article ou un événement",
+      "liens": "Presse et réseaux ajoutés",
+      "liensAfaire": "Ajoutez un article de presse ou vos réseaux (YouTube, Instagram…)",
+      "photos": "Toutes vos œuvres ont une photo",
+      "photosAfaire": "{{n}} œuvre(s) sans photo",
+      "descriptions": "Toutes vos œuvres sont bien décrites",
+      "descriptionsAfaire": "{{n}} œuvre(s) avec un résumé trop court (moins de {{min}} caractères)"
+    },
     "defaultTitle": "Tala DZ - La source de la culture algérienne",
     "defaultDescription": "Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel.",
     "siteName": "Tala DZ",
@@ -5610,5 +5681,44 @@
     "relier": "Relier à un lieu",
     "relierAide": "Choisissez un lieu existant que cette œuvre concerne : elle apparaîtra sur sa fiche.",
     "confirmer": "Relier"
+  },
+  "paiement": {
+    "mention": "Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.",
+    "moyens": {
+      "titre": "Mes moyens de paiement",
+      "renseignes": "· renseignés",
+      "aRenseigner": "· à renseigner pour vos événements payants",
+      "aide": "Vos participants vous paient directement. Tala DZ ne perçoit aucune somme et ne prend aucune commission. Ces informations ne sont montrées qu’aux personnes inscrites à vos événements payants.",
+      "titulaire": "Nom du titulaire du compte",
+      "rip": "RIP BaridiMob (20 chiffres)",
+      "ccp": "Numéro de CCP",
+      "cle": "Clé",
+      "especes": "J’accepte les espèces (sur place ou à la livraison)",
+      "lien": "Lien de paiement (facultatif)",
+      "lienNom": "Nom du lien",
+      "consignes": "Consignes (facultatif)",
+      "consignesExemple": "Ex. : indiquez votre nom dans le motif du virement.",
+      "enregistres": "Moyens de paiement enregistrés"
+    },
+    "participant": {
+      "aConvenir": "Prix à convenir avec l’organisateur",
+      "aPayer": "À payer : {{montant}}",
+      "recu": "L’organisateur a reçu votre paiement.",
+      "enAttente": "Paiement pas encore confirmé par l’organisateur.",
+      "payez": "Payez directement {{nom}} :",
+      "organisateur": "l’organisateur",
+      "titulaire": "Titulaire : {{nom}}",
+      "especes": "Espèces : sur place ou à la remise",
+      "lien": "Payer en ligne",
+      "sansMoyen": "L’organisateur vous indiquera comment le payer."
+    },
+    "orga": {
+      "recuLe": "Payé le {{date}}",
+      "annuler": "Ce n’est pas payé",
+      "enAttente": "Paiement en attente",
+      "recu": "Paiement reçu",
+      "confirme": "Paiement enregistré : le participant est prévenu",
+      "corrige": "Paiement retiré"
+    }
   }
 }

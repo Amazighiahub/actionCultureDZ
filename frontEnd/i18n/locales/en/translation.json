@@ -3132,6 +3132,8 @@
     "successDesc": "Your review has been published successfully."
   },
   "oeuvre": {
+    "parCreateur": "A work by {{nom}}",
+    "voirPortfolio": "See their portfolio",
     "addToFavorites": "Add to favorites",
     "awards": "Awards",
     "backToList": "Back to list",
@@ -5253,6 +5255,12 @@
     "skipToContent": "Skip to main content"
   },
   "profile": {
+    "specialites": "Your professions and skills",
+    "specialitesAide": "For example: Painter, Poet, Storyteller, Art therapist. Up to 8. People will also find you with these words.",
+    "specialitesPlaceholder": "Add a profession or skill",
+    "specialitesAjouter": "Add",
+    "specialitesRetirer": "Remove {{s}}",
+    "specialitesVide": "No profession given",
     "socialLinks": "Website and social media",
     "socialOf": "{{name}} on {{network}}",
     "socialInvalid": "Invalid {{network}} link (e.g. {{example}})",
@@ -5549,6 +5557,69 @@
     "synthetiseur": "Synthesizer"
   },
   "seo": {
+    "conseils": {
+      "titre": "Tips to be found easily on Google",
+      "oeuvre": {
+        "0": "Title: the real title, written the way people would search for it on Google.",
+        "1": "Summary: at least 3 or 4 sentences. What the work is about, when and where it was created, who it is for.",
+        "2": "Use the words people type: the town or region, the genre (novel, poetry, chaabi, painting…).",
+        "3": "A sharp, well-lit photo: the cover, the poster or the work seen from the front.",
+        "4": "If you can, also write the title and summary in Arabic or French: you will be found in those languages."
+      },
+      "artisanat": {
+        "0": "Precise name: the object, the material and the region. For example: “Ghardaïa wool rug”.",
+        "1": "Description: the technique, how long it takes to make, the story of the pattern, its use.",
+        "2": "Give the dimensions, the weight and the price: buyers look for them.",
+        "3": "Several sharp photos: the whole object, a detail, and the object in use."
+      },
+      "evenement": {
+        "0": "A clear name, with the town if possible. For example: “Béjaïa book fair”.",
+        "1": "Choose the exact venue: the event then appears on the map and in searches for the wilaya.",
+        "2": "Description: the programme, the guests, the audience, the price.",
+        "3": "Add a poster or a photo: an event without an image is rarely opened."
+      },
+      "article": {
+        "0": "A title that announces the subject, not just a catchphrase.",
+        "1": "A two-sentence lead that sums up the article: Google often shows it.",
+        "2": "Subheadings to break up the text, and precise names of places, people and dates.",
+        "3": "Cite your sources and add links: they build trust with readers and search engines."
+      },
+      "lieu": {
+        "0": "The official name of the place, and its other names if any (Arabic, Tamazight, popular name).",
+        "1": "The exact municipality and the position on the map.",
+        "2": "Its history, what can be seen there, opening hours and access.",
+        "3": "Recent, sharp photos."
+      },
+      "profil": {
+        "0": "A biography of at least 300 characters: your profession, your town, your main works, your awards or exhibitions.",
+        "1": "Use the same name everywhere (site, social networks, press): search engines then link your pages together.",
+        "2": "A sharp photo of yourself, from the front.",
+        "3": "Add your press articles and social networks (YouTube, Instagram, Facebook…) in “In the press and online”."
+      }
+    },
+    "visibilite": {
+      "metiers": "Professions and skills given",
+      "metiersAfaire": "Give your professions and skills (painter, poet…): people also find you through them",
+      "titre": "Your page is {{score}}% complete",
+      "resume": "The more complete it is, the easier you are to find on Google, Bing and ChatGPT. {{n}} point(s) left to improve.",
+      "corriger": "Fix",
+      "public": "Your profile is public",
+      "publicAfaire": "Your profile is private: search engines cannot see it",
+      "photo": "Profile photo",
+      "photoAfaire": "Add a sharp photo of yourself, from the front",
+      "bio": "Complete biography",
+      "bioAfaire": "Biography of at least {{min}} characters (you have {{n}}): profession, town, main works",
+      "wilaya": "Wilaya filled in",
+      "wilayaAfaire": "Give your wilaya: people also search by town",
+      "contenu": "At least one work or event online",
+      "contenuAfaire": "Publish a first work, article or event",
+      "liens": "Press and social networks added",
+      "liensAfaire": "Add a press article or your social networks (YouTube, Instagram…)",
+      "photos": "All your works have a photo",
+      "photosAfaire": "{{n}} work(s) without a photo",
+      "descriptions": "All your works are well described",
+      "descriptionsAfaire": "{{n}} work(s) with a summary that is too short (under {{min}} characters)"
+    },
     "defaultTitle": "Tala DZ - The source of Algerian culture",
     "defaultDescription": "Discover Algeria's rich cultural heritage: events, historic sites, literary and artistic works, traditional crafts.",
     "siteName": "Tala DZ",
@@ -5610,5 +5681,44 @@
     "relier": "Link to a place",
     "relierAide": "Choose an existing place this work relates to: it will appear on its page.",
     "confirmer": "Link"
+  },
+  "paiement": {
+    "mention": "Payment is made directly to the organiser. Tala DZ receives no money.",
+    "moyens": {
+      "titre": "My payment methods",
+      "renseignes": "· filled in",
+      "aRenseigner": "· to fill in for your paid events",
+      "aide": "Your participants pay you directly. Tala DZ receives no money and takes no commission. This information is only shown to people registered for your paid events.",
+      "titulaire": "Account holder name",
+      "rip": "BaridiMob RIP (20 digits)",
+      "ccp": "CCP account number",
+      "cle": "Key",
+      "especes": "I accept cash (on site or on delivery)",
+      "lien": "Payment link (optional)",
+      "lienNom": "Link name",
+      "consignes": "Instructions (optional)",
+      "consignesExemple": "E.g. put your name in the transfer reference.",
+      "enregistres": "Payment methods saved"
+    },
+    "participant": {
+      "aConvenir": "Price to be agreed with the organiser",
+      "aPayer": "To pay: {{montant}}",
+      "recu": "The organiser has received your payment.",
+      "enAttente": "Payment not yet confirmed by the organiser.",
+      "payez": "Pay {{nom}} directly:",
+      "organisateur": "the organiser",
+      "titulaire": "Account holder: {{nom}}",
+      "especes": "Cash: on site or on handover",
+      "lien": "Pay online",
+      "sansMoyen": "The organiser will tell you how to pay."
+    },
+    "orga": {
+      "recuLe": "Paid on {{date}}",
+      "annuler": "Not paid",
+      "enAttente": "Payment pending",
+      "recu": "Payment received",
+      "confirme": "Payment recorded: the participant has been notified",
+      "corrige": "Payment removed"
+    }
   }
 }
