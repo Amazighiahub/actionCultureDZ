@@ -31,6 +31,7 @@ const initNewsletterRoutes = require('./newsletterRoutes');
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
 const initLienRoutes = require('./lienRoutes');
+const initPaiementRoutes = require('./paiementRoutes');
 const initMultilingualRoutes = require('./multilingualRoutes');
 const initStatsRoutes = require('./statsRoutes');
 // ========================================================================
@@ -484,6 +485,7 @@ const initRoutes = (models, authMiddleware) => {
     // Routes qui nécessitent tous les middlewares
     { path: '/organisations', init: initOrganisationRoutes, args: [models, authMiddleware] },
     { path: '/liens', init: initLienRoutes, args: [models, authMiddleware] },
+    { path: '/paiement', init: initPaiementRoutes, args: [models, authMiddleware] },
     { path: '/evenements', init: initEvenementRoutes, args: [models, authMiddleware] },
     { path: '/intervenants', init: initIntervenantRoutes, args: [models, authMiddleware] },
     

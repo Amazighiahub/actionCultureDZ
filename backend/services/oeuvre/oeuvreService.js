@@ -373,6 +373,7 @@ class OeuvreService extends BaseService {
     this.cache.invalidate();
     this.logger.info(`Œuvre mise à jour: ${id} par utilisateur: ${userId}`);
     if (!isAdmin) await this._signalerModificationPubliee(existingOeuvre, userId, 'a modifié');
+    if (existingOeuvre.statut === 'publie') require('../indexNow').signalerOeuvre(this.models, existingOeuvre);
 
     // 8. Retourner l'œuvre mise à jour (sans compter comme vue)
     return this.findWithFullDetails(id, { incrementViews: false });
@@ -519,6 +520,8 @@ class OeuvreService extends BaseService {
 
     this.cache.invalidate();
     this.logger.info(`Œuvre validée: ${id} par: ${validatorId}`);
+    // Nouvelle page publique : Bing (et donc ChatGPT) est prévenu tout de suite
+    require('../indexNow').signalerOeuvre(this.models, updated);
 
     return OeuvreDTO.fromEntity(updated);
   }

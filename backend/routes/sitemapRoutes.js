@@ -4,7 +4,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const { professionnelPath, evenementPath, organisationPath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
@@ -93,7 +93,7 @@ const initSitemapRoutes = (models) => {
         // (/articles/:id, /artisanat/:id)
         models.Oeuvre ? safeQuery('oeuvres', () => models.Oeuvre.findAll({
           where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5, 7] } },
-          attributes: ['id_oeuvre', 'date_modification'],
+          attributes: ['id_oeuvre', 'titre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
@@ -116,7 +116,7 @@ const initSitemapRoutes = (models) => {
         // Seulement les creations dont l'oeuvre est publiee (comme la fiche publique)
         models.Artisanat ? safeQuery('artisanat', () => models.Artisanat.findAll({
           // (artisanat n'a pas de colonne de mise a jour : date de modification de l'oeuvre liee)
-          include: [{ model: models.Oeuvre, attributes: ['date_modification'], where: { statut: 'publie' }, required: true }],
+          include: [{ model: models.Oeuvre, attributes: ['titre', 'date_modification'], where: { statut: 'publie' }, required: true }],
           attributes: ['id_artisanat'],
           order: [[models.Oeuvre, 'date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
@@ -124,7 +124,7 @@ const initSitemapRoutes = (models) => {
 
         models.Oeuvre ? safeQuery('articles', () => models.Oeuvre.findAll({
           where: { statut: 'publie', id_type_oeuvre: [4, 5] },
-          attributes: ['id_oeuvre', 'date_modification'],
+          attributes: ['id_oeuvre', 'titre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
@@ -138,11 +138,11 @@ const initSitemapRoutes = (models) => {
         })) : []
       ]);
 
-      oeuvres.forEach(o => { urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification); });
+      oeuvres.forEach(o => { urls += urlBlock(oeuvrePath(o.id_oeuvre, o.titre), 'weekly', '0.7', o.date_modification); });
       evenements.forEach(e => { urls += urlBlock(evenementPath(e.id_evenement, e.nom_evenement), 'daily', '0.8', e.date_modification); });
       lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
-      artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a['Oeuvre.date_modification']); });
-      articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });
+      artisanats.forEach(a => { urls += urlBlock(artisanatPath(a.id_artisanat, a['Oeuvre.titre']), 'weekly', '0.7', a['Oeuvre.date_modification']); });
+      articles.forEach(a => { urls += urlBlock(oeuvrePath(a.id_oeuvre, a.titre, 4), 'weekly', '0.7', a.date_modification); });
       professionnels.forEach(u => { urls += urlBlock(professionnelPath(u.id_user, u.prenom, u.nom), 'weekly', '0.6', u.date_modification); });
 
       // Organisations publiées, services visibles, personnalités : pages publiques jamais signalées avant

@@ -953,6 +953,7 @@ class EvenementService extends BaseService {
     this.cache.invalidate();
     await this._viderCachesListes();
     this.logger.info(`Événement publié: ${id} par admin: ${adminId}`);
+    require('../indexNow').signalerPlusTard(lien);
     if (['brouillon', 'en_attente'].includes(evenement.statut)) {
       await notifier(this.notificationService, evenement.id_user, {
         titre: 'Événement publié',

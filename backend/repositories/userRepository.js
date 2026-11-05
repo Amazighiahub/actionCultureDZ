@@ -98,7 +98,8 @@ class UserRepository extends BaseRepository {
     // Route publique : uniquement le profil public, contact selon les préférences
     const typeDemande = Number(type);
     const wilayaDemandee = Number(wilaya);
-    const nom = conditionNom(this.model.sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`' });
+    // « poétesse », « céramiste » : les métiers saisis par le professionnel sont cherchés aussi
+    const nom = conditionNom(this.model.sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`', autres: ['CAST(`User`.`specialites` AS CHAR)'] });
     const result = await this.findAll({
       ...options,
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
