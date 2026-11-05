@@ -4,6 +4,7 @@ const router = express.Router();
 const { body, param } = require('express-validator');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
+const { FORMAT_JETON } = require('../models/misc/emailVerification');
 
 module.exports = (models, authMiddleware) => {
   const controller = require('../controllers/emailVerificationController');
@@ -15,6 +16,9 @@ module.exports = (models, authMiddleware) => {
   const emailValidation = [
     // Pas de normalizeEmail : il retire les points des adresses Gmail, le compte n'était plus trouvé
     body('email')
+      .isString()
+      .withMessage((value, { req }) => req.t('validation.invalidEmail'))
+      .bail()
       .trim()
       .isEmail()
       .withMessage((value, { req }) => req.t('validation.invalidEmail'))
@@ -22,9 +26,11 @@ module.exports = (models, authMiddleware) => {
   ];
 
   const passwordResetValidation = [
+    // Un texte au format exact : un tableau ou un nombre serait comparé autrement par MySQL
+    // et pourrait correspondre à un jeton que la personne ne connaît pas
     body('token')
-      .notEmpty()
-      .withMessage((value, { req }) => req.t('validation.tokenRequired')),
+      .custom((valeur) => FORMAT_JETON.test(typeof valeur === 'string' ? valeur : ''))
+      .withMessage((value, { req }) => req.t('validation.invalidToken')),
     body('newPassword')
       .isLength({ min: 12 })
       .withMessage((value, { req }) => req.t('validation.passwordTooShort'))

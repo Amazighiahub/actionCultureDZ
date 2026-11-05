@@ -27,6 +27,8 @@ class UserRepository extends BaseRepository {
    *   détecter un admin lors du login, par exemple)
    */
   async findByEmail(email, options = {}) {
+    // Un tableau deviendrait « email IN (…) » et pourrait désigner un autre compte
+    if (typeof email !== 'string') return null;
     const { includeRoles, includeAuth, ...rest } = options;
     const finalOptions = { ...rest };
 

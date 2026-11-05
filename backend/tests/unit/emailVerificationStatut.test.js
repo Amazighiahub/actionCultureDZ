@@ -12,7 +12,7 @@ const verifier = async (user) => {
   const EV = defineEmailVerification(sequelize);
   const verification = { User: user, metadata: {}, update: jest.fn() };
   EV.findOne = jest.fn().mockResolvedValue(verification);
-  const res = await EV.verifyToken('jeton', 'email_verification');
+  const res = await EV.verifyToken('a'.repeat(64), 'email_verification');
   return { res, verification };
 };
 const compte = (champs) => ({ ...champs, update: jest.fn() });

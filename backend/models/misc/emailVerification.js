@@ -1,6 +1,9 @@
 // models/misc/emailVerification.js
 const { DataTypes, Op } = require('sequelize');
 
+// Tous les jetons sont créés par randomBytes(32).toString('hex')
+const FORMAT_JETON = /^[a-f0-9]{64}$/;
+
 module.exports = (sequelize) => {
   const EmailVerification = sequelize.define('EmailVerification', {
     id: {
@@ -132,6 +135,14 @@ module.exports = (sequelize) => {
    * @param {string} ipAddress - IP de la requête (pour logging)
    */
   EmailVerification.verifyToken = async function(token, type = 'email_verification', ipAddress = null) {
+    // Seconde barrière, pour tous les appelants : seul un jeton au format exact atteint la base
+    if (typeof token !== 'string' || !FORMAT_JETON.test(token)) {
+      return {
+        success: false,
+        error: 'Token invalide ou expiré'
+      };
+    }
+
     const verification = await this.findOne({
       where: {
         token: token,
@@ -267,3 +278,5 @@ module.exports = (sequelize) => {
 
   return EmailVerification;
 };
+
+module.exports.FORMAT_JETON = FORMAT_JETON;

@@ -35,7 +35,7 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/register',
     validateStringLengths,
     [
-      body('email').isEmail().withMessage('Email invalide'),
+      body('email').isString().withMessage('Email invalide').bail().isEmail().withMessage('Email invalide'),
       body('password').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères')
         .matches(/[A-Z]/).withMessage('Le mot de passe doit contenir au moins une majuscule')
         .matches(/[a-z]/).withMessage('Le mot de passe doit contenir au moins une minuscule')
@@ -60,7 +60,7 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/login',
     accountRateLimiter.checkAccountLock,
     [
-      body('email').isEmail().withMessage('Email invalide'),
+      body('email').isString().withMessage('Email invalide').bail().isEmail().withMessage('Email invalide'),
       body('password').notEmpty().withMessage('Mot de passe requis'),
     ],
     handleValidationErrors,
