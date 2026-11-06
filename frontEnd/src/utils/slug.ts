@@ -15,6 +15,47 @@ export function slugify(text: string): string {
     .replace(/-+$/g, '');
 }
 
+/**
+ * Texte de l'adresse : lettres latines si le nom en a, sinon ses propres lettres (arabe, tifinagh).
+ * Même calcul que backend/utils/slug.js.
+ */
+export function slugAdresse(text: string): string {
+  const latin = slugify(text);
+  if (latin) return latin;
+  return String(text || '')
+    .normalize('NFC')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/g, '');
+}
+
+/** Adresse publique d'un lieu du patrimoine : « /patrimoine/12-casbah-d-alger » */
+export function lieuPath(id: number, nom?: unknown): string {
+  const slug = slugAdresse(texteAdresse(nom));
+  return `/patrimoine/${id}${slug ? `-${slug}` : ''}`;
+}
+
+/** Adresse publique d'une personnalité : « /personnalites/19-el-hadj-m-hamed-el-anka » */
+export function personnalitePath(id: number, prenom?: unknown, nom?: unknown): string {
+  const slug = slugAdresse([texteAdresse(prenom), texteAdresse(nom)].filter(Boolean).join(' '));
+  return `/personnalites/${id}${slug ? `-${slug}` : ''}`;
+}
+
+/** Adresse publique d'un service : « /services/4-restaurant-dar-el-bahdja » */
+export function servicePath(id: number, nom?: unknown): string {
+  const slug = slugAdresse(texteAdresse(nom));
+  return `/services/${id}${slug ? `-${slug}` : ''}`;
+}
+
+/** Adresse publique d'une wilaya : « /wilayas/16-alger » */
+export function wilayaPath(id: number, nom?: unknown): string {
+  const slug = slugAdresse(texteAdresse(nom));
+  return `/wilayas/${id}${slug ? `-${slug}` : ''}`;
+}
+
 /** « 17-amina-benali » -> 17 ; null si l'adresse ne commence pas par un numéro */
 export function idFromSlug(param: string | undefined): number | null {
   const match = /^(\d+)(?:-|$)/.exec(param || '');
@@ -23,7 +64,7 @@ export function idFromSlug(param: string | undefined): number | null {
 
 /** Adresse publique du portfolio d'un professionnel */
 export function professionnelPath(id: number, prenom?: string | null, nom?: string | null): string {
-  const slug = slugify([prenom, nom].filter(Boolean).join(' '));
+  const slug = slugAdresse([prenom, nom].filter(Boolean).join(' '));
   return `/professionnels/${id}${slug ? `-${slug}` : ''}`;
 }
 
@@ -32,7 +73,7 @@ export function organisationPath(id: number, nom?: unknown): string {
   const texte = typeof nom === 'string' ? nom
     : nom && typeof nom === 'object' ? ((nom as Record<string, string | undefined>).fr || Object.values(nom as Record<string, string | undefined>).find(Boolean) || '')
     : '';
-  const slug = slugify(texte);
+  const slug = slugAdresse(texte);
   return `/organisations/${id}${slug ? `-${slug}` : ''}`;
 }
 
@@ -43,14 +84,14 @@ const texteAdresse = (v: unknown): string => typeof v === 'string' ? v
 
 /** Adresse publique d'une œuvre : « /oeuvres/125-zajeljazz » ; un article : « /articles/… » */
 export function oeuvrePath(id: number, titre?: unknown, idType?: number | null): string {
-  const slug = slugify(texteAdresse(titre));
+  const slug = slugAdresse(texteAdresse(titre));
   const base = idType === 4 || idType === 5 ? 'articles' : 'oeuvres';
   return `/${base}/${id}${slug ? `-${slug}` : ''}`;
 }
 
 /** Adresse publique d'un produit artisanal : « /artisanat/12-tapis-de-ghardaia » */
 export function artisanatPath(id: number, titre?: unknown): string {
-  const slug = slugify(texteAdresse(titre));
+  const slug = slugAdresse(texteAdresse(titre));
   return `/artisanat/${id}${slug ? `-${slug}` : ''}`;
 }
 
@@ -62,6 +103,6 @@ export function evenementPath(id: number, nom?: unknown): string {
   const texte = typeof nom === 'string' ? nom
     : nom && typeof nom === 'object' ? ((nom as Record<string, string | undefined>).fr || Object.values(nom as Record<string, string | undefined>).find(Boolean) || '')
     : '';
-  const slug = slugify(texte);
+  const slug = slugAdresse(texte);
   return `/evenements/${id}${slug ? `-${slug}` : ''}`;
 }

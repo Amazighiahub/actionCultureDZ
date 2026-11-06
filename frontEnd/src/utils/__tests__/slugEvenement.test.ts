@@ -7,9 +7,9 @@ describe('adresse lisible d’un événement', () => {
       .toBe('/evenements/1-salon-de-la-poterie-traditionnelle-d-ait-smail-9-edition');
   });
 
-  test('nom multilingue : le français d’abord ; sans nom latin, le numéro seul', () => {
+  test('nom multilingue : le français d’abord ; sans nom latin, les lettres arabes', () => {
     expect(evenementPath(7, { fr: 'Festival du film amazigh', ar: 'مهرجان الفيلم الأمازيغي' })).toBe('/evenements/7-festival-du-film-amazigh');
-    expect(evenementPath(8, { ar: 'مهرجان' })).toBe('/evenements/8');
+    expect(evenementPath(8, { ar: 'مهرجان' })).toBe('/evenements/8-مهرجان');
     expect(evenementPath(9)).toBe('/evenements/9');
   });
 

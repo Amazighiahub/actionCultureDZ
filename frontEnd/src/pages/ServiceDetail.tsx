@@ -20,7 +20,7 @@ import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { safeExternalUrl } from '@/utils/safeUrl';
-import { professionnelPath } from '@/utils/slug';
+import { idFromSlug, professionnelPath, servicePath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
@@ -58,10 +58,18 @@ const ServiceDetail: React.FC = () => {
   const lang = i18n.language;
   const { formatPriceRange } = useLocalizedNumber();
   const [service, setService] = useState<ServiceFiche | null>(null);
+  // Adresse lisible et partageable : /services/4 -> /services/4-nom-du-service
+  useEffect(() => {
+    const s = service as unknown as { id?: number; id_service?: number; nom?: unknown } | null;
+    const numero = s?.id ?? s?.id_service;
+    if (!numero) return;
+    const canonique = servicePath(numero, s?.nom);
+    if (`/services/${id}` !== canonique) navigate(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [service, id, navigate]);
   const [etat, setEtat] = useState<'chargement' | 'ok' | 'introuvable'>('chargement');
 
   useEffect(() => {
-    const n = parseInt(id || '', 10);
+    const n = idFromSlug(id) ?? NaN;
     if (!n) { setEtat('introuvable'); return; }
     let actif = true;
     setEtat('chargement');

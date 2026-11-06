@@ -35,7 +35,7 @@ import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio'
 import { usePermissions } from '@/hooks/usePermissions';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
-import { evenementPath } from '@/utils/slug';
+import { evenementPath, idFromSlug, lieuPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { mentionCredit } from '@/utils/creditPhoto';
@@ -183,6 +183,13 @@ const PatrimoineDetail = () => {
   const { isAuthenticated, isAdmin, isValidatedProfessional, hasRole, isOwner } = usePermissions();
 
   const [site, setSite] = useState<SitePatrimoineDetail | null>(null);
+  // Adresse lisible et partageable : /patrimoine/12 -> /patrimoine/12-casbah-d-alger
+  const naviguerVersCanonique = useNavigate();
+  useEffect(() => {
+    if (!site?.id_lieu) return;
+    const canonique = lieuPath(site.id_lieu, site.nom);
+    if (`/patrimoine/${id}` !== canonique) naviguerVersCanonique(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [site, id, naviguerVersCanonique]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -200,7 +207,7 @@ const PatrimoineDetail = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await patrimoineService.getSiteDetail(parseInt(id));
+      const response = await patrimoineService.getSiteDetail(idFromSlug(id) ?? 0);
       if (response.success && response.data) {
         setSite(response.data as unknown as SitePatrimoineDetail);
       } else {

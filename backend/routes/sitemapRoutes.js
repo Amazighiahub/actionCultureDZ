@@ -4,7 +4,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, wilayaPath, servicePath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
@@ -43,7 +43,7 @@ const initSitemapRoutes = (models) => {
 
   // Helper : génère un bloc <url>
   const urlBlock = (loc, changefreq = 'weekly', priority = '0.5', lastmod = null) => {
-    let xml = `  <url>\n    <loc>${escapeXml(FRONTEND_URL + loc)}</loc>\n`;
+    let xml = `  <url>\n    <loc>${escapeXml(FRONTEND_URL + encodeURI(loc))}</loc>\n`;
     if (lastmod) {
       xml += `    <lastmod>${new Date(lastmod).toISOString().split('T')[0]}</lastmod>\n`;
     }
@@ -75,13 +75,14 @@ const initSitemapRoutes = (models) => {
       // Pages de wilaya : seulement celles qui ont au moins un site publié (pas de pages vides)
       if (models.Lieu) {
         const wilayasAvecSites = await safeQuery('wilayas', () => models.Lieu.sequelize.query(
-          `SELECT DISTINCT d.wilayaId AS id FROM lieu l
+          `SELECT DISTINCT d.wilayaId AS id, w.wilaya_name_ascii AS nom FROM lieu l
             JOIN communes c ON c.id_commune = l.communeId
             JOIN dairas d ON d.id_daira = c.dairaId
+            JOIN wilayas w ON w.id_wilaya = d.wilayaId
             WHERE l.statut = 'publie'`,
           { type: models.Lieu.sequelize.QueryTypes.SELECT }
         ));
-        wilayasAvecSites.forEach(w => { urls += urlBlock(`/wilayas/${w.id}`, 'weekly', '0.6'); });
+        wilayasAvecSites.forEach(w => { urls += urlBlock(wilayaPath(w.id, w.nom), 'weekly', '0.6'); });
       }
 
       // ══════════════════════════════════════════
@@ -108,7 +109,7 @@ const initSitemapRoutes = (models) => {
 
         models.Lieu ? safeQuery('patrimoine', () => models.Lieu.findAll({
           where: { statut: 'publie' },
-          attributes: ['id_lieu', 'updatedAt'],
+          attributes: ['id_lieu', 'nom', 'updatedAt'],
           order: [['updatedAt', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
@@ -140,7 +141,7 @@ const initSitemapRoutes = (models) => {
 
       oeuvres.forEach(o => { urls += urlBlock(oeuvrePath(o.id_oeuvre, o.titre), 'weekly', '0.7', o.date_modification); });
       evenements.forEach(e => { urls += urlBlock(evenementPath(e.id_evenement, e.nom_evenement), 'daily', '0.8', e.date_modification); });
-      lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
+      lieux.forEach(l => { urls += urlBlock(lieuPath(l.id_lieu, l.nom), 'monthly', '0.7', l.updatedAt); });
       artisanats.forEach(a => { urls += urlBlock(artisanatPath(a.id_artisanat, a['Oeuvre.titre']), 'weekly', '0.7', a['Oeuvre.date_modification']); });
       articles.forEach(a => { urls += urlBlock(oeuvrePath(a.id_oeuvre, a.titre, 4), 'weekly', '0.7', a.date_modification); });
       professionnels.forEach(u => { urls += urlBlock(professionnelPath(u.id_user, u.prenom, u.nom), 'weekly', '0.6', u.date_modification); });
@@ -151,15 +152,15 @@ const initSitemapRoutes = (models) => {
           where: { statut: 'valide' }, attributes: ['id_organisation', 'nom'], limit: SITEMAP_LIMIT, raw: true
         })) : [],
         models.Service ? safeQuery('services', () => models.Service.findAll({
-          where: { [Op.or]: [{ statut: 'valide' }, { id_user: null }] }, attributes: ['id'], limit: SITEMAP_LIMIT, raw: true
+          where: { [Op.or]: [{ statut: 'valide' }, { id_user: null }] }, attributes: ['id', 'nom'], limit: SITEMAP_LIMIT, raw: true
         })) : [],
         models.Intervenant ? safeQuery('personnalites', () => models.Intervenant.findAll({
-          where: { actif: true }, attributes: ['id_intervenant'], limit: SITEMAP_LIMIT, raw: true
+          where: { actif: true }, attributes: ['id_intervenant', 'nom', 'prenom'], limit: SITEMAP_LIMIT, raw: true
         })) : []
       ]);
       organisations.forEach(o => { urls += urlBlock(organisationPath(o.id_organisation, o.nom), 'weekly', '0.6'); });
-      services.forEach(s => { urls += urlBlock(`/services/${s.id}`, 'monthly', '0.5'); });
-      personnalites.forEach(p => { urls += urlBlock(`/personnalites/${p.id_intervenant}`, 'monthly', '0.5'); });
+      services.forEach(s => { urls += urlBlock(servicePath(s.id, s.nom), 'monthly', '0.5'); });
+      personnalites.forEach(p => { urls += urlBlock(personnalitePath(p.id_intervenant, p.prenom, p.nom), 'monthly', '0.5'); });
 
       // ══════════════════════════════════════════
       // Assembler le XML final

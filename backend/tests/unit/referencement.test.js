@@ -160,3 +160,21 @@ describe('visibilité de la fiche', () => {
     expect(r.points.find((x) => x.cle === 'photos').ok).toBe(true);
   });
 });
+
+describe('adresses lisibles', () => {
+  const s = require('../../utils/slug');
+  it('titre latin : lettres latines seulement', () => {
+    expect(s.oeuvrePath(2, { fr: 'Nedjma', ar: 'نجمة' })).toBe('/oeuvres/2-nedjma');
+    expect(s.personnalitePath(19, 'El Hadj', 'M’hamed El Anka')).toBe('/personnalites/19-el-hadj-m-hamed-el-anka');
+    expect(s.lieuPath(12, { fr: 'Casbah d’Alger' })).toBe('/patrimoine/12-casbah-d-alger');
+    expect(s.wilayaPath(16, 'Alger')).toBe('/wilayas/16-alger');
+    expect(s.servicePath(4, 'Dar El Bahdja')).toBe('/services/4-dar-el-bahdja');
+  });
+  it('titre seulement en arabe : lettres arabes, sans voyelles courtes', () => {
+    expect(s.oeuvrePath(46, { ar: 'آنيا و سمفونية الطبيعة' })).toBe('/oeuvres/46-آنيا-و-سمفونية-الطبيعة');
+    expect(s.slugAdresse('مُوسِيقَى')).toBe('موسيقى');
+  });
+  it('sans nom : le numéro seul', () => {
+    expect(s.lieuPath(7, null)).toBe('/patrimoine/7');
+  });
+});

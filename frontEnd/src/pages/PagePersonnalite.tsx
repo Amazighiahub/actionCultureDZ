@@ -25,10 +25,11 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { texteLangue } from '@/utils/programmeIntervenants';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import { idFromSlug, personnalitePath } from '@/utils/slug';
 
 const PagePersonnalite: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const idIntervenant = parseInt(id || '', 10);
+  const idIntervenant = idFromSlug(id) ?? NaN;
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -38,6 +39,14 @@ const PagePersonnalite: React.FC = () => {
   const peutEcrire = isAdmin || hasRole('Moderateur') || proValide;
 
   const [page, setPage] = useState<PagePersonnaliteData | null>(null);
+  // Adresse lisible et partageable : /personnalites/19 -> /personnalites/19-el-hadj-m-hamed-el-anka
+  const naviguerVersCanonique = useNavigate();
+  useEffect(() => {
+    const inv = page?.intervenant;
+    if (!inv?.id_intervenant) return;
+    const canonique = personnalitePath(inv.id_intervenant, inv.prenom, inv.nom);
+    if (`/personnalites/${id}` !== canonique) naviguerVersCanonique(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [page, id, naviguerVersCanonique]);
   const [chargement, setChargement] = useState(true);
   const [introuvable, setIntrouvable] = useState(false);
   const [peutModifier, setPeutModifier] = useState(false);

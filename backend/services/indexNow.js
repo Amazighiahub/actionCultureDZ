@@ -22,7 +22,7 @@ async function signaler(chemins, { envoyer = fetch, actif = ACTIF } = {}) {
   if (!actif) return false;
   const maintenant = Date.now();
   const urls = [...new Set([].concat(chemins).filter(Boolean)
-    .map((c) => (/^https?:\/\//.test(c) ? c : `${SITE_URL}${c.startsWith('/') ? '' : '/'}${c}`)))]
+    .map((c) => (/^https?:\/\//.test(c) ? c : `${SITE_URL}${encodeURI(c.startsWith('/') ? c : `/${c}`)}`)))]
     // Même page signalée plusieurs fois de suite (double clic, modifications rapprochées) : une seule fois
     .filter((u) => !(derniers.get(u) > maintenant - DELAI_MS));
   if (!urls.length) return false;

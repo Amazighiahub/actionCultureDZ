@@ -9,7 +9,7 @@
 const express = require('express');
 const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
-const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, servicePath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
@@ -240,6 +240,7 @@ const initOgRoutes = (models) => {
         description: summary(description) || undefined,
         image,
         type: 'place',
+        path: lieuPath(id, l.nom),
         corps: [sectionFaits([['Adresse', text(l.adresse)]]), paragraphes(description)].join('\n'),
         jsonLd: {
           '@context': 'https://schema.org',
@@ -247,7 +248,7 @@ const initOgRoutes = (models) => {
           name: text(l.nom),
           description: summary(description, 500),
           image: imageAbsolue(image),
-          url: `${SITE_URL}/patrimoine/${id}`,
+          url: `${SITE_URL}${lieuPath(id, l.nom)}`,
           address: l.adresse ? { '@type': 'PostalAddress', streetAddress: text(l.adresse), addressCountry: 'DZ' } : undefined,
           geo: l.latitude && l.longitude ? { '@type': 'GeoCoordinates', latitude: Number(l.latitude), longitude: Number(l.longitude) } : undefined,
         },
@@ -370,8 +371,9 @@ const initOgRoutes = (models) => {
       if (!s || (s.statut !== 'valide' && s.id_user !== null)) return null;
       return {
         title: text(s.nom), description: summary(s.description) || undefined, image: s.photo_url, type: 'place',
+        path: servicePath(s.id, s.nom),
         corps: paragraphes(s.description),
-        jsonLd: { '@context': 'https://schema.org', '@type': 'LocalBusiness', name: text(s.nom), description: summary(s.description, 500), image: imageAbsolue(s.photo_url), url: `${SITE_URL}/services/${id}` },
+        jsonLd: { '@context': 'https://schema.org', '@type': 'LocalBusiness', name: text(s.nom), description: summary(s.description, 500), image: imageAbsolue(s.photo_url), url: `${SITE_URL}${servicePath(s.id, s.nom)}` },
       };
     },
     // Personnalité (fiche active)
@@ -381,8 +383,9 @@ const initOgRoutes = (models) => {
       const nom = nomComplet(p);
       return {
         title: nom, description: summary(p.biographie) || undefined, image: p.photo_url, type: 'profile',
+        path: personnalitePath(p.id_intervenant, p.prenom, p.nom),
         corps: paragraphes(p.biographie),
-        jsonLd: { '@context': 'https://schema.org', '@type': 'Person', name: nom, description: summary(p.biographie, 500), image: imageAbsolue(p.photo_url), url: `${SITE_URL}/personnalites/${id}` },
+        jsonLd: { '@context': 'https://schema.org', '@type': 'Person', name: nom, description: summary(p.biographie, 500), image: imageAbsolue(p.photo_url), url: `${SITE_URL}${personnalitePath(p.id_intervenant, p.prenom, p.nom)}` },
       };
     },
   };

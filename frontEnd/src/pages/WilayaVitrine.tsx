@@ -2,8 +2,8 @@
  * Page d'une wilaya (/wilayas/:id) : les personnes qui y vivent, leurs œuvres, et ce qui s'y passe.
  * Sans numéro (/wilayas) : la liste des wilayas. Une section vide n'est pas affichée.
  */
-import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { MapPin } from 'lucide-react';
@@ -24,6 +24,7 @@ import { evenementPath, professionnelPath } from '@/utils/slug';
 import { libelleRole } from '@/utils/rolesOeuvre';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { wilayaVitrineService, lienOeuvre, type OeuvreCarte, type PersonneWilaya } from '@/services/wilayaVitrine.service';
+import { idFromSlug, wilayaPath } from '@/utils/slug';
 
 const Section: React.FC<{ titre: string; total: number; affiches: number; children: React.ReactNode }> = ({ titre, total, affiches, children }) => {
   const { t } = useTranslation();
@@ -92,6 +93,15 @@ const FicheWilaya: React.FC<{ id: number }> = ({ id }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['wilaya-vitrine', id], queryFn: () => wilayaVitrineService.vitrine(id) });
+  // Adresse lisible et partageable : /wilayas/16 -> /wilayas/16-alger
+  const naviguerVersCanonique = useNavigate();
+  const { id: brut } = useParams();
+  useEffect(() => {
+    const w = data?.wilaya as { wilaya_name_ascii?: string; nom?: unknown } | undefined;
+    if (!w) return;
+    const canonique = wilayaPath(id, w.wilaya_name_ascii || w.nom);
+    if (`/wilayas/${brut}` !== canonique) naviguerVersCanonique(canonique + window.location.search + window.location.hash, { replace: true });
+  }, [data, id, brut, naviguerVersCanonique]);
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError && (error as { status?: number }).status !== 404) return <ErreurChargement onReessayer={() => refetch()} />;
@@ -186,7 +196,7 @@ const FicheWilaya: React.FC<{ id: number }> = ({ id }) => {
 
 const WilayaVitrine: React.FC = () => {
   const { id } = useParams();
-  const numero = Number(id);
+  const numero = idFromSlug(id) ?? NaN;
   return (
     <div className="min-h-screen bg-background">
       <Header />

@@ -18,6 +18,7 @@ describe('adresses lisibles', () => {
 
   it('professionnelPath : avec ou sans nom latin', () => {
     expect(professionnelPath(17, 'Amina', 'Bénali')).toBe('/professionnels/17-amina-benali');
-    expect(professionnelPath(5, 'أمينة', null)).toBe('/professionnels/5');
+    // Sans nom latin : les lettres arabes gardent l'adresse lisible
+    expect(professionnelPath(5, 'أمينة', null)).toBe('/professionnels/5-أمينة');
   });
 });
