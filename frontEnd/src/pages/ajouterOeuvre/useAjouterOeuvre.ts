@@ -1,4 +1,5 @@
 import type { MediaEnregistre } from './MediasEnregistres';
+import type { GenreExtrait } from './ExtraitFichiersLivre';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { detailsArticle, liensArticle, nomDuTag } from '@/utils/donneesArticle';
@@ -111,6 +112,9 @@ export function useAjouterOeuvre() {
   const [medias, setMedias] = useState<MediaUpload[]>([]);
   // Modification : médias déjà enregistrés (retirables un par un)
   const [mediasEnregistres, setMediasEnregistres] = useState<MediaEnregistre[]>([]);
+  // Livre : extrait PDF et audio déjà en ligne, et fichiers choisis (envoyés après l'enregistrement)
+  const [extraitsEnregistres, setExtraitsEnregistres] = useState<Partial<Record<GenreExtrait, MediaEnregistre | null>>>({});
+  const [extraitsChoisis, setExtraitsChoisis] = useState<Partial<Record<GenreExtrait, File | null>>>({});
   const [isDragging, setIsDragging] = useState(false);
 
   // État pour les métadonnées
@@ -272,7 +276,15 @@ export function useAjouterOeuvre() {
           dimensions_art: (oeuvreArtData['dimensions'] ?? oeuvre['dimensions_art']) as string | undefined,
           support: (oeuvreArtData['support'] ?? oeuvre['support']) as string | undefined,
         });
-        setMediasEnregistres(((oeuvre['Media'] ?? oeuvre['medias'] ?? []) as MediaEnregistre[]).filter(m => m?.id_media));
+        const tousMedias = ((oeuvre['Media'] ?? oeuvre['medias'] ?? []) as MediaEnregistre[]).filter(m => m?.id_media);
+        const idPdf = Number(livreData['id_media_extrait_pdf']) || null;
+        const idAudio = Number(livreData['id_media_extrait_audio']) || null;
+        setExtraitsEnregistres({
+          pdf: tousMedias.find(m => m.id_media === idPdf) ?? null,
+          audio: tousMedias.find(m => m.id_media === idAudio) ?? null,
+        });
+        // Les extraits se gèrent dans leur propre bloc, pas dans la liste des médias
+        setMediasEnregistres(tousMedias.filter(m => m.id_media !== idPdf && m.id_media !== idAudio));
         // Saisie en cours perdue par une session expirée : elle remplace les valeurs chargées
         restaurerBrouillon();
       } else {
@@ -835,17 +847,44 @@ export function useAjouterOeuvre() {
           }
         };
 
+        // Livre : extrait PDF et lecture audio, chacun sur sa propre adresse
+        const uploadExtraits = async (oeuvreId: number) => {
+          if (formData.id_type_oeuvre !== 1) return;
+          for (const genre of ['pdf', 'audio'] as GenreExtrait[]) {
+            const fichier = extraitsChoisis[genre];
+            if (!fichier) continue;
+            const progressLabel = (percent: number) => t('ajouteroeuvre.envoiExtrait', 'Envoi de l’extrait : {{percent}} %', { percent });
+            setUploadProgress(progressLabel(0));
+            try {
+              const fd = new FormData();
+              fd.append('fichier', fichier);
+              const res = await httpClient.upload(`/oeuvres/${oeuvreId}/extrait/${genre}`, fd, (p) => setUploadProgress(progressLabel(p)));
+              if (!res?.success) {
+                failedMedias++;
+                if (res?.error) toast({ title: t('ajouteroeuvre.extraitRefuse', 'Extrait non envoyé'), description: res.error, variant: 'destructive' });
+              }
+            } catch (err) {
+              console.error('Erreur envoi extrait:', err);
+              failedMedias++;
+            }
+          }
+        };
+
         if (isEditMode && editId) {
           oeuvreResponse = await oeuvreService.updateOeuvre(editId, oeuvreData);
           if (oeuvreResponse.success && mediaFiles.length > 0) {
             await uploadMediaFiles(Number(editId));
           }
+          if (oeuvreResponse.success) await uploadExtraits(Number(editId));
         } else {
           oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
 
           if (oeuvreResponse.success && mediaFiles.length > 0 && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
             const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
             await uploadMediaFiles(oeuvreId);
+          }
+          if (oeuvreResponse.success && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
+            await uploadExtraits(oeuvreResponse.data.oeuvre.id_oeuvre);
           }
         }
 
@@ -922,7 +961,7 @@ export function useAjouterOeuvre() {
       setUploadProgress('');
       submittingRef.current = false;
     }
-  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, prepareDetailsSpecifiques, toast, t]);
+  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, extraitsChoisis, prepareDetailsSpecifiques, toast, t]);
 
   return {
     // State
@@ -950,5 +989,8 @@ export function useAjouterOeuvre() {
     getTagName: (nom: unknown) => getTagName(nom, lang),
     mediasEnregistres,
     retirerMediaEnregistre: (idMedia: number) => setMediasEnregistres(prev => prev.filter(m => m.id_media !== idMedia)),
+    extraitsEnregistres, extraitsChoisis,
+    choisirExtrait: (genre: GenreExtrait, fichier: File | null) => setExtraitsChoisis(prev => ({ ...prev, [genre]: fichier })),
+    retirerExtrait: (genre: GenreExtrait) => setExtraitsEnregistres(prev => ({ ...prev, [genre]: null })),
   };
 }

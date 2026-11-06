@@ -28,6 +28,15 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    // Extrait en PDF et lecture audio par l'écrivain : médias de l'œuvre (vidés si le média est supprimé)
+    id_media_extrait_pdf: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    id_media_extrait_audio: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     id_genre: {
       type: DataTypes.INTEGER,
       references: {

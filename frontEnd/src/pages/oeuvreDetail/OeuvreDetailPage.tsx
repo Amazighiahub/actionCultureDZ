@@ -33,7 +33,7 @@ import { getTranslation, type SupportedLanguage } from '@/types/common/multiling
 import { HeroSection } from '@/components/oeuvre/HeroSection';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getMainImage } from '@/types/models/media-extended.types';
-import { EVENEMENT_LIRE_EXTRAIT } from '@/components/oeuvre/HeroLivre';
+import { EVENEMENT_LIRE_EXTRAIT, extraitsFichiers } from '@/components/oeuvre/HeroLivre';
 
 // Hook personnalisé
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
@@ -326,7 +326,12 @@ const OeuvreDetailPage: React.FC = () => {
   };
 
   // Lire un extrait : la fenêtre de l'extrait, en haut de la page
-  const extraitLivre = String((oeuvre?.Livre as unknown as { extrait?: string | null } | undefined)?.extrait || '').trim();
+  const extraitsLivre = extraitsFichiers(oeuvre, (medias || []) as Array<{ id_media?: number; url?: string }>);
+  // L'extrait PDF et audio s'ouvre par « Lire un extrait », pas dans la galerie
+  const mediasGalerie = (medias || []).filter(m => m.id_media !== extraitsLivre.pdf?.id_media && m.id_media !== extraitsLivre.audio?.id_media);
+  // Texte, PDF ou lecture audio : le bouton « Lire un extrait » ouvre la même fenêtre
+  const extraitLivre = !!(String((oeuvre?.Livre as unknown as { extrait?: string | null } | undefined)?.extrait || '').trim()
+    || extraitsLivre.pdf || extraitsLivre.audio);
   const handleLireExtrait = () => {
     window.dispatchEvent(new Event(EVENEMENT_LIRE_EXTRAIT));
   };
@@ -649,7 +654,7 @@ const OeuvreDetailPage: React.FC = () => {
               </Card>
 
               {/* Galerie */}
-              {medias && medias.length > 0 && (
+              {mediasGalerie.length > 0 && (
                 <Card className="mt-6">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -660,7 +665,7 @@ const OeuvreDetailPage: React.FC = () => {
                   <CardContent>
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
-                        <OeuvreGallery medias={medias} />
+                        <OeuvreGallery medias={mediasGalerie} />
                       </Suspense>
                     </ErrorBoundary>
                   </CardContent>

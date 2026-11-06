@@ -626,6 +626,41 @@ class OeuvreService extends BaseService {
   }
 
   /**
+   * Extrait d'un livre en PDF ou en audio : le fichier devient un média de l'œuvre et la fiche du
+   * livre le désigne ; l'ancien extrait du même genre est retiré (pas de fichiers oubliés).
+   * @param {'pdf'|'audio'} genre
+   */
+  async definirExtraitFichier(oeuvreId, genre, fichier, userId, isAdmin = false) {
+    const oeuvre = await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
+    if (oeuvre.id_type_oeuvre !== 1 || !this.models?.Livre) throw this._validationError('Un extrait de lecture ne concerne qu’un livre');
+    if (!fichier) throw this._validationError('Aucun fichier reçu');
+    const colonne = genre === 'pdf' ? 'id_media_extrait_pdf' : 'id_media_extrait_audio';
+    const [media] = await this.enregistrerMedias(oeuvreId, fichier, userId);
+    let livre = await this.models.Livre.findOne({ where: { id_oeuvre: oeuvreId } });
+    if (!livre) livre = await this.models.Livre.create({ id_oeuvre: oeuvreId });
+    const ancien = livre[colonne];
+    await livre.update({ [colonne]: media.id_media });
+    if (ancien && ancien !== media.id_media) {
+      await this.deleteMedia(oeuvreId, ancien, userId, isAdmin).catch(() => {});
+    }
+    this.cache.invalidate();
+    return { id_media: media.id_media, url: media.url, type_media: media.type_media };
+  }
+
+  /** Retire l'extrait PDF ou audio d'un livre (le média et son fichier compris) */
+  async retirerExtraitFichier(oeuvreId, genre, userId, isAdmin = false) {
+    await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
+    const colonne = genre === 'pdf' ? 'id_media_extrait_pdf' : 'id_media_extrait_audio';
+    const livre = this.models?.Livre ? await this.models.Livre.findOne({ where: { id_oeuvre: oeuvreId } }) : null;
+    const id = livre?.[colonne];
+    if (!id) return false;
+    await livre.update({ [colonne]: null });
+    await this.deleteMedia(oeuvreId, id, userId, isAdmin).catch(() => {});
+    this.cache.invalidate();
+    return true;
+  }
+
+  /**
    * Retire un média de l'œuvre (fichier Cloudinary compris). Avant : méthode absente, erreur 500 —
    * une mauvaise pochette ou un mauvais extrait ne pouvait plus être retiré.
    */

@@ -8,6 +8,11 @@ const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024;                                     
 const MAX_VIDEO_SIZE = parseInt(process.env.UPLOAD_VIDEO_MAX_SIZE, 10) || 100 * 1024 * 1024; // 100 MB
 const MAX_AUDIO_SIZE = parseInt(process.env.UPLOAD_AUDIO_MAX_SIZE, 10) || 50 * 1024 * 1024;  // 50 MB
 const MAX_MEDIA_SIZE = MAX_VIDEO_SIZE;                                                       // max en média mixte
+// Extrait d'un livre : « pas trop grand » (lecture rapide sur téléphone)
+const MAX_EXTRAIT_PDF_SIZE = 5 * 1024 * 1024;                                                // 5 MB, extrait gardé
+const MAX_EXTRAIT_PDF_ENVOI = 50 * 1024 * 1024;                                              // 50 MB, livre entier envoyé
+const MAX_EXTRAIT_AUDIO_SIZE = 10 * 1024 * 1024;                                             // 10 MB (8 min en MP3)
+const MAX_EXTRAIT_PDF_PAGES = 20;
 
 const IMAGE_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 const DOCUMENT_MIMES = [
@@ -22,5 +27,6 @@ const MEDIA_MIMES = [...IMAGE_MIMES, ...VIDEO_MIMES, ...AUDIO_MIMES, ...DOCUMENT
 
 module.exports = {
   MAX_IMAGE_SIZE, MAX_DOCUMENT_SIZE, MAX_VIDEO_SIZE, MAX_AUDIO_SIZE, MAX_MEDIA_SIZE,
+  MAX_EXTRAIT_PDF_SIZE, MAX_EXTRAIT_PDF_ENVOI, MAX_EXTRAIT_AUDIO_SIZE, MAX_EXTRAIT_PDF_PAGES,
   IMAGE_MIMES, DOCUMENT_MIMES, VIDEO_MIMES, AUDIO_MIMES, MEDIA_MIMES
 };

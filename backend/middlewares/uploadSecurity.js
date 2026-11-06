@@ -237,7 +237,8 @@ const TEMP_DIR = path.join(os.tmpdir(), 'eventculture-uploads');
  * @param {number} [opts.maxFiles] - > 1 : plusieurs fichiers (req.files)
  * @returns {Function[]} middlewares Express
  */
-function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1 }) {
+// controle (facultatif) : (file) => message de refus ou null ; lit (ou réécrit) le fichier temporaire avant l'envoi
+function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1, controle = null }) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
   const storage = multer.diskStorage({
     destination: TEMP_DIR,
@@ -268,6 +269,11 @@ function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1 }) {
           return sendRejection(res, 400, 'UPLOAD_INVALID_TYPE', req.t ? req.t('upload.invalidFileType') : 'Type de fichier non autorise');
         }
         file.mimetype = result.mimeType; // type réel détecté, pas celui déclaré
+        const refus = controle ? await controle(file) : null;
+        if (refus) {
+          await removeTempFiles(files);
+          return sendRejection(res, 400, 'UPLOAD_REFUSED', refus);
+        }
       }
       return next();
     } catch (error) {

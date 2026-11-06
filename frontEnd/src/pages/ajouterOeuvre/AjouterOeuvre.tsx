@@ -1,4 +1,5 @@
 import MediasEnregistres from './MediasEnregistres';
+import ExtraitFichiersLivre from './ExtraitFichiersLivre';
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -68,6 +69,7 @@ const AjouterOeuvre: React.FC = () => {
     getTagName,
     isEditMode,
     editId, mediasEnregistres, retirerMediaEnregistre,
+    extraitsEnregistres, extraitsChoisis, choisirExtrait, retirerExtrait,
   } = hook;
 
   // ============================================================================
@@ -361,6 +363,10 @@ const AjouterOeuvre: React.FC = () => {
                       </CardHeader>
                       <CardContent>
                         <OeuvreSpecificFields metadata={metadata} formData={formData} fieldErrors={fieldErrors} handleInputChange={handleInputChange} />
+                        {formData.id_type_oeuvre === 1 && (
+                          <ExtraitFichiersLivre oeuvreId={editId} enregistres={extraitsEnregistres} choisis={extraitsChoisis}
+                            onChoisir={choisirExtrait} onRetire={retirerExtrait} />
+                        )}
                       </CardContent>
                     </Card>
 

@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   BookOpen, BookMarked, Star, Heart, Eye, MessageCircle,
   Globe, Calendar, FileText, ZoomIn, RotateCcw, Quote,
-  Sparkles, X
+  Sparkles, X, Headphones
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
@@ -40,6 +40,15 @@ interface HeroLivreProps {
 /** Ouvre la fenêtre de l'extrait depuis un autre bouton de la page */
 export const EVENEMENT_LIRE_EXTRAIT = 'tala:lire-extrait';
 
+type LivreExtraits = { Livre?: { id_media_extrait_pdf?: number | null; id_media_extrait_audio?: number | null } | null };
+
+/** Extrait PDF et audio d'un livre : les médias que la fiche du livre désigne */
+export function extraitsFichiers(oeuvre: unknown, medias: Array<{ id_media?: number; url?: string }> = []) {
+  const livre = (oeuvre as LivreExtraits)?.Livre;
+  const trouver = (id?: number | null) => (id ? medias.find(m => m.id_media === id && m.url) ?? null : null);
+  return { pdf: trouver(livre?.id_media_extrait_pdf), audio: trouver(livre?.id_media_extrait_audio) };
+}
+
 const HeroLivre: React.FC<HeroLivreProps> = ({
   oeuvre, medias, mainImage, titre, description, typeOeuvre,
   mainContributors, gt, viewCount, commentsCount,
@@ -54,6 +63,9 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
   const [showZoom, setShowZoom] = useState(false);
   // Extrait saisi par l'écrivain (avant : le bouton montrait le résumé)
   const extrait = String((oeuvre as { Livre?: { extrait?: string | null } }).Livre?.extrait || '').trim();
+  // Extrait en PDF et lecture audio par l'écrivain
+  const { pdf: extraitPdf, audio: extraitAudio } = extraitsFichiers(oeuvre, medias);
+  const aUnExtrait = !!(extrait || extraitPdf || extraitAudio);
   // Le bouton « Lire un extrait » plus bas sur la page ouvre la même fenêtre
   useEffect(() => {
     const ouvrir = () => setShowExcerpt(true);
@@ -255,7 +267,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               </div>
             )}
 
-            {extrait && (
+            {aUnExtrait && (
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
               <Button size="lg" className="shadow-lg" onClick={() => setShowExcerpt(true)}>
                 <Eye className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />{t('works.actions.readExcerpt', 'Lire un extrait')}
@@ -271,10 +283,27 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                     <BookOpen className="h-5 w-5 text-primary" />{t('works.excerpt.title', 'Extrait de')} "{titre}"
                   </DialogTitle>
                 </DialogHeader>
-                <div className="mt-4">
+                <div className="mt-4 space-y-6">
+                  {extraitAudio && (
+                    <div className="space-y-2">
+                      <p className="font-medium flex items-center gap-2"><Headphones className="h-4 w-4 text-primary" aria-hidden="true" />{t('works.excerpt.listen', 'Écouter l’extrait lu')}</p>
+                      <audio controls preload="none" src={extraitAudio.url} className="w-full" />
+                    </div>
+                  )}
+                  {extraitPdf && (
+                    <iframe src={extraitPdf.url} title={t('works.excerpt.pdfTitle', 'Extrait (PDF)')}
+                      className="w-full h-[60vh] rounded-md border bg-white" />
+                  )}
+                  {extraitPdf && (
+                    <Button asChild variant="outline">
+                      <a href={extraitPdf.url} target="_blank" rel="noopener noreferrer">
+                        <FileText className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} aria-hidden="true" />{t('works.excerpt.openPdf', 'Ouvrir l’extrait (PDF)')}
+                      </a>
+                    </Button>
+                  )}
                   {extrait ? (
                     <div dir="auto" className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap font-serif text-base">{extrait}</div>
-                  ) : (
+                  ) : aUnExtrait ? null : (
                     <p className="text-muted-foreground text-center py-8">{t('works.excerpt.noContent', "Aucun contenu disponible pour cet ouvrage.")}</p>
                   )}
                 </div>
