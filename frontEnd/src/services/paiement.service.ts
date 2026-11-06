@@ -13,6 +13,10 @@ export interface MoyensPaiement {
   lien_url?: string | null;
   lien_libelle?: string | null;
   consignes?: string | null;
+  /** Commandes : frais d'envoi en DA (null : pas d'envoi) et remise en main propre */
+  envoi_algerie?: number | string | null;
+  envoi_etranger?: number | string | null;
+  main_propre?: boolean;
 }
 
 export interface PaiementInscription {

@@ -2,6 +2,7 @@
  * ArtisanatDetail.tsx - Page de détail d'un artisanat
  */
 import React, { useState, useEffect } from 'react';
+import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
@@ -439,6 +440,9 @@ const ArtisanatDetail: React.FC = () => {
                 }
                 return min ? <div className="text-2xl font-bold text-primary">{formatPrice(min, undefined, false)}</div> : null;
               })()}
+
+              {/* Commande : paiement direct à l'artisan */}
+              {Oeuvre?.id_oeuvre && <CommanderOeuvre idOeuvre={Oeuvre.id_oeuvre} className="w-full sm:w-auto" />}
 
               {/* Disponibilité */}
               {(artisanat.sur_commande || artisanat.delai_fabrication || (artisanat.en_stock ?? 0) > 0) && (

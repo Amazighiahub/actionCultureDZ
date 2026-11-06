@@ -857,7 +857,8 @@
       "pendingValidations": "Validations en attente",
       "proDashboard": "Tableau de bord Pro",
       "open": "Menu de mon compte",
-      "myPortfolio": "Mon portfolio"
+      "myPortfolio": "Mon portfolio",
+      "myOrders": "Mes commandes"
     },
     "menu": {
       "close": "Fermer le menu",
@@ -5699,8 +5700,73 @@
     "relierAide": "Choisissez un lieu existant que cette œuvre concerne : elle apparaîtra sur sa fiche.",
     "confirmer": "Relier"
   },
+  "commande": {
+    "commander": "Commander",
+    "titre": "Commander « {{titre}} »",
+    "envoyee": "Commande envoyée",
+    "mention": "Vous payez directement {{nom}}. Tala DZ ne perçoit aucune somme.",
+    "leVendeur": "le vendeur",
+    "prevenu": "{{nom}} a été prévenu(e) de votre commande.",
+    "montantAConfirmer": "Montant à confirmer par le vendeur (à partir de {{montant}})",
+    "aPayer": "À payer : {{montant}}",
+    "plusFrais": "+ frais d’envoi à convenir",
+    "payez": "Payez directement {{nom}} :",
+    "suite": "Le vendeur confirmera la réception du paiement, puis l’envoi. Vous serez prévenu(e) à chaque étape.",
+    "voirMesCommandes": "Voir mes commandes",
+    "prixFourchette": "Prix : de {{min}} à {{max}} (le vendeur confirme le montant)",
+    "prixUnitaire": "Prix : {{prix}}",
+    "quantite": "Quantité",
+    "stock": "Il en reste {{n}}.",
+    "livraisonTitre": "Livraison",
+    "adresse": "Adresse de livraison",
+    "adresseExemple": "Nom, rue, ville, wilaya ou pays",
+    "telephone": "Téléphone (facultatif)",
+    "message": "Message au vendeur (facultatif)",
+    "total": "Total : {{montant}}",
+    "partage": "Le vendeur verra votre nom, votre adresse e-mail et, si vous les indiquez, votre adresse de livraison et votre téléphone.",
+    "valider": "Envoyer la commande",
+    "choisirLivraison": "Choisissez la livraison.",
+    "adresseRequise": "Indiquez l’adresse de livraison.",
+    "epuise": "Plus en stock pour le moment",
+    "mesCommandes": "Mes commandes",
+    "mesVentes": "Mes ventes",
+    "mesAchats": "Mes achats",
+    "aTraiter": "{{count}} à traiter",
+    "aucuneVente": "Aucune commande reçue pour l’instant. Indiquez vos moyens de paiement et vos frais d’envoi dans votre tableau de bord : le bouton « Commander » apparaîtra sur vos œuvres qui ont un prix.",
+    "aucunAchat": "Vous n’avez encore rien commandé.",
+    "par": "Commandé par {{nom}}",
+    "vendeurNom": "Vendu par {{nom}}",
+    "aPartirDe": "à partir de {{m}}",
+    "livraison": {
+      "algerie": "Envoi en Algérie",
+      "etranger": "Envoi à l’étranger",
+      "mainPropre": "Remise en main propre",
+      "aConvenir": "Livraison à convenir avec le vendeur",
+      "gratuit": "gratuit"
+    },
+    "statut": {
+      "aPayer": "À payer",
+      "aPayerVendeur": "En attente du paiement",
+      "payee": "Paiement reçu par le vendeur",
+      "aEnvoyer": "Payée · à envoyer",
+      "envoyee": "Envoyée",
+      "prete": "Prête / remise",
+      "annulee": "Annulée"
+    },
+    "action": {
+      "paiementRecu": "Paiement reçu",
+      "envoyee": "Envoyée",
+      "remise": "Remise / prête",
+      "annuler": "Annuler",
+      "confirmerAnnulation": "Annuler cette commande ?",
+      "fixerMontant": "Fixer le montant",
+      "montant": "Montant final (DA)",
+      "montantCourt": "Montant DA"
+    }
+  },
   "paiement": {
     "mention": "Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.",
+    "mentionCommandes": "Les paiements se font directement entre l’acheteur et le vendeur. Tala DZ ne perçoit aucune somme et ne prend aucune commission.",
     "moyens": {
       "titre": "Mes moyens de paiement",
       "renseignes": "· renseignés",
@@ -5715,7 +5781,14 @@
       "lienNom": "Nom du lien",
       "consignes": "Consignes (facultatif)",
       "consignesExemple": "Ex. : indiquez votre nom dans le motif du virement.",
-      "enregistres": "Moyens de paiement enregistrés"
+      "enregistres": "Moyens de paiement enregistrés",
+      "aRenseignerVentes": "· à renseigner pour vos événements payants et vos ventes",
+      "aideVentes": "Vos participants et vos acheteurs vous paient directement. Tala DZ ne perçoit aucune somme et ne prend aucune commission. Ces informations ne sont montrées qu’aux personnes inscrites à vos événements payants et à celles qui commandent vos œuvres.",
+      "livraison": "Vos ventes : livraison",
+      "livraisonAide": "Le bouton « Commander » apparaît sur vos livres, œuvres d’art et objets d’artisanat qui ont un prix. Laissez un champ vide si vous n’envoyez pas dans cette zone (0 = envoi gratuit).",
+      "envoiAlgerie": "Frais d’envoi en Algérie (DA)",
+      "envoiEtranger": "Frais d’envoi à l’étranger (DA)",
+      "mainPropre": "Remise en main propre possible"
     },
     "participant": {
       "aConvenir": "Prix à convenir avec l’organisateur",

@@ -831,7 +831,8 @@
       "pendingValidations": "Pending validations",
       "proDashboard": "Pro Dashboard",
       "open": "My account menu",
-      "myPortfolio": "My portfolio"
+      "myPortfolio": "My portfolio",
+      "myOrders": "My orders"
     },
     "menu": {
       "close": "Close menu",
@@ -5699,8 +5700,73 @@
     "relierAide": "Choose an existing place this work relates to: it will appear on its page.",
     "confirmer": "Link"
   },
+  "commande": {
+    "commander": "Order",
+    "titre": "Order “{{titre}}”",
+    "envoyee": "Order sent",
+    "mention": "You pay {{nom}} directly. Tala DZ receives no money.",
+    "leVendeur": "the seller",
+    "prevenu": "{{nom}} has been told about your order.",
+    "montantAConfirmer": "Amount to be confirmed by the seller (from {{montant}})",
+    "aPayer": "To pay: {{montant}}",
+    "plusFrais": "+ shipping to be agreed",
+    "payez": "Pay {{nom}} directly:",
+    "suite": "The seller will confirm receiving the payment, then shipping. You will be notified at each step.",
+    "voirMesCommandes": "See my orders",
+    "prixFourchette": "Price: from {{min}} to {{max}} (the seller confirms the amount)",
+    "prixUnitaire": "Price: {{prix}}",
+    "quantite": "Quantity",
+    "stock": "{{n}} left.",
+    "livraisonTitre": "Delivery",
+    "adresse": "Delivery address",
+    "adresseExemple": "Name, street, city, province or country",
+    "telephone": "Phone (optional)",
+    "message": "Message to the seller (optional)",
+    "total": "Total: {{montant}}",
+    "partage": "The seller will see your name, your e-mail address and, if you give them, your delivery address and phone.",
+    "valider": "Send the order",
+    "choisirLivraison": "Choose a delivery option.",
+    "adresseRequise": "Enter the delivery address.",
+    "epuise": "Out of stock for now",
+    "mesCommandes": "My orders",
+    "mesVentes": "My sales",
+    "mesAchats": "My purchases",
+    "aTraiter": "{{count}} to handle",
+    "aucuneVente": "No orders yet. Add your payment methods and shipping fees in your dashboard: the “Order” button will appear on your works that have a price.",
+    "aucunAchat": "You have not ordered anything yet.",
+    "par": "Ordered by {{nom}}",
+    "vendeurNom": "Sold by {{nom}}",
+    "aPartirDe": "from {{m}}",
+    "livraison": {
+      "algerie": "Shipping within Algeria",
+      "etranger": "Shipping abroad",
+      "mainPropre": "Hand delivery",
+      "aConvenir": "Delivery to be agreed with the seller",
+      "gratuit": "free"
+    },
+    "statut": {
+      "aPayer": "To pay",
+      "aPayerVendeur": "Awaiting payment",
+      "payee": "Payment received by the seller",
+      "aEnvoyer": "Paid · to ship",
+      "envoyee": "Shipped",
+      "prete": "Ready / handed over",
+      "annulee": "Cancelled"
+    },
+    "action": {
+      "paiementRecu": "Payment received",
+      "envoyee": "Shipped",
+      "remise": "Handed over / ready",
+      "annuler": "Cancel",
+      "confirmerAnnulation": "Cancel this order?",
+      "fixerMontant": "Set the amount",
+      "montant": "Final amount (DZD)",
+      "montantCourt": "Amount DZD"
+    }
+  },
   "paiement": {
     "mention": "Payment is made directly to the organiser. Tala DZ receives no money.",
+    "mentionCommandes": "Payments go directly between the buyer and the seller. Tala DZ receives no money and takes no commission.",
     "moyens": {
       "titre": "My payment methods",
       "renseignes": "· filled in",
@@ -5715,7 +5781,14 @@
       "lienNom": "Link name",
       "consignes": "Instructions (optional)",
       "consignesExemple": "E.g. put your name in the transfer reference.",
-      "enregistres": "Payment methods saved"
+      "enregistres": "Payment methods saved",
+      "aRenseignerVentes": "· to fill in for your paid events and sales",
+      "aideVentes": "Your participants and buyers pay you directly. Tala DZ receives no money and takes no commission. This information is only shown to people registered for your paid events and to those who order your works.",
+      "livraison": "Your sales: delivery",
+      "livraisonAide": "The “Order” button appears on your books, artworks and crafts that have a price. Leave a field empty if you do not ship to that area (0 = free shipping).",
+      "envoiAlgerie": "Shipping fees within Algeria (DZD)",
+      "envoiEtranger": "Shipping fees abroad (DZD)",
+      "mainPropre": "Hand delivery possible"
     },
     "participant": {
       "aConvenir": "Price to be agreed with the organiser",

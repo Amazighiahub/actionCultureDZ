@@ -87,6 +87,7 @@ const ViewProgrammePage = React.lazy(() => import('./pages/ViewProgrammePage'));
 
 // Pages de notifications
 const NotificationsPage = React.lazy(() => import('./pages/notifications/Notifications'));
+const MesCommandes = React.lazy(() => import('./pages/MesCommandes'));
 const NotificationPreferences = React.lazy(() => import('./pages/notifications/Preferences'));
 
 // ============================================================================
@@ -412,6 +413,8 @@ const App = () => (
             {/* Aliases de compatibilité pour les liens existants */}
             <Route path="/profile" element={<Navigate to="/dashboard-user" replace />} />
             <Route path="/mes-favoris" element={<Navigate to="/dashboard-user" replace />} />
+            {/* Commandes (achats et ventes) : paiement direct au vendeur */}
+            <Route path="/mes-commandes" element={<ProtectedRoute><ErrorBoundary><MesCommandes /></ErrorBoundary></ProtectedRoute>} />
 
             {/* Routes des notifications - Accessibles à tous les utilisateurs connectés */}
             <Route 

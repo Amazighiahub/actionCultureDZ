@@ -299,6 +299,10 @@ const loadModels = (sequelize) => {
   const auditLogModel = loadModelSafely('./misc/auditLog', 'AuditLog', sequelize);
   if (auditLogModel) models.AuditLog = auditLogModel;
 
+  // Commandes (livres, œuvres d'art, artisanat) : paiement direct au professionnel
+  const commandeModel = loadModelSafely('./misc/commande', 'Commande', sequelize);
+  if (commandeModel) models.Commande = commandeModel;
+
   // 14. QR Code
   const qrCodeModel = loadModelSafely('./misc/qrCode', 'QRCode', sequelize);
   if (qrCodeModel) models.QRCode = qrCodeModel;

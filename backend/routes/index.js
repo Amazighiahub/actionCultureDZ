@@ -32,6 +32,7 @@ const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
 const initLienRoutes = require('./lienRoutes');
 const initPaiementRoutes = require('./paiementRoutes');
+const initCommandeRoutes = require('./commandeRoutes');
 const initMultilingualRoutes = require('./multilingualRoutes');
 const initStatsRoutes = require('./statsRoutes');
 // ========================================================================
@@ -486,6 +487,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/organisations', init: initOrganisationRoutes, args: [models, authMiddleware] },
     { path: '/liens', init: initLienRoutes, args: [models, authMiddleware] },
     { path: '/paiement', init: initPaiementRoutes, args: [models, authMiddleware] },
+    { path: '/commandes', init: initCommandeRoutes, args: [models, authMiddleware] },
     { path: '/evenements', init: initEvenementRoutes, args: [models, authMiddleware] },
     { path: '/intervenants', init: initIntervenantRoutes, args: [models, authMiddleware] },
     

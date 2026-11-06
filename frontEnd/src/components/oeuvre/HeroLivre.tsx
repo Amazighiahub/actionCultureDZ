@@ -19,6 +19,7 @@ import type { MediaExtended } from '@/types/models/media-extended.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 
 interface HeroLivreProps {
   oeuvre: Oeuvre;
@@ -267,13 +268,15 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               </div>
             )}
 
-            {aUnExtrait && (
+            {/* « Commander » n'apparaît que si le livre a un prix et l'auteur un moyen de paiement */}
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
-              <Button size="lg" className="shadow-lg" onClick={() => setShowExcerpt(true)}>
+              <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="shadow-lg" />
+              {aUnExtrait && (
+              <Button size="lg" variant="outline" className="shadow-lg" onClick={() => setShowExcerpt(true)}>
                 <Eye className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />{t('works.actions.readExcerpt', 'Lire un extrait')}
               </Button>
+              )}
             </div>
-            )}
 
             {/* Modal Extrait */}
             <Dialog open={showExcerpt} onOpenChange={setShowExcerpt}>

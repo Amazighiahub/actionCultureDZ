@@ -15,7 +15,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { paiementService, type MoyensPaiement as Moyens } from '@/services/paiement.service';
 
-const VIDE: Moyens = { titulaire: '', baridimob_rip: '', ccp_numero: '', ccp_cle: '', especes: false, lien_url: '', lien_libelle: '', consignes: '' };
+const VIDE: Moyens = { titulaire: '', baridimob_rip: '', ccp_numero: '', ccp_cle: '', especes: false, lien_url: '', lien_libelle: '', consignes: '', envoi_algerie: '', envoi_etranger: '', main_propre: false };
+const CASES = ['especes', 'main_propre'];
 
 const MoyensPaiement: React.FC = () => {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ const MoyensPaiement: React.FC = () => {
   useEffect(() => {
     paiementService.mesMoyens().then((r) => {
       if (r?.success && r.data) {
-        setMoyens({ ...VIDE, ...Object.fromEntries(Object.entries(r.data).map(([k, v]) => [k, v ?? (k === 'especes' ? false : '')])) });
+        setMoyens({ ...VIDE, ...Object.fromEntries(Object.entries(r.data).map(([k, v]) => [k, v ?? (CASES.includes(k) ? false : '')])) });
         setRenseigne(true);
       }
       setChargement(false);
@@ -59,7 +60,7 @@ const MoyensPaiement: React.FC = () => {
             {t('paiement.moyens.titre', 'Mes moyens de paiement')}
             {!chargement && (
               <span className={`text-xs font-normal ${renseigne ? 'text-green-700' : 'text-amber-700'}`}>
-                {renseigne ? t('paiement.moyens.renseignes', '· renseignés') : t('paiement.moyens.aRenseigner', '· à renseigner pour vos événements payants')}
+                {renseigne ? t('paiement.moyens.renseignes', '· renseignés') : t('paiement.moyens.aRenseignerVentes', '· à renseigner pour vos événements payants et vos ventes')}
               </span>
             )}
           </CardTitle>
@@ -69,7 +70,7 @@ const MoyensPaiement: React.FC = () => {
       {ouvert && (
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {t('paiement.moyens.aide', 'Vos participants vous paient directement. Tala DZ ne perçoit aucune somme et ne prend aucune commission. Ces informations ne sont montrées qu’aux personnes inscrites à vos événements payants.')}
+            {t('paiement.moyens.aideVentes', 'Vos participants et vos acheteurs vous paient directement. Tala DZ ne perçoit aucune somme et ne prend aucune commission. Ces informations ne sont montrées qu’aux personnes inscrites à vos événements payants et à celles qui commandent vos œuvres.')}
           </p>
           {chargement ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : (
             <>
@@ -110,6 +111,25 @@ const MoyensPaiement: React.FC = () => {
                 <Textarea id="mp-consignes" value={moyens.consignes || ''} onChange={champ('consignes')} maxLength={500}
                   placeholder={t('paiement.moyens.consignesExemple', 'Ex. : indiquez votre nom dans le motif du virement.')} />
               </div>
+              {/* Commandes de livres, d'œuvres d'art et d'artisanat */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="px-1 text-sm font-medium">{t('paiement.moyens.livraison', 'Vos ventes : livraison')}</legend>
+                <p className="text-xs text-muted-foreground">{t('paiement.moyens.livraisonAide', 'Le bouton « Commander » apparaît sur vos livres, œuvres d’art et objets d’artisanat qui ont un prix. Laissez un champ vide si vous n’envoyez pas dans cette zone (0 = envoi gratuit).')}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mp-envoi-dz">{t('paiement.moyens.envoiAlgerie', 'Frais d’envoi en Algérie (DA)')}</Label>
+                    <Input id="mp-envoi-dz" type="number" min={0} inputMode="numeric" value={moyens.envoi_algerie ?? ''} onChange={champ('envoi_algerie')} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mp-envoi-etr">{t('paiement.moyens.envoiEtranger', 'Frais d’envoi à l’étranger (DA)')}</Label>
+                    <Input id="mp-envoi-etr" type="number" min={0} inputMode="numeric" value={moyens.envoi_etranger ?? ''} onChange={champ('envoi_etranger')} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="mp-main" checked={!!moyens.main_propre} onCheckedChange={(v) => setMoyens((m) => ({ ...m, main_propre: v === true }))} />
+                  <Label htmlFor="mp-main">{t('paiement.moyens.mainPropre', 'Remise en main propre possible')}</Label>
+                </div>
+              </fieldset>
               {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
               <Button onClick={enregistrer} disabled={envoi}>
                 {envoi && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}

@@ -65,6 +65,7 @@ const GestionEvenement = React.lazy(() => import('@/components/event/GestionEven
 import { oeuvreService } from '@/services/oeuvre.service';
 import SEOHead from '@/components/SEOHead';
 import MoyensPaiement from '@/components/pro/MoyensPaiement';
+import AccesCommandes from '@/components/commande/AccesCommandes';
 import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
@@ -689,6 +690,10 @@ const DashboardPro = () => {
           <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('liens.ajouter', 'Ajouter un lien')}</Link>
         </p>
 
+        {/* Paiement direct (événements et ventes) : Tala DZ n'encaisse rien */}
+        <AccesCommandes />
+        <MoyensPaiement />
+
         {/* Zone principale avec onglets */}
         <Card>
           <CardContent className="p-0">
@@ -780,8 +785,6 @@ const DashboardPro = () => {
 
               {/* Les autres onglets suivent le même pattern... */}
               <TabsContent value="evenements" className="p-6 m-0">
-                {/* Paiement direct par les participants : Tala DZ n'encaisse rien */}
-                <MoyensPaiement />
                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_vnements")} ({filterBySearch(mesEvenements?.items || []).length})</h2>
                   <Button size="sm" asChild><Link to="/ajouter-evenement">

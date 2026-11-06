@@ -34,6 +34,7 @@ import { HeroSection } from '@/components/oeuvre/HeroSection';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getMainImage } from '@/types/models/media-extended.types';
 import { EVENEMENT_LIRE_EXTRAIT, extraitsFichiers } from '@/components/oeuvre/HeroLivre';
+import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 
 // Hook personnalisé
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
@@ -584,6 +585,8 @@ const OeuvreDetailPage: React.FC = () => {
                           </div>
                         </div>
                       )}
+                      {/* Commande : paiement direct à l'artiste */}
+                      <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="w-full sm:w-auto" />
 
                       {/* Statut */}
                       {oeuvre.statut === 'publie' && (

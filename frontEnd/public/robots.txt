@@ -17,6 +17,7 @@ Disallow: /programme/creer
 Disallow: /programme/modifier/
 Disallow: /profile
 Disallow: /mes-favoris
+Disallow: /mes-commandes
 Disallow: /notifications
 Disallow: /forgot-password
 Disallow: /reset-password/

@@ -24,9 +24,18 @@ const chiffres = (v, champ, min, max) => {
   return c;
 };
 
+/** Montant en DA (0 : gratuit ; vide : null) */
+const montant = (v, champ) => {
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0 || n > 1000000) throw AppError.badRequest(`${champ} : montant invalide`);
+  return Math.round(n * 100) / 100;
+};
+
 /**
  * Moyens saisis par le professionnel → valeur enregistrée (null s'il n'a rien indiqué)
- * { titulaire, baridimob_rip, ccp_numero, ccp_cle, especes, lien_url, lien_libelle, consignes }
+ * { titulaire, baridimob_rip, ccp_numero, ccp_cle, especes, lien_url, lien_libelle, consignes,
+ *   envoi_algerie, envoi_etranger, main_propre }  (frais d'envoi des commandes, en DA ; null : pas d'envoi)
  */
 function normaliserMoyens(entree) {
   if (entree === null) return null;
@@ -41,6 +50,10 @@ function normaliserMoyens(entree) {
     lien_url: texte(entree.lien_url, 500, 'Lien de paiement'),
     lien_libelle: texte(entree.lien_libelle, 60, 'Nom du lien'),
     consignes: texte(entree.consignes, 500, 'Consignes'),
+    // Commandes de livres, d'œuvres d'art et d'artisanat : frais d'envoi et remise en main propre
+    envoi_algerie: montant(entree.envoi_algerie, 'Frais d’envoi en Algérie'),
+    envoi_etranger: montant(entree.envoi_etranger, 'Frais d’envoi à l’étranger'),
+    main_propre: entree.main_propre === true,
   };
   if (m.lien_url && !/^https:\/\/[^\s]+$/i.test(m.lien_url)) {
     throw AppError.badRequest('Le lien de paiement doit commencer par https://');
@@ -49,7 +62,8 @@ function normaliserMoyens(entree) {
     throw AppError.badRequest('CCP : indiquez le numéro et la clé');
   }
   const rempli = m.baridimob_rip || m.ccp_numero || m.especes || m.lien_url;
-  if (!rempli) return m.consignes || m.titulaire ? { ...m } : null;
+  const autre = m.consignes || m.titulaire || m.envoi_algerie !== null || m.envoi_etranger !== null || m.main_propre;
+  if (!rempli) return autre ? { ...m } : null;
   return m;
 }
 
@@ -133,4 +147,4 @@ async function confirmerPaiement(models, evenementService, notificationService, 
   return { paye: recu, date_paiement: inscription.date_paiement };
 }
 
-module.exports = { normaliserMoyens, aUnMoyen, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };
+module.exports = { normaliserMoyens, aUnMoyen, lireMoyens, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };
