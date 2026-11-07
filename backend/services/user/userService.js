@@ -222,6 +222,15 @@ class UserService extends BaseService {
         // Connexion ouverte avant la séparation par appareil : elle continue sans redemander le mot de passe
         user = await this.repository.findByRefreshToken(hashedToken, { transaction, lock: transaction.LOCK.UPDATE });
         if (!user) {
+          // Ancien jeton d'une connexion, déjà remplacé et hors délai de grâce : quelqu'un d'autre l'a
+          // utilisé (vol probable). La connexion est coupée après la transaction (avant : simple refus,
+          // le voleur qui avait renouvelé le premier gardait la session).
+          const reutilise = await SessionConnexion.findOne({
+            where: { jeton_precedent_hash: hashedToken },
+            attributes: ['id_session', 'id_user'],
+            transaction
+          });
+          if (reutilise) return { reutilise };
           this.logger.warn(`Refresh token invalide ou déjà consommé — possible réutilisation`);
           throw this._unauthorizedError('Refresh token invalide');
         }
@@ -268,6 +277,12 @@ class UserService extends BaseService {
 
       return { user, newAccessToken, newRefreshToken };
     });
+
+    if (result.reutilise) {
+      await this.models.SessionConnexion.destroy({ where: { id_session: result.reutilise.id_session } });
+      this.logger.warn(`Jeton de rafraîchissement réutilisé : connexion ${result.reutilise.id_session} coupée (utilisateur ${result.reutilise.id_user})`);
+      throw this._unauthorizedError('Refresh token invalide');
+    }
 
     this.logger.info(`Token rafraîchi pour: ${result.user.id_user}`);
     return {

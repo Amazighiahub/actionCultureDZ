@@ -173,6 +173,8 @@ async function enregistrerMoyens(models, idUser, entree, { motDePasse, ip, userA
 }
 
 const STATUTS_SANS_PAIEMENT = ['invitation', 'annule'];
+// Organisateur dont on peut montrer les coordonnées (pas un compte suspendu, banni ou supprimé)
+const ORGANISATEUR_EN_REGLE = ['actif'];
 
 /**
  * Ce que voit le participant : montant, état du paiement et moyens de l'organisateur.
@@ -190,14 +192,18 @@ async function paiementDuParticipant(models, idEvenement, idUser) {
   if (montant === 0) return { montant: 0, paye: false, date_paiement: null, moyens: null, organisateur: null };
   const evenement = await models.Evenement.findByPk(idEvenement, { attributes: ['id_user'] });
   const organisateur = evenement?.id_user
-    ? await models.User.findByPk(evenement.id_user, { attributes: ['id_user', 'nom', 'prenom', 'moyens_paiement'] })
+    ? await models.User.findByPk(evenement.id_user, { attributes: ['id_user', 'nom', 'prenom', 'moyens_paiement', 'statut'] })
     : null;
-  const moyens = lireMoyens(organisateur?.moyens_paiement);
+  // Organisateur suspendu (par exemple pour fraude) : plus de coordonnées de paiement montrées
+  const enRegle = !!organisateur && ORGANISATEUR_EN_REGLE.includes(organisateur.statut);
+  const moyens = enRegle ? lireMoyens(organisateur?.moyens_paiement) : null;
   return {
     montant,
     paye: !!inscription.date_paiement,
     date_paiement: inscription.date_paiement,
     moyens: aUnMoyen(moyens) ? moyens : null,
+    // Ne pas payer : l'organisateur n'est plus en règle (le site le dit au participant)
+    organisateur_indisponible: !!organisateur && !enRegle,
     organisateur: organisateur
       ? { id: organisateur.id_user, nom: [texteLisible(organisateur.prenom), texteLisible(organisateur.nom)].filter(Boolean).join(' ') }
       : null,

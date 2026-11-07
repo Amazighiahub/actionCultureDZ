@@ -20,9 +20,11 @@ function fabriquer(utilisateur) {
   const lier = (l) => Object.assign(l, { update: async (v) => Object.assign(l, v) });
   const SessionConnexion = {
     lignes,
-    findOne: async ({ where }) => lignes.find((l) => where[Op.or].some((c) => (c.jeton_hash
+    findOne: async ({ where }) => (!where[Op.or]
+      ? lignes.find((l) => l.jeton_precedent_hash === where.jeton_precedent_hash) || null
+      : lignes.find((l) => where[Op.or].some((c) => (c.jeton_hash
       ? l.jeton_hash === c.jeton_hash
-      : l.jeton_precedent_hash === c.jeton_precedent_hash && l.precedent_jusqua > c.precedent_jusqua[Op.gt]))) || null,
+      : l.jeton_precedent_hash === c.jeton_precedent_hash && l.precedent_jusqua > c.precedent_jusqua[Op.gt]))) || null),
     findAll: async ({ where, offset }) => lignes.filter((l) => l.id_user === where.id_user)
       .sort((a, b) => b.id_session - a.id_session).slice(offset),
     create: async (v) => {
@@ -34,6 +36,7 @@ function fabriquer(utilisateur) {
       const garde = lignes.filter((l) => {
         if (where.expire_le) return l.expire_le >= where.expire_le[Op.lt];
         if (Array.isArray(where.id_session)) return !where.id_session.includes(l.id_session);
+        if (where.id_session && where.id_user === undefined) return l.id_session !== where.id_session;
         if (where.id_session) return !(l.id_session === where.id_session && l.id_user === where.id_user);
         return l.id_user !== where.id_user;
       });
@@ -89,6 +92,17 @@ describe('connexions par appareil', () => {
     await expect(service.refreshToken(suivant)).resolves.toHaveProperty('refreshToken');
 
     SessionConnexion.lignes[0].precedent_jusqua = new Date(Date.now() - 1000);
+    await expect(service.refreshToken(suivant)).rejects.toThrow();
+  });
+
+  test('ancien jeton présenté après le délai (vol probable) : la connexion est coupée', async () => {
+    const { service, SessionConnexion } = fabriquer(personne());
+    await service._saveRefreshToken(7, 'jeton');
+    const { refreshToken: suivant } = await service.refreshToken('jeton');
+    SessionConnexion.lignes[0].precedent_jusqua = new Date(Date.now() - 1000);
+    await expect(service.refreshToken('jeton')).rejects.toThrow();
+    expect(SessionConnexion.lignes).toHaveLength(0);
+    // Le jeton le plus récent ne marche plus non plus : il faut se reconnecter
     await expect(service.refreshToken(suivant)).rejects.toThrow();
   });
 

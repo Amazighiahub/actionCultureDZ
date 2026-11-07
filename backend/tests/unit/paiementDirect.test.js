@@ -37,12 +37,20 @@ describe('ce que voit le participant', () => {
   const modeles = (inscription, moyens) => ({
     EvenementUser: { findOne: jest.fn(async () => inscription) },
     Evenement: { findByPk: jest.fn(async () => ({ id_user: 3 })) },
-    User: { findByPk: jest.fn(async () => ({ id_user: 3, nom: 'Exemple', prenom: 'Lina', moyens_paiement: moyens })) },
+    User: { findByPk: jest.fn(async () => ({ id_user: 3, nom: 'Exemple', prenom: 'Lina', moyens_paiement: moyens, statut: 'actif' })) },
   });
 
   it('inscrit à un événement payant : montant, moyens et organisateur', async () => {
     const r = await p.paiementDuParticipant(modeles({ statut_participation: 'inscrit', montant_du: '1500.00', date_paiement: null }, { especes: true }), 9, 5);
     expect(r).toMatchObject({ montant: 1500, paye: false, moyens: { especes: true }, organisateur: { id: 3, nom: 'Lina Exemple' } });
+  });
+
+  it('organisateur suspendu : plus de coordonnées de paiement', async () => {
+    const m = modeles({ statut_participation: 'inscrit', montant_du: '1500.00', date_paiement: null }, { especes: true });
+    m.User.findByPk = jest.fn(async () => ({ id_user: 3, nom: 'Exemple', prenom: 'Lina', moyens_paiement: { especes: true }, statut: 'suspendu' }));
+    const r = await p.paiementDuParticipant(m, 9, 5);
+    expect(r.moyens).toBeNull();
+    expect(r.organisateur_indisponible).toBe(true);
   });
 
   it('gratuit : aucune coordonnée', async () => {

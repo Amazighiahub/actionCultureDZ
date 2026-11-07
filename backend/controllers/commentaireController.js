@@ -153,7 +153,8 @@ class CommentaireController extends BaseController {
         note_qualite,
         commentaire_parent_id,
         id_user: req.user.id_user,
-        id_oeuvre: oeuvreId
+        id_oeuvre: oeuvreId,
+        id_proprietaire: oeuvre.saisi_par
       });
       this._prevenirCommentaire(req, commentaire_parent_id, { oeuvreId });
 
@@ -195,7 +196,8 @@ class CommentaireController extends BaseController {
         note_qualite,
         commentaire_parent_id,
         id_user: req.user.id_user,
-        id_evenement: evenementId
+        id_evenement: evenementId,
+        id_proprietaire: evenement.id_user
       });
       this._prevenirCommentaire(req, commentaire_parent_id, { evenementId });
 

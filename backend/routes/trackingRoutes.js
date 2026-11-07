@@ -107,15 +107,42 @@ const initTrackingRoutes = (models, authMiddleware) => {
     (req, res) => vueController.updateViewDuration(req, res)
   );
 
+  // Chiffres d'un contenu pas encore public (brouillon, en attente, refusé) : seulement son auteur et
+  // l'administration (avant : n'importe qui pouvait sonder les brouillons par leur numéro)
+  const STATUTS_PUBLICS = ['publie', 'planifie', 'en_cours', 'termine', 'reporte', 'annule', 'valide', 'actif'];
+  const statsVisibles = async (req, res, next) => {
+    try {
+      let e = req.entity;
+      // Artisanat et article : état et auteur portés par leur œuvre (l'artisanat n'a pas de statut,
+      // l'article est « publie » par défaut même si son œuvre est un brouillon)
+      if (e && ['artisanat', 'article'].includes(req.params.type) && e.id_oeuvre && models.Oeuvre) {
+        e = await models.Oeuvre.findByPk(e.id_oeuvre, { attributes: ['statut', 'saisi_par'] });
+        if (!e) return res.status(404).json({ success: false, message: req.t ? req.t('common.notFound') : 'Not found' });
+      }
+      if (!e || e.statut === undefined || e.statut === null || STATUTS_PUBLICS.includes(e.statut)) return next();
+      const auteur = e.saisi_par ?? e.id_user ?? e.id_createur;
+      if (req.user && (req.user.isAdmin || Number(auteur) === Number(req.user.id_user))) return next();
+      return res.status(404).json({ success: false, message: req.t ? req.t('common.notFound') : 'Not found' });
+    } catch (err) {
+      return next(err);
+    }
+  };
+
   // Obtenir les statistiques publiques d'une entité
   router.get('/stats/:type/:id',
+    optionalAuth,
     validateEntityType,
+    checkEntityExists,
+    statsVisibles,
     (req, res) => vueController.getViewStats(req, res)
   );
 
   // Obtenir le nombre de vues pour une entité
   router.get('/:type/:id/count',
+    optionalAuth,
     validateEntityType,
+    checkEntityExists,
+    statsVisibles,
     async (req, res) => {
       try {
         const { type, id } = req.params;

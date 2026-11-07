@@ -117,13 +117,31 @@ class CommentaireService extends BaseService {
    * @returns {object} Commentaire complet avec User inclus
    */
   async createCommentaire(data) {
+    // id_proprietaire : auteur de l'œuvre ou organisateur de l'événement (jamais enregistré)
+    const { id_proprietaire, ...donnees } = data;
+    data = donnees;
     if (data.commentaire_parent_id) {
       const [champ, valeur] = data.id_oeuvre ? ['id_oeuvre', data.id_oeuvre] : ['id_evenement', data.id_evenement];
       const idParent = await this._parentValide(data.commentaire_parent_id, champ, valeur);
       // Une réponse ne porte pas de note
       return this.repository.createWithAuthor({ ...data, commentaire_parent_id: idParent, note_qualite: null });
     }
-    return this.repository.createWithAuthor(data);
+    // Une seule note par personne, et pas de note sur son propre contenu (avant : notes sans limite,
+    // l'auteur pouvait monter sa moyenne à 5). Le commentaire reste publié, sans note.
+    let noteIgnoree = null;
+    if (data.note_qualite !== undefined && data.note_qualite !== null) {
+      const [champ, valeur] = data.id_oeuvre ? ['id_oeuvre', data.id_oeuvre] : ['id_evenement', data.id_evenement];
+      if (id_proprietaire && Number(id_proprietaire) === Number(data.id_user)) noteIgnoree = 'proprietaire';
+      else if (await this.repository.dejaNote(champ, valeur, data.id_user)) noteIgnoree = 'deja_note';
+      if (noteIgnoree) data = { ...data, note_qualite: null };
+    }
+    const cree = await this.repository.createWithAuthor(data);
+    // Le site explique pourquoi la note n'a pas été gardée (le commentaire, lui, est publié)
+    if (noteIgnoree && cree) {
+      if (typeof cree.setDataValue === 'function') cree.setDataValue('note_ignoree', noteIgnoree);
+      else cree.note_ignoree = noteIgnoree;
+    }
+    return cree;
   }
 
   /**
@@ -153,7 +171,10 @@ class CommentaireService extends BaseService {
     // Seuls les champs envoyés changent ; une réponse à un avis n'a pas de note
     const maj = { date_modification: new Date() };
     if (data.contenu !== undefined) maj.contenu = data.contenu;
-    if (data.note_qualite !== undefined && data.note_qualite !== null && !commentaireInstance.commentaire_parent_id) {
+    // Œuvre ou événement : la note ne s'ajoute pas après coup (une seule par personne) ; avis d'un service : inchangé
+    const sansNoteAjoutee = !commentaireInstance.id_service
+      && (commentaireInstance.note_qualite === null || commentaireInstance.note_qualite === undefined);
+    if (data.note_qualite !== undefined && data.note_qualite !== null && !commentaireInstance.commentaire_parent_id && !sansNoteAjoutee) {
       maj.note_qualite = parseInt(data.note_qualite, 10);
     }
     await commentaireInstance.update(maj);

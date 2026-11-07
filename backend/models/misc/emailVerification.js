@@ -170,8 +170,18 @@ module.exports = (sequelize) => {
       };
     }
 
-    // Marquer le token comme utilisé
-    await verification.update({ used_at: new Date() });
+    // Marquer le token comme utilisé, d'un seul coup : deux demandes simultanées avec le même lien
+    // ne passent plus toutes les deux (avant : lecture puis écriture séparées)
+    const [pris] = await this.update(
+      { used_at: new Date() },
+      { where: { id: verification.id, used_at: null } }
+    );
+    if (pris !== 1) {
+      return {
+        success: false,
+        error: 'Token invalide ou expiré'
+      };
+    }
 
     // Effectuer l'action selon le type
     const user = verification.User;

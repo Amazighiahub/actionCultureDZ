@@ -498,7 +498,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/multilingual', init: initMultilingualRoutes, args: [models, authMiddleware] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },
     { path: '/artisanat', init: initArtisanatRoutes, args: [models, authMiddleware] },
-    { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth, requireVerifiedEmail: authMiddleware.requireVerifiedEmail }] },
+    { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth, requireVerifiedEmail: authMiddleware.requireVerifiedEmail, requireRole: authMiddleware.requireRole }] },
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
     
     { path: '/notifications', init: initNotificationRoutes, args: [models] },

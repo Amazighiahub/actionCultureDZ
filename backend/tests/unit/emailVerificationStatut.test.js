@@ -6,15 +6,30 @@
 const { Sequelize } = require('sequelize');
 const defineEmailVerification = require('../../models/misc/emailVerification');
 
-const verifier = async (user) => {
+// lignesPrises : 1 = le jeton est pris par cette demande ; 0 = une autre demande l'a pris juste avant
+const verifier = async (user, lignesPrises = 1) => {
   const sequelize = new Sequelize('mysql://test:test@127.0.0.1:3306/test', { logging: false });
   sequelize.models.User = {};
   const EV = defineEmailVerification(sequelize);
-  const verification = { User: user, metadata: {}, update: jest.fn() };
+  const verification = { id: 7, User: user, metadata: {}, update: jest.fn() };
   EV.findOne = jest.fn().mockResolvedValue(verification);
+  EV.update = jest.fn().mockResolvedValue([lignesPrises]);
   const res = await EV.verifyToken('a'.repeat(64), 'email_verification');
-  return { res, verification };
+  return { res, verification, EV };
 };
+
+describe('EmailVerification.verifyToken — usage unique', () => {
+  it('jeton marqué utilisé seulement s’il ne l’était pas encore', async () => {
+    const { EV } = await verifier(compte({ id_type_user: 1, statut: 'actif' }));
+    expect(EV.update).toHaveBeenCalledWith(expect.objectContaining({ used_at: expect.any(Date) }), { where: { id: 7, used_at: null } });
+  });
+  it('deux demandes en même temps : la seconde est refusée et ne touche pas au compte', async () => {
+    const user = compte({ id_type_user: 1, statut: 'en_attente_validation' });
+    const { res } = await verifier(user, 0);
+    expect(res.success).toBe(false);
+    expect(user.update).not.toHaveBeenCalled();
+  });
+});
 const compte = (champs) => ({ ...champs, update: jest.fn() });
 
 describe('EmailVerification.verifyToken — statut du compte', () => {

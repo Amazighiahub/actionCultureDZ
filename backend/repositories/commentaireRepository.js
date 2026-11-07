@@ -108,6 +108,23 @@ class CommentaireRepository extends BaseRepository {
   }
 
   /**
+   * Ce membre a-t-il déjà noté cette œuvre ou cet événement ? (une seule note par personne)
+   * @param {'id_oeuvre'|'id_evenement'} champ
+   */
+  async dejaNote(champ, valeur, userId) {
+    return !!(await this.model.findOne({
+      where: {
+        [champ]: valeur,
+        id_user: userId,
+        commentaire_parent_id: null,
+        note_qualite: { [Op.ne]: null },
+        statut: ['publie', 'en_attente']
+      },
+      attributes: ['id_commentaire']
+    }));
+  }
+
+  /**
    * Note moyenne et nombre de notes des services donnés (avis publiés uniquement)
    * @returns {Map<number, { moyenne: number, nombre: number }>}
    */
