@@ -519,6 +519,14 @@ class UserService extends BaseService {
       throw this._validationError('Mot de passe incorrect');
     }
 
+    // Commandes en cours (à payer ou à envoyer) : elles sont terminées ou annulées d'abord ; sinon l'autre
+    // partie perdrait la trace d'un paiement
+    const enCours = await require('../commandes').commandesEnCours(this.models || {}, userId);
+    if (enCours > 0) {
+      throw this._conflictError(`Vous avez encore ${enCours} commande(s) à régler : annulez vos achats pas encore payés, et envoyez `
+        + 'ou annulez vos ventes en cours, depuis « Mes commandes », avant de supprimer votre compte.');
+    }
+
     // Organisateur d'événements à venir : il les annule d'abord (les inscrits sont prévenus) ou les confie à
     // l'équipe ; sinon ils resteraient publiés sans personne pour les gérer
     const aVenir = await this._evenementsAVenir(userId);

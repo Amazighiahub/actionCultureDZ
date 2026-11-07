@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import ImportInscriptionsDialog from './ImportInscriptionsDialog';
 import MessageParticipantsDialog from './MessageParticipantsDialog';
+import EcrireAvecMessagerie from './EcrireAvecMessagerie';
 import { httpClient } from '@/services/httpClient';
 import { paiementService } from '@/services/paiement.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
@@ -510,6 +511,8 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
             <Send className="h-4 w-4 me-2" aria-hidden="true" />
             {t('pro.participants.messages.bouton', 'Écrire aux participants')}
           </Button>
+          {/* Message libre envoyé depuis la messagerie de l'organisateur (sans quota du site) */}
+          <EcrireAvecMessagerie participants={participants} evenementNom={evenementNom} />
         </div>
         <MessageParticipantsDialog
           evenementId={evenementId}

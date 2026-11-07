@@ -92,6 +92,16 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
         {c.message && <p dir="auto" className="whitespace-pre-line italic text-muted-foreground">« {c.message} »</p>}
 
         {/* Acheteur : comment payer, tant qu'il n'a pas payé */}
+        {!vendeur && c.statut === 'en_attente' && c.vendeur_indisponible && (
+          <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-destructive">
+            {t('commande.vendeurIndisponible', 'Ce vendeur n’est plus disponible sur Tala DZ : ne le payez pas. Annulez cette commande.')}
+          </p>
+        )}
+        {!vendeur && c.statut === 'en_attente' && c.moyens_modifies && (
+          <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2 text-amber-800 dark:text-amber-200">
+            {t('commande.moyensModifies', 'Attention : le vendeur a changé ses coordonnées de paiement depuis votre commande. Vérifiez avec lui avant de payer.')}
+          </p>
+        )}
         {!vendeur && c.statut === 'en_attente' && c.moyens && (
           <div className="space-y-2 rounded-lg border p-3">
             <p>{t('commande.payez', 'Payez directement {{nom}} :', { nom: c.vendeur.nom || t('commande.leVendeur', 'le vendeur') })}</p>
@@ -105,13 +115,16 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
               <Button size="sm" disabled={enCours} onClick={() => agir({ statut: 'payee' })}>
                 <CheckCircle className="h-4 w-4 me-1" aria-hidden="true" />{t('commande.action.paiementRecu', 'Paiement reçu')}
               </Button>
+              {c.montant_bornes && (
               <div className="flex items-center gap-1">
-                <Input type="number" min={1} value={montant} onChange={(e) => setMontant(e.target.value)} className="h-9 w-28"
+                <Input type="number" min={c.montant_bornes.min} max={c.montant_bornes.max} value={montant} onChange={(e) => setMontant(e.target.value)} className="h-9 w-28"
                   aria-label={t('commande.action.montant', 'Montant final (DA)')} placeholder={t('commande.action.montantCourt', 'Montant DA')} />
                 <Button size="sm" variant="outline" disabled={enCours || !Number(montant)} onClick={() => agir({ montant_total: Number(montant) })}>
                   {t('commande.action.fixerMontant', 'Fixer le montant')}
                 </Button>
+                <span className="text-xs text-muted-foreground">{t('commande.action.bornes', 'de {{min}} à {{max}}', { min: formatPrice(c.montant_bornes.min), max: formatPrice(c.montant_bornes.max) })}</span>
               </div>
+              )}
             </>
           )}
           {vendeur && c.statut === 'payee' && (

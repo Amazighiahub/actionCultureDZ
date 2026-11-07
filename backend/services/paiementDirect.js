@@ -7,10 +7,15 @@ const AppError = require('../utils/appError');
 const { texteLisible } = require('../helpers/i18n');
 const { notifier } = require('../utils/notifierModeration');
 
+// Caractères invisibles (contrôle, sens d'écriture forcé) : ils peuvent maquiller un nom ou un texte
+// eslint-disable-next-line no-control-regex -- volontaire : ces caractères sont justement ceux à retirer
+const INVISIBLES = /[\u0000-\u0009\u000B-\u001F\u007F\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+/** Mêmes invisibles, plus le « joiner » graphique U+034F (marque combinante : retirée par son code) */
+const sansInvisibles = (s) => Array.from(String(s).replace(INVISIBLES, '')).filter((ch) => ch.codePointAt(0) !== 0x034F).join('');
 const texte = (v, max, champ) => {
   if (v === undefined || v === null || v === '') return null;
   if (typeof v !== 'string') throw AppError.badRequest(`${champ} invalide`);
-  const t = v.trim();
+  const t = sansInvisibles(v.replace(/\r\n?/g, '\n')).trim();
   if (t.length > max) throw AppError.badRequest(`${champ} : ${max} caractères au plus`);
   return t || null;
 };
@@ -23,6 +28,32 @@ const chiffres = (v, champ, min, max) => {
   }
   return c;
 };
+
+/** Nom de la plateforme, en lettres latines ou arabes (y compris l'ancienne graphie) */
+// Latin : « Tala DZ », « Thala-DZ », « taladz » ; arabe : « ثالا » (l'écriture de la plateforme) partout,
+// « تالا » seulement suivi de « DZ » / « دي زد » (c'est aussi un prénom courant)
+const MOTIF_TALA = /\bth?ala\s*[-_.]?\s*dz\b|th?aladz|ثالا|تالا\s*[-_.]?\s*(dz|دي\s*زا?د|ديزا?د)/i;
+const NOM_ARABE_SEUL = /^\s*(ثالا|تالا)\s*$/;
+// Lettres cyrilliques qui ressemblent aux lettres latines du nom
+const SOSIES = { 'а': 'a', 'А': 'a', 'т': 't', 'Т': 't', 'ӏ': 'l', 'Ӏ': 'l', 'і': 'i', 'І': 'i', 'ԁ': 'd', 'Ԁ': 'd', 'һ': 'h', 'о': 'o', 'е': 'e', 'с': 'c', 'р': 'p', 'х': 'x', 'у': 'y' };
+/** Tatouil et voyelles arabes (fatha, kasra…) : retirés avant la comparaison */
+const sansVoyellesArabes = (s) => Array.from(s).filter((ch) => {
+  const c = ch.codePointAt(0);
+  return !(c === 0x0640 || (c >= 0x064B && c <= 0x065F) || c === 0x0670);
+}).join('');
+/** Le texte imite-t-il le nom de la plateforme ? (formes compatibles, invisibles et voyelles retirés) */
+const normaliserNom = (s) => sansVoyellesArabes(sansInvisibles(String(s).normalize('NFKC'))).replace(/[\u0400-\u04FF\u0500-\u052F]/g, (ch) => SOSIES[ch] || ch).toLowerCase();
+const imiteTala = (s, { nomSeul = false } = {}) => {
+  const n = normaliserNom(s);
+  return MOTIF_TALA.test(n) || (nomSeul && NOM_ARABE_SEUL.test(n));
+};
+/** Adresse d'un lien : lettres seules (« paytala-dz.com » → « paytaladzcom ») */
+const hoteImiteTala = (hote) => imiteTala(hote) || /th?aladz/.test(normaliserNom(hote).replace(/[^a-z]/g, ''));
+
+/** Coordonnées qui servent à payer : leur changement demande le mot de passe et prévient le titulaire */
+const CLES_PAIEMENT = ['titulaire', 'baridimob_rip', 'ccp_numero', 'ccp_cle', 'especes', 'lien_url', 'lien_libelle', 'consignes'];
+// Toutes : un texte de consignes (« notre RIP a changé… ») détournerait autant qu'un RIP
+const CLES_SENSIBLES = CLES_PAIEMENT;
 
 /** Montant en DA (0 : gratuit ; vide : null) */
 const montant = (v, champ) => {
@@ -58,6 +89,18 @@ function normaliserMoyens(entree) {
   if (m.lien_url && !/^https:\/\/[^\s]+$/i.test(m.lien_url)) {
     throw AppError.badRequest('Le lien de paiement doit commencer par https://');
   }
+  if (m.lien_url) {
+    let hote = '';
+    try { hote = new URL(m.lien_url).hostname.toLowerCase(); } catch { throw AppError.badRequest('Lien de paiement invalide'); }
+    // Un lien « tala… » ferait croire que Tala DZ encaisse : refusé
+    if (hoteImiteTala(hote) || hote.startsWith('xn--') || hote.includes('.xn--')) {
+      throw AppError.badRequest('Ce lien de paiement n’est pas accepté : utilisez le lien direct de votre service de paiement.');
+    }
+  }
+  // Tala DZ n'encaisse jamais : un nom qui l'imite tromperait les acheteurs
+  for (const [champ, nom] of [['titulaire', 'Titulaire du compte'], ['lien_libelle', 'Nom du lien'], ['consignes', 'Consignes']]) {
+    if (m[champ] && imiteTala(m[champ], { nomSeul: champ === 'lien_libelle' })) throw AppError.badRequest(`${nom} : le nom de Tala DZ ne peut pas y figurer.`);
+  }
   if ((m.ccp_numero && !m.ccp_cle) || (!m.ccp_numero && m.ccp_cle)) {
     throw AppError.badRequest('CCP : indiquez le numéro et la clé');
   }
@@ -81,9 +124,51 @@ async function mesMoyens(models, idUser) {
   return lireMoyens(u?.moyens_paiement);
 }
 
-async function enregistrerMoyens(models, idUser, entree) {
+/**
+ * Enregistrement des moyens de paiement. Changer le RIP, le CCP, le titulaire ou le lien demande le
+ * mot de passe (une session volée ne suffit pas à détourner les paiements) ; le titulaire du compte
+ * est prévenu par e-mail et par notification, et le changement est journalisé.
+ */
+async function enregistrerMoyens(models, idUser, entree, { motDePasse, ip, userAgent, emailService, notificationService } = {}) {
   const moyens = normaliserMoyens(entree);
+  const u = await models.User.unscoped().findByPk(idUser, { attributes: ['id_user', 'email', 'nom', 'prenom', 'password', 'moyens_paiement'] });
+  if (!u) throw AppError.notFound('Compte');
+  const avant = lireMoyens(u.moyens_paiement);
+  // Vide, absent et « non coché » valent la même chose : seul un vrai changement compte
+  const valeur = (v) => (v === undefined || v === null || v === '' || v === false ? null : v);
+  const change = CLES_SENSIBLES.filter((k) => valeur(avant?.[k]) !== valeur(moyens?.[k]));
+  if (change.length) {
+    if (!motDePasse || typeof motDePasse !== 'string') {
+      throw AppError.badRequest('Confirmez avec votre mot de passe pour changer vos coordonnées de paiement.', 'MOT_DE_PASSE_REQUIS');
+    }
+    const bcrypt = require('bcrypt');
+    if (!u.password || !(await bcrypt.compare(motDePasse, u.password))) {
+      throw AppError.badRequest('Mot de passe incorrect', 'MOT_DE_PASSE_INCORRECT');
+    }
+  }
   await models.User.update({ moyens_paiement: moyens }, { where: { id_user: idUser } });
+
+  if (change.length) {
+    if (models.AuditLog?.create) {
+      await models.AuditLog.create({
+        id_admin: idUser, action: 'moyens_paiement_modifies', entity_type: 'user', entity_id: idUser,
+        details: { champs: change }, ip_address: ip ? String(ip).slice(0, 45) : null, user_agent: userAgent ? String(userAgent).slice(0, 500) : null,
+      }).catch(() => {});
+    }
+    await notifier(notificationService, idUser, {
+      titre: 'Coordonnées de paiement modifiées',
+      message: 'Vos coordonnées de paiement viennent d’être modifiées. Si ce n’est pas vous, changez votre mot de passe tout de suite et écrivez à contact@taladz.com.',
+      url_action: '/dashboard-pro', metadata: { champs: change },
+    });
+    if (emailService?.sendEmail && u.email) {
+      const nom = [texteLisible(u.prenom), texteLisible(u.nom)].filter(Boolean).join(' ');
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      Promise.resolve(emailService.sendEmail(u.email, 'Vos coordonnées de paiement ont été modifiées',
+        `<p>Bonjour ${esc(nom || '')},</p><p>Les coordonnées de paiement de votre compte Tala DZ (RIP, CCP ou lien de paiement) viennent d’être modifiées.</p>`
+        + '<p>Si c’est vous, il n’y a rien à faire.</p><p><b>Si ce n’est pas vous</b> : changez tout de suite votre mot de passe (« Mot de passe oublié » sur la page de connexion) et écrivez à contact@taladz.com.</p>'
+        + '<p>Rappel : Tala DZ n’encaisse jamais d’argent et ne vous demandera jamais vos codes bancaires.</p>', null, null, { type: 'securite' })).catch(() => {});
+    }
+  }
   return moyens;
 }
 
@@ -147,4 +232,4 @@ async function confirmerPaiement(models, evenementService, notificationService, 
   return { paye: recu, date_paiement: inscription.date_paiement };
 }
 
-module.exports = { normaliserMoyens, aUnMoyen, lireMoyens, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };
+module.exports = { INVISIBLES, CLES_PAIEMENT, CLES_SENSIBLES, normaliserMoyens, aUnMoyen, lireMoyens, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };

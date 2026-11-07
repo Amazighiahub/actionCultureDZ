@@ -70,3 +70,32 @@ describe('GET /sitemap.xml : résilience', () => {
     expect(res.text).not.toContain('/patrimoine/5');
   });
 });
+
+describe('plan du site gardé en mémoire', () => {
+  it('deux visites : la base n’est lue qu’une fois', async () => {
+    const { models } = buildModels();
+    // Base complète (rubrique des wilayas comprise) : un plan incomplet n'est pas gardé
+    models.Lieu.sequelize = { query: jest.fn(async () => []), QueryTypes: { SELECT: 'SELECT' } };
+    const app = express();
+    app.use('/sitemap.xml', initSitemapRoutes(models));
+    const a = await request(app).get('/sitemap.xml');
+    const lecturesApresUne = models.Oeuvre.findAll.mock.calls.length;
+    const b = await request(app).get('/sitemap.xml');
+    expect(a.status).toBe(200);
+    expect(b.text).toBe(a.text);
+    expect(models.Oeuvre.findAll).toHaveBeenCalledTimes(lecturesApresUne);
+  });
+});
+
+describe('plan du site incomplet', () => {
+  it('une rubrique en erreur : le plan est envoyé mais recalculé à la visite suivante', async () => {
+    const { models } = buildModels();
+    models.Lieu.sequelize = { query: jest.fn(async () => { throw new Error('base indisponible'); }) };
+    const app = express();
+    app.use('/sitemap.xml', initSitemapRoutes(models));
+    await request(app).get('/sitemap.xml');
+    const lectures = models.Oeuvre.findAll.mock.calls.length;
+    await request(app).get('/sitemap.xml');
+    expect(models.Oeuvre.findAll.mock.calls.length).toBeGreaterThan(lectures);
+  });
+});

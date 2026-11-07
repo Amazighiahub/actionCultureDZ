@@ -98,6 +98,9 @@ class CronService {
     // 7. Nettoyage des fichiers temporaires - Tous les jours à 4h
     this.scheduleJob('clean-temp-files', '0 4 * * *', () => this.cleanTempFiles());
 
+    // Photos envoyées sans compte (inscription) : effacées si aucun compte ne les utilise après 2 h
+    this.scheduleJob('nettoyer-quarantaine', '20 * * * *', () => require('./nettoyageQuarantaine').nettoyerQuarantaine(this.models));
+
     // 8. Mise à jour du statut des événements - Toutes les heures
     this.scheduleJob('update-event-status', '0 * * * *', () => this.updateEventStatuses());
 

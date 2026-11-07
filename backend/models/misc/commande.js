@@ -13,6 +13,11 @@ module.exports = (sequelize) => {
     id_acheteur: { type: DataTypes.INTEGER, allowNull: false },
     quantite: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1, validate: { min: 1, max: 20 } },
     prix_unitaire: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    // Haut de la fourchette annoncée (artisanat) : borne du montant que le vendeur peut fixer
+    prix_max_unitaire: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
+    modifs_montant: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    // Copie des coordonnées de paiement au moment de la commande
+    moyens_paiement: { type: DataTypes.JSON, allowNull: true },
     prix_a_confirmer: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     frais_envoi: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
     montant_total: { type: DataTypes.DECIMAL(10, 2), allowNull: false },

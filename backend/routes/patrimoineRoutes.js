@@ -5,7 +5,7 @@
 
 const express = require('express');
 const { publicHttpCache } = require('../middlewares/cacheMiddleware');
-const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
@@ -13,7 +13,8 @@ const { body } = require('express-validator');
 const { aUnTexte } = require('../helpers/i18n');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const limiteEnvois = [mediasLimiter];
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -85,7 +86,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
+  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(), ...limiteEnvois,
+    // Site inexistant : refusé avant de recevoir le fichier (avant, le fichier partait sur Cloudinary)
+    avantEnvoi(async (req) => {
+      const site = models.Lieu ? await models.Lieu.findByPk(parseInt(req.params.id, 10), { attributes: ['id_lieu'] }) : null;
+      if (!site) { const e = new Error('Site introuvable'); e.statusCode = 404; e.code = 'NOT_FOUND'; throw e; }
+    }),
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     [body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage('Langue invalide')],
     handleValidationErrors,

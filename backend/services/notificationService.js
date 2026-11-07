@@ -1,6 +1,6 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const logger = require('../utils/logger');
-const { budgetEnvoiGroupe } = require('./quotaEmail');
+const { budgetEnvoiGroupe, premiereFoisPendant } = require('./quotaEmail');
 const { lienPourEmail, STATUTS_AVEC_LIEN } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
 const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
@@ -140,20 +140,20 @@ class NotificationService {
         throw new Error('Utilisateur ou événement non trouvé');
       }
 
-      // Envoyer l'email
-      const result = await this.emailService.notifierValidationProfessionnel(
-        professionnel,
-        evenement,
-        statut,
-        notes
-      );
+      // E-mail, SMS et WhatsApp : une fois toutes les 10 minutes par participant (accepter puis refuser
+      // en boucle ne bombarde plus la personne ; la notification sur le site part toujours)
+      const envoiPermis = await premiereFoisPendant(`validation:${evenementId}:${userId}:${statut}`, 10 * 60);
+      const result = envoiPermis
+        ? await this.emailService.notifierValidationProfessionnel(professionnel, evenement, statut, notes)
+        : { success: false, limite: 'repetition' };
 
-      // SMS + WhatsApp
-      await this._envoyerSmsWhatsapp(professionnel, 'validation', {
-        nomEvenement: this._str(evenement.nom_evenement),
-        statut,
-        notes
-      });
+      if (envoiPermis) {
+        await this._envoyerSmsWhatsapp(professionnel, 'validation', {
+          nomEvenement: this._str(evenement.nom_evenement),
+          statut,
+          notes
+        });
+      }
 
       // Enregistrer la notification dans la base
       await this.enregistrerNotification({
@@ -291,7 +291,12 @@ class NotificationService {
     const resume = [...nouveautes, ...(nouveauLien ? ['Le lien de réunion a changé'] : [])];
     if (resume.length === 0) return { notified: 0 };
 
-    const results = await this.emailService.notifierChangementEvenement(participants, evenement, nouveauLien ? lignesPour : nouveautes);
+    // Une fois toutes les 6 h pour un même contenu : une correction (autre date, nouveau lien) repart tout de suite
+    const empreinteAvis = require('crypto').createHash('sha256').update(JSON.stringify(resume)).digest('hex').slice(0, 16);
+    const emailsPermis = await premiereFoisPendant(`changement:${evenementId}:${empreinteAvis}`, 6 * 3600);
+    const results = emailsPermis
+      ? await this.emailService.notifierChangementEvenement(participants, evenement, nouveauLien ? lignesPour : nouveautes)
+      : [];
     await this.enregistrerNotificationsMultiples(participants.map(participant => ({
       id_user: participant.id_user,
       type_notification: 'modification_programme',
@@ -797,7 +802,8 @@ class NotificationService {
           await file.addEmail({
             to: user.email, subject: title, html: withUnsubscribeFooter(html, url, 'annonces'),
             texteBrut: `${title}\n\n${message}\n\n--\nTala DZ — taladz.com\nNe plus recevoir ces annonces : ${url}`,
-            headers: unsubscribeHeaders(url)
+            headers: unsubscribeHeaders(url),
+            type: direct ? 'transactionnel' : 'groupe'
           });
           enFile++;
         } catch (err) {
@@ -817,7 +823,7 @@ class NotificationService {
         const res = await this.emailService.sendEmail(
           user.email, title, withUnsubscribeFooter(html, url, 'annonces'), null,
           `${title}\n\n${message}\n\n--\nTala DZ — taladz.com\nNe plus recevoir ces annonces : ${url}`,
-          { headers: unsubscribeHeaders(url), sansRelance: direct }
+          { headers: unsubscribeHeaders(url), sansRelance: direct, type: direct ? 'transactionnel' : 'groupe' }
         );
         if (res && res.success === false) {
           echecs++;

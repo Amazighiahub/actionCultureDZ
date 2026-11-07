@@ -238,6 +238,23 @@ const uploadLimiter = rateLimit(withStore('upload', {
   },
 }));
 
+// 3c bis. Paiement direct et commandes : limites propres (avant : partagées avec d'autres créations)
+const limiteParPersonne = (nom, windowMs, max, message) => rateLimit(withStore(nom, {
+  windowMs,
+  max: IS_PRODUCTION ? max : max * 10,
+  keyGenerator: parPersonne,
+  handler: (req, res) => res.status(429).json({ success: false, error: message }),
+}));
+// Médias des fiches (œuvres, artisanat, patrimoine, extraits) : le site les envoie un par un
+// 400 par heure : un catalogue importé envoie une couverture par livre (300 lignes au plus)
+const mediasLimiter = limiteParPersonne('medias', 60 * 60 * 1000, 400, 'Trop d’envois de fichiers en une heure : réessayez plus tard.');
+// Moyens de paiement : le mot de passe y est vérifié (pas d'essais en masse)
+const moyensPaiementLimiter = limiteParPersonne('moyens-paiement', 15 * 60 * 1000, 10, 'Trop d’essais : réessayez dans 15 minutes.');
+// Nouvelles commandes : 10 par heure et par personne (vendeurs protégés des notifications en masse)
+const commandeLimiter = limiteParPersonne('commande', 60 * 60 * 1000, 10, 'Trop de commandes en peu de temps : réessayez plus tard.');
+// Étapes d'une commande (paiement reçu, envoyée, annulée, montant)
+const commandeEtapeLimiter = limiteParPersonne('commande-etape', 60 * 60 * 1000, 60, 'Trop d’actions en peu de temps : réessayez plus tard.');
+
 // 3d. Rate limiter strict pour uploads PUBLICS (sans auth) — 5/h/IP
 const publicUploadLimiter = rateLimit(withStore('upload-public', {
   windowMs: 60 * 60 * 1000, // 1 heure
@@ -426,6 +443,36 @@ const endpointLimiters = {
  * - par e-mail, toutes IP confondues : plafond plus haut (30) contre une attaque répartie.
  * Seuls les mauvais mots de passe comptent (pas un compte suspendu ou un e-mail non vérifié).
  */
+/**
+ * Appareil déjà connu : après une connexion réussie, le navigateur garde un témoin signé (HttpOnly),
+ * propre à l'adresse e-mail. Le verrou « toutes IP confondues » ne s'applique pas à cet appareil :
+ * quelqu'un qui accumule de faux mots de passe depuis d'autres adresses IP ne bloque plus le titulaire
+ * sur son propre ordinateur ou téléphone. Le verrou par (e-mail, IP) reste valable pour tous.
+ */
+const TEMOIN_APPAREIL = 'appareil_connu';
+const cleAppareil = () => crypto.createHmac('sha256', String(process.env.APPAREIL_SECRET || process.env.JWT_SECRET || ''))
+  .update('tala:appareil-connu:v1').digest();
+const signatureAppareil = (email) => crypto.createHmac('sha256', cleAppareil()).update(String(email).toLowerCase()).digest('base64url');
+const secretAppareilPresent = () => !!(process.env.APPAREIL_SECRET || process.env.JWT_SECRET);
+function appareilConnu(req, email) {
+  if (!secretAppareilPresent()) return false;
+  const valeur = req.cookies?.[TEMOIN_APPAREIL];
+  if (!valeur || typeof valeur !== 'string' || !email) return false;
+  const attendu = Buffer.from(signatureAppareil(email));
+  const recu = Buffer.from(valeur);
+  return attendu.length === recu.length && crypto.timingSafeEqual(attendu, recu);
+}
+function marquerAppareilConnu(res, email) {
+  if (!res?.cookie || !email || !secretAppareilPresent()) return;
+  res.cookie(TEMOIN_APPAREIL, signatureAppareil(email), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/users/login',
+    maxAge: 365 * 24 * 3600 * 1000,
+  });
+}
+
 class AccountRateLimiter {
   constructor(options = {}) {
     this.maxAttempts = options.maxAttempts || 5;
@@ -489,7 +536,8 @@ class AccountRateLimiter {
     const { parIp, global } = this._cles(email, req.ip);
 
     Promise.all([this._getAttempts(parIp), this._getAttempts(global)]).then(([a, b]) => {
-      const verrous = [a, b].filter(x => x && Date.now() < x.lockoutUntil);
+      // Verrou global (attaque répartie) : pas pour un appareil où le titulaire s'est déjà connecté
+      const verrous = [a, appareilConnu(req, email) ? null : b].filter(x => x && Date.now() < x.lockoutUntil);
       const attempts = verrous.sort((x, y) => y.lockoutUntil - x.lockoutUntil)[0];
       if (attempts) {
         const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
@@ -588,6 +636,9 @@ async function logRateLimitViolation(userId, endpoint, ip) {
 }
 
 module.exports = {
+  AccountRateLimiter,
+  appareilConnu,
+  marquerAppareilConnu,
   StoreTolerant,
   globalLimiter,
   strictLimiter,
@@ -597,6 +648,10 @@ module.exports = {
   pdfLimiter,
   commentLimiter,
   uploadLimiter,
+  moyensPaiementLimiter,
+  mediasLimiter,
+  commandeLimiter,
+  commandeEtapeLimiter,
   viewLimiter,
   dynamicLimiter,
   progressiveLimiter,

@@ -2,7 +2,7 @@
 const logger = require('../utils/logger');
 const { lienPourEmail } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
-const { compterEnvoi } = require('./quotaEmail');
+const { compterEnvoi, reserverEnvoi, rendreEnvoi } = require('./quotaEmail');
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
@@ -182,6 +182,17 @@ class EmailService {
       return { success: true, messageId: 'simulated-' + Date.now() };
     }
 
+    // Quota : part du type d'e-mail et limite par destinataire (une seule fois : pas pour une relance)
+    let reservation = null;
+    if (!options.dejaReserve) {
+      const r = await reserverEnvoi(to, options.type || 'transactionnel', { sansLimiteDestinataire: !!options.sansLimiteDestinataire });
+      reservation = r;
+      if (!r.ok) {
+        logger.warn(`Email non envoyé (limite du jour : ${r.raison}, type ${options.type || 'transactionnel'}) → ${maskEmail(to)}`);
+        return { success: false, error: 'Limite d’envoi du jour atteinte', limite: r.raison };
+      }
+    }
+
     try {
       const mailOptions = {
         from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -194,14 +205,17 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      await compterEnvoi();
+      // Compté à la réservation ; seul un envoi non réservé (cas exceptionnel) est compté ici
+      if (options.dejaReserve === undefined && !reservation) await compterEnvoi();
       logger.info(`Email envoyé. ID: ${result.messageId} → ${maskEmail(to)}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
       logger.error('Erreur envoi email:', error.message);
-      if (!options.sansRelance && !attachments && await this._relancerPlusTard({ to, subject, html, texteBrut: text, headers })) {
+      if (!options.sansRelance && !attachments && await this._relancerPlusTard({ to, subject, html, texteBrut: text, headers, dejaReserve: true, type: options.type })) {
         return { success: true, enAttente: true };
       }
+      // Pas envoyé et pas remis en file : les places du quota sont rendues
+      await rendreEnvoi(reservation).catch(() => {});
       return { success: false, error: error.message };
     }
   }
@@ -242,7 +256,7 @@ class EmailService {
         verificationUrl: verificationUrl,
       });
 
-      return await this.sendEmail(user.email, 'Vérifiez votre compte Tala DZ', html);
+      return await this.sendEmail(user.email, 'Vérifiez votre compte Tala DZ', html, null, null, { type: 'verification' });
     } catch (error) {
       logger.error("Erreur dans sendVerificationEmail:", error);
       return { success: false, error: error.message };
@@ -261,7 +275,7 @@ class EmailService {
         email: user.email,
       });
 
-      return await this.sendEmail(user.email, 'Confirmation de changement de mot de passe', html);
+      return await this.sendEmail(user.email, 'Confirmation de changement de mot de passe', html, null, null, { type: 'securite' });
     } catch (error) {
       logger.error("Erreur dans sendPasswordChangeEmail:", error);
       return { success: false, error: error.message };
@@ -310,7 +324,7 @@ class EmailService {
           <p style="font-size: 14px; color: #6b6a63;">Vous ne souhaitez pas de compte ? Ne faites rien, ou écrivez-nous à contact@taladz.com et nous le supprimerons.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Votre accès à Tala DZ et votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Votre accès à Tala DZ et votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html, null, null, { type: 'groupe' });
     } catch (error) {
       logger.error('Erreur dans sendInvitationInscription:', error);
       return { success: false, error: error.message };
@@ -338,7 +352,7 @@ class EmailService {
           <p style="font-size: 14px; color: #6b6a63;">Vous n'êtes pas à l'origine de cette demande ? Cliquez sur « Refuser » sur la page de l'événement, ou ignorez ce message.</p>
           <p>L'équipe Tala DZ</p>
         </div>`;
-      return await this.sendEmail(user.email, `Confirmez votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html);
+      return await this.sendEmail(user.email, `Confirmez votre inscription : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html, null, null, { type: 'groupe' });
     } catch (error) {
       logger.error('Erreur dans sendDemandeConfirmationInscription:', error);
       return { success: false, error: error.message };
@@ -384,7 +398,7 @@ class EmailService {
         `\nL'événement : ${pageEvenement}`
       ].filter(l => l !== '').join('\n');
       const sujet = `${titre} — ${nomEvenement || 'Tala DZ'}`.replace(/[\r\n]+/g, ' ');
-      return await this.sendEmail(user.email, sujet, html, null, texte);
+      return await this.sendEmail(user.email, sujet, html, null, texte, { type: 'groupe' });
     } catch (error) {
       logger.error('Erreur dans sendMessageParticipant:', error);
       return { success: false, error: error.message };
@@ -421,7 +435,7 @@ class EmailService {
         `;
       }
 
-      return await this.sendEmail(user.email, 'Votre mot de passe pour accéder à Tala DZ (taladz.com)', html);
+      return await this.sendEmail(user.email, 'Votre mot de passe pour accéder à Tala DZ (taladz.com)', html, null, null, { type: 'reinitialisation' });
     } catch (error) {
       logger.error("Erreur dans sendPasswordResetEmail:", error);
       return { success: false, error: error.message };
@@ -454,7 +468,7 @@ class EmailService {
         `;
       }
 
-      return await this.sendEmail(user.email, 'Votre mot de passe a été modifié', html);
+      return await this.sendEmail(user.email, 'Votre mot de passe a été modifié', html, null, null, { type: 'securite' });
     } catch (error) {
       logger.error("Erreur dans sendPasswordChangedEmail:", error);
       return { success: false, error: error.message };
@@ -481,7 +495,7 @@ class EmailService {
         </div>
       `;
 
-      return await this.sendEmail(user.email, 'Demande de changement d\'email', html);
+      return await this.sendEmail(user.email, 'Demande de changement d\'email', html, null, null, { type: 'securite' });
     } catch (error) {
       logger.error("Erreur dans sendEmailChangeNotification:", error);
       return { success: false, error: error.message };
@@ -509,7 +523,7 @@ class EmailService {
         </div>
       `;
 
-      return await this.sendEmail(newEmail, 'Confirmez votre nouvelle adresse email', html);
+      return await this.sendEmail(newEmail, 'Confirmez votre nouvelle adresse email', html, null, null, { type: 'securite' });
     } catch (error) {
       logger.error("Erreur dans sendEmailChangeConfirmation:", error);
       return { success: false, error: error.message };
@@ -776,7 +790,7 @@ class EmailService {
             <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
-        const result = await this.sendEmail(user.email, `Événement modifié : ${this._sanitizeSubject(nomEvenementStr)}`, html);
+        const result = await this.sendEmail(user.email, `Événement modifié : ${this._sanitizeSubject(nomEvenementStr)}`, html, null, null, { type: 'groupe' });
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi changement d'événement à ${maskEmail(participant.User?.email)}:`, error);
@@ -809,7 +823,7 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `Événement annulé : ${this._sanitizeSubject(nomEvenementStr)}`, html);
+        const result = await this.sendEmail(user.email, `Événement annulé : ${this._sanitizeSubject(nomEvenementStr)}`, html, null, null, { type: 'annulation' });
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi annulation à ${maskEmail(participant.User?.email)}:`, error);
@@ -862,7 +876,7 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `${this._sanitizeSubject(sujet)} : ${this._sanitizeSubject(nomEvenementStr)}`, html);
+        const result = await this.sendEmail(user.email, `${this._sanitizeSubject(sujet)} : ${this._sanitizeSubject(nomEvenementStr)}`, html, null, null, { type: 'groupe' });
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi modification programme à ${maskEmail(participant.User?.email)}:`, error);
@@ -906,7 +920,7 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `Nouvel événement : ${this._sanitizeSubject(nomEvenementStr)}`, html);
+        const result = await this.sendEmail(user.email, `Nouvel événement : ${this._sanitizeSubject(nomEvenementStr)}`, html, null, null, { type: 'groupe' });
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi nouvel événement à ${maskEmail(user.email)}:`, error);
@@ -941,7 +955,11 @@ class EmailService {
       return await this.sendEmail(
         email,
         `Rappel : ${this._sanitizeSubject(nomEvenement)} - Demain !`,
-        html
+        html,
+        null,
+        null,
+        // Rappels envoyés à tous les inscrits : part « envois groupés »
+        { type: 'groupe' }
       );
     } catch (error) {
       logger.error("Erreur dans sendEventReminder:", error);

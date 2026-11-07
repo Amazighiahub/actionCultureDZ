@@ -295,6 +295,9 @@ class ImportInscriptions {
     }
     aFaire.splice(0, aFaire.length, ...aFaire.filter(x => !(x.profil_inconnu && !x.reponses.profil)));
 
+    // Part « envois groupés » du jour : au-delà, l'inscription est créée et l'invitation reste à relancer
+    let budget = inviter ? await budgetEnvoiGroupe() : 0;
+    let aRelancer = 0;
     for (const l of aFaire) {
       try {
         let user = await this.models.User.findOne({ where: { email: l.email } });
@@ -329,7 +332,9 @@ class ImportInscriptions {
           }
         });
         if (cree) bilan.inscrits += 1;
-        if (cree && inviter && this.emailService) {
+        if (cree && inviter && this.emailService && budget <= 0) aRelancer += 1;
+        if (cree && inviter && this.emailService && budget > 0) {
+          budget -= 1;
           // Compte importé jamais activé (par un autre organisateur, par exemple) : il faut encore choisir
           // un mot de passe. « Confirmez » seul mènerait à une connexion impossible.
           const aActiver = nouveau || (!user.email_verifie && !user.accepte_conditions);
@@ -341,6 +346,9 @@ class ImportInscriptions {
         this.logger.error?.(`Import inscription ligne ${l.ligne}: ${e.message}`);
         bilan.erreurs.push(`Ligne ${l.ligne} (${l.email}) : ${e.message}`);
       }
+    }
+    if (aRelancer) {
+      bilan.erreurs.push(`${aRelancer} invitation(s) non envoyée(s) aujourd’hui (limite d’envoi du jour) : relancez-les demain depuis la liste des participants, ou écrivez-leur avec votre messagerie.`);
     }
     return bilan;
   }

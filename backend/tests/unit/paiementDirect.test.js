@@ -96,3 +96,94 @@ describe('confirmation par l’organisateur', () => {
     expect(c.notificationService.sendToUser).not.toHaveBeenCalled();
   });
 });
+
+describe('changement des coordonnées de paiement (protection contre le détournement)', () => {
+  const bcrypt = require('bcrypt');
+  const MDP = 'Essai-Exemple-2026!';
+  function modeles(moyens = { baridimob_rip: '00799999000012345678' }) {
+    const u = { id_user: 7, email: 'vendeuse@example.com', nom: 'Exemple', prenom: 'Lina', password: bcrypt.hashSync(MDP, 4), moyens_paiement: moyens };
+    return {
+      u,
+      models: {
+        User: {
+          unscoped: () => ({ findByPk: async () => u }),
+          update: jest.fn(async (ch) => { Object.assign(u, ch); return [1]; }),
+        },
+        AuditLog: { create: jest.fn(async () => ({})) },
+      },
+      notificationService: { sendToUser: jest.fn(async () => true) },
+      emailService: { sendEmail: jest.fn(async () => ({ success: true })) },
+    };
+  }
+  const NOUVEAU = { baridimob_rip: '00799999000099999999' };
+
+  it('changer le RIP sans mot de passe, ou avec un faux : refusé, rien n’est changé', async () => {
+    const m = modeles();
+    await expect(p.enregistrerMoyens(m.models, 7, NOUVEAU, {})).rejects.toMatchObject({ code: 'MOT_DE_PASSE_REQUIS' });
+    await expect(p.enregistrerMoyens(m.models, 7, NOUVEAU, { motDePasse: 'faux' })).rejects.toMatchObject({ code: 'MOT_DE_PASSE_INCORRECT' });
+    expect(m.models.User.update).not.toHaveBeenCalled();
+  });
+
+  it('avec le bon mot de passe : changé, titulaire prévenu (notification et e-mail), changement journalisé', async () => {
+    const m = modeles();
+    await p.enregistrerMoyens(m.models, 7, NOUVEAU, { motDePasse: MDP, notificationService: m.notificationService, emailService: m.emailService });
+    expect(m.u.moyens_paiement.baridimob_rip).toBe('00799999000099999999');
+    expect(m.notificationService.sendToUser).toHaveBeenCalledWith(7, expect.objectContaining({ titre: 'Coordonnées de paiement modifiées' }));
+    expect(m.emailService.sendEmail).toHaveBeenCalledWith('vendeuse@example.com', expect.any(String), expect.any(String), null, null, { type: 'securite' });
+    expect(m.models.AuditLog.create).toHaveBeenCalledWith(expect.objectContaining({ action: 'moyens_paiement_modifies', details: { champs: ['baridimob_rip'] } }));
+  });
+
+  it('frais d’envoi seuls : pas de mot de passe demandé, personne n’est dérangé', async () => {
+    const m = modeles();
+    await p.enregistrerMoyens(m.models, 7, { baridimob_rip: '00799999000012345678', envoi_algerie: 500 }, { notificationService: m.notificationService, emailService: m.emailService });
+    expect(m.u.moyens_paiement.envoi_algerie).toBe(500);
+    expect(m.emailService.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it('noms et liens qui imitent Tala DZ, ou adresses déguisées : refusés', () => {
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'Tala DZ paiements' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ lien_url: 'https://paiement-taladz.example.com/x' })).toThrow(/pas accepté/);
+    expect(() => p.normaliserMoyens({ lien_url: 'https://xn--pypal-4ve.com/x' })).toThrow(/pas accepté/);
+    expect(() => p.normaliserMoyens({ lien_url: 'https://www.paypal.me/exemple', lien_libelle: 'ثالا' })).toThrow();
+    expect(p.normaliserMoyens({ lien_url: 'https://www.paypal.me/exemple', lien_libelle: 'PayPal' }).lien_url).toBe('https://www.paypal.me/exemple');
+  });
+});
+
+describe('après la relecture : consignes et noms', () => {
+  const bcrypt = require('bcrypt');
+  it('changer seulement les consignes demande aussi le mot de passe', async () => {
+    const u = { id_user: 7, email: 'v@example.com', password: bcrypt.hashSync('Essai-2026!x', 4), moyens_paiement: { especes: true } };
+    const models = { User: { unscoped: () => ({ findByPk: async () => u }), update: jest.fn() } };
+    await expect(p.enregistrerMoyens(models, 7, { especes: true, consignes: 'Notre RIP a changé : 0079…' }, {})).rejects.toMatchObject({ code: 'MOT_DE_PASSE_REQUIS' });
+    expect(models.User.update).not.toHaveBeenCalled();
+  });
+
+  it('nom déguisé (caractère invisible, tatouil) refusé ; un nom ordinaire accepté', () => {
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'Tala\u200B DZ' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'ثـالا' })).toThrow(/Tala DZ/);
+    expect(p.normaliserMoyens({ especes: true, titulaire: 'Ait Ala Dziri' }).titulaire).toBe('Ait Ala Dziri');
+    expect(p.normaliserMoyens({ especes: true, consignes: 'Merci\u202E !' }).consignes).toBe('Merci !');
+  });
+});
+
+describe('après la deuxième relecture : nom de la plateforme', () => {
+  it('« Thala DZ », voyelles arabes et nom dans les consignes : refusés', () => {
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'Thala DZ' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'ثَالا' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ especes: true, consignes: 'Virement à Tala DZ, compte officiel' })).toThrow(/Consignes/);
+    expect(p.normaliserMoyens({ especes: true, consignes: 'Indiquez votre nom dans le motif.' }).consignes).toBe('Indiquez votre nom dans le motif.');
+  });
+});
+
+describe('après la troisième relecture : nom de la plateforme', () => {
+  it('le prénom تالا est permis dans un nom de titulaire ; « تالا دي زد » ne l’est pas', () => {
+    expect(p.normaliserMoyens({ especes: true, titulaire: 'تالا بن علي' }).titulaire).toBe('تالا بن علي');
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'ثالا دي زد' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ lien_url: 'https://www.paypal.me/exemple', lien_libelle: 'ثالا' })).toThrow(/Tala DZ/);
+  });
+  it('adresse « paytala-dz.com », lettres cyrilliques, marque arabe invisible : refusées', () => {
+    expect(() => p.normaliserMoyens({ lien_url: 'https://paytala-dz.com/x' })).toThrow(/pas accepté/);
+    expect(() => p.normaliserMoyens({ especes: true, titulaire: 'T\u0430la DZ' })).toThrow(/Tala DZ/);
+    expect(() => p.normaliserMoyens({ especes: true, consignes: 'ثا\u061Cلا دي زد' })).toThrow(/Consignes/);
+  });
+});

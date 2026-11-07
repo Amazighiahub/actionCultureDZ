@@ -52,14 +52,14 @@ const usersMethods = {
       delete updateData.id_user;
       delete updateData.date_creation;
 
-      const user = await container.userManagementService.updateUser(id, updateData);
+      const user = await container.userManagementService.updateUser(id, updateData, req.user.id_user);
       res.json({ success: true, message: req.t('admin.userUpdated'), data: user });
     } catch (error) {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      if (error.statusCode === 400) {
-        return res.status(400).json({ success: false, error: error.message });
+      if (error.statusCode === 400 || error.statusCode === 403) {
+        return res.status(error.statusCode).json({ success: false, error: error.message });
       }
       console.error('Erreur updateUser:', error.message);
       res.status(500).json({ success: false, error: req.t('common.serverError') });
@@ -116,6 +116,9 @@ const usersMethods = {
       }
       if (error.message === 'Rôle non trouvé') {
         return res.status(404).json({ success: false, error: req.t('admin.roleNotFound') });
+      }
+      if (error.statusCode === 403) {
+        return res.status(403).json({ success: false, error: error.message });
       }
       console.error('Erreur changeUserRole:', error.message);
       res.status(500).json({ success: false, error: req.t('common.serverError') });

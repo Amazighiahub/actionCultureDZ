@@ -86,14 +86,15 @@ class EmailQueueService {
     // NOTE: emailService.sendEmail(to, subject, html, attachments)
     // Si seul `text` est fourni, on l'encapsule en HTML minimal.
     this.queues.email.process('send-email', async (job) => {
-      const { to, subject, text, html, attachments, texteBrut, headers } = job.data;
+      const { to, subject, text, html, attachments, texteBrut, headers, dejaReserve, type } = job.data;
 
       logger.info(`📧 Traitement email: ${subject} → ${maskEmail(to)}`);
 
       const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
       // texteBrut / headers : version texte et en-têtes de désabonnement (annonces de l'administration)
       // sansRelance : c'est déjà une tâche de la file, avec ses propres nouveaux essais
-      const result = await emailService.sendEmail(to, subject, body, attachments, texteBrut || null, { ...(headers ? { headers } : {}), sansRelance: true });
+      // dejaReserve : relance d'un e-mail déjà compté dans le quota (pas une seconde fois)
+      const result = await emailService.sendEmail(to, subject, body, attachments, texteBrut || null, { ...(headers ? { headers } : {}), sansRelance: true, dejaReserve: !!dejaReserve, ...(type ? { type } : {}) });
 
       if (!result.success) {
         throw new Error(result.error || 'Échec envoi email');
@@ -154,7 +155,8 @@ class EmailQueueService {
             body,
             null,
             null,
-            headers ? { headers } : {}
+            // Envois en masse (rappels, résumés) : part « groupe » du quota
+            { ...(headers ? { headers } : {}), type: template.type || 'groupe' }
           );
           
           results.push({ email: email.to, success: result.success });
@@ -228,7 +230,7 @@ class EmailQueueService {
         body,
         emailData.attachments,
         null,
-        { sansRelance: true }
+        { sansRelance: true, dejaReserve: !!emailData.dejaReserve, ...(emailData.type ? { type: emailData.type } : {}) }
       );
     }
 
@@ -258,7 +260,7 @@ class EmailQueueService {
       Promise.resolve(ajout).then((job) => job?.remove?.()).catch(() => {});
       const corps = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
       return emailService.sendEmail(emailData.to, emailData.subject, corps, emailData.attachments, emailData.texteBrut || null,
-        { ...(emailData.headers ? { headers: emailData.headers } : {}), sansRelance: true });
+        { ...(emailData.headers ? { headers: emailData.headers } : {}), sansRelance: true, dejaReserve: !!emailData.dejaReserve, ...(emailData.type ? { type: emailData.type } : {}) });
     } finally {
       clearTimeout(minuteur);
     }

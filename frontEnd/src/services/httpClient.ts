@@ -576,6 +576,7 @@ class HttpClient {
     // Gérer le type unknown de response.data
     let message = error.message;
     let details: Record<string, unknown> | undefined = undefined;
+    let codeServeur: string | undefined;
 
     if (error.response?.data) {
       const responseData = error.response.data;
@@ -585,6 +586,8 @@ class HttpClient {
         const data = responseData as Record<string, unknown>;
         message = typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : message;
         details = typeof data.details === 'object' && data.details !== null ? data.details as Record<string, unknown> : undefined;
+        // Code du serveur d'abord (ex. MOT_DE_PASSE_REQUIS) ; sinon celui d'Axios (ERR_NETWORK…)
+        codeServeur = typeof data.code === 'string' ? data.code : undefined;
       } else if (typeof responseData === 'string') {
         message = responseData;
       }
@@ -593,7 +596,7 @@ class HttpClient {
     return new HttpError(
       message,
       error.response?.status,
-      error.code,
+      codeServeur || error.code,
       details
     );
   }

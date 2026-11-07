@@ -1,4 +1,6 @@
 /** Date ou lieu d'un événement changés : les inscrits sont prévenus */
+// Règle « une fois toutes les 6 h » neutralisée : chaque test simule un avis indépendant
+jest.mock('../../services/quotaEmail', () => ({ ...jest.requireActual('../../services/quotaEmail'), premiereFoisPendant: async () => true }));
 const NotificationService = require('../../services/notificationService');
 
 const service = () => {

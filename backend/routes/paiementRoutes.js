@@ -7,10 +7,11 @@ const { body } = require('express-validator');
 const asyncHandler = require('../utils/asyncHandler');
 const { validateId, handleValidationErrors } = require('../middlewares/validationMiddleware');
 const paiement = require('../services/paiementDirect');
+const { moyensPaiementLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const repondreErreur = (res, err) => {
   if (!err.statusCode || err.statusCode >= 500) throw err;
-  res.status(err.statusCode).json({ success: false, error: err.message });
+  res.status(err.statusCode).json({ success: false, error: err.message, code: err.code });
 };
 
 module.exports = (models, authMiddleware) => {
@@ -23,9 +24,14 @@ module.exports = (models, authMiddleware) => {
     res.set('Cache-Control', 'private, no-store');
     res.json({ success: true, data: await paiement.mesMoyens(models, req.user.id_user) });
   }));
-  router.put('/mes-moyens', authenticate, requireValidatedProfessional, requireVerifiedEmail, asyncHandler(async (req, res) => {
+  // Limite stricte : le mot de passe y est vérifié (pas d'essais en masse)
+  router.put('/mes-moyens', authenticate, requireValidatedProfessional, requireVerifiedEmail, moyensPaiementLimiter, asyncHandler(async (req, res) => {
     try {
-      res.json({ success: true, data: await paiement.enregistrerMoyens(models, req.user.id_user, req.body?.moyens ?? null) });
+      const c = container();
+      res.json({ success: true, data: await paiement.enregistrerMoyens(models, req.user.id_user, req.body?.moyens ?? null, {
+        motDePasse: req.body?.mot_de_passe, ip: req.ip, userAgent: req.get('user-agent'),
+        emailService: require('../services/emailService'), notificationService: c.notificationService,
+      }) });
     } catch (err) { repondreErreur(res, err); }
   }));
 

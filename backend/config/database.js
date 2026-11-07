@@ -21,7 +21,9 @@ const SLOW_QUERY_MS = parseInt(process.env.DB_SLOW_QUERY_MS || '500');
  */
 function slowQueryLogger(queryString, timing) {
   if (timing && timing.elapsed >= SLOW_QUERY_MS) {
-    logger.warn(`🐌 Slow query (${timing.elapsed}ms): ${queryString.substring(0, 500)}`);
+    // Valeurs masquées (chaînes entre apostrophes) : pas de donnée personnelle dans les journaux
+    const masquee = String(queryString).replace(/'(?:[^'\\]|\\.)*'/g, "'?'").substring(0, 500);
+    logger.warn(`🐌 Slow query (${timing.elapsed}ms): ${masquee}`);
   }
 }
 

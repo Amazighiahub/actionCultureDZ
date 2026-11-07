@@ -600,10 +600,24 @@ class UserRepository extends BaseRepository {
 
     return this.withTransaction(async (transaction) => {
       const tx = { transaction };
+      // Même ordre de verrous que les commandes : œuvres, puis compte (sinon interblocage possible avec
+      // une commande passée au même moment)
+      const verrou = transaction?.LOCK ? { lock: transaction.LOCK.UPDATE } : {};
+      if (m.Oeuvre?.findAll) await m.Oeuvre.findAll({ where: { saisi_par: userId }, attributes: ['id_oeuvre'], ...verrou, transaction });
       const user = await this.model.unscoped().findByPk(userId, {
         attributes: ['id_user', 'email', 'photo_url', 'documents_fournis'],
+        ...verrou,
         transaction
       });
+      // Suppression par la personne elle-même : une commande arrivée entre la vérification et maintenant bloque encore
+      if (user && !adminId && m.Commande) {
+        const enCours = await require('../services/commandes').commandesEnCours(m, userId, transaction);
+        if (enCours > 0) {
+          const e = new Error('Vous avez des commandes à régler : voyez « Mes commandes » avant de supprimer votre compte.');
+          e.statusCode = 409;
+          throw e;
+        }
+      }
       if (!user) return { deleted: false, type: 'hard', files: [] };
       if (user.email === DELETED_USER_EMAIL) {
         throw new Error('Le compte « Utilisateur supprimé » ne peut pas être supprimé');
@@ -676,6 +690,19 @@ class UserRepository extends BaseRepository {
           { where: { id_user: userId }, ...tx, ...UPDATE });
       }
       if (m.NewsletterAbonne) await m.NewsletterAbonne.destroy({ where: { email: user.email }, ...tx });
+
+      // Commandes : gardées pour l'autre partie (montant, date, état), sans l'adresse, le téléphone
+      // ni le message de la personne qui part ; rattachées au compte « Utilisateur supprimé »
+      // (avant : la suppression en cascade effaçait l'historique des acheteurs et des vendeurs)
+      if (m.Commande) {
+        // Sauf les commandes payées pas encore envoyées : le vendeur en a besoin pour expédier
+        await m.Commande.update({ adresse: null, telephone: null, message: null },
+          { where: { id_acheteur: userId, statut: { [Op.ne]: 'payee' } }, ...tx, ...UPDATE });
+        await m.Commande.update({ moyens_paiement: null },
+          { where: { id_vendeur: userId }, ...tx, ...UPDATE });
+        await reassign(m.Commande, 'id_acheteur');
+        await reassign(m.Commande, 'id_vendeur');
+      }
 
       // 2. Contenus qui exigent un auteur : rattachés au compte « Utilisateur supprimé »
       await reassign(m.Evenement, 'id_user');

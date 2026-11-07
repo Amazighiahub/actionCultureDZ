@@ -35,7 +35,7 @@ async function envoyerConfirmation(abonne) {
       <p>Aucun compte ni mot de passe n'est nécessaire. Ce lien est valable ${CONFIRMATION_JOURS} jours.</p>
       <p style="font-size: 14px; color: #6b6a63;">Vous n'êtes pas à l'origine de cette demande ? Ignorez ce message : votre adresse ne recevra rien de plus.</p>
     </div>`;
-  return emailService.sendEmail(abonne.email, 'Confirmez votre inscription à la newsletter Tala DZ', html);
+  return emailService.sendEmail(abonne.email, 'Confirmez votre inscription à la newsletter Tala DZ', html, null, null, { type: 'newsletter' });
 }
 
 /**

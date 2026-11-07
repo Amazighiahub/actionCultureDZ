@@ -24,7 +24,9 @@ const FOLDERS = {
   artisanat:  'eventculture/artisanat/images',
   video:      'eventculture/videos',
   audio:      'eventculture/audios',
-  document:   'eventculture/documents'
+  document:   'eventculture/documents',
+  // Photos envoyées avant la création du compte (inscription) : effacées si aucun compte ne les utilise
+  quarantaine: 'eventculture/quarantaine'
 };
 
 // ============================================================

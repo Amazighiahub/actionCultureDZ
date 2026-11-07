@@ -156,7 +156,10 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
                 <Label htmlFor="cmd-quantite">{t('commande.quantite', 'Quantité')}</Label>
                 <Input id="cmd-quantite" type="number" min={1} max={maxQuantite} value={quantite} className="w-28"
                   onChange={(e) => setQuantite(Math.max(1, Math.min(maxQuantite, Number(e.target.value) || 1)))} />
-                {offre.stock !== null && offre.stock !== undefined && (
+                {offre.unique && (
+                  <p className="text-xs text-muted-foreground">{t('commande.unique', 'Œuvre unique : une seule pièce.')}</p>
+                )}
+                {!offre.unique && offre.stock !== null && offre.stock !== undefined && (
                   <p className="text-xs text-muted-foreground">{t('commande.stock', 'Il en reste {{n}}.', { n: offre.stock })}</p>
                 )}
               </div>

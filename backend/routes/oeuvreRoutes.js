@@ -5,13 +5,14 @@
 
 const express = require('express');
 const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddleware');
-const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE, AUDIO_MIMES, MAX_EXTRAIT_PDF_SIZE, MAX_EXTRAIT_PDF_ENVOI, MAX_EXTRAIT_AUDIO_SIZE, MAX_EXTRAIT_PDF_PAGES } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const oeuvreController = require('../controllers/oeuvreController');
 const articleRevisionController = require('../controllers/articleRevisionController');
 const { handleValidationErrors, validateId, validatePagination, validateWorkSubmission, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const limiteEnvois = [mediasLimiter];
 const asyncHandler = require('../utils/asyncHandler');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
@@ -94,21 +95,28 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.delete('/:id', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.delete(req, res)));
   router.post('/:id/submit', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
 
-  // Médias
-  router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(),
+  // Médias : l'auteur (ou la modération) seulement, vérifié avant de recevoir le fichier
+  const oeuvreAMoi = (livreSeulement = false) => avantEnvoi(async (req) => {
+    const service = require('../services/serviceContainer').oeuvreService;
+    const oeuvre = await service._oeuvrePourMedias(parseInt(req.params.id, 10), req.user.id_user, !!req.user.isAdmin);
+    if (livreSeulement && oeuvre.id_type_oeuvre !== 1) throw service._validationError('Un extrait de lecture ne concerne qu’un livre');
+  });
+  router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(), ...limiteEnvois, oeuvreAMoi(),
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
   // Extrait d'un livre : le PDF entier est reçu, seules les 20 premières pages sont gardées (5 Mo au plus) ;
   // lecture audio par l'écrivain (10 Mo)
   const premieresPages = async (file) => {
-    const { garderPremieresPages } = require('../utils/extraitPdf');
+    // Traité à l'écart (mémoire et durée limitées) : un PDF piégé ne peut plus bloquer le site
+    const { garderPremieresPagesIsole, PdfOccupe } = require('../utils/extraitPdf');
     try {
-      const { taille } = await garderPremieresPages(file.path, MAX_EXTRAIT_PDF_PAGES);
+      const { taille } = await garderPremieresPagesIsole(file.path, MAX_EXTRAIT_PDF_PAGES);
       file.size = taille;
       return taille > MAX_EXTRAIT_PDF_SIZE
         ? `Les ${MAX_EXTRAIT_PDF_PAGES} premières pages pèsent plus de 5 Mo (images trop lourdes). Réduisez la taille du PDF.` : null;
-    } catch {
-      return 'PDF illisible ou protégé par un mot de passe.';
+    } catch (err) {
+      if (err instanceof PdfOccupe) return err.message;
+      return 'PDF illisible, trop complexe ou protégé par un mot de passe.';
     }
   };
   const extrait = (genre) => async (req, res) => {
@@ -120,10 +128,10 @@ const initOeuvreRoutes = (models, authMiddleware) => {
       oeuvreController._handleError(res, error);
     }
   };
-  router.post('/:id/extrait/pdf', authenticate, requireVerifiedEmail, validateId(),
+  router.post('/:id/extrait/pdf', authenticate, requireVerifiedEmail, validateId(), ...limiteEnvois, oeuvreAMoi(true),
     ...secureDiskUpload({ field: 'fichier', mimes: ['application/pdf'], maxFileSize: MAX_EXTRAIT_PDF_ENVOI, maxFiles: 1, controle: premieresPages }),
     asyncHandler(extrait('pdf')));
-  router.post('/:id/extrait/audio', authenticate, requireVerifiedEmail, validateId(),
+  router.post('/:id/extrait/audio', authenticate, requireVerifiedEmail, validateId(), ...limiteEnvois, oeuvreAMoi(true),
     ...secureDiskUpload({ field: 'fichier', mimes: AUDIO_MIMES, maxFileSize: MAX_EXTRAIT_AUDIO_SIZE, maxFiles: 1 }),
     asyncHandler(extrait('audio')));
   router.delete('/:id/extrait/:genre(pdf|audio)', authenticate, requireVerifiedEmail, validateId(), asyncHandler(async (req, res) => {

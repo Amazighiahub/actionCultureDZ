@@ -328,6 +328,7 @@ class EvenementService extends BaseService {
   async update(id, data, userId, options = {}) {
     let envoye = false;
     let changements = null;
+    let aVerifier = false;
     await this.withTransaction(async (transaction) => {
       const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!existing) throw this._notFoundError(id);
@@ -411,6 +412,16 @@ class EvenementService extends BaseService {
         }
       }
 
+      // Événement déjà publié dont le nom, le texte, l'image, le lien ou le tarif changent : la modération
+      // vérifie (sinon un événement validé pouvait être réécrit en arnaque sur une page de confiance)
+      // Publié = publie, planifie ou en_cours (le modèle range un événement publié selon ses dates)
+      const SENSIBLES = ['nom_evenement', 'description', 'image_url', 'url_virtuel', 'tarif'];
+      const valeur = (c, v) => (c === 'tarif' ? (v === null || v === undefined || v === '' ? null : Number(v)) : JSON.stringify(v ?? null));
+      const changes = SENSIBLES.filter((c) => updateData[c] !== undefined && valeur(c, updateData[c]) !== valeur(c, existing[c]));
+      if (['publie', 'planifie', 'en_cours'].includes(existing.statut) && !options.isAdmin && changes.length) {
+        aVerifier = changes.map((c) => `${c}:${valeur(c, updateData[c])}`).join('|');
+      }
+
       await this.repository.update(id, updateData, { transaction });
       await this._syncTags(id, data.tags, transaction);
 
@@ -441,6 +452,7 @@ class EvenementService extends BaseService {
     await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement modifié: ${id} par user: ${userId}`);
     if (envoye) await this._prevenirModeration(updated);
+    if (aVerifier) await this._signalerModificationPubliee(updated, aVerifier);
     if (changements) {
       // En arrière-plan : un e-mail en échec n'annule pas la modification
       const notifService = this.notificationService || new (require('../notificationService'))(this.models);
@@ -1000,6 +1012,27 @@ class EvenementService extends BaseService {
       });
     } catch (err) {
       this.logger.error(`Abonnés de l'organisateur non prévenus : ${err.message}`);
+    }
+  }
+
+  /** Événement publié modifié par son organisateur : l'équipe est prévenue (une fois toutes les 6 h) */
+  async _signalerModificationPubliee(evenement, contenu = '') {
+    try {
+      const { premiereFoisPendant } = require('../quotaEmail');
+      // Une fois par contenu : une nouvelle réécriture dans les 6 h est signalée elle aussi
+      const empreinte = require('crypto').createHash('sha256').update(String(contenu)).digest('hex').slice(0, 16);
+      if (!(await premiereFoisPendant(`moderation:evenement:${evenement.id_evenement}:${empreinte}`, 6 * 3600))) return;
+      const nom = nomLisible(evenement.nom_evenement);
+      for (const idAdmin of await idsAdministrateurs(this.models)) {
+        if (idAdmin === evenement.id_user) continue;
+        await notifier(this.notificationService, idAdmin, {
+          titre: 'Événement publié modifié',
+          message: `« ${nom} », déjà publié, a été modifié par son organisateur (nom, texte, image, lien ou tarif) : à vérifier.`,
+          url_action: `/evenements/${evenement.id_evenement}`, metadata: { id_evenement: evenement.id_evenement }
+        });
+      }
+    } catch (err) {
+      this.logger?.error?.('Signalement de modification d’un événement publié :', err.message);
     }
   }
 

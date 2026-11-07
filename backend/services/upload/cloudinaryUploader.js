@@ -86,8 +86,8 @@ function streamUpload(buffer, opts) {
  * @returns {Promise<Object>} Reponse Cloudinary
  */
 async function uploadImageBuffer(buffer, { context = 'default', originalname = 'file' } = {}) {
-  const folder = context === 'profile' ? FOLDERS.profile : FOLDERS.image;
-  const transformation = context === 'profile'
+  const folder = context === 'quarantaine' ? FOLDERS.quarantaine : context === 'profile' ? FOLDERS.profile : FOLDERS.image;
+  const transformation = context === 'profile' || context === 'quarantaine'
     ? IMAGE_TRANSFORMS.profile
     : IMAGE_TRANSFORMS.default;
   const publicId = buildPublicId(originalname, 'img');

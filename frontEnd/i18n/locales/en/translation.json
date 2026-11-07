@@ -1536,7 +1536,9 @@
     "resubmitOeuvre": "Resubmit after corrections",
     "motifRefus": "Reason for refusal",
     "rappelWilaya": "Add your wilaya to appear on its page, with your works.",
-    "rappelWilayaLien": "Complete my profile"
+    "rappelWilayaLien": "Complete my profile",
+    "rappelMetiers": "Give your professions (for example: painter, poet, storyteller): they appear on your portfolio and help people find you.",
+    "rappelMetiersLien": "Add my professions"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -3792,6 +3794,13 @@
         "emailsEnCours": "emails being sent",
         "emailsBilan": "{{ok}} email(s) sent",
         "emailsEchecs": "{{n}} not sent"
+      },
+      "messagerie": {
+        "ouvrir": "Write with my e-mail ({{count}})",
+        "copier": "Copy addresses ({{count}})",
+        "copiees": "{{count}} address(es) copied",
+        "collez": "Open your mailbox and paste them in “Bcc”, never in “To”: everyone would see the others’ addresses.",
+        "copieImpossible": "Copy failed: select the addresses by hand."
       }
     }
   },
@@ -5297,7 +5306,11 @@
       "retirer": "Remove",
       "ajouter": "Add an article",
       "lienInvalide": "Invalid link (must start with https://)"
-    }
+    },
+    "specialitesModifier": "Edit my professions",
+    "specialitesAjouterBouton": "Add my professions",
+    "specialitesVideConseil": "No profession given: add them (artist, poet…) to be found more easily.",
+    "specialitesEnregistrer": "Type a profession, click “Add”, then “Save” at the bottom of the page."
   },
   "share": {
     "onMyPage": "Share on my page:",
@@ -5761,8 +5774,12 @@
       "confirmerAnnulation": "Cancel this order?",
       "fixerMontant": "Set the amount",
       "montant": "Final amount (DZD)",
-      "montantCourt": "Amount DZD"
-    }
+      "montantCourt": "Amount DZD",
+      "bornes": "from {{min}} to {{max}}"
+    },
+    "vendeurIndisponible": "This seller is no longer available on Tala DZ: do not pay them. Cancel this order.",
+    "moyensModifies": "Warning: the seller changed their payment details after your order. Check with them before paying.",
+    "unique": "Unique work: a single piece."
   },
   "paiement": {
     "mention": "Payment is made directly to the organiser. Tala DZ receives no money.",
@@ -5788,7 +5805,10 @@
       "livraisonAide": "The “Order” button appears on your books, artworks and crafts that have a price. Leave a field empty if you do not ship to that area (0 = free shipping).",
       "envoiAlgerie": "Shipping fees within Algeria (DZD)",
       "envoiEtranger": "Shipping fees abroad (DZD)",
-      "mainPropre": "Hand delivery possible"
+      "mainPropre": "Hand delivery possible",
+      "motDePasseRequis": "Confirm with your password to change your payment details.",
+      "motDePasse": "Your password (to confirm the change of payment details)",
+      "motDePasseAide": "You will receive a confirmation e-mail. This way nobody can divert your payments with your session."
     },
     "participant": {
       "aConvenir": "Price to be agreed with the organiser",
@@ -5809,6 +5829,7 @@
       "recu": "Payment received",
       "confirme": "Payment recorded: the participant has been notified",
       "corrige": "Payment removed"
-    }
+    },
+    "avertissement": "Tala DZ will never ask you to pay on its site, nor for your bank codes."
   }
 }

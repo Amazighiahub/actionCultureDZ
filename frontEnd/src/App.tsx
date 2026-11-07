@@ -411,7 +411,7 @@ const App = () => (
             <Route path="/gestion-artisanat" element={<Navigate to="/ajouter-artisanat" replace />} />
 
             {/* Aliases de compatibilité pour les liens existants */}
-            <Route path="/profile" element={<Navigate to="/dashboard-user" replace />} />
+            <Route path="/profile" element={<Navigate to="/dashboard-user?onglet=profil" replace />} />
             <Route path="/mes-favoris" element={<Navigate to="/dashboard-user" replace />} />
             {/* Commandes (achats et ventes) : paiement direct au vendeur */}
             <Route path="/mes-commandes" element={<ProtectedRoute><ErrorBoundary><MesCommandes /></ErrorBoundary></ProtectedRoute>} />

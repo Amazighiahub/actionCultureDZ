@@ -66,6 +66,7 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import SEOHead from '@/components/SEOHead';
 import MoyensPaiement from '@/components/pro/MoyensPaiement';
 import AccesCommandes from '@/components/commande/AccesCommandes';
+import { lireSpecialites } from '@/utils/specialites';
 import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
@@ -503,6 +504,13 @@ const DashboardPro = () => {
           <div role="status" className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
             {t('dashboardpro.rappelWilaya', 'Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.')}{' '}
             <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('dashboardpro.rappelWilayaLien', 'Compléter mon profil')}</Link>
+          </div>
+        )}
+        {/* Métiers (artiste, poétesse…) : sans eux, le portfolio ne montre que le type du compte */}
+        {currentUser && lireSpecialites((currentUser as { specialites?: unknown }).specialites).length === 0 && (
+          <div role="status" className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
+            {t('dashboardpro.rappelMetiers', 'Indiquez vos métiers (par exemple : artiste peintre, poétesse, conteuse) : ils s’affichent sur votre portfolio et aident à vous trouver.')}{' '}
+            <Link to="/dashboard-user?onglet=profil#mes-metiers" className="font-medium text-primary underline">{t('dashboardpro.rappelMetiersLien', 'Ajouter mes métiers')}</Link>
           </div>
         )}
         {/* En-tête simplifié */}

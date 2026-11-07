@@ -17,6 +17,8 @@ export interface OffreOeuvre {
   prix?: number | null;
   prix_max?: number | null;
   stock?: number | null;
+  /** Œuvre d'art unique : quantité 1 */
+  unique?: boolean;
   vendeur?: { id: number; nom: string } | null;
   /** Frais d'envoi en DA par mode (null : à convenir) */
   livraison?: Partial<Record<ModeLivraison, number | null>>;
@@ -44,8 +46,14 @@ export interface Commande {
   role: 'acheteur' | 'vendeur';
   vendeur: { id: number; nom: string };
   acheteur: { id: number; nom: string; email?: string | null };
-  /** Montré à l'acheteur tant qu'il doit payer */
+  /** Montré à l'acheteur tant qu'il doit payer (copie des coordonnées au moment de la commande) */
   moyens?: MoyensPaiement;
+  /** Le vendeur a changé ses coordonnées depuis la commande : à vérifier avec lui avant de payer */
+  moyens_modifies?: boolean;
+  /** Vendeur suspendu : ne pas payer */
+  vendeur_indisponible?: boolean;
+  /** Vendeur : montant qu'il peut encore fixer (fourchette annoncée) */
+  montant_bornes?: { min: number; max: number };
 }
 
 export interface NouvelleCommande {

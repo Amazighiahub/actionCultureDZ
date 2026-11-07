@@ -9,7 +9,9 @@
 function createTimeoutMiddleware(ms = 30000) {
   return (req, res, next) => {
     // Uploads get a longer timeout (5 minutes) instead of being skipped entirely
-    const timeout = req.path.includes('/upload') ? 5 * 60 * 1000 : ms;
+    // (médias des fiches et extraits de livre compris : leurs adresses ne contiennent pas « /upload »)
+    const envoi = req.path.includes('/upload') || /\/(extrait\/(pdf|audio)|medias)$/.test(req.path);
+    const timeout = envoi ? 5 * 60 * 1000 : ms;
 
     const timer = setTimeout(() => {
       if (!res.headersSent) {

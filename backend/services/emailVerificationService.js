@@ -174,6 +174,9 @@ class EmailVerificationService {
     // lui est renvoyé : n'importe qui peut saisir son adresse ici, cela ne doit pas annuler ce lien.
     const lienExistant = hasActive ? await this.models.EmailVerification.lienActif(user.id_user, 'password_reset') : null;
     if (lienExistant) {
+      // Même lien renvoyé : pas plus d'une fois toutes les 15 minutes (avant : à chaque demande)
+      const { premiereFoisPendant } = require('./quotaEmail');
+      if (!(await premiereFoisPendant(`reinit-renvoi:${user.id_user}`, 15 * 60))) return { expiresIn: '2 heures' };
       try {
         await emailService.sendPasswordResetEmail(user, lienExistant.token);
       } catch (error) {

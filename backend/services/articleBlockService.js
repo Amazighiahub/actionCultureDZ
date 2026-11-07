@@ -117,6 +117,7 @@ class ArticleBlockService extends BaseService {
       await transaction.commit();
 
       const newBlock = await this.getBlockWithMedia(block.id_block);
+      await this._signalerTexteModifie(access, user);
       return { data: newBlock };
 
     } catch (error) {
@@ -165,6 +166,7 @@ class ArticleBlockService extends BaseService {
       // Récupérer les blocs avec associations
       const newBlocks = await this.repository.findByArticle(id_article, article_type);
 
+      await this._signalerTexteModifie(access, user);
       return { data: newBlocks, count: createdBlocks.length };
 
     } catch (error) {
@@ -205,6 +207,7 @@ class ArticleBlockService extends BaseService {
       await transaction.commit();
 
       const updatedBlock = await this.getBlockWithMedia(blockId);
+      await this._signalerTexteModifie(access, user);
       return { data: updatedBlock };
 
     } catch (error) {
@@ -230,6 +233,7 @@ class ArticleBlockService extends BaseService {
       await this._reorderAfterDelete(block.id_article, block.article_type, block.ordre, transaction);
       await transaction.commit();
 
+      await this._signalerTexteModifie(access, user);
       return { success: true };
 
     } catch (error) {
@@ -353,11 +357,28 @@ class ArticleBlockService extends BaseService {
 
     const parent = await Model.findByPk(idArticle, {
       attributes: [isScientifique ? 'id_article_scientifique' : 'id_article', 'id_oeuvre'],
-      include: [{ model: this.models.Oeuvre, attributes: ['saisi_par'] }]
+      include: [{ model: this.models.Oeuvre, attributes: ['saisi_par', 'id_oeuvre', 'statut', 'titre'] }]
     });
     if (!parent) return { error: 'notFound' };
     if (!user?.id_user || parent.Oeuvre?.saisi_par !== user.id_user) return { error: 'forbidden' };
-    return {};
+    return { oeuvre: parent.Oeuvre };
+  }
+
+  /**
+   * Article déjà publié dont l'auteur change les blocs : l'équipe est prévenue, comme pour une œuvre
+   * modifiée (une fois par heure et par article : un texte se corrige en plusieurs fois)
+   */
+  async _signalerTexteModifie(access, user) {
+    const oeuvre = access?.oeuvre;
+    if (!oeuvre || oeuvre.statut !== 'publie' || user?.isAdmin) return;
+    try {
+      const { premiereFoisPendant } = require('./quotaEmail');
+      if (!(await premiereFoisPendant(`moderation:article:${oeuvre.id_oeuvre}`, 3600))) return;
+      const service = require('./serviceContainer').oeuvreService;
+      await service?._signalerModificationPubliee?.(oeuvre, user.id_user, 'a modifié le texte de');
+    } catch (err) {
+      require('../utils/logger').error('Signalement de modification d’un article publié :', err.message);
+    }
   }
 
   /**

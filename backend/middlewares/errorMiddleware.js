@@ -105,7 +105,11 @@ const errorMiddleware = {
     if (error.name === 'SequelizeDatabaseError') {
       statusCode = 500;
       message = 'Erreur de base de données';
-      logger.error('Erreur de base de données: %o', error);
+      // Ni la requête SQL ni ses valeurs (e-mails, empreintes de mot de passe, jetons) dans les journaux
+      logger.error('Erreur de base de données', {
+        name: error.name, code: error.parent?.code || error.original?.code,
+        message: error.original?.sqlMessage || error.parent?.sqlMessage || error.message?.slice(0, 300),
+      });
     }
 
     // Erreurs JWT

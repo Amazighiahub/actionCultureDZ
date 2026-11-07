@@ -110,7 +110,10 @@ class ProfessionnelService {
     const user = await this.models.User.findByPk(userId);
     if (!user) return null;
 
-    const updates = { ...otherFields };
+    // Seuls le nom, le prénom et la biographie (avant : tout le reste du corps de la requête, y compris
+    // des champs sensibles comme les moyens de paiement). Les autres passent par userService.
+    void otherFields;
+    const updates = {};
 
     // Gérer les champs multilingues
     if (nom !== undefined) {

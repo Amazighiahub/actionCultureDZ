@@ -108,10 +108,37 @@ class DashboardUserManagementService {
     return { oeuvres, evenements, commentaires };
   }
 
+  /** Comptes administrateurs (type administrateur, ou rôle Administrateur) — pas les modérateurs */
+  async _idsAdministration() {
+    if (!this.models?.User?.findAll) return new Set();
+    const parType = await this.models.User.findAll({ where: { id_type_user: TYPE_USER_IDS.ADMINISTRATEUR }, attributes: ['id_user'] });
+    const parRole = this.models.Role ? await this.models.User.findAll({
+      attributes: ['id_user'],
+      include: [{ model: this.models.Role, as: 'Roles', where: { nom_role: 'Administrateur' }, attributes: [], through: { attributes: [] } }]
+    }) : []; // pas de .catch : en cas d'erreur, l'action échoue plutôt que de passer sans protection
+    return new Set([...parType, ...parRole].map((u) => Number(u.id_user)));
+  }
+
+  /**
+   * Protection entre comptes d'administration : on ne modifie ni l'e-mail, ni le statut, ni le type,
+   * ni le rôle d'un autre compte d'administration depuis le tableau de bord. Sinon un seul compte
+   * administrateur volé suffisait à prendre les autres (e-mail changé, puis « mot de passe oublié »).
+   */
+  async _refuserSiAdministration(userId, parId, action) {
+    if (parId && Number(userId) === Number(parId)) {
+      throw erreurHttp(`Vous ne pouvez pas ${action} votre propre compte ici`, 403);
+    }
+    if ((await this._idsAdministration()).has(Number(userId))) {
+      throw erreurHttp(`Un compte d’administration ne peut pas être ${action === 'modifier' ? 'modifié' : 'changé de rôle'} depuis le tableau de bord`, 403);
+    }
+  }
+
   /**
    * Mise à jour d'un utilisateur (champs autorisés uniquement)
    */
-  async updateUser(userId, data) {
+  async updateUser(userId, data, parId = null) {
+    await this._refuserSiAdministration(userId, parId, 'modifier');
+    const avant = data.email !== undefined ? await this.userRepo.findById(userId) : null;
     const allowedFields = [
       'nom', 'prenom', 'email', 'telephone', 'id_type_user',
       'entreprise', 'biographie', 'statut'
@@ -137,6 +164,13 @@ class DashboardUserManagementService {
       throw erreurHttp('Utilisateur non trouvé', 404);
     }
     await this._invalidateUserCache(userId);
+    // E-mail changé par l'administration : l'ancienne adresse est prévenue
+    if (avant?.email && updateData.email && String(updateData.email).toLowerCase() !== String(avant.email).toLowerCase()) {
+      const emailService = require('../emailService');
+      Promise.resolve(emailService.sendEmail(avant.email, 'L’adresse e-mail de votre compte Tala DZ a été changée',
+        '<p>Bonjour,</p><p>L’administration de Tala DZ a changé l’adresse e-mail de votre compte. Si vous n’en êtes pas à l’origine, écrivez tout de suite à contact@taladz.com.</p>',
+        null, null, { type: 'securite' })).catch(() => {});
+    }
     return user;
   }
 
@@ -213,6 +247,7 @@ class DashboardUserManagementService {
    * Changement de rôle (transactionnel)
    */
   async changeUserRole(userId, roleId, adminId) {
+    await this._refuserSiAdministration(userId, adminId, 'changer le rôle de');
     const user = await this.userRepo.findById(userId);
     if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
 
@@ -318,7 +353,12 @@ class DashboardUserManagementService {
 
     // change_role en batch via repository
     if (action === 'change_role' && data.role_id) {
-      if (this.models.UserRole) {
+      // Ni soi-même ni un autre compte d'administration (même règle que le changement un par un)
+      const administration = await this._idsAdministration();
+      const ecartes = userIds.filter((id) => Number(id) === Number(adminId) || administration.has(Number(id)));
+      userIds = userIds.filter((id) => !ecartes.includes(id));
+      for (const id of ecartes) results.errors.push({ id, error: 'Compte d’administration ou votre propre compte : rôle non changé' });
+      if (this.models.UserRole && userIds.length) {
         await this.userRepo.withTransaction(async (transaction) => {
           await this.models.UserRole.destroy({ where: { id_user: { [Op.in]: userIds } }, transaction });
           await this.models.UserRole.bulkCreate(
@@ -472,7 +512,9 @@ class DashboardUserManagementService {
     const { raison, duree, suspendu_par: suspenduPar } = data;
     const user = await this.userRepo.findById(userId);
     if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
-    if (user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR) throw erreurHttp('Un compte administrateur ne peut pas être suspendu ainsi', 403);
+    if (user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR || (await this._idsAdministration()).has(Number(userId))) {
+      throw erreurHttp('Un compte administrateur ne peut pas être suspendu ainsi', 403);
+    }
     // Colonnes réelles : motif, fin et auteur étaient perdus, et la suspension ne prenait jamais fin
     await this.userRepo.suspend(userId, suspenduPar, Number(duree) || 0, raison);
     await this._invalidateUserCache(userId);

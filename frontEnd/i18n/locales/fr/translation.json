@@ -1562,7 +1562,9 @@
     "resubmitOeuvre": "Renvoyer après correction",
     "motifRefus": "Motif du refus",
     "rappelWilaya": "Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.",
-    "rappelWilayaLien": "Compléter mon profil"
+    "rappelWilayaLien": "Compléter mon profil",
+    "rappelMetiers": "Indiquez vos métiers (par exemple : artiste peintre, poétesse, conteuse) : ils s’affichent sur votre portfolio et aident à vous trouver.",
+    "rappelMetiersLien": "Ajouter mes métiers"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -3797,6 +3799,13 @@
         "emailsEnCours": "emails en cours d’envoi",
         "emailsBilan": "{{ok}} email(s) envoyé(s)",
         "emailsEchecs": "{{n}} non envoyé(s)"
+      },
+      "messagerie": {
+        "ouvrir": "Écrire avec ma messagerie ({{count}})",
+        "copier": "Copier les adresses ({{count}})",
+        "copiees": "{{count}} adresse(s) copiée(s)",
+        "collez": "Ouvrez votre messagerie et collez-les dans « Cci » (copie cachée), jamais dans « À » : chacun verrait les adresses des autres.",
+        "copieImpossible": "Copie impossible : sélectionnez les adresses à la main."
       }
     }
   },
@@ -5297,7 +5306,11 @@
       "retirer": "Retirer",
       "ajouter": "Ajouter un article",
       "lienInvalide": "Lien invalide (doit commencer par https://)"
-    }
+    },
+    "specialitesModifier": "Modifier mes métiers",
+    "specialitesAjouterBouton": "Ajouter mes métiers",
+    "specialitesVideConseil": "Aucun métier indiqué : ajoutez-les (artiste, poétesse…) pour être mieux trouvé.",
+    "specialitesEnregistrer": "Tapez un métier, cliquez sur « Ajouter », puis sur « Enregistrer » en bas de la page."
   },
   "share": {
     "onMyPage": "Partager sur ma page :",
@@ -5761,8 +5774,12 @@
       "confirmerAnnulation": "Annuler cette commande ?",
       "fixerMontant": "Fixer le montant",
       "montant": "Montant final (DA)",
-      "montantCourt": "Montant DA"
-    }
+      "montantCourt": "Montant DA",
+      "bornes": "de {{min}} à {{max}}"
+    },
+    "vendeurIndisponible": "Ce vendeur n’est plus disponible sur Tala DZ : ne le payez pas. Annulez cette commande.",
+    "moyensModifies": "Attention : le vendeur a changé ses coordonnées de paiement depuis votre commande. Vérifiez avec lui avant de payer.",
+    "unique": "Œuvre unique : une seule pièce."
   },
   "paiement": {
     "mention": "Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.",
@@ -5788,7 +5805,10 @@
       "livraisonAide": "Le bouton « Commander » apparaît sur vos livres, œuvres d’art et objets d’artisanat qui ont un prix. Laissez un champ vide si vous n’envoyez pas dans cette zone (0 = envoi gratuit).",
       "envoiAlgerie": "Frais d’envoi en Algérie (DA)",
       "envoiEtranger": "Frais d’envoi à l’étranger (DA)",
-      "mainPropre": "Remise en main propre possible"
+      "mainPropre": "Remise en main propre possible",
+      "motDePasseRequis": "Confirmez avec votre mot de passe pour changer vos coordonnées de paiement.",
+      "motDePasse": "Votre mot de passe (pour confirmer le changement de coordonnées)",
+      "motDePasseAide": "Vous recevrez un e-mail de confirmation. Ainsi, personne ne peut détourner vos paiements avec votre session."
     },
     "participant": {
       "aConvenir": "Prix à convenir avec l’organisateur",
@@ -5809,6 +5829,7 @@
       "recu": "Paiement reçu",
       "confirme": "Paiement enregistré : le participant est prévenu",
       "corrige": "Paiement retiré"
-    }
+    },
+    "avertissement": "Tala DZ ne vous demandera jamais de payer sur son site, ni vos codes bancaires."
   }
 }

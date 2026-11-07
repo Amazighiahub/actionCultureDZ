@@ -194,8 +194,15 @@ class App {
       next();
     });
 
-    // Augmenter les limites pour les uploads de médias
-    this.app.use(express.json({ limit: '5mb' }));
+    // Taille des requêtes selon l'usage : 5 Mo pour les contenus riches (articles en blocs, fiches,
+    // programmes), 1 Mo ailleurs (connexion, inscription, newsletter, commentaires…). Avant : 5 Mo partout,
+    // lus et nettoyés avant toute limite de fréquence, de quoi occuper le serveur avec de faux envois.
+    const CONTENUS_RICHES = /^\/api\/(oeuvres|article-blocks|patrimoine|evenements|programmes|parcours|organisations|dashboard)(\/|$)/;
+    const jsonRiche = express.json({ limit: '5mb' });
+    const jsonCourant = express.json({ limit: '1mb' });
+    const formRiche = express.urlencoded({ extended: true, limit: '5mb' });
+    const formCourant = express.urlencoded({ extended: true, limit: '1mb' });
+    this.app.use((req, res, next) => (CONTENUS_RICHES.test(req.path) ? jsonRiche : jsonCourant)(req, res, next));
     this.app.use((err, req, res, next) => {
       if (err.type === 'entity.parse.failed') {
         return res.status(400).json({
@@ -205,7 +212,7 @@ class App {
       }
       next(err);
     });
-    this.app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+    this.app.use((req, res, next) => (CONTENUS_RICHES.test(req.path) ? formRiche : formCourant)(req, res, next));
 
     // Sanitization des entrées
     this.app.use(securityMiddleware.sanitizeInput);

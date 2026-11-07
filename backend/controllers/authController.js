@@ -78,6 +78,8 @@ class AuthController extends BaseController {
       const result = await this.userService.login(email, password);
 
       await accountRateLimiter.resetAttempts(email, req.ip);
+      // Cet appareil est désormais connu : un verrou dû à une attaque répartie ne l'empêchera plus de se connecter
+      try { require('../middlewares/rateLimitMiddleware').marquerAppareilConnu?.(res, email); } catch { /* jamais bloquant */ }
 
       authCookies.setAuthCookies(res, {
         token: result.token,
@@ -134,9 +136,8 @@ class AuthController extends BaseController {
     // 2) Blacklist access token (clef = jti si present, sinon token entier
     // pour retro-compat avec les anciennes sessions en vol).
     try {
-      const jwt = require('jsonwebtoken');
       const { getClient } = require('../utils/redisClient');
-      const { buildBlacklistKey } = require('../utils/jwtHelper');
+      const { buildBlacklistKey, verifyAccessToken } = require('../utils/jwtHelper');
 
       const token = req.cookies?.access_token
         || (req.headers.authorization?.startsWith('Bearer ')
@@ -144,9 +145,11 @@ class AuthController extends BaseController {
           : null);
 
       if (token) {
-        const decoded = jwt.decode(token);
-        if (decoded?.exp) {
-          const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+        // Signature vérifiée d'abord : un faux jeton (durée infinie, identifiant énorme) ne peut plus
+        // remplir la mémoire Redis. Un jeton expiré ou faux est déjà refusé partout : rien à noter.
+        const decoded = verifyAccessToken(token);
+        if (decoded?.exp && (!decoded.jti || /^[\w-]{8,64}$/.test(String(decoded.jti)))) {
+          const ttl = Math.min(decoded.exp - Math.floor(Date.now() / 1000), 7 * 24 * 3600);
           if (ttl > 0) {
             const redis = getClient();
             if (!redis) {

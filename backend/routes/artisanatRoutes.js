@@ -5,12 +5,13 @@
 
 const express = require('express');
 const { publicHttpCache } = require('../middlewares/cacheMiddleware');
-const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const artisanatController = require('../controllers/artisanatController');
 const { handleValidationErrors, validateId, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const limiteEnvois = [mediasLimiter];
 const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
@@ -74,7 +75,10 @@ const initArtisanatRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => artisanatController.delete(req, res)));
   router.post('/:id/medias', authenticate, requireVerifiedEmail,
     validateId(),
-    createContentLimiter,
+    ...limiteEnvois,
+    // L'artisan (ou la modération) seulement, vérifié avant de recevoir le fichier
+    avantEnvoi((req) => require('../services/serviceContainer').artisanatService.verifierProprietaire(
+      parseInt(req.params.id, 10), req.user.id_user, !!req.user.isAdmin)),
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 

@@ -5,7 +5,7 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const { validateId } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { commandeLimiter, commandeEtapeLimiter } = require('../middlewares/rateLimitMiddleware');
 const commandes = require('../services/commandes');
 
 const repondreErreur = (res, err) => {
@@ -22,10 +22,10 @@ module.exports = (models, authMiddleware) => {
   // Public : l'œuvre se commande-t-elle, à quel prix, avec quelle livraison (rien de privé)
   router.get('/oeuvres/:id/offre', validateId(), asyncHandler(async (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ success: true, data: await commandes.offre(models, Number(req.params.id)) });
+    res.json({ success: true, data: await commandes.offrePublique(models, Number(req.params.id)) });
   }));
 
-  router.post('/', authenticate, requireVerifiedEmail, createContentLimiter, asyncHandler(async (req, res) => {
+  router.post('/', authenticate, requireVerifiedEmail, commandeLimiter, asyncHandler(async (req, res) => {
     try {
       res.status(201).json({ success: true, data: await commandes.commander(models, notifications(), req.user.id_user, req.body || {}) });
     } catch (err) { repondreErreur(res, err); }
@@ -54,7 +54,7 @@ module.exports = (models, authMiddleware) => {
   }));
 
   // Étapes : paiement reçu, envoyée, annulée ; montant fixé par le vendeur
-  router.put('/:id', authenticate, requireVerifiedEmail, validateId(), asyncHandler(async (req, res) => {
+  router.put('/:id', authenticate, requireVerifiedEmail, validateId(), commandeEtapeLimiter, asyncHandler(async (req, res) => {
     try {
       const { statut, montant_total } = req.body || {};
       res.json({ success: true, data: await commandes.mettreAJour(models, notifications(), Number(req.params.id), par(req), { statut, montant_total }) });

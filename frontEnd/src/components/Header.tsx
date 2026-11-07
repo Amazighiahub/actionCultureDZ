@@ -371,7 +371,7 @@ const Header = () => {
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="flex items-center gap-2 min-h-[44px]">
+                      <Link to="/dashboard-user?onglet=profil" className="flex items-center gap-2 min-h-[44px]">
                         <User className="h-4 w-4" />
                         <span>{t('header.userMenu.myProfile')}</span>
                       </Link>

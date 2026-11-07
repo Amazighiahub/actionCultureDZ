@@ -2,6 +2,8 @@
  * Audit V8, points moyens de fiabilité : annulation et publication selon le statut, suppression
  * d'un événement avec inscrits, capacité au rétablissement, heure de 01:00.
  */
+// Délai de 15 min entre deux renvois du même lien neutralisé : chaque test simule une demande indépendante
+jest.mock('../../services/quotaEmail', () => ({ ...jest.requireActual('../../services/quotaEmail'), premiereFoisPendant: async () => true }));
 jest.mock('../../middlewares/cacheMiddleware', () => ({ clearCache: jest.fn() }), { virtual: false });
 const EvenementService = require('../../services/evenement/evenementService');
 const { verifierPlacePourRetablir } = require('../../utils/comptesEvenement');

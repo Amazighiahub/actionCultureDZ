@@ -113,7 +113,7 @@ describe('DashboardUserManagementService', () => {
     it('should throw if role not found', async () => {
       mockUserRepo.findById.mockResolvedValue({ id_user: 1 });
       mockModels.Role.findByPk.mockResolvedValue(null);
-      await expect(service.changeUserRole(1, 99, 1)).rejects.toThrow('Rôle non trouvé');
+      await expect(service.changeUserRole(1, 99, 7)).rejects.toThrow('Rôle non trouvé');
     });
 
     it('should destroy old roles and create new one in transaction', async () => {
@@ -308,5 +308,39 @@ describe('DashboardUserManagementService', () => {
       expect(mockUserRepo.suspend).toHaveBeenCalledWith(1, 2, 30, 'Abus');
       expect(result.message).toBe('Utilisateur suspendu');
     });
+  });
+});
+
+
+describe('protections entre comptes d’administration', () => {
+  function service() {
+    const repo = { findById: jest.fn(async (id) => ({ id_user: id, email: 'ancien@example.com' })), update: jest.fn(async (id, d) => ({ id_user: id, ...d })), withTransaction: jest.fn(async (cb) => cb({})) };
+    const models = {
+      User: { findAll: jest.fn(async ({ where }) => (where?.id_type_user ? [{ id_user: 2 }] : [])) },
+      Role: { findByPk: jest.fn(async () => ({ id_role: 1, nom_role: 'Administrateur' })) },
+      UserRole: { findOne: jest.fn(), destroy: jest.fn(), create: jest.fn(), bulkCreate: jest.fn() },
+    };
+    const s = new DashboardUserManagementService(models, { user: repo });
+    s.models = models; s.userRepo = repo; s._invalidateUserCache = jest.fn(); s._invalidateUserCacheBulk = jest.fn();
+    return { s, repo, models };
+  }
+  it('un administrateur ne modifie ni l’e-mail, ni le rôle d’un autre administrateur, ni son propre rôle', async () => {
+    const { s, repo } = service();
+    await expect(s.updateUser(2, { email: 'pirate@example.com' }, 1)).rejects.toThrow(/administration/);
+    await expect(s.changeUserRole(2, 3, 1)).rejects.toThrow(/administration/);
+    await expect(s.changeUserRole(1, 3, 1)).rejects.toThrow(/propre compte/);
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+  it('un administrateur peut changer le rôle d’un modérateur (compte non administrateur)', async () => {
+    const { s, models } = service();
+    await s.changeUserRole(4, 3, 1);
+    expect(models.UserRole.create).toHaveBeenCalledWith(expect.objectContaining({ id_user: 4, id_role: 3 }), expect.anything());
+  });
+
+  it('changement groupé : les comptes d’administration et soi-même sont écartés', async () => {
+    const { s, models } = service();
+    const r = await s.bulkUserAction('change_role', [1, 2, 5], { role_id: 3 }, 1);
+    expect(models.UserRole.bulkCreate).toHaveBeenCalledWith([{ id_user: 5, id_role: 3 }], expect.anything());
+    expect(r.errors.map((e) => e.id)).toEqual([1, 2]);
   });
 });

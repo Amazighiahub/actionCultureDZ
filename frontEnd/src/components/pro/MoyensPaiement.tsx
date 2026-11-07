@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { paiementService, type MoyensPaiement as Moyens } from '@/services/paiement.service';
+import { paiementService, CLES_SENSIBLES, type MoyensPaiement as Moyens } from '@/services/paiement.service';
 
 const VIDE: Moyens = { titulaire: '', baridimob_rip: '', ccp_numero: '', ccp_cle: '', especes: false, lien_url: '', lien_libelle: '', consignes: '', envoi_algerie: '', envoi_etranger: '', main_propre: false };
 const CASES = ['especes', 'main_propre'];
@@ -23,6 +23,9 @@ const MoyensPaiement: React.FC = () => {
   const { toast } = useToast();
   const [ouvert, setOuvert] = useState(false);
   const [moyens, setMoyens] = useState<Moyens>(VIDE);
+  // Valeurs enregistrées : changer une coordonnée de paiement demande le mot de passe
+  const [initial, setInitial] = useState<Moyens>(VIDE);
+  const [motDePasse, setMotDePasse] = useState('');
   const [renseigne, setRenseigne] = useState(false);
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
@@ -31,7 +34,9 @@ const MoyensPaiement: React.FC = () => {
   useEffect(() => {
     paiementService.mesMoyens().then((r) => {
       if (r?.success && r.data) {
-        setMoyens({ ...VIDE, ...Object.fromEntries(Object.entries(r.data).map(([k, v]) => [k, v ?? (CASES.includes(k) ? false : '')])) });
+        const charge = { ...VIDE, ...Object.fromEntries(Object.entries(r.data).map(([k, v]) => [k, v ?? (CASES.includes(k) ? false : '')])) };
+        setMoyens(charge);
+        setInitial(charge);
         setRenseigne(true);
       }
       setChargement(false);
@@ -41,13 +46,34 @@ const MoyensPaiement: React.FC = () => {
   const champ = (cle: keyof Moyens) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setMoyens((m) => ({ ...m, [cle]: e.target.value }));
 
+  // Même comparaison que le serveur : chiffres sans espaces ni points pour le RIP et le CCP, texte tel quel sinon
+  const CHIFFRES = ['baridimob_rip', 'ccp_numero', 'ccp_cle'];
+  const vide = (k: string, v: unknown) => {
+    const s = v === null || v === undefined || v === false ? '' : String(v).trim();
+    return CHIFFRES.includes(k) ? s.replace(/[\s.-]/g, '') : s;
+  };
+  const [mdpDemande, setMdpDemande] = useState(false);
+  const coordonneesChangees = mdpDemande || CLES_SENSIBLES.some((k) => vide(k, moyens[k]) !== vide(k, initial[k]));
+
   const enregistrer = async () => {
+    if (coordonneesChangees && !motDePasse) {
+      setErreur(t('paiement.moyens.motDePasseRequis', 'Confirmez avec votre mot de passe pour changer vos coordonnées de paiement.'));
+      return;
+    }
     setEnvoi(true);
     setErreur(null);
-    const r = await paiementService.enregistrerMoyens(moyens);
+    const r = await paiementService.enregistrerMoyens(moyens, coordonneesChangees ? motDePasse : undefined);
     setEnvoi(false);
-    if (!r?.success) { setErreur(r?.error || t('common.error', 'Erreur')); return; }
+    if (!r?.success) {
+      // Le serveur demande le mot de passe (cas non vu ici) : le champ apparaît
+      if (r?.code === 'MOT_DE_PASSE_REQUIS' || r?.code === 'MOT_DE_PASSE_INCORRECT') setMdpDemande(true);
+      setErreur(r?.error || t('common.error', 'Erreur'));
+      return;
+    }
     setRenseigne(!!r.data);
+    setInitial(moyens);
+    setMotDePasse('');
+    setMdpDemande(false);
     toast({ title: t('paiement.moyens.enregistres', 'Moyens de paiement enregistrés') });
   };
 
@@ -130,6 +156,13 @@ const MoyensPaiement: React.FC = () => {
                   <Label htmlFor="mp-main">{t('paiement.moyens.mainPropre', 'Remise en main propre possible')}</Label>
                 </div>
               </fieldset>
+              {coordonneesChangees && (
+                <div className="space-y-1.5 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3">
+                  <Label htmlFor="mp-mdp">{t('paiement.moyens.motDePasse', 'Votre mot de passe (pour confirmer le changement de coordonnées)')}</Label>
+                  <Input id="mp-mdp" type="password" autoComplete="current-password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">{t('paiement.moyens.motDePasseAide', 'Vous recevrez un e-mail de confirmation. Ainsi, personne ne peut détourner vos paiements avec votre session.')}</p>
+                </div>
+              )}
               {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
               <Button onClick={enregistrer} disabled={envoi}>
                 {envoi && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}

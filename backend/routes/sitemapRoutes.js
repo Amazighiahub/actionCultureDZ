@@ -14,6 +14,7 @@ function safeQuery(label, promiseFactory) {
   let timer;
   const timeout = new Promise((resolve) => {
     timer = setTimeout(() => {
+      safeQuery.echecs += 1;
       logger.warn(`Sitemap: ${label} > ${QUERY_TIMEOUT_MS} ms, rubrique omise`);
       resolve([]);
     }, QUERY_TIMEOUT_MS);
@@ -25,9 +26,10 @@ function safeQuery(label, promiseFactory) {
       if (ms > 1000) logger.warn(`Sitemap: ${label} lent (${ms} ms)`);
       return rows;
     })
-    .catch((err) => { logger.warn(`Sitemap: erreur ${label}: ${err.message}`); return []; });
+    .catch((err) => { safeQuery.echecs += 1; logger.warn(`Sitemap: erreur ${label}: ${err.message}`); return []; });
   return Promise.race([query, timeout]).finally(() => clearTimeout(timer));
 }
+safeQuery.echecs = 0;
 
 /**
  * Génère le sitemap XML dynamique
@@ -52,6 +54,32 @@ const initSitemapRoutes = (models) => {
     xml += `  </url>\n`;
     return xml;
   };
+
+  // Plan du site gardé une heure en mémoire (avant : 6 lectures de la base à chaque visite, sans limite
+  // de fréquence, de quoi charger le serveur). Pendant qu'une visite le recalcule, les autres reçoivent
+  // l'ancien plan.
+  let enCache = null;
+  let enCalcul = false;
+  const DUREE_CACHE_MS = 60 * 60 * 1000;
+  router.get('/', (req, res, next) => {
+    const frais = enCache && Date.now() - enCache.le < DUREE_CACHE_MS;
+    if (enCache && (frais || enCalcul)) {
+      res.set('Content-Type', 'application/xml; charset=utf-8');
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.send(enCache.xml);
+    }
+    enCalcul = true;
+    const echecsAvant = safeQuery.echecs;
+    const envoyer = res.send.bind(res);
+    res.send = (corps) => {
+      enCalcul = false;
+      // Rubrique en erreur ou trop lente : plan incomplet, pas gardé (recalculé à la visite suivante)
+      if (res.statusCode === 200 && typeof corps === 'string' && safeQuery.echecs === echecsAvant) enCache = { xml: corps, le: Date.now() };
+      return envoyer(corps);
+    };
+    res.once('close', () => { enCalcul = false; });
+    return next();
+  });
 
   router.get('/', async (req, res) => {
     const started = Date.now();

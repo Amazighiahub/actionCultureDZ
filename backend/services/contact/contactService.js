@@ -25,7 +25,9 @@ class ContactService {
       `[Contact Tala DZ] ${String(sujet || 'Nouveau message').replace(/[\r\n]+/g, ' ')}`,
       html,
       null,
-      text
+      text,
+      // Vers l'adresse de l'équipe : pas de limite par destinataire (sinon le 7e message du jour échouait)
+      { type: 'contact', sansLimiteDestinataire: true }
     );
   }
 }

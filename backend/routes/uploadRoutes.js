@@ -72,7 +72,8 @@ const initUploadRoutes = (models, authMiddleware) => {
     ...rateLimitMiddleware.publicUpload,
     multerErrorGuard(uploadService.uploadImageSafe(MAX_IMAGE_SIZE).single('image')),
     validateMagicBytesBuffer(IMAGE_MIMES, { maxFileSize: MAX_IMAGE_SIZE }),
-    pushBufferToCloudinary({ type: 'image', context: 'default' }),
+    // Quarantaine : sans compte créé dans les 2 heures, la photo est effacée (tâche « nettoyer-quarantaine »)
+    pushBufferToCloudinary({ type: 'image', context: 'quarantaine' }),
     auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
     (req, res) => uploadController.uploadPublicImage(req, res)
   );
@@ -156,13 +157,14 @@ const initUploadRoutes = (models, authMiddleware) => {
     (req, res) => uploadController.uploadAudio(req, res)
   );
 
-  const [receiveOeuvreMedia, validateOeuvreMedia, pushOeuvreMedia] = secureDiskUpload({
+  const [tailleOeuvreMedia, receiveOeuvreMedia, validateOeuvreMedia, pushOeuvreMedia] = secureDiskUpload({
     field: 'medias', mimes: OEUVRE_MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: MAX_OEUVRE_FILES
   });
   router.post('/oeuvre/media',
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
     rateLimitMiddleware.upload,
+    tailleOeuvreMedia,
     receiveOeuvreMedia,
     // Taille totale : empêche 5 fichiers de 100 MB = 500 MB par requête
     async (req, res, next) => {

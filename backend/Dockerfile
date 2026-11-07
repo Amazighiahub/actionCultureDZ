@@ -7,7 +7,8 @@
 
 FROM node:22-alpine AS base
 
-RUN apk add --no-cache libc6-compat
+# qpdf : découpe des PDF d'extrait de livre, lancé sous limites de mémoire et de temps (utils/extraitPdf.js)
+RUN apk add --no-cache libc6-compat qpdf
 
 WORKDIR /app
 

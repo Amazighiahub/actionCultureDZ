@@ -2,6 +2,8 @@
  * Audit V9, lot 2 : quota d'e-mails, relance après un refus, inscrits prévenus d'un changement de lien
  * ou d'un passage en ligne, suppression d'un produit d'artisanat, sanctions depuis un signalement.
  */
+// Règle « une fois toutes les 6 h » neutralisée : chaque test simule un avis indépendant
+jest.mock('../../services/quotaEmail', () => ({ ...jest.requireActual('../../services/quotaEmail'), premiereFoisPendant: async () => true }));
 jest.mock('../../utils/redisClient', () => ({ getClient: () => null, getRedisClient: async () => null, isReady: () => false, etat: () => 'absent' }));
 jest.mock('../../utils/sessionCache', () => ({ invalidateUserSession: jest.fn() }));
 const mockOeuvreDelete = jest.fn(async () => true);
