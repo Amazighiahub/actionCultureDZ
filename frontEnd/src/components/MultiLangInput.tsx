@@ -283,7 +283,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             disabled={disabled}
             maxLength={maxLength}
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
-            spellCheck={activeLang === 'fr' || activeLang === 'en'}
+            spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
             aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
             aria-invalid={!!errors[activeLang] || undefined}
             aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
@@ -304,7 +304,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
             autoCapitalize={activeLang === 'ar' ? 'none' : 'sentences'}
             autoComplete={activeLang === 'ar' ? 'off' : 'on'}
-            spellCheck={activeLang === 'fr' || activeLang === 'en'}
+            spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
             maxLength={maxLength}
             aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
             aria-invalid={!!errors[activeLang] || undefined}

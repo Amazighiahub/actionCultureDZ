@@ -1,4 +1,5 @@
 // pages/articles/ArticleViewPage.tsx
+import CouvertureAuto from '@/components/article/CouvertureAuto';
 import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
@@ -741,6 +742,12 @@ const ArticleViewPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Article sans aucune image : couverture dessinée avec son titre (pas d'image inventée) */}
+      {!blocOuverture?.media && !blocsCorps.some(b => b.type_block === 'image' && b.media) &&
+        !(oeuvre.Media || []).some((m: { type_media?: string; url?: string }) => (m.type_media || 'image') === 'image' && m.url) &&
+      <CouvertureAuto titre={String(oeuvre.titre || '')} auteur={articleHelpers.getAuteur(articleData) || undefined} rtl={sensContenu === 'rtl'} />
+      }
 
       {/* Photo d'ouverture */}
       {blocOuverture?.media &&

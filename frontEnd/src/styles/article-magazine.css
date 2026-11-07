@@ -25,6 +25,10 @@
   text-align: end;
 }
 
+/* Couverture dessinée (article sans image) : entière, jamais recadrée */
+.mag-couverture-auto { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1rem 0; }
+.mag-couverture-auto img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; border-radius: 0.75rem; }
+
 .mag-entete {
   max-width: 46rem;
   margin-inline: auto;

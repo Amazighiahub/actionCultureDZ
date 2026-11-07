@@ -107,7 +107,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
     switch (block.type_block) {
       case 'text':
         return (
-          <Textarea
+          <Textarea dir="auto" spellCheck
             value={block.contenu || ''}
             onChange={(e) => handleContentChange(e.target.value)}
             placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
@@ -129,7 +129,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <SelectItem value="3">{t("article_articleeditor.titre_2")}</SelectItem>
               </SelectContent>
             </Select>
-            <Input
+            <Input dir="auto"
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder={t("article_articleeditor.placeholder_entrez_votre_titre")}
@@ -175,7 +175,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             )}
             <div className="space-y-2">
               <Label>{t("article_articleeditor.lgende_limage_optionnel")}</Label>
-              <Input
+              <Input dir="auto"
                 value={block.metadata?.caption || ''}
                 onChange={(e) => handleMetadataChange('caption', e.target.value)}
                 placeholder={t("article_articleeditor.placeholder_dcrivez_limage")} />
@@ -204,7 +204,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
           <div className="space-y-3">
             <div className="space-y-2">
               <Label>{t("article_articleeditor.url_vido")}</Label>
-              <Input
+              <Input dir="auto"
                 value={block.contenu || ''}
                 onChange={(e) => handleVideoUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=..." />
@@ -222,12 +222,12 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
       case 'citation':
         return (
           <div className="space-y-3">
-            <Textarea
+            <Textarea dir="auto" spellCheck
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder={t("article_articleeditor.placeholder_entrez_votre_citation")}
               className="italic" />
-            <Input
+            <Input dir="auto"
               value={block.metadata?.author || ''}
               onChange={(e) => handleMetadataChange('author', e.target.value)}
               placeholder={t("article_articleeditor.placeholder_auteur_citation_optionnel")} />
@@ -248,7 +248,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <SelectItem value="ordered">{t("article_articleeditor.liste_numrote")}</SelectItem>
               </SelectContent>
             </Select>
-            <Textarea
+            <Textarea dir="auto" spellCheck
               value={texteListe}
               onChange={(e) => {
                 setTexteListe(e.target.value);
@@ -267,7 +267,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
               <div className="border rounded-lg p-4 space-y-2">
                 <div className="space-y-2">
                   <Label>{t("article_articleeditor.enttes_spars_par")}</Label>
-                  <Input
+                  <Input dir="auto"
                     value={block.contenu_json.headers.join(', ')}
                     onChange={(e) => {
                       const headers = e.target.value.split(',').map((h) => h.trim());
@@ -277,7 +277,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 </div>
                 <div className="space-y-2">
                   <Label>{t("article_articleeditor.lignes_une_par")}</Label>
-                  <Textarea
+                  <Textarea dir="auto" spellCheck
                     value={block.contenu_json.rows.map((row) => row.join(' | ')).join('\n')}
                     onChange={(e) => {
                       const rows = e.target.value.split('\n').map((line) =>
@@ -300,11 +300,11 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
       case 'code':
         return (
           <div className="space-y-3">
-            <Input
+            <Input dir="auto"
               value={block.metadata?.language || ''}
               onChange={(e) => handleMetadataChange('language', e.target.value)}
               placeholder={t("article_articleeditor.placeholder_langage_javascript_python")} />
-            <Textarea
+            <Textarea dir="auto" spellCheck
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder={t("article_articleeditor.placeholder_entrez_votre_code")}
@@ -324,7 +324,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
           <div className="space-y-3">
             <div className="space-y-2">
               <Label>{t("article_articleeditor.code_dintgration_url")}</Label>
-              <Textarea
+              <Textarea dir="auto" spellCheck
                 value={block.contenu || ''}
                 onChange={(e) => handleContentChange(e.target.value)}
                 placeholder={t("article_articleeditor.placeholder_iframe_srciframe_url")}

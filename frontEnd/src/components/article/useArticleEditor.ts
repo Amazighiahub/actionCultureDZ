@@ -242,6 +242,9 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     setBlocks(newBlocks);
   };
 
+  /** Tous les blocs d'un coup (nettoyage de la mise en page, annulation) */
+  const remplacerBlocs = (nouveaux: ArticleBlock[]) => setBlocks(nouveaux);
+
   const deleteBlock = (index: number) => {
     setBlocks(blocks.filter((_, i) => i !== index));
   };
@@ -404,7 +407,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     contributeurs, editeurs, setEditeurs,
 
     // Handlers
-    addBlock, updateBlock, deleteBlock, moveBlock, duplicateBlock,
+    addBlock, updateBlock, deleteBlock, moveBlock, duplicateBlock, remplacerBlocs,
     handleAddTag, handleRemoveTag, toggleSection,
     handleIntervenantsChange, handleSave,
   };

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import { nettoyerBlocs } from '@/utils/nettoyageTexte';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ArrowLeft, Save, Eye, Loader2, FileText, AlertCircle
+  ArrowLeft, Save, Eye, Loader2, FileText, AlertCircle, Wand2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -37,6 +38,22 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   const { t } = useTranslation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
+
+  // Nettoyage de la mise en page (gardé pour pouvoir annuler)
+
+  const [nettoyage, setNettoyage] = useState<{ modifies: number; avant: typeof editor.blocks } | null>(null);
+
+  const nettoyer = () => {
+
+    const avant = editor.blocks;
+
+    const { blocs, modifies } = nettoyerBlocs(avant);
+
+    if (modifies > 0) editor.remplacerBlocs(blocs);
+
+    setNettoyage({ modifies, avant });
+
+  };
   // Un long article ne doit pas se perdre sur un clic « Retour », un lien ou la fermeture de l'onglet
   useUnsavedChanges(editor.modifie && !editor.saving);
   const retour = () => { if (onBack && (!editor.modifie || confirmerSortie())) onBack(); };
@@ -84,6 +101,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               </div>
             </div>
             <div className="flex gap-2">
+              <Button variant="outline" onClick={nettoyer} title={t('article_articleeditor.nettoyerAide', 'Doubles espaces, espaces autour de la ponctuation, lignes vides en trop')}>
+                <Wand2 className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('article_articleeditor.nettoyer', 'Nettoyer la mise en page')}
+              </Button>
               <Button variant="outline" onClick={() => editor.setActiveTab(editor.activeTab === 'preview' ? 'content' : 'preview')}>
                 <Eye className="h-4 w-4 me-2" />
                 {editor.activeTab === 'preview'
@@ -96,6 +117,22 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               </Button>
             </div>
           </div>
+
+          {nettoyage && (
+            <Alert className="mb-6" role="status">
+              <Wand2 className="h-4 w-4" />
+              <AlertDescription className="flex flex-wrap items-center gap-3">
+                {nettoyage.modifies > 0
+                  ? t('article_articleeditor.nettoyeOk', '{{n}} paragraphe(s) corrigé(s). Vérifiez dans l’Aperçu, puis enregistrez.', { n: nettoyage.modifies })
+                  : t('article_articleeditor.nettoyeRien', 'Rien à corriger : la mise en page est propre.')}
+                {nettoyage.modifies > 0 && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => { editor.remplacerBlocs(nettoyage.avant); setNettoyage(null); }}>
+                    {t('article_articleeditor.annulerNettoyage', 'Annuler')}
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {editor.error && (
             <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">

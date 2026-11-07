@@ -2703,7 +2703,12 @@
       "legende": "Légende traduite",
       "ecritEn": "Le texte de l’article est écrit en",
       "aide": "Vous traduisez l’article en {{langue}}. Traduisez le titre, le chapeau puis chaque bloc : le texte d’origine ({{origine}}) est affiché au-dessus. Les images et la mise en page sont communes à toutes les langues. Pour ajouter, déplacer ou supprimer un bloc, revenez à {{origine}}."
-    }
+    },
+    "nettoyer": "Nettoyer la mise en page",
+    "nettoyerAide": "Doubles espaces, espaces autour de la ponctuation, lignes vides en trop",
+    "nettoyeOk": "{{n}} paragraphe(s) corrigé(s). Vérifiez dans l’Aperçu, puis enregistrez.",
+    "nettoyeRien": "Rien à corriger : la mise en page est propre.",
+    "annulerNettoyage": "Annuler"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",

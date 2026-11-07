@@ -2655,7 +2655,12 @@
       "legende": "Translated caption",
       "ecritEn": "The article is written in",
       "aide": "You are translating the article into {{langue}}. Translate the title, the lead and then each block: the original text ({{origine}}) is shown above. Images and layout are shared by all languages. To add, move or delete a block, go back to {{origine}}."
-    }
+    },
+    "nettoyer": "Clean up layout",
+    "nettoyerAide": "Double spaces, spaces around punctuation, extra blank lines",
+    "nettoyeOk": "{{n}} paragraph(s) fixed. Check the Preview, then save.",
+    "nettoyeRien": "Nothing to fix: the layout is clean.",
+    "annulerNettoyage": "Undo"
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",
