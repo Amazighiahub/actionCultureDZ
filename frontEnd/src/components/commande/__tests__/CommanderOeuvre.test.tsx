@@ -71,7 +71,7 @@ describe('bouton « Commander »', () => {
     expect(commander).not.toHaveBeenCalled();
     expect(screen.getByText('Total : 3500 DA')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('Adresse de livraison'), { target: { value: '1 rue Exemple, Alger' } });
+    fireEvent.change(screen.getByLabelText(/Adresse de livraison/), { target: { value: '1 rue Exemple, Alger' } });
     fireEvent.click(screen.getByText('Envoyer la commande'));
     await waitFor(() => expect(commander).toHaveBeenCalledWith(expect.objectContaining({ id_oeuvre: 5, quantite: 2, livraison: 'algerie', adresse: '1 rue Exemple, Alger' })));
     expect(await screen.findByText('À payer : 3500 DA')).toBeTruthy();

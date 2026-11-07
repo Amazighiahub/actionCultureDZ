@@ -51,7 +51,7 @@ const ResetPassword = () => {
       newErrors.password = t('auth.passwordRules.lowercase', 'Doit contenir une minuscule');
     } else if (!/[0-9]/.test(password)) {
       newErrors.password = t('auth.passwordRules.digit', 'Doit contenir un chiffre');
-    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
       newErrors.password = t('auth.passwordRules.special', 'Doit contenir un caractère spécial');
     }
 
@@ -88,7 +88,7 @@ const ResetPassword = () => {
           setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.lowercase', 'Doit contenir une minuscule') }));
         } else if (!/[0-9]/.test(password)) {
           setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.digit', 'Doit contenir un chiffre') }));
-        } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        } else if (!/[^A-Za-z0-9]/.test(password)) {
           setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.special', 'Doit contenir un caractère spécial') }));
         }
         break;

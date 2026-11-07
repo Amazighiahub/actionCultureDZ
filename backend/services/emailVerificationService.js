@@ -248,7 +248,7 @@ class EmailVerificationService {
       err.code = 'PASSWORD_DIGIT';
       throw err;
     }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
       const err = new Error('Password must contain special character');
       err.statusCode = 400;
       err.code = 'PASSWORD_SPECIAL';

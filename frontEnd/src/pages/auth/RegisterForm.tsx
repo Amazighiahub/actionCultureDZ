@@ -63,6 +63,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   });
 
   // État pour l'upload de photo
+  // Date de naissance : les trois listes séparément, la date complète seulement quand tout est choisi
+  const [naissance, setNaissance] = useState({ jour: '', mois: '', annee: '' });
+  const choisirNaissance = (partie: 'jour' | 'mois' | 'annee', valeur: string) => {
+    const n = { ...naissance, [partie]: valeur };
+    setNaissance(n);
+    let date = '';
+    if (n.jour && n.mois !== '' && n.annee) {
+      const j = Number(n.jour), m = Number(n.mois), a = Number(n.annee);
+      const valide = new Date(Date.UTC(a, m, j)).getUTCDate() === j;
+      date = valide ? `${a}-${String(m + 1).padStart(2, '0')}-${String(j).padStart(2, '0')}` : 'invalide';
+    }
+    setRegisterForm((f) => ({ ...f, date_naissance: date }));
+    setRegisterErrors((e) => ({ ...e, date_naissance: '' }));
+  };
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
@@ -148,7 +162,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         else if (!/[A-Z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedUppercase', 'Le mot de passe doit contenir au moins une majuscule');
         else if (!/[a-z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
         else if (!/[0-9]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
-        else if (!/[!@#$%^&*(),.?":{}|<>]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
+        else if (!/[^A-Za-z0-9]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
         break;
       case 'confirmation_mot_de_passe':
         if (registerForm.mot_de_passe && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) error = t('auth.errors.passwordMismatch');
@@ -205,7 +219,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       errors.mot_de_passe = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
     } else if (!/[0-9]/.test(registerForm.mot_de_passe)) {
       errors.mot_de_passe = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
-    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(registerForm.mot_de_passe)) {
+    } else if (!/[^A-Za-z0-9]/.test(registerForm.mot_de_passe)) {
       errors.mot_de_passe = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
     }
     
@@ -410,6 +424,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         setPhotoFile(null);
         setPhotoPreview(null);
         setUploadedPhotoUrl(null);
+        setNaissance({ jour: '', mois: '', annee: '' });
         setRegisterForm({
           nom: '',
           prenom: '',
@@ -594,14 +609,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         <div className="grid grid-cols-3 gap-2">
                           <select
                             aria-label={t('auth.register.day', 'Jour')}
+                            aria-invalid={!!registerErrors.date_naissance}
+                            aria-describedby={registerErrors.date_naissance ? 'auth-date-naissance-error' : undefined}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
-                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getDate() : ''}
-                            onChange={(e) => {
-                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
-                              d.setDate(parseInt(e.target.value) || 1);
-                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
-                              setRegisterErrors({...registerErrors, date_naissance: ''});
-                            }}
+                            value={naissance.jour}
+                            onChange={(e) => choisirNaissance('jour', e.target.value)}
                           >
                             <option value="">{t('auth.register.day', 'Jour')}</option>
                             {Array.from({length: 31}, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
@@ -609,13 +621,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           <select
                             aria-label={t('auth.register.month', 'Mois')}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
-                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getMonth() : ''}
-                            onChange={(e) => {
-                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
-                              d.setMonth(parseInt(e.target.value));
-                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
-                              setRegisterErrors({...registerErrors, date_naissance: ''});
-                            }}
+                            value={naissance.mois}
+                            onChange={(e) => choisirNaissance('mois', e.target.value)}
                           >
                             <option value="">{t('auth.register.month', 'Mois')}</option>
                             {[
@@ -628,22 +635,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           <select
                             aria-label={t('auth.register.year', 'Année')}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
-                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getFullYear() : ''}
-                            onChange={(e) => {
-                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
-                              d.setFullYear(parseInt(e.target.value));
-                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
-                              setRegisterErrors({...registerErrors, date_naissance: ''});
-                            }}
+                            value={naissance.annee}
+                            onChange={(e) => choisirNaissance('annee', e.target.value)}
                           >
                             <option value="">{t('auth.register.year', 'Année')}</option>
                             {Array.from({length: 80}, (_, i) => new Date().getFullYear() - 13 - i).map(y => <option key={y} value={y}>{y}</option>)}
                           </select>
                         </div>
-                        <input type="hidden" value={registerForm.date_naissance}
-                          aria-invalid={!!registerErrors.date_naissance}
-                          aria-describedby={registerErrors.date_naissance ? 'auth-date-naissance-error' : undefined}
-                        />
                         {registerErrors.date_naissance && (
                           <p id="auth-date-naissance-error" role="alert" className="text-sm text-destructive">{registerErrors.date_naissance}</p>
                         )}

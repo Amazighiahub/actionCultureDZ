@@ -1,4 +1,5 @@
 
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -31,6 +32,10 @@ const APropos = () => {
       toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('apropos.emailMessageRequis', 'L\'email et le message sont obligatoires.'), variant: 'destructive' });
       return;
     }
+    if (formData.message.trim().length < 10) {
+      toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('apropos.messageTropCourt', 'Le message doit faire au moins 10 caractères.'), variant: 'destructive' });
+      return;
+    }
     setSending(true);
     try {
       // httpClient : jeton anti-CSRF exigé par l'API (un fetch direct était refusé : aucun message n'arrivait)
@@ -39,10 +44,10 @@ const APropos = () => {
         toast({ title: t('apropos.messageEnvoye', 'Message envoyé'), description: t('apropos.messageEnvoyeDesc', 'Nous avons bien reçu votre message. Nous vous répondrons rapidement.') });
         setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
       } else {
-        toast({ title: t('common.error', 'Erreur'), description: data.error || t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.'), variant: 'destructive' });
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(data, t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.')), variant: 'destructive' });
       }
-    } catch {
-      toast({ title: t('common.error', 'Erreur'), description: t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.'), variant: 'destructive' });
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.')), variant: 'destructive' });
     } finally {
       setSending(false);
     }
@@ -144,25 +149,28 @@ const APropos = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">{t("apropos.email")}</Label>
+                  <Label htmlFor="email">{t("apropos.email")} <span className="text-destructive" aria-hidden="true">*</span></Label>
                   <Input id="email" type="email" autoComplete="email" required maxLength={255} value={formData.email} onChange={handleChange} placeholder={t("apropos.placeholder_votreemailexemplecom")} />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="sujet">{t("apropos.sujet")}</Label>
-                  <Input id="sujet" maxLength={255} value={formData.sujet} onChange={handleChange} placeholder={t("apropos.placeholder_objet_votre_message")} />
+                  <Input id="sujet" maxLength={200} value={formData.sujet} onChange={handleChange} placeholder={t("apropos.placeholder_objet_votre_message")} />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">{t("apropos.message")}</Label>
+                  <Label htmlFor="message">{t("apropos.message")} <span className="text-destructive" aria-hidden="true">*</span></Label>
                   <Textarea
                     id="message"
-                    maxLength={5000}
+                    minLength={10}
+                    maxLength={2000}
+                    aria-describedby="message-compteur"
                     required
                     value={formData.message}
                     onChange={handleChange}
                     placeholder={t("apropos.placeholder_votre_message")}
                     className="min-h-[120px]" />
+                  <p id="message-compteur" className="text-xs text-muted-foreground text-end">{formData.message.length} / 2000</p>
                 </div>
 
                 <Button type="submit" className="w-full btn-hover" disabled={sending}>

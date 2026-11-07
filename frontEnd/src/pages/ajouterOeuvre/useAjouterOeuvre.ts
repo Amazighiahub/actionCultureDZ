@@ -803,7 +803,7 @@ export function useAjouterOeuvre() {
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
-        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'liens_ecoute', 'categories'];
+        const fieldOrder = ['id_type_oeuvre', 'titre', 'id_langue', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'liens_ecoute', 'categories'];
         const firstErrorField = fieldOrder.find((f) => errors[f]);
         if (firstErrorField) {
           const elementId = firstErrorField === 'titre' ? 'titre-fr'

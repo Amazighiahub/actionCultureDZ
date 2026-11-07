@@ -2,6 +2,7 @@
  * AjouterServicePro - Formulaire pour les professionnels
  * Permet d'ajouter un service commercial autour d'un lieu patrimonial
  */
+import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -117,6 +118,7 @@ const AjouterServicePro: React.FC = () => {
   // Submit state
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const refErreur = useDefilerVersErreur(error);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   useUnsavedChanges(isDirty);
@@ -368,7 +370,7 @@ const AjouterServicePro: React.FC = () => {
       }
     } catch (err: unknown) {
       console.error('Erreur création service:', err);
-      setError(err instanceof Error ? err.message : t('service.errors.submitFailed', 'Erreur lors de la soumission'));
+      setError(messageErreurServeur(err, t('service.errors.submitFailed', 'Erreur lors de la soumission')));
     } finally {
       setSubmitting(false);
     }
@@ -412,7 +414,7 @@ const AjouterServicePro: React.FC = () => {
 
         {/* Error */}
         {error && (
-          <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
+          <Alert ref={refErreur} variant="destructive" className="mb-6" role="alert" aria-live="assertive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>

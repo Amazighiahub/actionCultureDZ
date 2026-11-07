@@ -562,6 +562,9 @@ class HttpClient {
   }
 
   private transformError(error: AxiosError): HttpError {
+    if (error.response?.status === 413) {
+      return new HttpError(i18next.t('common.fichierTropLourd', 'Fichier trop volumineux : choisissez un fichier plus léger.'), 413, 'TROP_VOLUMINEUX');
+    }
     if (error.response?.status === 429) {
       // Message du serveur (ex. « Compte temporairement bloqué… Réessayez dans 15 minute(s). »)
       const data = (error.response.data || {}) as Record<string, unknown>;
@@ -588,7 +591,8 @@ class HttpClient {
         details = typeof data.details === 'object' && data.details !== null ? data.details as Record<string, unknown> : undefined;
         // Code du serveur d'abord (ex. MOT_DE_PASSE_REQUIS) ; sinon celui d'Axios (ERR_NETWORK…)
         codeServeur = typeof data.code === 'string' ? data.code : undefined;
-      } else if (typeof responseData === 'string') {
+      } else if (typeof responseData === 'string' && !/^\s*</.test(responseData)) {
+        // Une page HTML (erreur de nginx) n'est jamais montrée telle quelle
         message = responseData;
       }
     }

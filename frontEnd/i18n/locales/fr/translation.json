@@ -122,7 +122,11 @@
     }
   },
   "auth": {
-    "reprise": {"titre": "Connexion au serveur impossible", "texte": "Vous restez connecté. Vérifiez votre réseau : la page reviendra toute seule dès que possible.", "reessayer": "Réessayer"},
+    "reprise": {
+      "titre": "Connexion au serveur impossible",
+      "texte": "Vous restez connecté. Vérifiez votre réseau : la page reviendra toute seule dès que possible.",
+      "reessayer": "Réessayer"
+    },
     "mustBeConnected": "Vous devez être connecté",
     "required": "Requis",
     "login": {
@@ -585,7 +589,8 @@
     "errorOccurred": "Une erreur est survenue",
     "notFound": "Introuvable",
     "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?",
-    "backToTop": "Retour en haut"
+    "backToTop": "Retour en haut",
+    "fichierTropLourd": "Fichier trop volumineux : choisissez un fichier plus léger."
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -610,7 +615,27 @@
     "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom."
   },
   "comments": {
-    "actions": {"modifier": "Modifier", "modifie": "Commentaire modifié", "modifierTitre": "Modifier votre commentaire", "modifierAide": "Le nouveau texte remplace l’ancien.", "supprimer": "Supprimer", "supprime": "Commentaire supprimé", "supprimerTitre": "Supprimer ce commentaire ?", "supprimerAide": "Il disparaîtra du site.", "masquer": "Masquer", "masque": "Commentaire masqué", "masquerTitre": "Masquer ce commentaire ?", "masquerAide": "Il ne sera plus visible sur le site, sans être effacé.", "signalerTitre": "Signaler ce commentaire", "signalerAide": "L’équipe Tala DZ lira votre signalement. La personne ne saura pas que c’est vous.", "motif": "Motif", "motifChoisir": "Choisir un motif", "motifRequis": "Choisissez un motif", "precision": "Précision (facultatif)", "envoyer": "Envoyer le signalement"},
+    "actions": {
+      "modifier": "Modifier",
+      "modifie": "Commentaire modifié",
+      "modifierTitre": "Modifier votre commentaire",
+      "modifierAide": "Le nouveau texte remplace l’ancien.",
+      "supprimer": "Supprimer",
+      "supprime": "Commentaire supprimé",
+      "supprimerTitre": "Supprimer ce commentaire ?",
+      "supprimerAide": "Il disparaîtra du site.",
+      "masquer": "Masquer",
+      "masque": "Commentaire masqué",
+      "masquerTitre": "Masquer ce commentaire ?",
+      "masquerAide": "Il ne sera plus visible sur le site, sans être effacé.",
+      "signalerTitre": "Signaler ce commentaire",
+      "signalerAide": "L’équipe Tala DZ lira votre signalement. La personne ne saura pas que c’est vous.",
+      "motif": "Motif",
+      "motifChoisir": "Choisir un motif",
+      "motifRequis": "Choisissez un motif",
+      "precision": "Précision (facultatif)",
+      "envoyer": "Envoyer le signalement"
+    },
     "title": "Commentaires",
     "reviews": "Avis",
     "addComment": "Ajouter un commentaire",
@@ -718,7 +743,8 @@
       "sentDesc": "L’équipe Tala DZ va relire votre événement. Vous recevrez une notification dès qu’il sera publié.",
       "dateLimite": "Date limite d’inscription",
       "contactEmail": "E-mail de contact",
-      "contactTelephone": "Téléphone de contact"
+      "contactTelephone": "Téléphone de contact",
+      "startDatePast": "La date de début ne peut pas être passée"
     },
     "types": {
       "concert": "Concert",
@@ -2020,7 +2046,8 @@
     },
     "ressources": "Ressources",
     "ressourcesText": "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.",
-    "titreCourt": "À propos"
+    "titreCourt": "À propos",
+    "messageTropCourt": "Le message doit faire au moins 10 caractères."
   },
   "ajouteroeuvre": {
     "extrait": "Extrait du livre",
@@ -4740,7 +4767,9 @@
       "loadFailed": "Impossible de charger l'artisanat",
       "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques",
       "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum",
-      "descriptionRequired": "La description est requise, dans au moins une langue"
+      "descriptionRequired": "La description est requise, dans au moins une langue",
+      "updateFailed": "Erreur lors de la mise à jour",
+      "notFound": "Artisanat introuvable"
     },
     "addTag": "Ajouter le tag",
     "removeTag": "Supprimer le tag {{tag}}",
@@ -5779,7 +5808,8 @@
     },
     "vendeurIndisponible": "Ce vendeur n’est plus disponible sur Tala DZ : ne le payez pas. Annulez cette commande.",
     "moyensModifies": "Attention : le vendeur a changé ses coordonnées de paiement depuis votre commande. Vérifiez avec lui avant de payer.",
-    "unique": "Œuvre unique : une seule pièce."
+    "unique": "Œuvre unique : une seule pièce.",
+    "telephoneInvalide": "Numéro de téléphone invalide (chiffres, espaces, + au début)."
   },
   "paiement": {
     "mention": "Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.",

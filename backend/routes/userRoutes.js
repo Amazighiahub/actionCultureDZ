@@ -40,7 +40,7 @@ const initUserRoutes = (models, authMiddleware) => {
         .matches(/[A-Z]/).withMessage('Le mot de passe doit contenir au moins une majuscule')
         .matches(/[a-z]/).withMessage('Le mot de passe doit contenir au moins une minuscule')
         .matches(/[0-9]/).withMessage('Le mot de passe doit contenir au moins un chiffre')
-        .matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage('Le mot de passe doit contenir au moins un caractère spécial'),
+        .matches(/[^A-Za-z0-9]/).withMessage('Le mot de passe doit contenir au moins un caractère spécial'),
       body('password_confirmation').custom((val, { req }) => {
         if (val !== req.body.password) throw new Error('Les mots de passe ne correspondent pas');
         return true;

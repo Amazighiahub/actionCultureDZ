@@ -136,7 +136,8 @@ const validationMiddleware = {
   validateWorkSubmission: async (req, res, next) => {
     try {
       const { annee_creation } = req.body;
-      const currentYear = new Date().getFullYear();
+      // Année prochaine permise (livre annoncé), comme le formulaire et la validation des routes
+      const currentYear = new Date().getFullYear() + 1;
       
       if (annee_creation && (annee_creation < 1000 || annee_creation > currentYear)) {
         return res.status(400).json({

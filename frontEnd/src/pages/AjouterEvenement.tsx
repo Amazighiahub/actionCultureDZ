@@ -1,3 +1,4 @@
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -422,6 +423,8 @@ const AjouterEvenement = () => {
       case 'dateDebut':
         if (!formData.dateDebut) {
           error = t('events.create.startDateRequired', 'La date de début est requise');
+        } else if (!isEditMode && formData.dateDebut < new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })) {
+          error = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
         }
         break;
       case 'dateFin':
@@ -568,14 +571,15 @@ const AjouterEvenement = () => {
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || (isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création')),
+          description: messageErreurServeur(response, isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création')),
           variant: 'destructive',
         });
       }
     } catch (error: unknown) {
+      // Vraie raison donnée par le serveur (avant : toujours le même texte, sans dire quel champ)
       toast({
         title: t('common.error', 'Erreur'),
-        description: isEditMode ? t('toasts.updateError') : t('events.create.errorEvent', 'Erreur lors de la création de l\'événement'),
+        description: messageErreurServeur(error, isEditMode ? t('toasts.updateError') : t('events.create.errorEvent', 'Erreur lors de la création de l\'événement')),
         variant: 'destructive',
       });
     } finally {
@@ -829,6 +833,7 @@ const AjouterEvenement = () => {
                 <div className="space-y-2">
                   <MultiLangInput
                     name="nom"
+                    maxLength={200}
                     label={t('events.create.eventName')}
                     value={formData.nom}
                     onChange={(value) => { clearFieldError('nom'); setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } })); }}
@@ -979,6 +984,7 @@ const AjouterEvenement = () => {
                     <Input
                       id="date-debut"
                       type="date"
+                      min={isEditMode ? undefined : new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })}
                       value={formData.dateDebut}
                       onChange={(e) => { clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateDebut: e.target.value })); }}
                       onBlur={() => validateFieldOnBlur('dateDebut')}
@@ -1038,12 +1044,13 @@ const AjouterEvenement = () => {
                   <Input
                     id="max-participants"
                     type="number"
-                    min="0"
+                    inputMode="numeric"
+                    min="1"
                     max="100000"
                     value={formData.maxParticipants}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (val === '' || (Number(val) >= 0 && Number(val) <= 100000)) setFormData(prev => ({ ...prev, maxParticipants: val }));
+                      if (val === '' || (Number(val) >= 1 && Number(val) <= 100000)) setFormData(prev => ({ ...prev, maxParticipants: val }));
                     }}
                     placeholder={t('events.create.maxParticipantsPlaceholder')}
                   />

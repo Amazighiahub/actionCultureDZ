@@ -36,6 +36,8 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
   const [offre, setOffre] = useState<OffreOeuvre | null>(null);
   const [ouvert, setOuvert] = useState(false);
   const [quantite, setQuantite] = useState(1);
+  // Texte en cours de saisie (avant : effacer puis taper « 3 » donnait « 13 »)
+  const [saisieQuantite, setSaisieQuantite] = useState<string | null>(null);
   const [livraison, setLivraison] = useState<ModeLivraison | ''>('');
   const [adresse, setAdresse] = useState('');
   const [telephone, setTelephone] = useState('');
@@ -91,6 +93,8 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
   const envoyer = async () => {
     if (!livraison) { setErreur(t('commande.choisirLivraison', 'Choisissez la livraison.')); return; }
     if (avecAdresse && !adresse.trim()) { setErreur(t('commande.adresseRequise', 'Indiquez l’adresse de livraison.')); return; }
+    // Même règle que le serveur
+    if (telephone.trim() && !/^[+\d][\d\s.()-]{5,29}$/.test(telephone.trim())) { setErreur(t('commande.telephoneInvalide', 'Numéro de téléphone invalide (chiffres, espaces, + au début).')); return; }
     setEnvoi(true);
     setErreur(null);
     const r = await commandeService.commander({
@@ -154,8 +158,12 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
 
               <div className="space-y-1.5">
                 <Label htmlFor="cmd-quantite">{t('commande.quantite', 'Quantité')}</Label>
-                <Input id="cmd-quantite" type="number" min={1} max={maxQuantite} value={quantite} className="w-28"
-                  onChange={(e) => setQuantite(Math.max(1, Math.min(maxQuantite, Number(e.target.value) || 1)))} />
+                <Input id="cmd-quantite" type="number" inputMode="numeric" min={1} max={maxQuantite} value={saisieQuantite ?? quantite} className="w-28"
+                  onChange={(e) => {
+                    setSaisieQuantite(e.target.value);
+                    if (e.target.value !== '') setQuantite(Math.max(1, Math.min(maxQuantite, Number(e.target.value) || 1)));
+                  }}
+                  onBlur={() => setSaisieQuantite(null)} />
                 {offre.unique && (
                   <p className="text-xs text-muted-foreground">{t('commande.unique', 'Œuvre unique : une seule pièce.')}</p>
                 )}
@@ -176,7 +184,7 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
 
               {avecAdresse && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="cmd-adresse">{t('commande.adresse', 'Adresse de livraison')}</Label>
+                  <Label htmlFor="cmd-adresse">{t('commande.adresse', 'Adresse de livraison')} <span className="text-destructive" aria-hidden="true">*</span></Label>
                   <Textarea id="cmd-adresse" dir="auto" rows={3} maxLength={500} value={adresse} onChange={(e) => setAdresse(e.target.value)}
                     placeholder={t('commande.adresseExemple', 'Nom, rue, ville, wilaya ou pays')} />
                 </div>

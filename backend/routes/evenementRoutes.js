@@ -70,7 +70,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
     uploadService.uploadImage().single('affiche'),
     validateStringLengths,
     [
-      body('nom_evenement').optional().isLength({ min: 2, max: 500 }).withMessage('Nom de l\'événement invalide'),
+      body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage('Nom de l\'événement invalide'),
       body('nom').optional().isLength({ min: 2, max: 500 }).withMessage('Nom invalide'),
       body('date_debut').optional().isISO8601().withMessage('Date de début invalide'),
       body('date_fin').optional().isISO8601().withMessage('Date de fin invalide'),

@@ -1,3 +1,4 @@
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -657,10 +658,10 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         setEditing(false);
         await refreshUser();
       } else {
-        toast({ title: t('common.error'), description: response.error, variant: 'destructive' });
+        toast({ title: t('common.error'), description: messageErreurServeur(response, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')), variant: 'destructive' });
       }
-    } catch {
-      toast({ title: t('common.error'), description: t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour'), variant: 'destructive' });
+    } catch (err) {
+      toast({ title: t('common.error'), description: messageErreurServeur(err, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')), variant: 'destructive' });
     } finally {
       setSaving(false);
     }

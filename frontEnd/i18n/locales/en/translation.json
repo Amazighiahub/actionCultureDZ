@@ -122,7 +122,11 @@
     }
   },
   "auth": {
-    "reprise": {"titre": "Unable to reach the server", "texte": "You are still signed in. Check your network: the page will come back on its own as soon as possible.", "reessayer": "Try again"},
+    "reprise": {
+      "titre": "Unable to reach the server",
+      "texte": "You are still signed in. Check your network: the page will come back on its own as soon as possible.",
+      "reessayer": "Try again"
+    },
     "mustBeConnected": "You must be logged in",
     "required": "Required",
     "title": "Login & Registration",
@@ -580,7 +584,8 @@
     "errorOccurred": "An error occurred",
     "notFound": "Not found",
     "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "fichierTropLourd": "File too large: choose a smaller file."
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -692,7 +697,8 @@
       "sentDesc": "The Tala DZ team will review your event. You will be notified as soon as it is published.",
       "dateLimite": "Registration deadline",
       "contactEmail": "Contact email",
-      "contactTelephone": "Contact phone"
+      "contactTelephone": "Contact phone",
+      "startDatePast": "The start date cannot be in the past"
     },
     "types": {
       "concert": "Concert",
@@ -1994,7 +2000,8 @@
     },
     "ressources": "Resources",
     "ressourcesText": "Tala DZ provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more.",
-    "titreCourt": "About"
+    "titreCourt": "About",
+    "messageTropCourt": "The message must be at least 10 characters long."
   },
   "ajouteroeuvre": {
     "extrait": "Book excerpt",
@@ -3131,7 +3138,27 @@
     "constantine": "Constantine"
   },
   "comments": {
-    "actions": {"modifier": "Edit", "modifie": "Comment updated", "modifierTitre": "Edit your comment", "modifierAide": "The new text replaces the old one.", "supprimer": "Delete", "supprime": "Comment deleted", "supprimerTitre": "Delete this comment?", "supprimerAide": "It will disappear from the site.", "masquer": "Hide", "masque": "Comment hidden", "masquerTitre": "Hide this comment?", "masquerAide": "It will no longer appear on the site, but it will not be erased.", "signalerTitre": "Report this comment", "signalerAide": "The Tala DZ team will read your report. The person will not know it was you.", "motif": "Reason", "motifChoisir": "Choose a reason", "motifRequis": "Please choose a reason", "precision": "Details (optional)", "envoyer": "Send the report"},
+    "actions": {
+      "modifier": "Edit",
+      "modifie": "Comment updated",
+      "modifierTitre": "Edit your comment",
+      "modifierAide": "The new text replaces the old one.",
+      "supprimer": "Delete",
+      "supprime": "Comment deleted",
+      "supprimerTitre": "Delete this comment?",
+      "supprimerAide": "It will disappear from the site.",
+      "masquer": "Hide",
+      "masque": "Comment hidden",
+      "masquerTitre": "Hide this comment?",
+      "masquerAide": "It will no longer appear on the site, but it will not be erased.",
+      "signalerTitre": "Report this comment",
+      "signalerAide": "The Tala DZ team will read your report. The person will not know it was you.",
+      "motif": "Reason",
+      "motifChoisir": "Choose a reason",
+      "motifRequis": "Please choose a reason",
+      "precision": "Details (optional)",
+      "envoyer": "Send the report"
+    },
     "title": "Comments",
     "reviews": "Reviews",
     "addComment": "Add comment",
@@ -4459,7 +4486,9 @@
       "loadFailed": "Unable to load the craft product",
       "loadMetadataFailed": "Error loading materials and techniques",
       "prixMinMax": "The minimum price cannot be higher than the maximum price",
-      "descriptionRequired": "A description is required, in at least one language"
+      "descriptionRequired": "A description is required, in at least one language",
+      "updateFailed": "Error while updating",
+      "notFound": "Craft item not found"
     },
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",
@@ -5779,7 +5808,8 @@
     },
     "vendeurIndisponible": "This seller is no longer available on Tala DZ: do not pay them. Cancel this order.",
     "moyensModifies": "Warning: the seller changed their payment details after your order. Check with them before paying.",
-    "unique": "Unique work: a single piece."
+    "unique": "Unique work: a single piece.",
+    "telephoneInvalide": "Invalid phone number (digits, spaces, + at the start)."
   },
   "paiement": {
     "mention": "Payment is made directly to the organiser. Tala DZ receives no money.",

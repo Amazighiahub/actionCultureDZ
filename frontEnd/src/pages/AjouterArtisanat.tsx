@@ -1,3 +1,4 @@
+import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -81,6 +82,7 @@ const AjouterArtisanat: React.FC = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const refErreur = useDefilerVersErreur(error);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
@@ -134,7 +136,7 @@ const AjouterArtisanat: React.FC = () => {
         });
         // Artisanat loaded for editing
       } else {
-        setError('Artisanat introuvable');
+        setError(t('ajouterArtisanat.errors.notFound', 'Artisanat introuvable'));
         navigate('/dashboard-pro');
       }
     } catch (_err: unknown) {
@@ -295,7 +297,7 @@ const AjouterArtisanat: React.FC = () => {
         rafraichirTableauDeBord();
         naviguerPlusTard('/dashboard-pro');
       } else {
-        setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
+        setError(messageErreurServeur(response, isEditMode ? t('ajouterArtisanat.errors.updateFailed', 'Erreur lors de la mise à jour') : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
@@ -353,7 +355,7 @@ const AjouterArtisanat: React.FC = () => {
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6" role="alert">
+          <Alert ref={refErreur} variant="destructive" className="mb-6" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>

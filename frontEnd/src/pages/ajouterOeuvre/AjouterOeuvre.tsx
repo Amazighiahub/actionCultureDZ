@@ -1,3 +1,4 @@
+import { useDefilerVersErreur } from '@/utils/erreurServeur';
 import MediasEnregistres from './MediasEnregistres';
 import ExtraitFichiersLivre from './ExtraitFichiersLivre';
 import React from 'react';
@@ -47,6 +48,7 @@ const getTypeIcon = (typeId: number): React.ReactNode => {
 
 const AjouterOeuvre: React.FC = () => {
   const hook = useAjouterOeuvre();
+  const refErreur = useDefilerVersErreur(hook.submitError);
   const {
     t, direction, navigate,
     loading, loadingMetadata,
@@ -179,7 +181,7 @@ const AjouterOeuvre: React.FC = () => {
               }
 
               {submitError &&
-              <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
+              <Alert ref={refErreur} variant="destructive" className="mb-6" role="alert" aria-live="assertive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{submitError}</AlertDescription>
                 </Alert>

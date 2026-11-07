@@ -444,7 +444,7 @@ class UserService extends BaseService {
     if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
       throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
     }
-    if (!/[A-Z]/.test(nouveauMotDePasse) || !/[a-z]/.test(nouveauMotDePasse) || !/[0-9]/.test(nouveauMotDePasse) || !/[!@#$%^&*(),.?":{}|<>]/.test(nouveauMotDePasse)) {
+    if (!/[A-Z]/.test(nouveauMotDePasse) || !/[a-z]/.test(nouveauMotDePasse) || !/[0-9]/.test(nouveauMotDePasse) || !/[^A-Za-z0-9]/.test(nouveauMotDePasse)) {
       throw this._validationError('Le mot de passe doit contenir majuscule, minuscule, chiffre et caractère spécial');
     }
 
