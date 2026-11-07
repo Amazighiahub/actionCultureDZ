@@ -22,7 +22,10 @@ async function suivre(models, idUser, idPro) {
     where: { id_user: idUser, id_professionnel: idPro },
     defaults: { date_creation: new Date() },
   });
-  if (cree) await require('./messagesProfessionnels').prevenirNouvelAbonne(models, idPro);
+  // Une seule notification « Nouvel abonné » par personne et par jour (suivre / ne plus suivre en boucle)
+  if (cree && await require('./quotaEmail').premiereFoisPendant(`suivi:${idUser}:${idPro}`, 24 * 3600)) {
+    await require('./messagesProfessionnels').prevenirNouvelAbonne(models, idPro);
+  }
 }
 
 async function nePlusSuivre(models, idUser, idPro) {

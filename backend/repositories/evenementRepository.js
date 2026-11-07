@@ -302,6 +302,8 @@ class EvenementRepository extends BaseRepository {
     if (this.models.Organisation) {
       includes.push({
         model: this.models.Organisation,
+        // Ce que la page affiche, sans les coordonnées de l'organisation
+        attributes: ['id_organisation', 'nom', 'description', 'logo_url', 'site_web', 'statut'],
         // rôle de l'organisation (organisateur principal, partenaire, sponsor…) pour la page publique
         through: { attributes: ['role'] },
         as: 'Organisations',

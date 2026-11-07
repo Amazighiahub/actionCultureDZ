@@ -744,6 +744,7 @@ class UserService extends BaseService {
     if (user.statut !== 'en_attente_validation') {
       throw this._conflictError(`Seul un compte en attente peut être validé (statut: ${user.statut})`);
     }
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validatorId, userId, 'votre propre compte');
 
     const updatedUser = await this.repository.validate(userId, validatorId);
     await invalidateUserSession(userId);

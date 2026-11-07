@@ -318,6 +318,7 @@ class ServiceService extends BaseService {
     if (service.statut === 'valide') {
       throw this._conflictError('Ce service est déjà validé');
     }
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, adminId, service.id_user, 'votre propre service');
 
     await this.repository.update(id, { statut: 'valide' });
     const updated = await this.repository.findWithFullDetails(id);
@@ -341,6 +342,7 @@ class ServiceService extends BaseService {
     if (!motif || motif.trim().length === 0) {
       throw this._validationError('Un motif de rejet est requis');
     }
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, adminId, service.id_user, 'votre propre service');
 
     await this.repository.update(id, { statut: 'rejete' });
     const updated = await this.repository.findWithFullDetails(id);

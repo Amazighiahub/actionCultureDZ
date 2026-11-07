@@ -15,7 +15,11 @@ import { httpClient } from '@/services/httpClient';
 import { ConfirmDialog } from '@/components/shared';
 import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation, surTelephone } from '@/utils/applicationMobile';
 
-export function InstallerTalaDz() {
+/**
+ * @param rond - bouton rond vert, en haut de chaque page (avant : seulement en bas de page et après la
+ *               connexion, et beaucoup ne le voyaient pas)
+ */
+export function InstallerTalaDz({ rond = false }: { rond?: boolean } = {}) {
   const { t } = useTranslation();
   const [proposee, setProposee] = useState(installationProposee());
   const [consignes, setConsignes] = useState(false);
@@ -35,12 +39,21 @@ export function InstallerTalaDz() {
       t('applicationMobile.android2', 'Touchez les trois points, en haut à droite.'),
       t('applicationMobile.android3', 'Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».'),
     ];
+  const ouvrir = () => (proposee ? lancerInstallation() : setConsignes(true));
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => (proposee ? lancerInstallation() : setConsignes(true))}>
-        <Download className="h-4 w-4 me-2" aria-hidden="true" />
-        {t('applicationMobile.installer', 'Installer Tala DZ')}
-      </Button>
+      {rond ? (
+        <button type="button" onClick={ouvrir}
+          aria-label={t('applicationMobile.installer', 'Installer Tala DZ')} title={t('applicationMobile.installer', 'Installer Tala DZ')}
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-600 text-white shadow-md ring-2 ring-green-600/30 transition hover:bg-green-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-500/50 motion-safe:animate-[pulse_2.5s_ease-in-out_3]">
+          <Download className="h-5 w-5" aria-hidden="true" />
+        </button>
+      ) : (
+        <Button variant="outline" size="sm" onClick={ouvrir}>
+          <Download className="h-4 w-4 me-2" aria-hidden="true" />
+          {t('applicationMobile.installer', 'Installer Tala DZ')}
+        </Button>
+      )}
       <ConfirmDialog
         open={consignes}
         onOpenChange={setConsignes}

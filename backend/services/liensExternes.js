@@ -194,5 +194,5 @@ async function mesContenus(models, idUser) {
 }
 
 module.exports = {
-  MAX_LIENS, typeDepuisUrl, urlValide, creer, modifier, supprimer, mesLiens, liensDuPortfolio, liensDeLOeuvre, liensDeLEvenement, mesContenus,
+  MAX_LIENS, STATUTS_EVENEMENT_PUBLICS, typeDepuisUrl, urlValide, creer, modifier, supprimer, mesLiens, liensDuPortfolio, liensDeLOeuvre, liensDeLEvenement, mesContenus,
 };

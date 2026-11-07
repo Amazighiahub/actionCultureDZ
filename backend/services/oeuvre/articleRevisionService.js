@@ -19,8 +19,25 @@ const TYPES_BLOCS = ['text', 'heading', 'image', 'video', 'citation', 'list', 't
 const MAX_BLOCS = 150;
 const MAX_EN_ATTENTE_PAR_PERSONNE = 3;
 // Images d'une proposition : envoyées par /upload/image (Cloudinary) ou fichiers du site
-const imageAutorisee = (url) => typeof url === 'string'
-  && (/^https:\/\/res\.cloudinary\.com\//.test(url) || /^\/uploads\/[\w./-]+$/.test(url));
+// Image du compte Cloudinary du site, ou fichier local (avant : n'importe quel compte Cloudinary)
+// Adresse analysée (un « ../ » ou « %2e%2e » ne fait plus sortir du compte), comme les photos de profil
+const imageAutorisee = (url) => {
+  if (typeof url !== 'string') return false;
+  if (/^\/uploads\/[\w./-]+$/.test(url)) return !url.includes('..');
+  if (/%2e/i.test(url)) return false;
+  return require('../../dto/baseDTO').isOwnMediaUrl(url);
+};
+
+/** Titre ou résumé proposé : texte, ou objet par langue ; longueur bornée (avant : sans limite) */
+function texteProposeValide(valeur, max, champ, erreur) {
+  if (valeur === undefined || valeur === null || valeur === '') return null;
+  const valeurs = typeof valeur === 'string' ? [valeur]
+    : (typeof valeur === 'object' && !Array.isArray(valeur) ? Object.values(valeur) : null);
+  if (!valeurs || valeurs.some((v) => typeof v !== 'string')) throw erreur(`${champ} invalide`);
+  if (typeof valeur === 'object' && Object.keys(valeur).length > 6) throw erreur(`${champ} : trop de langues`);
+  if (valeurs.some((v) => v.length > max)) throw erreur(`${champ} : ${max} caractères au plus`);
+  return valeur;
+}
 
 class ArticleRevisionService extends BaseService {
   constructor(models, { notificationService } = {}) {
@@ -91,6 +108,9 @@ class ArticleRevisionService extends BaseService {
       throw this._validationError('Vous avez déjà des propositions en attente pour cet article : attendez la réponse de son auteur');
     }
 
+    // Mêmes limites qu'à la création d'une œuvre (sinon un article existant plus long refuserait toute proposition)
+    const titrePropose = texteProposeValide(donnees.titre, 500, 'Titre', (m) => this._validationError(m));
+    const descriptionProposee = texteProposeValide(donnees.description, typeof donnees.description === 'object' ? 50000 : 10000, 'Résumé', (m) => this._validationError(m));
     const blocks = await this._blocsValides(donnees.blocks, idOeuvre, Media);
     // Empreinte de l'article au moment de la proposition : à l'acceptation, on saura s'il a changé
     const empreinte_base = await this._empreinteArticle(oeuvre);
@@ -98,7 +118,7 @@ class ArticleRevisionService extends BaseService {
       id_oeuvre: idOeuvre,
       id_auteur: userId,
       motif,
-      contenu: { titre: donnees.titre ?? null, description: donnees.description ?? null, blocks, empreinte_base },
+      contenu: { titre: titrePropose, description: descriptionProposee, blocks, empreinte_base },
       statut: 'en_attente'
     });
 

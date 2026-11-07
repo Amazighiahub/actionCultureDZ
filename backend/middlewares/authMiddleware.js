@@ -268,10 +268,9 @@ module.exports = (modelsOrUser) => {
       // ✅ SÉCURITÉ: Priorité au cookie httpOnly (plus sécurisé)
       // Fallback sur header Authorization pour compatibilité
       const authHeader = req.headers.authorization;
+      // Anciennes formes (en-tête x-access-token, témoin « token ») retirées : la migration est finie
       const token = req.cookies?.access_token  // 1. Cookie httpOnly (prioritaire)
-        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null)  // 2. Header Authorization
-        || req.headers['x-access-token']  // 3. Header legacy
-        || req.cookies?.token;  // 4. Ancien cookie (migration)
+        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null);  // 2. Header Authorization
 
       if (!token) {
         return res.status(401).json({
@@ -396,9 +395,7 @@ module.exports = (modelsOrUser) => {
       // ✅ SÉCURITÉ: Même logique que authenticate
       const authHeader = req.headers.authorization;
       const token = req.cookies?.access_token
-        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null)
-        || req.headers['x-access-token']
-        || req.cookies?.token;
+        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null);
 
       if (token) {
         const decoded = verifyToken(token);

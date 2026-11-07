@@ -126,19 +126,15 @@ describe('authMiddleware', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('should authenticate with x-access-token header', async () => {
-      const token = 'legacy-token';
-      req.headers['x-access-token'] = token;
+    it('refuse l’ancien en-tête x-access-token (forme retirée)', async () => {
+      req.headers['x-access-token'] = 'legacy-token';
       jwt.verify.mockReturnValue({ userId: 1 });
 
       await authMiddleware.authenticate(req, res, next);
 
-      expect(jwt.verify).toHaveBeenCalledWith(
-        token,
-        JWT_SECRET,
-        expect.objectContaining({ algorithms: ['HS256'] })
-      );
-      expect(next).toHaveBeenCalled();
+      expect(jwt.verify).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
     });
 
     it('should prioritize cookie over Bearer header', async () => {

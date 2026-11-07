@@ -65,3 +65,28 @@ describe('bouton Installer Tala DZ', () => {
     expect(screen.queryByRole('button', BOUTON)).not.toBeInTheDocument();
   });
 });
+
+describe('bouton rond vert en haut de page', () => {
+  beforeEach(() => { etat.proposee = false; etat.iphone = false; etat.installee = false; etat.telephone = true; lancer.mockClear(); });
+
+  test('visible sur téléphone, lance l’installation quand le navigateur la propose', async () => {
+    etat.proposee = true;
+    render(<InstallerTalaDz rond />);
+    const bouton = screen.getByRole('button', BOUTON);
+    expect(bouton.className).toContain('rounded-full');
+    expect(bouton.className).toContain('bg-green-600');
+    await userEvent.click(bouton);
+    expect(lancer).toHaveBeenCalled();
+  });
+
+  test('sur iPhone : donne les gestes à faire ; déjà installée : invisible', async () => {
+    etat.iphone = true;
+    const { unmount } = render(<InstallerTalaDz rond />);
+    await userEvent.click(screen.getByRole('button', BOUTON));
+    expect(screen.getByText(/Partager/)).toBeTruthy();
+    unmount();
+    etat.installee = true;
+    render(<InstallerTalaDz rond />);
+    expect(screen.queryByRole('button', BOUTON)).toBeNull();
+  });
+});

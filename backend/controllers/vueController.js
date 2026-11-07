@@ -54,10 +54,11 @@ class VueController extends BaseController {
       // Avant : une session nouvelle à chaque appel, chaque appel comptait une vue de plus.
       const empreinte = () => 'anon-' + require('crypto').createHash('sha256')
         .update(`${ipAddress}|${userAgent}|${new Date().toISOString().slice(0, 10)}`).digest('hex').slice(0, 24);
-      const sessionId = String(req.session?.id || req.cookies?.sessionId ||
-                       req.headers['x-session-id'] || empreinte()).slice(0, 128);
+      // Session : témoin du site ou empreinte ; plus l'en-tête X-Session-Id (une valeur nouvelle à
+      // chaque appel comptait une vue de plus)
+      const sessionId = String(req.session?.id || req.cookies?.sessionId || empreinte()).slice(0, 128);
 
-      if (!req.cookies?.sessionId && !req.headers['x-session-id'] && !req.session?.id) {
+      if (!req.cookies?.sessionId && !req.session?.id) {
         res.cookie('sessionId', sessionId, {
           httpOnly: true,
           sameSite: 'lax',
@@ -122,7 +123,7 @@ class VueController extends BaseController {
       const { id } = req.params;
       const { duration } = req.body;
 
-      const requestSessionId = req.session?.id || req.cookies?.sessionId || req.headers['x-session-id'] || req.sessionID;
+      const requestSessionId = req.session?.id || req.cookies?.sessionId || req.sessionID;
 
       const vue = await this.vueService.findById(id);
       if (!vue) {

@@ -62,7 +62,7 @@ async function enAttente(models) {
 /**
  * @returns {Promise<{ demande: object, organisation: object, refusesAuto: number[] }>}
  */
-async function decider(models, idDemande, decision, motif) {
+async function decider(models, idDemande, decision, motif, idDecideur = null) {
   if (!['acceptee', 'refusee'].includes(decision)) throw erreur('Décision invalide', 400, 'VALIDATION_ERROR');
   const raison = String(motif || '').trim();
   if (decision === 'refusee' && !raison) throw erreur('Un motif de refus est requis', 400, 'VALIDATION_ERROR');
@@ -72,6 +72,8 @@ async function decider(models, idDemande, decision, motif) {
     const [demande] = await q(models, 'SELECT * FROM organisation_revendication WHERE id = :id FOR UPDATE', { id: idDemande }, { transaction });
     if (!demande) throw erreur('Demande introuvable', 404, 'NOT_FOUND');
     if (demande.statut !== 'en_attente') throw erreur('Cette demande a déjà été traitée', 409, 'DEMANDE_TRAITEE');
+    // Un modérateur ne s'accorde pas lui-même la responsabilité d'une organisation
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(models, idDecideur, demande.id_user, 'votre propre demande');
     const organisation = await models.Organisation.findByPk(demande.id_organisation, { transaction });
     let refusesAuto = [];
 

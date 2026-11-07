@@ -278,6 +278,11 @@ class ParcoursService extends BaseService {
    * @param {Object} params - Paramètres métier (pas de req/res)
    */
   async generatePersonnalise({ lat, lng, interests = [], duration = 240, transport = 'voiture', maxSites = 5, includeRestaurants = false, includeHotels = false, lang = 'fr' }) {
+    // Bornes : la route est publique (avant : maxSites sans limite, une seule requête pouvait charger
+    // des milliers de lieux)
+    maxSites = Math.min(20, Math.max(1, parseInt(maxSites, 10) || 5));
+    duration = Math.min(24 * 60, Math.max(30, parseInt(duration, 10) || 240));
+    interests = Array.isArray(interests) ? interests.slice(0, 20) : [];
     // Noms et descriptions dans la langue du visiteur (sinon français, puis la langue remplie)
     const texte = (v) => translate(lireMultiLang(v), lang);
     const rayonKm = rayonParTransport(transport);

@@ -397,7 +397,7 @@ class OrganisationService extends BaseService {
 
   /** Accepter (le demandeur devient responsable) ou refuser avec un motif ; les demandeurs sont prévenus */
   async deciderResponsabilite(idDemande, decision, motif, adminId) {
-    const { demande, organisation, refusesAuto } = await revendications.decider(this.models, Number(idDemande), decision, motif);
+    const { demande, organisation, refusesAuto } = await revendications.decider(this.models, Number(idDemande), decision, motif, adminId);
     const nomOrg = texteLisible(organisation?.nom);
     this.logger.info(`Demande de responsable ${idDemande} (${nomOrg}) : ${decision} par admin: ${adminId}`);
     await notifier(this.notificationService, demande.id_user, decision === 'acceptee'

@@ -539,7 +539,8 @@ const initRoutes = (models, authMiddleware) => {
           success: false,
           error: req.t ? req.t('common.notImplemented') : 'Module not implemented',
           message: `Module ${path}`,
-          details: error.message
+          // Détail de l'erreur seulement hors production
+          ...(process.env.NODE_ENV === 'production' ? {} : { details: error.message })
         });
       });
     }

@@ -141,7 +141,9 @@ const initMetadataRoutes = (models) => {
         });
         res.json({ success: true, data: localites });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        // Message interne journalisé, jamais renvoyé (il pouvait décrire la base)
+        require('../utils/logger').error('metadata localites :', error.message);
+        res.status(500).json({ success: false, error: 'Erreur serveur' });
       }
     }
   );

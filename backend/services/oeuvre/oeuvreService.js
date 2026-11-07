@@ -515,6 +515,7 @@ class OeuvreService extends BaseService {
       if (oeuvre.statut !== 'en_attente') {
         throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
       }
+      await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validatorId, oeuvre.saisi_par ?? oeuvre.id_createur, 'votre propre œuvre');
       return this.repository.validate(id, validatorId, { transaction });
     });
 
@@ -543,6 +544,7 @@ class OeuvreService extends BaseService {
       if (oeuvre.statut !== 'en_attente') {
         throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
       }
+      await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validatorId, oeuvre.saisi_par ?? oeuvre.id_createur, 'votre propre œuvre');
       return this.repository.reject(id, validatorId, motif, { transaction });
     });
 

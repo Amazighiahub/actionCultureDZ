@@ -193,7 +193,13 @@ class MessagesParticipants {
     });
     if (!m || !estPdfDuSite(m.lien_programme)) throw erreur('Programme introuvable', 404);
     const ancien = m.date_creation && new Date(m.date_creation) < SIGNATURE_DEPUIS;
-    if (!ancien && !signatureValide(idMessage, cle)) throw erreur('Programme introuvable', 404);
+    if (!signatureValide(idMessage, cle)) {
+      if (!ancien) throw erreur('Programme introuvable', 404);
+      // Ancien lien sans signature : seulement si l'événement est public (pas un brouillon ni un refus)
+      const ev = this.models.Evenement ? await this.models.Evenement.findByPk(idEvenement, { attributes: ['statut'] }) : null;
+      const { STATUTS_EVENEMENT_PUBLICS } = require('../liensExternes');
+      if (!ev || !STATUTS_EVENEMENT_PUBLICS.includes(ev.statut)) throw erreur('Programme introuvable', 404);
+    }
     return m.lien_programme;
   }
 

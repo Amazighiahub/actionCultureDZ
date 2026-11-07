@@ -81,6 +81,10 @@ const initTrackingRoutes = (models, authMiddleware) => {
   router.post('/view',
     optionalAuth,
     viewLimiter,
+    // Même contrôle que /:type/:id/view : type connu et contenu existant
+    (req, res, next) => { req.params.type = req.body?.type_entite; req.params.id = req.body?.id_entite; next(); },
+    validateEntityType,
+    checkEntityExists,
     (req, res) => vueController.trackView(req, res)
   );
 

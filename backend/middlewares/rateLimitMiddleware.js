@@ -245,6 +245,9 @@ const limiteParPersonne = (nom, windowMs, max, message) => rateLimit(withStore(n
   keyGenerator: parPersonne,
   handler: (req, res) => res.status(429).json({ success: false, error: message }),
 }));
+// Suivre / ne plus suivre un professionnel : 30 par heure (avant : sans limite, chaque nouvel
+// abonnement envoyait une notification au professionnel)
+const suiviLimiter = limiteParPersonne('suivi', 60 * 60 * 1000, 30, 'Trop d’actions en peu de temps : réessayez plus tard.');
 // Médias des fiches (œuvres, artisanat, patrimoine, extraits) : le site les envoie un par un
 // 400 par heure : un catalogue importé envoie une couverture par livre (300 lignes au plus)
 const mediasLimiter = limiteParPersonne('medias', 60 * 60 * 1000, 400, 'Trop d’envois de fichiers en une heure : réessayez plus tard.');
@@ -291,8 +294,8 @@ const pdfLimiter = rateLimit(withStore('pdf', {
 
 const viewLimiter = rateLimit(withStore('views', {
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30, // 30 vues par 5 minutes
-  keyGenerator: (req) => `${req.ip}:${req.params.type || req.body?.type_entite}:${req.params.id || req.body?.id_entite}`,
+  max: 60, // 60 vues par 5 minutes et par adresse, tous contenus confondus
+  keyGenerator: (req) => `${req.ip}`,
   handler: (req, res) => res.json({ success: true, data: { compte: false } })
 }));
 
@@ -650,6 +653,7 @@ module.exports = {
   uploadLimiter,
   moyensPaiementLimiter,
   mediasLimiter,
+  suiviLimiter,
   commandeLimiter,
   commandeEtapeLimiter,
   viewLimiter,

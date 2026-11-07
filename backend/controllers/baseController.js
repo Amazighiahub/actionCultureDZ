@@ -166,7 +166,8 @@ class BaseController {
       error: (IS_PRODUCTION && statusCode === 500)
         ? 'Internal server error'
         : (error.message || 'Internal server error'),
-      code
+      // En production, pas de code système (ECONNREFUSED, ETIMEDOUT…) sur une erreur 500
+      code: (IS_PRODUCTION && statusCode === 500) ? 'INTERNAL_ERROR' : code
     };
 
     // Détail des champs refusés : utile à la personne (avant : masqué en production, elle ne voyait

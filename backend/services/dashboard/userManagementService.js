@@ -457,6 +457,7 @@ class DashboardUserManagementService {
     if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
     if (user.id_type_user === TYPE_USER_IDS.VISITEUR) throw erreurHttp('Les visiteurs n\'ont pas besoin de validation', 400);
     if (user.statut !== 'en_attente_validation') throw erreurHttp(`Cet utilisateur a déjà été traité (statut: ${user.statut})`, 409);
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validateur_id, userId, 'votre propre compte');
 
     const updateData = { statut: valide ? 'actif' : 'rejete', date_validation: new Date(), id_user_validate: validateur_id };
     if (!valide && raison) updateData.raison_rejet = raison;

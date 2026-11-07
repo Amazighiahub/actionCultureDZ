@@ -105,7 +105,8 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             className={cn("flex items-center gap-1 h-8 px-2", className)}
           >
             {showFlag && <span className="text-sm leading-none">{currentFlag}</span>}
-            {showLabel && <span className="text-xs font-medium">{currentLabel}</span>}
+            {/* Nom de la langue caché sur petit téléphone (le drapeau suffit, l'en-tête tient sur 360 px) */}
+            {showLabel && <span className="hidden sm:inline text-xs font-medium">{currentLabel}</span>}
           </Button>
         );
 

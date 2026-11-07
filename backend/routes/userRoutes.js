@@ -20,7 +20,7 @@ const userProfileController = require('../controllers/userProfileController');
 const userAdminController = require('../controllers/userAdminController');
 const gdprController = require('../controllers/gdprController');
 const asyncHandler = require('../utils/asyncHandler');
-const { strictLimiter, endpointLimiters, accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
+const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 
 const initUserRoutes = (models, authMiddleware) => {
@@ -88,7 +88,7 @@ const initUserRoutes = (models, authMiddleware) => {
     res.set('Cache-Control', 'private, no-store');
     res.json({ success: true, data: await suivis.etat(models, Number(req.params.id), req.user?.id_user) });
   }));
-  router.post('/professionals/:id/suivi', authenticate, validateId(), asyncHandler(async (req, res) => {
+  router.post('/professionals/:id/suivi', authenticate, validateId(), suiviLimiter, asyncHandler(async (req, res) => {
     try {
       await suivis.suivre(models, req.user.id_user, Number(req.params.id));
       res.json({ success: true });
@@ -96,7 +96,7 @@ const initUserRoutes = (models, authMiddleware) => {
       repondreErreur(res, req, err);
     }
   }));
-  router.delete('/professionals/:id/suivi', authenticate, validateId(), asyncHandler(async (req, res) => {
+  router.delete('/professionals/:id/suivi', authenticate, validateId(), suiviLimiter, asyncHandler(async (req, res) => {
     await suivis.nePlusSuivre(models, req.user.id_user, Number(req.params.id));
     res.json({ success: true });
   }));

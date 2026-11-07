@@ -10,9 +10,11 @@ const STATUTS_AVEC_LIEN = ['confirme', 'present'];
 /** Pour app.set('json replacer') : ne modifie jamais l'objet d'origine (il peut venir du cache) */
 function retirerLienEnLigne(_cle, valeur) {
   if (!valeur || typeof valeur !== 'object' || Array.isArray(valeur)) return valeur;
-  if (!Object.prototype.hasOwnProperty.call(valeur, 'url_virtuel')) return valeur;
-  const { url_virtuel: lien, ...reste } = valeur;
-  return { ...reste, en_ligne: Boolean(lien) };
+  const a = (cle) => Object.prototype.hasOwnProperty.call(valeur, cle);
+  // Les deux écritures du champ (base : url_virtuel ; objet de transfert : urlVirtuel)
+  if (!a('url_virtuel') && !a('urlVirtuel')) return valeur;
+  const { url_virtuel: lien, urlVirtuel: lienBis, ...reste } = valeur;
+  return { ...reste, en_ligne: Boolean(lien || lienBis) };
 }
 
 /**

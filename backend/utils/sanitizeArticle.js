@@ -47,12 +47,19 @@ function isAllowedEmbedUrl(url) {
  * URL de vidéo acceptée pour un bloc "video" : https, domaine d'embed autorisé
  * ou vidéo hébergée sur notre compte Cloudinary.
  */
+/** Fichier du compte Cloudinary du site (nom du compte pris dans la configuration) */
+function estNotreCloudinary(parsed) {
+  if (parsed.hostname !== 'res.cloudinary.com') return false;
+  const compte = process.env.CLOUDINARY_CLOUD_NAME;
+  return compte ? parsed.pathname.startsWith(`/${compte}/`) : true;
+}
+
 function isAllowedVideoUrl(url) {
   if (!url || typeof url !== 'string') return false;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== 'https:') return false;
-    return isAllowedEmbedUrl(url) || parsed.hostname === 'res.cloudinary.com';
+    return isAllowedEmbedUrl(url) || estNotreCloudinary(parsed);
   } catch {
     return false;
   }

@@ -935,6 +935,8 @@ class EvenementService extends BaseService {
   async publish(id, adminId, { statut, raison } = {}) {
     const evenement = await this.repository.findById(id);
     if (!evenement) throw this._notFoundError(id);
+    // Un modérateur ne valide pas son propre événement
+    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, adminId, evenement.id_user, 'votre propre événement');
     const nom = nomLisible(evenement.nom_evenement);
     const lien = evenementPath(id, evenement.nom_evenement);
 

@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRTL } from '@/utils/rtl';
 import LanguageSelector from '@/components/LanguageSelector';
+import { InstallerTalaDz } from '@/components/shared/PiedDePageApplication';
 import NotificationBell from '@/components/NotificationBell';
 import { professionnelPath } from '@/utils/slug';
 
@@ -244,6 +245,9 @@ const Header = () => {
 
             {/* Actions droite */}
             <div className="flex items-center gap-1 sm:gap-2">
+
+              {/* Installer l'application : rond vert, visible de tous tant qu'elle n'est pas installée */}
+              <InstallerTalaDz rond />
 
               {/* Selecteur de langue */}
               <LanguageSelector

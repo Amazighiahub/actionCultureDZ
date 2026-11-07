@@ -187,9 +187,12 @@ class App {
     this.app.use('/api', (req, res, next) => {
       // Vary pour CDN/proxies (langue + encoding)
       res.set('Vary', 'Accept-Encoding, Accept-Language, X-Language');
-      // Empêcher le cache sur les mutations
+      // Empêcher le cache sur les mutations, et sur les réponses d'un compte connecté (profil,
+      // notifications, export…) : sur un ordinateur partagé, le navigateur ne les garde plus
       if (req.method !== 'GET') {
         res.set('Cache-Control', 'no-store');
+      } else if (req.cookies?.access_token) {
+        res.set('Cache-Control', 'private, no-store');
       }
       next();
     });
@@ -621,7 +624,7 @@ class App {
       }
       // Désinscription one-click (RFC 8058) : POST envoyé par la messagerie, sans jeton CSRF ;
       // protégé par la signature HMAC du lien.
-      if (req.path === '/users/newsletter/unsubscribe' || req.path === '/newsletter/desabonner') {
+      if (['/users/newsletter/unsubscribe', '/users/annonces/unsubscribe', '/newsletter/desabonner'].includes(req.path)) {
         return next();
       }
       return csrfVerifier(req, res, next);

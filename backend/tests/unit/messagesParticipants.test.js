@@ -122,7 +122,11 @@ describe('MessagesParticipants', () => {
     await expect(service.programme(2, 7)).rejects.toMatchObject({ statusCode: 404 });
     await expect(service.programme(2, 8, cle)).rejects.toMatchObject({ statusCode: 404 });
     m.MessageEvenement.findOne = jest.fn().mockResolvedValue({ lien_programme: pdf, date_creation: new Date('2026-10-20') });
+    // Ancien lien sans signature : accepté pour un événement public, refusé pour un brouillon
+    m.Evenement = { ...(m.Evenement || {}), findByPk: jest.fn().mockResolvedValue({ statut: 'planifie' }) };
     await expect(service.programme(2, 7)).resolves.toBe(pdf);
+    m.Evenement.findByPk = jest.fn().mockResolvedValue({ statut: 'brouillon' });
+    await expect(service.programme(2, 7)).rejects.toMatchObject({ statusCode: 404 });
   });
 
   it('l\'administration peut écrire aux participants de tout événement', async () => {

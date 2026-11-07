@@ -205,6 +205,13 @@ const corsOptionsDelegate = (req, callback) => {
     return callback(null, { ...baseCorsOptions, origin: true });
   }
 
+  // Désabonnement en un clic envoyé par Gmail, Outlook… (RFC 8058) : sans Origin par nature, et
+  // protégé par la signature du lien (avant : refusé, le désabonnement en un clic ne marchait pas)
+  const chemin = String(req.originalUrl || req.url || '').split('?')[0];
+  if (method === 'POST' && ['/api/users/newsletter/unsubscribe', '/api/users/annonces/unsubscribe', '/api/newsletter/desabonner'].includes(chemin)) {
+    return callback(null, { ...baseCorsOptions, origin: true });
+  }
+
   if (ALLOW_NO_ORIGIN_BYPASS) {
     if (shouldSample()) {
       logger.warn('CORS: requete sans Origin autorisee via CORS_ALLOW_NO_ORIGIN', safeClientInfo(req));
