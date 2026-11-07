@@ -2,6 +2,8 @@
  * VisitePlanner - Planificateur de visite intelligent
  * Permet de planifier une visite autour d'un site patrimonial
  */
+import LireAVoixHaute, { type LangueLue } from '@/components/shared/LireAVoixHaute';
+import i18nAide from 'i18next';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -137,6 +139,13 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
   siteType,
 }) => {
   const { t } = useTranslation();
+  // Aide du planificateur (lue à voix haute dans la langue de la page : français, arabe ou anglais)
+  const etapesAide = [
+    t('visit.aide.etape1', 'Choisissez ce qui vous intéresse : histoire, architecture, nature, art…'),
+    t('visit.aide.etape2', 'Indiquez le temps dont vous disposez et votre moyen de transport.'),
+    t('visit.aide.etape3', 'Le site trace votre parcours. À chaque étape, ouvrez le lieu pour lire ou écouter son histoire.'),
+  ];
+  const langueAide = (['fr', 'ar', 'en'].includes((i18nAide.language || 'fr').slice(0, 2)) ? (i18nAide.language || 'fr').slice(0, 2) : 'fr') as LangueLue;
   const { formatPriceRange } = useLocalizedNumber();
 
   // États du formulaire
@@ -250,6 +259,15 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                   {error}
                 </div>
               )}
+
+              {/* Comment ça marche : 3 étapes, à lire ou à écouter */}
+              <details className="rounded-lg border bg-primary/5 p-3 text-sm" open>
+                <summary className="cursor-pointer font-medium">{t('visit.aide.titre', 'Comment choisir son parcours ? (3 étapes)')}</summary>
+                <ol className="mt-2 space-y-1 list-decimal ps-5">
+                  {etapesAide.map((e, i) => <li key={i}>{e}</li>)}
+                </ol>
+                <LireAVoixHaute className="mt-2" compact textes={{ [langueAide]: etapesAide.join(' ') }} />
+              </details>
 
               {/* Durée de la visite */}
               <div className="space-y-3">

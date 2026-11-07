@@ -2,6 +2,7 @@
  * EventComments - Commentaires et avis de l'événement
  * Liste des commentaires avec formulaire d'ajout
  */
+import { noteMoyenne } from '@/utils/noteMoyenne';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -190,17 +191,15 @@ const EventComments: React.FC<EventCommentsProps> = ({
 
   // Calculer la moyenne des notes
   // (protégé : sans aucune note, la division donnait NaN)
-  const rated = comments.filter(c => noteOf(c) > 0);
-  const averageRating = rated.length > 0
-    ? rated.reduce((acc, c) => acc + noteOf(c), 0) / rated.length
-    : 0;
+  // Une note par personne (les notes en double ne comptent qu'une fois)
+  const { moyenne: averageRating, nombre: nombreNotes, repartition } = noteMoyenne(comments);
 
   // Distribution des notes
   const ratingDistribution = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: comments.filter(c => noteOf(c) === star).length,
-    percentage: comments.length > 0 
-      ? (comments.filter(c => noteOf(c) === star).length / comments.length) * 100
+    count: repartition[star] || 0,
+    percentage: nombreNotes > 0
+      ? ((repartition[star] || 0) / nombreNotes) * 100
       : 0
   }));
 
@@ -243,7 +242,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
   return (
     <div className="space-y-6">
       {/* Résumé des avis */}
-      {comments.length > 0 && (
+      {nombreNotes > 0 && (
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
@@ -254,7 +253,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
                 </div>
                 <StarRating value={Math.round(averageRating)} readonly size="lg" />
                 <p className="text-sm text-muted-foreground mt-1">
-                  {comments.length} {t('comments.reviews', 'avis')}
+                  {nombreNotes} {t('comments.reviews', 'avis')}
                 </p>
               </div>
 

@@ -2,6 +2,7 @@
  * Oeuvres.tsx - Page de listing des œuvres refactorisée
  * Avec lazy loading des images et composants séparés
  */
+import MissionModule from '@/components/shared/MissionModule';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFavorisIds } from '@/hooks/useFavoris';
@@ -314,6 +315,7 @@ const Oeuvres: React.FC = () => {
       <Header />
 
       <main className="container py-8">
+        <MissionModule module="oeuvres" />
         {/* En-tête */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">

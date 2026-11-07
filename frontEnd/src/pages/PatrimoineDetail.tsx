@@ -1,3 +1,4 @@
+import LireAVoixHaute, { textesParLangue } from '@/components/shared/LireAVoixHaute';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -871,6 +872,9 @@ const PatrimoineDetail = () => {
                           {/* Histoire */}
                           {sectionKey === 'histoire' && (
                             <div className="space-y-4">
+                              {/* Écouter l'histoire du lieu (voix de l'appareil), en français, arabe ou anglais */}
+                              <LireAVoixHaute textes={textesParLangue(site.DetailLieu?.histoire, site.nom)} langueDePreference={lang.slice(0, 2)}
+                                libelle={t('lecture.ecouterHistoire', 'Écouter l’histoire')} />
                               <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" blocs={blocsDe('histoire')} pages={pagesDe('histoire')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
                               <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" blocs={blocsDe('referencesHistoriques')} pages={pagesDe('referencesHistoriques')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
                             </div>

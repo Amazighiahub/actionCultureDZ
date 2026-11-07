@@ -2,6 +2,7 @@
  * Commentaires d'une œuvre chargés à part, pour une page qui n'utilise pas useOeuvreDetails
  * (fiche d'artisanat : un produit artisanal est une œuvre). Même affichage que la fiche d'une œuvre.
  */
+import { messageNoteIgnoree } from '@/utils/noteIgnoree';
 import React, { Suspense } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -34,9 +35,10 @@ export default function CommentairesOeuvre({ oeuvreId }: { oeuvreId: number }) {
     mutationFn: async ({ contenu, note }: { contenu: string; note?: number }) => {
       const reponse = await commentaireService.createCommentaireOeuvre(oeuvreId, { contenu, ...(note ? { note_qualite: note } : {}) });
       if (!reponse.success) throw new Error(reponse.error || t('common.error', 'Erreur'));
+      return reponse.data;
     },
-    onSuccess: () => {
-      toast({ title: t('comments.added', 'Commentaire ajouté'), description: t('comments.addedDesc', 'Votre avis a été publié') });
+    onSuccess: (donnees) => {
+      toast({ title: t('comments.added', 'Commentaire ajouté'), description: messageNoteIgnoree(donnees, t) || t('comments.addedDesc', 'Votre avis a été publié') });
       queryClient.invalidateQueries({ queryKey: cle });
     },
     onError: (erreur: Error) => {

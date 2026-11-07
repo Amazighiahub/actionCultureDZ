@@ -3,6 +3,7 @@
  * Recherche par nom ; filtres par métier (?type= dans l'adresse) et par wilaya.
  * Seuls les profils publics et validés apparaissent.
  */
+import MissionModule from '@/components/shared/MissionModule';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -111,6 +112,7 @@ const Professionnels: React.FC = () => {
       <Header />
 
       <main id="main" className="container pt-24 pb-16">
+        <MissionModule module="professionnels" />
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">{t('professionnels.titre', 'Professionnels de la culture')}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

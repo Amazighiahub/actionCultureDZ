@@ -653,7 +653,9 @@
     "reportError": "Erreur lors du signalement.",
     "errorTooShort": "Le commentaire doit contenir au moins 3 caractères",
     "successTitle": "Commentaire publié",
-    "successDesc": "Votre avis a été publié avec succès."
+    "successDesc": "Votre avis a été publié avec succès.",
+    "noteDejaDonnee": "Votre commentaire est publié, sans note : vous avez déjà noté ce contenu (une seule note par personne).",
+    "noteProprietaire": "Votre commentaire est publié, sans note : on ne note pas son propre contenu."
   },
   "errors": {
     "generic": {
@@ -4492,7 +4494,13 @@
     "interests.art": "Art",
     "interests.nature": "Nature",
     "interests.religion": "Religion",
-    "interests.gastronomy": "Gastronomie"
+    "interests.gastronomy": "Gastronomie",
+    "aide": {
+      "titre": "Comment choisir son parcours ? (3 étapes)",
+      "etape1": "Choisissez ce qui vous intéresse : histoire, architecture, nature, art…",
+      "etape2": "Indiquez le temps dont vous disposez et votre moyen de transport.",
+      "etape3": "Le site trace votre parcours. À chaque étape, ouvrez le lieu pour lire ou écouter son histoire."
+    }
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
@@ -5868,7 +5876,8 @@
       "titulaire": "Titulaire : {{nom}}",
       "especes": "Espèces : sur place ou à la remise",
       "lien": "Payer en ligne",
-      "sansMoyen": "L’organisateur vous indiquera comment le payer."
+      "sansMoyen": "L’organisateur vous indiquera comment le payer.",
+      "indisponible": "L’organisateur n’est plus actif sur Tala DZ : ne lui envoyez pas d’argent. Écrivez à contact@taladz.com si vous avez déjà payé."
     },
     "orga": {
       "recuLe": "Payé le {{date}}",
@@ -5879,5 +5888,23 @@
       "corrige": "Paiement retiré"
     },
     "avertissement": "Tala DZ ne vous demandera jamais de payer sur son site, ni vos codes bancaires."
+  },
+  "mission": {
+    "titre": "À quoi sert cette page ?",
+    "fermer": "Fermer",
+    "oeuvres": "Ici, les livres, films, musiques, arts et créations d’Algérie. Chaque œuvre a sa page : photos, résumé, extrait, et vous pouvez la commander directement à son auteur. Tala DZ ne prend aucune commission.",
+    "evenements": "Festivals, expositions, conférences et spectacles partout en Algérie. Inscrivez-vous en un clic et recevez un rappel avant le jour J.",
+    "patrimoine": "Les lieux et l’histoire de l’Algérie. Lisez ou écoutez l’histoire de chaque lieu, et préparez votre visite avec le planificateur intelligent.",
+    "artisanat": "Le savoir-faire des artisans algériens : poterie, tapis, bijoux, vannerie… Découvrez leurs créations et commandez-les directement à l’artisan.",
+    "professionnels": "Les artistes, écrivains, artisans et organisateurs de la culture algérienne. Chaque page présente un parcours et des œuvres : suivez ceux qui vous inspirent."
+  },
+  "lecture": {
+    "ecouter": "Écouter",
+    "ecouterHistoire": "Écouter l’histoire",
+    "pause": "Pause",
+    "reprendre": "Reprendre",
+    "arreter": "Arrêter",
+    "nonDisponible": "La lecture à voix haute n’est pas disponible sur ce navigateur.",
+    "pasDeVoix": "Votre appareil n’a pas de voix en {{langue}}. Vous pouvez en ajouter une dans les réglages de synthèse vocale du téléphone."
   }
 }

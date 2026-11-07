@@ -25,6 +25,8 @@ export interface PaiementInscription {
   date_paiement: string | null;
   moyens: MoyensPaiement | null;
   organisateur: { id: number; nom: string } | null;
+  /** L'organisateur n'est plus en règle (compte suspendu) : ne pas payer */
+  organisateur_indisponible?: boolean;
 }
 
 const erreur = (e: unknown, defaut: string) => ({

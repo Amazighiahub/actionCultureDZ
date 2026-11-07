@@ -15,8 +15,12 @@ const VerifyEmailPage = () => {
   const [message, setMessage] = useState('');
 
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Le lien ne sert qu'une fois : une seconde demande (page rendue deux fois) échouerait après le succès
+  const dejaEnvoye = useRef<string | null>(null);
 
   useEffect(() => {
+    if (token && dejaEnvoye.current === token) return;
+    if (token) dejaEnvoye.current = token;
     if (!token) {
       setStatus('error');
       setMessage(t('verifyemailpage.noToken'));

@@ -2,6 +2,7 @@
  * Artisanat.tsx - Page de listing des produits artisanaux
  * Avec lazy loading des images et composants partagés
  */
+import MissionModule from '@/components/shared/MissionModule';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { httpClient } from '@/services/httpClient';
@@ -130,6 +131,7 @@ const Artisanat: React.FC = () => {
       <Header />
 
       <main className="container py-8">
+        <MissionModule module="artisanat" />
         {/* En-tête */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">

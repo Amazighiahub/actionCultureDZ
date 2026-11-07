@@ -2,6 +2,7 @@
  * OeuvreComments - Commentaires et avis de l'œuvre
  * Similaire à EventComments mais adapté aux œuvres
  */
+import { noteMoyenne } from '@/utils/noteMoyenne';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,17 +96,15 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
   const [error, setError] = useState<string | null>(null);
 
   // Moyenne des notes
-  const commentsWithNote = comments.filter(c => noteOf(c) > 0);
-  const averageRating = commentsWithNote.length > 0
-    ? commentsWithNote.reduce((acc, c) => acc + noteOf(c), 0) / commentsWithNote.length
-    : 0;
+  // Une note par personne (les notes en double ne comptent qu'une fois)
+  const { moyenne: averageRating, nombre: nombreNotes, repartition } = noteMoyenne(comments);
 
   // Distribution
   const ratingDistribution = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: comments.filter(c => noteOf(c) === star).length,
-    percentage: commentsWithNote.length > 0 
-      ? (comments.filter(c => noteOf(c) === star).length / commentsWithNote.length) * 100
+    count: repartition[star] || 0,
+    percentage: nombreNotes > 0
+      ? ((repartition[star] || 0) / nombreNotes) * 100
       : 0
   }));
 
@@ -145,7 +144,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
   return (
     <div className="space-y-6">
       {/* Résumé des notes */}
-      {commentsWithNote.length > 0 && (
+      {nombreNotes > 0 && (
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
@@ -153,7 +152,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
                 <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
                 <StarRating value={Math.round(averageRating)} readonly size="lg" />
                 <p className="text-sm text-muted-foreground mt-1">
-                  {commentsWithNote.length} {t('comments.reviews', 'avis')}
+                  {nombreNotes} {t('comments.reviews', 'avis')}
                 </p>
               </div>
               <div className="flex-1 space-y-2">

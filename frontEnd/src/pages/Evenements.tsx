@@ -2,6 +2,7 @@
  * Evenements.tsx - Page de listing des événements refactorisée
  * Avec lazy loading des images et composants séparés
  */
+import MissionModule from '@/components/shared/MissionModule';
 import React, { Suspense, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -232,6 +233,7 @@ const Evenements: React.FC = () => {
       <Header />
 
       <main className="container py-8">
+        <MissionModule module="evenements" />
         {/* En-tête */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">

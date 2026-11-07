@@ -38,7 +38,11 @@ const PaiementInscription: React.FC<{ idEvenement: number }> = ({ idEvenement })
       ) : (
         <>
           <p className="flex items-center gap-2 text-amber-700"><Clock className="h-4 w-4" aria-hidden="true" />{t('paiement.participant.enAttente', 'Paiement pas encore confirmé par l’organisateur.')}</p>
-          {m ? (
+          {p.organisateur_indisponible ? (
+            <p className="rounded border border-red-300 bg-red-50 p-2 text-red-800 dark:bg-red-950 dark:text-red-200" role="alert">
+              {t('paiement.participant.indisponible', 'L’organisateur n’est plus actif sur Tala DZ : ne lui envoyez pas d’argent. Écrivez à contact@taladz.com si vous avez déjà payé.')}
+            </p>
+          ) : m ? (
             <div className="space-y-2">
               <p>{t('paiement.participant.payez', 'Payez directement {{nom}} :', { nom: p.organisateur?.nom || t('paiement.participant.organisateur', 'l’organisateur') })}</p>
               <ListeMoyensPaiement moyens={m} />

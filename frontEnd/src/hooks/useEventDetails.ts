@@ -2,6 +2,7 @@
  * useEventDetails - Hook pour la page détail événement
  * Gère le chargement des données et les actions (favoris, inscription, commentaires)
  */
+import { messageNoteIgnoree } from '@/utils/noteIgnoree';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -257,10 +258,10 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       }
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (donnees) => {
       toast({
         title: t('comments.added', 'Commentaire ajouté'),
-        description: t('comments.addedDesc', 'Votre avis a été publié'),
+        description: messageNoteIgnoree(donnees, t) || t('comments.addedDesc', 'Votre avis a été publié'),
       });
       queryClient.invalidateQueries({ queryKey: commentsKey });
     },

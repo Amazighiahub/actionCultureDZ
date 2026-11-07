@@ -1,3 +1,4 @@
+import MissionModule from '@/components/shared/MissionModule';
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
@@ -194,6 +195,7 @@ const Patrimoine = () => {
       <Header />
 
       <main className="container py-12">
+        <MissionModule module="patrimoine" />
         {/* En-tête */}
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">

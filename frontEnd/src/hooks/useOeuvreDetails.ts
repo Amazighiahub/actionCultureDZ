@@ -2,6 +2,7 @@
  * useOeuvreDetails - Hook pour la page détail œuvre
  * Gère le chargement des données et les actions
  */
+import { messageNoteIgnoree } from '@/utils/noteIgnoree';
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -172,10 +173,10 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       }
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (donnees) => {
       toast({
         title: t('comments.added', 'Commentaire ajouté'),
-        description: t('comments.addedDesc', 'Votre avis a été publié'),
+        description: messageNoteIgnoree(donnees, t) || t('comments.addedDesc', 'Votre avis a été publié'),
       });
       queryClient.invalidateQueries({ queryKey: commentsKey });
     },

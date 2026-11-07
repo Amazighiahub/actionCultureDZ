@@ -3176,7 +3176,9 @@
     "reportError": "Error while reporting.",
     "errorTooShort": "The comment must contain at least 3 characters",
     "successTitle": "Comment published",
-    "successDesc": "Your review has been published successfully."
+    "successDesc": "Your review has been published successfully.",
+    "noteDejaDonnee": "Your comment is published without a rating: you have already rated this (one rating per person).",
+    "noteProprietaire": "Your comment is published without a rating: you cannot rate your own content."
   },
   "oeuvre": {
     "parCreateur": "A work by {{nom}}",
@@ -4740,7 +4742,13 @@
     "interests.art": "Art",
     "interests.nature": "Nature",
     "interests.religion": "Religion",
-    "interests.gastronomy": "Gastronomy"
+    "interests.gastronomy": "Gastronomy",
+    "aide": {
+      "titre": "How to choose your route (3 steps)",
+      "etape1": "Choose what interests you: history, architecture, nature, art…",
+      "etape2": "Tell us how much time you have and how you travel.",
+      "etape3": "The site draws your route. At each stop, open the place to read or listen to its history."
+    }
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "Tifinagh keyboard not detected",
@@ -5868,7 +5876,8 @@
       "titulaire": "Account holder: {{nom}}",
       "especes": "Cash: on site or on handover",
       "lien": "Pay online",
-      "sansMoyen": "The organiser will tell you how to pay."
+      "sansMoyen": "The organiser will tell you how to pay.",
+      "indisponible": "The organiser is no longer active on Tala DZ: do not send them money. Write to contact@taladz.com if you have already paid."
     },
     "orga": {
       "recuLe": "Paid on {{date}}",
@@ -5879,5 +5888,23 @@
       "corrige": "Payment removed"
     },
     "avertissement": "Tala DZ will never ask you to pay on its site, nor for your bank codes."
+  },
+  "mission": {
+    "titre": "What is this page for?",
+    "fermer": "Close",
+    "oeuvres": "Books, films, music, art and creations from Algeria. Each work has its own page: photos, summary, excerpt, and you can order it directly from its author. Tala DZ takes no commission.",
+    "evenements": "Festivals, exhibitions, talks and shows all over Algeria. Register in one click and get a reminder before the day.",
+    "patrimoine": "The places and history of Algeria. Read or listen to the history of each place, and plan your visit with the smart planner.",
+    "artisanat": "The craftsmanship of Algerian artisans: pottery, rugs, jewellery, basketry… Discover their creations and order them directly from the artisan.",
+    "professionnels": "The artists, writers, artisans and organisers of Algerian culture. Each page shows a career and works: follow those who inspire you."
+  },
+  "lecture": {
+    "ecouter": "Listen",
+    "ecouterHistoire": "Listen to the history",
+    "pause": "Pause",
+    "reprendre": "Resume",
+    "arreter": "Stop",
+    "nonDisponible": "Read-aloud is not available in this browser.",
+    "pasDeVoix": "Your device has no {{langue}} voice. You can add one in the phone’s text-to-speech settings."
   }
 }
