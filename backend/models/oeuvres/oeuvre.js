@@ -212,6 +212,13 @@ module.exports = (sequelize) => {
     }
   });
 
+  // Un article ne se vend pas : pas de prix (un prix saisi par erreur s'affichait sur la liste des œuvres)
+  Oeuvre.addHook('beforeSave', (oeuvre) => {
+    if ([4, 5].includes(Number(oeuvre.id_type_oeuvre)) && oeuvre.prix !== null && oeuvre.prix !== undefined) {
+      oeuvre.prix = null;
+    }
+  });
+
   Oeuvre.beforeUpdate(async (oeuvre, options) => {
     if (oeuvre.id_oeuvre_originale === oeuvre.id_oeuvre) {
       throw new Error("Une œuvre ne peut pas être sa propre traduction");

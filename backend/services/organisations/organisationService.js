@@ -425,6 +425,10 @@ class OrganisationService extends BaseService {
 
   /** Fusionner des doublons dans l'organisation gardée ; ses responsables sont prévenus */
   async fusionner(idGarde, idsDoublons, adminId) {
+    // Une fusion peut valider la page gardée : un modérateur membre d'une des pages ne la fait pas lui-même
+    for (const id of [idGarde, ...(Array.isArray(idsDoublons) ? idsDoublons : [])]) {
+      await this._refuserSiMembre(Number(id), adminId);
+    }
     const resultat = await fusion.fusionner(this.models, idGarde, idsDoublons);
     this.logger.info(`Organisations ${resultat.fusionnees.join(', ')} fusionnées dans ${idGarde} par admin: ${adminId}`);
     for (const idUser of resultat.responsables) {
@@ -449,9 +453,18 @@ class OrganisationService extends BaseService {
     return this.repository.findPourModeration();
   }
 
+  /** Un modérateur membre de l'organisation ne décide pas de sa page (un vrai administrateur le peut) */
+  async _refuserSiMembre(id, deciderId) {
+    if (!deciderId || !this.repository.roleMembre) return;
+    if (!(await this.repository.roleMembre(id, deciderId))) return;
+    if (await require('../../utils/estAdministrateur').estAdministrateur(this.models, deciderId)) return;
+    throw Object.assign(new Error('Vous êtes membre de cette organisation : un autre membre de l’équipe doit vérifier sa page.'), { statusCode: 403, code: 'AUTO_VALIDATION' });
+  }
+
   async valider(id, adminId) {
     const org = await this.repository.findById(id);
     if (!org) throw this._notFoundError(id);
+    await this._refuserSiMembre(id, adminId);
     await org.update({ statut: 'valide' });
     this.logger.info(`Organisation validée: ${id} par admin: ${adminId}`);
     for (const idUser of await this.repository.responsables(id)) {
@@ -469,6 +482,7 @@ class OrganisationService extends BaseService {
     if (!raison) throw this._validationError('Un motif de refus est requis');
     const org = await this.repository.findById(id);
     if (!org) throw this._notFoundError(id);
+    await this._refuserSiMembre(id, adminId);
     await org.update({ statut: 'rejete' });
     this.logger.info(`Organisation refusée: ${id} par admin: ${adminId}`);
     for (const idUser of await this.repository.responsables(id)) {

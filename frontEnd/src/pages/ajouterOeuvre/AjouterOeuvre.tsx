@@ -265,7 +265,8 @@ const AjouterOeuvre: React.FC = () => {
                               }} className="hover:border-primary focus:border-primary" />
                             {fieldErrors.annee_creation && <p id="annee_creation-error" role="alert" className="text-sm text-destructive">{fieldErrors.annee_creation}</p>}
                           </div>
-                          <div className="space-y-2">
+                          {/* Pas de prix pour un article (il ne se vend pas) */}
+                          {![4, 5].includes(Number(formData.id_type_oeuvre)) && <div className="space-y-2">
                             <Label htmlFor="prix" className="text-base">{t("ajouteroeuvre.prix")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                             <Input id="prix" type="number" min="0" step="0.01" placeholder={t("ajouteroeuvre.placeholder_1200")}
                               value={formData.prix || ''} aria-invalid={!!fieldErrors.prix || undefined}
@@ -277,7 +278,7 @@ const AjouterOeuvre: React.FC = () => {
                                 if (!isNaN(num) && num >= 0) handleInputChange('prix', num);
                               }} className="hover:border-primary focus:border-primary" />
                             {fieldErrors.prix && <p id="prix-error" role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>}
-                          </div>
+                          </div>}
                         </div>
                         <div className="space-y-2 mt-4">
                           <RequiredLabel htmlFor="id_langue" required className="text-base">{t("ajouteroeuvre.langueOriginale", "Langue originale de l'œuvre")}</RequiredLabel>

@@ -60,3 +60,12 @@ describe('getAllowedEmbedUrl', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+describe('vidéo Cloudinary : seulement le compte du site', () => {
+  it('compte du site accepté, autre compte refusé', async () => {
+    const { getAllowedEmbedUrl } = await import('../safeUrl');
+    expect(getAllowedEmbedUrl('https://res.cloudinary.com/dvlqi2t7y/video/upload/v1/a.mp4')).toBeDefined();
+    expect(getAllowedEmbedUrl('https://res.cloudinary.com/autre-compte/video/upload/v1/a.mp4')).toBeUndefined();
+    expect(getAllowedEmbedUrl('https://res.cloudinary.com/dvlqi2t7y-faux/video/upload/a.mp4')).toBeUndefined();
+  });
+});

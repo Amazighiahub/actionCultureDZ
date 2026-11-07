@@ -204,7 +204,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
         </div>
 
         {/* Prix */}
-        {oeuvre.prix && (
+        {oeuvre.prix && ![4, 5].includes(Number(oeuvre.id_type_oeuvre)) && (
           <div className="mt-3 pt-3 border-t">
             <span className="font-semibold text-primary">{formatPrice(Number(oeuvre.prix))}</span>
           </div>

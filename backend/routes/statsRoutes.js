@@ -12,7 +12,8 @@ const initStatsRoutes = (models, authMiddleware) => {
   let cacheMiddleware;
   try {
     const cache = require('../middlewares/cacheMiddleware');
-    cacheMiddleware = cache.cacheStrategy ? cache.cacheStrategy.medium : (req, res, next) => next();
+    // Page sans paramètres : la clé de cache les ignore (adresses inventées ≠ nouvelles entrées)
+    cacheMiddleware = cache.conditionalCache ? cache.conditionalCache(300, { sansParametres: true }) : (req, res, next) => next();
   } catch (e) {
     cacheMiddleware = (req, res, next) => next();
   }

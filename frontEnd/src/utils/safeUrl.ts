@@ -54,6 +54,9 @@ const ALLOWED_EMBED_HOSTS = [
  * document inerte : aucun script ni gestionnaire d'événement n'est exécuté).
  * @returns l'URL de l'iframe ou undefined
  */
+/** Compte Cloudinary du site (nom public, présent dans chaque adresse d'image) */
+const COMPTE_CLOUDINARY = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined) || 'dvlqi2t7y';
+
 export function getAllowedEmbedUrl(raw: unknown): string | undefined {
   if (typeof raw !== 'string' || !raw.trim()) return undefined;
   let src = raw.trim();
@@ -65,7 +68,8 @@ export function getAllowedEmbedUrl(raw: unknown): string | undefined {
     const url = new URL(src);
     if (url.protocol !== 'https:') return undefined;
     const host = url.hostname.toLowerCase();
-    const allowed = host === 'res.cloudinary.com'
+    // Cloudinary : seulement le compte du site (avant : n'importe quel compte, de quoi encadrer une page piégée)
+    const allowed = (host === 'res.cloudinary.com' && url.pathname.startsWith(`/${COMPTE_CLOUDINARY}/`))
       || ALLOWED_EMBED_HOSTS.some(d => host === d || host.endsWith('.' + d));
     return allowed ? url.href : undefined;
   } catch {

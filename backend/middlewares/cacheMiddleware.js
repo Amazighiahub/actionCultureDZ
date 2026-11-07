@@ -173,12 +173,20 @@ const store = {
 // ============================================================
 // Middleware factories
 // ============================================================
-function createCacheMiddleware(ttl = 300) {
+/**
+ * @param {number} ttl durée en secondes
+ * @param {{ sansParametres?: boolean }} options sansParametres : la page n'a pas de paramètres, ils
+ *   sont ignorés dans la clé (sinon « ?x=1 », « ?x=2 »… créaient chacun une entrée de cache)
+ */
+function createCacheMiddleware(ttl = 300, { sansParametres = false } = {}) {
   return (req, res, next) => {
     if (req.method !== 'GET') return next();
 
     const lang = langueDuCache(req);
-    const key = `${lang}:${req.originalUrl || req.url}`;
+    const adresse = req.originalUrl || req.url;
+    // Sans paramètres : ni la casse ni la barre finale ne créent de nouvelle entrée (Express les ignore)
+    const chemin = sansParametres ? String(adresse).split('?')[0].toLowerCase().replace(/\/+$/, '') : adresse;
+    const key = `${lang}:${chemin}`;
 
     store.get(key).then(cachedData => {
       if (cachedData) {

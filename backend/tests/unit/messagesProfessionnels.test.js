@@ -112,3 +112,21 @@ describe('commentaire', () => {
     await expect(messages.prevenirCommentaire(m, { idAuteurCommentaire: 7, oeuvreId: 9 })).resolves.toBe(0);
   });
 });
+
+describe('un message par jour, même avec deux clics simultanés', () => {
+  it('deux envois en même temps : un seul passe', async () => {
+    const id = 9001;
+    const m = modeles();
+    const r = await Promise.allSettled([
+      messages.envoyer(m, id, { modele: 'profil' }),
+      messages.envoyer(m, id, { modele: 'profil' }),
+    ]);
+    expect(r.filter(x => x.status === 'fulfilled')).toHaveLength(1);
+    expect(r.find(x => x.status === 'rejected').reason).toMatchObject({ statusCode: 429 });
+  });
+  it('envoi impossible (aucun abonné) : la place du jour est rendue', async () => {
+    const id = 9002;
+    await expect(messages.envoyer(modeles({ abonnes: [] }), id, { modele: 'profil' })).rejects.toMatchObject({ statusCode: 400 });
+    await expect(messages.envoyer(modeles(), id, { modele: 'profil' })).resolves.toEqual({ prevenus: 1 });
+  });
+});

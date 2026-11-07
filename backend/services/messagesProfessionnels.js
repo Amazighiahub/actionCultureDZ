@@ -88,6 +88,35 @@ async function noterEnvoi(idPro) {
   }
 }
 
+/**
+ * Réserve l'envoi du jour d'un seul coup (avant : lecture puis écriture séparées, deux clics très
+ * rapprochés envoyaient deux messages). false si un envoi a déjà eu lieu dans les 24 heures.
+ */
+async function reserverEnvoi(idPro) {
+  const maintenant = Date.now();
+  try {
+    const redis = getClient();
+    if (redis) return (await redis.set(cleLimite(idPro), String(maintenant), { NX: true, EX: DELAI_SECONDES })) === 'OK';
+  } catch {
+    // Mémoire
+  }
+  const dernier = memoire.get(idPro);
+  if (dernier && maintenant - dernier < DELAI_SECONDES * 1000) return false;
+  memoire.set(idPro, maintenant);
+  return true;
+}
+
+/** Envoi finalement impossible (rien à envoyer, contenu introuvable) : la place est rendue */
+async function libererEnvoi(idPro) {
+  memoire.delete(idPro);
+  try {
+    const redis = getClient();
+    if (redis) await redis.del(cleLimite(idPro));
+  } catch (err) {
+    logger.warn(`Message des pros : place du jour non rendue pour ${idPro} (${err.message})`);
+  }
+}
+
 async function evenementsVisibles(models, idPro) {
   return models.Evenement.findAll({
     where: { id_user: idPro, statut: { [Op.in]: STATUTS_EVENEMENT_VISIBLE } },
@@ -157,11 +186,20 @@ async function creerPourPersonnes(models, ids, fabrique) {
 async function envoyer(models, idPro, { modele, id_oeuvre: idOeuvre, id_evenement: idEvenement }) {
   if (!['oeuvre', 'evenement', 'profil', 'suivre'].includes(modele)) throw erreur('Message inconnu', 400);
 
-  const dernier = await dernierEnvoi(idPro);
-  if (dernier && Date.now() - dernier < DELAI_SECONDES * 1000) {
+  if (!(await reserverEnvoi(idPro))) {
     throw erreur('Vous avez déjà envoyé un message aujourd’hui. Vous pourrez en envoyer un autre demain.', 429);
   }
+  try {
+    return await envoyerReserve(models, idPro, modele, idOeuvre, idEvenement);
+  } catch (err) {
+    // Rendue seulement si rien n'est parti (contenu introuvable, aucun abonné : erreur 400). Une panne au
+    // milieu de l'envoi garde la place : sinon un nouvel envoi doublerait les notifications déjà créées.
+    if (err?.statusCode === 400) await libererEnvoi(idPro);
+    throw err;
+  }
+}
 
+async function envoyerReserve(models, idPro, modele, idOeuvre, idEvenement) {
   const pro = await models.User.findByPk(idPro, { attributes: ['nom', 'prenom'] });
   const qui = nomComplet(pro) || 'Tala DZ';
   let titreContenu = '';
