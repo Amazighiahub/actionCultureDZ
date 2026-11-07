@@ -87,7 +87,7 @@ describe('IndexNow', () => {
     const envoyer = jest.fn(async () => ({ ok: true, status: 200 }));
     expect(await signaler(['/oeuvres/101', '/professionnels/20-lina-exemple'], { envoyer, actif: true })).toBe(true);
     const corps = JSON.parse(envoyer.mock.calls[0][1].body);
-    expect(corps).toMatchObject({ host: 'taladz.com', key: CLE, keyLocation: `https://taladz.com/api/indexnow/${CLE}.txt` });
+    expect(corps).toMatchObject({ host: 'taladz.com', key: CLE, keyLocation: `https://taladz.com/${CLE}.txt` });
     expect(corps.urlList).toEqual(['https://taladz.com/oeuvres/101', 'https://taladz.com/professionnels/20-lina-exemple']);
   });
 

@@ -3,7 +3,9 @@
  * modifiée. Bing alimente aussi la recherche de ChatGPT : une fiche y apparaît en quelques jours
  * au lieu de quelques semaines. Google n'utilise pas IndexNow (il lit le plan du site).
  *
- * La clé est publique par conception : le moteur la vérifie à /api/indexnow/<clé>.txt.
+ * La clé est publique par conception : le moteur la vérifie à /<clé>.txt, à la racine du site
+ * (frontEnd/public). Une clé rangée dans /api/indexnow/ n'autorise que les adresses de ce dossier :
+ * Bing refusait toutes les pages (erreur 422).
  * Production seulement ; un échec ne bloque jamais la publication.
  */
 const logger = require('../utils/logger');
@@ -32,7 +34,7 @@ async function signaler(chemins, { envoyer = fetch, actif = ACTIF } = {}) {
     const reponse = await envoyer('https://api.indexnow.org/indexnow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ host: new URL(SITE_URL).host, key: CLE, keyLocation: `${SITE_URL}/api/indexnow/${CLE}.txt`, urlList: urls }),
+      body: JSON.stringify({ host: new URL(SITE_URL).host, key: CLE, keyLocation: `${SITE_URL}/${CLE}.txt`, urlList: urls }),
       signal: AbortSignal.timeout(8000),
     });
     if (!reponse.ok && reponse.status !== 202) logger.warn(`IndexNow : réponse ${reponse.status}`);
