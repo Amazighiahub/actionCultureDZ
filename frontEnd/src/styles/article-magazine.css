@@ -102,6 +102,22 @@
   margin-top: 0.35rem;
   color: hsl(var(--primary));
 }
+/* Retours à la ligne voulus par l'auteur à l'intérieur d'un paragraphe : gardés */
+.mag-corps > p { white-space: pre-line; }
+
+/* ---------- Texte arabe (sens de droite à gauche) ---------- */
+.mag-corps[dir="rtl"],
+.mag-titre[dir="rtl"],
+.mag-chapeau[dir="rtl"] { font-family: var(--font-arabic); }
+.mag-titre[dir="rtl"],
+.mag-corps[dir="rtl"] h2,
+.mag-corps[dir="rtl"] h3,
+.mag-corps[dir="rtl"] h4 { font-family: var(--font-arabic); line-height: 1.5; letter-spacing: 0; }
+/* L'arabe a besoin de plus d'interligne (signes au-dessus et au-dessous des lettres) */
+.mag-corps[dir="rtl"] > p { font-size: 1.2rem; line-height: 2.1; }
+.mag-chapeau[dir="rtl"] { line-height: 1.9; }
+.mag-corps[dir="rtl"] li { line-height: 2; }
+
 .mag-corps h2,
 .mag-corps h3,
 .mag-corps h4 {

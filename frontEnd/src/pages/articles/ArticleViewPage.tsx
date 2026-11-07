@@ -1,4 +1,5 @@
 // pages/articles/ArticleViewPage.tsx
+import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -517,7 +518,14 @@ const ArticleViewPage: React.FC = () => {
   const blocOuverture = blocsLangue[0]?.type_block === 'image' && blocsLangue[0].media
     && ['full-width', 'full', undefined].includes(blocsLangue[0].metadata?.layout) ? blocsLangue[0] : null;
   const blocsCorps = blocOuverture ? blocsLangue.slice(1) : blocsLangue;
-  const premierTexte = blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
+  // Sens d'écriture du texte affiché (arabe : de droite à gauche, quelle que soit la langue du site)
+  const sensContenu = directionTexte([
+    typeof oeuvre?.titre === 'string' ? oeuvre.titre : '',
+    ...blocsCorps.filter(b => b.type_block === 'text' || b.type_block === 'heading').slice(0, 6).map(b => b.contenu),
+  ]);
+  const langueContenu = sensContenu === 'rtl' ? 'ar' : undefined;
+  // Lettrine : pas en arabe (elle détachait la première lettre du mot, alors que les lettres se lient)
+  const premierTexte = sensContenu === 'rtl' ? -1 : blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
 
   // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante)
   const classeFigure = (layout?: string) => ({
@@ -532,13 +540,14 @@ const ArticleViewPage: React.FC = () => {
         // Le titre de l'article est le h1 : les intertitres commencent au h2
         const niveau = Math.min(Math.max(Number(block.metadata?.level) || 2, 2), 4);
         const HeadingTag = `h${niveau}` as keyof JSX.IntrinsicElements;
-        return <HeadingTag key={cle}>{block.contenu}</HeadingTag>;
+        return <HeadingTag key={cle} dir="auto">{block.contenu}</HeadingTag>;
       }
 
       case 'text':
         return (
-          <p key={cle} className={index === premierTexte ? 'mag-premier' : undefined}>
-            {block.contenu}
+          <p key={cle} dir="auto" className={index === premierTexte ? 'mag-premier' : undefined}>
+            {/* Sans les retours à la ligne en trop au début et à la fin (grands blancs entre les paragraphes) */}
+            {paragrapheNettoye(block.contenu)}
           </p>);
 
       case 'image':
@@ -761,7 +770,7 @@ const ArticleViewPage: React.FC = () => {
           }
         </div>
 
-        <h1 className="mag-titre">{oeuvre.titre}</h1>
+        <h1 className="mag-titre" dir={sensContenu} lang={langueContenu}>{oeuvre.titre}</h1>
 
         {languesLecture.length > 1 &&
         <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm" aria-label={t('article.lireEn', 'Lire en')}>
@@ -776,9 +785,9 @@ const ArticleViewPage: React.FC = () => {
         }
 
         {articleHelpers.getSousTitre(articleData) &&
-        <p className="mag-chapeau font-medium">{articleHelpers.getSousTitre(articleData)}</p>
+        <p className="mag-chapeau font-medium" dir="auto">{articleHelpers.getSousTitre(articleData)}</p>
         }
-        {chapeau && <p className="mag-chapeau">{chapeau}</p>}
+        {chapeau && <p className="mag-chapeau" dir="auto">{chapeau}</p>}
 
         <div className="mag-signature">
           {articleHelpers.getAuteur(articleData) &&
@@ -828,7 +837,7 @@ const ArticleViewPage: React.FC = () => {
       </header>
 
       {/* Contenu de l'article */}
-      <article className="mag-corps">
+      <article className="mag-corps" dir={sensContenu} lang={langueContenu}>
         {blocsCorps.length > 0 ?
         blocsCorps.map((block, index) => renderBlock(block, index)) :
         <div className="text-center py-12">
