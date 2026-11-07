@@ -5344,7 +5344,25 @@
   "share": {
     "onMyPage": "Partager sur ma page :",
     "on": "Partager sur {{network}}",
-    "copied": "Lien copié"
+    "copied": "Lien copié",
+    "images": {
+      "menu": "Image Instagram / Facebook",
+      "titre": "Image pour les réseaux",
+      "aide": "Choisissez le format, puis partagez l’image ou enregistrez-la pour la publier.",
+      "format": "Format",
+      "carre": "Instagram publication",
+      "story": "Instagram story",
+      "facebook": "Facebook",
+      "apercu": "Aperçu de l’image",
+      "partager": "Partager l’image",
+      "telecharger": "Télécharger",
+      "facebookAide": "Le mieux sur Facebook : publier le lien. La publication montre l’image et le titre, et un clic ouvre la page de l’œuvre pour la découvrir ou la commander.",
+      "publierLien": "Publier le lien sur Facebook",
+      "legende": "Texte de la publication (résumé et lien)",
+      "copierTexte": "Copier le texte",
+      "texteCopie": "Texte copié : collez-le dans la légende",
+      "lienBio": "Sur Instagram, un lien dans le texte ne se clique pas : mettez aussi le lien de votre page Tala DZ dans votre bio (« lien en bio »)."
+    }
   },
   "portfolio": {
     "notFound": "Profil introuvable",

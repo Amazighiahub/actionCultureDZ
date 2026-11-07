@@ -27,7 +27,7 @@ import {
   Sparkles, Eye, Heart, Share2, Star, Play, MessageCircle,
   User, Calendar, Clock, Headphones, RotateCcw, Quote, Globe,
   BookMarked, Facebook, Twitter, Link as LinkIcon, Copy, ZoomIn, X,
-  Beaker, ExternalLink, CheckCircle, Hash
+  Beaker, ExternalLink, CheckCircle, Hash, Image as ImageIcon
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
@@ -37,6 +37,8 @@ import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import i18n from 'i18next';
+import ImagesReseaux from '@/components/shared/ImagesReseaux';
+import { slugify } from '@/utils/slug';
 
 // ShareButton extracted to module scope to avoid re-creation on every render
 const ShareButton = ({
@@ -87,6 +89,13 @@ const ShareButton = ({
         >
           <MessageCircle className="h-4 w-4 text-green-500" />
           <span>WhatsApp</span>
+        </button>
+        <button
+          onClick={() => onShare('images')}
+          className="flex items-center gap-3 w-full p-2 hover:bg-muted rounded-md text-sm transition-colors"
+        >
+          <ImageIcon className="h-4 w-4 text-pink-600" />
+          <span>{t('share.images.menu', 'Image Instagram / Facebook')}</span>
         </button>
         <button
           onClick={() => onShare('copy')}
@@ -144,6 +153,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   // État pour le menu de partage
   const [shareOpen, setShareOpen] = useState(false);
+  // Images prêtes à publier (Instagram, Facebook)
+  const [imagesOpen, setImagesOpen] = useState(false);
   // État pour la modal d'extrait
   const [showExcerpt, setShowExcerpt] = useState(false);
   // État pour le zoom de la couverture
@@ -197,6 +208,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       case 'whatsapp':
         window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank', 'noopener,noreferrer');
         break;
+      case 'images':
+        setImagesOpen(true);
+        break;
     }
     setShareOpen(false);
   };
@@ -221,6 +235,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   const mainContributors = getMainContributors();
 
+  // Images pour Instagram / Facebook : titre, auteur (ou type d'œuvre), photo principale
+  const auteurs = mainContributors.map((c: any) => `${gt(c.prenom)} ${gt(c.nom)}`.trim()).filter(Boolean).join(', ');
+  const dialogImages = (
+    <ImagesReseaux open={imagesOpen} onOpenChange={setImagesOpen}
+      contenu={{ titre, sousTitre: auteurs || gt(oeuvre.TypeOeuvre?.nom_type) || typeOeuvre, image: mainImage }}
+      lien={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
+      resume={description}
+      nomFichier={`taladz-${slugify(titre) || 'oeuvre'}`} />
+  );
+
   // ═══════════════════════════════════════════════════════════════════════════
   // HERO POUR LIVRE - Composant extrait dans HeroLivre.tsx
   // ═══════════════════════════════════════════════════════════════════════════
@@ -233,7 +257,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         viewCount={viewCount} commentsCount={commentsCount}
         isFavorite={isFavorite} favoriteLoading={favoriteLoading}
         onToggleFavorite={onToggleFavorite}
-        shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
+        shareButton={<><ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />{dialogImages}</>}
       />
     );
   }
@@ -250,7 +274,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         viewCount={viewCount} commentsCount={commentsCount}
         isFavorite={isFavorite} favoriteLoading={favoriteLoading}
         onToggleFavorite={onToggleFavorite}
-        shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
+        shareButton={<><ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />{dialogImages}</>}
         playableMedia={playableMedia} videoMedia={videoMedia}
         handlePlay={handlePlay} noMediaMsg={noMediaMsg}
       />
@@ -269,7 +293,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         viewCount={viewCount} commentsCount={commentsCount}
         isFavorite={isFavorite} favoriteLoading={favoriteLoading}
         onToggleFavorite={onToggleFavorite}
-        shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
+        shareButton={<><ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />{dialogImages}</>}
         playableMedia={audioMedia || videoMedia}
         handlePlay={handlePlay} noMediaMsg={noMediaMsg}
       />
@@ -288,7 +312,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         viewCount={viewCount} commentsCount={commentsCount}
         isFavorite={isFavorite} favoriteLoading={favoriteLoading}
         onToggleFavorite={onToggleFavorite}
-        shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
+        shareButton={<><ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />{dialogImages}</>}
       />
     );
   }
@@ -303,7 +327,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       mainContributors={mainContributors} viewCount={viewCount}
       isFavorite={isFavorite} favoriteLoading={favoriteLoading}
       onToggleFavorite={onToggleFavorite}
-      shareButton={<ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />}
+      shareButton={<><ShareButton shareOpen={shareOpen} setShareOpen={setShareOpen} onShare={handleShare} t={t} />{dialogImages}</>}
     />
   );
 };
