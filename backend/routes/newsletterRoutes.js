@@ -2,11 +2,22 @@
 const express = require('express');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 const abonnes = require('../services/newsletterAbonnes');
+const { verifierTurnstile } = require('../middlewares/turnstile');
 
 module.exports = (models) => {
   const router = express.Router();
 
-  router.post('/inscription', rateLimitMiddleware.endpointLimiters.newsletter, async (req, res) => {
+  // Avant le contrôle anti-robots : le champ piège garde sa réponse silencieuse, une adresse invalide ne consomme pas la vérification
+  const piegeEtAdresse = (req, res, next) => {
+    if (req.body?.site_web) return res.json({ success: true });
+    const email = req.body?.email;
+    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ success: false, error: req.t('validation.invalidEmail') });
+    }
+    next();
+  };
+
+  router.post('/inscription', rateLimitMiddleware.endpointLimiters.newsletter, piegeEtAdresse, verifierTurnstile('newsletter'), async (req, res) => {
     // Champ caché du formulaire : rempli seulement par les robots, qui reçoivent la réponse habituelle
     if (req.body?.site_web) return res.json({ success: true });
     try {

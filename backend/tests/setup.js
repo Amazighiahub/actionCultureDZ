@@ -73,6 +73,8 @@ let _testModels = null;
  */
 const setupTestDatabase = async () => {
   require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
+  // Les tests d'inscription, de contact et de newsletter n'envoient pas de jeton anti-robots
+  delete process.env.TURNSTILE_SECRET_KEY;
   const { createDatabaseConnection } = require("../config/database");
   // NB: on importe depuis ../models (qui re-exporte loadModels/initializeAssociations
   // pour usage par les tests). L'import declenche aussi la creation d'une instance

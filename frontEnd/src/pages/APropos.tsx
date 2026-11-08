@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useToast } from '@/components/ui/use-toast';
 import SEOHead from '@/components/SEOHead';
 import { httpClient } from '@/services/httpClient';
+import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
 
 const CONTACT_EMAIL = 'contact@taladz.com';
 
@@ -20,6 +21,7 @@ const APropos = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
+  const antiRobot = useAntiRobot();
   // Sujet prérempli depuis un lien (ex. « Proposition pour le lieu : … »)
   const [formData, setFormData] = useState(() => {
     let sujet = '';
@@ -44,7 +46,7 @@ const APropos = () => {
     setSending(true);
     try {
       // httpClient : jeton anti-CSRF exigé par l'API (un fetch direct était refusé : aucun message n'arrivait)
-      const data = await httpClient.post('/contact', formData);
+      const data = await httpClient.post('/contact', { ...formData, ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() } : {}) });
       if (data.success) {
         toast({ title: t('apropos.messageEnvoye', 'Message envoyé'), description: t('apropos.messageEnvoyeDesc', 'Nous avons bien reçu votre message. Nous vous répondrons rapidement.') });
         setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
@@ -55,6 +57,8 @@ const APropos = () => {
       toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.')), variant: 'destructive' });
     } finally {
       setSending(false);
+      // Un jeton ne sert qu'une fois
+      antiRobot.reinitialiser();
     }
   };
   const valeurs = [
@@ -178,7 +182,9 @@ const APropos = () => {
                   <p id="message-compteur" className="text-xs text-muted-foreground text-end">{formData.message.length} / 2000</p>
                 </div>
 
-                <Button type="submit" className="w-full btn-hover" disabled={sending}>
+                <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} />
+
+                <Button type="submit" className="w-full btn-hover" disabled={sending || antiRobot.manquant}>
                   {sending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Send className="h-4 w-4 me-2" />}
                   {t("apropos.envoyer_message")}
                 </Button>

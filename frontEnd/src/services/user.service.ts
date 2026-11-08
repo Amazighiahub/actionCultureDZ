@@ -107,8 +107,11 @@ class UserService extends BaseService<User> {
     return httpClient.post<void>(API_ENDPOINTS.auth.changePassword, data);
   }
 
-  async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
-    return httpClient.post<{ message: string }>(API_ENDPOINTS.auth.forgotPassword, { email });
+  async forgotPassword(email: string, turnstileToken?: string | null): Promise<ApiResponse<{ message: string }>> {
+    return httpClient.post<{ message: string }>(API_ENDPOINTS.auth.forgotPassword, {
+      email,
+      ...(turnstileToken ? { turnstile_token: turnstileToken } : {}),
+    });
   }
 
   async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {

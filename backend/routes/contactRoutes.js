@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { handleValidationErrors } = require('../middlewares/validationMiddleware');
+const { verifierTurnstile } = require('../middlewares/turnstile');
 const rateLimit = require('express-rate-limit');
 const ContactService = require('../services/contact/contactService');
 const emailService = require('../services/emailService');
@@ -26,6 +27,7 @@ const initContactRoutes = () => {
       body('sujet').optional().isLength({ max: 200 })
     ],
     handleValidationErrors,
+    verifierTurnstile('contact'),
     async (req, res) => {
       try {
         const result = await contactService.sendContactMessage(req.body);

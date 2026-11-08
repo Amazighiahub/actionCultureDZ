@@ -5937,5 +5937,11 @@
     "arreter": "Arrêter",
     "nonDisponible": "La lecture à voix haute n’est pas disponible sur ce navigateur.",
     "pasDeVoix": "Votre appareil n’a pas de voix en {{langue}}. Vous pouvez en ajouter une dans les réglages de synthèse vocale du téléphone."
+  },
+  "antiRobot": {
+    "erreur": "La vérification anti-robots n’a pas pu se charger.",
+    "reessayer": "Réessayer",
+    "refuse": "La vérification anti-robots a échoué : recommencez-la.",
+    "secours": "Si le problème continue, écrivez-nous à contact@taladz.com."
   }
 }

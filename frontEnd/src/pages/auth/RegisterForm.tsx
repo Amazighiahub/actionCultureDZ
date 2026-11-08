@@ -2,6 +2,7 @@
  * RegisterForm - Composant formulaire d'inscription
  * Extrait de Auth.tsx pour une meilleure maintenabilité
  */
+import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +38,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { registerVisitor, registerProfessional, registerLoading } = useAuth();
   // Liste des wilayas : chargée par GeoSelector ; on attend seulement son chargement
   const { loading: wilayasLoading } = useWilayas();
+  const antiRobot = useAntiRobot();
 
   const [userType, setUserType] = useState<'visiteur' | 'professionnel'>('visiteur');
   const [registerForm, setRegisterForm] = useState({
@@ -366,7 +368,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false,
         // Saisi et validé mais jamais envoyé auparavant
-        ...(registerForm.telephone.trim() ? { telephone: registerForm.telephone.replace(/\s/g, '') } : {})
+        ...(registerForm.telephone.trim() ? { telephone: registerForm.telephone.replace(/\s/g, '') } : {}),
+        ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() ?? undefined } : {})
       };
       
       authLogger.debug('ÉTAPE 2 - Inscription avec les données complètes');
@@ -493,6 +496,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       });
     } finally {
       setUploadingPhoto(false);
+      // Un jeton ne sert qu'une fois
+      antiRobot.reinitialiser();
     }
   };
 
@@ -973,11 +978,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                     </div>
                     
+                    <AntiRobot ref={antiRobot.ref} action="inscription" onJeton={antiRobot.setJeton} />
+
                     <Button
                       type="submit"
                       size="lg"
                       className="w-full"
-                      disabled={registerLoading || wilayasLoading || uploadingPhoto}
+                      disabled={registerLoading || wilayasLoading || uploadingPhoto || antiRobot.manquant}
                     >
                       {registerLoading ? (
                         <>

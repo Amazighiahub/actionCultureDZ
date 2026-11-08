@@ -524,5 +524,9 @@
     "rejected": "Organisation rejected",
     "merged": "Organisations merged",
     "claimSent": "Request sent: the Tala DZ team will review it"
+  },
+  "captcha": {
+    "requis": "Complete the anti-robot check before sending.",
+    "invalide": "The anti-robot check expired or failed: redo it, then send again."
   }
 }

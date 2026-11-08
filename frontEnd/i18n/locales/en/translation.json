@@ -5937,5 +5937,11 @@
     "arreter": "Stop",
     "nonDisponible": "Read-aloud is not available in this browser.",
     "pasDeVoix": "Your device has no {{langue}} voice. You can add one in the phone’s text-to-speech settings."
+  },
+  "antiRobot": {
+    "erreur": "The anti-robot check could not load.",
+    "reessayer": "Try again",
+    "refuse": "The anti-robot check failed: please redo it.",
+    "secours": "If the problem persists, write to us at contact@taladz.com."
   }
 }

@@ -524,5 +524,9 @@
     "rejected": "Organisation refusée",
     "merged": "Organisations regroupées",
     "claimSent": "Demande envoyée : l’équipe Tala DZ va la vérifier"
+  },
+  "captcha": {
+    "requis": "Cochez la vérification anti-robots avant d’envoyer.",
+    "invalide": "La vérification anti-robots a expiré ou a échoué : recommencez-la, puis renvoyez."
   }
 }

@@ -29,6 +29,8 @@ export interface RegisterVisitorData {
   telephone?: string;
   accepte_conditions: boolean;
   accepte_newsletter?: boolean;
+  /** Jeton du contrôle anti-robots (Cloudflare Turnstile) */
+  turnstile_token?: string;
 }
 
 // Données pour l'inscription professionnel

@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 import { useRTL } from '@/hooks/useRTL';
 import SEOHead from '@/components/SEOHead';
+import AntiRobot, { estRefusAntiRobot, useAntiRobot } from '@/components/shared/AntiRobot';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const antiRobot = useAntiRobot();
 
   const validateEmail = (email: string): boolean => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,7 +70,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await userService.forgotPassword(email);
+      const response = await userService.forgotPassword(email, antiRobot.lireJeton());
 
       if (response.success) {
         setSubmitted(true);
@@ -78,7 +80,10 @@ const ForgotPassword = () => {
         });
       } else {
         const errMsg = (response.error || '').toLowerCase();
-        if (errMsg.includes('429') || errMsg.includes('too many') || errMsg.includes('trop de') || errMsg.includes('rate')) {
+        // Refus anti-robots : jamais présenté comme « e-mail envoyé »
+        if (estRefusAntiRobot(response)) {
+          setError(response.error || t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'));
+        } else if (errMsg.includes('429') || errMsg.includes('too many') || errMsg.includes('trop de') || errMsg.includes('rate')) {
           setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
         } else {
           // Pour les autres erreurs, afficher succès (ne pas révéler si l'email existe)
@@ -87,7 +92,9 @@ const ForgotPassword = () => {
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message.toLowerCase() : '';
-      if (errMsg.includes('429') || errMsg.includes('rate') || errMsg.includes('trop')) {
+      if (estRefusAntiRobot(err)) {
+        setError((err instanceof Error && err.message) || t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'));
+      } else if (errMsg.includes('429') || errMsg.includes('rate') || errMsg.includes('trop')) {
         setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
       } else if (errMsg.includes('timeout') || errMsg.includes('network') || errMsg.includes('connection')) {
         setError(t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.'));
@@ -96,6 +103,8 @@ const ForgotPassword = () => {
       }
     } finally {
       setLoading(false);
+      // Un jeton ne sert qu'une fois
+      antiRobot.reinitialiser();
     }
   };
 
@@ -198,7 +207,9 @@ const ForgotPassword = () => {
                   )}
                 </div>
 
-                <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                <AntiRobot ref={antiRobot.ref} action="mot_de_passe" onJeton={antiRobot.setJeton} />
+
+                <Button type="submit" size="lg" className="w-full" disabled={loading || antiRobot.manquant}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 me-2 animate-spin" />

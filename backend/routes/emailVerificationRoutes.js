@@ -4,6 +4,7 @@ const router = express.Router();
 const { body, param } = require('express-validator');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
+const { verifierTurnstile } = require('../middlewares/turnstile');
 const { FORMAT_JETON } = require('../models/misc/emailVerification');
 
 module.exports = (models, authMiddleware) => {
@@ -72,6 +73,7 @@ module.exports = (models, authMiddleware) => {
   router.post('/request-password-reset',
     emailValidation,
     validationMiddleware.handleValidationErrors,
+    verifierTurnstile('mot_de_passe'),
     (req, res) => controller.requestPasswordReset(req, res)
   );
 

@@ -2,6 +2,7 @@
  * Pied de page, visible de tous, sans compte : installer Tala DZ et s'abonner à la newsletter
  * avec son e-mail seul. Le bouton d'installation n'apparaît que si le navigateur le permet.
  */
+import AntiRobot, { antiRobotActif, useAntiRobot } from '@/components/shared/AntiRobot';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
@@ -73,12 +74,24 @@ export function InscriptionNewsletter() {
   const [robot, setRobot] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [envoye, setEnvoye] = useState(false);
+  // Pied de page de toutes les pages : le script de Cloudflare n'est chargé qu'au moment d'écrire son adresse
+  const [afficherAntiRobot, setAfficherAntiRobot] = useState(false);
+  const antiRobot = useAntiRobot();
 
   const envoyer = async (e: FormEvent) => {
     e.preventDefault();
+    // Envoi sans avoir touché au champ (adresse remplie par le navigateur) : montrer d'abord la vérification
+    if (antiRobotActif && !antiRobot.lireJeton()) {
+      setAfficherAntiRobot(true);
+      return;
+    }
     setEnCours(true);
     try {
-      const res = await httpClient.post<unknown>('/newsletter/inscription', { email, site_web: robot });
+      const res = await httpClient.post<unknown>('/newsletter/inscription', {
+        email,
+        site_web: robot,
+        ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() } : {}),
+      });
       if (!res.success) throw new Error(res.error);
       setEnvoye(true);
     } catch (err) {
@@ -89,6 +102,8 @@ export function InscriptionNewsletter() {
       });
     } finally {
       setEnCours(false);
+      // Un jeton ne sert qu'une fois
+      antiRobot.reinitialiser();
     }
   };
 
@@ -107,15 +122,17 @@ export function InscriptionNewsletter() {
           dir="ltr"
           placeholder={t('newsletter.adresse', 'Votre adresse e-mail')}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onFocus={() => setAfficherAntiRobot(true)}
+          onChange={(e) => { setEmail(e.target.value); setAfficherAntiRobot(true); }}
         />
-        <Button type="submit" disabled={enCours}>
+        <Button type="submit" disabled={enCours || (antiRobot.manquant && afficherAntiRobot)}>
           {enCours
             ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />
             : <Mail className="h-4 w-4 me-2" aria-hidden="true" />}
           {t('newsletter.sinscrire', 'S’inscrire')}
         </Button>
       </div>
+      {afficherAntiRobot && <AntiRobot ref={antiRobot.ref} action="newsletter" onJeton={antiRobot.setJeton} />}
       {/* Invisible pour les personnes : seuls les robots le remplissent */}
       <input type="text" name="site_web" value={robot} onChange={(e) => setRobot(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <p className="text-xs text-muted-foreground">

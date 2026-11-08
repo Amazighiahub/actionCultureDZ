@@ -25,6 +25,7 @@ const securityMiddleware = {
     // Strip HTML sur un mot de passe = corruption silencieuse + impossibilité
     // de se reconnecter si des caractères comme <, > ou & sont utilisés.
     const NEVER_SANITIZE = new Set([
+      'turnstile_token',
       'password',
       'mot_de_passe',
       'ancien_mot_de_passe',

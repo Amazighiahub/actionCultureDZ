@@ -22,6 +22,7 @@ const gdprController = require('../controllers/gdprController');
 const asyncHandler = require('../utils/asyncHandler');
 const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
+const { verifierTurnstile } = require('../middlewares/turnstile');
 
 const initUserRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -55,6 +56,8 @@ const initUserRoutes = (models, authMiddleware) => {
       body('accepte_conditions').equals('true').withMessage('Vous devez accepter les conditions'),
     ],
     handleValidationErrors,
+    // Anti-robots après la validation : un formulaire mal rempli ne consomme pas la vérification
+    verifierTurnstile('inscription'),
     asyncHandler((req, res) => authController.register(req, res)));
 
   router.post('/login',
