@@ -70,3 +70,15 @@ describe('relance des participants', () => {
     await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: '22 e-mail(s) envoyé(s)' })));
   });
 });
+
+describe('mention sous chaque participant', () => {
+  test('trois cas : pas de mot de passe, participation à confirmer, tout est fait (bouton grisé)', async () => {
+    afficher([participant(1, false, 'invitation'), participant(2, true, 'invitation'), participant(3, true)]);
+    expect(await screen.findByText('Compte pas encore activé : e-mail non confirmé')).toBeInTheDocument();
+    expect(screen.getByText('Mot de passe choisi, mais participation pas encore confirmée')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Lui rappeler de confirmer/ })).toBeEnabled();
+    expect(screen.getByText('Mot de passe déjà choisi')).toBeInTheDocument();
+    const grises = screen.getAllByRole('button', { name: /Renvoyer l’email/ }).filter((b) => (b as HTMLButtonElement).disabled);
+    expect(grises).toHaveLength(1);
+  });
+});

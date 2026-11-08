@@ -3773,7 +3773,10 @@
         "relanceReste": "{{echecs}} failed, {{restants}} to resend later: click again in a moment.",
         "relanceTitre": "Resend the e-mail to {{count}} participant(s)?",
         "relanceDesc": "Each person who has not finished will receive the e-mail again to choose their password or confirm their registration.",
-        "inutile": "This person has already chosen their password"
+        "inutile": "This person has already chosen their password",
+        "aConfirmer": "Password chosen, but participation not yet confirmed",
+        "rappelerConfirmation": "Remind to confirm",
+        "nonActive": "Account not activated yet: e-mail not confirmed"
       },
       "profil": {
         "label": "Profile:",

@@ -594,12 +594,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                           son mot de passe (l'email « Choisir mon mot de passe » ne servirait à rien) */}
                       {participant.statut_participation !== 'annule' && (() => {
                         // Invitation pas encore confirmée : l'email (demande de confirmation) peut être renvoyé
-                        const aSonMotDePasse = participant.User.email_verifie !== false && participant.statut_participation !== 'invitation';
+                        // Trois cas : pas de mot de passe ; mot de passe choisi mais participation pas confirmée
+                        // (le bouton renvoie alors la demande de confirmation) ; tout est fait (bouton grisé)
+                        const motDePasseChoisi = participant.User.email_verifie !== false;
+                        const aSonMotDePasse = motDePasseChoisi && participant.statut_participation !== 'invitation';
+                        const aConfirmer = motDePasseChoisi && participant.statut_participation === 'invitation';
                         return (
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             {aSonMotDePasse
                               ? <span className="text-xs text-muted-foreground">{t('pro.participants.invitation.dejaChoisi', 'Mot de passe déjà choisi')}</span>
-                              : <span className="text-xs text-amber-700">{t('pro.participants.invitation.pasEncore', 'N’a pas encore choisi son mot de passe')}</span>}
+                              : aConfirmer
+                                ? <span className="text-xs text-amber-700">{t('pro.participants.invitation.aConfirmer', 'Mot de passe choisi, mais participation pas encore confirmée')}</span>
+                                : <span className="text-xs text-amber-700">{t('pro.participants.invitation.nonActive', 'Compte pas encore activé : e-mail non confirmé')}</span>}
                             <Button
                               variant="outline" size="sm" className="h-7"
                               onClick={() => renvoyerInvitation(participant.id_user)}
@@ -611,7 +617,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                                 : aSonMotDePasse
                                   ? <CheckCircle className="h-3 w-3 me-1" aria-hidden="true" />
                                   : <Mail className="h-3 w-3 me-1" aria-hidden="true" />}
-                              {t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
+                              {aConfirmer
+                                ? t('pro.participants.invitation.rappelerConfirmation', 'Lui rappeler de confirmer')
+                                : t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
                             </Button>
                           </div>
                         );

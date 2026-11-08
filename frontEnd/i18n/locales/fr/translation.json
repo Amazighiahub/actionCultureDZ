@@ -3778,7 +3778,10 @@
         "relanceReste": "{{echecs}} échec(s), {{restants}} à relancer plus tard : cliquez de nouveau dans un moment.",
         "relanceTitre": "Renvoyer l’e-mail à {{count}} participant(s) ?",
         "relanceDesc": "Chaque personne qui n’a pas fini recevra de nouveau l’e-mail pour choisir son mot de passe ou confirmer son inscription.",
-        "inutile": "Cette personne a déjà choisi son mot de passe"
+        "inutile": "Cette personne a déjà choisi son mot de passe",
+        "aConfirmer": "Mot de passe choisi, mais participation pas encore confirmée",
+        "rappelerConfirmation": "Lui rappeler de confirmer",
+        "nonActive": "Compte pas encore activé : e-mail non confirmé"
       },
       "profil": {
         "label": "Profil :",
