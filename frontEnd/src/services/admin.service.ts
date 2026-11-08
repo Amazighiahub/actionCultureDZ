@@ -322,6 +322,11 @@ class AdminService {
     return httpClient.post<{ lienEnvoye: boolean }>(`/dashboard/users/${userId}/reset-password`, {});
   }
 
+  /** Changer le type de compte (ex. visiteuse → écrivaine) ; un type pro attend ensuite la validation */
+  async changerTypeCompte(userId: number, idTypeUser: number): Promise<ApiResponse<{ id_type_user: number; statut: string }>> {
+    return httpClient.patch<{ id_type_user: number; statut: string }>(`/dashboard/users/${userId}/type`, { id_type_user: idTypeUser });
+  }
+
   async verifyEmailManually(userId: number): Promise<ApiResponse<void>> {
     return httpClient.post<void>(`/dashboard/users/${userId}/verify-email`, {});
   }

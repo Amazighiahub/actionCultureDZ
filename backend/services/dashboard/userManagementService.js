@@ -6,7 +6,7 @@ const logger = require('../../utils/logger');
 const bcrypt = require('bcrypt');
 const { texteLisible } = require('../../helpers/i18n');
 const crypto = require('crypto');
-const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { TYPE_USER_IDS, REGISTRABLE_TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('../user/userFileCleanup');
 const { annulerEvenementsAVenir } = require('../user/evenementsAVenir');
@@ -246,6 +246,65 @@ class DashboardUserManagementService {
   /**
    * Changement de rôle (transactionnel)
    */
+  /**
+   * Changer le type de compte (inscription dans le mauvais métier, ou visiteur qui devient professionnel).
+   * Vers un type professionnel : le compte passe « en attente de validation », l'administration le
+   * valide ensuite comme d'habitude (accès au tableau de bord pro après validation). Vers « visiteur » :
+   * compte actif. Jamais pour un compte d'administration ni pour son propre compte ; pas pour un compte
+   * suspendu, banni ou refusé (le réactiver d'abord).
+   */
+  async changerTypeCompte(userId, idType, adminId) {
+    await this._refuserSiAdministration(userId, adminId, 'changer le type de');
+    const nouveau = Number(idType);
+    if (!REGISTRABLE_TYPE_USER_IDS.has(nouveau)) throw erreurHttp('Type de compte invalide', 400);
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw erreurHttp('Utilisateur non trouvé', 404);
+    if (Number(user.id_type_user) === nouveau) throw erreurHttp('Le compte a déjà ce type', 409);
+    if (['suspendu', 'banni', 'rejete', 'inactif'].includes(user.statut)) {
+      throw erreurHttp(`Compte ${user.statut} : réactivez-le avant de changer son type`, 409);
+    }
+    const ancien = Number(user.id_type_user);
+    const versPro = nouveau !== TYPE_USER_IDS.VISITEUR;
+    const statut = versPro ? 'en_attente_validation' : 'actif';
+
+    // Type et rôle changent ensemble (une seule transaction) : le serveur reconnaît un professionnel
+    // à son type OU à son rôle « Professionnel » ; un ancien pro repassé visiteur qui garderait ce rôle
+    // resterait « professionnel ». Les rôles Administrateur et Moderateur ne sont jamais touchés.
+    await this.userRepo.withTransaction(async (transaction) => {
+      await this.userRepo.update(userId, { id_type_user: nouveau, statut }, { transaction });
+      if (!this.models.UserRole || !this.models.Role) return;
+      const roles = await this.models.Role.findAll({ where: { nom_role: ['Professionnel', 'User'] }, attributes: ['id_role', 'nom_role'], transaction });
+      const idRole = (nom) => roles.find((r) => r.nom_role === nom)?.id_role;
+      const [garder, retirer] = versPro ? ['Professionnel', 'User'] : ['User', 'Professionnel'];
+      if (idRole(retirer)) await this.models.UserRole.destroy({ where: { id_user: userId, id_role: idRole(retirer) }, transaction });
+      if (idRole(garder)) {
+        await this.models.UserRole.findOrCreate({ where: { id_user: userId, id_role: idRole(garder) }, defaults: { id_user: userId, id_role: idRole(garder) }, transaction });
+      } else {
+        logger.warn(`Changement de type : rôle « ${garder} » absent de la base, seul le type est changé`);
+      }
+    });
+    await this._invalidateUserCache(userId);
+
+    const libelle = this.models.TypeUser
+      ? (await this.models.TypeUser.findByPk(nouveau, { attributes: ['nom_type'] }))?.nom_type
+      : null;
+    logger.info('Type de compte changé', { action: 'CHANGE_USER_TYPE', targetUserId: userId, ancien, nouveau, statut, adminId });
+    if (this.models.Notification) {
+      try {
+        await this.models.Notification.create({
+          id_user: userId,
+          type_notification: 'message_admin',
+          titre: 'Type de compte modifié',
+          message: versPro
+            ? `Votre compte est maintenant « ${texteLisible(libelle) || 'professionnel'} ». Il sera actif dès que l’équipe l’aura validé : vous aurez alors accès au tableau de bord professionnel.`
+            : 'Votre compte est maintenant un compte visiteur.',
+          lu: false
+        });
+      } catch (err) { logger.error('Notification changement de type :', err.message); }
+    }
+    return { id_user: Number(userId), id_type_user: nouveau, statut, ancien_type: ancien };
+  }
+
   async changeUserRole(userId, roleId, adminId) {
     await this._refuserSiAdministration(userId, adminId, 'changer le rôle de');
     const user = await this.userRepo.findById(userId);

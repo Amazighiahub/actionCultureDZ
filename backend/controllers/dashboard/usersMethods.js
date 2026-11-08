@@ -142,6 +142,22 @@ const usersMethods = {
     }
   },
 
+  /** PATCH /dashboard/users/:id/type { id_type_user } */
+  async changerTypeCompte(req, res) {
+    try {
+      const data = await container.userManagementService.changerTypeCompte(
+        Number(req.params.id), req.body.id_type_user, req.user.id_user
+      );
+      res.json({ success: true, message: data.statut === 'en_attente_validation'
+        ? 'Type changé : le compte attend maintenant votre validation.'
+        : 'Type changé.', data });
+    } catch (error) {
+      if (error.statusCode) return res.status(error.statusCode).json({ success: false, error: error.message });
+      console.error('Erreur changerTypeCompte:', error.message);
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
+    }
+  },
+
   async verifyEmailManually(req, res) {
     try {
       const { id } = req.params;

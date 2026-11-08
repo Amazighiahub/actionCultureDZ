@@ -15,8 +15,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Users, Search, CheckCircle, XCircle,
-  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX, MailCheck, Bell
+  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX, MailCheck, Bell, Briefcase
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SECTEUR_TYPE_USER_MAP } from '@/types/models/auth.types';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +87,30 @@ const AdminUsersTabContent: React.FC = () => {
   const [notifying, setNotifying] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId?: number }>({ open: false });
   const [confirmSuspend, setConfirmSuspend] = useState<{ open: boolean; userId?: number }>({ open: false });
+  // Changer le type de compte (ex. inscrite comme visiteuse, ou dans le mauvais métier)
+  const [typeCompte, setTypeCompte] = useState<{ userId: number; nom: string; typeActuel: number } | null>(null);
+  const [nouveauType, setNouveauType] = useState<number>(2);
+  const [envoiType, setEnvoiType] = useState(false);
+  const confirmerType = async () => {
+    if (!typeCompte) return;
+    setEnvoiType(true);
+    try {
+      const r = await adminService.changerTypeCompte(typeCompte.userId, nouveauType);
+      if (!r.success) throw r;
+      toast({
+        title: t('admin.users.typeChange', 'Type de compte changé'),
+        description: nouveauType === 1
+          ? t('admin.users.typeVisiteur', 'Le compte est maintenant un compte visiteur.')
+          : t('admin.users.typeAValider', 'Le compte attend maintenant votre validation : validez-le pour lui ouvrir le tableau de bord professionnel.'),
+      });
+      setTypeCompte(null);
+      await loadAllUsers({ page });
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('admin.users.typeEchec', 'Le type n’a pas pu être changé')), variant: 'destructive' });
+    } finally {
+      setEnvoiType(false);
+    }
+  };
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   // « Envoyer un email » : destinataire de la fenêtre d'envoi (le menu ne faisait rien)
   const [destinataire, setDestinataire] = useState<{ id: number; nom: string } | null>(null);
@@ -427,6 +454,18 @@ const AdminUsersTabContent: React.FC = () => {
                           <Mail className="h-4 w-4 me-2" />
                           {t('admin.users.sendEmail', 'Envoyer un email')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const actuel = Number(user.id_type_user) || 1;
+                          setNouveauType(actuel === 1 ? 2 : actuel);
+                          setTypeCompte({
+                            userId: user.id_user,
+                            nom: `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`.trim() || user.email,
+                            typeActuel: actuel,
+                          });
+                        }}>
+                          <Briefcase className="h-4 w-4 me-2" />
+                          {t('admin.users.changerType', 'Changer le type de compte')}
+                        </DropdownMenuItem>
                         {!user.email_verifie && (
                           <DropdownMenuItem onClick={() => verifyEmailManually({ userId: user.id_user })}>
                             <MailCheck className="h-4 w-4 me-2" />
@@ -476,6 +515,36 @@ const AdminUsersTabContent: React.FC = () => {
           setConfirmDelete({ open: false });
         }}
       />
+
+      <Dialog open={!!typeCompte} onOpenChange={(o) => { if (!o) setTypeCompte(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('admin.users.changerType', 'Changer le type de compte')}</DialogTitle>
+            <DialogDescription>{typeCompte?.nom}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="nouveau-type" className="text-sm font-medium">{t('admin.users.nouveauType', 'Nouveau type')}</label>
+            <select id="nouveau-type" className="w-full rounded-md border bg-background p-2 min-h-[44px]"
+              value={nouveauType} onChange={(e) => setNouveauType(Number(e.target.value))}>
+              <option value={1}>{t('admin.users.visiteur', 'Visiteur')}</option>
+              {Object.entries(SECTEUR_TYPE_USER_MAP).map(([cle, id]) => (
+                <option key={cle} value={id}>{t(`auth.sectors.${cle}`, cle)}</option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">
+              {nouveauType === 1
+                ? t('admin.users.typeAideVisiteur', 'Le compte devient visiteur : il perd l’accès au tableau de bord professionnel.')
+                : t('admin.users.typeAidePro', 'Le compte devient professionnel et passe « en attente » : validez-le ensuite (bouton Valider) pour lui ouvrir le tableau de bord professionnel.')}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTypeCompte(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button onClick={confirmerType} disabled={envoiType || nouveauType === typeCompte?.typeActuel}>
+              {t('admin.users.changerType', 'Changer le type de compte')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmSuspend.open}

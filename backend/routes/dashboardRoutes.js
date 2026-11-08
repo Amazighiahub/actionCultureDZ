@@ -265,6 +265,17 @@ const initDashboardRoutes = (models) => {
   );
 
   // Vérifier manuellement l'email d'un utilisateur
+  // Changer le type de compte (ex. visiteuse → écrivaine) ; un type pro attend ensuite la validation
+  router.patch('/users/:id/type',
+    invaliderListesUtilisateurs,
+    validationMiddleware.validateId('id'),
+    [body('id_type_user').isInt({ min: 1 }).withMessage('Type de compte invalide')],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('CHANGE_USER_TYPE'),
+    (req, res) => dashboardController.changerTypeCompte(req, res)
+  );
+
   router.post('/users/:id/verify-email',
     invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),

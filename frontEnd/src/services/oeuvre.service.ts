@@ -1,4 +1,5 @@
 // services/oeuvre.service.ts - Version complètement corrigée
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import {
   CreateOeuvreCompleteDTO,
   CreateOeuvreResponse,
@@ -172,7 +173,7 @@ class OeuvreService {
     } catch (error: unknown) {
       return {
         success: false,
-        error: getErrorMessage(error, 'Erreur lors de la création')
+        error: messageErreurServeur(error, 'Erreur lors de la création')
       };
     }
   }
@@ -594,7 +595,7 @@ class OeuvreService {
     } catch (error: unknown) {
       return {
         success: false,
-        error: getErrorMessage(error, 'Erreur lors de la mise à jour')
+        error: messageErreurServeur(error, 'Erreur lors de la mise à jour')
       };
     }
   }

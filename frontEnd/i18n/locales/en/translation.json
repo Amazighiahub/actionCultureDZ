@@ -3010,7 +3010,16 @@
         "organisateur": "Organiser",
         "guide": "Guide",
         "artisan": "Craftsperson"
-      }
+      },
+      "changerType": "Change account type",
+      "nouveauType": "New type",
+      "visiteur": "Visitor",
+      "typeChange": "Account type changed",
+      "typeVisiteur": "The account is now a visitor account.",
+      "typeAValider": "The account now awaits your validation: validate it to open the professional dashboard.",
+      "typeEchec": "The type could not be changed",
+      "typeAideVisiteur": "The account becomes a visitor: it loses access to the professional dashboard.",
+      "typeAidePro": "The account becomes professional and goes \"pending\": then validate it (Validate button) to open the professional dashboard."
     },
     "oeuvres": {
       "pendingCount": "{{count}} work(s) to validate",

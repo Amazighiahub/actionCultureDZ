@@ -2789,7 +2789,16 @@
         "organisateur": "Organisateur",
         "guide": "Guide",
         "artisan": "Artisan"
-      }
+      },
+      "changerType": "Changer le type de compte",
+      "nouveauType": "Nouveau type",
+      "visiteur": "Visiteur",
+      "typeChange": "Type de compte changé",
+      "typeVisiteur": "Le compte est maintenant un compte visiteur.",
+      "typeAValider": "Le compte attend maintenant votre validation : validez-le pour lui ouvrir le tableau de bord professionnel.",
+      "typeEchec": "Le type n’a pas pu être changé",
+      "typeAideVisiteur": "Le compte devient visiteur : il perd l’accès au tableau de bord professionnel.",
+      "typeAidePro": "Le compte devient professionnel et passe « en attente » : validez-le ensuite (bouton Valider) pour lui ouvrir le tableau de bord professionnel."
     },
     "oeuvres": {
       "pendingCount": "{{count}} œuvre(s) à valider",
