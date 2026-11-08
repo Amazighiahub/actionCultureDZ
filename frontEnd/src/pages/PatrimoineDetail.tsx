@@ -1,4 +1,4 @@
-import { usePeutEnrichirLieu, lienPropositionLieu } from '@/hooks/usePeutEnrichirLieu';
+import { lienPropositionLieu } from '@/hooks/usePeutEnrichirLieu';
 import LireAVoixHaute, { textesParLangue } from '@/components/shared/LireAVoixHaute';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
@@ -341,7 +341,8 @@ const PatrimoineDetail = () => {
   const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
     .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0 || pagesDe(k).length > 0);
   const canAddContent = isAdmin || isValidatedProfessional();
-  const peutEnrichir = usePeutEnrichirLieu();
+  // Même règle que usePeutEnrichirLieu, sans nouveau hook (on est après un retour anticipé)
+  const peutEnrichir = canAddContent || hasRole('Moderateur') || hasRole('Modérateur');
   // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
   const peutEcrireArticle = canAddContent || hasRole('Moderateur');
   const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
