@@ -1,3 +1,4 @@
+import { usePeutEnrichirLieu } from '@/hooks/usePeutEnrichirLieu';
 import { useState } from 'react';
 import { Plus, Trash2, Pencil, Landmark, Building2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -169,7 +170,9 @@ export default function SectionElements({
   className,
 }: SectionElementsProps) {
   // La suppression est réservée à la modération (contrôlée aussi côté API)
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  // Enrichir : équipe ou professionnel validé (les autres proposent à l'équipe par la page Contact)
+  const isAuthenticated = usePeutEnrichirLieu();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const cfg = CONFIG[kind];

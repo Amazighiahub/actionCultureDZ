@@ -303,9 +303,9 @@ const App = () => (
             <Route
               path="/ajouter-patrimoine"
               element={
-                <ProfessionalRoute>
+                <ProtectedRoute>
                   <AjouterPatrimoineRapide />
-                </ProfessionalRoute>
+                </ProtectedRoute>
               }
             />
 

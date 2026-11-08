@@ -7,6 +7,7 @@
  *
  * Inclut un bouton "Modifier" pour les contributeurs connectés
  */
+import { usePeutEnrichirLieu } from '@/hooks/usePeutEnrichirLieu';
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -70,7 +71,9 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   blocs = [], peutEcrireArticle = false, onArticlesChange, pages = [], onPagesChange
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  // Enrichir : équipe ou professionnel validé (les autres proposent à l'équipe par la page Contact)
+  const isAuthenticated = usePeutEnrichirLieu();
   const navigate = useNavigate();
   const { toast } = useToast();
 

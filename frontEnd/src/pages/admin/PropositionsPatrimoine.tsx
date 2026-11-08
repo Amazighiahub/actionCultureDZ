@@ -19,7 +19,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 
 interface Proposition {
-  id: number; id_lieu: number; lieu_nom: unknown; action: 'detail' | 'personnalite' | 'element_ajout' | 'element_modif';
+  id: number; id_lieu: number; lieu_nom: unknown; action: 'detail' | 'personnalite' | 'element_ajout' | 'element_modif' | 'creation';
   donnees: { corps?: Record<string, unknown>; genre?: 'monument' | 'vestige'; idElement?: number; intervenant?: string | null };
   date_creation: string; id_user: number; prenom: unknown; nom: unknown; email: string;
 }
@@ -61,6 +61,8 @@ const PropositionsPatrimoine: React.FC = () => {
   const titreAction = (p: Proposition) => {
     const genre = p.donnees.genre === 'vestige' ? t('admin.patrimoine.propositions.vestige', 'vestige') : t('admin.patrimoine.propositions.monument', 'monument');
     switch (p.action) {
+      // Lieu ajouté par un membre : « Accepter » le publie, « Refuser » l'archive
+      case 'creation': return t('admin.patrimoine.propositions.creation', 'Nouveau lieu proposé par un membre (ouvrez-le pour le vérifier)');
       case 'detail': return t('admin.patrimoine.propositions.detail', 'Textes du site');
       case 'personnalite': return t('admin.patrimoine.propositions.personnalite', 'Personnalité à rattacher');
       case 'element_ajout': return t('admin.patrimoine.propositions.ajout', 'Nouveau {{genre}}', { genre });

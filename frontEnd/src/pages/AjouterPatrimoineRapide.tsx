@@ -249,6 +249,20 @@ const AjouterPatrimoineRapide: React.FC = () => {
           }
         }
 
+        // Lieu ajouté par un membre : il attend la vérification de l'équipe (pas encore de page publique)
+        if ((response as { proposition?: boolean }).proposition) {
+          toast({
+            title: t('patrimoine.enAttente.titre', 'Merci pour ce lieu !'),
+            description: uploadFailed
+              ? t('patrimoine.enAttente.sansPhotos', 'Il sera publié après vérification par l’équipe. Certaines photos n’ont pas pu être envoyées.')
+              : t('patrimoine.enAttente.texte', 'Il sera publié après vérification par l’équipe. Vous recevrez une notification.'),
+          });
+          queryClient.invalidateQueries({ queryKey: ['patrimoine'] });
+          setIsDirty(false);
+          navigate('/patrimoine');
+          return;
+        }
+
         toast({
           title: uploadFailed ? t('patrimoine.success.partial', 'Site créé (photos non uploadées)') : t('patrimoine.success.created', 'Site créé !'),
           description: uploadFailed

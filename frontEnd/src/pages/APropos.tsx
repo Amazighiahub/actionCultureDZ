@@ -20,7 +20,12 @@ const APropos = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
-  const [formData, setFormData] = useState({ prenom: '', nom: '', email: '', sujet: '', message: '' });
+  // Sujet prérempli depuis un lien (ex. « Proposition pour le lieu : … »)
+  const [formData, setFormData] = useState(() => {
+    let sujet = '';
+    try { sujet = (new URLSearchParams(window.location.search).get('sujet') || '').slice(0, 200); } catch { /* adresse illisible */ }
+    return { prenom: '', nom: '', email: '', sujet, message: '' };
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -136,7 +141,7 @@ const APropos = () => {
                 <h2 className="text-2xl font-semibold font-serif">{t("apropos.nous_contacter")}</h2>
               </div>
               
-              <form className="space-y-4" onSubmit={handleSubmit}>
+              <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="prenom">{t("apropos.prnom")}</Label>

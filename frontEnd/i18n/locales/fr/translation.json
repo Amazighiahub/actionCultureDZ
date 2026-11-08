@@ -3097,7 +3097,8 @@
           "horaires": "Horaires",
           "nom": "Nom",
           "type": "Type"
-        }
+        },
+        "creation": "Nouveau lieu proposé par un membre (ouvrez-le pour le vérifier)"
       }
     },
     "overview": {
@@ -4334,6 +4335,15 @@
     "proposition": {
       "envoyee": "Proposition envoyée",
       "relecture": "Merci ! Elle sera publiée après relecture par l’équipe."
+    },
+    "proposerInfo": {
+      "texte": "Vous connaissez l’histoire de ce lieu, une tradition, une photo ? Envoyez-la à l’équipe Tala DZ.",
+      "bouton": "Proposer une information"
+    },
+    "enAttente": {
+      "titre": "Merci pour ce lieu !",
+      "texte": "Il sera publié après vérification par l’équipe. Vous recevrez une notification.",
+      "sansPhotos": "Il sera publié après vérification par l’équipe. Certaines photos n’ont pas pu être envoyées."
     }
   },
   "toasts": {

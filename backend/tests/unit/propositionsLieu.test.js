@@ -66,3 +66,26 @@ describe('proposer et décider', () => {
     await expect(P.decider(modeles(), {}, 1, 'refusee', '  ', 8)).rejects.toMatchObject({ statusCode: 400 });
   });
 });
+
+describe('nouveau lieu proposé par un membre', () => {
+  const avecDecision = () => {
+    const m = modeles();
+    m.Lieu.update = jest.fn(async () => [1]);
+    m.sequelize.transaction = async (f) => f({});
+    m.sequelize.query = jest.fn(async (sql) => (sql.startsWith('SELECT * FROM proposition_lieu')
+      ? [{ id: 5, id_lieu: 3, id_user: 37, action: 'creation', statut: 'en_attente', donnees: '{}' }]
+      : []));
+    return m;
+  };
+  test('accepté : le lieu est publié', async () => {
+    const m = avecDecision();
+    await P.decider(m, {}, 5, 'acceptee', '', 8);
+    expect(m.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, { where: { id_lieu: 3, statut: 'brouillon' } });
+  });
+  test('refusé : le lieu est archivé, l’auteur reçoit le motif', async () => {
+    const m = avecDecision();
+    await P.decider(m, {}, 5, 'refusee', 'Lieu déjà présent', 8);
+    expect(m.Lieu.update).toHaveBeenCalledWith({ statut: 'archive' }, { where: { id_lieu: 3, statut: 'brouillon' } });
+    expect(notifier).toHaveBeenCalledWith({}, 37, expect.objectContaining({ titre: 'Proposition non retenue' }));
+  });
+});

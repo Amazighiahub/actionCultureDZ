@@ -3,6 +3,7 @@
  * Architecture: Controller → Service → Repository → Database
  */
 
+const { estProValide } = require('../utils/droits');
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
@@ -180,6 +181,24 @@ class PatrimoineController extends BaseController {
   async create(req, res) {
     // Ajouter l'id du créateur
     req.body.id_createur = req.user?.id_user;
+    const equipeOuPro = this._estModeration(req) || estProValide(req.user);
+    if (!equipeOuPro) {
+      // Un membre ajoute un lieu : en attente, relu par l'équipe (pas de point de visite d'un autre site)
+      if (req.body.id_lieu_parent) {
+        return res.status(403).json({ success: false, error: 'Seuls les professionnels peuvent ajouter un point de visite à un site.', code: 'ENRICHIR_PRO' });
+      }
+      if (await propositions.plafondAtteint(this._models, req.user.id_user)) {
+        return res.status(409).json({ success: false, code: 'TROP_DE_PROPOSITIONS', error: 'Vous avez déjà beaucoup de propositions en attente : l’équipe doit d’abord les relire.' });
+      }
+      const site = await this.patrimoineService.create({ ...req.body, statut: undefined }, { isModerator: false, enAttente: true });
+      await propositions.proposer(this._models, container.notificationService, {
+        idLieu: site.id_lieu, user: req.user, action: 'creation', donnees: {}
+      });
+      return res.status(202).json({
+        success: true, proposition: true, data: { id_lieu: site.id_lieu },
+        message: 'Merci ! Le lieu sera publié après vérification par l’équipe.'
+      });
+    }
     const site = await this.patrimoineService.create(req.body, { isModerator: this._estModeration(req) });
     res.status(201).json({
       success: true,
@@ -222,6 +241,14 @@ class PatrimoineController extends BaseController {
    */
   async _proposer(req, res, action, extra = {}) {
     const idLieu = parseInt(req.params.id, 10);
+    // Enrichir un lieu : équipe et professionnels validés ; les autres écrivent à l'équipe (page Contact)
+    if (!this._estModeration(req) && !estProValide(req.user)) {
+      res.status(403).json({
+        success: false, code: 'ENRICHIR_PRO',
+        error: 'Seuls les professionnels peuvent enrichir un lieu. Envoyez votre information à l’équipe Tala DZ depuis la page Contact.'
+      });
+      return true;
+    }
     if (!(await propositions.doitProposer(this._models, req.user, idLieu))) return false;
     await propositions.proposer(this._models, container.notificationService, {
       idLieu, user: req.user, action, donnees: { ...extra, corps: req.body }

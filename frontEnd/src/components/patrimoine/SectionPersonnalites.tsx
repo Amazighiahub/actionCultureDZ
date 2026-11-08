@@ -1,3 +1,4 @@
+import { usePeutEnrichirLieu } from '@/hooks/usePeutEnrichirLieu';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +62,9 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   blocs = [], onArticlesChange, pages = [], onPagesChange
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
+  // Enrichir : équipe ou professionnel validé (les autres proposent à l'équipe par la page Contact)
+  const isAuthenticated = usePeutEnrichirLieu();
   const navigate = useNavigate();
   const { isAdmin, hasRole, isValidatedProfessional } = usePermissions();
   const estModeration = isAdmin || hasRole('Moderateur');

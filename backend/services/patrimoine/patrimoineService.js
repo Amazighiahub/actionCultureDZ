@@ -165,7 +165,7 @@ class PatrimoineService extends BaseService {
    * @param {Object} [options]
    * @param {boolean} [options.isModerator] - admin ou modérateur (calculé par authMiddleware)
    */
-  async create(data, { isModerator = false } = {}) {
+  async create(data, { isModerator = false, enAttente = false } = {}) {
     if (data.lieuId && !isModerator) {
       throw this._forbiddenError('Seule la modération peut rattacher un site à un lieu existant');
     }
@@ -271,6 +271,14 @@ class PatrimoineService extends BaseService {
           });
         }
 
+        if (existingByCoords && enAttente) {
+          // Membre : un lieu existe déjà à cet endroit ; il le signale à l'équipe plutôt que de le compléter
+          const err = new Error('Un lieu existe déjà à cet endroit : ouvrez-le, et proposez vos informations à l’équipe.');
+          err.statusCode = 409;
+          err.code = 'DUPLICATE_SITE';
+          err.data = { existingId: existingByCoords.id_lieu, existingNom: existingByCoords.nom };
+          throw err;
+        }
         if (existingByCoords) {
           lieuId = existingByCoords.id_lieu;
           reusedByCoords = true;
@@ -288,7 +296,8 @@ class PatrimoineService extends BaseService {
             communeId: data.communeId,
             localiteId: data.localiteId || null,
             id_createur: data.id_createur || null,
-            statut: (isModerator && data.statut) || 'publie',
+            // Lieu ajouté par un membre (ni équipe ni professionnel) : en attente de la relecture de l'équipe
+            statut: enAttente ? 'brouillon' : ((isModerator && data.statut) || 'publie'),
             id_lieu_parent: parent ? parent.id_lieu : null,
             ordre_visite: parent ? await this._ordreVisite(data.ordre_visite, parent.id_lieu, transaction) : null,
             repere: parent && !isEmptyMultilang(data.repere) ? data.repere : null

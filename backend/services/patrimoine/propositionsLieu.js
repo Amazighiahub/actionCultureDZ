@@ -13,8 +13,9 @@ const { texteLisible } = require('../../helpers/i18n');
 const logger = require('../../utils/logger');
 const elements = require('./elementsLieu');
 
-const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif'];
+const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif', 'creation'];
 const LIBELLES = {
+  creation: 'un nouveau lieu :',
   detail: 'une modification des textes de',
   personnalite: 'une personnalité pour',
   element_ajout: 'un ajout à',
@@ -38,6 +39,15 @@ async function doitProposer(models, user, idLieu) {
 // Garde-fous : un compte ne peut pas noyer la file de relecture de l'équipe
 const PLAFOND_EN_ATTENTE = 20;
 const TAILLE_MAX_DONNEES = 200 * 1024;
+
+/** true si ce compte a déjà trop de propositions en attente */
+async function plafondAtteint(models, idUser) {
+  const [{ n }] = await models.sequelize.query(
+    "SELECT COUNT(*) AS n FROM proposition_lieu WHERE id_user = :user AND statut = 'en_attente'",
+    { type: models.sequelize.QueryTypes.SELECT, replacements: { user: idUser } }
+  );
+  return Number(n) >= PLAFOND_EN_ATTENTE;
+}
 
 /** Enregistre la proposition et prévient l'équipe */
 async function proposer(models, notificationService, { idLieu, user, action, donnees }) {
@@ -119,6 +129,10 @@ async function appliquer(models, notificationService, p) {
     case 'element_modif':
       await elements.modifierElement(models, genre, p.id_lieu, Number(idElement), corps);
       return;
+    case 'creation':
+      // Lieu ajouté par un membre : publié
+      await models.Lieu.update({ statut: 'publie' }, { where: { id_lieu: p.id_lieu, statut: 'brouillon' } });
+      return;
     default:
       throw erreur('Action invalide', 400, 'VALIDATION_ERROR');
   }
@@ -156,6 +170,10 @@ async function decider(models, notificationService, idProposition, decision, mot
     }
   }
 
+  // Nouveau lieu refusé : archivé (invisible sur le site, l'équipe peut le retrouver)
+  if (decision === 'refusee' && p.action === 'creation') {
+    await models.Lieu.update({ statut: 'archive' }, { where: { id_lieu: p.id_lieu, statut: 'brouillon' } });
+  }
   const lieu = await models.Lieu.findByPk(p.id_lieu, { attributes: ['nom'] });
   const nomLieu = texteLisible(lieu?.nom);
   await notifier(notificationService, p.id_user, decision === 'acceptee'
@@ -166,4 +184,4 @@ async function decider(models, notificationService, idProposition, decision, mot
   return { statut: decision };
 }
 
-module.exports = { ACTIONS, doitProposer, proposer, enAttente, decider };
+module.exports = { ACTIONS, doitProposer, proposer, enAttente, decider, plafondAtteint };

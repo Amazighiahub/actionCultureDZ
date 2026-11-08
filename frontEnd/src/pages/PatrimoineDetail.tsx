@@ -1,3 +1,4 @@
+import { usePeutEnrichirLieu, lienPropositionLieu } from '@/hooks/usePeutEnrichirLieu';
 import LireAVoixHaute, { textesParLangue } from '@/components/shared/LireAVoixHaute';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
@@ -340,6 +341,7 @@ const PatrimoineDetail = () => {
   const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
     .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0 || pagesDe(k).length > 0);
   const canAddContent = isAdmin || isValidatedProfessional();
+  const peutEnrichir = usePeutEnrichirLieu();
   // « Écrire un article » : même règle que le serveur (modération et professionnels validés)
   const peutEcrireArticle = canAddContent || hasRole('Moderateur');
   const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
@@ -582,6 +584,16 @@ const PatrimoineDetail = () => {
             )}
 
             {/* Guide audio multilingue */}
+            {/* Membre (ni équipe ni professionnel) : il propose ses informations à l'équipe */}
+            {isAuthenticated && !peutEnrichir && (
+              <div className="rounded-lg border border-dashed p-4 text-sm flex flex-wrap items-center justify-between gap-3">
+                <span className="text-muted-foreground">{t('patrimoine.proposerInfo.texte', 'Vous connaissez l’histoire de ce lieu, une tradition, une photo ? Envoyez-la à l’équipe Tala DZ.')}</span>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={lienPropositionLieu(translate(site.nom, lang))}>{t('patrimoine.proposerInfo.bouton', 'Proposer une information')}</Link>
+                </Button>
+              </div>
+            )}
+
             {(audios.length > 0 || canAddContent) && (
               <Card>
                 <CardHeader>

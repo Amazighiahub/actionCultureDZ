@@ -25,6 +25,18 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   const requireModerationOuPro = (req, res, next) =>
     (req.user?.isAdmin || req.user?.isModerateur) ? next() : requireValidatedProfessional(req, res, next);
 
+  // Photos d'un site : équipe et professionnels validés ; un membre, seulement pour le lieu qu'il vient
+  // d'ajouter et qui attend la relecture de l'équipe
+  const proOuAuteurDuLieuEnAttente = async (req, res, next) => {
+    if (req.user?.isAdmin || req.user?.isModerateur) return next();
+    try {
+      const site = models.Lieu ? await models.Lieu.findByPk(parseInt(req.params.id, 10), { attributes: ['id_createur', 'statut'] }) : null;
+      if (site && site.statut === 'brouillon' && Number(site.id_createur) === Number(req.user?.id_user)) return next();
+    } catch { /* contrôle suivant */ }
+    if (req.user?.isProfessionnel) return requireValidatedProfessional(req, res, next);
+    return res.status(403).json({ success: false, error: 'Seuls les professionnels peuvent ajouter des photos à un lieu.', code: 'ENRICHIR_PRO' });
+  };
+
   // Relevé Excel de points de visite (modèle Taladz) : lu en mémoire, jamais stocké
   const releveUpload = [
     ...uploadClasseurXlsx,
@@ -86,7 +98,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(), ...limiteEnvois,
+  router.post('/:id/medias', authenticate, proOuAuteurDuLieuEnAttente, validateId(), ...limiteEnvois,
     // Site inexistant : refusé avant de recevoir le fichier (avant, le fichier partait sur Cloudinary)
     avantEnvoi(async (req) => {
       const site = models.Lieu ? await models.Lieu.findByPk(parseInt(req.params.id, 10), { attributes: ['id_lieu'] }) : null;
@@ -217,8 +229,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/admin/stats', authenticate, requireRole(['Admin']), patrimoineController.wrap('getStats'));
-  // Création de site (admin, modérateur ET professionnels validés)
-  router.post('/', authenticate, requireValidatedProfessional,
+  // Création de site : tout membre à l'e-mail vérifié. Équipe et professionnels validés : publié tout de
+  // suite ; les autres : en attente, l'équipe relit (écran des propositions)
+  router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
     validateGPS,

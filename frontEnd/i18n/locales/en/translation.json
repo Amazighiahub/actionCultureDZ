@@ -2896,7 +2896,8 @@
           "horaires": "Opening hours",
           "nom": "Name",
           "type": "Type"
-        }
+        },
+        "creation": "New place suggested by a member (open it to check)"
       }
     },
     "overview": {
@@ -4329,6 +4330,15 @@
     "proposition": {
       "envoyee": "Suggestion sent",
       "relecture": "Thank you! It will be published after review by the team."
+    },
+    "proposerInfo": {
+      "texte": "Do you know this place’s history, a tradition, or have a photo? Send it to the Tala DZ team.",
+      "bouton": "Suggest information"
+    },
+    "enAttente": {
+      "titre": "Thank you for this place!",
+      "texte": "It will be published after the team reviews it. You will get a notification.",
+      "sansPhotos": "It will be published after the team reviews it. Some photos could not be sent."
     }
   },
   "toasts": {

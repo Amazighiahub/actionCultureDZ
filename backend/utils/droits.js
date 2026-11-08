@@ -16,5 +16,7 @@ const peutGerer = (auteurs, { userId = null, isModerator = false } = {}) =>
 
 /** Administration ou modération (req.user rempli par authenticate / optionalAuth) */
 const estModeration = (user) => user?.isAdmin === true || user?.isModerateur === true;
+/** Professionnel validé (compte pro actif) */
+const estProValide = (user) => user?.isProfessionnel === true && user?.statut === 'actif';
 
-module.exports = { memeUtilisateur, peutGerer, estModeration };
+module.exports = { memeUtilisateur, peutGerer, estModeration, estProValide };

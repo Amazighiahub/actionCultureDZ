@@ -8,6 +8,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_k: string, d?: unknown) => (typeof d === 'string' ? d : _k), i18n: { language: 'fr' } })
 }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated: true, isAdmin: false }) }));
+// Enrichir : équipe ou professionnel validé (ici : professionnel validé ; variable pour le cas « membre »)
+const mockPeutEnrichir = { valeur: true };
+vi.mock('@/hooks/usePeutEnrichirLieu', () => ({ usePeutEnrichirLieu: () => mockPeutEnrichir.valeur, lienPropositionLieu: () => '/a-propos' }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/services/httpClient', () => ({ httpClient: { patch: vi.fn(), delete: vi.fn() } }));
 vi.mock('@/components/patrimoine/SectionArticleEditor', () => ({ default: () => null }));
@@ -87,5 +90,22 @@ describe('SectionEnrichissable — articles de la section', () => {
       <SectionEnrichissable {...props} content={{ fr: 'x' }} blocs={[bloc(1, 'video', 'https://exemple.dz/v', { url: 'https://exemple.dz/v' })]} />
     );
     expect(container.querySelector('iframe')).toBeNull();
+  });
+});
+
+describe('SectionEnrichissable — membre non professionnel', () => {
+  test('texte lisible, mais pas de bouton « Modifier » ni de section vide à remplir', () => {
+    mockPeutEnrichir.valeur = false;
+    try {
+      const { unmount } = render(<SectionEnrichissable {...props} content={{ fr: 'Couscous aux fèves' }} />);
+      expect(screen.getByText('Couscous aux fèves')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /modifier|edit/i })).toBeNull();
+      unmount();
+      render(<SectionEnrichissable {...props} content={null} />);
+      expect(screen.queryByText('Gastronomie locale')).toBeNull();
+      expect(screen.queryByRole('button')).toBeNull();
+    } finally {
+      mockPeutEnrichir.valeur = true;
+    }
   });
 });
