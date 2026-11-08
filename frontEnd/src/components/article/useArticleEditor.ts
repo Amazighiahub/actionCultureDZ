@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ArticleImporte } from '@/utils/importArticle';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -245,6 +246,24 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   /** Tous les blocs d'un coup (nettoyage de la mise en page, annulation) */
   const remplacerBlocs = (nouveaux: ArticleBlock[]) => setBlocks(nouveaux);
 
+  /** Article importé d'un fichier : titre, chapeau, mots-clés et blocs, dans toutes ses langues */
+  const importerArticle = (a: ArticleImporte) => {
+    setTranslations(prev => {
+      const suivant = { ...prev };
+      for (const langue of new Set([...Object.keys(a.titre), ...Object.keys(a.description)])) {
+        suivant[langue] = {
+          titre: a.titre[langue] ?? prev[langue]?.titre ?? '',
+          description: a.description[langue] ?? prev[langue]?.description ?? '',
+        };
+      }
+      return suivant;
+    });
+    if (a.tags.length) setFormData(prev => ({ ...prev, tags: [...new Set([...(prev.tags || []), ...a.tags])] }));
+    setLangueTexte(a.langue);
+    setEditLang(a.langue);
+    setBlocks(a.blocks.map(b => ({ ...b, _uid: generateBlockUid() } as ArticleBlock)));
+  };
+
   const deleteBlock = (index: number) => {
     setBlocks(blocks.filter((_, i) => i !== index));
   };
@@ -407,7 +426,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     contributeurs, editeurs, setEditeurs,
 
     // Handlers
-    addBlock, updateBlock, deleteBlock, moveBlock, duplicateBlock, remplacerBlocs,
+    addBlock, updateBlock, deleteBlock, moveBlock, duplicateBlock, remplacerBlocs, importerArticle,
     handleAddTag, handleRemoveTag, toggleSection,
     handleIntervenantsChange, handleSave,
   };

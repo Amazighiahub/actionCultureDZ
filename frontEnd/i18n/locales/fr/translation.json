@@ -2708,7 +2708,11 @@
     "nettoyerAide": "Doubles espaces, espaces autour de la ponctuation, lignes vides en trop",
     "nettoyeOk": "{{n}} paragraphe(s) corrigé(s). Vérifiez dans l’Aperçu, puis enregistrez.",
     "nettoyeRien": "Rien à corriger : la mise en page est propre.",
-    "annulerNettoyage": "Annuler"
+    "annulerNettoyage": "Annuler",
+    "importer": "Importer un article",
+    "importerAide": "Remplir l’article depuis un fichier préparé (.json), dans toutes ses langues",
+    "importOk": "Article importé : {{blocs}} blocs, dans {{langues}}. Ajoutez maintenant les photos dans les {{images}} case(s) d’image, choisissez la catégorie (onglet Métadonnées), vérifiez l’Aperçu, puis enregistrez.",
+    "importRemplacer": "Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",

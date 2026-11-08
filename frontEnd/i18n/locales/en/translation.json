@@ -2660,7 +2660,11 @@
     "nettoyerAide": "Double spaces, spaces around punctuation, extra blank lines",
     "nettoyeOk": "{{n}} paragraph(s) fixed. Check the Preview, then save.",
     "nettoyeRien": "Nothing to fix: the layout is clean.",
-    "annulerNettoyage": "Undo"
+    "annulerNettoyage": "Undo",
+    "importer": "Import an article",
+    "importerAide": "Fill the article from a prepared file (.json), in all its languages",
+    "importOk": "Article imported: {{blocs}} blocks, in {{langues}}. Now add the photos in the {{images}} image box(es), choose the category (Metadata tab), check the Preview, then save.",
+    "importRemplacer": "The current content of the article will be replaced by the file. Continue?"
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",

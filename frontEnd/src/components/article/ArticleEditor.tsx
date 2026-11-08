@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ArrowLeft, Save, Eye, Loader2, FileText, AlertCircle, Wand2
+  ArrowLeft, Save, Eye, Loader2, FileText, AlertCircle, Wand2, Upload
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -42,6 +43,38 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   // Nettoyage de la mise en page (gardé pour pouvoir annuler)
 
   const [nettoyage, setNettoyage] = useState<{ modifies: number; avant: typeof editor.blocks } | null>(null);
+
+  // Importer un article préparé (fichier .json) : remplace le contenu de l'éditeur
+
+  const [resultatImport, setResultatImport] = useState<{ blocs?: number; langues?: string; images?: number; erreur?: string } | null>(null);
+
+  const importer = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const fichier = e.target.files?.[0];
+
+    e.target.value = '';
+
+    if (!fichier) return;
+
+    try {
+
+      const article = lireArticleImporte(await fichier.text());
+
+      if (editor.blocks.length > 0 && !window.confirm(t('article_articleeditor.importRemplacer', 'Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?'))) return;
+
+      editor.importerArticle(article);
+
+      const langues = [...new Set([article.langue, ...Object.keys(article.titre)])].map(l => l.toUpperCase()).join(', ');
+
+      setResultatImport({ blocs: article.blocks.length, langues, images: article.images });
+
+    } catch (err) {
+
+      setResultatImport({ erreur: err instanceof Error ? err.message : String(err) });
+
+    }
+
+  };
 
   const nettoyer = () => {
 
@@ -101,6 +134,12 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               </div>
             </div>
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => document.getElementById('import-article')?.click()}
+                title={t('article_articleeditor.importerAide', 'Remplir l’article depuis un fichier préparé (.json), dans toutes ses langues')}>
+                <Upload className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('article_articleeditor.importer', 'Importer un article')}
+              </Button>
+              <input id="import-article" type="file" accept=".json,application/json" className="hidden" onChange={importer} />
               <Button variant="outline" onClick={nettoyer} title={t('article_articleeditor.nettoyerAide', 'Doubles espaces, espaces autour de la ponctuation, lignes vides en trop')}>
                 <Wand2 className="h-4 w-4 me-2" aria-hidden="true" />
                 {t('article_articleeditor.nettoyer', 'Nettoyer la mise en page')}
@@ -117,6 +156,17 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               </Button>
             </div>
           </div>
+
+          {resultatImport && (
+            <Alert className="mb-6" role="status" variant={resultatImport.erreur ? 'destructive' : 'default'}>
+              <Upload className="h-4 w-4" />
+              <AlertDescription>
+                {resultatImport.erreur
+                  ? resultatImport.erreur
+                  : t('article_articleeditor.importOk', 'Article importé : {{blocs}} blocs, dans {{langues}}. Ajoutez maintenant les photos dans les {{images}} case(s) d’image, choisissez la catégorie (onglet Métadonnées), vérifiez l’Aperçu, puis enregistrez.', resultatImport)}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {nettoyage && (
             <Alert className="mb-6" role="status">
