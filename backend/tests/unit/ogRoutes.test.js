@@ -4,7 +4,7 @@
 const express = require('express');
 const request = require('supertest');
 const initOgRoutes = require('../../routes/ogRoutes');
-const { buildOgHtml, socialImage, summary } = require('../../routes/ogRoutes')._internal;
+const { buildOgHtml, socialImage, summary, firstImage } = require('../../routes/ogRoutes')._internal;
 
 const CLOUD = 'https://res.cloudinary.com/demo/image/upload/v1/taladz/medina.jpg';
 
@@ -72,6 +72,19 @@ describe('GET /api/og/:type/:id', () => {
 });
 
 describe('outils', () => {
+  it('firstImage : l’image principale, sinon la première dans l’ordre (pas une ancienne image restée en tête)', () => {
+    const ancienne = { type_media: 'image', url: 'https://example.com/ancienne.jpg', is_Principale: false, ordre: 0 };
+    const nouvelle = { type_media: 'image', url: 'https://example.com/nouvelle.jpg', is_Principale: true, ordre: 3 };
+    expect(firstImage([ancienne, nouvelle])).toBe('https://example.com/nouvelle.jpg');
+    expect(firstImage([
+      { type_media: 'video', url: 'https://example.com/v.mp4', ordre: 0 },
+      { type_media: 'image', url: 'https://example.com/b.jpg', ordre: 2 },
+      { type_media: 'image', url: 'https://example.com/a.jpg', ordre: 1 },
+    ])).toBe('https://example.com/a.jpg');
+    expect(firstImage([{ type_media: 'image', url: 'https://example.com/seule.jpg' }])).toBe('https://example.com/seule.jpg');
+    expect(firstImage([])).toBeUndefined();
+  });
+
   it('socialImage : image par défaut pour les SVG, PDF et absences', () => {
     expect(socialImage(null)).toBe('https://taladz.com/og-image.jpg');
     expect(socialImage('/images/placeholder.svg')).toBe('https://taladz.com/og-image.jpg');

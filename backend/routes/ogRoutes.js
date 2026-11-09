@@ -117,7 +117,15 @@ ${corps || `<p>${e(desc)}</p>`}
 `;
 }
 
-const firstImage = (medias = []) => (medias.find((m) => (m.type_media || m.type) === 'image' && m.url) || {}).url;
+// Image d'aperçu : celle marquée « principale » (pour un article, sa première image), sinon la première
+// dans l'ordre choisi. Avant : la première trouvée en base, souvent une ancienne image remplacée depuis.
+const firstImage = (medias = []) => {
+  const images = medias.filter((m) => (m.type_media || m.type) === 'image' && m.url);
+  const rang = (m) => (m.ordre == null ? Number.MAX_SAFE_INTEGER : Number(m.ordre));
+  const choisie = images.find((m) => m.is_Principale === true || m.is_Principale === 1)
+    || [...images].sort((a, b) => rang(a) - rang(b))[0];
+  return choisie?.url;
+};
 const dateFr = (d) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
 const iso = (d) => (d ? new Date(d).toISOString() : undefined);
 const nomComplet = (u) => [text(u?.prenom), text(u?.nom)].filter(Boolean).join(' ');
@@ -143,7 +151,7 @@ const initOgRoutes = (models) => {
   const loaders = {
     async evenements(id) {
       const ev = await models.Evenement.findByPk(id, {
-        include: [{ model: models.Media, as: 'Medias', attributes: ['url', 'type_media'], required: false }],
+        include: [{ model: models.Media, as: 'Medias', attributes: ['url', 'type_media', 'is_Principale', 'ordre'], required: false }],
       });
       if (!ev || ['brouillon', 'en_attente'].includes(ev.statut)) return null;
       const date = dateFr(ev.date_debut);
@@ -188,7 +196,7 @@ const initOgRoutes = (models) => {
     },
     async oeuvres(id) {
       const o = await models.Oeuvre.findByPk(id, {
-        include: [{ model: models.Media, attributes: ['url', 'type_media'], required: false }],
+        include: [{ model: models.Media, attributes: ['url', 'type_media', 'is_Principale', 'ordre'], required: false }],
       });
       if (!o || o.statut !== 'publie') return null;
       const auteur = await auteurPublic(o.saisi_par);
@@ -258,7 +266,7 @@ const initOgRoutes = (models) => {
       const a = await models.Artisanat.findByPk(id, {
         include: [{
           model: models.Oeuvre,
-          include: [{ model: models.Media, attributes: ['url', 'type_media'], required: false }],
+          include: [{ model: models.Media, attributes: ['url', 'type_media', 'is_Principale', 'ordre'], required: false }],
         }],
       });
       if (!a || !a.Oeuvre || a.Oeuvre.statut !== 'publie') return null;
@@ -416,4 +424,4 @@ const initOgRoutes = (models) => {
 };
 
 module.exports = initOgRoutes;
-module.exports._internal = { buildOgHtml, socialImage, summary, text, jsonLdTexte };
+module.exports._internal = { buildOgHtml, socialImage, summary, text, jsonLdTexte, firstImage };
