@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const ArticleBlockController = require('../controllers/articleBlockController');
 const { body } = require('express-validator');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, enregistrementArticleLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const initArticleBlockRoutes = (models, authMiddleware) => {
   const articleBlockController = ArticleBlockController;
@@ -143,11 +143,11 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     (req, res) => articleBlockController.createBlock(req, res)
   );
 
-  // Créer plusieurs blocs (remplacer tout le contenu)
+  // Créer plusieurs blocs (remplacer tout le contenu) : limite propre, plus large (un auteur enregistre souvent)
   router.post('/batch',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
-    createContentLimiter,
+    enregistrementArticleLimiter,
     createMultipleValidation,
     handleValidationErrors,
     (req, res) => articleBlockController.createMultipleBlocks(req, res)

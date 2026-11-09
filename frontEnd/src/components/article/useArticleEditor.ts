@@ -72,6 +72,9 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   });
 
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
+  // Article existant : son contenu a-t-il bien été chargé ? (sinon, enregistrer effacerait le vrai texte)
+  const [contenuCharge, setContenuCharge] = useState(false);
+  const MESSAGE_NON_CHARGE = () => t('article.errors.contenuNonCharge', 'Le contenu de l’article n’a pas pu être chargé. Rechargez la page avant de modifier : rien ne sera enregistré tant qu’il n’est pas chargé.');
 
   const [intervenantsExistants, setIntervenantsExistants] = useState<IntervenantExistant[]>([]);
   const [nouveauxIntervenants, setNouveauxIntervenants] = useState<NouvelIntervenant[]>([]);
@@ -212,11 +215,17 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
           const origine = langueOrigine(blocksResponse.data, langueSite);
           setLangueTexte(origine);
           setEditLang(origine);
+          setContenuCharge(true);
+        } else {
+          // Contenu non chargé : l'éditeur paraîtrait vide, et enregistrer effacerait le vrai texte
+          setError(MESSAGE_NON_CHARGE());
         }
+      } else {
+        setError(MESSAGE_NON_CHARGE());
       }
     } catch (error) {
       console.error('Erreur chargement article:', error);
-      setError('Erreur lors du chargement de l\'article');
+      setError(MESSAGE_NON_CHARGE());
     } finally {
       setLoading(false);
     }
@@ -297,25 +306,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   const handleAddTag = async (tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
-      const existingTag = metadata.tags?.find((t: any) => {
-        if (typeof t.nom === 'string') return t.nom.toLowerCase() === normalizedTag;
-        if (typeof t.nom === 'object' && t.nom) {
-          return Object.values(t.nom).some((v: any) => typeof v === 'string' && v.toLowerCase() === normalizedTag);
-        }
-        return false;
-      });
-
-      if (!existingTag && metadata.tags) {
-        try {
-          const response = await metadataService.createTag({ nom: normalizedTag });
-          if (response.success && response.data) {
-            metadata.tags.push(response.data);
-          }
-        } catch (error) {
-          console.error('Erreur création tag:', error);
-        }
-      }
-
+      // Mot-clé nouveau : le serveur le crée à l'enregistrement (helpers/tags.resolveTagIds). L'appel de
+      // création directe était réservé à l'administration : les auteurs voyaient un faux « Accès refusé ».
       setFormData((prev) => ({ ...prev, tags: [...prev.tags, normalizedTag] }));
       setNewTag('');
     }
@@ -337,6 +329,11 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
   // Save
   const handleSave = async () => {
+    // Article existant dont le contenu n'a pas été chargé : on n'enregistre rien (le texte serait effacé)
+    if (articleId && !contenuCharge) {
+      setError(MESSAGE_NON_CHARGE());
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -378,11 +375,27 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
       const titreMultiLang = buildMultiLang('titre');
       const descriptionMultiLang = buildMultiLang('description');
 
+      // Langue de l'œuvre : celle dans laquelle l'article est écrit (codes de la table des langues)
+      const CODE_LANGUE: Record<string, string> = { 'tz-ltn': 'tm', 'tz-tfng': 'tif' };
+      const codeLangue = CODE_LANGUE[langueTexte] || langueTexte;
+      const idLangueTexte = (metadata?.langues as Array<{ id_langue: number; code?: string }> | undefined)
+        ?.find(l => l.code === codeLangue)?.id_langue;
+
       const saveFormData = {
         ...formData,
+        id_langue: idLangueTexte || formData.id_langue,
         titre: titreMultiLang as any,
         description: descriptionMultiLang as any,
       };
+      if (!saveFormData.id_langue) {
+        throw new Error(t('article.errors.langueInconnue', 'La langue de l’article n’a pas pu être déterminée. Choisissez-la dans « Le texte de l’article est écrit en », puis réessayez.'));
+      }
+      // Un bloc de texte tient en 65 000 octets en base (environ 30 000 lettres arabes, 60 000 latines)
+      const tropLong = blocks.findIndex(b => new TextEncoder().encode(String(b.contenu ?? '')).length > 60000);
+      if (tropLong >= 0) {
+        setActiveTab('content');
+        throw new Error(t('article.errors.blocTropLong', 'Le bloc n° {{n}} est trop long : coupez-le en plusieurs paragraphes (un bloc par partie), puis enregistrez.', { n: tropLong + 1 }));
+      }
 
       const response: ArticleSaveResponse = {
         article: {

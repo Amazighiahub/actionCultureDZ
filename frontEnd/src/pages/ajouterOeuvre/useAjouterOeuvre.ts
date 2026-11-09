@@ -14,6 +14,7 @@ import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { mapToBackendDTO, type CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import type { TagMotCle, TypeOeuvre, Categorie } from '@/types/models/references.types';
@@ -140,6 +141,9 @@ export function useAjouterOeuvre() {
 
   // Ref synchrone pour bloquer les double-envois (mobile double-tap)
   const submittingRef = useRef(false);
+  // Article déjà créé lors d'un essai précédent dont le contenu n'a pas pu être enregistré :
+  // le nouvel essai le complète au lieu d'en créer un second
+  const articleCreeRef = useRef<{ oeuvreId: number; articleRecordId?: number } | null>(null);
 
   // Brouillon gardé quand la session expire pendant la saisie (httpClient émet « auth:expired » puis
   // renvoie vers la connexion, qui ramène ici) : la saisie revient, sauf les fichiers joints
@@ -523,6 +527,10 @@ export function useAjouterOeuvre() {
 
       const isScientific = articleFormData.type === 'article_scientifique';
       const id_type_oeuvre = isScientific ? 5 : 4;
+      // Article sans aucun contenu (blocs vides ignorés) : refusé, comme à la modification
+      if (!blocks?.length) {
+        throw new Error(t('article_articleeditor.contenuVide', 'L’article doit garder au moins un bloc de contenu.'));
+      }
 
       const details_specifiques = detailsArticle(articleFormData as unknown as Record<string, unknown>) as DetailsSpecifiques;
 
@@ -538,16 +546,27 @@ export function useAjouterOeuvre() {
         ...liensArticle(contribs, eds),
       } as CreateOeuvreBackendDTO;
 
-      const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+      // Nouvel essai après un échec du contenu : l'article existe déjà, on le met à jour
+      const dejaCree = articleCreeRef.current;
+      let oeuvreResponse: Awaited<ReturnType<typeof oeuvreService.createOeuvre>>;
+      if (dejaCree) {
+        const maj = await oeuvreService.updateOeuvre(dejaCree.oeuvreId, {
+          titre: oeuvreData.titre, description: oeuvreData.description, categories: oeuvreData.categories,
+          tags: oeuvreData.tags, details_specifiques: oeuvreData.details_specifiques,
+        } as Partial<CreateOeuvreBackendDTO>);
+        if (!maj.success) throw new Error(messageErreurServeur(maj, t('toasts.updateError')));
+        oeuvreResponse = { success: true, data: { oeuvre: { id_oeuvre: dejaCree.oeuvreId } } } as typeof oeuvreResponse;
+      } else {
+        oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+      }
 
       if (!oeuvreResponse.success || !oeuvreResponse.data?.oeuvre?.id_oeuvre) {
-        throw new Error(oeuvreResponse.error || t('ajouteroeuvre.articleCreateError', 'Erreur lors de la création de l\'article'));
+        throw new Error(messageErreurServeur(oeuvreResponse, t('ajouteroeuvre.articleCreateError', 'Erreur lors de la création de l\'article')));
       }
 
       const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
-      let blocsEnregistres = true;
 
-      const articleRecordId = (() => {
+      const articleRecordId = dejaCree?.articleRecordId ?? (() => {
         const d = oeuvreResponse.data;
         if (isScientific) {
           return d.subtype?.id_article_scientifique ||
@@ -588,9 +607,11 @@ export function useAjouterOeuvre() {
           }
         }
 
+        // Garder l'article créé : un nouvel essai le complétera (pas de second article en double)
+        articleCreeRef.current = { oeuvreId, articleRecordId: finalArticleRecordId || undefined };
         if (!finalArticleRecordId) {
           console.error('❌ ID article spécifique manquant! Réponse backend:', JSON.stringify(oeuvreResponse.data, null, 2));
-          toast({ title: t('toasts.warning'), description: t('toasts.articleCreatedBlocksFailed'), variant: 'destructive' });
+          throw new Error(t('ajouteroeuvre.contenuNonEnregistre', 'Le texte de l’article n’a pas pu être enregistré. Il est toujours à l’écran : cliquez de nouveau sur « Enregistrer ».'));
         }
 
         const blocksWithMedia = await Promise.all(
@@ -612,12 +633,9 @@ export function useAjouterOeuvre() {
                 }
                 if (!id_media) throw new Error(uploadResult.error || 'upload');
               } catch (uploadErr) {
+                // Photo non envoyée : on s'arrête (avant, l'article était publié sans elle, en silence)
                 console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
-                toast({
-                  title: t('toasts.warning'),
-                  description: t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: index + 1 }),
-                  variant: 'destructive',
-                });
+                throw new Error(t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: index + 1 }));
               }
             }
             return { block, id_media, index };
@@ -652,14 +670,17 @@ export function useAjouterOeuvre() {
         }) : { success: false, error: 'ID article manquant' };
 
         if (!blocksResponse.success) {
+          // Le texte n'est pas enregistré : on reste dans l'éditeur, le texte à l'écran (avant : page
+          // de l'article ouverte, vide, et le texte perdu)
           console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
-          blocsEnregistres = false;
+          throw new Error(messageErreurServeur(blocksResponse, t('ajouteroeuvre.contenuNonEnregistre', 'Le texte de l’article n’a pas pu être enregistré. Il est toujours à l’écran : cliquez de nouveau sur « Enregistrer ».')));
         }
       }
+      articleCreeRef.current = null;
 
       // Créé en brouillon : sans cet envoi, l'article n'arrivait jamais à l'équipe malgré « soumis avec
       // succès ». Blocs non enregistrés : il reste en brouillon, on n'envoie pas un article vide
-      const soumission = blocsEnregistres ? await oeuvreService.submitForValidation(oeuvreId) : { success: false };
+      const soumission = await oeuvreService.submitForValidation(oeuvreId);
       if (!soumission.success) {
         toast({
           title: t('toasts.warning'),
@@ -684,8 +705,10 @@ export function useAjouterOeuvre() {
 
     } catch (error: unknown) {
       console.error('❌ Erreur sauvegarde article avancé:', error);
-      const message = error instanceof Error ? error.message : t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article');
+      const message = messageErreurServeur(error, t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article'));
       toast({ title: t('common.error', 'Erreur'), description: message, variant: 'destructive' });
+      // Renvoyée à l'éditeur : il l'affiche en rouge et garde le texte à l'écran
+      throw new Error(message);
     } finally {
       submittingRef.current = false;
     }

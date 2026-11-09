@@ -132,7 +132,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 sm:pb-0">
       <style dangerouslySetInnerHTML={{ __html: PREVIEW_STYLES }} />
 
       <div className="container py-8">
@@ -159,7 +159,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => document.getElementById('import-article')?.click()}
                 title={t('article_articleeditor.importerAide', 'Remplir l’article depuis un fichier préparé (.json), dans toutes ses langues')}>
                 <Upload className="h-4 w-4 me-2" aria-hidden="true" />
@@ -181,6 +181,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 <Save className="h-4 w-4 me-2" />{libelleEnregistrer || t("article_articleeditor.sauvegarder")}
               </Button>
             </div>
+          </div>
+
+          {/* Téléphone : « Enregistrer » toujours visible en bas de l'écran (en haut, il sortait de l'écran) */}
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur">
+            <Button className="w-full" onClick={editor.handleSave} disabled={editor.saving}>
+              {editor.saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+              <Save className="h-4 w-4 me-2" />{libelleEnregistrer || t("article_articleeditor.sauvegarder")}
+            </Button>
           </div>
 
           {resultatImport && (
@@ -220,7 +228,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
           <AideRedaction />
 
           <Tabs value={editor.activeTab} onValueChange={editor.setActiveTab}>
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 h-auto flex-wrap">
               <TabsTrigger value="content">{t("article_articleeditor.contenu")}</TabsTrigger>
               <TabsTrigger value="metadata">{t("article_articleeditor.mtadonnes")}</TabsTrigger>
               <TabsTrigger value="preview">{t("article_articleeditor.aperu")}</TabsTrigger>
@@ -237,7 +245,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                   {/* Language selector */}
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <Label className="text-sm text-muted-foreground">{t("article_articleeditor.langue", "Langue")} :</Label>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {LANG_OPTIONS.map((lang) => (
                         <Button
                           key={lang.code}

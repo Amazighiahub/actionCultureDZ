@@ -212,6 +212,21 @@ const createContentLimiter = rateLimit(withStore('create', {
   },
 }));
 
+// 3a. Enregistrement du contenu d'un article (remplace les blocs, ne crée rien) : un auteur enregistre
+// souvent. Avec la limite commune de création (20/h, partagée avec les œuvres et les événements), la
+// 21e sauvegarde de l'heure était refusée et le texte n'était pas enregistré.
+const enregistrementArticleLimiter = rateLimit(withStore('article-save', {
+  windowMs: 60 * 60 * 1000,
+  max: 300,
+  keyGenerator: (req) => req.user?.id_user || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+    });
+  },
+}));
+
 // 3b. Rate limiter spécifique commentaires (10/min/user)
 const commentLimiter = rateLimit(withStore('comment', {
   windowMs: 60 * 1000, // 1 minute
@@ -648,6 +663,7 @@ module.exports = {
   actionsLimiter,
   importLimiter,
   createContentLimiter,
+  enregistrementArticleLimiter,
   pdfLimiter,
   commentLimiter,
   uploadLimiter,

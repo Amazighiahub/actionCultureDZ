@@ -181,18 +181,18 @@ vi.mock('@/types/api/create-oeuvre-backend.dto', () => ({
 }));
 
 vi.mock('@/components/article/ArticleEditor', () => ({
-  // « Enregistrer » de l'éditeur avancé : un article simple, sans blocs
+  // « Enregistrer » de l'éditeur avancé : un article simple, un paragraphe (l'éditeur affiche les erreurs)
   default: ({ onSave }: any) => (
     <div data-testid="article-editor">
       <button type="button" onClick={() => onSave({ article: {
         formData: { titre: 'La rechta', description: 'Pâtes fraîches', type: 'article', id_langue: 5 },
-        blocks: [], contributeurs: {}, editeurs: []
-      } })}>Enregistrer l’article</button>
+        blocks: [{ type_block: 'text', contenu: 'Pâtes fraîches roulées à la main.', metadata: {} }], contributeurs: {}, editeurs: []
+      } }).catch(() => {})}>Enregistrer l’article</button>
       <button type="button" onClick={() => onSave({ article: {
         formData: { titre: 'Le patio', description: 'Architecture', type: 'article', id_langue: 5 },
         blocks: [{ type_block: 'image', metadata: { caption: 'Le patio', tempFile: new File(['x'], 'patio.jpg', { type: 'image/jpeg' }) } }],
         contributeurs: {}, editeurs: []
-      } })}>Enregistrer avec une image</button>
+      } }).catch(() => {})}>Enregistrer avec une image</button>
     </div>
   ),
 }));
@@ -462,6 +462,7 @@ describe('AjouterOeuvre', () => {
   describe('Page détaillée d’un lieu', () => {
     test('ouvre directement l’éditeur avancé, puis relie l’article à la section du lieu', async () => {
       mockSearch = new URLSearchParams('lieu=69&section=gastronomie');
+      mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 }, subtype: { id_article: 9 } } });
       const { httpClient } = await import('@/services/httpClient');
       (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
       render(<AjouterOeuvre />);
@@ -474,9 +475,34 @@ describe('AjouterOeuvre', () => {
       expect(mockSubmitForValidation).toHaveBeenCalledWith(42);
     });
 
+    test('texte non enregistré : on reste dans l’éditeur, et le nouvel essai complète le même article', async () => {
+      mockSearch = new URLSearchParams('lieu=69&section=gastronomie');
+      mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 }, subtype: { id_article: 9 } } });
+      mockUpdate.mockResolvedValue({ success: true, data: {} });
+      const { articleBlockService } = await import('@/services/articleBlock.service');
+      (articleBlockService.createMultipleBlocks as any).mockResolvedValueOnce({ success: false, error: 'Trop de requêtes' });
+      const { httpClient } = await import('@/services/httpClient');
+      (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
+      render(<AjouterOeuvre />);
+      expect(await screen.findByTestId('article-editor')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Enregistrer l’article' }));
+      await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })));
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockSubmitForValidation).not.toHaveBeenCalled();
+      expect(screen.getByTestId('article-editor')).toBeInTheDocument();
+
+      // Deuxième essai : l'article déjà créé est mis à jour, pas recréé
+      await user.click(screen.getByRole('button', { name: 'Enregistrer l’article' }));
+      await waitFor(() => expect(mockSubmitForValidation).toHaveBeenCalledWith(42));
+      expect(mockCreateOeuvre).toHaveBeenCalledTimes(1);
+      expect(mockUpdate).toHaveBeenCalledWith(42, expect.any(Object));
+    });
+
     test('un article dont l’envoi échoue reste en brouillon et l’auteur en est averti', async () => {
       mockSearch = new URLSearchParams('lieu=69&section=gastronomie');
       mockSubmitForValidation.mockResolvedValueOnce({ success: false, error: 'refus' });
+      mockCreateOeuvre.mockResolvedValue({ success: true, data: { oeuvre: { id_oeuvre: 42 }, subtype: { id_article: 9 } } });
       const { httpClient } = await import('@/services/httpClient');
       (httpClient.post as any).mockResolvedValue({ success: true, data: {} });
       render(<AjouterOeuvre />);

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { enDeuxColonnes, formeDuBloc } from '@/utils/poeme';
 import React from 'react';
+const FORMATS_IMAGE = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,43 +46,41 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
   };
 
   const handleImageUpload = (file: File) => {
-    const maxSize = 10 * 1024 * 1024;
+    // Photo de téléphone : jusqu'à 25 Mo, réduite ensuite avant l'envoi (prepareImageForUpload)
+    const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
         title: t('common.error', 'Erreur'),
-        description: t('article.imageTooLarge', 'L\'image est trop volumineuse (max 10MB)'),
+        description: t('article.imageTropGrande', 'L’image est trop volumineuse (25 Mo au plus).'),
         variant: 'destructive',
       });
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
+    // Formats acceptés par le serveur (sinon l'erreur n'apparaissait qu'à l'enregistrement)
+    if (!FORMATS_IMAGE.includes(file.type)) {
       toast({
         title: t('common.error', 'Erreur'),
-        description: t('article.mustBeImage', 'Le fichier doit être une image'),
+        description: t('article.formatImage', 'Format non accepté : choisissez une photo JPEG, PNG, GIF ou WebP.'),
         variant: 'destructive',
       });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const mediaInfo: MediaInfo = {
-        url: e.target?.result as string,
-        titre: file.name,
-        type_media: file.type,
-        taille_fichier: file.size
-      };
-
-      onUpdate(index, {
-        media: mediaInfo,
-        metadata: {
-          ...block.metadata,
-          tempFile: file
-        }
-      });
+    // Aperçu par adresse temporaire (une photo en texte base64, recopiée à chaque frappe, ralentissait la saisie)
+    const mediaInfo: MediaInfo = {
+      url: URL.createObjectURL(file),
+      titre: file.name,
+      type_media: file.type,
+      taille_fichier: file.size
     };
-    reader.readAsDataURL(file);
+    onUpdate(index, {
+      media: mediaInfo,
+      metadata: {
+        ...block.metadata,
+        tempFile: file
+      }
+    });
   };
 
   const handleVideoUrl = (url: string) => {
@@ -100,8 +99,10 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
     onUpdate(index, { contenu_json: { headers, rows } });
   };
 
+  // Retirer : l'image enregistrée (id_media) et la photo en attente d'envoi aussi (sinon elle revenait)
   const handleImageRemove = () => {
-    onUpdate(index, { media: undefined });
+    const { tempFile: _fichier, ...metadata } = (block.metadata || {}) as Record<string, unknown>;
+    onUpdate(index, { media: undefined, id_media: undefined, metadata });
   };
 
   const renderBlockContent = () => {
@@ -208,7 +209,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <input
                   id={`image-upload-${index}`}
                   type="file"
-                  accept="image/*"
+                  accept={FORMATS_IMAGE.join(",")}
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];

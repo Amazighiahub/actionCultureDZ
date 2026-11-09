@@ -14,6 +14,19 @@
 
 const sanitizeHtml = require('sanitize-html');
 
+// Balises HTML reconnues (et leurs fermetures) : seules elles sont retirées d'un texte. « < », « > », « & »
+// et des guillemets « <<mot>> » restent du texte. Commentaires HTML retirés aussi.
+const BALISES = 'a|abbr|address|area|article|aside|audio|b|base|bdi|bdo|blockquote|body|br|button|canvas|caption|center|cite|code|col|colgroup|data|datalist|dd|del|details|dfn|dialog|div|dl|dt|em|embed|fieldset|figcaption|figure|font|footer|form|frame|frameset|h[1-6]|head|header|hr|html|i|iframe|img|input|ins|kbd|label|legend|li|link|main|map|mark|marquee|math|menu|meta|meter|nav|noscript|object|ol|optgroup|option|output|p|param|picture|pre|progress|q|s|samp|script|section|select|small|source|span|strike|strong|style|sub|summary|sup|svg|table|tbody|td|template|textarea|tfoot|th|thead|time|title|tr|track|tt|u|ul|var|video|wbr|xml|xmp';
+const RE_BALISE = new RegExp(String.raw`<\s*\/?\s*(?:${BALISES})(?=[\s/>])[^<>]*>`, 'gi');
+const RE_COMMENTAIRE = /<!--[\s\S]*?-->/g;
+function retirerBalises(texte) {
+  let avant;
+  let t = String(texte);
+  // Répété : « <scr<script>ipt> » ne reforme pas une balise une fois la première retirée
+  do { avant = t; t = t.replace(RE_COMMENTAIRE, '').replace(RE_BALISE, ''); } while (t !== avant);
+  return t;
+}
+
 // Domaines autorisés pour les embeds (iframes)
 const ALLOWED_EMBED_DOMAINS = [
   'youtube.com',
@@ -76,16 +89,15 @@ function sanitizeBlockContent(typeBlock, contenu) {
   if (!contenu || typeof contenu !== 'string') return contenu;
 
   switch (typeBlock) {
-    // Texte pur — supprimer TOUS les tags HTML
+    // Texte pur : les balises HTML retirées, le reste du texte gardé tel quel (affiché comme du texte
+    // par le site, jamais comme du HTML). Avant, sanitize-html échappait le texte : « Arts & Culture »
+    // devenait « Arts &amp; Culture » à l'écran, « x < y » « x &lt; y », et « a<b » perdait la suite.
     case 'text':
     case 'heading':
     case 'citation':
     case 'list':
     case 'separator':
-      return sanitizeHtml(contenu, {
-        allowedTags: [],
-        allowedAttributes: {},
-      });
+      return retirerBalises(contenu);
 
     // Code — garder tel quel (sera échappé à l'affichage par le frontend)
     case 'code':
