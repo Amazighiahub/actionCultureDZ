@@ -9,6 +9,9 @@
  *   referencesHistoriques } en { fr, ar, en } ; un point peut aussi donner seulement `description`
  * - points : sites du même format, rattachés au site dans l'ordre de la liste
  *
+ * Site déjà publié : `existantSeulement: true` (retrouvé par son nom, jamais créé) ; ses textes vides sont remplis,
+ * ses nouveaux points ajoutés à la suite, chacun avec sa demande de validation.
+ *
  * Rejouable : un lieu déjà présent (même nom français, même commune, même site parent) n'est pas recréé.
  * Hors du dossier migrations : sequelize-cli prendrait tout fichier de ce dossier pour une migration.
  */
@@ -75,36 +78,71 @@ async function creerSites(queryInterface, sites, { wilayaId, idCreateur }) {
     return idLieu;
   };
 
+  const demande = (idLieu, nom) => s.query(
+    `INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees, statut, date_creation)
+     VALUES (?, ?, 'creation', ?, 'en_attente', NOW())`,
+    { replacements: [idLieu, idCreateur, json({ corps: { nom } })] }
+  );
+
   for (const site of sites) {
-    const idCommune = await commune(site.commune);
-    if (!idCommune) continue; // commune absente : rien à rattacher
-    let idSite = await existant(site.nom.fr, idCommune, null);
-    const nouveau = !idSite;
-    if (nouveau) idSite = await creerLieu(site, idCommune, null, null);
-    let ordre = 1;
+    let idSite;
+    let nouveau = false;
+    if (site.existantSeulement) {
+      // Site déjà sur le site (publié ou non) : retrouvé par son nom, jamais recréé
+      const [l] = await select(
+        `SELECT id_lieu FROM lieu WHERE id_lieu_parent IS NULL AND JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) = ?
+          ORDER BY statut = 'publie' DESC, id_lieu ASC LIMIT 1`, [site.nom.fr]
+      );
+      if (!l) continue;
+      idSite = l.id_lieu;
+      await completerSiVide(s, select, idSite, site.detail || {});
+    } else {
+      const idCommune = await commune(site.commune);
+      if (!idCommune) continue; // commune absente : rien à rattacher
+      idSite = await existant(site.nom.fr, idCommune, null);
+      nouveau = !idSite;
+      if (nouveau) idSite = await creerLieu(site, idCommune, null, null);
+    }
+    // Ordre des nouveaux points : à la suite de ceux du site
+    const [{ n: dejaLa }] = await select('SELECT COUNT(*) AS n FROM lieu WHERE id_lieu_parent = ?', [idSite]);
+    let ordre = nouveau ? 1 : Number(dejaLa) + 1;
     for (const point of site.points || []) {
       const idCommunePoint = await commune(point.commune);
       if (idCommunePoint && !(await existant(point.nom.fr, idCommunePoint, idSite))) {
-        await creerLieu(point, idCommunePoint, idSite, ordre);
+        const idPoint = await creerLieu(point, idCommunePoint, idSite, ordre);
+        ordre += 1;
+        // Site déjà existant : chaque nouveau point a sa propre demande de validation
+        if (!nouveau && idCreateur) await demande(idPoint, point.nom);
       }
-      ordre += 1;
     }
-    // Demande de publication APRÈS les points : l'accepter publie le site et les points créés jusque-là.
+    // Nouveau site : une demande APRÈS les points ; l'accepter publie le site et les points créés jusque-là.
     // Un compte est obligatoire pour une proposition.
-    if (nouveau && idCreateur) {
-      await s.query(
-        `INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees, statut, date_creation)
-         VALUES (?, ?, 'creation', ?, 'en_attente', NOW())`,
-        { replacements: [idSite, idCreateur, json({ corps: { nom: site.nom } })] }
-      );
-    }
+    if (nouveau && idCreateur) await demande(idSite, site.nom);
+  }
+}
+
+/** Remplit les textes encore vides d'un lieu existant (jamais une saisie déjà faite) */
+async function completerSiVide(s, select, idLieu, detail) {
+  const cles = Object.keys(detail);
+  if (!cles.length) return;
+  const [d] = await select(`SELECT ${cles.join(', ')} FROM detail_lieux WHERE id_lieu = ?`, [idLieu]);
+  if (!d) return;
+  const vide = (v) => {
+    const o = typeof v === 'string' ? JSON.parse(v) : v;
+    return !o || !Object.values(o).some((x) => String(x || '').trim());
+  };
+  const aRemplir = cles.filter((c) => vide(d[c]));
+  if (aRemplir.length) {
+    await s.query(`UPDATE detail_lieux SET ${aRemplir.map((c) => `${c} = ?`).join(', ')}, updatedAt = NOW() WHERE id_lieu = ?`,
+      { replacements: [...aRemplir.map((c) => json(detail[c])), idLieu] });
   }
 }
 
 /** Retire les lieux de cette liste restés en brouillon (un lieu publié entre-temps est gardé) */
 async function retirerSites(queryInterface, sites) {
   const s = queryInterface.sequelize;
-  const noms = sites.flatMap((site) => [site.nom.fr, ...(site.points || []).map((p) => p.nom.fr)]);
+  // Un site existant (existantSeulement) n'est jamais retiré, seulement les points ajoutés ici
+  const noms = sites.flatMap((site) => [...(site.existantSeulement ? [] : [site.nom.fr]), ...(site.points || []).map((p) => p.nom.fr)]);
   const lignes = await s.query(
     `SELECT id_lieu FROM lieu WHERE statut = 'brouillon' AND JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) IN (?)
       ORDER BY id_lieu_parent IS NULL, id_lieu DESC`,

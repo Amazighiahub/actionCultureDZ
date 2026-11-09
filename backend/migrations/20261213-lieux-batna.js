@@ -6,7 +6,7 @@
  *   arc de Septime Sévère, musée
  * - Imedghassen (Medracen), mausolée royal numide, Boumia
  * - Parc national de Belezma, Oued Chaaba
- * Batna centre (déjà publié) n'est pas touché ici.
+ * - Batna centre (déjà publié, jamais recréé) : textes remplis s'ils sont vides, points « Allées Ben Boulaïd » et « Ancienne mairie (APC) »
  *
  * Positions : Wikipédia et Wikidata ; points de Lambèse : position médiane des photos géolocalisées de
  * Wikimedia Commons (musée : à vérifier sur place). Textes fr, ar, en avec sources.
@@ -19,6 +19,44 @@ const ID_ADMIN_CHOISI = 75;
 const sources = (fr) => ({ fr, ar: fr.replace('Sources :', 'المصادر:'), en: fr.replace('Sources :', 'Sources:') });
 
 const SITES = [
+  {
+    // Déjà publié : jamais recréé ; textes remplis seulement s'ils sont vides ; nouveau point avec sa demande
+    existantSeulement: true,
+    nom: { fr: 'Batna centre' },
+    detail: {
+      description: {
+        fr: 'Capitale des Aurès, Batna est née d’un camp militaire français en 1844, sur la route qui mène au Sahara par les gorges d’El Kantara.',
+        ar: 'عاصمة الأوراس، وُلدت باتنة من معسكر عسكري فرنسي سنة 1844، على الطريق المؤدي إلى الصحراء عبر مضايق القنطرة.',
+        en: 'Capital of the Aurès, Batna was born from a French military camp in 1844, on the road to the Sahara through the El Kantara gorges.',
+      },
+      histoire: {
+        fr: 'En 1844, l’armée française établit un camp fortifié au lieu-dit Bathent, pour contrôler la route du Sahara et le passage d’El Kantara ; le camp porte d’abord le nom de Ras-el-Ayoun-Batna. Par décret du 12 septembre 1848, la garnison devient une commune sous le nom de Nouvelle-Lambèse, mais les habitants continuent de dire Batna, nom officiel dès 1849.\n\nLa ville honore Mostefa Ben Boulaïd, figure de la guerre de libération dans les Aurès : une allée et un lycée portent son nom, comme l’aéroport, et son buste se dresse sur la place principale.',
+        ar: 'في سنة 1844 أقام الجيش الفرنسي معسكرًا محصّنًا في موضع «باثنت» لمراقبة طريق الصحراء وممر القنطرة، وسُمّي أولًا «رأس العيون-باتنة». وبمرسوم 12 سبتمبر 1848 صارت الحامية بلدية باسم «لامبيز الجديدة»، لكن السكان ظلّوا يقولون «باتنة»، فصار الاسم رسميًا منذ 1849.\n\nوتكرّم المدينة مصطفى بن بولعيد، أحد رموز حرب التحرير في الأوراس: يحمل اسمه ممشى وثانوية والمطار، ويقوم تمثاله النصفي في الساحة الرئيسية.',
+        en: 'In 1844 the French army set up a fortified camp at a place called Bathent, to control the road to the Sahara and the El Kantara pass; the camp was first named Ras-el-Ayoun-Batna. By decree of 12 September 1848 the garrison became a municipality named Nouvelle-Lambèse, but residents kept saying Batna, the official name from 1849.\n\nThe city honours Mostefa Ben Boulaïd, a figure of the liberation war in the Aurès: an avenue, a high school and the airport bear his name, and his bust stands on the main square.',
+      },
+      referencesHistoriques: sources('Sources :\n• Geneawiki, « Algérie – Batna » : https://fr.geneawiki.com/wiki/Algérie_-_Batna\n• Encyclopædia Britannica, « Batna »\n• Wikipédia, « Batna (city) » et « Mostefa Ben Boulaïd »'),
+    },
+    points: [
+      {
+        commune: 'Batna', typePatrimoine: 'monument', latitude: 35.556579, longitude: 6.176942,
+        nom: { fr: 'Allées Ben Boulaïd et la statue de Mostefa Ben Boulaïd', ar: 'ممشى بن بولعيد وتمثال مصطفى بن بولعيد', en: 'Ben Boulaïd avenue and the statue of Mostefa Ben Boulaïd' },
+        description: {
+          fr: 'Grande allée du centre de Batna, qui porte le nom de Mostefa Ben Boulaïd, figure de la guerre de libération dans les Aurès, et où se dresse sa statue. Lieu de promenade et de fêtes de la ville. Position de la statue à ajuster sur la carte si besoin.',
+          ar: 'الممشى الكبير في وسط باتنة، يحمل اسم مصطفى بن بولعيد، أحد رموز حرب التحرير في الأوراس، وفيه يقوم تمثاله. فضاء للتنزه واحتفالات المدينة. يمكن ضبط موقع التمثال على الخريطة عند الحاجة.',
+          en: 'Main avenue of central Batna, named after Mostefa Ben Boulaïd, a figure of the liberation war in the Aurès, where his statue stands. A place for strolls and city festivities. Statue position to be adjusted on the map if needed.',
+        },
+      },
+      {
+        commune: 'Batna', typePatrimoine: 'monument', latitude: 35.553356, longitude: 6.178,
+        nom: { fr: 'Ancienne mairie de Batna (APC)', ar: 'مقر بلدية باتنة القديم', en: 'Former town hall of Batna (APC)' },
+        description: {
+          fr: 'Bâtiment de l’époque coloniale qui abrite aujourd’hui l’Assemblée populaire communale (APC) de Batna, rue Nouara Ahmed. Date de construction à préciser.',
+          ar: 'مبنى من الحقبة الاستعمارية يضمّ اليوم المجلس الشعبي البلدي لباتنة، شارع نوارة أحمد. تاريخ البناء يُحدَّد لاحقًا.',
+          en: 'Colonial-era building that now houses the People’s Municipal Assembly (APC) of Batna, rue Nouara Ahmed. Construction date to be confirmed.',
+        },
+      },
+    ],
+  },
   {
     commune: 'Tazoult',
     nom: { fr: 'Lambèse (Lambaesis)', ar: 'لامبيز (لامبايزيس)', en: 'Lambaesis (Lambèse)' },
