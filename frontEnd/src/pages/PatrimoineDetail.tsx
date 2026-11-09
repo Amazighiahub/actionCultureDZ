@@ -456,10 +456,12 @@ const PatrimoineDetail = () => {
 
           {/* Overlay info */}
           <div className="absolute bottom-0 start-0 end-0 p-5 md:p-6 text-white">
-            <div className="flex items-end justify-between gap-4">
+            {/* Téléphone : badges sous le titre (en colonne à droite, ils ne laissaient au titre que la moitié de la
+                largeur : un nom long débordait en haut et les mots étaient coupés en leur milieu) */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div className="min-w-0">
                 {/* text-white explicite : la règle globale des h1 (index.css) impose la couleur du texte */}
-                <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2 text-white drop-shadow-sm break-words">
+                <h1 lang={lang} className={`${translate(site.nom, lang).length > 30 ? 'text-2xl sm:text-3xl' : 'text-3xl'} md:text-4xl font-bold font-serif mb-2 text-white drop-shadow-sm break-words hyphens-auto`}>
                   {translate(site.nom, lang)}
                 </h1>
                 <div className="flex items-center gap-2 text-white/90 mb-1">
@@ -473,7 +475,7 @@ const PatrimoineDetail = () => {
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2 items-end shrink-0">
+              <div className="flex flex-row flex-wrap sm:flex-col gap-2 items-start sm:items-end shrink-0">
                 {site.stats?.noteMoyenne && (
                   <Badge className="bg-yellow-500/90 text-white">
                     <Star className="h-4 w-4 me-1 fill-current" />
