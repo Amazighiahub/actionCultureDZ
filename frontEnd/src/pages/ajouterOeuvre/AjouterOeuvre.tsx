@@ -414,7 +414,8 @@ const AjouterOeuvre: React.FC = () => {
                               onIntervenantsChange={handleIntervenantsChange} onEditeursChange={handleEditeursChange} />
                           </div>
                         )}
-                        {formData.je_suis_auteur === true && metadata.types_users && metadata.editeurs && (
+                        {/* Aussi avant la réponse à « Qui est l'auteur ? » : la recherche et l'ajout d'un éditeur restaient cachés */}
+                        {formData.je_suis_auteur !== false && metadata.types_users && metadata.editeurs && (
                           <div className="mt-4 pt-4 border-t">
                             <p className="text-sm text-muted-foreground mb-4">{t('ajouteroeuvre.coAuteursOptionnel', 'Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)')}</p>
                             <IntervenantEditeurManager typeOeuvreId={formData.id_type_oeuvre} typesUsers={metadata.types_users} editeurs={metadata.editeurs}

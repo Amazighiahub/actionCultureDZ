@@ -13,6 +13,8 @@ const SKIP_BELOW_BYTES = 400 * 1024;
 const QUALITY = 0.85;
 const LOAD_TIMEOUT_MS = 10000;
 const RESIZABLE_TYPES = ['image/jpeg', 'image/jpg', 'image/webp', 'image/png'];
+/** Formats d'image acceptés par le serveur pour les médias (constants/uploadMimes.js : IMAGE_MIMES) */
+export const FORMATS_IMAGE_ACCEPTES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 const loadImage = (file: File): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { enDeuxColonnes, formeDuBloc } from '@/utils/poeme';
 import React from 'react';
-const FORMATS_IMAGE = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+import { FORMATS_IMAGE_ACCEPTES as FORMATS_IMAGE } from '@/utils/prepareImageForUpload';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
