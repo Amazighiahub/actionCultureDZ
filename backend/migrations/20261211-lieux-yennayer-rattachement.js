@@ -12,22 +12,11 @@
  * et rend les lieux sans propriétaire, comme avant.
  */
 const lieux = require('./20261210-lieux-yennayer-tlemcen');
+const { administrateur } = require('../utils/lieuxPrepares');
 
 // Compte administrateur choisi par la responsable du site (n° 75 en production). S'il n'est pas un administrateur
 // actif (autre base, compte changé), le premier administrateur actif est pris à la place.
 const ID_ADMIN_CHOISI = 75;
-
-async function administrateur(select) {
-  const [choisi] = await select(
-    `SELECT u.id_user FROM user u
-      WHERE u.id_user = ? AND u.statut = 'actif'
-        AND (u.id_type_user = 29 OR EXISTS (
-          SELECT 1 FROM userroles ur JOIN role r ON r.id_role = ur.id_role
-           WHERE ur.id_user = u.id_user AND r.nom_role = 'Administrateur'))`,
-    [ID_ADMIN_CHOISI]
-  );
-  return choisi ? choisi.id_user : lieux._premierAdministrateur(select);
-}
 
 const sitesEnBrouillon = (select) => select(
   `SELECT id_lieu FROM lieu WHERE statut = 'brouillon' AND id_lieu_parent IS NULL
@@ -39,7 +28,7 @@ module.exports = {
   async up(queryInterface) {
     const s = queryInterface.sequelize;
     const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
-    const idAdmin = await administrateur(select);
+    const idAdmin = await administrateur(select, ID_ADMIN_CHOISI);
     if (!idAdmin) return;
 
     for (const { id_lieu: idSite } of await sitesEnBrouillon(select)) {

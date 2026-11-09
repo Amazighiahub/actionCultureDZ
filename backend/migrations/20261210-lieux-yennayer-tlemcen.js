@@ -164,115 +164,18 @@ const SITES = [
   },
 ];
 
-const json = (v) => (v == null ? null : JSON.stringify(v));
-
-/**
- * Premier compte administrateur actif : par son rôle « Administrateur » ou par son type de compte (29),
- * comme le reconnaît le site (middlewares/authMiddleware.js). Avant : par le type seulement, et en production
- * l'administration l'est par son rôle, d'où des lieux sans propriétaire ni demande de validation.
- */
-async function premierAdministrateur(select) {
-  const [admin] = await select(
-    `SELECT u.id_user FROM user u
-      WHERE u.statut = 'actif'
-        AND (u.id_type_user = 29 OR EXISTS (
-          SELECT 1 FROM userroles ur JOIN role r ON r.id_role = ur.id_role
-           WHERE ur.id_user = u.id_user AND r.nom_role = 'Administrateur'))
-      ORDER BY u.id_user ASC LIMIT 1`
-  );
-  return admin ? admin.id_user : null;
-}
+const { administrateur, creerSites, retirerSites } = require('../utils/lieuxPrepares');
 
 module.exports = {
   async up(queryInterface) {
     const s = queryInterface.sequelize;
     const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
-
-    const idCreateur = await premierAdministrateur(select);
-
-    const communes = new Map();
-    const commune = async (nom) => {
-      if (!communes.has(nom)) {
-        const [c] = await select(
-          `SELECT c.id_commune FROM communes c JOIN dairas d ON d.id_daira = c.dairaId
-            WHERE d.wilayaId = 13 AND c.commune_name_ascii = ? LIMIT 1`, [nom]
-        );
-        communes.set(nom, c ? c.id_commune : null);
-      }
-      return communes.get(nom);
-    };
-
-    const existant = async (nomFr, idCommune, idParent) => {
-      const [l] = await select(
-        `SELECT id_lieu FROM lieu WHERE communeId = ? AND JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) = ?
-           AND ${idParent ? 'id_lieu_parent = ?' : 'id_lieu_parent IS NULL'} LIMIT 1`,
-        idParent ? [idCommune, nomFr, idParent] : [idCommune, nomFr]
-      );
-      return l ? l.id_lieu : null;
-    };
-
-    const creerLieu = async (l, idCommune, idParent, ordre, detail) => {
-      const [idLieu] = await s.query(
-        `INSERT INTO lieu (typeLieu, typePatrimoine, communeId, nom, adresse, latitude, longitude, id_createur, statut,
-                           id_lieu_parent, ordre_visite, createdAt, updatedAt)
-         VALUES ('Commune', ?, ?, ?, ?, ?, ?, ?, 'brouillon', ?, ?, NOW(), NOW())`,
-        { replacements: [l.typePatrimoine, idCommune, json(l.nom), json(l.adresse || {}), l.latitude, l.longitude,
-          idCreateur, idParent, ordre] }
-      );
-      const d = detail || { description: l.description };
-      await s.query(
-        `INSERT INTO detail_lieux (id_lieu, description, horaires, histoire, referencesHistoriques, gastronomie, traditions,
-                                   artisanat_local, personnalites, architecture, infos_pratiques, nb_notations, nb_contributions,
-                                   createdAt, updatedAt)
-         VALUES (?, ?, '{}', ?, ?, ?, ?, NULL, NULL, NULL, ?, 0, 0, NOW(), NOW())`,
-        { replacements: [idLieu, json(d.description || {}), json(d.histoire || {}), json(d.referencesHistoriques || {}),
-          json(d.gastronomie), json(d.traditions), json(d.infos_pratiques)] }
-      );
-      return idLieu;
-    };
-
-    for (const site of SITES) {
-      const idCommune = await commune(site.commune);
-      if (!idCommune) continue; // commune absente : rien à rattacher
-      let idSite = await existant(site.nom.fr, idCommune, null);
-      const nouveau = !idSite;
-      if (nouveau) idSite = await creerLieu(site, idCommune, null, null, site.detail);
-      let ordre = 1;
-      for (const point of site.points) {
-        const idCommunePoint = await commune(point.commune);
-        if (idCommunePoint && !(await existant(point.nom.fr, idCommunePoint, idSite))) {
-          await creerLieu(point, idCommunePoint, idSite, ordre, null);
-        }
-        ordre += 1;
-      }
-      // Demande de publication dans la file de l'équipe, APRÈS les points : l'accepter publie le site et
-      // les points créés jusque-là (propositionsLieu.js). Un compte est obligatoire pour une proposition.
-      if (nouveau && idCreateur) {
-        await s.query(
-          `INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees, statut, date_creation)
-           VALUES (?, ?, 'creation', ?, 'en_attente', NOW())`,
-          { replacements: [idSite, idCreateur, json({ corps: { nom: site.nom } })] }
-        );
-      }
-    }
+    await creerSites(queryInterface, SITES, { wilayaId: 13, idCreateur: await administrateur(select) });
   },
 
   async down(queryInterface) {
-    const s = queryInterface.sequelize;
-    // Seulement les lieux de cette migration encore en brouillon (un lieu publié entre-temps est gardé)
-    const noms = SITES.flatMap((site) => [site.nom.fr, ...site.points.map((p) => p.nom.fr)]);
-    const lignes = await s.query(
-      `SELECT id_lieu FROM lieu WHERE statut = 'brouillon' AND JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) IN (?)
-        ORDER BY id_lieu_parent IS NULL, id_lieu DESC`,
-      { replacements: [noms], type: s.QueryTypes.SELECT }
-    );
-    for (const { id_lieu: id } of lignes) {
-      await s.query('DELETE FROM proposition_lieu WHERE id_lieu = ?', { replacements: [id] });
-      await s.query('DELETE FROM detail_lieux WHERE id_lieu = ?', { replacements: [id] });
-      await s.query('DELETE FROM lieu WHERE id_lieu = ?', { replacements: [id] });
-    }
+    await retirerSites(queryInterface, SITES);
   },
 
   _SITES: SITES,
-  _premierAdministrateur: premierAdministrateur,
 };
