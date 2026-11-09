@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { AideRedaction, ChoixModele } from './ModelesEtAide';
 import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
 import React, { useState } from 'react';
@@ -17,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { ArticleEditorProps } from '@/types/models/articles.types';
 
 import { PREVIEW_STYLES } from './articlePreview.styles';
-import { BLOCK_TEMPLATES, BLOCK_ICONS, nomBloc } from './articleEditor.constants';
+import { BLOCK_TEMPLATES, BLOCK_ICONS, nomBloc, generateBlockUid } from './articleEditor.constants';
 import InsertBlockBar from './InsertBlockBar';
 import ArticleBlockEditor from './ArticleBlockEditor';
 import ArticleMetadataTab from './ArticleMetadataTab';
@@ -191,6 +192,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
             </Alert>
           )}
 
+          <AideRedaction />
+
           <Tabs value={editor.activeTab} onValueChange={editor.setActiveTab}>
             <TabsList className="mb-6">
               <TabsTrigger value="content">{t("article_articleeditor.contenu")}</TabsTrigger>
@@ -314,11 +317,16 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {editor.blocks.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>{t("article_articleeditor.aucun_contenu_pour")}</p>
-                      <p className="text-sm">{t("article_articleeditor.ajoutez_des_blocs")}</p>
-                    </div>
+                    <>
+                      {!enTraduction && (
+                        <ChoixModele onChoisir={(blocs) => editor.remplacerBlocs(blocs.map(b => ({ ...b, _uid: generateBlockUid() } as typeof b)))} />
+                      )}
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>{t("article_articleeditor.aucun_contenu_pour")}</p>
+                        <p className="text-sm">{t("article_articleeditor.ajoutez_des_blocs")}</p>
+                      </div>
+                    </>
                   )}
 
                   <div className="space-y-1">

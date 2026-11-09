@@ -119,7 +119,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             <Textarea dir="auto" spellCheck
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
+              placeholder={block.metadata?.indication || t("article_articleeditor.placeholder_entrez_votre_texte")}
               className={centre ? 'min-h-[160px] text-center leading-loose' : forme === 'encadre' ? 'min-h-[100px] bg-primary/5' : 'min-h-[100px]'} />
             <div className="flex flex-wrap items-center gap-2">
               <Label className="text-sm">{t('article_articleeditor.style_texte', 'Style du texte')}</Label>
@@ -171,7 +171,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             <Input dir="auto"
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_titre")}
+              placeholder={block.metadata?.indication || t("article_articleeditor.placeholder_entrez_votre_titre")}
               className="text-lg font-semibold" />
           </div>
         );
@@ -179,6 +179,10 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
       case 'image':
         return (
           <div className="space-y-3">
+            {/* Consigne du modèle choisi (jamais publiée) */}
+            {block.metadata?.indication && !block.media?.url && (
+              <p className="text-sm text-muted-foreground">{block.metadata.indication}</p>
+            )}
             {block.media?.url ? (
               <div className="relative group">
                 <img
@@ -264,7 +268,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             <Textarea dir="auto" spellCheck
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_citation")}
+              placeholder={block.metadata?.indication || t("article_articleeditor.placeholder_entrez_votre_citation")}
               className="italic" />
             <Input dir="auto"
               value={block.metadata?.author || ''}

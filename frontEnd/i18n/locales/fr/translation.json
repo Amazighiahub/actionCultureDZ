@@ -5954,5 +5954,58 @@
     "reessayer": "Réessayer",
     "refuse": "La vérification anti-robots a échoué : recommencez-la.",
     "secours": "Si le problème continue, écrivez-nous à contact@taladz.com."
+  },
+  "aideArticle": {
+    "titre": "Comment réussir son article ?",
+    "etape1": "Choisissez un modèle ci-dessous, ou ajoutez vos blocs un par un (paragraphe, image, titre, citation…).",
+    "etape2": "Écrivez le titre et une courte description : ils sont obligatoires.",
+    "etape3": "Écrivez votre texte dans les blocs. Pour un poème, choisissez « Style du texte : Poème » ; pour un proverbe ou une note, « Proverbe » ou « Encadré ».",
+    "etape4": "Ajoutez vos photos et choisissez leur place : pleine largeur, centrée, à gauche ou à droite.",
+    "etape5": "Onglet « Métadonnées » : choisissez au moins une catégorie (obligatoire), puis ajoutez des mots-clés.",
+    "etape6": "Onglet « Aperçu » : vérifiez le rendu, puis cliquez sur « Enregistrer ». Un message vert confirme l’enregistrement ; un message rouge explique ce qui manque."
+  },
+  "modeles": {
+    "choisir": "Commencer avec un modèle :",
+    "poeme": {
+      "nom": "Poème",
+      "aide": "Image à gauche, vers centrés",
+      "image": "Facultatif : une photo ou une œuvre qui accompagne le poème",
+      "texte": "Collez le poème ici : un vers par ligne, une ligne vide entre deux strophes.",
+      "note": "Facultatif : quelques mots sur le poème ou sur son auteur."
+    },
+    "portrait": {
+      "nom": "Portrait d’artiste",
+      "aide": "Parcours, œuvres, citation",
+      "image": "Une photo de l’artiste ou de son œuvre",
+      "intro": "Présentez la personne en quelques lignes : qui elle est, d’où elle vient, ce qu’elle crée.",
+      "titre1": "Titre de section, par exemple : Son parcours",
+      "parcours": "Racontez son parcours : formation, rencontres, étapes importantes.",
+      "titre2": "Titre de section, par exemple : Ses œuvres",
+      "oeuvres": "Décrivez ses œuvres principales, sa technique, ce qui la rend unique.",
+      "citation": "Une phrase de l’artiste, entre guillemets"
+    },
+    "evenement": {
+      "nom": "Compte rendu d’événement",
+      "aide": "Programme, bilan, infos pratiques",
+      "image": "Une photo de l’événement",
+      "intro": "Quand, où, et qui organisait ? Présentez l’événement en quelques lignes.",
+      "titre1": "Titre de section, par exemple : Le programme",
+      "programme": "Racontez les moments forts : spectacles, ateliers, rencontres.",
+      "titre2": "Titre de section, par exemple : Ce qu’il faut retenir",
+      "bilan": "Votre bilan : l’ambiance, le public, ce qui a marqué.",
+      "infos": "Infos pratiques : prochaine édition, contact, lien d’inscription."
+    },
+    "lieu": {
+      "nom": "Lieu du patrimoine",
+      "aide": "Histoire, traditions, accès",
+      "image": "Une photo du lieu",
+      "intro": "Où se trouve ce lieu et pourquoi est-il important ?",
+      "titre1": "Titre de section, par exemple : Son histoire",
+      "histoire": "Racontez son histoire : origine, grandes époques, légendes.",
+      "titre2": "Titre de section, par exemple : Traditions et vie locale",
+      "traditions": "Fêtes, savoir-faire, cuisine, chants liés à ce lieu.",
+      "dicton": "Facultatif : un proverbe ou un dicton de la région.",
+      "acces": "Comment s’y rendre, quand le visiter, ce qu’il faut savoir."
+    }
   }
 }

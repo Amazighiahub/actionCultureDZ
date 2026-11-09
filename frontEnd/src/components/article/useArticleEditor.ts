@@ -26,6 +26,7 @@ import type {
 } from '@/types/api/oeuvre-creation.types';
 
 import { generateBlockUid } from './articleEditor.constants';
+import { estBlocVide } from './ModelesEtAide';
 import { LANGUES_ARTICLE, langueOrigine } from '@/utils/traductionBlocs';
 import { nomDuTag } from '@/utils/donneesArticle';
 
@@ -388,8 +389,12 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
           id_oeuvre: articleId ? Number(articleId) : 0,
           titre: titreMultiLang.fr || Object.values(titreMultiLang)[0] || '',
           formData: saveFormData,
-          // Chaque bloc garde la langue de son texte d'origine (pour la traduction)
-          blocks: blocks.map(b => ({ ...b, metadata: { ...b.metadata, langue_origine: langueTexte } })),
+          // Chaque bloc garde la langue de son texte d'origine (pour la traduction). Les blocs laissés vides
+          // (cases d'un modèle non remplies) ne sont pas publiés, et les consignes du modèle sont retirées.
+          blocks: blocks.filter(b => !estBlocVide(b)).map(b => {
+            const { indication: _indication, ...metadata } = (b.metadata || {}) as Record<string, unknown>;
+            return { ...b, metadata: { ...metadata, langue_origine: langueTexte } };
+          }),
           contributeurs: {
             existants: intervenantsExistants,
             nouveaux: nouveauxIntervenants,

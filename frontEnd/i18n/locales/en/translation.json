@@ -5954,5 +5954,58 @@
     "reessayer": "Try again",
     "refuse": "The anti-robot check failed: please redo it.",
     "secours": "If the problem persists, write to us at contact@taladz.com."
+  },
+  "aideArticle": {
+    "titre": "How to write a great article?",
+    "etape1": "Pick a template below, or add your blocks one by one (paragraph, image, heading, quote…).",
+    "etape2": "Write the title and a short description: both are required.",
+    "etape3": "Write your text in the blocks. For a poem, choose \"Text style: Poem\"; for a proverb or a note, \"Proverb\" or \"Highlighted box\".",
+    "etape4": "Add your photos and choose their place: full width, centred, left or right.",
+    "etape5": "\"Metadata\" tab: choose at least one category (required), then add keywords.",
+    "etape6": "\"Preview\" tab: check the result, then click \"Save\". A green message confirms it; a red message explains what is missing."
+  },
+  "modeles": {
+    "choisir": "Start with a template:",
+    "poeme": {
+      "nom": "Poem",
+      "aide": "Image on the left, centred lines",
+      "image": "Optional: a photo or artwork to go with the poem",
+      "texte": "Paste the poem here: one line per verse, an empty line between stanzas.",
+      "note": "Optional: a few words about the poem or its author."
+    },
+    "portrait": {
+      "nom": "Artist portrait",
+      "aide": "Career, works, quote",
+      "image": "A photo of the artist or their work",
+      "intro": "Introduce the person in a few lines: who they are, where they come from, what they create.",
+      "titre1": "Section heading, for example: Their journey",
+      "parcours": "Tell their journey: training, encounters, key steps.",
+      "titre2": "Section heading, for example: Their works",
+      "oeuvres": "Describe their main works, technique, what makes them unique.",
+      "citation": "A sentence from the artist, in quotes"
+    },
+    "evenement": {
+      "nom": "Event report",
+      "aide": "Programme, review, practical info",
+      "image": "A photo of the event",
+      "intro": "When, where, and who organised it? Introduce the event in a few lines.",
+      "titre1": "Section heading, for example: The programme",
+      "programme": "Tell the highlights: shows, workshops, meetings.",
+      "titre2": "Section heading, for example: Key takeaways",
+      "bilan": "Your review: atmosphere, audience, what stood out.",
+      "infos": "Practical info: next edition, contact, registration link."
+    },
+    "lieu": {
+      "nom": "Heritage place",
+      "aide": "History, traditions, access",
+      "image": "A photo of the place",
+      "intro": "Where is this place and why does it matter?",
+      "titre1": "Section heading, for example: Its history",
+      "histoire": "Tell its history: origins, major periods, legends.",
+      "titre2": "Section heading, for example: Traditions and local life",
+      "traditions": "Festivals, crafts, food, songs linked to this place.",
+      "dicton": "Optional: a proverb or saying from the region.",
+      "acces": "How to get there, when to visit, what to know."
+    }
   }
 }
