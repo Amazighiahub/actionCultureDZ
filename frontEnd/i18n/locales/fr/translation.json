@@ -5394,6 +5394,7 @@
     "specialitesEnregistrer": "Tapez un métier, cliquez sur « Ajouter », puis sur « Enregistrer » en bas de la page."
   },
   "share": {
+    "lien": "Partager le lien",
     "onMyPage": "Partager sur ma page :",
     "on": "Partager sur {{network}}",
     "copied": "Lien copié",

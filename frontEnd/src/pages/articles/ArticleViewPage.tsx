@@ -40,8 +40,12 @@ import {
   Star,
   ChevronUp,
   Send,
+  Image as ImageIcon,
   GitPullRequestArrow } from
 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import ImagesReseaux from '@/components/shared/ImagesReseaux';
+import { slugify } from '@/utils/slug';
 
 // Services
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -213,6 +217,8 @@ const ArticleViewPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  // Image prête à publier sur Instagram / Facebook (comme pour les œuvres)
+  const [imagesOpen, setImagesOpen] = useState(false);
   const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -668,6 +674,12 @@ const ArticleViewPage: React.FC = () => {
   // Le résumé sert de chapeau seulement s'il n'est pas déjà affiché comme corps de l'article
   const chapeau = getLocalizedText(oeuvre.description)?.trim()
     || (!isScientific && !resumeEnCorps ? articleHelpers.getResume(articleData) : undefined);
+  // Image pour les réseaux : l'image principale de l'article (première image), sinon une image sans photo
+  const imagePartage = blocOuverture?.media?.url
+    || blocsCorps.find(b => b.type_block === 'image' && b.media?.url)?.media?.url
+    || (oeuvre.Media || []).find((m: { type_media?: string; url?: string }) => (m.type_media || 'image') === 'image' && m.url)?.url;
+  const auteurPartage = articleHelpers.getAuteur(articleData)?.trim()
+    || contributeurs.map(c => c.nom.trim()).filter(Boolean).slice(0, 3).join(', ');
 
   return (
     <div className="min-h-screen bg-background">
@@ -718,14 +730,32 @@ const ArticleViewPage: React.FC = () => {
                 
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
               </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={handleShare}
-                title={t("articles_articleviewpage.title_partager")}>
-                
-                <Share2 className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={t("articles_articleviewpage.title_partager")}
+                    title={t("articles_articleviewpage.title_partager")}>
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={handleShare}>
+                    <Share2 className="h-4 w-4 me-2" aria-hidden="true" />
+                    {t('share.lien', 'Partager le lien')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setImagesOpen(true)}>
+                    <ImageIcon className="h-4 w-4 me-2 text-pink-600" aria-hidden="true" />
+                    {t('share.images.menu', 'Image Instagram / Facebook')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ImagesReseaux open={imagesOpen} onOpenChange={setImagesOpen}
+                contenu={{ titre: String(oeuvre.titre || ''), sousTitre: auteurPartage || undefined, image: imagePartage ? getAssetUrl(imagePartage) : undefined }}
+                lien={`${window.location.origin}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4)}`}
+                resume={chapeau || resumeArticle || undefined}
+                nomFichier={`taladz-${slugify(String(oeuvre.titre || '')) || 'article'}`} />
               {peutModifier &&
               <Button asChild size="sm" variant="outline" className="me-1">
                   <Link to={`/editer-article/${oeuvre.id_oeuvre}`}>

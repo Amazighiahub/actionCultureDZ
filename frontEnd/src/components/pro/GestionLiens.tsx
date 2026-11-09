@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { ListeLiens, NOMS_LIEN, typeDepuisUrl, type LienExterne } from '@/components/shared/LiensExternes';
 
 interface MesContenus {
@@ -96,7 +97,10 @@ export default function GestionLiens() {
       fermer();
       rafraichir();
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : t('common.error', 'Erreur'));
+      // Connexion coupée : un message compréhensible (et non « Network Error ») ; le lien a pu être
+      // enregistré avant la coupure, la liste est donc relue
+      setErreur(messageErreurServeur(e, t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.')));
+      rafraichir();
     } finally {
       setEnCours(false);
     }

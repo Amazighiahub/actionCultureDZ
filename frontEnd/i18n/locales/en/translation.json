@@ -5394,6 +5394,7 @@
     "specialitesEnregistrer": "Type a profession, click “Add”, then “Save” at the bottom of the page."
   },
   "share": {
+    "lien": "Share the link",
     "onMyPage": "Share on my page:",
     "on": "Share on {{network}}",
     "copied": "Link copied",
