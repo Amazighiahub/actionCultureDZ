@@ -1,6 +1,7 @@
 // pages/articles/ArticleViewPage.tsx
 import CouvertureAuto from '@/components/article/CouvertureAuto';
 import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
+import { estBlocPoeme, ressembleAPoeme } from '@/utils/poeme';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -519,18 +520,29 @@ const ArticleViewPage: React.FC = () => {
   const blocOuverture = blocsLangue[0]?.type_block === 'image' && blocsLangue[0].media
     && ['full-width', 'full', undefined].includes(blocsLangue[0].metadata?.layout) ? blocsLangue[0] : null;
   const blocsCorps = blocOuverture ? blocsLangue.slice(1) : blocsLangue;
+  // Article sans aucun bloc de texte (texte saisi dans le seul « résumé ») : le résumé devient le corps.
+  // Avant, la page restait vide alors que le texte existait (ex. un poème écrit dans le résumé).
+  const texteDansBlocs = blocsCorps.some(b => ['text', 'heading', 'citation', 'list', 'table'].includes(b.type_block)
+    && (!!String(b.contenu ?? '').trim() || !!b.contenu_json));
+  const resumeArticle = !isScientific ? articleHelpers.getResume(articleData)?.trim() : undefined;
+  const resumeEnCorps = !texteDansBlocs && resumeArticle ? resumeArticle : undefined;
   // Sens d'écriture du texte affiché (arabe : de droite à gauche, quelle que soit la langue du site)
   const sensContenu = directionTexte([
     typeof oeuvre?.titre === 'string' ? oeuvre.titre : '',
     ...blocsCorps.filter(b => b.type_block === 'text' || b.type_block === 'heading').slice(0, 6).map(b => b.contenu),
+    resumeEnCorps,
   ]);
   const langueContenu = sensContenu === 'rtl' ? 'ar' : undefined;
   // Lettrine : pas en arabe (elle détachait la première lettre du mot, alors que les lettres se lient)
+  // (jamais sur un poème : la première lettre agrandie casserait le premier vers)
   const premierTexte = sensContenu === 'rtl' ? -1 : blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
+  const lettrine = (index: number, block: ArticleBlock) => index === premierTexte && !estBlocPoeme(block.metadata);
 
-  // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante)
+  // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante).
+  // « À gauche » veut dire à gauche dans toutes les langues, comme dans l'aperçu de l'éditeur
+  // (avant, en arabe, l'image « à gauche » partait à droite : début du sens de lecture).
   const classeFigure = (layout?: string) => ({
-    'full-width': 'mag-large', full: 'mag-large', 'float-left': 'mag-flottante-debut', 'float-right': 'mag-flottante-fin'
+    'full-width': 'mag-large', full: 'mag-large', 'float-left': 'mag-flottante-gauche', 'float-right': 'mag-flottante-droite'
   } as Record<string, string>)[layout || 'full-width'] || '';
 
   // Rendu des blocs
@@ -546,7 +558,7 @@ const ArticleViewPage: React.FC = () => {
 
       case 'text':
         return (
-          <p key={cle} dir="auto" className={index === premierTexte ? 'mag-premier' : undefined}>
+          <p key={cle} dir="auto" className={estBlocPoeme(block.metadata) ? 'mag-poeme' : lettrine(index, block) ? 'mag-premier' : undefined}>
             {/* Sans les retours à la ligne en trop au début et à la fin (grands blancs entre les paragraphes) */}
             {paragrapheNettoye(block.contenu)}
           </p>);
@@ -653,8 +665,9 @@ const ArticleViewPage: React.FC = () => {
   const peutProposer = !!user && oeuvre.statut === 'publie' && user.id_user !== oeuvre.saisi_par && !isAdmin;
   // L'auteur et l'administration corrigent directement, même après la publication
   const peutModifier = !!user && (user.id_user === oeuvre.saisi_par || !!isAdmin);
+  // Le résumé sert de chapeau seulement s'il n'est pas déjà affiché comme corps de l'article
   const chapeau = getLocalizedText(oeuvre.description)?.trim()
-    || (!isScientific ? articleHelpers.getResume(articleData) : undefined);
+    || (!isScientific && !resumeEnCorps ? articleHelpers.getResume(articleData) : undefined);
 
   return (
     <div className="min-h-screen bg-background">
@@ -845,8 +858,11 @@ const ArticleViewPage: React.FC = () => {
 
       {/* Contenu de l'article */}
       <article className="mag-corps" dir={sensContenu} lang={langueContenu}>
-        {blocsCorps.length > 0 ?
-        blocsCorps.map((block, index) => renderBlock(block, index)) :
+        {blocsCorps.length > 0 && blocsCorps.map((block, index) => renderBlock(block, index))}
+        {resumeEnCorps &&
+        <p dir="auto" className={ressembleAPoeme(resumeEnCorps) ? 'mag-poeme' : undefined}>{paragrapheNettoye(resumeEnCorps)}</p>
+        }
+        {blocsCorps.length === 0 && !resumeEnCorps &&
         <div className="text-center py-12">
             <FileText className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-xl text-muted-foreground">{t("articles_articleviewpage.contenu_cet_article")}</p>

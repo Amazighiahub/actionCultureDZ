@@ -2664,7 +2664,11 @@
     "importer": "Import an article",
     "importerAide": "Fill the article from a prepared file (.json), in all its languages",
     "importOk": "Article imported: {{blocs}} blocks, in {{langues}}. Now add the photos in the {{images}} image box(es), choose the category (Metadata tab), check the Preview, then save.",
-    "importRemplacer": "The current content of the article will be replaced by the file. Continue?"
+    "importRemplacer": "The current content of the article will be replaced by the file. Continue?",
+    "style_texte": "Text style",
+    "style_normal": "Normal text",
+    "style_poeme": "Poem (centred lines)",
+    "aide_poeme": "One line per verse; leave an empty line between two stanzas."
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",

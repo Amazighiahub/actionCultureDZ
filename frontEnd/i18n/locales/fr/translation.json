@@ -2712,7 +2712,11 @@
     "importer": "Importer un article",
     "importerAide": "Remplir l’article depuis un fichier préparé (.json), dans toutes ses langues",
     "importOk": "Article importé : {{blocs}} blocs, dans {{langues}}. Ajoutez maintenant les photos dans les {{images}} case(s) d’image, choisissez la catégorie (onglet Métadonnées), vérifiez l’Aperçu, puis enregistrez.",
-    "importRemplacer": "Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?"
+    "importRemplacer": "Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?",
+    "style_texte": "Style du texte",
+    "style_normal": "Texte normal",
+    "style_poeme": "Poème (vers centrés)",
+    "aide_poeme": "Un vers par ligne ; laissez une ligne vide entre deux strophes."
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",

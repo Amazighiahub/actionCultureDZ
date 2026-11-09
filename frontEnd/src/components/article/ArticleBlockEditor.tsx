@@ -105,14 +105,38 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
 
   const renderBlockContent = () => {
     switch (block.type_block) {
-      case 'text':
+      case 'text': {
+        const poeme = block.metadata?.forme === 'poeme';
         return (
-          <Textarea dir="auto" spellCheck
-            value={block.contenu || ''}
-            onChange={(e) => handleContentChange(e.target.value)}
-            placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
-            className="min-h-[100px]" />
+          <div className="space-y-3">
+            <Textarea dir="auto" spellCheck
+              value={block.contenu || ''}
+              onChange={(e) => handleContentChange(e.target.value)}
+              placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
+              className={poeme ? 'min-h-[160px] text-center leading-loose' : 'min-h-[100px]'} />
+            {/* Poème : un vers par ligne, une ligne vide entre deux strophes */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-sm">{t('article_articleeditor.style_texte', 'Style du texte')}</Label>
+              <Select
+                value={poeme ? 'poeme' : 'normal'}
+                onValueChange={(value) => handleMetadataChange('forme', value === 'poeme' ? 'poeme' : undefined)}>
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">{t('article_articleeditor.style_normal', 'Texte normal')}</SelectItem>
+                  <SelectItem value="poeme">{t('article_articleeditor.style_poeme', 'Poème (vers centrés)')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {poeme && (
+              <p className="text-xs text-muted-foreground">
+                {t('article_articleeditor.aide_poeme', 'Un vers par ligne ; laissez une ligne vide entre deux strophes.')}
+              </p>
+            )}
+          </div>
         );
+      }
 
       case 'heading':
         return (

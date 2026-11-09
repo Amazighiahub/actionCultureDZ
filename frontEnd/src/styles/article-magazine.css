@@ -109,6 +109,15 @@
 /* Retours à la ligne voulus par l'auteur à l'intérieur d'un paragraphe : gardés */
 .mag-corps > p { white-space: pre-line; }
 
+/* Poème : vers centrés, interligne aéré ; les lignes vides de l'auteur séparent les strophes */
+.mag-corps > p.mag-poeme {
+  text-align: center;
+  font-size: 1.25rem;
+  line-height: 2.15;
+  margin: 2rem 0 2.5rem;
+}
+.mag-corps[dir="rtl"] > p.mag-poeme { font-size: 1.3rem; line-height: 2.35; }
+
 /* ---------- Texte arabe (sens de droite à gauche) ---------- */
 .mag-corps[dir="rtl"],
 .mag-titre[dir="rtl"],
@@ -160,10 +169,11 @@
 }
 @media (min-width: 900px) {
   .mag-figure.mag-large { margin-inline: -6rem; }
-  .mag-figure.mag-flottante-debut,
-  .mag-figure.mag-flottante-fin { width: 46%; margin-top: 0.4rem; margin-bottom: 1.25rem; }
-  .mag-figure.mag-flottante-debut { float: inline-start; margin-inline: -3rem 1.75rem; }
-  .mag-figure.mag-flottante-fin { float: inline-end; margin-inline: 1.75rem -3rem; }
+  /* Gauche et droite réelles (pas « début » et « fin ») : même place en arabe et en français */
+  .mag-figure.mag-flottante-gauche,
+  .mag-figure.mag-flottante-droite { width: 46%; margin-top: 0.4rem; margin-bottom: 1.25rem; }
+  .mag-figure.mag-flottante-gauche { float: left; margin-left: -3rem; margin-right: 1.75rem; }
+  .mag-figure.mag-flottante-droite { float: right; margin-right: -3rem; margin-left: 1.75rem; }
 }
 
 /* Citation mise en avant */

@@ -10,7 +10,7 @@
  *   "tags": ["…"],
  *   "blocs": [
  *     { "type": "heading", "niveau": 2, "texte": { "fr": "…", "ar": "…" } },
- *     { "type": "text", "texte": { … } },
+ *     { "type": "text", "texte": { … } },            (+ "forme": "poeme" : vers centrés)
  *     { "type": "citation", "texte": { … }, "auteur": { … } },
  *     { "type": "image", "legende": { … }, "mise_en_page": "full-width" },
  *     { "type": "list", "elements": { "fr": ["…"], "ar": ["…"] } },
@@ -107,6 +107,7 @@ export function lireArticleImporte(texte: string): ArticleImporte {
         traduire('contenu', t);
         const metadata: Record<string, unknown> = {};
         if (b.type === 'heading') metadata.level = [2, 3, 4].includes(Number(b.niveau)) ? Number(b.niveau) : 2;
+        if (b.type === 'text' && b.forme === 'poeme') metadata.forme = 'poeme';
         if (b.type === 'citation') {
           const auteur = parLangue(b.auteur, `bloc ${i + 1} (auteur)`, 300);
           if (auteur[langue]) metadata.author = auteur[langue];

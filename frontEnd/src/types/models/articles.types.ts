@@ -28,6 +28,8 @@ export interface ArticleBlock {
     listType?: 'ordered' | 'unordered';
     alignment?: 'left' | 'center' | 'right' | 'justify';
     style?: Record<string, any>;
+    /** Bloc de texte affiché en vers (poème) */
+    forme?: 'poeme';
     [key: string]: any;
   }
   

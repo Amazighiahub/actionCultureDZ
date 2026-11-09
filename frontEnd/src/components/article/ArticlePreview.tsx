@@ -24,7 +24,9 @@ interface ArticlePreviewProps {
 const renderPreviewBlock = (block: ArticleBlock, index: number) => {
   switch (block.type_block) {
     case 'text':
-      return <p key={index}>{block.contenu}</p>;
+      return block.metadata?.forme === 'poeme'
+        ? <p key={index} dir="auto" style={{ whiteSpace: 'pre-line', textAlign: 'center', lineHeight: 2.2 }}>{block.contenu}</p>
+        : <p key={index} dir="auto" style={{ whiteSpace: 'pre-line' }}>{block.contenu}</p>;
 
     case 'heading': {
       const HeadingTag = `h${block.metadata?.level || 2}` as keyof JSX.IntrinsicElements;
