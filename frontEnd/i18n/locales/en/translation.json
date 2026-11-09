@@ -2654,7 +2654,9 @@
       "lignes": "Translated rows (one per line, cells separated by |)",
       "legende": "Translated caption",
       "ecritEn": "The article is written in",
-      "aide": "You are translating the article into {{langue}}. Translate the title, the lead and then each block: the original text ({{origine}}) is shown above. Images and layout are shared by all languages. To add, move or delete a block, go back to {{origine}}."
+      "aide": "You are translating the article into {{langue}}. Translate the title, the lead and then each block: the original text ({{origine}}) is shown above. Images and layout are shared by all languages. To add, move or delete a block, go back to {{origine}}.",
+      "arabeMalRegle": "Your text is written in Arabic, but the article is set as written in {{origine}}.",
+      "passerArabe": "Yes, the article is written in Arabic"
     },
     "nettoyer": "Clean up layout",
     "nettoyerAide": "Double spaces, spaces around punctuation, extra blank lines",

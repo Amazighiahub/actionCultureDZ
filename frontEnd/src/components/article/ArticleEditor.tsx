@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AideRedaction, ChoixModele } from './ModelesEtAide';
+import { AideRedaction, ChoixModele, estBlocVide } from './ModelesEtAide';
+import { directionTexte } from '@/utils/directionTexte';
 import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
 import React, { useState } from 'react';
@@ -94,6 +95,30 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   // Autre langue que celle du texte d'origine : on traduit les blocs existants
   const enTraduction = editor.editLang !== editor.langueTexte;
   const nomLangue = (code: string) => LANG_OPTIONS.find(l => l.code === code)?.label || code;
+
+  // Rien d'écrit dans la langue d'origine : choisir une langue, c'est choisir la langue de l'article
+  // (avant : site en français, un clic sur « العربية » passait en mode traduction d'un article vide)
+  const origine = editor.translations[editor.langueTexte];
+  const origineVide = !origine?.titre?.trim() && !origine?.description?.trim() && editor.blocks.every(estBlocVide);
+  const choisirLangue = (code: string) => {
+    if (origineVide) editor.setLangueTexte(code);
+    editor.setEditLang(code);
+  };
+  // Texte d'origine écrit en arabe alors que l'article est réglé sur une autre langue : on le signale
+  const texteOrigine = [origine?.titre, origine?.description,
+    ...editor.blocks.filter(b => ['text', 'heading', 'citation'].includes(b.type_block)).map(b => b.contenu)];
+  const arabeMalRegle = !enTraduction && editor.langueTexte !== 'ar'
+    && texteOrigine.some(x => String(x ?? '').trim()) && directionTexte(texteOrigine) === 'rtl';
+  const passerEnArabe = () => {
+    const ancienne = editor.langueTexte;
+    editor.setTranslations(prev => {
+      const src = prev[ancienne] || { titre: '', description: '' };
+      const ar = prev.ar || { titre: '', description: '' };
+      return { ...prev, ar: { titre: ar.titre || src.titre, description: ar.description || src.description }, [ancienne]: { titre: '', description: '' } };
+    });
+    editor.setLangueTexte('ar');
+    editor.setEditLang('ar');
+  };
 
   if (editor.loading) {
     return (
@@ -219,7 +244,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                           type="button"
                           size="sm"
                           variant={editor.editLang === lang.code ? 'default' : 'outline'}
-                          onClick={() => editor.setEditLang(lang.code)}
+                          onClick={() => choisirLangue(lang.code)}
                           className="text-xs px-2 py-1 h-7">
                           {lang.label}
                           {lang.code === editor.langueTexte
@@ -246,6 +271,21 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                       {LANG_OPTIONS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                     </select>
                   </div>
+
+                  {arabeMalRegle && (
+                    <Alert role="status">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="flex flex-wrap items-center gap-3">
+                        {t('article_articleeditor.traduction.arabeMalRegle', {
+                          origine: nomLangue(editor.langueTexte),
+                          defaultValue: 'Votre texte est écrit en arabe, mais l’article est réglé comme écrit en {{origine}}.'
+                        })}
+                        <Button type="button" size="sm" onClick={passerEnArabe}>
+                          {t('article_articleeditor.traduction.passerArabe', 'Oui, l’article est écrit en arabe')}
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {enTraduction && (
                     <Alert>
