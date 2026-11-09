@@ -82,6 +82,18 @@ describe('nouveau lieu proposé par un membre', () => {
     await P.decider(m, {}, 5, 'acceptee', '', 8);
     expect(m.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, { where: { id_lieu: 3, statut: 'brouillon' } });
   });
+  test('accepté : ses points de visite préparés avant la demande sont publiés avec lui, pas ceux ajoutés après', async () => {
+    const m = avecDecision();
+    const date = new Date('2026-11-10T08:00:00Z');
+    m.sequelize.query = jest.fn(async (sql) => (sql.startsWith('SELECT * FROM proposition_lieu')
+      ? [{ id: 5, id_lieu: 3, id_user: 37, action: 'creation', statut: 'en_attente', donnees: '{}', date_creation: date }]
+      : []));
+    await P.decider(m, {}, 5, 'acceptee', '', 8);
+    const { Op } = require('sequelize');
+    expect(m.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, {
+      where: { id_lieu_parent: 3, statut: 'brouillon', createdAt: { [Op.lte]: date } },
+    });
+  });
   test('refusé : le lieu est archivé, l’auteur reçoit le motif', async () => {
     const m = avecDecision();
     await P.decider(m, {}, 5, 'refusee', 'Lieu déjà présent', 8);

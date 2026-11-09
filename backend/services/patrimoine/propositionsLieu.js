@@ -7,6 +7,7 @@
  * les mêmes fonctions qu'une modification directe (historique, notifications) ; refusée, le motif est
  * envoyé à son auteur.
  */
+const { Op } = require('sequelize');
 const { estModeration } = require('../../utils/droits');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { texteLisible } = require('../../helpers/i18n');
@@ -130,8 +131,14 @@ async function appliquer(models, notificationService, p) {
       await elements.modifierElement(models, genre, p.id_lieu, Number(idElement), corps);
       return;
     case 'creation':
-      // Lieu ajouté par un membre : publié
+      // Lieu ajouté par un membre : publié, avec les points de visite préparés en même temps que lui
+      // (créés au plus tard à la demande ; un point ajouté ensuite, ex. « à identifier » d'un relevé, reste en brouillon)
       await models.Lieu.update({ statut: 'publie' }, { where: { id_lieu: p.id_lieu, statut: 'brouillon' } });
+      if (p.date_creation) {
+        await models.Lieu.update({ statut: 'publie' }, {
+          where: { id_lieu_parent: p.id_lieu, statut: 'brouillon', createdAt: { [Op.lte]: p.date_creation } },
+        });
+      }
       return;
     default:
       throw erreur('Action invalide', 400, 'VALIDATION_ERROR');
