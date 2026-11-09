@@ -2668,7 +2668,14 @@
     "style_texte": "Text style",
     "style_normal": "Normal text",
     "style_poeme": "Poem (centred lines)",
-    "aide_poeme": "One line per verse; leave an empty line between two stanzas."
+    "aide_poeme": "One line per verse; leave an empty line between two stanzas.",
+    "style_proverbe": "Proverb (centred, large)",
+    "style_encadre": "Highlighted box (note)",
+    "aide_proverbe": "A proverb or a strong sentence, in one or two lines.",
+    "aide_encadre": "A note, a definition or a piece of information to highlight.",
+    "colonnes": "Columns",
+    "une_colonne": "One column",
+    "deux_colonnes": "Two columns (on computer)"
   },
   "articles_editarticle": {
     "chargement_larticle": "Loading article...",

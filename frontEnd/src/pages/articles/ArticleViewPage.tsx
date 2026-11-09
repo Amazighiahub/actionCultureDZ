@@ -1,7 +1,7 @@
 // pages/articles/ArticleViewPage.tsx
 import CouvertureAuto from '@/components/article/CouvertureAuto';
 import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
-import { estBlocPoeme, ressembleAPoeme } from '@/utils/poeme';
+import { classesBlocTexte, formeDuBloc, ressembleAPoeme } from '@/utils/poeme';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -534,9 +534,9 @@ const ArticleViewPage: React.FC = () => {
   ]);
   const langueContenu = sensContenu === 'rtl' ? 'ar' : undefined;
   // Lettrine : pas en arabe (elle détachait la première lettre du mot, alors que les lettres se lient)
-  // (jamais sur un poème : la première lettre agrandie casserait le premier vers)
+  // (seulement sur un texte normal : sur un poème ou un proverbe, la lettre agrandie casserait la ligne)
   const premierTexte = sensContenu === 'rtl' ? -1 : blocsCorps.findIndex(b => b.type_block === 'text' && !!b.contenu);
-  const lettrine = (index: number, block: ArticleBlock) => index === premierTexte && !estBlocPoeme(block.metadata);
+  const lettrine = (index: number, block: ArticleBlock) => index === premierTexte && !formeDuBloc(block.metadata);
 
   // Mise en page des images : valeurs de l'éditeur (pleine largeur, centrée, flottante).
   // « À gauche » veut dire à gauche dans toutes les langues, comme dans l'aperçu de l'éditeur
@@ -558,7 +558,7 @@ const ArticleViewPage: React.FC = () => {
 
       case 'text':
         return (
-          <p key={cle} dir="auto" className={estBlocPoeme(block.metadata) ? 'mag-poeme' : lettrine(index, block) ? 'mag-premier' : undefined}>
+          <p key={cle} dir="auto" className={[classesBlocTexte(block.metadata), lettrine(index, block) ? 'mag-premier' : ''].filter(Boolean).join(' ') || undefined}>
             {/* Sans les retours à la ligne en trop au début et à la fin (grands blancs entre les paragraphes) */}
             {paragrapheNettoye(block.contenu)}
           </p>);

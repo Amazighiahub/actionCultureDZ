@@ -320,9 +320,9 @@ export function useAjouterOeuvre() {
     typeOeuvre.id_type_oeuvre === 4 ||  // Article
     typeOeuvre.id_type_oeuvre === 5);   // Article Scientifique
     setShowEditorChoice(!!isArticleType);
-    if (!isArticleType) {
-      setUseArticleEditor(false);
-    }
+    // Article : toujours l'éditeur avancé (avec le formulaire simple, le texte écrit dans le seul
+    // « résumé » donnait un article sans contenu, et la page publiée restait vide)
+    setUseArticleEditor(!!isArticleType);
   }, [formData.id_type_oeuvre, metadata.types_oeuvres]);
 
   // ============================================================================

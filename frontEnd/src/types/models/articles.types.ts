@@ -29,7 +29,9 @@ export interface ArticleBlock {
     alignment?: 'left' | 'center' | 'right' | 'justify';
     style?: Record<string, any>;
     /** Bloc de texte affiché en vers (poème) */
-    forme?: 'poeme';
+    forme?: 'poeme' | 'proverbe' | 'encadre';
+    /** Deux colonnes sur grand écran */
+    colonnes?: 2;
     [key: string]: any;
   }
   

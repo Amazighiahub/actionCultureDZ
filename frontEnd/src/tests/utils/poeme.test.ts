@@ -28,3 +28,29 @@ describe('poèmes dans les articles', () => {
     expect(a.blocks[1].metadata?.forme).toBeUndefined();
   });
 });
+
+describe('styles de texte et colonnes', () => {
+  it('classes de la page publiée selon la forme et les colonnes', async () => {
+    const { classesBlocTexte, formeDuBloc } = await import('@/utils/poeme');
+    expect(classesBlocTexte({ forme: 'proverbe' })).toBe('mag-proverbe');
+    expect(classesBlocTexte({ forme: 'encadre', colonnes: 2 })).toBe('mag-encadre mag-deux-colonnes');
+    expect(classesBlocTexte({ colonnes: '2' })).toBe('mag-deux-colonnes');
+    expect(classesBlocTexte({ forme: 'inconnue' })).toBe('');
+    expect(formeDuBloc({ forme: '<script>' })).toBeNull();
+  });
+
+  it('import : proverbe, encadré et deux colonnes gardés ; forme inconnue ignorée', () => {
+    const a = lireArticleImporte(JSON.stringify({
+      format: 'taladz-article', version: 1, langue: 'fr', titre: { fr: 'Titre' },
+      blocs: [
+        { type: 'text', forme: 'proverbe', texte: { fr: 'Qui sème le vent…' } },
+        { type: 'text', forme: 'encadre', colonnes: 2, texte: { fr: 'Note' } },
+        { type: 'text', forme: 'n-importe-quoi', texte: { fr: 'Texte' } },
+      ],
+    }));
+    expect(a.blocks[0].metadata?.forme).toBe('proverbe');
+    expect(a.blocks[1].metadata?.forme).toBe('encadre');
+    expect(a.blocks[1].metadata?.colonnes).toBe(2);
+    expect(a.blocks[2].metadata?.forme).toBeUndefined();
+  });
+});

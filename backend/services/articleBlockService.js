@@ -118,6 +118,7 @@ class ArticleBlockService extends BaseService {
 
       const newBlock = await this.getBlockWithMedia(block.id_block);
       await this._signalerTexteModifie(access, user);
+      await this._couvertureSuitPremiereImage(id_article, article_type);
       return { data: newBlock };
 
     } catch (error) {
@@ -167,6 +168,7 @@ class ArticleBlockService extends BaseService {
       const newBlocks = await this.repository.findByArticle(id_article, article_type);
 
       await this._signalerTexteModifie(access, user);
+      await this._couvertureSuitPremiereImage(id_article, article_type);
       return { data: newBlocks, count: createdBlocks.length };
 
     } catch (error) {
@@ -208,6 +210,7 @@ class ArticleBlockService extends BaseService {
 
       const updatedBlock = await this.getBlockWithMedia(blockId);
       await this._signalerTexteModifie(access, user);
+      await this._couvertureSuitPremiereImage(block.id_article, block.article_type);
       return { data: updatedBlock };
 
     } catch (error) {
@@ -234,6 +237,7 @@ class ArticleBlockService extends BaseService {
       await transaction.commit();
 
       await this._signalerTexteModifie(access, user);
+      await this._couvertureSuitPremiereImage(block.id_article, block.article_type);
       return { success: true };
 
     } catch (error) {
@@ -280,6 +284,7 @@ class ArticleBlockService extends BaseService {
       );
 
       await transaction.commit();
+      await this._couvertureSuitPremiereImage(articleId, articleType);
       return { success: true };
 
     } catch (error) {
@@ -378,6 +383,49 @@ class ArticleBlockService extends BaseService {
       await service?._signalerModificationPubliee?.(oeuvre, user.id_user, 'a modifié le texte de');
     } catch (err) {
       require('../utils/logger').error('Signalement de modification d’un article publié :', err.message);
+    }
+  }
+
+  /**
+   * L'image principale d'un article (sa carte dans les listes, l'accueil, les partages) suit la première
+   * image visible de son contenu. Avant, c'était toujours la première image envoyée, souvent une ancienne
+   * image retirée du texte, et l'éditeur d'article ne permettait pas de la changer.
+   * Sans image dans le contenu, rien ne change. Jamais bloquant : une erreur est seulement journalisée.
+   */
+  async _couvertureSuitPremiereImage(idArticle, articleType) {
+    const Media = this.models?.Media;
+    const Model = articleType === 'article_scientifique' ? this.models?.ArticleScientifique : this.models?.Article;
+    if (!Media || !Model) return;
+    try {
+      const parent = await Model.findByPk(idArticle, { attributes: ['id_oeuvre'] });
+      const idOeuvre = parent?.id_oeuvre;
+      if (!idOeuvre) return;
+      const blocs = await this.repository.findByArticle(idArticle, articleType);
+      const premiere = [...(blocs || [])]
+        .sort((a, b) => (a.ordre || 0) - (b.ordre || 0))
+        .find(b => b.type_block === 'image' && b.id_media && b.visible !== false);
+      if (!premiere) return;
+      // Seulement une image de cette œuvre : jamais le fichier d'un autre contenu
+      const media = await Media.findOne({
+        where: { id_media: premiere.id_media, id_oeuvre: idOeuvre, type_media: 'image' },
+        attributes: ['id_media', 'is_Principale']
+      });
+      if (!media) return;
+      const transaction = await this.sequelize.transaction();
+      try {
+        await Media.update({ is_Principale: false }, {
+          where: { id_oeuvre: idOeuvre, is_Principale: true, id_media: { [Op.ne]: media.id_media } }, transaction
+        });
+        if (!media.is_Principale) await Media.update({ is_Principale: true }, { where: { id_media: media.id_media }, transaction });
+        await transaction.commit();
+      } catch (err) {
+        await transaction.rollback();
+        throw err;
+      }
+      // Listes d'œuvres gardées en mémoire quelques minutes : la nouvelle image s'y voit tout de suite
+      try { require('./serviceContainer').oeuvreService?.cache?.invalidate?.(); } catch { /* jamais bloquant */ }
+    } catch (err) {
+      require('../utils/logger').error('Image principale de l’article :', err.message);
     }
   }
 

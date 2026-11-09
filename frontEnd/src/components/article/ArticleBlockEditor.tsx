@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { enDeuxColonnes, formeDuBloc } from '@/utils/poeme';
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,34 +107,48 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
   const renderBlockContent = () => {
     switch (block.type_block) {
       case 'text': {
-        const poeme = block.metadata?.forme === 'poeme';
+        const forme = formeDuBloc(block.metadata);
+        const centre = forme === 'poeme' || forme === 'proverbe';
+        const aides: Record<string, string> = {
+          poeme: t('article_articleeditor.aide_poeme', 'Un vers par ligne ; laissez une ligne vide entre deux strophes.'),
+          proverbe: t('article_articleeditor.aide_proverbe', 'Un proverbe ou une phrase forte, en une ou deux lignes.'),
+          encadre: t('article_articleeditor.aide_encadre', 'Une note, une définition ou une information à mettre en valeur.'),
+        };
         return (
           <div className="space-y-3">
             <Textarea dir="auto" spellCheck
               value={block.contenu || ''}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
-              className={poeme ? 'min-h-[160px] text-center leading-loose' : 'min-h-[100px]'} />
-            {/* Poème : un vers par ligne, une ligne vide entre deux strophes */}
+              className={centre ? 'min-h-[160px] text-center leading-loose' : forme === 'encadre' ? 'min-h-[100px] bg-primary/5' : 'min-h-[100px]'} />
             <div className="flex flex-wrap items-center gap-2">
               <Label className="text-sm">{t('article_articleeditor.style_texte', 'Style du texte')}</Label>
               <Select
-                value={poeme ? 'poeme' : 'normal'}
-                onValueChange={(value) => handleMetadataChange('forme', value === 'poeme' ? 'poeme' : undefined)}>
+                value={forme || 'normal'}
+                onValueChange={(value) => handleMetadataChange('forme', value === 'normal' ? undefined : value)}>
                 <SelectTrigger className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="normal">{t('article_articleeditor.style_normal', 'Texte normal')}</SelectItem>
                   <SelectItem value="poeme">{t('article_articleeditor.style_poeme', 'Poème (vers centrés)')}</SelectItem>
+                  <SelectItem value="proverbe">{t('article_articleeditor.style_proverbe', 'Proverbe (centré, en grand)')}</SelectItem>
+                  <SelectItem value="encadre">{t('article_articleeditor.style_encadre', 'Encadré (note mise en valeur)')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={enDeuxColonnes(block.metadata) ? '2' : '1'}
+                onValueChange={(value) => handleMetadataChange('colonnes', value === '2' ? 2 : undefined)}>
+                <SelectTrigger className="w-56" aria-label={t('article_articleeditor.colonnes', 'Colonnes')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">{t('article_articleeditor.une_colonne', 'Une colonne')}</SelectItem>
+                  <SelectItem value="2">{t('article_articleeditor.deux_colonnes', 'Deux colonnes (sur ordinateur)')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {poeme && (
-              <p className="text-xs text-muted-foreground">
-                {t('article_articleeditor.aide_poeme', 'Un vers par ligne ; laissez une ligne vide entre deux strophes.')}
-              </p>
-            )}
+            {forme && <p className="text-xs text-muted-foreground">{aides[forme]}</p>}
           </div>
         );
       }

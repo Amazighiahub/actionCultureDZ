@@ -118,6 +118,48 @@
 }
 .mag-corps[dir="rtl"] > p.mag-poeme { font-size: 1.3rem; line-height: 2.35; }
 
+/* Proverbe (مثل) : centré, en grand, entre guillemets décoratifs */
+.mag-corps > p.mag-proverbe {
+  position: relative;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  line-height: 1.8;
+  font-weight: 600;
+  color: hsl(var(--primary));
+  margin: 2.75rem auto;
+  padding: 1.75rem 1.5rem 0.5rem;
+  max-width: 34rem;
+}
+.mag-corps[dir="rtl"] > p.mag-proverbe { font-family: var(--font-arabic); font-size: 1.55rem; line-height: 2; }
+.mag-corps > p.mag-proverbe::before {
+  content: "❝";
+  position: absolute;
+  inset-block-start: -0.4rem;
+  inset-inline: 0;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: hsl(var(--primary) / 0.35);
+}
+
+/* Encadré : une note mise en valeur */
+.mag-corps > p.mag-encadre {
+  background: hsl(var(--primary) / 0.07);
+  border-inline-start: 4px solid hsl(var(--primary));
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.4rem;
+  font-size: 1.05rem;
+}
+
+/* Deux colonnes, sur grand écran seulement (une seule sur téléphone) */
+@media (min-width: 900px) {
+  .mag-corps > p.mag-deux-colonnes {
+    column-count: 2;
+    column-gap: 2.75rem;
+    column-rule: 1px solid hsl(var(--primary) / 0.18);
+  }
+}
+
 /* ---------- Texte arabe (sens de droite à gauche) ---------- */
 .mag-corps[dir="rtl"],
 .mag-titre[dir="rtl"],
@@ -174,6 +216,18 @@
   .mag-figure.mag-flottante-droite { width: 46%; margin-top: 0.4rem; margin-bottom: 1.25rem; }
   .mag-figure.mag-flottante-gauche { float: left; margin-left: -3rem; margin-right: 1.75rem; }
   .mag-figure.mag-flottante-droite { float: right; margin-right: -3rem; margin-left: 1.75rem; }
+}
+/* Téléphone et tablette : l'image « flottante » reste de son côté, réduite, au-dessus du texte
+   (à côté, sur un écran étroit, les vers d'un poème étaient coupés en deux) */
+@media (max-width: 899px) {
+  .mag-figure.mag-flottante-gauche,
+  .mag-figure.mag-flottante-droite { width: 62%; margin-top: 0.5rem; margin-bottom: 1.75rem; }
+  .mag-figure.mag-flottante-gauche { margin-left: 0; margin-right: auto; }
+  .mag-figure.mag-flottante-droite { margin-right: 0; margin-left: auto; }
+  .mag-figure.mag-flottante-gauche img,
+  .mag-figure.mag-flottante-droite img { width: 100%; box-shadow: 0 10px 28px -12px rgb(0 0 0 / 0.35); }
+  .mag-figure.mag-flottante-gauche figcaption,
+  .mag-figure.mag-flottante-droite figcaption { font-size: 0.78rem; max-width: none; margin-inline: 0; }
 }
 
 /* Citation mise en avant */

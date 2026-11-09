@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { enDeuxColonnes, formeDuBloc } from '@/utils/poeme';
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getAssetUrl } from '@/helpers/assetUrl';
@@ -23,10 +24,16 @@ interface ArticlePreviewProps {
 
 const renderPreviewBlock = (block: ArticleBlock, index: number) => {
   switch (block.type_block) {
-    case 'text':
-      return block.metadata?.forme === 'poeme'
-        ? <p key={index} dir="auto" style={{ whiteSpace: 'pre-line', textAlign: 'center', lineHeight: 2.2 }}>{block.contenu}</p>
-        : <p key={index} dir="auto" style={{ whiteSpace: 'pre-line' }}>{block.contenu}</p>;
+    case 'text': {
+      // Même rendu que la page publiée (styles de texte et colonnes)
+      const forme = formeDuBloc(block.metadata);
+      const style: React.CSSProperties = { whiteSpace: 'pre-line' };
+      if (forme === 'poeme') Object.assign(style, { textAlign: 'center', lineHeight: 2.2 });
+      if (forme === 'proverbe') Object.assign(style, { textAlign: 'center', fontSize: '1.4rem', fontWeight: 600, lineHeight: 1.9 });
+      if (forme === 'encadre') Object.assign(style, { background: 'rgba(95,107,63,0.08)', borderInlineStart: '4px solid #5f6b3f', borderRadius: '0.75rem', padding: '1rem 1.25rem' });
+      if (enDeuxColonnes(block.metadata)) Object.assign(style, { columnCount: 2, columnGap: '2.5rem' });
+      return <p key={index} dir="auto" style={style}>{forme === 'proverbe' ? `❝ ${block.contenu || ''}` : block.contenu}</p>;
+    }
 
     case 'heading': {
       const HeadingTag = `h${block.metadata?.level || 2}` as keyof JSX.IntrinsicElements;

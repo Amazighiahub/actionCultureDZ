@@ -21,7 +21,6 @@ import IntervenantEditeurManager from '@/components/oeuvre/IntervenantEditeurMan
 import type { TypeOeuvre, TagMotCle } from '@/types/models/references.types';
 import { useAjouterOeuvre } from './useAjouterOeuvre';
 import CategorySelection from './CategorySelection';
-import EditorModeSelector from './EditorModeSelector';
 import OeuvreSpecificFields from './OeuvreSpecificFields';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
@@ -59,7 +58,7 @@ const AjouterOeuvre: React.FC = () => {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle,
+    useArticleEditor, showEditorChoice, cibleArticle,
     handleInputChange,
     handleTagAdd, handleTagRemove,
     handleMediaUpload, handleDragOver, handleDragLeave, handleDrop,
@@ -151,7 +150,7 @@ const AjouterOeuvre: React.FC = () => {
               numero: formData.numero,
               peer_reviewed: formData.peer_reviewed
             }}
-            onBack={() => setUseArticleEditor(false)}
+            onBack={() => handleInputChange('id_type_oeuvre', 0)}
             onSave={handleArticleEditorSave} /> :
 
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }}>
@@ -222,9 +221,7 @@ const AjouterOeuvre: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {!isEditMode && formData.id_type_oeuvre > 0 && showEditorChoice &&
-                <EditorModeSelector metadata={metadata} formData={formData} showEditorChoice={showEditorChoice} useArticleEditor={useArticleEditor} setUseArticleEditor={setUseArticleEditor} />
-                }
+                {/* Articles : l'éditeur avancé s'ouvre directement (plus de choix « formulaire classique ») */}
 
                 {formData.id_type_oeuvre > 0 && (isEditMode || !useArticleEditor) &&
                 <>

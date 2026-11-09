@@ -2716,7 +2716,14 @@
     "style_texte": "Style du texte",
     "style_normal": "Texte normal",
     "style_poeme": "Poème (vers centrés)",
-    "aide_poeme": "Un vers par ligne ; laissez une ligne vide entre deux strophes."
+    "aide_poeme": "Un vers par ligne ; laissez une ligne vide entre deux strophes.",
+    "style_proverbe": "Proverbe (centré, en grand)",
+    "style_encadre": "Encadré (note mise en valeur)",
+    "aide_proverbe": "Un proverbe ou une phrase forte, en une ou deux lignes.",
+    "aide_encadre": "Une note, une définition ou une information à mettre en valeur.",
+    "colonnes": "Colonnes",
+    "une_colonne": "Une colonne",
+    "deux_colonnes": "Deux colonnes (sur ordinateur)"
   },
   "articles_editarticle": {
     "chargement_larticle": "Chargement de l'article...",
