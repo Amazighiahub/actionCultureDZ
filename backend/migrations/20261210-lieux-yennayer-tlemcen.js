@@ -166,15 +166,29 @@ const SITES = [
 
 const json = (v) => (v == null ? null : JSON.stringify(v));
 
+/**
+ * Premier compte administrateur actif : par son rôle « Administrateur » ou par son type de compte (29),
+ * comme le reconnaît le site (middlewares/authMiddleware.js). Avant : par le type seulement, et en production
+ * l'administration l'est par son rôle, d'où des lieux sans propriétaire ni demande de validation.
+ */
+async function premierAdministrateur(select) {
+  const [admin] = await select(
+    `SELECT u.id_user FROM user u
+      WHERE u.statut = 'actif'
+        AND (u.id_type_user = 29 OR EXISTS (
+          SELECT 1 FROM userroles ur JOIN role r ON r.id_role = ur.id_role
+           WHERE ur.id_user = u.id_user AND r.nom_role = 'Administrateur'))
+      ORDER BY u.id_user ASC LIMIT 1`
+  );
+  return admin ? admin.id_user : null;
+}
+
 module.exports = {
   async up(queryInterface) {
     const s = queryInterface.sequelize;
     const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
 
-    const [admin] = await select(
-      "SELECT id_user FROM user WHERE id_type_user = 29 AND statut = 'actif' ORDER BY id_user ASC LIMIT 1"
-    );
-    const idCreateur = admin ? admin.id_user : null;
+    const idCreateur = await premierAdministrateur(select);
 
     const communes = new Map();
     const commune = async (nom) => {
@@ -260,4 +274,5 @@ module.exports = {
   },
 
   _SITES: SITES,
+  _premierAdministrateur: premierAdministrateur,
 };
