@@ -30,4 +30,15 @@ describe('BaseController._handleError', () => {
     expect(res.status).toHaveBeenCalledWith(404);
     expect(logger.error).not.toHaveBeenCalled();
   });
+
+  test('interblocage MySQL : 409 CONFLIT_SIMULTANE (comme errorMiddleware), pas « Internal server error »', () => {
+    const res = reponse();
+    const e = Object.assign(new Error('Deadlock found when trying to get lock'), {
+      name: 'SequelizeDatabaseError', parent: { code: 'ER_LOCK_DEADLOCK' },
+    });
+    new BaseController()._handleError(res, e);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, code: 'CONFLIT_SIMULTANE' }));
+    expect(logger.error).not.toHaveBeenCalled();
+  });
 });

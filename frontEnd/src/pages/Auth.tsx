@@ -24,8 +24,9 @@ const Auth = () => {
   const { isAuthenticated } = useAuth();
   // Avant : toujours « Connexion », même après un clic sur « S'inscrire » (audit V11 UX-2)
   const [activeTab, setActiveTab] = useState(() => ongletDepuisAdresse(location.search));
-  // Clic sur « S'inscrire » ou « Se connecter » alors que la page est déjà ouverte
-  useEffect(() => { setActiveTab(ongletDepuisAdresse(location.search)); }, [location.search]);
+  // Clic sur « S'inscrire » ou « Se connecter » alors que la page est déjà ouverte : chaque clic est une
+  // nouvelle navigation (location.key change), même vers la même adresse après un changement d'onglet à la main
+  useEffect(() => { setActiveTab(ongletDepuisAdresse(location.search)); }, [location.key, location.search]);
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -1,5 +1,6 @@
 const AppError = require('../utils/appError');
 const logger = require('../utils/logger');
+const { repondreSiConflit } = require('../utils/conflitSimultane');
 
 const errorMiddleware = {
   // Gestionnaire d'erreurs 404
@@ -102,17 +103,8 @@ const errorMiddleware = {
       code = 'FK_CONSTRAINT';
     }
 
-    // Deux enregistrements simultanés sur les mêmes données : MySQL annule toute l'opération (rien n'est
-    // enregistré à moitié). Message clair au lieu d'une erreur serveur ; la personne peut réessayer.
-    const codeSql = error.parent?.code || error.original?.code;
-    if (error.name === 'SequelizeDatabaseError' && codeSql === 'ER_LOCK_DEADLOCK') {
-      logger.warn('Interblocage MySQL, opération annulée', { route: `${req.method} ${req.originalUrl}` });
-      return res.status(409).json({
-        success: false,
-        error: 'Une autre opération modifiait les mêmes données au même moment : rien n’a été enregistré. Réessayez.',
-        code: 'CONFLIT_SIMULTANE',
-      });
-    }
+    // Deux enregistrements simultanés sur les mêmes données : opération annulée, message clair (409)
+    if (repondreSiConflit(error, req, res, logger)) return;
 
     if (error.name === 'SequelizeDatabaseError') {
       statusCode = 500;

@@ -19,6 +19,7 @@
 
 const { peutGerer, estModeration } = require('../utils/droits');
 const logger = require('../utils/logger');
+const { repondreSiConflit } = require('../utils/conflitSimultane');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -143,6 +144,9 @@ class BaseController {
    * @param {Error} error
    */
   _handleError(res, error) {
+    // Deux enregistrements simultanés sur les mêmes données : opération annulée, message clair (409)
+    // au lieu de « Internal server error » (même réponse que errorMiddleware)
+    if (repondreSiConflit(error, res.req, res, logger)) return;
     const statusCode = error.statusCode || 500;
     const code = error.code || 'INTERNAL_ERROR';
 
