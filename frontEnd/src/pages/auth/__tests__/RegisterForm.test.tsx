@@ -277,7 +277,7 @@ describe('RegisterForm', () => {
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.getByText('auth.errors.passwordMinLength')).toBeInTheDocument();
+        expect(screen.getByText('Le mot de passe doit contenir au moins 12 caractères')).toBeInTheDocument();
       });
 
       expect(getPasswordInput()).toHaveAttribute('aria-invalid', 'true');
@@ -291,7 +291,7 @@ describe('RegisterForm', () => {
       fireEvent.submit(getForm());
 
       await waitFor(() => {
-        expect(screen.getByText('auth.errors.passwordMinLength')).toBeInTheDocument();
+        expect(screen.getByText('Le mot de passe doit contenir au moins 12 caractères')).toBeInTheDocument();
       });
     });
 
@@ -333,7 +333,7 @@ describe('RegisterForm', () => {
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.queryByText('auth.errors.passwordMinLength')).not.toBeInTheDocument();
+        expect(screen.queryByText('Le mot de passe doit contenir au moins 12 caractères')).not.toBeInTheDocument();
         expect(screen.queryByText(/doit contenir/i)).not.toBeInTheDocument();
       });
     });

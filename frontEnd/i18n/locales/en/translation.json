@@ -1506,7 +1506,8 @@
       "lienEnvoye": "New link sent. Remember to check your spam folder.",
       "envoiEchec": "The link could not be sent. Try again in a few minutes.",
       "dejaEnvoye": "A link has just been sent to you. Wait a few minutes before asking for another one."
-    }
+    },
+    "photoProfil": "Profile photo"
   },
   "dashboardpro": {
     "participants": "participants",
@@ -6067,6 +6068,31 @@
       "traditions": "Festivals, crafts, food, songs linked to this place.",
       "dicton": "Optional: a proverb or saying from the region.",
       "acces": "How to get there, when to visit, what to know."
+    }
+  },
+  "profil": {
+    "securite": {
+      "titre": "Account security",
+      "intro": "Change your password or your email address.",
+      "changerMdp": "Change my password",
+      "changerEmail": "Change my email address",
+      "actuel": "Current password",
+      "actuelRequis": "Enter your current password.",
+      "nouveau": "New password",
+      "identique": "The new password must be different from the current one.",
+      "validerMdp": "Change the password",
+      "mdpChange": "Password changed.",
+      "mdpChangeSuite": "For your security, you have been logged out of all your devices. Log in again with the new password.",
+      "seReconnecter": "Log in again",
+      "echec": "The change did not go through. Try again in a few minutes.",
+      "adresseActuelle": "Current address:",
+      "nouvelleAdresse": "New email address",
+      "memeAdresse": "This is already your current address.",
+      "motDePasseFaux": "Incorrect password.",
+      "adressePrise": "This address is already used by another account.",
+      "envoyerLien": "Get the confirmation link",
+      "lienEnvoye": "Confirmation link sent.",
+      "lienEnvoyeSuite": "Open the email received at {{email}} and tap the link (valid 24 hours). Your address only changes after this click. Your current address has also been notified."
     }
   }
 }

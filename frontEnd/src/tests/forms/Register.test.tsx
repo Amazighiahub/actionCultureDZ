@@ -443,7 +443,7 @@ describe('Register — Formulaire d inscription', () => {
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.getByText('auth.errors.passwordMinLength')).toBeInTheDocument();
+        expect(screen.getByText('Le mot de passe doit contenir au moins 12 caractères')).toBeInTheDocument();
       });
     });
 

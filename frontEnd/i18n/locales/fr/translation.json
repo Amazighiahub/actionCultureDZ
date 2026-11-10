@@ -1555,7 +1555,8 @@
       "lienEnvoye": "Nouveau lien envoyé. Pensez à regarder dans les courriers indésirables.",
       "envoiEchec": "Le lien n’a pas pu être envoyé. Réessayez dans quelques minutes.",
       "dejaEnvoye": "Un lien vient déjà de vous être envoyé. Attendez quelques minutes avant d’en demander un autre."
-    }
+    },
+    "photoProfil": "Photo de profil"
   },
   "dashboardpro": {
     "participants": " participants",
@@ -6067,6 +6068,31 @@
       "traditions": "Fêtes, savoir-faire, cuisine, chants liés à ce lieu.",
       "dicton": "Facultatif : un proverbe ou un dicton de la région.",
       "acces": "Comment s’y rendre, quand le visiter, ce qu’il faut savoir."
+    }
+  },
+  "profil": {
+    "securite": {
+      "titre": "Sécurité du compte",
+      "intro": "Changez votre mot de passe ou votre adresse e-mail.",
+      "changerMdp": "Changer mon mot de passe",
+      "changerEmail": "Changer mon adresse e-mail",
+      "actuel": "Mot de passe actuel",
+      "actuelRequis": "Indiquez votre mot de passe actuel.",
+      "nouveau": "Nouveau mot de passe",
+      "identique": "Le nouveau mot de passe doit être différent de l’actuel.",
+      "validerMdp": "Changer le mot de passe",
+      "mdpChange": "Mot de passe changé.",
+      "mdpChangeSuite": "Pour votre sécurité, vous êtes déconnecté(e) de tous vos appareils. Reconnectez-vous avec le nouveau mot de passe.",
+      "seReconnecter": "Se reconnecter",
+      "echec": "Le changement n’a pas abouti. Réessayez dans quelques minutes.",
+      "adresseActuelle": "Adresse actuelle :",
+      "nouvelleAdresse": "Nouvelle adresse e-mail",
+      "memeAdresse": "C’est déjà votre adresse actuelle.",
+      "motDePasseFaux": "Mot de passe incorrect.",
+      "adressePrise": "Cette adresse est déjà utilisée par un autre compte.",
+      "envoyerLien": "Recevoir le lien de confirmation",
+      "lienEnvoye": "Lien de confirmation envoyé.",
+      "lienEnvoyeSuite": "Ouvrez l’e-mail reçu à l’adresse {{email}} et appuyez sur le lien (valable 24 heures). Votre adresse ne change qu’après ce clic. Votre adresse actuelle a aussi été prévenue."
     }
   }
 }

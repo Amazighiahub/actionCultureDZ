@@ -334,6 +334,9 @@ export const API_ENDPOINTS = {
     submitProfessional: '/users/professional/submit',
     professionalStatus: '/users/professional/status',
     
+    // Changement d'adresse e-mail (lien de confirmation envoyé à la nouvelle adresse)
+    requestEmailChange: '/email-verification/request-email-change',
+
     // Préférences
     updatePreferences: '/users/preferences',
     updatePrivacy: '/users/privacy',

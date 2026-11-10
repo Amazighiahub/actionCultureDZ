@@ -131,7 +131,7 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Minimum 12 caractères')).toBeInTheDocument();
+      expect(screen.getByText('Le mot de passe doit contenir au moins 12 caractères')).toBeInTheDocument();
     });
 
     // Règle 2 : Doit contenir une majuscule
@@ -142,7 +142,7 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Doit contenir une majuscule')).toBeInTheDocument();
+      expect(screen.getByText('Le mot de passe doit contenir au moins une majuscule')).toBeInTheDocument();
     });
 
     // Règle 3 : Doit contenir une minuscule
@@ -153,7 +153,7 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Doit contenir une minuscule')).toBeInTheDocument();
+      expect(screen.getByText('Le mot de passe doit contenir au moins une minuscule')).toBeInTheDocument();
     });
 
     // Règle 4 : Doit contenir un chiffre
@@ -164,7 +164,7 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Doit contenir un chiffre')).toBeInTheDocument();
+      expect(screen.getByText('Le mot de passe doit contenir au moins un chiffre')).toBeInTheDocument();
     });
 
     // Règle 5 : Doit contenir un caractère spécial
@@ -175,7 +175,7 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Doit contenir un caractère spécial')).toBeInTheDocument();
+      expect(screen.getByText('Le mot de passe doit contenir au moins un caractère spécial')).toBeInTheDocument();
     });
 
     // Le service n'a JAMAIS été appelé (toutes les soumissions ont échoué côté client)

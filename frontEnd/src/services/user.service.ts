@@ -107,6 +107,11 @@ class UserService extends BaseService<User> {
     return httpClient.post<void>(API_ENDPOINTS.auth.changePassword, data);
   }
 
+  /** Changer d'adresse : un lien de confirmation part vers la nouvelle adresse (l'actuelle est prévenue) */
+  async requestEmailChange(newEmail: string, password: string): Promise<ApiResponse<{ newEmail: string }>> {
+    return httpClient.post<{ newEmail: string }>(API_ENDPOINTS.auth.requestEmailChange, { newEmail, password });
+  }
+
   async forgotPassword(email: string, turnstileToken?: string | null): Promise<ApiResponse<{ message: string }>> {
     return httpClient.post<{ message: string }>(API_ENDPOINTS.auth.forgotPassword, {
       email,

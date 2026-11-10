@@ -14,6 +14,7 @@ import { userService } from '@/services/user.service';
 import { useRTL } from '@/hooks/useRTL';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { detailsDesChamps, messageErreurServeur } from '@/utils/erreurServeur';
+import { erreurMotDePasse } from '@/utils/motDePasse';
 
 const ResetPassword = () => {
   const { t } = useTranslation();
@@ -43,19 +44,9 @@ const ResetPassword = () => {
   const validateForm = (): boolean => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
 
-    if (!password) {
-      newErrors.password = t('auth.errors.passwordRequired');
-    } else if (password.length < 12) {
-      newErrors.password = t('auth.errors.passwordMinLength', 'Minimum 12 caractères');
-    } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = t('auth.passwordRules.uppercase', 'Doit contenir une majuscule');
-    } else if (!/[a-z]/.test(password)) {
-      newErrors.password = t('auth.passwordRules.lowercase', 'Doit contenir une minuscule');
-    } else if (!/[0-9]/.test(password)) {
-      newErrors.password = t('auth.passwordRules.digit', 'Doit contenir un chiffre');
-    } else if (!/[^A-Za-z0-9]/.test(password)) {
-      newErrors.password = t('auth.passwordRules.special', 'Doit contenir un caractère spécial');
-    }
+    // Règles communes du mot de passe (utils/motDePasse.ts)
+    const problemeMdp = erreurMotDePasse(password, t);
+    if (problemeMdp) newErrors.password = problemeMdp;
 
     if (!confirmPassword) {
       newErrors.confirmPassword = t('auth.errors.confirmPasswordRequired');

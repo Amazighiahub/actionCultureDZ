@@ -34,6 +34,7 @@ import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import MesSuivisCard from '@/components/user/MesSuivisCard';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
 import CompleterProfilCard from '@/components/user/CompleterProfilCard';
+import SecuriteCompteCard from '@/components/user/SecuriteCompteCard';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
 import GestionLiens from '@/components/pro/GestionLiens';
@@ -558,6 +559,7 @@ const DashboardUser = () => {
           {/* Onglet Profil */}
           <TabsContent value="profil" className="space-y-6">
             <ProfilEditableTab user={user} t={t} formatDate={formatDate} />
+            <SecuriteCompteCard emailActuel={user?.email} />
             <MesSuivisCard />
             <ApplicationMobileCard />
             <MesDonneesCard />
@@ -743,7 +745,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         <div className="relative">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
             {user?.photo_url ? (
-              <img loading="lazy" decoding="async" src={user.photo_url} alt="Photo de profil" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={user.photo_url} alt={t('dashboarduser.photoProfil', 'Photo de profil')} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-muted-foreground">
                 {displayName(user?.prenom)?.[0]?.toUpperCase() || '?'}
@@ -769,32 +771,35 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.prnom")}</label>
+            <label htmlFor="profil-prenom" className="block text-sm font-medium mb-2">{t("dashboarduser.prnom")}</label>
             {editing ? (
-              <input className="w-full p-3 border rounded-lg" value={form.prenom} onChange={(e) => setForm(f => ({...f, prenom: e.target.value}))} />
+              <input id="profil-prenom" autoComplete="given-name" className="w-full p-3 border rounded-lg" value={form.prenom} onChange={(e) => setForm(f => ({...f, prenom: e.target.value}))} />
             ) : (
-              <input className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.prenom)} readOnly />
+              <input id="profil-prenom" className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.prenom)} readOnly />
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.nom")}</label>
+            <label htmlFor="profil-nom" className="block text-sm font-medium mb-2">{t("dashboarduser.nom")}</label>
             {editing ? (
-              <input className="w-full p-3 border rounded-lg" value={form.nom} onChange={(e) => setForm(f => ({...f, nom: e.target.value}))} />
+              <input id="profil-nom" autoComplete="family-name" className="w-full p-3 border rounded-lg" value={form.nom} onChange={(e) => setForm(f => ({...f, nom: e.target.value}))} />
             ) : (
-              <input className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.nom)} readOnly />
+              <input id="profil-nom" className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.nom)} readOnly />
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.email")}</label>
-            <input className="w-full p-3 border rounded-lg bg-muted" value={user?.email || ''} readOnly />
-            <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.emailReadOnly', 'L\'email ne peut pas être modifié')}</p>
+            <label htmlFor="profil-email" className="block text-sm font-medium mb-2">{t("dashboarduser.email")}</label>
+            <input id="profil-email" dir="ltr" className="w-full p-3 border rounded-lg bg-muted" value={user?.email || ''} readOnly />
+            {/* Avant : « L'email ne peut pas être modifié », inexact (audit V11 FRM-12) */}
+            <a href="#securite" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">
+              {t('profil.securite.changerEmail', 'Changer mon adresse e-mail')}
+            </a>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">{t("auth.register.phone", "Téléphone")}</label>
+            <label htmlFor="profil-telephone" className="block text-sm font-medium mb-2">{t("auth.register.phone", "Téléphone")}</label>
             {editing ? (
-              <input className="w-full p-3 border rounded-lg" type="tel" value={form.telephone} onChange={(e) => setForm(f => ({...f, telephone: e.target.value}))} />
+              <input id="profil-telephone" dir="ltr" autoComplete="tel" className="w-full p-3 border rounded-lg" type="tel" value={form.telephone} onChange={(e) => setForm(f => ({...f, telephone: e.target.value}))} />
             ) : (
-              <input className="w-full p-3 border rounded-lg bg-muted" value={user?.telephone || t('common.notProvided', 'Non renseigné')} readOnly />
+              <input id="profil-telephone" className="w-full p-3 border rounded-lg bg-muted" value={user?.telephone || t('common.notProvided', 'Non renseigné')} readOnly />
             )}
           </div>
         </div>
@@ -843,14 +848,14 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>
+            <p className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</p>
             <div className="p-3 border rounded-lg bg-muted">
               <Badge variant="secondary">{(user as any)?.TypeUser?.nom_type || (user as any)?.type_user || t("dashboarduser.visiteur")}</Badge>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.membre_depuis")}</label>
-            <input className="w-full p-3 border rounded-lg bg-muted" value={user?.date_creation ? formatDate(user.date_creation) : ''} readOnly />
+            <label htmlFor="profil-membre" className="block text-sm font-medium mb-2">{t("dashboarduser.membre_depuis")}</label>
+            <input id="profil-membre" className="w-full p-3 border rounded-lg bg-muted" value={user?.date_creation ? formatDate(user.date_creation) : ''} readOnly />
           </div>
           {/* Plusieurs métiers (artiste et poétesse…) : montrés sur le portfolio, cherchés dans l'annuaire.
               Rubrique à part, visible sans cliquer sur « Modifier » (avant : cachée sous « Biographie ») */}
@@ -884,9 +889,9 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium mb-2">{t("dashboarduser.biographie", "Biographie")}</label>
+            <label htmlFor="profil-biographie" className="block text-sm font-medium mb-2">{t("dashboarduser.biographie", "Biographie")}</label>
             {editing ? (
-              <><textarea className="w-full p-3 border rounded-lg min-h-[120px]" value={form.biographie} onChange={(e) => setForm(f => ({...f, biographie: e.target.value}))} placeholder={t('dashboarduser.biographiePlaceholder', 'Décrivez-vous en quelques lignes...')} />{isProfessional && <ConseilReferencement type="profil" className="mt-3" />}</>
+              <><textarea id="profil-biographie" dir="auto" className="w-full p-3 border rounded-lg min-h-[120px]" value={form.biographie} onChange={(e) => setForm(f => ({...f, biographie: e.target.value}))} placeholder={t('dashboarduser.biographiePlaceholder', 'Décrivez-vous en quelques lignes...')} />{isProfessional && <ConseilReferencement type="profil" className="mt-3" />}</>
             ) : (
               <div className="p-3 border rounded-lg bg-muted min-h-[80px]">
                 {displayName(user?.biographie) || <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}

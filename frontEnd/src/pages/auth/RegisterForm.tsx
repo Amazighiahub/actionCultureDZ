@@ -28,6 +28,7 @@ import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 import { normaliserTelephone, telephoneValide } from '@/utils/telephone';
 import { emailValide } from '@/utils/validationChamps';
+import { erreurMotDePasse } from '@/utils/motDePasse';
 import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import type { AuthResult } from '@/types/models/auth.types';
 import { Link } from 'react-router-dom';
@@ -197,11 +198,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         else if (!emailValide(registerForm.email)) error = t('auth.errors.emailInvalid');
         break;
       case 'mot_de_passe':
-        if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) error = t('auth.errors.passwordMinLength');
-        else if (!/[A-Z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedUppercase', 'Le mot de passe doit contenir au moins une majuscule');
-        else if (!/[a-z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
-        else if (!/[0-9]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
-        else if (!/[^A-Za-z0-9]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
+        error = erreurMotDePasse(registerForm.mot_de_passe, t) || '';
         break;
       case 'confirmation_mot_de_passe':
         if (registerForm.mot_de_passe && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) error = t('auth.errors.passwordMismatch');
@@ -250,17 +247,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       errors.email = t('auth.errors.emailInvalid');
     }
     
-    if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) {
-      errors.mot_de_passe = t('auth.errors.passwordMinLength');
-    } else if (!/[A-Z]/.test(registerForm.mot_de_passe)) {
-      errors.mot_de_passe = t('auth.errors.passwordNeedUppercase', 'Le mot de passe doit contenir au moins une majuscule');
-    } else if (!/[a-z]/.test(registerForm.mot_de_passe)) {
-      errors.mot_de_passe = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
-    } else if (!/[0-9]/.test(registerForm.mot_de_passe)) {
-      errors.mot_de_passe = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
-    } else if (!/[^A-Za-z0-9]/.test(registerForm.mot_de_passe)) {
-      errors.mot_de_passe = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
-    }
+    // Règles communes du mot de passe (utils/motDePasse.ts)
+    const problemeMdp = erreurMotDePasse(registerForm.mot_de_passe, t);
+    if (problemeMdp) errors.mot_de_passe = problemeMdp;
     
     // Visiteur : un seul champ de mot de passe, avec le bouton « afficher » (pas de confirmation)
     if (!estVisiteur && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) {
