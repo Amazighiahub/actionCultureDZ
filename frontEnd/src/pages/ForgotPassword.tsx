@@ -75,9 +75,13 @@ const ForgotPassword = () => {
     // coupure affichait « Email envoyé ! » et la personne attendait un e-mail qui ne viendrait pas
     // (audit V11 FRM-3).
     const nonParti = t('auth.forgotPassword.nonParti', 'Le service ne répond pas pour le moment. Votre demande n’est pas partie : réessayez dans quelques minutes.');
-    const montrerErreur = (source: unknown) => setError(estRefusAntiRobot(source)
-      ? messageErreurServeur(source, t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'))
-      : messageErreurServeur(source, nonParti));
+    const montrerErreur = (source: unknown) => {
+      const statut = (source as { status?: number } | null)?.status ?? 0;
+      if (estRefusAntiRobot(source)) setError(messageErreurServeur(source, t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.')));
+      // Serveur en panne : dire clairement que la demande n'est pas partie
+      else if (statut >= 500) setError(nonParti);
+      else setError(messageErreurServeur(source, nonParti));
+    };
     try {
       const response = await userService.forgotPassword(email, antiRobot.lireJeton());
 

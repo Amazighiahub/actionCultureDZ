@@ -112,20 +112,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         // Utiliser le message d'erreur spécifique du backend
         const errorMessage = getErrorMessage(result.error || '');
 
-        toast({
-          title: t('auth.errors.loginError', 'Erreur de connexion'),
-          description: errorMessage,
-          variant: 'destructive'
-        });
-
-        // Afficher l'erreur sur le(s) champ(s) concerné(s)
+        // Un seul message, dans le formulaire (avant : aussi en bulle en haut de l'écran, qui cachait le titre
+        // et répétait le même texte). Sur le(s) champ(s) concerné(s), ou au-dessus du bouton.
         const errLower = (result.error || '').toLowerCase();
         const isGeneric = errLower.includes('incorrect') || errLower.includes('invalid');
         const isEmailError = errLower.includes('email') || errLower.includes('utilisateur') || errLower.includes('user') || errLower.includes('trouvé') || errLower.includes('found');
         const isPasswordError = errLower.includes('mot de passe') || errLower.includes('password');
 
         if (isGeneric || (isEmailError && isPasswordError)) {
-          setErrors({ email: t('auth.errors.checkEmail', 'Vérifiez votre email'), password: t('auth.errors.checkPassword', 'Vérifiez votre mot de passe') });
+          setErrors({ email: t('auth.errors.checkEmail', 'Vérifiez votre email'), password: t('auth.errors.checkPassword', 'Vérifiez votre mot de passe'), general: errorMessage });
         } else if (isPasswordError) {
           setErrors({ password: errorMessage });
         } else if (isEmailError) {
@@ -136,12 +131,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           setErrors({ general: errorMessage });
         }
       }
-    } catch (error: unknown) {
-      toast({
-        title: t('auth.errors.loginError', 'Erreur'),
-        description: t('auth.errors.serverError', 'Erreur serveur. Veuillez réessayer.'),
-        variant: 'destructive'
-      });
+    } catch (_error: unknown) {
+      setErrors({ general: t('auth.errors.serverError', 'Erreur serveur. Veuillez réessayer.') });
     }
   };
 
@@ -218,7 +209,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           {errors.general && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" aria-hidden="true" />
-              <AlertDescription role="alert">{errors.general}</AlertDescription>
+              <AlertDescription>{errors.general}</AlertDescription>
             </Alert>
           )}
 
