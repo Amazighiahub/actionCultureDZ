@@ -3251,7 +3251,8 @@
     "successTitle": "Comment published",
     "successDesc": "Your review has been published successfully.",
     "noteDejaDonnee": "Your comment is published without a rating: you have already rated this (one rating per person).",
-    "noteProprietaire": "Your comment is published without a rating: you cannot rate your own content."
+    "noteProprietaire": "Your comment is published without a rating: you cannot rate your own content.",
+    "nonEnvoye": "Your comment was not sent. It is still in the box: try again."
   },
   "oeuvre": {
     "parCreateur": "A work by {{nom}}",
@@ -6010,7 +6011,8 @@
     "erreur": "The anti-robot check could not load.",
     "reessayer": "Try again",
     "refuse": "The anti-robot check failed: please redo it.",
-    "secours": "If the problem persists, write to us at contact@taladz.com."
+    "secours": "If the problem persists, write to us at contact@taladz.com.",
+    "attendre": "Before sending, wait for the green tick or check the verification box just above."
   },
   "aideArticle": {
     "titre": "How to write a great article?",

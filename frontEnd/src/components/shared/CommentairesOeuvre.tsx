@@ -3,6 +3,8 @@
  * (fiche d'artisanat : un produit artisanal est une œuvre). Même affichage que la fiche d'une œuvre.
  */
 import { messageNoteIgnoree } from '@/utils/noteIgnoree';
+import { echecCommentaire } from '@/utils/envoiCommentaire';
+import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import React, { Suspense } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -34,28 +36,26 @@ export default function CommentairesOeuvre({ oeuvreId }: { oeuvreId: number }) {
   const ajout = useMutation({
     mutationFn: async ({ contenu, note }: { contenu: string; note?: number }) => {
       const reponse = await commentaireService.createCommentaireOeuvre(oeuvreId, { contenu, ...(note ? { note_qualite: note } : {}) });
-      if (!reponse.success) throw new Error(reponse.error || t('common.error', 'Erreur'));
+      if (!reponse.success) throw reponse;
       return reponse.data;
     },
     onSuccess: (donnees) => {
       toast({ title: t('comments.added', 'Commentaire ajouté'), description: messageNoteIgnoree(donnees, t) || t('comments.addedDesc', 'Votre avis a été publié') });
       queryClient.invalidateQueries({ queryKey: cle });
     },
-    onError: (erreur: Error) => {
-      toast({ title: t('common.error', 'Erreur'), description: erreur.message, variant: 'destructive' });
-    },
+    // Échec : message sous la case (plus de bandeau en double, audit V11 FRM-14)
   });
 
-  const ajouter = async (contenu: string, note?: number) => {
+  const ajouter = async (contenu: string, note?: number): Promise<ResultatEnvoi> => {
     if (!isAuthenticated) {
       inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
-      return false;
+      return { ok: false };
     }
     try {
       await ajout.mutateAsync({ contenu, note });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      return echecCommentaire(err, t);
     }
   };
 

@@ -387,6 +387,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     // Erreurs de saisie : sous chaque champ, curseur sur le premier (plus de bandeau en double)
     setErreurServeur(null);
     if (!validateRegisterForm()) return;
+    // Vérification anti-robots pas encore terminée : message sous la case (bouton plus grisé sans raison)
+    if (!antiRobot.pretAEnvoyer()) return;
 
     try {
       let photoUrl: string | null = null;
@@ -1074,7 +1076,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                     </div>
                     
-                    <AntiRobot ref={antiRobot.ref} action="inscription" onJeton={antiRobot.setJeton} />
+                    <AntiRobot ref={antiRobot.ref} action="inscription" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
 
                     {erreurServeur && (
                       <Alert ref={refErreurServeur} variant="destructive" role="alert">
@@ -1087,7 +1089,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       type="submit"
                       size="lg"
                       className="w-full"
-                      disabled={registerLoading || wilayasLoading || uploadingPhoto || antiRobot.manquant}
+                      disabled={registerLoading || wilayasLoading || uploadingPhoto}
                     >
                       {registerLoading ? (
                         <>

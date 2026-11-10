@@ -13,7 +13,7 @@ import {
   MessageCircle, Star, ThumbsUp, Reply,
   Send, AlertCircle, User, Clock, Loader2
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
@@ -46,7 +46,7 @@ interface Comment {
 
 interface EventCommentsProps {
   comments: Comment[];
-  onAddComment: (content: string, rating?: number) => Promise<boolean>;
+  onAddComment: (content: string, rating?: number) => Promise<ResultatEnvoi>;
   eventId: number;
   /** Après une modification, suppression ou un masquage : recharger la liste */
   onChange?: () => void;
@@ -182,7 +182,6 @@ const EventComments: React.FC<EventCommentsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
 
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(0);
@@ -223,17 +222,16 @@ const EventComments: React.FC<EventCommentsProps> = ({
     setError(null);
 
     try {
-      const success = await onAddComment(newComment.trim(), rating || undefined);
-      
-      if (success) {
+      // Réussite : un seul bandeau, celui de l'envoi (avant : deux). Échec : la vraie raison sous la case.
+      const resultat = await onAddComment(newComment.trim(), rating || undefined);
+      if (resultat.ok) {
         setNewComment('');
         setRating(0);
-        toast({ title: t('comments.successTitle', 'Commentaire publié'), description: t('comments.successDesc', 'Votre avis a été publié avec succès.') });
-      } else {
-        setError(t('comments.errorSubmit', 'Erreur lors de l\'envoi du commentaire'));
+      } else if (resultat.erreur) {
+        setError(resultat.erreur);
       }
-    } catch (err) {
-      setError(t('comments.errorSubmit', 'Erreur lors de l\'envoi du commentaire'));
+    } catch {
+      setError(t('comments.nonEnvoye', 'Votre commentaire n’est pas parti. Il est toujours dans la case : réessayez.'));
     } finally {
       setIsSubmitting(false);
     }

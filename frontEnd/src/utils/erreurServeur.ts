@@ -28,6 +28,28 @@ export function messageErreurServeur(source: unknown, defaut: string): string {
   return base && !TECHNIQUE.test(base) ? base : defaut;
 }
 
+/** Résultat d'un envoi (inscription, commentaire…) : le message d'échec est montré là où la personne a appuyé */
+export interface ResultatEnvoi {
+  ok: boolean;
+  erreur?: string;
+}
+
+/**
+ * Échec d'un envoi, avec la bonne phrase selon la cause :
+ * - pas de réponse (réseau coupé) : la demande n'est pas partie, on peut réessayer ;
+ * - délai dépassé : elle est peut-être arrivée (réessayer tout de suite risquerait un doublon) ;
+ * - refus du serveur : sa raison précise (détail des champs compris).
+ */
+export function echecEnvoi(
+  err: unknown,
+  messages: { defaut: string; nonParti: string; reponseTarde?: string },
+): ResultatEnvoi {
+  const e = err as { code?: string; status?: number } | null;
+  if (!e?.status && e?.code === 'ERR_NETWORK') return { ok: false, erreur: messages.nonParti };
+  if (!e?.status && e?.code === 'ECONNABORTED') return { ok: false, erreur: messages.reponseTarde || messages.nonParti };
+  return { ok: false, erreur: messageErreurServeur(err, messages.defaut) };
+}
+
 /**
  * Fait défiler la page jusqu'au message d'erreur quand il apparaît (sur téléphone, le message en haut
  * d'un long formulaire restait hors de vue : rien ne semblait se passer après « Envoyer »).

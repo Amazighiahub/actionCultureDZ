@@ -417,16 +417,30 @@ describe('useEventDetails', () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      let success: boolean | undefined;
+      let resultat: { ok: boolean; erreur?: string } | undefined;
       await act(async () => {
-        success = await result.current.addComment('Excellent !', 5);
+        resultat = await result.current.addComment('Excellent !', 5);
       });
 
-      expect(success).toBe(true);
+      expect(resultat?.ok).toBe(true);
       expect(mockCreateCommentaire).toHaveBeenCalledWith(9, {
         contenu: 'Excellent !',
         note_qualite: 5,
       });
+    });
+
+    // Audit V11 FRM-14 : la vraie raison revient à la case, sans bandeau en double
+    it('addComment : refus du serveur → sa raison, sans bandeau d’erreur', async () => {
+      mockCreateCommentaire.mockResolvedValueOnce({ success: false, error: 'Trop de commentaires, réessayez plus tard' });
+      const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      mockToast.mockClear();
+
+      let resultat: { ok: boolean; erreur?: string } | undefined;
+      await act(async () => { resultat = await result.current.addComment('Bonjour à tous'); });
+
+      expect(resultat).toEqual({ ok: false, erreur: 'Trop de commentaires, réessayez plus tard' });
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
     });
 
     it('addComment refuse si non authentifié', async () => {
@@ -436,12 +450,12 @@ describe('useEventDetails', () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      let success: boolean | undefined;
+      let resultat: { ok: boolean; erreur?: string } | undefined;
       await act(async () => {
-        success = await result.current.addComment('Test');
+        resultat = await result.current.addComment('Test');
       });
 
-      expect(success).toBe(false);
+      expect(resultat?.ok).toBe(false);
       expect(mockCreateCommentaire).not.toHaveBeenCalled();
     });
   });

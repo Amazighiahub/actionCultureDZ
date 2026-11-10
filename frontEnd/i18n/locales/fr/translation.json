@@ -673,7 +673,8 @@
     "successTitle": "Commentaire publié",
     "successDesc": "Votre avis a été publié avec succès.",
     "noteDejaDonnee": "Votre commentaire est publié, sans note : vous avez déjà noté ce contenu (une seule note par personne).",
-    "noteProprietaire": "Votre commentaire est publié, sans note : on ne note pas son propre contenu."
+    "noteProprietaire": "Votre commentaire est publié, sans note : on ne note pas son propre contenu.",
+    "nonEnvoye": "Votre commentaire n’est pas parti. Il est toujours dans la case : réessayez."
   },
   "errors": {
     "generic": {
@@ -6010,7 +6011,8 @@
     "erreur": "La vérification anti-robots n’a pas pu se charger.",
     "reessayer": "Réessayer",
     "refuse": "La vérification anti-robots a échoué : recommencez-la.",
-    "secours": "Si le problème continue, écrivez-nous à contact@taladz.com."
+    "secours": "Si le problème continue, écrivez-nous à contact@taladz.com.",
+    "attendre": "Avant d’envoyer, attendez la coche verte ou cochez la case de vérification juste au-dessus."
   },
   "aideArticle": {
     "titre": "Comment réussir son article ?",

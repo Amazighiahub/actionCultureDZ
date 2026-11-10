@@ -3,6 +3,8 @@
  * Gère le chargement des données et les actions
  */
 import { messageNoteIgnoree } from '@/utils/noteIgnoree';
+import { echecCommentaire } from '@/utils/envoiCommentaire';
+import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -168,9 +170,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
   const addCommentMutation = useMutation({
     mutationFn: async ({ contenu, note }: { contenu: string; note?: number }) => {
       const response = await commentaireService.createCommentaireOeuvre(oeuvreId, { contenu, ...(note ? { note_qualite: note } : {}) });
-      if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de l\'ajout du commentaire');
-      }
+      if (!response.success) throw response;
       return response.data;
     },
     onSuccess: (donnees) => {
@@ -180,13 +180,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       });
       queryClient.invalidateQueries({ queryKey: commentsKey });
     },
-    onError: (error: Error) => {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
+    // Échec : message sous la case, renvoyé par addComment (plus de bandeau en double, audit V11 FRM-14)
   });
 
   // Note : l'incrémentation des vues est gérée côté backend
@@ -265,17 +259,17 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
   // ACTIONS WRAPPER
   // ============================================
 
-  const addComment = async (contenu: string, note?: number) => {
+  const addComment = async (contenu: string, note?: number): Promise<ResultatEnvoi> => {
     if (!isAuthenticated) {
       inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
-      return false;
+      return { ok: false };
     }
 
     try {
       await addCommentMutation.mutateAsync({ contenu, note });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      return echecCommentaire(err, t);
     }
   };
 

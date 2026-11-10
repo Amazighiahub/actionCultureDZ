@@ -16,13 +16,11 @@ import type { Organisation } from '@/types/models/organisation.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { echecEnvoi, type ResultatEnvoi } from '@/utils/erreurServeur';
+import { echecCommentaire } from '@/utils/envoiCommentaire';
 
 /** Résultat d'une inscription : le message d'échec est montré là où la personne a appuyé */
-export interface ResultatInscription {
-  ok: boolean;
-  erreur?: string;
-}
+export type ResultatInscription = ResultatEnvoi;
 
 interface EventDetailsOptions {
   enabled?: boolean;
@@ -255,9 +253,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
         contenu,
         note_qualite: note,
       });
-      if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de l\'ajout du commentaire');
-      }
+      if (!response.success) throw response;
       return response.data;
     },
     onSuccess: (donnees) => {
@@ -267,13 +263,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       });
       queryClient.invalidateQueries({ queryKey: commentsKey });
     },
-    onError: (error: Error) => {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
+    // Échec : message sous la case, renvoyé par addComment (plus de bandeau en double, audit V11 FRM-14)
   });
 
   // ============================================
@@ -347,18 +337,12 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       await registerMutation.mutateAsync(data);
       return { ok: true };
     } catch (err) {
-      const code = (err as { code?: string; status?: number } | null)?.code;
-      const statut = (err as { status?: number } | null)?.status;
-      // Pas de réponse : la demande n'est pas partie, on peut réessayer
-      if (!statut && code === 'ERR_NETWORK') {
-        return { ok: false, erreur: t('event.registration.nonPartie', 'Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».') };
-      }
-      // Délai dépassé : elle est peut-être arrivée ; réessayer tout de suite risquerait un doublon
-      if (!statut && code === 'ECONNABORTED') {
-        return { ok: false, erreur: t('event.registration.reponseTarde', 'La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer.') };
-      }
-      // Refus du serveur (complet, déjà inscrit…) : sa raison précise
-      return { ok: false, erreur: messageErreurServeur(err, t('event.registration.error', 'Une erreur est survenue lors de l’inscription')) };
+      // Réseau coupé : réessayer ; délai dépassé : vérifier d'abord (pas de doublon) ; refus : sa raison
+      return echecEnvoi(err, {
+        defaut: t('event.registration.error', 'Une erreur est survenue lors de l’inscription'),
+        nonParti: t('event.registration.nonPartie', 'Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».'),
+        reponseTarde: t('event.registration.reponseTarde', 'La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer.'),
+      });
     }
   };
 
@@ -373,17 +357,17 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     }
   };
 
-  const addComment = async (contenu: string, note?: number) => {
+  const addComment = async (contenu: string, note?: number): Promise<ResultatEnvoi> => {
     if (!isAuthenticated) {
       inviterConnexion(t('auth.loginToComment', 'Connectez-vous pour commenter'));
-      return false;
+      return { ok: false };
     }
 
     try {
       await addCommentMutation.mutateAsync({ contenu, note });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      return echecCommentaire(err, t);
     }
   };
 

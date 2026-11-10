@@ -58,6 +58,8 @@ const APropos = () => {
     else if (formData.message.trim().length < 10) nouvelles.message = t('apropos.messageTropCourt', 'Le message doit faire au moins 10 caractères.');
     setErreurs(nouvelles);
     if (nouvelles.email || nouvelles.message) { allerAuPremierChamp(); return; }
+    // Vérification anti-robots pas encore terminée : message sous la case (bouton plus grisé sans raison)
+    if (!antiRobot.pretAEnvoyer()) return;
 
     // Refus du serveur : sous le champ concerné si possible, sinon dans l'encadré au-dessus du bouton
     const montrerRefus = (source: unknown, defaut: string) => {
@@ -228,13 +230,13 @@ const APropos = () => {
                   <p id="message-compteur" className="text-xs text-muted-foreground text-end">{formData.message.length} / 2000</p>
                 </div>
 
-                <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} />
+                <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
 
                 {erreurServeur && (
                   <div ref={refErreurServeur} role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{erreurServeur}</div>
                 )}
 
-                <Button type="submit" className="w-full btn-hover" disabled={sending || antiRobot.manquant}>
+                <Button type="submit" className="w-full btn-hover" disabled={sending}>
                   {sending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Send className="h-4 w-4 me-2" />}
                   {t("apropos.envoyer_message")}
                 </Button>

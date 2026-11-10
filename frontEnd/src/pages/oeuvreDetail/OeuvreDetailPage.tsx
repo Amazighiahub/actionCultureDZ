@@ -40,7 +40,6 @@ import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 
 // Services
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -106,7 +105,6 @@ const OeuvreDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { formatDate: hookFormatDate } = useFormatDate();
-  const { toast } = useToast();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
 
   // Page d'origine transmise par la navigation : chemin interne uniquement
@@ -131,6 +129,7 @@ const OeuvreDetailPage: React.FC = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
+  const [erreurCommentaire, setErreurCommentaire] = useState<string | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // États additionnels pour les fonctionnalités complètes
@@ -289,15 +288,18 @@ const OeuvreDetailPage: React.FC = () => {
     if (!oeuvre || !commentContent.trim()) return;
 
     setCommentLoading(true);
+    setErreurCommentaire(null);
     try {
-      const success = await addComment(commentContent.trim());
-      if (success) {
+      const resultat = await addComment(commentContent.trim());
+      if (resultat.ok) {
         setCommentContent('');
         setShowCommentModal(false);
+      } else if (resultat.erreur) {
+        // Dans la fenêtre, qui reste ouverte avec le texte (audit V11 FRM-14)
+        setErreurCommentaire(resultat.erreur);
       }
-    } catch (err) {
-      console.error('Erreur ajout commentaire:', err);
-      toast({ title: t('common.error', 'Erreur'), description: t('comments.errorSubmit', 'Impossible d\'envoyer votre commentaire. Veuillez réessayer.'), variant: 'destructive' });
+    } catch {
+      setErreurCommentaire(t('comments.nonEnvoye', 'Votre commentaire n’est pas parti. Il est toujours dans la case : réessayez.'));
     } finally {
       setCommentLoading(false);
     }
@@ -895,12 +897,15 @@ const OeuvreDetailPage: React.FC = () => {
                 placeholder={t('oeuvredetailpage.placeholder_crivez_votre_commentaire', 'Écrivez votre commentaire ici...')}
                 className="min-h-[120px] resize-none"
                 value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
+                onChange={(e) => { setCommentContent(e.target.value); setErreurCommentaire(null); }}
                 disabled={commentLoading}
+                aria-invalid={!!erreurCommentaire || undefined}
+                aria-describedby={erreurCommentaire ? 'comment-erreur' : undefined}
               />
               <p className="text-xs text-muted-foreground text-end">
                 {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
+              {erreurCommentaire && <p id="comment-erreur" role="alert" className="text-sm text-destructive">{erreurCommentaire}</p>}
             </div>
           </div>
           <DialogFooter>

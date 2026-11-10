@@ -55,9 +55,11 @@ interface Props {
   action: 'inscription' | 'mot_de_passe' | 'contact' | 'newsletter';
   onJeton: (jeton: string | null) => void;
   className?: string;
+  /** Envoi demandé avant la fin de la vérification : on explique quoi faire (useAntiRobot().attente) */
+  attente?: boolean;
 }
 
-const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, className }, ref) => {
+const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, className, attente }, ref) => {
   const { t, i18n } = useTranslation();
   const zone = useRef<HTMLDivElement>(null);
   const idWidget = useRef<string | null>(null);
@@ -105,6 +107,11 @@ const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, classNa
   return (
     <div className={className}>
       <div ref={zone} />
+      {attente && !erreur && (
+        <p role="alert" className="mt-1 text-sm text-destructive">
+          {t('antiRobot.attendre', 'Avant d’envoyer, attendez la coche verte ou cochez la case de vérification juste au-dessus.')}
+        </p>
+      )}
       {erreur && (
         <p role="alert" className="mt-1 text-sm text-destructive">
           {t('antiRobot.erreur', 'La vérification anti-robots n’a pas pu se charger.')}{' '}
@@ -122,15 +129,29 @@ AntiRobot.displayName = 'AntiRobot';
 /**
  * État partagé par les formulaires : jeton, référence du widget, et s'il manque encore.
  * lireJeton() donne le jeton du moment de l'envoi (après un long envoi de photo, le jeton a pu être renouvelé).
+ *
+ * Le bouton d'envoi reste actif (avant : grisé sans explication, audit V11 FRM-13). À l'envoi, le
+ * formulaire appelle pretAEnvoyer() : s'il manque le jeton, `attente` passe à vrai et <AntiRobot attente>
+ * explique quoi faire ; le message disparaît dès que la vérification répond.
  */
 export function useAntiRobot() {
   const [jeton, setJetonEtat] = useState<string | null>(null);
+  const [attente, setAttente] = useState(false);
   const jetonActuel = useRef<string | null>(null);
-  const setJeton = useCallback((j: string | null) => { jetonActuel.current = j; setJetonEtat(j); }, []);
+  const setJeton = useCallback((j: string | null) => {
+    jetonActuel.current = j;
+    setJetonEtat(j);
+    if (j) setAttente(false);
+  }, []);
   const lireJeton = useCallback(() => jetonActuel.current, []);
   const ref = useRef<AntiRobotHandle>(null);
   const reinitialiser = useCallback(() => ref.current?.reinitialiser(), []);
-  return { jeton, setJeton, lireJeton, ref, reinitialiser, manquant: antiRobotActif && !jeton };
+  const pretAEnvoyer = useCallback((): boolean => {
+    if (!antiRobotActif || jetonActuel.current) return true;
+    setAttente(true);
+    return false;
+  }, []);
+  return { jeton, setJeton, lireJeton, ref, reinitialiser, pretAEnvoyer, attente, manquant: antiRobotActif && !jeton };
 }
 
 export default AntiRobot;

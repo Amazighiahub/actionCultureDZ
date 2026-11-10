@@ -64,6 +64,9 @@ const ForgotPassword = () => {
       return;
     }
 
+    // Vérification anti-robots pas encore terminée : message sous la case (bouton plus grisé sans raison)
+    if (!antiRobot.pretAEnvoyer()) return;
+
     setLoading(true);
 
     // « E-mail envoyé » seulement si le serveur le confirme. Il répond déjà de la même façon que l'adresse
@@ -199,9 +202,9 @@ const ForgotPassword = () => {
                   )}
                 </div>
 
-                <AntiRobot ref={antiRobot.ref} action="mot_de_passe" onJeton={antiRobot.setJeton} />
+                <AntiRobot ref={antiRobot.ref} action="mot_de_passe" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
 
-                <Button type="submit" size="lg" className="w-full" disabled={loading || antiRobot.manquant}>
+                <Button type="submit" size="lg" className="w-full" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 me-2 animate-spin" />

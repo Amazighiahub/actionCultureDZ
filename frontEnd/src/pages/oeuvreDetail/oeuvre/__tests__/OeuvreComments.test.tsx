@@ -148,7 +148,7 @@ const SAMPLE_COMMENT = {
 
 function renderComments({
   comments = [] as ComponentProps<typeof OeuvreComments>['comments'],
-  onAddComment = vi.fn().mockResolvedValue(true),
+  onAddComment = vi.fn().mockResolvedValue({ ok: true }),
   oeuvreId = 1,
 } = {}) {
   return render(
@@ -246,7 +246,7 @@ describe('OeuvreComments', () => {
 
     // Test complémentaire : 3 caractères exacts — PAS d'erreur, appelle onAddComment
     test('soumet correctement un commentaire de 3 caractères ou plus', async () => {
-      const mockOnAddComment = vi.fn().mockResolvedValue(true);
+      const mockOnAddComment = vi.fn().mockResolvedValue({ ok: true });
       renderComments({ onAddComment: mockOnAddComment });
 
       await user.type(getCommentTextarea(), 'abc');
@@ -261,25 +261,29 @@ describe('OeuvreComments', () => {
     });
 
     // Test complémentaire : succès → toast affiché et champ réinitialisé
-    test('affiche un toast de succès et réinitialise le champ après soumission réussie', async () => {
-      const mockOnAddComment = vi.fn().mockResolvedValue(true);
+    test('réinitialise le champ après soumission réussie (le bandeau vient de l’envoi lui-même)', async () => {
+      const mockOnAddComment = vi.fn().mockResolvedValue({ ok: true });
       renderComments({ onAddComment: mockOnAddComment });
 
       await user.type(getCommentTextarea(), 'Super commentaire de test !');
       await user.click(getSubmitButton());
 
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: expect.stringMatching(/comments\.successTitle|Commentaire publié/i),
-          })
-        );
-      });
-
       // Le champ est réinitialisé
       await waitFor(() => {
         expect(getCommentTextarea()).toHaveValue('');
       });
+    });
+
+    // Audit V11 FRM-14 : un seul message, sous la case, avec la vraie raison ; le texte reste
+    test('échec : la raison s’affiche sous la case et le texte est conservé', async () => {
+      const mockOnAddComment = vi.fn().mockResolvedValue({ ok: false, erreur: 'Trop de commentaires, réessayez plus tard' });
+      renderComments({ onAddComment: mockOnAddComment });
+
+      await user.type(getCommentTextarea(), 'Super commentaire de test !');
+      await user.click(getSubmitButton());
+
+      expect(await screen.findByText('Trop de commentaires, réessayez plus tard')).toBeInTheDocument();
+      expect(getCommentTextarea()).toHaveValue('Super commentaire de test !');
     });
   });
 

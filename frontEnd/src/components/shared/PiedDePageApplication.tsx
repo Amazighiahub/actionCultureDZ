@@ -2,7 +2,7 @@
  * Pied de page, visible de tous, sans compte : installer Tala DZ et s'abonner à la newsletter
  * avec son e-mail seul. Le bouton d'installation n'apparaît que si le navigateur le permet.
  */
-import AntiRobot, { antiRobotActif, useAntiRobot } from '@/components/shared/AntiRobot';
+import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
@@ -93,7 +93,7 @@ export function InscriptionNewsletter() {
       return;
     }
     // Envoi sans avoir touché au champ (adresse remplie par le navigateur) : montrer d'abord la vérification
-    if (antiRobotActif && !antiRobot.lireJeton()) {
+    if (!antiRobot.pretAEnvoyer()) {
       setAfficherAntiRobot(true);
       return;
     }
@@ -140,7 +140,7 @@ export function InscriptionNewsletter() {
           onFocus={() => setAfficherAntiRobot(true)}
           onChange={(e) => { setEmail(e.target.value); setErreurEmail(''); setAfficherAntiRobot(true); }}
         />
-        <Button type="submit" disabled={enCours || (antiRobot.manquant && afficherAntiRobot)}>
+        <Button type="submit" disabled={enCours}>
           {enCours
             ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />
             : <Mail className="h-4 w-4 me-2" aria-hidden="true" />}
@@ -148,7 +148,7 @@ export function InscriptionNewsletter() {
         </Button>
       </div>
       {erreurEmail && <p id="newsletter-email-erreur" role="alert" className="text-sm text-destructive">{erreurEmail}</p>}
-      {afficherAntiRobot &&<AntiRobot ref={antiRobot.ref} action="newsletter" onJeton={antiRobot.setJeton} />}
+      {afficherAntiRobot &&<AntiRobot ref={antiRobot.ref} action="newsletter" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />}
       {/* Invisible pour les personnes : seuls les robots le remplissent */}
       <input type="text" name="site_web" value={robot} onChange={(e) => setRobot(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <p className="text-xs text-muted-foreground">
