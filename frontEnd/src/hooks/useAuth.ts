@@ -11,6 +11,8 @@ import type {
 import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { queryClient } from '@/lib/queryClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -78,12 +80,12 @@ export function useAuth(): UseAuthReturn {
       // ✅ Retourner le message d'erreur du backend
       return { 
         success: false, 
-        error: response.error || 'Email ou mot de passe incorrect'
+        error: messageErreurServeur(response, i18next.t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'))
       };
     } catch (error: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la connexion'
+        error: messageErreurServeur(error, i18next.t('auth.errors.loginError', 'Erreur lors de la connexion'))
       };
     } finally {
       setLoginLoading(false);
@@ -128,10 +130,8 @@ export function useAuth(): UseAuthReturn {
         if (needsEmailVerification) {
           // Rediriger vers page de confirmation email
           navigate('/verification-email-envoyee', {
-            state: {
-              email: data.email,
-              message: 'Un email de vérification a été envoyé à votre adresse.'
-            }
+            // Pas de texte ici : la page traduit son message (avant, ce texte français s'affichait aussi en arabe)
+            state: { email: data.email }
           });
         } else {
           // Mode dev ou email déjà vérifié - rediriger vers accueil
@@ -144,12 +144,12 @@ export function useAuth(): UseAuthReturn {
       // ✅ Retourner le message d'erreur du backend
       return { 
         success: false, 
-        error: response.error || 'Une erreur est survenue lors de l\'inscription'
+        error: messageErreurServeur(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
       };
     } catch (error: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription'
+        error: messageErreurServeur(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
       };
     } finally {
       setRegisterLoading(false);
@@ -179,7 +179,7 @@ export function useAuth(): UseAuthReturn {
           navigate('/verification-email-envoyee', {
             state: {
               email: data.email,
-              message: 'Un email de vérification a été envoyé. Après vérification, votre compte sera soumis à validation par un administrateur.',
+              message: i18next.t('auth.emailVerificationPro', 'Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe.'),
               isProfessional: true
             }
           });
@@ -201,12 +201,12 @@ export function useAuth(): UseAuthReturn {
       // ✅ Retourner le message d'erreur du backend
       return { 
         success: false, 
-        error: response.error || 'Une erreur est survenue lors de l\'inscription'
+        error: messageErreurServeur(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
       };
     } catch (error: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription'
+        error: messageErreurServeur(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
       };
     } finally {
       setRegisterLoading(false);

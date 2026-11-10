@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { httpClient } from '@/services/httpClient';
 import { ConfirmDialog } from '@/components/shared';
 import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation, surTelephone } from '@/utils/applicationMobile';
@@ -92,12 +93,13 @@ export function InscriptionNewsletter() {
         site_web: robot,
         ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() } : {}),
       });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw res;
       setEnvoye(true);
     } catch (err) {
       toast({
         title: t('common.error', 'Erreur'),
-        description: (err instanceof Error && err.message) || t('newsletter.echec', 'L’inscription n’a pas abouti. Réessayez.'),
+        // Détail du champ refusé (avant : « Données invalides » seul, audit V11 FRM-6)
+        description: messageErreurServeur(err, t('newsletter.echec', 'L’inscription n’a pas abouti. Réessayez.')),
         variant: 'destructive',
       });
     } finally {

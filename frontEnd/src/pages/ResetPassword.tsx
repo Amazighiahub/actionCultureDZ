@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 import { useRTL } from '@/hooks/useRTL';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
+import { detailsDesChamps, messageErreurServeur } from '@/utils/erreurServeur';
 
 const ResetPassword = () => {
   const { t } = useTranslation();
@@ -28,6 +29,7 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [lienInvalide, setLienInvalide] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -102,9 +104,27 @@ const ResetPassword = () => {
     }
   };
 
+  /**
+   * Erreur du serveur : lue par son code et le détail des champs, plus par des mots-clés (le serveur
+   * écrit « Invalid token » en anglais ; « Données invalides » s'affichait sans dire quoi faire,
+   * audit V11 FRM-6). Lien plus valable : message clair et bouton pour en demander un autre.
+   */
+  const montrerErreur = (source: unknown) => {
+    const code = (source as { code?: string } | null)?.code || '';
+    if (code === 'INVALID_TOKEN' || detailsDesChamps(source).some((d) => d.field === 'token')) {
+      setLienInvalide(true);
+      setError(t('auth.resetPassword.lienInvalide', 'Ce lien n’est plus valable (il a déjà servi ou il est trop ancien). Demandez un nouveau lien.'));
+    } else if (code.startsWith('PASSWORD_')) {
+      setError(t('auth.resetPassword.regles', 'Le mot de passe doit contenir au moins 12 caractères, une minuscule, une majuscule, un chiffre et un caractère spécial.'));
+    } else {
+      setError(messageErreurServeur(source, t('auth.resetPassword.error', 'Une erreur est survenue. Veuillez réessayer.')));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLienInvalide(false);
 
     if (!validateForm()) {
       return;
@@ -131,26 +151,10 @@ const ResetPassword = () => {
           navigate('/auth');
         }, 3000);
       } else {
-        const errMsg = response.error || '';
-        if (errMsg.includes('429') || errMsg.toLowerCase().includes('too many') || errMsg.toLowerCase().includes('trop de')) {
-          setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
-        } else if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('expiré') || errMsg.toLowerCase().includes('expired')) {
-          setError(t('auth.resetPassword.tokenExpired', 'Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation.'));
-        } else {
-          setError(errMsg || t('auth.resetPassword.error', 'Une erreur est survenue. Veuillez réessayer.'));
-        }
+        montrerErreur(response);
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : '';
-      if (errMsg.includes('429') || errMsg.toLowerCase().includes('rate')) {
-        setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
-      } else if (errMsg.includes('timeout') || errMsg.includes('Timeout') || errMsg.includes('ECONNABORTED')) {
-        setError(t('auth.errors.timeout', 'Le serveur met trop de temps à répondre. Veuillez réessayer.'));
-      } else if (errMsg.includes('ERR_CONNECTION') || errMsg.includes('Network')) {
-        setError(t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.'));
-      } else {
-        setError(errMsg || t('auth.resetPassword.error', 'Une erreur est survenue. Veuillez réessayer.'));
-      }
+      montrerErreur(err);
     } finally {
       setLoading(false);
     }
@@ -245,7 +249,14 @@ const ResetPassword = () => {
                 {error && (
                   <Alert variant="destructive" role="alert">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>
+                      {error}
+                      {lienInvalide && (
+                        <Button asChild variant="outline" size="sm" className="mt-3 block w-fit">
+                          <Link to="/forgot-password">{t('auth.resetPassword.requestNewLink')}</Link>
+                        </Button>
+                      )}
+                    </AlertDescription>
                   </Alert>
                 )}
 

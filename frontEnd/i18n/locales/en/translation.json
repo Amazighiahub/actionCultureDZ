@@ -360,7 +360,9 @@
       "requestNewLink": "Request a new link",
       "tokenExpired": "This link has expired. Please request a new reset link.",
       "conditions": "By choosing your password, you accept the",
-      "conditionsLien": "terms of use"
+      "conditionsLien": "terms of use",
+      "lienInvalide": "This link is no longer valid (it has already been used or is too old). Request a new link.",
+      "regles": "The password must have at least 12 characters, a lowercase letter, an uppercase letter, a digit and a special character."
     },
     "loginToComment": "Log in to comment",
     "inviteTitle": "Log in, it’s free",
@@ -397,7 +399,8 @@
     "backToLogin": "Back to sign in",
     "sessionExpired": "Session expired",
     "pleaseReconnect": "Please sign in again",
-    "seoTitle": "Log in and sign up"
+    "seoTitle": "Log in and sign up",
+    "emailVerificationPro": "A verification e-mail has been sent to you. After this check, the team will validate your professional account."
   },
   "categories": {
     "heritageTypes": {

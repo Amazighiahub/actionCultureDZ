@@ -376,7 +376,9 @@
       "requestNewLink": "Demander un nouveau lien",
       "tokenExpired": "Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation.",
       "conditions": "En choisissant votre mot de passe, vous acceptez les",
-      "conditionsLien": "conditions d’utilisation"
+      "conditionsLien": "conditions d’utilisation",
+      "lienInvalide": "Ce lien n’est plus valable (il a déjà servi ou il est trop ancien). Demandez un nouveau lien.",
+      "regles": "Le mot de passe doit contenir au moins 12 caractères, une minuscule, une majuscule, un chiffre et un caractère spécial."
     },
     "idleWarning": "Session bientôt expirée",
     "idleWarningDesc": "Vous serez déconnecté dans 2 minutes pour inactivité.",
@@ -397,7 +399,8 @@
     "backToLogin": "Retour à la connexion",
     "sessionExpired": "Session expirée",
     "pleaseReconnect": "Veuillez vous reconnecter",
-    "seoTitle": "Connexion et inscription"
+    "seoTitle": "Connexion et inscription",
+    "emailVerificationPro": "Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe."
   },
   "categories": {
     "heritageTypes": {
