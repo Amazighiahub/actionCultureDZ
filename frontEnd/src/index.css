@@ -683,8 +683,11 @@
 /* ==========================================================================
    12. RTL SUPPORT COMPLET
    ========================================================================== */
+/* « start » et non « right » : chaque texte s'aligne au début de SA langue. Avec « right », un passage
+   en français dans la page arabe (article, légende, nom) restait aligné à droite, ponctuation déplacée
+   (audit V11 UX-3). */
 [dir="rtl"] {
-  text-align: right;
+  text-align: start;
 }
 
 [dir="rtl"] ul, [dir="rtl"] ol {

@@ -32,7 +32,7 @@ export const useRTL = (languageParam?: string) => {
   const normalizedLang = normalizeLanguageCode(language);
   
   const isRtl = ['ar', 'ar-DZ', 'he', 'fa', 'ur'].includes(normalizedLang);
-  const direction = isRtl ? 'rtl' : 'ltr' as const;
+  const direction: 'rtl' | 'ltr' = isRtl ? 'rtl' : 'ltr';
   
   // Classes pré-calculées basées sur isRtl
   const rtlClasses = useMemo(() => ({

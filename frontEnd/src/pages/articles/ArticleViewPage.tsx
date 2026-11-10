@@ -573,7 +573,7 @@ const ArticleViewPage: React.FC = () => {
         return block.media ?
         <figure key={cle} className={`mag-figure ${classeFigure(block.metadata?.layout)}`}>
             <img src={getAssetUrl(block.media.url)} alt={block.metadata?.caption || ''} loading="lazy" decoding="async" />
-            {block.metadata?.caption && <figcaption>{block.metadata.caption}</figcaption>}
+            {block.metadata?.caption && <figcaption dir="auto">{block.metadata.caption}</figcaption>}
           </figure> :
         null;
 
@@ -796,7 +796,7 @@ const ArticleViewPage: React.FC = () => {
       {blocOuverture?.media &&
       <figure className="mag-hero">
           <img src={getAssetUrl(blocOuverture.media.url)} alt={blocOuverture.metadata?.caption || ''} />
-          {blocOuverture.metadata?.caption && <figcaption>{blocOuverture.metadata.caption}</figcaption>}
+          {blocOuverture.metadata?.caption && <figcaption dir="auto">{blocOuverture.metadata.caption}</figcaption>}
         </figure>
       }
 

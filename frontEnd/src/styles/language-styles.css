@@ -108,27 +108,33 @@ html[lang="en"] {
      Support RTL
      =================================== */
 
-/* Direction RTL globale */
-html[dir="rtl"] {
-    text-align: right;
-}
-
+/* Direction globale : alignement logique (début de la langue de chaque texte), voir index.css */
+html[dir="rtl"],
 html[dir="ltr"] {
-    text-align: left;
+    text-align: start;
 }
 
-/* Ajustements pour les inputs en RTL */
+/* Champs en RTL : ils suivent le sens de la page sans l'imposer (avant : « direction: rtl » sur tous
+   les champs écrasait dir="ltr" et dir="auto", même pour un e-mail ou un téléphone, audit V11 UX-22) */
 html[dir="rtl"] input,
 html[dir="rtl"] textarea,
 html[dir="rtl"] select {
-    text-align: right;
-    direction: rtl;
+    text-align: start;
 }
 
-/* Placeholders en RTL */
+/* E-mail, téléphone, adresse web : toujours écrits de gauche à droite (« contact@… », « 0555 12 34 56 »),
+   alignés à droite pour rester dans la mise en page arabe */
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="url"] {
+    direction: ltr;
+    text-align: right;
+}
+
+/* Placeholders : alignés comme le champ */
 html[dir="rtl"] input::placeholder,
 html[dir="rtl"] textarea::placeholder {
-    text-align: right;
+    text-align: inherit;
 }
 
 /* ===================================
@@ -168,13 +174,13 @@ html[dir="rtl"] button svg:last-child {
 
 /* Dropdown menus en RTL */
 html[dir="rtl"] [role="menu"] {
-    text-align: right;
+    text-align: start;
 }
 
 /* Cards et conteneurs */
 html[dir="rtl"] .card,
 html[dir="rtl"] .panel {
-    text-align: right;
+    text-align: start;
 }
 
 /* ===================================

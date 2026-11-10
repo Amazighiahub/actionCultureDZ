@@ -37,7 +37,7 @@ const Bloc: React.FC<{ bloc: PatrimoineBlock }> = ({ bloc }) => {
       return src ? (
         <figure>
           <img src={src} alt={meta(bloc, 'alt') || ''} loading="lazy" decoding="async" className="rounded-lg max-w-full max-h-[480px] object-contain mx-auto" />
-          {meta(bloc, 'alt') && <figcaption className="text-xs text-muted-foreground text-center mt-1">{meta(bloc, 'alt')}</figcaption>}
+          {meta(bloc, 'alt') && <figcaption dir="auto" className="text-xs text-muted-foreground text-center mt-1">{meta(bloc, 'alt')}</figcaption>}
         </figure>
       ) : null;
     }

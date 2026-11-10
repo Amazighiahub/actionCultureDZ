@@ -48,7 +48,7 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
             alt={block.metadata?.caption || 'Image'}
             className="rounded-lg max-w-full max-h-[600px] object-contain mx-auto" />
           {block.metadata?.caption && (
-            <figcaption className="image-caption">{block.metadata.caption}</figcaption>
+            <figcaption dir="auto" className="image-caption">{block.metadata.caption}</figcaption>
           )}
         </figure>
       ) : null;

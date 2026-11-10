@@ -4,6 +4,8 @@ import '../i18n/config';
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { DirectionProvider } from "@radix-ui/react-direction";
+import { useRTL } from "@/hooks/useRTL";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import InvitationInstallation from '@/components/shared/InvitationInstallation';
@@ -160,8 +162,19 @@ const OfflineBanner = () => {
   );
 };
 
+/**
+ * Sens d'écriture donné une fois pour toutes aux composants Radix (onglets, listes déroulantes, menus,
+ * boutons radio…). Sans lui, ils posaient dir="ltr" même en arabe : l'ancienne règle « tout à droite »
+ * le masquait, l'alignement logique (audit V11 UX-3) le rendait visible.
+ */
+const DirectionComposants = ({ children }: { children: React.ReactNode }) => {
+  const { direction } = useRTL();
+  return <DirectionProvider dir={direction}>{children}</DirectionProvider>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <DirectionComposants>
     <TooltipProvider>
       <PermissionsProvider>
         <BrowserRouter
@@ -485,6 +498,7 @@ const App = () => (
         </BrowserRouter>
       </PermissionsProvider>
     </TooltipProvider>
+    </DirectionComposants>
   </QueryClientProvider>
 );
 
