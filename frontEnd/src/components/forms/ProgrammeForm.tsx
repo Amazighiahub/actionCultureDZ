@@ -447,7 +447,6 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 onChange={(value) => handleMultiLangChange('titre', value)}
                 required={false}
                 disabled={isReadOnly}
-                errors={errors}
               />
 
               {/* Description multilingue (requise) */}
@@ -461,7 +460,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 required={true}
                 requiredLanguages={['fr']}
                 disabled={isReadOnly}
-                errors={errors}
+                // Message du champ entier : avant, toute la liste des erreurs était passée, rangée par champ
+                // et non par langue, et « la description est requise » ne s'affichait jamais
+                error={errors.description}
               />
 
               {/* Type d'activité */}

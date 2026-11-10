@@ -333,7 +333,7 @@ const AjouterOrganisation = () => {
                     required
                     requiredLanguages={[]}
                     placeholder={t('organisations.create.namePlaceholder', 'Ex: Association culturelle...')}
-                    errors={fieldErrors.nom ? { fr: fieldErrors.nom } : undefined}
+                    error={fieldErrors.nom}
                   />
                   {ressemblantes.length > 0 && (
                     <Alert>

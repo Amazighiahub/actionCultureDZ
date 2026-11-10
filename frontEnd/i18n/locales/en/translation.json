@@ -2212,7 +2212,8 @@
     "brouillonRestaure": "Your input has been restored",
     "brouillonFichiers": "Your session had expired. Add the files (images, sounds) again before sending.",
     "verifyUpdate": "The server was slow to respond: the change may have been saved. Open your dashboard to check before trying again.",
-    "contenuNonEnregistre": "The article text could not be saved. It is still on screen: click “Save” again."
+    "contenuNonEnregistre": "The article text could not be saved. It is still on screen: click “Save” again.",
+    "lienSource": "Source link"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -3400,7 +3401,8 @@
       "invalidIsbn": "Invalid ISBN — 10 or 13 digits expected",
       "invalidUrl": "Invalid URL — use the format https://example.com",
       "formHasErrors": "Please correct the errors below",
-      "nbPistesInvalide": "The number of tracks must be between 1 and 500"
+      "nbPistesInvalide": "The number of tracks must be between 1 and 500",
+      "aCorriger": "To fix before sending. Tap a word to go there:"
     },
     "scientificDetails": "Scientific details",
     "journal": "Journal / Review",

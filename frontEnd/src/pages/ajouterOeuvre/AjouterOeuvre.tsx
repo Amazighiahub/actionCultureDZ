@@ -19,7 +19,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 import ArticleEditor from '@/components/article/ArticleEditor';
 import IntervenantEditeurManager from '@/components/oeuvre/IntervenantEditeurManager';
 import type { TypeOeuvre, TagMotCle } from '@/types/models/references.types';
-import { useAjouterOeuvre } from './useAjouterOeuvre';
+import { CHAMPS_OEUVRE_DANS_L_ORDRE, allerAuChampOeuvre, useAjouterOeuvre } from './useAjouterOeuvre';
 import CategorySelection from './CategorySelection';
 import OeuvreSpecificFields from './OeuvreSpecificFields';
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -72,6 +72,22 @@ const AjouterOeuvre: React.FC = () => {
     editId, mediasEnregistres, retirerMediaEnregistre,
     extraitsEnregistres, extraitsChoisis, choisirExtrait, retirerExtrait,
   } = hook;
+
+  // Résumé des champs à corriger, dans l'ordre de la page
+  const libelleChamp: Record<string, string> = {
+    id_type_oeuvre: t('ajouteroeuvre.type_duvre'),
+    titre: t('ajouteroeuvre.titre_luvre'),
+    description: t('ajouteroeuvre.description_label', 'Résumé de l’œuvre'),
+    annee_creation: t('ajouteroeuvre.anne_cration'),
+    prix: t('ajouteroeuvre.prix'),
+    id_langue: t('ajouteroeuvre.langueOriginale', 'Langue originale de l’œuvre'),
+    isbn: t('ajouteroeuvre.isbn'),
+    url_source: t('ajouteroeuvre.lienSource', 'Lien de la source'),
+    nb_pistes: t('ajouteroeuvre.nb_pistes', 'Nombre de pistes'),
+    liens_ecoute: t('musique.liens', 'Liens d’écoute'),
+    categories: t('ajouteroeuvre.catgories_1'),
+  };
+  const champsEnErreur = CHAMPS_OEUVRE_DANS_L_ORDRE.filter((champ) => fieldErrors[champ]);
 
   // ============================================================================
   // RENDU CONDITIONNEL SELON L'ÉTAT
@@ -179,10 +195,30 @@ const AjouterOeuvre: React.FC = () => {
                 </Alert>
               }
 
+              {/* Erreur du serveur : la page remonte jusqu'ici */}
               {submitError &&
               <Alert ref={refErreur} variant="destructive" className="mb-6" role="alert" aria-live="assertive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
+              }
+
+              {/* Erreurs de saisie : la page est déjà au premier champ ; ce résumé mène aux autres (audit V11 FRM-7) */}
+              {champsEnErreur.length > 0 &&
+              <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p>{t('oeuvre.errors.aCorriger', 'À corriger avant l’envoi. Appuyez sur un mot pour y aller :')}</p>
+                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                      {champsEnErreur.map((champ) => (
+                        <li key={champ}>
+                          <button type="button" className="underline underline-offset-2 font-medium" onClick={() => allerAuChampOeuvre(champ)}>
+                            {libelleChamp[champ]}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
                 </Alert>
               }
 
@@ -237,14 +273,14 @@ const AjouterOeuvre: React.FC = () => {
                               onChange={(value: any) => handleInputChange('titre', value)} required requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_lart_calligraphie_maghrebine")}
                               maxLength={500} showCharCount
-                              errors={fieldErrors.titre ? { fr: fieldErrors.titre, ar: fieldErrors.titre } : {}} />
+                              error={fieldErrors.titre} />
                           </div>
                           <div>
                             <MultiLangInput name="description" label={t("ajouteroeuvre.description_label", "Résumé de l'œuvre")} value={formData.description}
                               onChange={(value: any) => handleInputChange('description', value)} type="textarea" rows={4} required requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
                               maxLength={5000} showCharCount
-                              errors={fieldErrors.description ? { fr: fieldErrors.description, ar: fieldErrors.description } : {}} />
+                              error={fieldErrors.description} />
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -371,9 +407,11 @@ const AjouterOeuvre: React.FC = () => {
                     </Card>
 
                     {/* Catégories */}
-                    <CategorySelection typeOeuvreId={formData.id_type_oeuvre} selectedCategories={formData.categories}
-                      onCategoriesChange={(categories) => handleInputChange('categories', categories)} />
-                    {fieldErrors.categories && <p id="categories-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.categories}</p>}
+                    <div id="categories" tabIndex={-1} className="scroll-mt-24 focus:outline-none">
+                      <CategorySelection typeOeuvreId={formData.id_type_oeuvre} selectedCategories={formData.categories}
+                        onCategoriesChange={(categories) => handleInputChange('categories', categories)} />
+                      {fieldErrors.categories && <p id="categories-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.categories}</p>}
+                    </div>
 
                     {/* Qui est l'auteur ? */}
                     <Card className="shadow-cultural">

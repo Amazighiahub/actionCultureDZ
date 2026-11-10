@@ -53,6 +53,27 @@ export const getTagName = (nom: unknown, lang: SupportedLanguage = 'fr'): string
   return String(nom);
 };
 
+/** Champs contrôlés, dans l'ordre où ils apparaissent sur la page (avant : la langue passait avant le résumé) */
+export const CHAMPS_OEUVRE_DANS_L_ORDRE = [
+  'id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'id_langue',
+  'isbn', 'url_source', 'nb_pistes', 'liens_ecoute', 'categories',
+] as const;
+
+/**
+ * Amène la page au champ et y place le curseur. Titre et résumé : la zone de la langue ouverte
+ * (« titre-ar » sur le site arabe ; avant, « titre-fr » était visé et n'existait pas : rien ne bougeait).
+ */
+export function allerAuChampOeuvre(champ: string) {
+  const multilingue = champ === 'titre' || champ === 'description';
+  const el = (multilingue
+    ? document.querySelector<HTMLElement>(`input[id^="${champ}-"], textarea[id^="${champ}-"]`)
+    : document.getElementById(champ)) || document.getElementById(`${champ}-error`);
+  if (!el) return;
+  // Catégories : bloc haut, on montre son début (le milieu cachait le titre de la rubrique)
+  el.scrollIntoView({ behavior: 'smooth', block: champ === 'categories' ? 'start' : 'center' });
+  el.focus?.({ preventScroll: true });
+}
+
 export function useAjouterOeuvre() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
@@ -829,22 +850,12 @@ export function useAjouterOeuvre() {
       }
 
       if (Object.keys(errors).length > 0) {
+        // Erreurs de saisie : la page va au premier champ à corriger. Pas de submitError ici : il faisait
+        // remonter la page sur le bandeau du haut, loin des champs (audit V11 FRM-7) ; le résumé cliquable
+        // des champs à corriger est construit par la page à partir de fieldErrors.
         setFieldErrors(errors);
-        setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
-        const fieldOrder = ['id_type_oeuvre', 'titre', 'id_langue', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'nb_pistes', 'liens_ecoute', 'categories'];
-        const firstErrorField = fieldOrder.find((f) => errors[f]);
-        if (firstErrorField) {
-          const elementId = firstErrorField === 'titre' ? 'titre-fr'
-            : firstErrorField === 'description' ? 'description-fr'
-            : firstErrorField;
-          requestAnimationFrame(() => {
-            const el = document.getElementById(elementId) || document.getElementById(`${firstErrorField}-error`);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              if (typeof (el as HTMLElement).focus === 'function') el.focus();
-            }
-          });
-        }
+        const premier = CHAMPS_OEUVRE_DANS_L_ORDRE.find((f) => errors[f]);
+        if (premier) requestAnimationFrame(() => allerAuChampOeuvre(premier));
         return;
       }
 

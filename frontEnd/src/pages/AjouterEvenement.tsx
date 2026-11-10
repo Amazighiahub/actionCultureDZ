@@ -1292,7 +1292,7 @@ const AjouterEvenement = () => {
                 required
                 requiredLanguages={[]}
                 placeholder={t('organisations.create.namePlaceholder', 'Ex: Association culturelle...')}
-                errors={orgFormErrors.nom ? { fr: orgFormErrors.nom } : undefined}
+                error={orgFormErrors.nom}
               />
             </div>
 

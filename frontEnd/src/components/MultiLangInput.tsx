@@ -51,8 +51,14 @@ interface MultiLangInputProps {
   className?: string;
   /** Désactivé? */
   disabled?: boolean;
-  /** Erreurs de validation */
+  /** Erreurs de validation, langue par langue */
   errors?: Record<string, string>;
+  /**
+   * Erreur du champ entier (ex. « requis, dans au moins une langue »), affichée quelle que soit la
+   * langue ouverte. Avant, il fallait la recopier dans `errors` pour chaque langue : sur le site en
+   * arabe ou en anglais, l'onglet ouvert n'avait souvent aucun message.
+   */
+  error?: string;
   /** Nombre max de caractères */
   maxLength?: number;
   /** Afficher le compteur de caractères */
@@ -85,6 +91,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   className = '',
   disabled = false,
   errors = {},
+  error,
   maxLength,
   showCharCount = false,
 }) => {
@@ -110,6 +117,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
 
   // Obtenir la langue active
   const activeLanguage = AVAILABLE_LANGUAGES.find(l => l.code === activeLang) || AVAILABLE_LANGUAGES[0];
+  // Message de la langue ouverte, sinon celui du champ entier
+  const erreurAffichee = errors[activeLang] || error;
 
   // État pour détecter les claviers tamazight
   const [keyboardStatus, setKeyboardStatus] = useState<{ tifinagh: boolean; latin: boolean; any: boolean }>({
@@ -184,7 +193,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
         {AVAILABLE_LANGUAGES.map((lang) => {
           const hasValue = !!value[lang.code]?.trim();
           const isRequired = requiredLanguages.includes(lang.code);
-          const hasError = errors[lang.code];
+          const hasError = errors[lang.code] || error;
 
           return (
             <button
@@ -285,11 +294,11 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
             spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
             aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
-            aria-invalid={!!errors[activeLang] || undefined}
-            aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
+            aria-invalid={!!erreurAffichee || undefined}
+            aria-describedby={erreurAffichee ? `${name}-${activeLang}-error` : undefined}
             className={cn(
               activeLanguage.dir === 'rtl' && 'text-right',
-              errors[activeLang] && 'border-destructive'
+              erreurAffichee && 'border-destructive'
             )}
           />
         ) : (
@@ -307,11 +316,11 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
             maxLength={maxLength}
             aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
-            aria-invalid={!!errors[activeLang] || undefined}
-            aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
+            aria-invalid={!!erreurAffichee || undefined}
+            aria-describedby={erreurAffichee ? `${name}-${activeLang}-error` : undefined}
             className={cn(
               activeLanguage.dir === 'rtl' && 'text-right',
-              errors[activeLang] && 'border-destructive'
+              erreurAffichee && 'border-destructive'
             )}
           />
         )}
@@ -328,8 +337,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
       )}
 
       {/* Message d'erreur */}
-      {errors[activeLang] && (
-        <p id={`${name}-${activeLang}-error`} role="alert" className="mt-1 text-sm text-destructive">{errors[activeLang]}</p>
+      {erreurAffichee && (
+        <p id={`${name}-${activeLang}-error`} role="alert" className="mt-1 text-sm text-destructive">{erreurAffichee}</p>
       )}
 
       {/* Indicateur de progression */}

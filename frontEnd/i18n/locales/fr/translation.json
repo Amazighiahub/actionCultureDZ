@@ -2260,7 +2260,8 @@
     "brouillonRestaure": "Votre saisie a été restaurée",
     "brouillonFichiers": "Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.",
     "verifyUpdate": "Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer.",
-    "contenuNonEnregistre": "Le texte de l’article n’a pas pu être enregistré. Il est toujours à l’écran : cliquez de nouveau sur « Enregistrer »."
+    "contenuNonEnregistre": "Le texte de l’article n’a pas pu être enregistré. Il est toujours à l’écran : cliquez de nouveau sur « Enregistrer ».",
+    "lienSource": "Lien de la source"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -3405,7 +3406,8 @@
       "invalidIsbn": "ISBN invalide — 10 ou 13 chiffres attendus",
       "invalidUrl": "URL invalide — utilisez le format https://exemple.com",
       "formHasErrors": "Veuillez corriger les erreurs ci-dessous",
-      "nbPistesInvalide": "Le nombre de pistes doit être compris entre 1 et 500"
+      "nbPistesInvalide": "Le nombre de pistes doit être compris entre 1 et 500",
+      "aCorriger": "À corriger avant l’envoi. Appuyez sur un mot pour y aller :"
     },
     "scientificDetails": "Détails scientifiques",
     "journal": "Journal / Revue",
