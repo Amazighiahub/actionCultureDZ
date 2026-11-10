@@ -2084,7 +2084,11 @@
     "ressources": "Ressources",
     "ressourcesText": "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.",
     "titreCourt": "À propos",
-    "messageTropCourt": "Le message doit faire au moins 10 caractères."
+    "messageTropCourt": "Le message doit faire au moins 10 caractères.",
+    "messageRequis": "Écrivez votre message.",
+    "merciEnvoye": "Merci, votre message est bien parti.",
+    "reponseA": "Nous vous répondrons à l’adresse {{email}}.",
+    "autreMessage": "Écrire un autre message"
   },
   "ajouteroeuvre": {
     "extrait": "Extrait du livre",

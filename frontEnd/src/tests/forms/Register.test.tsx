@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -636,6 +636,38 @@ describe('Register — Formulaire d inscription', () => {
       for (const champ of ['sexe', 'date_naissance', 'wilaya_residence', 'telephone']) {
         expect(envoye).not.toHaveProperty(champ);
       }
+    });
+
+    // Audit V11 FRM-9 : e-mail déjà utilisé → sous le champ, avec les liens, plus de bandeau de 5 secondes
+    test('visiteur : e-mail déjà utilisé → message sous le champ et liens vers la connexion', async () => {
+      mockRegisterVisitor.mockResolvedValue({ success: false, code: 'CONFLICT', status: 409, error: 'Cet email est déjà utilisé' });
+      renderRegister();
+      await user.type(getPrenomInput(), 'Lina');
+      await user.type(getNomInput(), 'Exemple');
+      await user.type(getRegisterEmailInput(), 'lina@example.com');
+      await user.type(getPasswordInput(), 'SecurePass123!');
+      await user.click(screen.getByLabelText(/13 ans ou plus/));
+      await user.click(screen.getByLabelText(/auth\.register\.acceptTerms\.prefix/));
+      fireEvent.submit(getRegisterForm());
+
+      expect(await screen.findByText(/Un compte existe déjà avec cette adresse/)).toBeInTheDocument();
+      expect(getRegisterEmailInput()).toHaveAttribute('aria-invalid', 'true');
+      expect(within(getRegisterForm()).getByText('Mot de passe oublié ?').closest('a')).toHaveAttribute('href', '/forgot-password');
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+    });
+
+    test('visiteur : refus sans champ précis → encadré au-dessus du bouton', async () => {
+      mockRegisterVisitor.mockResolvedValue({ success: false, error: 'Service indisponible, réessayez plus tard' });
+      renderRegister();
+      await user.type(getPrenomInput(), 'Lina');
+      await user.type(getNomInput(), 'Exemple');
+      await user.type(getRegisterEmailInput(), 'lina@example.com');
+      await user.type(getPasswordInput(), 'SecurePass123!');
+      await user.click(screen.getByLabelText(/13 ans ou plus/));
+      await user.click(screen.getByLabelText(/auth\.register\.acceptTerms\.prefix/));
+      fireEvent.submit(getRegisterForm());
+
+      expect(await screen.findByText('Service indisponible, réessayez plus tard')).toBeInTheDocument();
     });
 
     test('bouton disabled pendant le loading', () => {

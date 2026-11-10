@@ -1,5 +1,5 @@
 
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { detailsDesChamps, messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookOpen, Users, Globe, Mail, Send, Loader2 } from 'lucide-react';
+import { BookOpen, Users, Globe, Mail, Send, Loader2, CheckCircle } from 'lucide-react';
 import { useTranslation } from "react-i18next";
-import { useToast } from '@/components/ui/use-toast';
 import SEOHead from '@/components/SEOHead';
 import { httpClient } from '@/services/httpClient';
 import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
@@ -20,7 +19,6 @@ const CONTACT_EMAIL = 'contact@taladz.com';
 
 const APropos = () => {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const antiRobot = useAntiRobot();
   // Sujet prérempli depuis un lien (ex. « Proposition pour le lieu : … »)
@@ -30,37 +28,59 @@ const APropos = () => {
     return { prenom: '', nom: '', email: '', sujet, message: '' };
   });
 
+  // Messages sous les champs et encadré qui restent affichés (avant : bandeaux de 5 secondes, puis un
+  // formulaire vidé sans trace après l'envoi, audit V11 FRM-9)
+  const [erreurs, setErreurs] = useState<{ email?: string; message?: string }>({});
+  const [erreurServeur, setErreurServeur] = useState<string | null>(null);
+  const refErreurServeur = useDefilerVersErreur(erreurServeur);
+  const [envoyeA, setEnvoyeA] = useState<string | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+    const champ = e.target.id;
+    setFormData(prev => ({ ...prev, [champ]: e.target.value }));
+    if (champ === 'email' || champ === 'message') setErreurs(prev => ({ ...prev, [champ]: undefined }));
   };
+
+  const allerAuPremierChamp = () => requestAnimationFrame(() => {
+    const el = document.querySelector<HTMLElement>('#contact [aria-invalid="true"]');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.focus({ preventScroll: true });
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.message) {
-      toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('apropos.emailMessageRequis', 'L\'email et le message sont obligatoires.'), variant: 'destructive' });
-      return;
-    }
+    setErreurServeur(null);
+    const nouvelles: { email?: string; message?: string } = {};
     // Format de l'adresse : contrôlé ici depuis noValidate (avant, seule la bulle du navigateur le faisait)
-    if (!emailValide(formData.email)) {
-      toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('auth.errors.emailInvalid', 'Email invalide'), variant: 'destructive' });
-      return;
-    }
-    if (formData.message.trim().length < 10) {
-      toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('apropos.messageTropCourt', 'Le message doit faire au moins 10 caractères.'), variant: 'destructive' });
-      return;
-    }
+    if (!formData.email.trim()) nouvelles.email = t('auth.errors.emailRequired', 'L’email est requis');
+    else if (!emailValide(formData.email)) nouvelles.email = t('auth.errors.emailInvalid', 'Email invalide');
+    if (!formData.message.trim()) nouvelles.message = t('apropos.messageRequis', 'Écrivez votre message.');
+    else if (formData.message.trim().length < 10) nouvelles.message = t('apropos.messageTropCourt', 'Le message doit faire au moins 10 caractères.');
+    setErreurs(nouvelles);
+    if (nouvelles.email || nouvelles.message) { allerAuPremierChamp(); return; }
+
+    // Refus du serveur : sous le champ concerné si possible, sinon dans l'encadré au-dessus du bouton
+    const montrerRefus = (source: unknown, defaut: string) => {
+      const parChamp: { email?: string; message?: string } = {};
+      for (const d of detailsDesChamps(source)) {
+        if ((d.field === 'email' || d.field === 'message') && d.message && !parChamp[d.field]) parChamp[d.field] = d.message;
+      }
+      if (parChamp.email || parChamp.message) { setErreurs(parChamp); allerAuPremierChamp(); return; }
+      setErreurServeur(messageErreurServeur(source, defaut));
+    };
+
     setSending(true);
     try {
       // httpClient : jeton anti-CSRF exigé par l'API (un fetch direct était refusé : aucun message n'arrivait)
       const data = await httpClient.post('/contact', { ...formData, ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() } : {}) });
       if (data.success) {
-        toast({ title: t('apropos.messageEnvoye', 'Message envoyé'), description: t('apropos.messageEnvoyeDesc', 'Nous avons bien reçu votre message. Nous vous répondrons rapidement.') });
+        setEnvoyeA(formData.email.trim());
         setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
       } else {
-        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(data, t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.')), variant: 'destructive' });
+        montrerRefus(data, t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.'));
       }
     } catch (err) {
-      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.')), variant: 'destructive' });
+      montrerRefus(err, t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.'));
     } finally {
       setSending(false);
       // Un jeton ne sert qu'une fois
@@ -151,7 +171,22 @@ const APropos = () => {
                 <h2 className="text-2xl font-semibold font-serif">{t("apropos.nous_contacter")}</h2>
               </div>
               
-              {/* noValidate : les messages du site, traduits, remplacent la bulle du navigateur */}
+              {/* Message parti : un encadré reste à la place du formulaire (avant : 5 secondes puis plus rien) */}
+              {envoyeA ? (
+                <div id="contact" className="space-y-4 scroll-mt-24 rounded-lg border border-primary/30 bg-primary/5 p-4" role="status">
+                  <p className="font-medium flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" aria-hidden="true" />
+                    {t('apropos.merciEnvoye', 'Merci, votre message est bien parti.')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('apropos.reponseA', 'Nous vous répondrons à l’adresse {{email}}.', { email: `⁦${envoyeA}⁩` })}
+                  </p>
+                  <Button type="button" variant="outline" onClick={() => setEnvoyeA(null)}>
+                    {t('apropos.autreMessage', 'Écrire un autre message')}
+                  </Button>
+                </div>
+              ) : (
+              /* noValidate : les messages du site, traduits, remplacent la bulle du navigateur */
               <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit} noValidate>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -166,7 +201,9 @@ const APropos = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="email">{t("apropos.email")} <span className="text-destructive" aria-hidden="true">*</span></Label>
-                  <Input id="email" type="email" autoComplete="email" required maxLength={255} value={formData.email} onChange={handleChange} placeholder={t("apropos.placeholder_votreemailexemplecom")} />
+                  <Input id="email" type="email" autoComplete="email" required maxLength={255} value={formData.email} onChange={handleChange} placeholder={t("apropos.placeholder_votreemailexemplecom")}
+                    dir="ltr" aria-invalid={!!erreurs.email || undefined} aria-describedby={erreurs.email ? 'contact-email-erreur' : undefined} />
+                  {erreurs.email && <p id="contact-email-erreur" role="alert" className="text-sm text-destructive">{erreurs.email}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -180,22 +217,29 @@ const APropos = () => {
                     id="message"
                     minLength={10}
                     maxLength={2000}
-                    aria-describedby="message-compteur"
+                    aria-describedby={erreurs.message ? 'contact-message-erreur message-compteur' : 'message-compteur'}
+                    aria-invalid={!!erreurs.message || undefined}
                     required
                     value={formData.message}
                     onChange={handleChange}
                     placeholder={t("apropos.placeholder_votre_message")}
                     className="min-h-[120px]" />
+                  {erreurs.message && <p id="contact-message-erreur" role="alert" className="text-sm text-destructive">{erreurs.message}</p>}
                   <p id="message-compteur" className="text-xs text-muted-foreground text-end">{formData.message.length} / 2000</p>
                 </div>
 
                 <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} />
+
+                {erreurServeur && (
+                  <div ref={refErreurServeur} role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{erreurServeur}</div>
+                )}
 
                 <Button type="submit" className="w-full btn-hover" disabled={sending || antiRobot.manquant}>
                   {sending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Send className="h-4 w-4 me-2" />}
                   {t("apropos.envoyer_message")}
                 </Button>
               </form>
+              )}
             </Card>
 
             {/* Contact direct */}

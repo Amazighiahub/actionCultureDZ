@@ -6,6 +6,12 @@ import type { CurrentUser } from '@/services/auth.service';
 export interface AuthResult {
   success: boolean;
   error?: string;
+  /** Code du serveur (ex. CONFLICT : e-mail déjà utilisé à l'inscription) */
+  code?: string;
+  /** Statut HTTP de la réponse refusée */
+  status?: number;
+  /** Détail champ par champ renvoyé par le serveur */
+  champs?: { field?: string; message?: string }[];
 }
 
 // Credentials pour la connexion

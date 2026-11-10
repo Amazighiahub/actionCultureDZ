@@ -2036,7 +2036,11 @@
     "ressources": "Resources",
     "ressourcesText": "Tala DZ provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more.",
     "titreCourt": "About",
-    "messageTropCourt": "The message must be at least 10 characters long."
+    "messageTropCourt": "The message must be at least 10 characters long.",
+    "messageRequis": "Write your message.",
+    "merciEnvoye": "Thank you, your message has been sent.",
+    "reponseA": "We will reply to {{email}}.",
+    "autreMessage": "Write another message"
   },
   "ajouteroeuvre": {
     "extrait": "Book excerpt",

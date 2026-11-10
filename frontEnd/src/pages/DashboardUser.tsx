@@ -1,4 +1,4 @@
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -616,6 +616,9 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   });
   // Erreurs de saisie des liens (site web / réseaux), par champ
   const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
+  // Refus du serveur à l'enregistrement : encadré près du bouton, qui reste affiché (avant : bandeau de 5 s)
+  const [erreurEnregistrement, setErreurEnregistrement] = useState<string | null>(null);
+  const refErreurEnregistrement = useDefilerVersErreur(erreurEnregistrement);
 
   // Initialiser le formulaire quand user change
   const startEditing = useCallback(() => {
@@ -632,6 +635,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       specialites: lireSpecialites((user as { specialites?: unknown } | null)?.specialites),
     });
     setLinkErrors({});
+    setErreurEnregistrement(null);
     setEditing(true);
   }, [user]);
 
@@ -664,6 +668,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
 
   const handleSave = async () => {
     if (isProfessional && !validateLinks()) return;
+    setErreurEnregistrement(null);
     setSaving(true);
     try {
       const response = await httpClient.put('/users/profile', {
@@ -686,10 +691,10 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         setEditing(false);
         await refreshUser();
       } else {
-        toast({ title: t('common.error'), description: messageErreurServeur(response, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')), variant: 'destructive' });
+        setErreurEnregistrement(messageErreurServeur(response, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')));
       }
     } catch (err) {
-      toast({ title: t('common.error'), description: messageErreurServeur(err, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')), variant: 'destructive' });
+      setErreurEnregistrement(messageErreurServeur(err, t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour')));
     } finally {
       setSaving(false);
     }
@@ -948,6 +953,13 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
 
       {/* Articles de presse et liens : sur le portfolio, et sur l'œuvre ou l'événement choisi */}
       {isProfessional && <GestionLiens />}
+
+      {erreurEnregistrement && editing && (
+        <Alert ref={refErreurEnregistrement} variant="destructive" className="mt-8" role="alert">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{erreurEnregistrement}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Boutons */}
       <div className="flex justify-end gap-3 mt-8 pt-6 border-t">

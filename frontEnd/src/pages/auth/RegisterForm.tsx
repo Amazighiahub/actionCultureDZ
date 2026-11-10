@@ -28,11 +28,34 @@ import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 import { normaliserTelephone, telephoneValide } from '@/utils/telephone';
 import { emailValide } from '@/utils/validationChamps';
+import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
+import type { AuthResult } from '@/types/models/auth.types';
+import { Link } from 'react-router-dom';
 
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
+
+/** Nom du champ dans la réponse du serveur → champ du formulaire (pour placer l'erreur dessous) */
+const CHAMP_DU_SERVEUR: Record<string, string> = {
+  email: 'email',
+  password: 'mot_de_passe',
+  password_confirmation: 'confirmation_mot_de_passe',
+  confirmation_mot_de_passe: 'confirmation_mot_de_passe',
+  nom: 'nom',
+  prenom: 'prenom',
+  telephone: 'telephone',
+  date_naissance: 'date_naissance',
+  atteste_age_minimum: 'atteste_age',
+  accepte_conditions: 'accepte_conditions',
+  accepteConditions: 'accepte_conditions',
+  wilaya_residence: 'wilaya_residence',
+  id_commune: 'id_commune',
+  biographie: 'biographie',
+  portfolio: 'portfolio',
+  site_web: 'portfolio',
+};
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { t, i18n } = useTranslation();
@@ -95,6 +118,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
   // État pour les erreurs de validation
   const [registerErrors, setRegisterErrors] = useState<Record<string, string>>({});
+  // Refus du serveur sans champ précis : encadré au-dessus du bouton, qui reste affiché
+  const [erreurServeur, setErreurServeur] = useState<string | null>(null);
+  const refErreurServeur = useDefilerVersErreur(erreurServeur);
+  // E-mail déjà utilisé : liens « Se connecter » et « Mot de passe oublié ? » sous le champ
+  const [emailDejaPris, setEmailDejaPris] = useState(false);
 
   // Gestion de l'upload de photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,18 +346,47 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     return !hasErrors;
   };
 
+  /**
+   * Inscription refusée : l'erreur va sous le champ concerné, sinon dans un encadré au-dessus du bouton,
+   * qui reste affiché (avant : un bandeau de 5 secondes en haut de l'écran, audit V11 FRM-9).
+   * E-mail déjà utilisé (code CONFLICT, et non plus des mots-clés français du message) : liens vers
+   * la connexion et le mot de passe oublié, sous le champ e-mail.
+   */
+  const montrerEchec = (resultat: AuthResult) => {
+    if (resultat.code === 'CONFLICT' || resultat.status === 409) {
+      setEmailDejaPris(true);
+      setRegisterErrors({ email: t('auth.errors.emailExistsDescription', 'Un compte existe déjà avec cette adresse email. Veuillez vous connecter ou utiliser une autre adresse.') });
+      requestAnimationFrame(() => {
+        const champ = document.getElementById('email');
+        champ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        champ?.focus({ preventScroll: true });
+      });
+      return;
+    }
+    const parChamp: Record<string, string> = {};
+    for (const d of resultat.champs || []) {
+      const champ = d.field ? CHAMP_DU_SERVEUR[d.field] : undefined;
+      if (champ && d.message && !parChamp[champ]) parChamp[champ] = d.message;
+    }
+    if (Object.keys(parChamp).length > 0) {
+      setRegisterErrors(parChamp);
+      requestAnimationFrame(() => {
+        const premier = document.querySelector<HTMLElement>('form [aria-invalid="true"]');
+        premier?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        premier?.focus({ preventScroll: true });
+      });
+      return;
+    }
+    setErreurServeur(resultat.error || t('auth.errors.registrationErrorDescription', 'Une erreur est survenue lors de l\'inscription'));
+  };
+
   // Soumission du formulaire d'inscription
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateRegisterForm()) {
-      toast({
-        title: t('auth.errors.validationError'),
-        description: t('auth.errors.correctErrors'),
-        variant: "destructive",
-      });
-      return;
-    }
+    // Erreurs de saisie : sous chaque champ, curseur sur le premier (plus de bandeau en double)
+    setErreurServeur(null);
+    if (!validateRegisterForm()) return;
 
     try {
       let photoUrl: string | null = null;
@@ -475,49 +532,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
         // La redirection sera gérée automatiquement par le hook useAuth
       } else {
-        console.error('❌ Échec de l\'inscription:', registrationResult.error);
-
-        // Afficher le message d'erreur spécifique du backend
-        const errorMessage = registrationResult.error || '';
-        let title = t('auth.errors.registrationError', 'Erreur d\'inscription');
-        let description = t('auth.errors.registrationErrorDescription', 'Une erreur est survenue lors de l\'inscription');
-
-        // Messages d'erreur spécifiques
-        if (errorMessage.toLowerCase().includes('email') && (errorMessage.toLowerCase().includes('exist') || errorMessage.toLowerCase().includes('déjà'))) {
-          title = t('auth.errors.emailExists', 'Email déjà utilisé');
-          description = t('auth.errors.emailExistsDescription', 'Un compte existe déjà avec cette adresse email. Veuillez vous connecter ou utiliser une autre adresse.');
-        } else if (errorMessage.toLowerCase().includes('mot de passe')) {
-          description = t('auth.errors.passwordError', 'Le mot de passe ne respecte pas les critères de sécurité');
-        } else if (errorMessage) {
-          description = errorMessage;
-        }
-
-        toast({
-          title,
-          description,
-          variant: "destructive",
-        });
+        montrerEchec(registrationResult);
       }
     } catch (error: unknown) {
-      console.error('❌ Erreur inscription:', error);
-      const errorMessage = error instanceof Error ? error.message : '';
-
-      // Vérifier si c'est une erreur d'email existant
-      let title = t('errors.generic.title', 'Erreur');
-      let description = t('errors.generic.message', 'Une erreur est survenue');
-
-      if (errorMessage.toLowerCase().includes('email') && (errorMessage.toLowerCase().includes('exist') || errorMessage.toLowerCase().includes('déjà'))) {
-        title = t('auth.errors.emailExists', 'Email déjà utilisé');
-        description = t('auth.errors.emailExistsDescription', 'Un compte existe déjà avec cette adresse email.');
-      } else if (errorMessage) {
-        description = errorMessage;
-      }
-
-      toast({
-        title,
-        description,
-        variant: "destructive",
-      });
+      montrerEchec({ success: false, error: messageErreurServeur(error, t('auth.errors.registrationErrorDescription', 'Une erreur est survenue lors de l\'inscription')) });
     } finally {
       setUploadingPhoto(false);
       // Un jeton ne sert qu'une fois
@@ -695,6 +713,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         onChange={(e) => {
                           setRegisterForm({...registerForm, email: e.target.value});
                           setRegisterErrors({...registerErrors, email: ''});
+                          setEmailDejaPris(false);
                         }}
                         onBlur={() => validateRegisterField('email')}
                         className={registerErrors.email ? 'border-destructive' : ''}
@@ -704,6 +723,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       />
                       {registerErrors.email && (
                         <p id="auth-register-email-error" role="alert" className="text-sm text-destructive">{registerErrors.email}</p>
+                      )}
+                      {emailDejaPris && (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                          <button type="button" className="font-medium text-primary underline underline-offset-2" onClick={onSwitchToLogin}>
+                            {t('auth.login.submit', 'Se connecter')}
+                          </button>
+                          <Link to="/forgot-password" className="font-medium text-primary underline underline-offset-2">
+                            {t('auth.login.forgotPassword', 'Mot de passe oublié ?')}
+                          </Link>
+                        </div>
                       )}
                     </div>
                     
@@ -1046,6 +1075,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     </div>
                     
                     <AntiRobot ref={antiRobot.ref} action="inscription" onJeton={antiRobot.setJeton} />
+
+                    {erreurServeur && (
+                      <Alert ref={refErreurServeur} variant="destructive" role="alert">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{erreurServeur}</AlertDescription>
+                      </Alert>
+                    )}
 
                     <Button
                       type="submit"

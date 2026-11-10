@@ -1,4 +1,11 @@
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { detailsDesChamps, messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
+
+/** Champ dans la réponse du serveur → clé de fieldErrors du formulaire (pour placer l'erreur dessous) */
+const CHAMP_EVENEMENT_DU_SERVEUR: Record<string, string> = {
+  nom_evenement: 'nom', id_type_evenement: 'type', date_debut: 'dateDebut', date_fin: 'dateFin',
+  id_lieu: 'lieu', id_organisation: 'organisation', url_virtuel: 'urlVirtuel', affiche: 'affiche',
+  contact_email: 'contactEmail', date_limite_inscription: 'dateLimite', tarif: 'tarif', tarification: 'tarif',
+};
 import React, { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -409,6 +416,16 @@ const AjouterEvenement = () => {
   const [statutActuel, setStatutActuel] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Refus du serveur à l'envoi : encadré près des boutons, la page y descend
+  const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
+  const refErreurEnvoi = useDefilerVersErreur(erreurEnvoi);
+
+  const allerALaPremiereErreur = () => setTimeout(() => {
+    const premier = document.querySelector<HTMLElement>('form [aria-invalid="true"]');
+    premier?.focus();
+    premier?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 0);
+
   const clearFieldError = (field: string) => {
     setFieldErrors(prev => {
       if (!prev[field]) return prev;
@@ -473,18 +490,36 @@ const AjouterEvenement = () => {
     if (file) handleImageFile(file);
   };
 
+  /**
+   * Refus du serveur : message dans un encadré près des boutons, qui reste affiché, et sous le champ
+   * quand le serveur le nomme (avant : bandeau de 5 secondes en haut de l'écran, audit V11 FRM-9)
+   */
+  const montrerRefus = (source: unknown, defaut: string) => {
+    const parChamp: Record<string, string> = {};
+    for (const d of detailsDesChamps(source)) {
+      const champ = d.field ? CHAMP_EVENEMENT_DU_SERVEUR[d.field] : undefined;
+      if (champ && d.message && !parChamp[champ]) parChamp[champ] = d.message;
+    }
+    if (Object.keys(parChamp).length) setFieldErrors((prev) => ({ ...prev, ...parChamp }));
+    setErreurEnvoi(messageErreurServeur(source, defaut));
+  };
+
   const submitEvent = async (statut: 'publie' | 'brouillon') => {
     if (isSubmitting) return;
+    setErreurEnvoi(null);
 
-    // Validation minimale même pour les brouillons
+    // Validation minimale même pour les brouillons : sous les champs (avant : bandeau de 5 secondes)
     if (statut === 'brouillon') {
-      const hasAnyName = formData.nom.fr?.trim() || formData.nom.ar?.trim() || formData.nom.en?.trim() || formData.nom['tz-ltn']?.trim() || formData.nom['tz-tfng']?.trim();
-      if (!hasAnyName) {
-        toast({ title: t('common.error'), description: t('events.create.draftNameRequired', 'Le nom est requis même pour un brouillon (au moins une langue)'), variant: 'destructive' });
-        return;
+      const erreursBrouillon: Record<string, string> = {};
+      if (!aDuTexte(formData.nom)) {
+        erreursBrouillon.nom = t('events.create.draftNameRequired', 'Le nom est requis même pour un brouillon (au moins une langue)');
       }
       if (!formData.idTypeEvenement) {
-        toast({ title: t('common.error'), description: t('events.create.typeRequired', 'Le type d\'événement est requis'), variant: 'destructive' });
+        erreursBrouillon.type = t('events.create.typeRequired', 'Le type d\'événement est requis');
+      }
+      if (Object.keys(erreursBrouillon).length) {
+        setFieldErrors(erreursBrouillon);
+        allerALaPremiereErreur();
         return;
       }
     }
@@ -570,19 +605,11 @@ const AjouterEvenement = () => {
         });
         navigate('/dashboard-pro');
       } else {
-        toast({
-          title: t('common.error', 'Erreur'),
-          description: messageErreurServeur(response, isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création')),
-          variant: 'destructive',
-        });
+        montrerRefus(response, isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création'));
       }
     } catch (error: unknown) {
       // Vraie raison donnée par le serveur (avant : toujours le même texte, sans dire quel champ)
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: messageErreurServeur(error, isEditMode ? t('toasts.updateError') : t('events.create.errorEvent', 'Erreur lors de la création de l\'événement')),
-        variant: 'destructive',
-      });
+      montrerRefus(error, isEditMode ? t('toasts.updateError') : t('events.create.errorEvent', 'Erreur lors de la création de l\'événement'));
     } finally {
       setIsSubmitting(false);
     }
@@ -659,20 +686,10 @@ const AjouterEvenement = () => {
 
     setFieldErrors(newErrors);
 
+    // Erreurs sous les champs, curseur sur la première (plus de bandeau en double)
     if (Object.keys(newErrors).length > 0) {
-      toast({
-        title: t('common.error'),
-        description: Object.values(newErrors)[0],
-        variant: "destructive",
-      });
-      // Focus first errored field
-      setTimeout(() => {
-        const firstError = document.querySelector('[aria-invalid="true"]');
-        if (firstError) {
-          (firstError as HTMLElement).focus();
-          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 0);
+      setErreurEnvoi(null);
+      allerALaPremiereErreur();
       return;
     }
 
@@ -1227,6 +1244,13 @@ const AjouterEvenement = () => {
                 <AlertDescription>
                   {t('events.create.organisationRequiredMessage', 'Vous devez d\'abord créer une organisation pour publier un événement en présentiel.')}
                 </AlertDescription>
+              </Alert>
+            )}
+
+            {erreurEnvoi && (
+              <Alert ref={refErreurEnvoi} variant="destructive" role="alert">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{erreurEnvoi}</AlertDescription>
               </Alert>
             )}
 

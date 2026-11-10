@@ -393,11 +393,9 @@ describe('AjouterEvenement', () => {
 
       submitForm();
 
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({ variant: 'destructive' })
-        );
-      });
+      // Message sous le champ, plus de bandeau de 5 secondes (audit V11 FRM-9)
+      expect(await screen.findByText("Le nom de l'événement est requis, dans au moins une langue")).toBeInTheDocument();
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -409,11 +407,9 @@ describe('AjouterEvenement', () => {
 
       submitForm();
 
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({ variant: 'destructive' })
-        );
-      });
+      // Message sous le champ, plus de bandeau de 5 secondes (audit V11 FRM-9)
+      expect(await screen.findByText("Le type d'événement est requis")).toBeInTheDocument();
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -426,11 +422,9 @@ describe('AjouterEvenement', () => {
 
       submitForm();
 
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({ variant: 'destructive' })
-        );
-      });
+      // Message sous le champ, plus de bandeau de 5 secondes (audit V11 FRM-9)
+      expect(await screen.findByText('La date de début est requise')).toBeInTheDocument();
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -450,11 +444,9 @@ describe('AjouterEvenement', () => {
 
       submitForm();
 
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({ variant: 'destructive' })
-        );
-      });
+      // Message sous le champ, plus de bandeau de 5 secondes (audit V11 FRM-9)
+      expect(await screen.findByText('La date de fin doit être après la date de début')).toBeInTheDocument();
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -587,10 +579,8 @@ describe('AjouterEvenement', () => {
       const draftBtn = screen.getByRole('button', { name: /saveAsDraft/i });
       await user.click(draftBtn);
 
-      // Toast d'erreur pour le nom manquant
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'destructive' })
-      );
+      // Message sous le nom (avant : bandeau de 5 secondes)
+      expect(await screen.findByText('Le nom est requis même pour un brouillon (au moins une langue)')).toBeInTheDocument();
       expect(mockCreate).not.toHaveBeenCalled();
 
       vi.clearAllMocks();
@@ -600,10 +590,8 @@ describe('AjouterEvenement', () => {
       await user.type(screen.getByTestId('input-nom-fr'), 'Mon brouillon');
       await user.click(draftBtn);
 
-      // Toast d'erreur pour le type manquant
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'destructive' })
-      );
+      // Message sous le type
+      expect(await screen.findByText("Le type d'événement est requis")).toBeInTheDocument();
       expect(mockCreate).not.toHaveBeenCalled();
     });
 

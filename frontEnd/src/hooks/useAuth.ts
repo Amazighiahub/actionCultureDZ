@@ -11,8 +11,23 @@ import type {
 import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { queryClient } from '@/lib/queryClient';
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { detailsDesChamps, messageErreurServeur } from '@/utils/erreurServeur';
 import i18next from 'i18next';
+
+/**
+ * Inscription refusée : message, code du serveur (CONFLICT = e-mail déjà utilisé) et détail des champs,
+ * pour que le formulaire place l'erreur sous le bon champ (avant : un bandeau de 5 secondes en haut)
+ */
+function echecInscription(source: unknown): AuthResult {
+  const s = source as { code?: unknown; status?: unknown } | null;
+  return {
+    success: false,
+    error: messageErreurServeur(source, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription')),
+    code: typeof s?.code === 'string' ? s.code : undefined,
+    status: typeof s?.status === 'number' ? s.status : undefined,
+    champs: detailsDesChamps(source),
+  };
+}
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -141,16 +156,9 @@ export function useAuth(): UseAuthReturn {
         return { success: true };
       }
       
-      // ✅ Retourner le message d'erreur du backend
-      return { 
-        success: false, 
-        error: messageErreurServeur(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
-      };
+      return echecInscription(response);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: messageErreurServeur(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
-      };
+      return echecInscription(error);
     } finally {
       setRegisterLoading(false);
     }
@@ -198,16 +206,9 @@ export function useAuth(): UseAuthReturn {
         return { success: true };
       }
       
-      // ✅ Retourner le message d'erreur du backend
-      return { 
-        success: false, 
-        error: messageErreurServeur(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
-      };
+      return echecInscription(response);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: messageErreurServeur(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'))
-      };
+      return echecInscription(error);
     } finally {
       setRegisterLoading(false);
     }
