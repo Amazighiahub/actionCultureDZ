@@ -16,8 +16,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import ListeMoyensPaiement from '@/components/paiement/ListeMoyensPaiement';
 import { commandeService, type Commande, type ModeLivraison, type OffreOeuvre } from '@/services/commande.service';
+import { detailsDesChamps, echecEnvoi } from '@/utils/erreurServeur';
 
 const ORDRE: ModeLivraison[] = ['algerie', 'etranger', 'main_propre', 'a_convenir'];
+
+type ErreursCommande = Partial<Record<'livraison' | 'adresse' | 'telephone', string>>;
 
 interface Props {
   idOeuvre: number;
@@ -44,6 +47,7 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
   const [message, setMessage] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [erreursChamps, setErreursChamps] = useState<ErreursCommande>({});
   const [faite, setFaite] = useState<Commande | null>(null);
 
   useEffect(() => {
@@ -90,22 +94,48 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
     setOuvert(true);
   };
 
+  // Erreur sous le champ concerné, le curseur y va (avant : en bas de la fenêtre, champ non marqué)
+  const montrerErreursChamps = (erreurs: ErreursCommande) => {
+    setErreursChamps(erreurs);
+    const premier = (['livraison', 'adresse', 'telephone'] as const).find((c) => erreurs[c]);
+    if (premier) requestAnimationFrame(() => document.getElementById(premier === 'livraison' ? 'cmd-livraison' : `cmd-${premier === 'adresse' ? 'adresse' : 'tel'}`)?.focus());
+  };
+
   const envoyer = async () => {
-    if (!livraison) { setErreur(t('commande.choisirLivraison', 'Choisissez la livraison.')); return; }
-    if (avecAdresse && !adresse.trim()) { setErreur(t('commande.adresseRequise', 'Indiquez l’adresse de livraison.')); return; }
+    const erreurs: ErreursCommande = {};
+    if (!livraison) erreurs.livraison = t('commande.choisirLivraison', 'Choisissez la livraison.');
+    if (avecAdresse && !adresse.trim()) erreurs.adresse = t('commande.adresseRequise', 'Indiquez l’adresse de livraison.');
     // Même règle que le serveur
-    if (telephone.trim() && !/^[+\d][\d\s.()-]{5,29}$/.test(telephone.trim())) { setErreur(t('commande.telephoneInvalide', 'Numéro de téléphone invalide (chiffres, espaces, + au début).')); return; }
-    setEnvoi(true);
+    if (telephone.trim() && !/^[+\d][\d\s.()-]{5,29}$/.test(telephone.trim())) erreurs.telephone = t('commande.telephoneInvalide', 'Numéro de téléphone invalide (chiffres, espaces, + au début).');
     setErreur(null);
-    const r = await commandeService.commander({
-      id_oeuvre: idOeuvre, quantite, livraison,
-      adresse: avecAdresse ? adresse.trim() : undefined,
-      telephone: telephone.trim() || undefined,
-      message: message.trim() || undefined,
-    }).catch(() => null);
-    setEnvoi(false);
-    if (!r?.success || !r.data) { setErreur(r?.error || t('common.error', 'Erreur')); return; }
-    setFaite(r.data);
+    if (Object.keys(erreurs).length || !livraison) { montrerErreursChamps(erreurs); return; }
+    setErreursChamps({});
+    setEnvoi(true);
+    try {
+      const r = await commandeService.commander({
+        id_oeuvre: idOeuvre, quantite, livraison,
+        adresse: avecAdresse ? adresse.trim() : undefined,
+        telephone: telephone.trim() || undefined,
+        message: message.trim() || undefined,
+      });
+      if (!r?.success || !r.data) throw r;
+      setFaite(r.data);
+    } catch (err) {
+      // Refus du serveur sur un champ : sous ce champ ; sinon un message qui dit si la commande est partie
+      const parChamp: ErreursCommande = {};
+      for (const d of detailsDesChamps(err)) {
+        if ((d.field === 'adresse' || d.field === 'telephone' || d.field === 'livraison') && d.message) parChamp[d.field] = d.message;
+      }
+      if (Object.keys(parChamp).length) { montrerErreursChamps(parChamp); return; }
+      setErreur(echecEnvoi(err, {
+        defaut: t('commande.nonEnvoyee', 'La commande n’est pas partie. Vérifiez votre connexion puis appuyez de nouveau sur « Envoyer la commande ».'),
+        nonParti: t('commande.nonEnvoyee', 'La commande n’est pas partie. Vérifiez votre connexion puis appuyez de nouveau sur « Envoyer la commande ».'),
+        // Elle est peut-être enregistrée : vérifier avant de recommencer (pas de commande en double)
+        reponseTarde: t('commande.reponseTarde', 'La réponse tarde. Ouvrez « Mes commandes » pour voir si elle est enregistrée avant de réessayer.'),
+      }).erreur || null);
+    } finally {
+      setEnvoi(false);
+    }
   };
 
   return (
@@ -172,26 +202,40 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
                 )}
               </div>
 
-              <fieldset className="space-y-2">
+              <fieldset className="space-y-2" aria-describedby={erreursChamps.livraison ? 'cmd-livraison-erreur' : undefined}>
                 <legend className="text-sm font-medium">{t('commande.livraisonTitre', 'Livraison')}</legend>
-                {modes.map((m) => (
+                {modes.map((m, i) => (
                   <label key={m} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="radio" name="cmd-livraison" value={m} checked={livraison === m} onChange={() => setLivraison(m)} />
+                    <input type="radio" name="cmd-livraison" value={m} checked={livraison === m}
+                      id={i === 0 ? 'cmd-livraison' : undefined} aria-invalid={!!erreursChamps.livraison || undefined}
+                      onChange={() => { setLivraison(m); setErreursChamps((e) => ({ ...e, livraison: undefined })); }} />
                     {libelleMode(m)}
                   </label>
                 ))}
+                {erreursChamps.livraison && <p id="cmd-livraison-erreur" role="alert" className="text-sm text-destructive">{erreursChamps.livraison}</p>}
               </fieldset>
 
               {avecAdresse && (
                 <div className="space-y-1.5">
                   <Label htmlFor="cmd-adresse">{t('commande.adresse', 'Adresse de livraison')} <span className="text-destructive" aria-hidden="true">*</span></Label>
-                  <Textarea id="cmd-adresse" dir="auto" rows={3} maxLength={500} value={adresse} onChange={(e) => setAdresse(e.target.value)}
+                  <Textarea id="cmd-adresse" dir="auto" rows={3} maxLength={500} value={adresse}
+                    onChange={(e) => { setAdresse(e.target.value); setErreursChamps((x) => ({ ...x, adresse: undefined })); }}
+                    aria-invalid={!!erreursChamps.adresse || undefined}
+                    aria-describedby={erreursChamps.adresse ? 'cmd-adresse-erreur' : undefined}
+                    className={erreursChamps.adresse ? 'border-destructive' : ''}
                     placeholder={t('commande.adresseExemple', 'Nom, rue, ville, wilaya ou pays')} />
+                  {erreursChamps.adresse && <p id="cmd-adresse-erreur" role="alert" className="text-sm text-destructive">{erreursChamps.adresse}</p>}
                 </div>
               )}
               <div className="space-y-1.5">
                 <Label htmlFor="cmd-tel">{t('commande.telephone', 'Téléphone (facultatif)')}</Label>
-                <Input id="cmd-tel" type="tel" inputMode="tel" maxLength={30} value={telephone} onChange={(e) => setTelephone(e.target.value)} />
+                <Input id="cmd-tel" type="tel" inputMode="tel" dir="ltr" maxLength={30} value={telephone}
+                  onChange={(e) => { setTelephone(e.target.value); setErreursChamps((x) => ({ ...x, telephone: undefined })); }}
+                  aria-invalid={!!erreursChamps.telephone || undefined}
+                  aria-describedby={erreursChamps.telephone ? 'cmd-tel-erreur' : 'cmd-tel-aide'}
+                  className={erreursChamps.telephone ? 'border-destructive' : ''} />
+                <p id="cmd-tel-aide" className="text-xs text-muted-foreground">{t('common.phoneHelper')}</p>
+                {erreursChamps.telephone && <p id="cmd-tel-erreur" role="alert" className="text-sm text-destructive">{erreursChamps.telephone}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cmd-message">{t('commande.message', 'Message au vendeur (facultatif)')}</Label>

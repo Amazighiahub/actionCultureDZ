@@ -5936,7 +5936,9 @@
     "vendeurIndisponible": "This seller is no longer available on Tala DZ: do not pay them. Cancel this order.",
     "moyensModifies": "Warning: the seller changed their payment details after your order. Check with them before paying.",
     "unique": "Unique work: a single piece.",
-    "telephoneInvalide": "Invalid phone number (digits, spaces, + at the start)."
+    "telephoneInvalide": "Invalid phone number (digits, spaces, + at the start).",
+    "nonEnvoyee": "The order was not sent. Check your connection, then tap “Send the order” again.",
+    "reponseTarde": "The reply is taking long. Open “My orders” to check whether it was saved before trying again."
   },
   "paiement": {
     "mention": "Payment is made directly to the organiser. Tala DZ receives no money.",
