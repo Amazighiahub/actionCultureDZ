@@ -26,6 +26,7 @@ import { programmeService, CreateProgrammeData, IntervenantData } from '@/servic
 import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
 import { intervenantValide } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { nombreHorsLimites } from '@/utils/validationChamps';
 
 export interface ProgrammeFormData {
   // Informations de base
@@ -333,6 +334,11 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       newErrors.description = t('programme.form.errors.descriptionRequired', 'La description est requise, dans au moins une langue');
     }
 
+    // Ordre : nombre entier à partir de 1 (avant : contrôlé par la bulle du navigateur seulement)
+    if (nombreHorsLimites(formData.ordre, { min: 1, entier: true })) {
+      newErrors.ordre = t('programme.form.errors.ordreInvalide', 'L’ordre doit être un nombre entier, à partir de 1');
+    }
+
     // Date requise
     if (!formData.date_programme) {
       newErrors.date_programme = t('programme.form.errors.dateRequired');
@@ -382,7 +388,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const isReadOnly = mode === 'view';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
+    <form onSubmit={handleSubmit} className="space-y-6 min-w-0" noValidate>
       <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
 
       {/* Messages d'erreur et succès */}
@@ -505,13 +511,16 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </FormField>
 
               {/* Ordre */}
-              <FormField label={t('programme.form.order')} error={errors.ordre}>
+              <FormField label={t('programme.form.order')} name="ordre" error={errors.ordre}>
                 <Input
+                  id="field-ordre"
                   type="number"
                   min="1"
-                  value={formData.ordre}
+                  value={Number.isNaN(formData.ordre) ? '' : formData.ordre}
                   onChange={(e) => handleChange('ordre', parseInt(e.target.value))}
                   disabled={isReadOnly}
+                  aria-invalid={!!errors.ordre || undefined}
+                  aria-describedby={errors.ordre ? 'field-ordre-error' : undefined}
                 />
               </FormField>
             </CardContent>

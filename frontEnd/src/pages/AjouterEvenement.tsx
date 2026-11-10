@@ -38,6 +38,7 @@ import TarifEvenementFields, { type ValeurTarif } from '@/components/event/Tarif
 import { PROFILS_DEFAUT, PROFIL_AUTRE, aPresencePartielle, optionsProfilDuFormulaire, tarificationDe } from '@/utils/tarifEvenement';
 import type { ConfigInscription } from '@/utils/formulaireInscription';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import { emailValide, lienWebValide } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 import DocumentsEvenementChoix, { envoyerDocumentsEvenement, type DocumentChoisi } from '@/components/event/DocumentsEvenementChoix';
 import DocumentsEvenementGestion from '@/components/event/DocumentsEvenementGestion';
@@ -602,9 +603,22 @@ const AjouterEvenement = () => {
       newErrors.type = t('events.create.typeRequired', 'Le type d\'événement est requis');
     }
 
-    // Validation: Date de début requise
+    // Validation: Date de début requise, et pas passée pour un nouvel événement (avant : vérifié seulement
+    // à la sortie du champ et par la bulle du navigateur, retirée par noValidate)
     if (!formData.dateDebut) {
       newErrors.dateDebut = t('events.create.startDateRequired', 'La date de début est requise');
+    } else if (!isEditMode && formData.dateDebut < new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })) {
+      newErrors.dateDebut = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
+    }
+
+    // Date limite d'inscription : au plus tard le jour du début
+    if (formData.dateLimite && formData.dateDebut && formData.dateLimite > formData.dateDebut) {
+      newErrors.dateLimite = t('events.create.dateLimiteApresDebut', 'La date limite d’inscription doit être au plus tard le jour du début');
+    }
+
+    // E-mail de contact : facultatif, mais bien écrit
+    if (formData.contactEmail?.trim() && !emailValide(formData.contactEmail)) {
+      newErrors.contactEmail = t('auth.errors.emailInvalid', 'Email invalide');
     }
 
     // Validation: Date de fin après date de début
@@ -625,6 +639,8 @@ const AjouterEvenement = () => {
     // Validation: URL virtuel requis pour événements virtuels
     if (isVirtual && !formData.urlVirtuel?.trim()) {
       newErrors.urlVirtuel = t('events.create.virtualUrlRequired', 'Le lien de l\'événement virtuel est requis');
+    } else if (isVirtual && !lienWebValide(formData.urlVirtuel)) {
+      newErrors.urlVirtuel = t('events.create.virtualUrlInvalide', 'Le lien doit commencer par https:// (ex. https://meet.google.com/…)');
     }
 
     // Validation: Tarif choisi, et complet
@@ -677,7 +693,9 @@ const AjouterEvenement = () => {
           />
           <ConseilReferencement type="evenement" className="mb-6" />
 
-          <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)}>
+          {/* noValidate : toutes les erreurs du site s'affichent d'un coup, traduites et sous les champs
+              (avant : la bulle du navigateur ne signalait que la date, le reste au deuxième essai) */}
+          <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)} noValidate>
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
             {/* Alerte si pas d'organisation et événement non-virtuel */}
             {!loadingOrganisations && !hasOrganisation && !isVirtual && (
@@ -1059,14 +1077,20 @@ const AjouterEvenement = () => {
                 <div className="space-y-2">
                   <Label htmlFor="date-limite">{t('events.create.dateLimite', 'Date limite d’inscription')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <Input id="date-limite" type="date" max={formData.dateDebut || undefined} value={formData.dateLimite ?? ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dateLimite: e.target.value }))} />
+                    aria-invalid={!!fieldErrors.dateLimite || undefined}
+                    aria-describedby={fieldErrors.dateLimite ? 'dateLimite-error' : undefined}
+                    onChange={(e) => { clearFieldError('dateLimite'); setFormData(prev => ({ ...prev, dateLimite: e.target.value })); }} />
+                  {fieldErrors.dateLimite && <p id="dateLimite-error" role="alert" className="text-sm text-destructive">{fieldErrors.dateLimite}</p>}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="contact-email">{t('events.create.contactEmail', 'E-mail de contact')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                     <Input id="contact-email" type="email" dir="ltr" maxLength={255} value={formData.contactEmail ?? ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))} />
+                      aria-invalid={!!fieldErrors.contactEmail || undefined}
+                      aria-describedby={fieldErrors.contactEmail ? 'contactEmail-error' : undefined}
+                      onChange={(e) => { clearFieldError('contactEmail'); setFormData(prev => ({ ...prev, contactEmail: e.target.value })); }} />
+                    {fieldErrors.contactEmail && <p id="contactEmail-error" role="alert" className="text-sm text-destructive">{fieldErrors.contactEmail}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contact-telephone">{t('events.create.contactTelephone', 'Téléphone de contact')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>

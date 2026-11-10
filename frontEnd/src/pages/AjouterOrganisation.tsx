@@ -28,6 +28,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { SOCIAL_NETWORKS, isValidSocialUrl } from '@/components/shared/SocialLinks';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import { emailValide, lienWebValide } from '@/utils/validationChamps';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { organisationPath } from '@/utils/slug';
 import type { Wilaya } from '@/types';
@@ -164,19 +165,23 @@ const AjouterOrganisation = () => {
     champ('logo_url', '');
   };
 
-  const validateFieldOnBlur = (field: string) => {
-    let error: string | undefined;
-    if (field === 'site_web') {
-      if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
-        error = t('organisations.create.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
-      }
+  // Une seule règle par champ, à la sortie du champ et à l'envoi (avant, l'envoi ne reprenait que les erreurs
+  // déjà affichées : une adresse remplie par le navigateur, sans quitter le champ, n'était pas vérifiée)
+  const erreurDuChamp = (field: 'site_web' | 'email' | 'telephone'): string | undefined => {
+    if (field === 'site_web' && formData.site_web && !lienWebValide(formData.site_web)) {
+      return t('organisations.create.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
     }
-    if (field === 'email' && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      error = t('organisations.form.emailInvalide', 'Adresse e-mail invalide');
+    if (field === 'email' && formData.email && !emailValide(formData.email)) {
+      return t('organisations.form.emailInvalide', 'Adresse e-mail invalide');
     }
     if (field === 'telephone' && formData.telephone && !/^[0-9+().\s-]{6,30}$/.test(formData.telephone)) {
-      error = t('organisations.form.telephoneInvalide', 'Numéro de téléphone invalide');
+      return t('organisations.form.telephoneInvalide', 'Numéro de téléphone invalide');
     }
+    return undefined;
+  };
+
+  const validateFieldOnBlur = (field: 'site_web' | 'email' | 'telephone') => {
+    const error = erreurDuChamp(field);
     setFieldErrors(prev => {
       if (!error) { const next = { ...prev }; delete next[field]; return next; }
       return { ...prev, [field]: error };
@@ -199,7 +204,10 @@ const AjouterOrganisation = () => {
         errs[`reseau_${reseau.key}`] = t('organisations.form.reseauInvalide', { reseau: reseau.label, defaultValue: 'Lien {{reseau}} invalide (adresse https:// du réseau)' });
       }
     }
-    for (const f of ['site_web', 'email', 'telephone']) if (fieldErrors[f]) errs[f] = fieldErrors[f];
+    for (const f of ['site_web', 'email', 'telephone'] as const) {
+      const erreur = erreurDuChamp(f);
+      if (erreur) errs[f] = erreur;
+    }
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
       toast({
@@ -305,7 +313,7 @@ const AjouterOrganisation = () => {
             subtitle={t('organisations.form.sousTitre', 'Association, maison d’édition, musée… : votre page réunit vos événements et vos publications.')}
           />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
             <Card>
               <CardHeader>

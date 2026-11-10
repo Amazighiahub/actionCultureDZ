@@ -3,6 +3,7 @@
  * Même règles que le serveur (backend/services/evenement/formulaireInscription.js),
  * qui reste seul juge : ici on évite seulement un aller-retour inutile.
  */
+import { emailValide } from '@/utils/validationChamps';
 
 /** Libellé déjà traduit par l'API (chaîne) ou multilingue (objet) */
 export type LibelleMultilingue = string | Record<string, string>;
@@ -39,7 +40,6 @@ export type Reponses = Record<string, ValeurReponse | undefined>;
 export type ErreurChamp = 'requis' | 'invalide';
 
 const LONGUEUR_MAX: Partial<Record<TypeChamp, number>> = { texte: 500, texte_long: 3000, email: 254, tel: 30 };
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEL_RE = /^\+?[\d\s().-]{6,30}$/;
 
 export const configInscriptionValide = (config: unknown): config is ConfigInscription =>
@@ -66,7 +66,7 @@ function erreurChamp(champ: ChampFormulaire, valeur: ValeurReponse | undefined):
 
   const max = LONGUEUR_MAX[champ.type];
   if (max && texte.length > max) return 'invalide';
-  if (champ.type === 'email' && !EMAIL_RE.test(texte)) return 'invalide';
+  if (champ.type === 'email' && !emailValide(texte)) return 'invalide';
   if (champ.type === 'tel' && !TEL_RE.test(texte)) return 'invalide';
   if (champ.type === 'nombre') {
     if (!/^-?\d+$/.test(texte)) return 'invalide';

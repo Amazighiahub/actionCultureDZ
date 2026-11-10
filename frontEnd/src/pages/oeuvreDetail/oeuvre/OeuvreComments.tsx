@@ -181,7 +181,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label className="text-sm font-medium mb-2 block">
                   {t('comments.yourRating', 'Votre note')} ({t('common.optional', 'optionnel')})

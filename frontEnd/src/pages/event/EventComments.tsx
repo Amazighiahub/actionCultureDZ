@@ -289,7 +289,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {/* Notation */}
               <div>
                 <label className="text-sm font-medium mb-2 block">

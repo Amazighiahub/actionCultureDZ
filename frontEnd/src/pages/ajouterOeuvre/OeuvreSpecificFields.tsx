@@ -165,7 +165,10 @@ const MusiqueFields: React.FC<{
             max={500}
             placeholder={t("ajouteroeuvre.placeholder_nb_pistes", "Ex: 12")}
             value={formData.nb_pistes || ''}
+            aria-invalid={!!fieldErrors.nb_pistes || undefined}
+            aria-describedby={fieldErrors.nb_pistes ? 'nb_pistes-error' : undefined}
             onChange={(e) => handleInputChange('nb_pistes', nombreOuVide(e.target.value, true))} />
+          {fieldErrors.nb_pistes && <p id="nb_pistes-error" role="alert" className="text-sm text-destructive">{fieldErrors.nb_pistes}</p>}
         </div>
       </div>
 

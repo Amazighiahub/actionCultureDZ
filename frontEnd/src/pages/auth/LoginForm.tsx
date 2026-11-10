@@ -12,6 +12,7 @@ import { Mail, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-rea
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { emailValide } from '@/utils/validationChamps';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -38,7 +39,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
     if (!formData.email?.trim()) {
       newErrors.email = t('auth.errors.emailRequired', 'L\'email est requis');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    } else if (!emailValide(formData.email)) {
       newErrors.email = t('auth.errors.emailInvalid', 'Email invalide');
     }
 
@@ -144,7 +145,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         </CardTitle>
       </CardHeader>
 
-      <form onSubmit={handleSubmit}>
+      {/* noValidate : les messages du site, traduits et sous les champs, remplacent la bulle du navigateur */}
+      <form onSubmit={handleSubmit} noValidate>
         <CardContent className="space-y-4">
           {/* Email */}
           <div className="space-y-2">

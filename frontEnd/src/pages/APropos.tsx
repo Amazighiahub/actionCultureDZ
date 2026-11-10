@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import SEOHead from '@/components/SEOHead';
 import { httpClient } from '@/services/httpClient';
 import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
+import { emailValide } from '@/utils/validationChamps';
 
 const CONTACT_EMAIL = 'contact@taladz.com';
 
@@ -37,6 +38,11 @@ const APropos = () => {
     e.preventDefault();
     if (!formData.email || !formData.message) {
       toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('apropos.emailMessageRequis', 'L\'email et le message sont obligatoires.'), variant: 'destructive' });
+      return;
+    }
+    // Format de l'adresse : contrôlé ici depuis noValidate (avant, seule la bulle du navigateur le faisait)
+    if (!emailValide(formData.email)) {
+      toast({ title: t('apropos.champsRequis', 'Champs requis'), description: t('auth.errors.emailInvalid', 'Email invalide'), variant: 'destructive' });
       return;
     }
     if (formData.message.trim().length < 10) {
@@ -145,7 +151,8 @@ const APropos = () => {
                 <h2 className="text-2xl font-semibold font-serif">{t("apropos.nous_contacter")}</h2>
               </div>
               
-              <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit}>
+              {/* noValidate : les messages du site, traduits, remplacent la bulle du navigateur */}
+              <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit} noValidate>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="prenom">{t("apropos.prnom")}</Label>

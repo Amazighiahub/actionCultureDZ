@@ -245,7 +245,8 @@ const ResetPassword = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* noValidate : les messages du site, traduits, remplacent la bulle du navigateur */}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 {error && (
                   <Alert variant="destructive" role="alert">
                     <AlertCircle className="h-4 w-4" />

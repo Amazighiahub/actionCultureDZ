@@ -725,7 +725,9 @@
       "dateLimite": "آخر أجل للتسجيل",
       "contactEmail": "البريد الإلكتروني للتواصل",
       "contactTelephone": "هاتف التواصل",
-      "startDatePast": "لا يمكن أن يكون تاريخ البداية في الماضي"
+      "startDatePast": "لا يمكن أن يكون تاريخ البداية في الماضي",
+      "dateLimiteApresDebut": "يجب أن يكون آخر أجل للتسجيل في يوم البداية على الأكثر",
+      "virtualUrlInvalide": "يجب أن يبدأ الرابط بـ https://‎ (مثال: https://meet.google.com/…)"
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -3515,7 +3517,8 @@
       "invalidPrice": "لا يمكن أن يكون السعر سالبًا",
       "invalidIsbn": "رقم ISBN غير صالح — يجب أن يتكون من 10 أو 13 رقمًا",
       "invalidUrl": "رابط غير صالح — استخدم الصيغة https://exemple.com",
-      "formHasErrors": "يرجى تصحيح الأخطاء أدناه"
+      "formHasErrors": "يرجى تصحيح الأخطاء أدناه",
+      "nbPistesInvalide": "يجب أن يكون عدد المقاطع بين 1 و500"
     },
     "scientificDetails": "التفاصيل العلمية",
     "journal": "المجلة / الدورية",
@@ -4686,7 +4689,10 @@
       "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى",
       "descriptionRequired": "الوصف مطلوب بلغة واحدة على الأقل",
       "updateFailed": "خطأ أثناء التحديث",
-      "notFound": "لم يتم العثور على الحرفة"
+      "notFound": "لم يتم العثور على الحرفة",
+      "prixInvalide": "يجب أن يكون السعر عددًا موجبًا",
+      "delaiInvalide": "يجب أن تكون المدة بين 1 و365 يومًا",
+      "stockInvalide": "يجب أن تكون الكمية بين 0 و100000"
     },
     "addTag": "إضافة الوسم",
     "removeTag": "حذف الوسم {{tag}}",
@@ -4750,7 +4756,8 @@
       "emailInvalid": "عنوان بريد إلكتروني غير صالح",
       "urlInvalid": "رابط الموقع غير صالح (يجب أن يبدأ بـ http:// أو https://)",
       "phoneInvalid": "رقم هاتف غير صالح",
-      "submitFailed": "خطأ أثناء الإرسال"
+      "submitFailed": "خطأ أثناء الإرسال",
+      "tarifInvalide": "يجب أن يكون السعر عددًا موجبًا"
     },
     "editTitle": "تعديل خدمتي",
     "types": {
@@ -5099,7 +5106,8 @@
         "descriptionRequired": "الوصف مطلوب بلغة واحدة على الأقل",
         "intervenantUserRequired": "يجب اختيار مستخدم لكل متدخل",
         "summary": "النموذج غير مكتمل:",
-        "intervenantNameRequired": "أدخل اسم كل متدخل (أو احذف السطر الفارغ)"
+        "intervenantNameRequired": "أدخل اسم كل متدخل (أو احذف السطر الفارغ)",
+        "ordreInvalide": "يجب أن يكون الترتيب عددًا صحيحًا يبدأ من 1"
       }
     },
     "loadError": "خطأ أثناء تحميل البرامج",

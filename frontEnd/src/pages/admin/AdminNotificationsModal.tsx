@@ -240,7 +240,7 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {/* Type de notification */}
           <div className="space-y-3">
             <Label>{t('admin.notifications.form.notificationType')}</Label>

@@ -764,7 +764,9 @@
       "dateLimite": "Date limite d’inscription",
       "contactEmail": "E-mail de contact",
       "contactTelephone": "Téléphone de contact",
-      "startDatePast": "La date de début ne peut pas être passée"
+      "startDatePast": "La date de début ne peut pas être passée",
+      "dateLimiteApresDebut": "La date limite d’inscription doit être au plus tard le jour du début",
+      "virtualUrlInvalide": "Le lien doit commencer par https:// (ex. https://meet.google.com/…)"
     },
     "types": {
       "concert": "Concert",
@@ -3402,7 +3404,8 @@
       "invalidPrice": "Le prix ne peut pas être négatif",
       "invalidIsbn": "ISBN invalide — 10 ou 13 chiffres attendus",
       "invalidUrl": "URL invalide — utilisez le format https://exemple.com",
-      "formHasErrors": "Veuillez corriger les erreurs ci-dessous"
+      "formHasErrors": "Veuillez corriger les erreurs ci-dessous",
+      "nbPistesInvalide": "Le nombre de pistes doit être compris entre 1 et 500"
     },
     "scientificDetails": "Détails scientifiques",
     "journal": "Journal / Revue",
@@ -4725,7 +4728,8 @@
         "descriptionRequired": "La description est requise, dans au moins une langue",
         "intervenantUserRequired": "Chaque intervenant doit avoir un utilisateur sélectionné",
         "summary": "Le formulaire n’est pas complet :",
-        "intervenantNameRequired": "Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)"
+        "intervenantNameRequired": "Indiquez le nom de chaque intervenant (ou supprimez la ligne vide)",
+        "ordreInvalide": "L’ordre doit être un nombre entier, à partir de 1"
       }
     },
     "loadError": "Erreur lors du chargement des programmes",
@@ -4855,7 +4859,10 @@
       "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum",
       "descriptionRequired": "La description est requise, dans au moins une langue",
       "updateFailed": "Erreur lors de la mise à jour",
-      "notFound": "Artisanat introuvable"
+      "notFound": "Artisanat introuvable",
+      "prixInvalide": "Le prix doit être un nombre positif",
+      "delaiInvalide": "Le délai doit être compris entre 1 et 365 jours",
+      "stockInvalide": "La quantité doit être comprise entre 0 et 100 000"
     },
     "addTag": "Ajouter le tag",
     "removeTag": "Supprimer le tag {{tag}}",
@@ -4919,7 +4926,8 @@
       "emailInvalid": "Adresse email invalide",
       "urlInvalid": "URL du site web invalide (doit commencer par http:// ou https://)",
       "phoneInvalid": "Numéro de téléphone invalide",
-      "submitFailed": "Erreur lors de la soumission"
+      "submitFailed": "Erreur lors de la soumission",
+      "tarifInvalide": "Le tarif doit être un nombre positif"
     },
     "editTitle": "Modifier mon service",
     "types": {

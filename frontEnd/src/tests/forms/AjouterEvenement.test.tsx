@@ -298,7 +298,7 @@ async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
 
   // Date debut
   const dateDebut = document.getElementById('date-debut') as HTMLInputElement;
-  await user.type(dateDebut, '2026-06-15');
+  await user.type(dateDebut, '2099-06-15');
 
   // Lieu
   await user.click(screen.getByTestId('lieu-selector'));
@@ -440,8 +440,8 @@ describe('AjouterEvenement', () => {
 
       await user.type(screen.getByTestId('input-nom-fr'), 'Mon evenement');
       await selectEventType(user);
-      await user.type(document.getElementById('date-debut')!, '2026-06-15');
-      await user.type(document.getElementById('date-fin')!, '2026-06-10');
+      await user.type(document.getElementById('date-debut')!, '2099-06-15');
+      await user.type(document.getElementById('date-fin')!, '2099-06-10');
       await user.click(screen.getByTestId('lieu-selector'));
       await user.upload(
         document.getElementById('affiche-upload') as HTMLInputElement,
@@ -646,7 +646,7 @@ describe('AjouterEvenement', () => {
       const nom = JSON.parse(fd.get('nom_evenement') as string);
       expect(nom.fr).toBe('Festival Culturel');
       expect(fd.get('id_type_evenement')).toBeTruthy();
-      expect(fd.get('date_debut')).toBe('2026-06-15');
+      expect(fd.get('date_debut')).toBe('2099-06-15');
       expect(fd.get('statut')).toBe('publie');
 
       const affiche = fd.get('affiche');
@@ -734,7 +734,7 @@ describe('AjouterEvenement', () => {
       // Une seule langue remplie suffit
       await user.type(screen.getByTestId('input-nom-fr'), 'Nom en francais seulement');
       await selectEventType(user);
-      await user.type(document.getElementById('date-debut')!, '2026-06-15');
+      await user.type(document.getElementById('date-debut')!, '2099-06-15');
       await user.click(screen.getByTestId('lieu-selector'));
       await user.upload(
         document.getElementById('affiche-upload') as HTMLInputElement,
@@ -758,7 +758,7 @@ describe('AjouterEvenement', () => {
       await waitForDataLoad();
       await user.type(screen.getByTestId('input-nom-fr'), 'Chantier');
       await selectEventType(user);
-      await user.type(document.getElementById('date-debut')!, '2026-06-15');
+      await user.type(document.getElementById('date-debut')!, '2099-06-15');
       await user.click(screen.getByTestId('lieu-selector'));
       await user.upload(document.getElementById('affiche-upload') as HTMLInputElement, createMockFile('img.jpg', 100, 'image/jpeg'));
       submitForm();

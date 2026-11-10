@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { emailValide } from '@/utils/validationChamps';
 import { httpClient } from '@/services/httpClient';
 import { ConfirmDialog } from '@/components/shared';
 import { estInstallee, estIphone, installationProposee, lancerInstallation, suivreInstallation, surTelephone } from '@/utils/applicationMobile';
@@ -75,12 +76,22 @@ export function InscriptionNewsletter() {
   const [robot, setRobot] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [envoye, setEnvoye] = useState(false);
+  const [erreurEmail, setErreurEmail] = useState('');
   // Pied de page de toutes les pages : le script de Cloudflare n'est chargé qu'au moment d'écrire son adresse
   const [afficherAntiRobot, setAfficherAntiRobot] = useState(false);
   const antiRobot = useAntiRobot();
 
   const envoyer = async (e: FormEvent) => {
     e.preventDefault();
+    // Adresse vide ou mal écrite : message sous le champ, dans la langue du site (avant : bulle du navigateur)
+    if (!email.trim()) {
+      setErreurEmail(t('auth.errors.emailRequired', 'L’email est requis'));
+      return;
+    }
+    if (!emailValide(email)) {
+      setErreurEmail(t('auth.errors.emailInvalid', 'Email invalide'));
+      return;
+    }
     // Envoi sans avoir touché au champ (adresse remplie par le navigateur) : montrer d'abord la vérification
     if (antiRobotActif && !antiRobot.lireJeton()) {
       setAfficherAntiRobot(true);
@@ -113,7 +124,7 @@ export function InscriptionNewsletter() {
     return <p className="text-sm" role="status">{t('newsletter.verifiez', 'Regardez vos e-mails, y compris les indésirables : cliquez sur le lien reçu pour confirmer votre inscription.')}</p>;
   }
   return (
-    <form onSubmit={envoyer} className="space-y-2">
+    <form onSubmit={envoyer} className="space-y-2" noValidate>
       <Label htmlFor="newsletter-email" className="font-medium">{t('newsletter.titre', 'Recevoir la newsletter')}</Label>
       <div className="flex flex-col sm:flex-row gap-2">
         <Input
@@ -124,8 +135,10 @@ export function InscriptionNewsletter() {
           dir="ltr"
           placeholder={t('newsletter.adresse', 'Votre adresse e-mail')}
           value={email}
+          aria-invalid={!!erreurEmail || undefined}
+          aria-describedby={erreurEmail ? 'newsletter-email-erreur' : undefined}
           onFocus={() => setAfficherAntiRobot(true)}
-          onChange={(e) => { setEmail(e.target.value); setAfficherAntiRobot(true); }}
+          onChange={(e) => { setEmail(e.target.value); setErreurEmail(''); setAfficherAntiRobot(true); }}
         />
         <Button type="submit" disabled={enCours || (antiRobot.manquant && afficherAntiRobot)}>
           {enCours
@@ -134,7 +147,8 @@ export function InscriptionNewsletter() {
           {t('newsletter.sinscrire', 'S’inscrire')}
         </Button>
       </div>
-      {afficherAntiRobot && <AntiRobot ref={antiRobot.ref} action="newsletter" onJeton={antiRobot.setJeton} />}
+      {erreurEmail && <p id="newsletter-email-erreur" role="alert" className="text-sm text-destructive">{erreurEmail}</p>}
+      {afficherAntiRobot &&<AntiRobot ref={antiRobot.ref} action="newsletter" onJeton={antiRobot.setJeton} />}
       {/* Invisible pour les personnes : seuls les robots le remplissent */}
       <input type="text" name="site_web" value={robot} onChange={(e) => setRobot(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <p className="text-xs text-muted-foreground">

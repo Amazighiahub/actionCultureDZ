@@ -15,6 +15,7 @@ import { useRTL } from '@/hooks/useRTL';
 import SEOHead from '@/components/SEOHead';
 import AntiRobot, { estRefusAntiRobot, useAntiRobot } from '@/components/shared/AntiRobot';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { emailValide } from '@/utils/validationChamps';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -27,15 +28,10 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const antiRobot = useAntiRobot();
 
-  const validateEmail = (email: string): boolean => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
-
   const validateEmailField = () => {
     if (!email?.trim()) {
       setError(t('auth.errors.emailRequired', 'L\'email est requis'));
-    } else if (!validateEmail(email.trim())) {
+    } else if (!emailValide(email)) {
       setError(t('auth.errors.emailInvalid', 'Format d\'email invalide'));
     }
   };
@@ -56,7 +52,7 @@ const ForgotPassword = () => {
       return;
     }
 
-    if (!validateEmail(email.trim())) {
+    if (!emailValide(email)) {
       setError(t('auth.errors.emailInvalid', 'Format d\'email invalide'));
       setTimeout(() => {
         const firstError = document.querySelector('[aria-invalid="true"]');
@@ -177,7 +173,8 @@ const ForgotPassword = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* noValidate : le message du site, traduit et sous le champ, remplace la bulle du navigateur */}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="space-y-2">
                   <Label htmlFor="email" required>{t('auth.forgotPassword.emailLabel')}</Label>
                   <Input

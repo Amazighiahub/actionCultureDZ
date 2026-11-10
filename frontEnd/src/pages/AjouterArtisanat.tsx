@@ -26,6 +26,7 @@ import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
@@ -232,8 +233,17 @@ const AjouterArtisanat: React.FC = () => {
     if (!formData.id_technique) {
       errs.id_technique = t('ajouterArtisanat.errors.techniqueRequired', 'La technique est requise');
     }
-    if (formData.prix_min && formData.prix_max && Number(formData.prix_min) > Number(formData.prix_max)) {
+    // Bornes des nombres : contrôlées ici depuis noValidate (avant, seule la bulle du navigateur le faisait)
+    if (nombreHorsLimites(formData.prix_min, { min: 0, max: 100000000 }) || nombreHorsLimites(formData.prix_max, { min: 0, max: 100000000 })) {
+      errs.prix = t('ajouterArtisanat.errors.prixInvalide', 'Le prix doit être un nombre positif');
+    } else if (formData.prix_min && formData.prix_max && Number(formData.prix_min) > Number(formData.prix_max)) {
       errs.prix = t('ajouterArtisanat.errors.prixMinMax', 'Le prix minimum ne peut pas être supérieur au prix maximum');
+    }
+    if (nombreHorsLimites(formData.delai_fabrication, { min: 1, max: 365, entier: true })) {
+      errs.delai_fabrication = t('ajouterArtisanat.errors.delaiInvalide', 'Le délai doit être compris entre 1 et 365 jours');
+    }
+    if (nombreHorsLimites(formData.en_stock, { min: 0, max: 100000, entier: true })) {
+      errs.en_stock = t('ajouterArtisanat.errors.stockInvalide', 'La quantité doit être comprise entre 0 et 100 000');
     }
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
@@ -361,7 +371,7 @@ const AjouterArtisanat: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
@@ -552,7 +562,12 @@ const AjouterArtisanat: React.FC = () => {
                           setIsDirty(true);
                         }}
                         placeholder={t('ajouterArtisanat.delaiFabricationPlaceholder', 'Nombre de jours')}
+                        aria-invalid={!!fieldErrors.delai_fabrication || undefined}
+                        aria-describedby={fieldErrors.delai_fabrication ? 'artisanat-delai-error' : undefined}
                       />
+                      {fieldErrors.delai_fabrication && (
+                        <p id="artisanat-delai-error" role="alert" className="text-sm text-destructive">{fieldErrors.delai_fabrication}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="artisanat-stock" className="flex items-center gap-2">
@@ -573,7 +588,12 @@ const AjouterArtisanat: React.FC = () => {
                           setIsDirty(true);
                         }}
                         placeholder="0"
+                        aria-invalid={!!fieldErrors.en_stock || undefined}
+                        aria-describedby={fieldErrors.en_stock ? 'artisanat-stock-error' : undefined}
                       />
+                      {fieldErrors.en_stock && (
+                        <p id="artisanat-stock-error" role="alert" className="text-sm text-destructive">{fieldErrors.en_stock}</p>
+                      )}
                     </div>
                   </div>
 

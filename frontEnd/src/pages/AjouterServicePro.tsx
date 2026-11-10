@@ -34,6 +34,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
@@ -197,23 +198,28 @@ const AjouterServicePro: React.FC = () => {
     }
   };
 
+  // Une seule règle par champ, utilisée à la sortie du champ et à l'envoi (avant : écrite deux fois)
+  const erreurDuChamp = (field: 'email' | 'telephone' | 'site_web' | 'tarif_min' | 'tarif_max'): string | undefined => {
+    switch (field) {
+      case 'email':
+        return formData.email && !emailValide(formData.email) ? t('service.errors.emailInvalid', 'Adresse email invalide') : undefined;
+      case 'telephone':
+        return formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone) ? t('service.errors.phoneInvalid', 'Numéro de téléphone invalide') : undefined;
+      case 'site_web':
+        return formData.site_web && !lienWebValide(formData.site_web) ? t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)') : undefined;
+      default:
+        // Tarif négatif : contrôlé ici depuis noValidate (avant, seule la bulle du navigateur le faisait)
+        return nombreHorsLimites(formData[field], { min: 0 }) ? t('service.errors.tarifInvalide', 'Le tarif doit être un nombre positif') : undefined;
+    }
+  };
+
   const validateFieldOnBlur = (field: string) => {
     let error: string | undefined;
     switch (field) {
       case 'email':
-        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          error = t('service.errors.emailInvalid', 'Adresse email invalide');
-        }
-        break;
       case 'telephone':
-        if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
-          error = t('service.errors.phoneInvalid', 'Numéro de téléphone invalide');
-        }
-        break;
       case 'site_web':
-        if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
-          error = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
-        }
+        error = erreurDuChamp(field);
         break;
       case 'tarif_min':
       case 'tarif_max':
@@ -275,19 +281,14 @@ const AjouterServicePro: React.FC = () => {
     if (!formData.id_lieu) {
       errs.id_lieu = t('service.errors.lieuRequired', 'Veuillez choisir le lieu de votre service');
     }
-    if (formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
+    for (const champ of ['tarif_min', 'tarif_max', 'email', 'site_web', 'telephone'] as const) {
+      const erreur = erreurDuChamp(champ);
+      if (erreur) errs[champ] = erreur;
+    }
+    if (!errs.tarif_min && !errs.tarif_max && formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
       const tarifErr = t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum');
       errs.tarif_min = tarifErr;
       errs.tarif_max = tarifErr;
-    }
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errs.email = t('service.errors.emailInvalid', 'Adresse email invalide');
-    }
-    if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
-      errs.site_web = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
-    }
-    if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
-      errs.telephone = t('service.errors.phoneInvalid', 'Numéro de téléphone invalide');
     }
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
@@ -420,7 +421,7 @@ const AjouterServicePro: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid gap-6">
             {/* Type de service */}

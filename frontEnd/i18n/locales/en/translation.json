@@ -716,7 +716,9 @@
       "dateLimite": "Registration deadline",
       "contactEmail": "Contact email",
       "contactTelephone": "Contact phone",
-      "startDatePast": "The start date cannot be in the past"
+      "startDatePast": "The start date cannot be in the past",
+      "dateLimiteApresDebut": "The registration deadline must be on or before the start date",
+      "virtualUrlInvalide": "The link must start with https:// (e.g. https://meet.google.com/…)"
     },
     "types": {
       "concert": "Concert",
@@ -3397,7 +3399,8 @@
       "invalidPrice": "The price cannot be negative",
       "invalidIsbn": "Invalid ISBN — 10 or 13 digits expected",
       "invalidUrl": "Invalid URL — use the format https://example.com",
-      "formHasErrors": "Please correct the errors below"
+      "formHasErrors": "Please correct the errors below",
+      "nbPistesInvalide": "The number of tracks must be between 1 and 500"
     },
     "scientificDetails": "Scientific details",
     "journal": "Journal / Review",
@@ -4568,7 +4571,10 @@
       "prixMinMax": "The minimum price cannot be higher than the maximum price",
       "descriptionRequired": "A description is required, in at least one language",
       "updateFailed": "Error while updating",
-      "notFound": "Craft item not found"
+      "notFound": "Craft item not found",
+      "prixInvalide": "The price must be a positive number",
+      "delaiInvalide": "The lead time must be between 1 and 365 days",
+      "stockInvalide": "The quantity must be between 0 and 100,000"
     },
     "addTag": "Add tag",
     "removeTag": "Remove tag {{tag}}",
@@ -4632,7 +4638,8 @@
       "emailInvalid": "Invalid email address",
       "urlInvalid": "Invalid website URL (must start with http:// or https://)",
       "phoneInvalid": "Invalid phone number",
-      "submitFailed": "Error during submission"
+      "submitFailed": "Error during submission",
+      "tarifInvalide": "The rate must be a positive number"
     },
     "editTitle": "Edit my service",
     "types": {
@@ -4973,7 +4980,8 @@
         "descriptionRequired": "A description is required, in at least one language",
         "intervenantUserRequired": "Each contributor must have a selected user",
         "summary": "The form is incomplete:",
-        "intervenantNameRequired": "Enter the name of each speaker (or remove the empty row)"
+        "intervenantNameRequired": "Enter the name of each speaker (or remove the empty row)",
+        "ordreInvalide": "The order must be a whole number, starting from 1"
       }
     },
     "loadError": "Error loading programmes",

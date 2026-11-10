@@ -27,6 +27,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 import { normaliserTelephone, telephoneValide } from '@/utils/telephone';
+import { emailValide } from '@/utils/validationChamps';
 
 
 interface RegisterFormProps {
@@ -165,7 +166,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         break;
       case 'email':
         if (!registerForm.email) error = t('auth.errors.emailRequired');
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) error = t('auth.errors.emailInvalid');
+        else if (!emailValide(registerForm.email)) error = t('auth.errors.emailInvalid');
         break;
       case 'mot_de_passe':
         if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) error = t('auth.errors.passwordMinLength');
@@ -217,7 +218,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     
     if (!registerForm.email) {
       errors.email = t('auth.errors.emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) {
+    } else if (!emailValide(registerForm.email)) {
       errors.email = t('auth.errors.emailInvalid');
     }
     
@@ -542,7 +543,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleRegister} className="space-y-6">
+                  {/* noValidate : les messages du site, traduits et sous les champs, remplacent la bulle du navigateur */}
+                  <form onSubmit={handleRegister} className="space-y-6" noValidate>
                     <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
                     {/* Choix du profil */}
                     <div className="space-y-3">

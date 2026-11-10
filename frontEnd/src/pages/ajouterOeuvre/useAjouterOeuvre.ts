@@ -38,6 +38,7 @@ import type {
 } from './types';
 import { INITIAL_FORM_DATA } from './types';
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
+import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -815,6 +816,10 @@ export function useAjouterOeuvre() {
           errors.url_source = t('oeuvre.errors.invalidUrl', 'URL invalide — utilisez le format https://exemple.com');
         }
       }
+      // Nombre de pistes (musique) : contrôlé ici depuis noValidate (avant, seule la bulle du navigateur le faisait)
+      if (formData.id_type_oeuvre === 3 && nombreHorsLimites(formData.nb_pistes, { min: 1, max: 500, entier: true })) {
+        errors.nb_pistes = t('oeuvre.errors.nbPistesInvalide', 'Le nombre de pistes doit être compris entre 1 et 500');
+      }
       // Liens d'écoute (musique) : https seulement, comme le vérifie le serveur
       if (formData.id_type_oeuvre === 3 && (formData.liens_ecoute || []).some((lien) => {
         if (!lien.trim()) return false;
@@ -826,7 +831,7 @@ export function useAjouterOeuvre() {
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
-        const fieldOrder = ['id_type_oeuvre', 'titre', 'id_langue', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'liens_ecoute', 'categories'];
+        const fieldOrder = ['id_type_oeuvre', 'titre', 'id_langue', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'nb_pistes', 'liens_ecoute', 'categories'];
         const firstErrorField = fieldOrder.find((f) => errors[f]);
         if (firstErrorField) {
           const elementId = firstErrorField === 'titre' ? 'titre-fr'

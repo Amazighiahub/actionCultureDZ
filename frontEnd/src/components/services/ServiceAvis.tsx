@@ -44,7 +44,7 @@ const Saisie: React.FC<{
   };
 
   return (
-    <form onSubmit={envoyer} className="space-y-3">
+    <form onSubmit={envoyer} className="space-y-3" noValidate>
       {avecNote && (
         <div>
           <p className="text-sm font-medium mb-1">{t('comments.yourRating', 'Votre note')} ({t('common.optional', 'optionnel')})</p>

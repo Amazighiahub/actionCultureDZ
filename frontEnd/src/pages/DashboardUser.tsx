@@ -51,6 +51,7 @@ import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lireSpecialites } from '@/utils/specialites';
+import { lienWebValide } from '@/utils/validationChamps';
 
 const DashboardUser = () => {
   const { user } = useAuth();
@@ -649,7 +650,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   // Liens des professionnels : vérifiés avant l'envoi (le serveur refait la même vérification)
   const validateLinks = (): boolean => {
     const errors: Record<string, string> = {};
-    if (form.site_web.trim() && !/^https?:\/\/.+\..+/.test(form.site_web.trim())) {
+    if (form.site_web.trim() && !lienWebValide(form.site_web)) {
       errors.site_web = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
     }
     for (const network of SOCIAL_NETWORKS) {

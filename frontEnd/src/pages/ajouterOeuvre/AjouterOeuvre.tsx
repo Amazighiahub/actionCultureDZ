@@ -153,7 +153,7 @@ const AjouterOeuvre: React.FC = () => {
             onBack={() => handleInputChange('id_type_oeuvre', 0)}
             onSave={handleArticleEditorSave} /> :
 
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }} noValidate>
               <FormPageHeader
                 onBack={() => window.history.back()}
                 backLabel={t("ajouteroeuvre.retour")}
