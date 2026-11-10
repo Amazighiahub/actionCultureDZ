@@ -345,13 +345,17 @@ class UserProfileController extends BaseController {
   async getProfessionals(req, res) {
     try {
       const { page, limit } = this._paginate(req);
-      const { q, type, wilaya } = req.query;
+      const { q, type, types, wilaya, typesOrganisation, propose } = req.query;
+      const texte = (v, max) => (typeof v === 'string' ? v.slice(0, max) : undefined);
       const result = await this.userService.findValidatedProfessionals({
         page,
         limit,
-        q: typeof q === 'string' ? q.slice(0, 100) : undefined,
-        type,
-        wilaya
+        q: texte(q, 100),
+        // Plusieurs métiers (types=3,7) ; l'ancien ?type=3 reste accepté
+        types: texte(types, 200) ?? texte(type, 20),
+        wilaya,
+        typesOrganisation: texte(typesOrganisation, 200),
+        propose: texte(propose, 60)
       });
 
       res.json({

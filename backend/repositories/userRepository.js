@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
 const { PUBLIC_USER_PROFILE_ATTRIBUTES, PROFESSIONAL_TYPE_IDS, stripPrivateContact } = require('../constants/publicAttributes');
 const { conditionNom } = require('./rechercheNom');
+const { STATUTS_EVENEMENT_PUBLICS } = require('../services/liensExternes');
 
 
 class UserRepository extends BaseRepository {
@@ -94,23 +95,52 @@ class UserRepository extends BaseRepository {
   /**
    * Trouve les professionnels validés
    */
-  async findValidatedProfessionals({ q, type, wilaya, ...options } = {}) {
+  /**
+   * Filtres (page Professionnels) : chaque groupe accepte plusieurs choix (l'un OU l'autre), les groupes
+   * se cumulent. types : métiers ; typesOrganisation : types d'organisation (validée, rattachement actif) ;
+   * propose : 'oeuvres' (publiées), 'evenements' (publics), 'services' (validés), mêmes règles que le portfolio.
+   */
+  async findValidatedProfessionals({ q, type, types, wilaya, typesOrganisation, propose, ...options } = {}) {
     // Route publique : uniquement le profil public, contact selon les préférences
-    const typeDemande = Number(type);
+    const entiers = (v) => [...new Set(String(v ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+    // Un type qui n'est pas un métier (visiteur, administrateur) ne filtre rien et n'ouvre rien
+    const metiers = entiers(types ?? type).filter((id) => PROFESSIONAL_TYPE_IDS.includes(id));
+    const organisations = entiers(typesOrganisation).slice(0, 30);
+    const offres = [...new Set(String(propose ?? '').split(','))].filter((o) => ['oeuvres', 'evenements', 'services'].includes(o));
     const wilayaDemandee = Number(wilaya);
+    const sequelize = this.model.sequelize;
     // « poétesse », « céramiste » : les métiers saisis par le professionnel sont cherchés aussi
-    const nom = conditionNom(this.model.sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`', autres: ['CAST(`User`.`specialites` AS CHAR)'] });
+    const nom = conditionNom(sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`', autres: ['CAST(`User`.`specialites` AS CHAR)'] });
+
+    const moi = '`User`.`id_user`';
+    const conditions = [];
+    if (nom) conditions.push(sequelize.literal(`(${nom})`));
+    // Identifiants déjà réduits à des entiers : pas d'injection possible
+    if (organisations.length) {
+      conditions.push(sequelize.literal(`EXISTS (SELECT 1 FROM userorganisation uo
+        JOIN organisation o ON o.id_organisation = uo.id_organisation
+        WHERE uo.id_user = ${moi} AND uo.actif = 1 AND o.statut = 'valide'
+          AND o.id_type_organisation IN (${organisations.join(',')}))`));
+    }
+    const sousRequetes = {
+      oeuvres: `EXISTS (SELECT 1 FROM oeuvre o WHERE o.statut = 'publie' AND (o.saisi_par = ${moi}
+        OR EXISTS (SELECT 1 FROM oeuvre_user ou WHERE ou.id_oeuvre = o.id_oeuvre AND ou.id_user = ${moi})))`,
+      evenements: `EXISTS (SELECT 1 FROM evenement e WHERE e.id_user = ${moi}
+        AND e.statut IN (${STATUTS_EVENEMENT_PUBLICS.map((s) => sequelize.escape(s)).join(',')}))`,
+      services: `EXISTS (SELECT 1 FROM services s WHERE s.id_user = ${moi} AND s.statut = 'valide')`,
+    };
+    if (offres.length) conditions.push(sequelize.literal(`(${offres.map((o) => sousRequetes[o]).join(' OR ')})`));
+
     const result = await this.findAll({
       ...options,
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       where: {
-        // Un type qui n'est pas un métier (visiteur, administrateur) ne filtre rien et n'ouvre rien
-        id_type_user: PROFESSIONAL_TYPE_IDS.includes(typeDemande) ? typeDemande : { [Op.in]: PROFESSIONAL_TYPE_IDS },
+        id_type_user: metiers.length ? { [Op.in]: metiers } : { [Op.in]: PROFESSIONAL_TYPE_IDS },
         statut: 'actif',
         profil_public: true,
         accepte_conditions: true,
         ...(Number.isInteger(wilayaDemandee) && wilayaDemandee > 0 ? { wilaya_residence: wilayaDemandee } : {}),
-        ...(nom ? { [Op.and]: [this.model.sequelize.literal(`(${nom})`)] } : {})
+        ...(conditions.length ? { [Op.and]: conditions } : {})
       }
     });
     result.data.forEach(stripPrivateContact);
@@ -204,7 +234,7 @@ class UserRepository extends BaseRepository {
         limit: LIMIT
       }) : [],
       Evenement ? Evenement.findAll({
-        where: { id_user: userId, statut: { [Op.in]: ['publie', 'planifie', 'en_cours', 'termine', 'reporte', 'annule'] } },
+        where: { id_user: userId, statut: { [Op.in]: STATUTS_EVENEMENT_PUBLICS } },
         attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'image_url', 'statut'],
         order: [['date_debut', 'DESC']],
         limit: LIMIT

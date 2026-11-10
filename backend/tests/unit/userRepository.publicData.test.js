@@ -38,6 +38,29 @@ describe('findValidatedProfessionals (public)', () => {
     expect(result.data[1].email).toBeNull();
     expect(result.data[1].telephone).toBe('0666');
   });
+
+  it('filtres de la page Professionnels : plusieurs métiers, types d’organisation, ce qu’ils proposent', async () => {
+    const { repo, User } = makeRepo([]);
+    const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
+    const [m1, m2] = PROFESSIONAL_TYPE_IDS;
+    await repo.findValidatedProfessionals({ types: `${m1},${m2},29,abc`, typesOrganisation: '12,14', propose: 'oeuvres,services,x' });
+    const { where } = User.findAndCountAll.mock.calls[0][0];
+    const { Op } = require('sequelize');
+    // Administrateur (29) et valeurs invalides ignorés
+    expect(where.id_type_user[Op.in]).toEqual([m1, m2]);
+    const sql = where[Op.and].map((c) => c.val).join('\n');
+    expect(sql).toMatch(/userorganisation[\s\S]*o\.statut = 'valide'[\s\S]*IN \(12,14\)/);
+    expect(sql).toMatch(/FROM oeuvre o WHERE o\.statut = 'publie'[\s\S]* OR EXISTS \(SELECT 1 FROM services s/);
+    expect(sql).not.toMatch(/evenement/);
+  });
+
+  it('valeurs piégées dans les filtres : ignorées, aucune condition ajoutée', async () => {
+    const { repo, User } = makeRepo([]);
+    await repo.findValidatedProfessionals({ typesOrganisation: "1' OR '1", propose: 'DROP' });
+    const { where } = User.findAndCountAll.mock.calls[0][0];
+    const { Op } = require('sequelize');
+    expect(where[Op.and]).toBeUndefined();
+  });
 });
 
 describe('searchUsers', () => {

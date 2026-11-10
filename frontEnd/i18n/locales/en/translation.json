@@ -85,12 +85,22 @@
     "menu": "Professionals",
     "titre": "Cultural professionals",
     "sousTitre": "Find an author, a craftsperson, a writer, an artist or a researcher, and discover their work.",
-    "rechercher": "Search by name…",
+    "rechercher": "Search a name or a profession…",
     "metier": "Profession",
     "tousMetiers": "All professions",
     "aucun": "No professional matches your search",
     "rechercherOeuvre": "Title or author name…",
-    "rechercherArtisanat": "Product or craftsperson name…"
+    "rechercherArtisanat": "Product or craftsperson name…",
+    "invitation": "Type a name or a profession, or choose a wilaya or filters, to find a professional.",
+    "filtres": "Filters",
+    "metiers": "Professions",
+    "typesOrganisation": "Organisation or association",
+    "propose": "What they offer",
+    "offres": {
+      "oeuvres": "Published works",
+      "evenements": "Events",
+      "services": "Services (tours, workshops…)"
+    }
   },
   "liens": {
     "titre": "In the press and online",
@@ -5947,8 +5957,7 @@
     "oeuvres": "Books, films, music, art and creations from Algeria. Each work has its own page: photos, summary, excerpt, and you can order it directly from its author. Tala DZ takes no commission.",
     "evenements": "Festivals, exhibitions, talks and shows all over Algeria. Register in one click and get a reminder before the day.",
     "patrimoine": "The places and history of Algeria. Read or listen to the history of each place, and plan your visit with the smart planner.",
-    "artisanat": "The craftsmanship of Algerian artisans: pottery, rugs, jewellery, basketry… Discover their creations and order them directly from the artisan.",
-    "professionnels": "The artists, writers, artisans and organisers of Algerian culture. Each page shows a career and works: follow those who inspire you."
+    "artisanat": "The craftsmanship of Algerian artisans: pottery, rugs, jewellery, basketry… Discover their creations and order them directly from the artisan."
   },
   "lecture": {
     "ecouter": "Listen",

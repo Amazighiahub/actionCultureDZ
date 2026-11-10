@@ -1,7 +1,7 @@
 // services/metadata.service.ts - VERSION CORRIGÉE
 import i18n from 'i18next';
 import { httpClient } from './httpClient';
-import type { ApiResponse } from '../config/api';
+import { API_ENDPOINTS, type ApiResponse } from '../config/api';
 import type {
   TypeOeuvre,
   TypeEvenement,
@@ -249,6 +249,15 @@ export class MetadataService {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'utilisateurs'
       };
+    }
+  }
+
+  /** Types d'organisation (association, maison d'édition, université…), traduits par le serveur */
+  async getTypesOrganisations(): Promise<ApiResponse<Array<{ id_type_organisation: number; nom: unknown; code?: string }>>> {
+    try {
+      return await httpClient.get(API_ENDPOINTS.metadata.typesOrganisations);
+    } catch (error: unknown) {
+      return { success: false, error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d’organisation' };
     }
   }
 

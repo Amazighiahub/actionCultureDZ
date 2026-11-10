@@ -1,6 +1,6 @@
 /**
  * « À quoi sert cette page ? » : deux phrases en haut de chaque grande partie du site (œuvres,
- * événements, patrimoine, artisanat, professionnels), à lire ou à écouter. On peut le fermer : le
+ * événements, patrimoine, artisanat), à lire ou à écouter. (La page Professionnels n'a que sa recherche.) On peut le fermer : le
  * navigateur s'en souvient (si le stockage n'est pas disponible, l'encadré revient simplement).
  */
 import React, { useState } from 'react';
@@ -8,14 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { Lightbulb, X } from 'lucide-react';
 import LireAVoixHaute, { type LangueLue } from '@/components/shared/LireAVoixHaute';
 
-export type ModuleMission = 'oeuvres' | 'evenements' | 'patrimoine' | 'artisanat' | 'professionnels';
+export type ModuleMission = 'oeuvres' | 'evenements' | 'patrimoine' | 'artisanat';
 
 const TEXTES_PAR_DEFAUT: Record<ModuleMission, string> = {
   oeuvres: 'Ici, les livres, films, musiques, arts et créations d’Algérie. Chaque œuvre a sa page : photos, résumé, extrait, et vous pouvez la commander directement à son auteur. Tala DZ ne prend aucune commission.',
   evenements: 'Festivals, expositions, conférences et spectacles partout en Algérie. Inscrivez-vous en un clic et recevez un rappel avant le jour J.',
   patrimoine: 'Les lieux et l’histoire de l’Algérie. Lisez ou écoutez l’histoire de chaque lieu, et préparez votre visite avec le planificateur intelligent.',
   artisanat: 'Le savoir-faire des artisans algériens : poterie, tapis, bijoux, vannerie… Découvrez leurs créations et commandez-les directement à l’artisan.',
-  professionnels: 'Les artistes, écrivains, artisans et organisateurs de la culture algérienne. Chaque page présente un parcours et des œuvres : suivez ceux qui vous inspirent.',
 };
 
 const cle = (module: ModuleMission) => `taladz-mission-fermee-${module}`;

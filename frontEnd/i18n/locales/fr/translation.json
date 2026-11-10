@@ -85,12 +85,22 @@
     "menu": "Professionnels",
     "titre": "Professionnels de la culture",
     "sousTitre": "Retrouvez un auteur, un artisan, un écrivain, un artiste ou un chercheur, et découvrez son travail.",
-    "rechercher": "Rechercher par nom…",
+    "rechercher": "Rechercher un nom ou un métier…",
     "metier": "Métier",
     "tousMetiers": "Tous les métiers",
     "aucun": "Aucun professionnel ne correspond à votre recherche",
     "rechercherOeuvre": "Titre ou nom de l’auteur…",
-    "rechercherArtisanat": "Produit ou nom de l’artisan…"
+    "rechercherArtisanat": "Produit ou nom de l’artisan…",
+    "invitation": "Tapez un nom ou un métier, ou choisissez une wilaya ou des filtres, pour trouver un professionnel.",
+    "filtres": "Filtres",
+    "metiers": "Métiers",
+    "typesOrganisation": "Organisation ou association",
+    "propose": "Ce qu’ils proposent",
+    "offres": {
+      "oeuvres": "Des œuvres publiées",
+      "evenements": "Des événements",
+      "services": "Des services (visites, ateliers…)"
+    }
   },
   "liens": {
     "titre": "Dans la presse et en ligne",
@@ -5947,8 +5957,7 @@
     "oeuvres": "Ici, les livres, films, musiques, arts et créations d’Algérie. Chaque œuvre a sa page : photos, résumé, extrait, et vous pouvez la commander directement à son auteur. Tala DZ ne prend aucune commission.",
     "evenements": "Festivals, expositions, conférences et spectacles partout en Algérie. Inscrivez-vous en un clic et recevez un rappel avant le jour J.",
     "patrimoine": "Les lieux et l’histoire de l’Algérie. Lisez ou écoutez l’histoire de chaque lieu, et préparez votre visite avec le planificateur intelligent.",
-    "artisanat": "Le savoir-faire des artisans algériens : poterie, tapis, bijoux, vannerie… Découvrez leurs créations et commandez-les directement à l’artisan.",
-    "professionnels": "Les artistes, écrivains, artisans et organisateurs de la culture algérienne. Chaque page présente un parcours et des œuvres : suivez ceux qui vous inspirent."
+    "artisanat": "Le savoir-faire des artisans algériens : poterie, tapis, bijoux, vannerie… Découvrez leurs créations et commandez-les directement à l’artisan."
   },
   "lecture": {
     "ecouter": "Écouter",

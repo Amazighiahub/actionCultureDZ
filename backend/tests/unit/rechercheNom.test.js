@@ -67,7 +67,7 @@ describe('annuaire des professionnels', () => {
     const depot = fabriquer();
     await depot.findValidatedProfessionals({ type: '7', wilaya: '16', q: 'amel', page: 1, limit: 24 });
     const { where, page, limit } = depot.findAll.mock.calls[0][0];
-    expect(where.id_type_user).toBe(7);
+    expect(where.id_type_user).toEqual({ [Op.in]: [7] }); // un ou plusieurs métiers (filtres à cocher)
     expect(where.wilaya_residence).toBe(16);
     expect(where.profil_public).toBe(true);
     expect(where.statut).toBe('actif');
