@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, ZoomControl, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MapPin, Maximize2, Navigation } from 'lucide-react';
+import { Maximize2, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { patrimoineService } from '@/services/patrimoine.service';
 import 'leaflet/dist/leaflet.css';
@@ -29,15 +28,70 @@ interface Monument {
 const CadrerSurSites: React.FC<{ positions: Array<[number, number]> }> = ({ positions }) => {
   const carte = useMap();
   useEffect(() => {
-    if (positions.length > 0) carte.fitBounds(positions, { padding: [40, 40], maxZoom: 9 });
+    // Marges serrées (40 px partout laissaient voir surtout la mer et l'Espagne sur téléphone), sauf en haut :
+    // le dessin du repère (≈ 41 px) dépasse au-dessus de son point
+    if (positions.length > 0) carte.fitBounds(positions, { paddingTopLeft: [20, 48], paddingBottomRight: [20, 12], maxZoom: 9 });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement quand la liste des sites change
   }, [positions.length, carte]);
   return null;
 };
 
+/**
+ * Carte des sites, déclarée HORS de CartePatrimoine. Avant, elle était déclarée dans son rendu : chaque
+ * changement d'état (toucher un repère) la détruisait et la recréait, la fenêtre du lieu ne s'ouvrait pas,
+ * la carte revenait au cadrage de départ et Leaflet levait « _leaflet_pos » (audit V11 UX-4).
+ */
+const CarteSites: React.FC<{ monuments: Monument[]; height: string }> = ({ monuments, height }) => {
+  const { t } = useTranslation();
+  const positions = useMemo(() => monuments.map((m) => m.position), [monuments]);
+  return (
+    <div style={{ height, width: '100%' }}>
+      <MapContainer
+        center={[32.0, 3.0]}
+        zoom={6}
+        // Crans de zoom fins : le cadrage serre au plus près des sites (crans entiers : trop large)
+        zoomSnap={0.25}
+        style={{ height: '100%', width: '100%', borderRadius: '12px' }}
+        zoomControl={false}
+      >
+        <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
+        <CadrerSurSites positions={positions} />
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
+        />
+        {monuments.map((monument) => (
+          <Marker
+            key={monument.id}
+            position={monument.position}
+            // Nom du marqueur pour les lecteurs d'écran (sinon « Marker »)
+            title={monument.nom}
+            alt={monument.nom}
+          >
+            <Popup>
+              <div className="p-2 max-w-xs">
+                <h3 dir="auto" className="font-semibold font-serif">{monument.nom}</h3>
+                {monument.region && <p dir="auto" className="text-sm text-muted-foreground mb-2">{monument.region}</p>}
+                <img
+                  src={monument.image}
+                  alt=""
+                  className="w-full h-24 object-cover rounded mb-2"
+                  loading="lazy"
+                />
+                <Link to={`/patrimoine/${monument.id}`} className="text-sm font-medium text-primary hover:underline">
+                  {t('common_cartepatrimoine.plus_dinformations')}
+                </Link>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+};
+
 const CartePatrimoine: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const [monumentSelectionne, setMonumentSelectionne] = useState<Monument | null>(null);
   const [carteOuverte, setCarteOuverte] = useState(false);
   const [dbMonuments, setDbMonuments] = useState<Monument[]>([]);
 
@@ -71,53 +125,6 @@ const CartePatrimoine: React.FC = () => {
 
   const allMonuments = dbMonuments;
 
-  // Composant Map
-  const MapComponent: React.FC<{ height?: string }> = ({ height = "400px" }) => (
-    <div style={{ height, width: '100%' }}>
-      <MapContainer
-        center={[32.0, 3.0]}
-        zoom={6}
-        style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-        zoomControl={false}
-      >
-        <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
-        <CadrerSurSites positions={allMonuments.map(m => m.position)} />
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-        />
-        
-        {allMonuments.map((monument) => (
-          <Marker
-            key={monument.id}
-            position={monument.position}
-            // Nom du marqueur pour les lecteurs d'écran (sinon « Marker »)
-            title={monument.nom}
-            alt={monument.nom}
-            eventHandlers={{ click: () => setMonumentSelectionne(monument) }}
-          >
-            <Popup>
-              <div className="p-2 max-w-xs">
-                <h3 className="font-semibold font-serif">{monument.nom}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{monument.region}</p>
-                <img
-                  src={monument.image}
-                  alt={monument.nom}
-                  className="w-full h-24 object-cover rounded mb-2"
-                  loading="lazy"
-                />
-                <Link to={`/patrimoine/${monument.id}`} className="text-sm font-medium text-primary hover:underline">
-                  {t('common_cartepatrimoine.plus_dinformations')}
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-        
-      </MapContainer>
-    </div>
-  );
-
   return (
     <div className="space-y-8">
       {/* Carte principale */}
@@ -142,7 +149,7 @@ const CartePatrimoine: React.FC = () => {
                   </DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 mt-4">
-                  <MapComponent height="calc(90vh - 120px)" />
+                  <CarteSites monuments={allMonuments} height="calc(90vh - 120px)" />
                 </div>
               </DialogContent>
             </Dialog>
@@ -153,52 +160,12 @@ const CartePatrimoine: React.FC = () => {
         </CardHeader>
         <CardContent className="p-0">
           <div className="relative">
-            <MapComponent height="300px" />
+            <CarteSites monuments={allMonuments} height="300px" />
             <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none rounded-lg" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Détails monument sélectionné */}
-      {monumentSelectionne && (
-        <Card className="bg-gradient-to-r from-accent/10 to-primary/5">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="font-serif text-xl">{monumentSelectionne.nom}</CardTitle>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{monumentSelectionne.region}</span>
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Badge variant="secondary">{t(`patrimoine.types.${monumentSelectionne.type}`, monumentSelectionne.type)}</Badge>
-                {monumentSelectionne.heritage === 'UNESCO' && (
-                  <Badge className="bg-accent text-accent-foreground">
-                    {t("common_cartepatrimoine.unesco")}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <img
-              src={monumentSelectionne.image}
-              alt={monumentSelectionne.nom}
-              className="w-full h-64 object-cover rounded-lg shadow-md"
-              loading="lazy"
-            />
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild className="flex-1 btn-hover">
-                <Link to={`/patrimoine/${monumentSelectionne.id}`}>{t('common_cartepatrimoine.plus_dinformations')}</Link>
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setMonumentSelectionne(null)}>
-                {t("common_cartepatrimoine.fermer")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
