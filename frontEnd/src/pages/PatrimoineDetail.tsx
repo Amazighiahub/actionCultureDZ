@@ -543,6 +543,27 @@ const PatrimoineDetail = () => {
           )}
         </div>
 
+        {/* Actions principales juste sous le titre. Avant : « Planifier votre visite » n'apparaissait qu'après
+            environ 6 écrans sur téléphone (audit V11 UX-6). Le bloc du bas reste, en rappel. */}
+        <div className="-mt-4 mb-8 flex flex-wrap gap-2">
+          <Button onClick={() => setShowVisitePlanner(true)} className="gap-2">
+            <Route className="h-4 w-4" aria-hidden="true" />
+            {t('patrimoine.planVisit', 'Planifier votre visite')}
+          </Button>
+          {Number(site.latitude) !== 0 && Number(site.longitude) !== 0 && (
+            <Button asChild variant="outline" className="gap-2">
+              <a href={itineraireUrl} target="_blank" rel="noopener noreferrer">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                {t('patrimoine.directions', 'Itinéraire')}
+              </a>
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleShareSite} className="gap-2">
+            <Share2 className="h-4 w-4" aria-hidden="true" />
+            {t('common.share', 'Partager')}
+          </Button>
+        </div>
+
         {/* Contenu principal */}
         <div className="grid md:grid-cols-3 gap-8">
           {/* Colonne principale */}

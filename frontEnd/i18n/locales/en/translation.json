@@ -1067,10 +1067,9 @@
       "noResults": "No results",
       "otherSites": "Other remarkable sites",
       "planVisit": {
-        "description": "Use our interactive map to create your personalized itinerary and discover the wonders of Algerian heritage. Choose a thematic route or freely explore the sites that interest you.",
-        "guide": "Practical guide",
-        "start": "Start exploring",
-        "title": "Plan your visit"
+        "title": "Plan your visit",
+        "comment": "Open a place, then tap “Plan your visit”: the site maps out your route with nearby places to see, based on your time.",
+        "choisir": "Choose a place"
       },
       "reviews": "reviews",
       "seeAll": "See all",

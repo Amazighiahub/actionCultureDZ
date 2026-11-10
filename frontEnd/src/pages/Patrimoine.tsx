@@ -302,8 +302,8 @@ const Patrimoine = () => {
           </Suspense>
         </div>
 
-        {/* Grille des sites */}
-        <div className="mb-12">
+        {/* Grille des sites (cible du bouton « Choisir un lieu » de l'encadré du bas) */}
+        <div id="sites-patrimoine" className="mb-12 scroll-mt-24">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold font-serif">
               {t('sections.heritage.otherSites', 'Sites patrimoniaux')}
@@ -445,16 +445,19 @@ const Patrimoine = () => {
             <h3 className="text-2xl font-semibold font-serif">
               {t('sections.heritage.planVisit.title', 'Planifiez votre visite')}
             </h3>
+            {/* Avant : « Commencer l'exploration » remontait en haut de page et « Guide pratique » menait à
+                « À propos » : le planificateur restait introuvable (audit V11 UX-5) */}
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('sections.heritage.planVisit.description', 'Créez un parcours personnalisé à travers les sites patrimoniaux de l\'Algérie')}
+              {t('sections.heritage.planVisit.comment', 'Ouvrez un lieu, puis touchez « Planifier votre visite » : le site trace votre parcours avec les lieux à voir autour, selon votre temps.')}
             </p>
-            <div className="flex justify-center gap-4">
-              <Button size="lg" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                {t('sections.heritage.planVisit.start', 'Commencer l\'exploration')}
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <Button size="lg" className="w-full sm:w-auto whitespace-normal"
+                onClick={() => document.getElementById('sites-patrimoine')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                {t('sections.heritage.planVisit.choisir', 'Choisir un lieu')}
               </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/a-propos">
-                  {t('sections.heritage.planVisit.guide', 'Guide pratique')}
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto whitespace-normal">
+                <Link to="/patrimoine/services">
+                  {t('servicesVisiteurs.menu', 'Services aux visiteurs')}
                 </Link>
               </Button>
             </div>

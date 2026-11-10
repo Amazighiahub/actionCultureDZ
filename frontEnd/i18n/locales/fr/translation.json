@@ -1117,10 +1117,9 @@
       "tryDifferentSearch": "Essayez une autre recherche ou réinitialisez les filtres",
       "otherSites": "Autres sites remarquables",
       "planVisit": {
-        "description": "Utilisez notre carte interactive pour créer votre itinéraire personnalisé et découvrir les merveilles du patrimoine algérien. Choisissez un parcours thématique ou explorez librement les sites qui vous intéressent.",
-        "guide": "Guide pratique",
-        "start": "Commencer l'exploration",
-        "title": "Planifiez votre visite"
+        "title": "Planifiez votre visite",
+        "comment": "Ouvrez un lieu, puis touchez « Planifier votre visite » : le site trace votre parcours avec les lieux à voir autour, selon votre temps.",
+        "choisir": "Choisir un lieu"
       },
       "reviews": "Avis",
       "seeAll": "Voir tout",
