@@ -94,24 +94,32 @@ describe('ForgotPassword — Mot de passe oublié', () => {
     mockForgotPassword.mockResolvedValue({ success: true });
   });
 
-  test('affiche toujours un message de succès même si email inconnu — anti-énumération', async () => {
-    // L'API rejette (email inconnu / erreur serveur)
-    mockForgotPassword.mockRejectedValue(new Error('User not found'));
+  test('adresse inconnue : le serveur répond succès comme pour une adresse connue (anti-énumération), « e-mail envoyé » s\'affiche', async () => {
+    // Le vrai serveur renvoie { success: true } que l'adresse existe ou non
+    mockForgotPassword.mockResolvedValue({ success: true });
 
     renderForgotPassword();
-
     await user.type(getEmailInput(), 'inconnu@example.com');
-
-    // Soumettre le formulaire
     await user.click(getSubmitButton());
 
-    // Malgré l'erreur, la vue "email envoyé" s'affiche
     await waitFor(() => {
       expect(screen.getByText('auth.forgotPassword.emailSentTitle')).toBeInTheDocument();
     });
+  });
 
-    // Aucun message d'erreur technique visible pour l'utilisateur
-    expect(screen.queryByText('User not found')).not.toBeInTheDocument();
+  test('panne du serveur : pas de faux « e-mail envoyé », un message clair à la place (audit V11 FRM-3)', async () => {
+    // Erreur telle que la transforme httpClient (502 : message technique remplacé)
+    mockForgotPassword.mockRejectedValue(Object.assign(new Error('Request failed with status code 502'), { status: 502 }));
+
+    renderForgotPassword();
+    await user.type(getEmailInput(), 'amina@example.com');
+    await user.click(getSubmitButton());
+
+    await waitFor(() => {
+      expect(screen.getByText(/Votre demande n’est pas partie/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('auth.forgotPassword.emailSentTitle')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Request failed/)).not.toBeInTheDocument();
   });
 
   test('bouton disabled pendant loading', async () => {

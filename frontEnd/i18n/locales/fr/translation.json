@@ -352,7 +352,8 @@
       "emailSentDescription": "Si cette adresse email est associée à un compte, vous recevrez un lien de réinitialisation dans quelques minutes.",
       "checkSpam": "Pensez à vérifier vos spams si vous ne recevez pas l'email.",
       "didntReceive": "Vous n'avez pas reçu l'email ?",
-      "tryAgain": "Réessayer"
+      "tryAgain": "Réessayer",
+      "nonParti": "Le service ne répond pas pour le moment. Votre demande n’est pas partie : réessayez dans quelques minutes."
     },
     "resetPassword": {
       "title": "Nouveau mot de passe",

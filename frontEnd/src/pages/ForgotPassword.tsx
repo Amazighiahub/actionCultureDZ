@@ -14,6 +14,7 @@ import { userService } from '@/services/user.service';
 import { useRTL } from '@/hooks/useRTL';
 import SEOHead from '@/components/SEOHead';
 import AntiRobot, { estRefusAntiRobot, useAntiRobot } from '@/components/shared/AntiRobot';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -69,6 +70,14 @@ const ForgotPassword = () => {
 
     setLoading(true);
 
+    // « E-mail envoyé » seulement si le serveur le confirme. Il répond déjà de la même façon que l'adresse
+    // existe ou non : aucune raison de maquiller une erreur en succès. Avant, une panne (500, 502) ou une
+    // coupure affichait « Email envoyé ! » et la personne attendait un e-mail qui ne viendrait pas
+    // (audit V11 FRM-3).
+    const nonParti = t('auth.forgotPassword.nonParti', 'Le service ne répond pas pour le moment. Votre demande n’est pas partie : réessayez dans quelques minutes.');
+    const montrerErreur = (source: unknown) => setError(estRefusAntiRobot(source)
+      ? messageErreurServeur(source, t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'))
+      : messageErreurServeur(source, nonParti));
     try {
       const response = await userService.forgotPassword(email, antiRobot.lireJeton());
 
@@ -79,28 +88,10 @@ const ForgotPassword = () => {
           description: t('auth.forgotPassword.successDescription'),
         });
       } else {
-        const errMsg = (response.error || '').toLowerCase();
-        // Refus anti-robots : jamais présenté comme « e-mail envoyé »
-        if (estRefusAntiRobot(response)) {
-          setError(response.error || t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'));
-        } else if (errMsg.includes('429') || errMsg.includes('too many') || errMsg.includes('trop de') || errMsg.includes('rate')) {
-          setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
-        } else {
-          // Pour les autres erreurs, afficher succès (ne pas révéler si l'email existe)
-          setSubmitted(true);
-        }
+        montrerErreur(response);
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message.toLowerCase() : '';
-      if (estRefusAntiRobot(err)) {
-        setError((err instanceof Error && err.message) || t('antiRobot.refuse', 'La vérification anti-robots a échoué : recommencez-la.'));
-      } else if (errMsg.includes('429') || errMsg.includes('rate') || errMsg.includes('trop')) {
-        setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
-      } else if (errMsg.includes('timeout') || errMsg.includes('network') || errMsg.includes('connection')) {
-        setError(t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.'));
-      } else {
-        setSubmitted(true);
-      }
+      montrerErreur(err);
     } finally {
       setLoading(false);
       // Un jeton ne sert qu'une fois

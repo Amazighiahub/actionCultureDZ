@@ -131,7 +131,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         } else if (isEmailError) {
           setErrors({ email: errorMessage });
         } else {
-          setErrors({ email: errorMessage });
+          // Ni l'e-mail ni le mot de passe (coupure de réseau, serveur indisponible…) : message général au-dessus
+          // du bouton. Avant : affiché sous le champ e-mail, comme si l'adresse était fausse (audit V11 FRM-2)
+          setErrors({ general: errorMessage });
         }
       }
     } catch (error: unknown) {
@@ -212,6 +214,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password}</p>
             )}
           </div>
+
+          {errors.general && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" aria-hidden="true" />
+              <AlertDescription role="alert">{errors.general}</AlertDescription>
+            </Alert>
+          )}
 
           {/* Options */}
           <div className="flex items-center justify-end">

@@ -336,7 +336,8 @@
       "emailSentDescription": "If this email address is associated with an account, you will receive a reset link in a few minutes.",
       "checkSpam": "Remember to check your spam folder if you don't receive the email.",
       "didntReceive": "Didn't receive the email?",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "nonParti": "The service is not responding right now. Your request was not sent: try again in a few minutes."
     },
     "resetPassword": {
       "title": "New Password",

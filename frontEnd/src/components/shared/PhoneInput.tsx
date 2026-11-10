@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/Utils';
 import { COUNTRY_CODES, type CountryCode } from '@/data/countryCodes';
+import { splitPhone } from '@/utils/telephone';
 
 interface PhoneInputProps {
   value: string;
@@ -22,11 +23,6 @@ interface PhoneInputProps {
   'aria-describedby'?: string;
 }
 
-function splitPhone(value: string): { dialCode: string; local: string } {
-  const match = value.match(/^(\+\d{1,4})\s?(.*)$/);
-  if (match) return { dialCode: match[1], local: match[2] };
-  return { dialCode: '+213', local: value };
-}
 
 export function PhoneInput({
   value,

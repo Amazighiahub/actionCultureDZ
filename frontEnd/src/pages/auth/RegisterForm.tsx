@@ -26,6 +26,7 @@ import GeoSelector from '@/components/shared/GeoSelector';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
+import { normaliserTelephone, telephoneValide } from '@/utils/telephone';
 
 
 interface RegisterFormProps {
@@ -170,7 +171,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         if (registerForm.mot_de_passe && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) error = t('auth.errors.passwordMismatch');
         break;
       case 'telephone':
-        if (registerForm.telephone && !/^\+\d{7,15}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+        if (!telephoneValide(registerForm.telephone)) {
           error = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
         }
         break;
@@ -260,7 +261,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       errors.id_commune = t('auth.errors.communeRequired', 'La commune est obligatoire pour un compte professionnel');
     }
 
-    if (registerForm.telephone && !/^\+\d{7,15}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+    if (!telephoneValide(registerForm.telephone)) {
       errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
     }
 
@@ -368,7 +369,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false,
         // Saisi et validé mais jamais envoyé auparavant
-        ...(registerForm.telephone.trim() ? { telephone: registerForm.telephone.replace(/\s/g, '') } : {}),
+        ...(normaliserTelephone(registerForm.telephone) ? { telephone: normaliserTelephone(registerForm.telephone) } : {}),
         ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() ?? undefined } : {})
       };
       

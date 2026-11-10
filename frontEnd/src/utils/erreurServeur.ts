@@ -16,8 +16,9 @@ export function detailsDesChamps(source: unknown): DetailChamp[] {
     : [];
 }
 
-/** Texte technique sans intérêt pour la personne (page HTML, message d'Axios) */
-const TECHNIQUE = /^\s*<|Request failed with status code|Network Error|timeout of \d+ms/i;
+/** Texte technique sans intérêt pour la personne (page HTML, message d'Axios ou du serveur). Une seule
+ *  liste, reprise par services/httpClient.ts pour ne jamais afficher ces textes. */
+export const TECHNIQUE = /^\s*<|Request failed with status code|Network Error|timeout of \d+ms|Internal server error|Request timeout|CSRF token|ECONN|ETIMEDOUT/i;
 
 export function messageErreurServeur(source: unknown, defaut: string): string {
   const champs = [...new Set(detailsDesChamps(source).map((d) => String(d.message)))];

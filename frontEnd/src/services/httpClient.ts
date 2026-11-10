@@ -7,6 +7,7 @@ import i18next from 'i18next';
 import { delaiAvantReessai, DELAI_MAX_REESSAI_AUTO } from '@/utils/delaiRateLimit';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
 import { apiLogger } from '@/utils/logger';
+import { TECHNIQUE } from '@/utils/erreurServeur';
 
 interface ApiUploadOptions<T = unknown> {
   fieldName?: string;
@@ -597,6 +598,21 @@ class HttpClient {
       }
     }
     
+    // Jamais de texte technique à l'écran (« Network Error », « Request failed… »), en français comme en
+    // arabe (audit V11 FRM-2) : un message clair dans la langue du site. Le code (ERR_NETWORK…) reste.
+    const statut = error.response?.status;
+    if (!error.response) {
+      message = error.code === 'ECONNABORTED'
+        ? i18next.t('auth.errors.timeout', 'Le serveur met trop de temps à répondre. Veuillez réessayer.')
+        : i18next.t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.');
+    } else if (statut === 408 || statut === 504) {
+      message = i18next.t('auth.errors.timeout', 'Le serveur met trop de temps à répondre. Veuillez réessayer.');
+    } else if (!message || TECHNIQUE.test(message)) {
+      message = statut && statut >= 500
+        ? i18next.t('toasts.serverErrorDesc', 'Une erreur est survenue. Veuillez réessayer plus tard.')
+        : i18next.t('common.error', 'Erreur');
+    }
+
     return new HttpError(
       message,
       error.response?.status,
