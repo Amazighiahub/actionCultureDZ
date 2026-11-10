@@ -7,6 +7,7 @@ const express = require('express');
 const { param, body } = require('express-validator');
 const parcoursController = require('../controllers/parcoursController');
 const { handleValidationErrors, validateId, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { msg } = require('../utils/messageValidation');
 
 const initParcoursRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -20,10 +21,10 @@ const initParcoursRoutes = (models, authMiddleware) => {
   router.get('/search', (req, res) => parcoursController.search(req, res));
   router.post('/personnalise',
     [
-      body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
-      body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
-      body('interests').optional().isArray().withMessage('interests doit être un tableau'),
-      body('duration').optional().isInt({ min: 30, max: 1440 }).withMessage('Durée invalide (30-1440 min)'),
+      body('latitude').isFloat({ min: -90, max: 90 }).withMessage(msg('validation.invalidLatitude')),
+      body('longitude').isFloat({ min: -180, max: 180 }).withMessage(msg('validation.invalidLongitude')),
+      body('interests').optional().isArray().withMessage(msg('validation.interetsListe')),
+      body('duration').optional().isInt({ min: 30, max: 1440 }).withMessage(msg('validation.dureeParcours')),
     ],
     handleValidationErrors,
     (req, res) => parcoursController.personnalise(req, res));
@@ -38,7 +39,7 @@ const initParcoursRoutes = (models, authMiddleware) => {
   router.get('/my/list', authenticate, (req, res) => parcoursController.getMyParcours(req, res));
   router.post('/', authenticate, requireVerifiedEmail,
     validateStringLengths,
-    [body('nom').notEmpty().withMessage('Le nom est requis')],
+    [body('nom').notEmpty().withMessage(msg('validation.nomRequis'))],
     handleValidationErrors,
     (req, res) => parcoursController.create(req, res));
   router.put('/:id', authenticate, requireVerifiedEmail,
@@ -53,17 +54,17 @@ const initParcoursRoutes = (models, authMiddleware) => {
   // Gestion des étapes
   router.post('/:id/etapes', authenticate, requireVerifiedEmail,
     validateId(),
-    [body('id_lieu').isInt({ min: 1 }).withMessage('id_lieu invalide')],
+    [body('id_lieu').isInt({ min: 1 }).withMessage(msg('validation.lieuInvalide'))],
     handleValidationErrors,
     (req, res) => parcoursController.addEtape(req, res));
   router.delete('/:id/etapes/:etapeId', authenticate, requireVerifiedEmail,
     validateId(),
-    [param('etapeId').isInt({ min: 1 }).withMessage('etapeId invalide')],
+    [param('etapeId').isInt({ min: 1 }).withMessage(msg('validation.etapeInvalide'))],
     handleValidationErrors,
     (req, res) => parcoursController.removeEtape(req, res));
   router.put('/:id/etapes/reorder', authenticate, requireVerifiedEmail,
     validateId(),
-    [body('etapes').isArray().withMessage('etapes doit être un tableau')],
+    [body('etapes').isArray().withMessage(msg('validation.etapesListe'))],
     handleValidationErrors,
     (req, res) => parcoursController.reorderEtapes(req, res));
 

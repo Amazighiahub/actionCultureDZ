@@ -13,6 +13,7 @@ const { handleValidationErrors, validateId, validateStringLengths } = require('.
 const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
 const limiteEnvois = [mediasLimiter];
 const asyncHandler = require('../utils/asyncHandler');
+const { msg } = require('../utils/messageValidation');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -52,11 +53,11 @@ const initArtisanatRoutes = (models, authMiddleware) => {
     createContentLimiter,
     validateStringLengths,
     [
-      body('nom').notEmpty().withMessage('Le nom est requis'),
-      body('id_materiau').isInt({ min: 1 }).withMessage('Le matériau est requis'),
-      body('id_technique').isInt({ min: 1 }).withMessage('La technique est requise'),
-      body('prix_min').optional().isFloat({ min: 0 }).withMessage('Le prix minimum doit être positif'),
-      body('prix_max').optional().isFloat({ min: 0 }).withMessage('Le prix maximum doit être positif')
+      body('nom').notEmpty().withMessage(msg('validation.nomRequis')),
+      body('id_materiau').isInt({ min: 1 }).withMessage(msg('validation.materiauRequis')),
+      body('id_technique').isInt({ min: 1 }).withMessage(msg('validation.techniqueRequise')),
+      body('prix_min').optional().isFloat({ min: 0 }).withMessage(msg('validation.prixMinPositif')),
+      body('prix_max').optional().isFloat({ min: 0 }).withMessage(msg('validation.prixMaxPositif'))
         .custom((val, { req }) => {
           if (req.body.prix_min && parseFloat(val) < parseFloat(req.body.prix_min)) {
             throw new Error('Le prix maximum doit être supérieur au prix minimum');

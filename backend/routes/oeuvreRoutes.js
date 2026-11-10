@@ -14,6 +14,7 @@ const { handleValidationErrors, validateId, validatePagination, validateWorkSubm
 const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
 const limiteEnvois = [mediasLimiter];
 const asyncHandler = require('../utils/asyncHandler');
+const { msg } = require('../utils/messageValidation');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -62,13 +63,13 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.get('/:id/revisions/:idRevision', authenticate, validateId(), validateId('idRevision'), articleRevisionController.wrap('detail'));
   router.post('/:id/revisions', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
     [
-      body('motif').isString().trim().isLength({ min: 5, max: 2000 }).withMessage('Motif : 5 à 2 000 caractères'),
-      body('blocks').isArray({ min: 1, max: 150 }).withMessage('Contenu de l’article manquant')
+      body('motif').isString().trim().isLength({ min: 5, max: 2000 }).withMessage(msg('validation.motif5a2000')),
+      body('blocks').isArray({ min: 1, max: 150 }).withMessage(msg('validation.contenuArticleManquant'))
     ],
     handleValidationErrors,
     articleRevisionController.wrap('proposer'));
   router.post('/:id/revisions/:idRevision/decision', authenticate, validateId(), validateId('idRevision'),
-    [body('decision').isIn(['accepter', 'refuser']).withMessage('Décision invalide')],
+    [body('decision').isIn(['accepter', 'refuser']).withMessage(msg('validation.decisionInvalide'))],
     handleValidationErrors,
     articleRevisionController.wrap('decider'));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
@@ -78,12 +79,12 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     createContentLimiter,
     validateStringLengths,
     [
-      body('titre').notEmpty().withMessage('Le titre est requis'),
-      body('id_type_oeuvre').isInt({ min: 1 }).withMessage('Le type d\'œuvre est requis'),
-      body('description').optional().isLength({ max: 10000 }).withMessage('Description trop longue (max 10000 caractères)'),
-      body('id_langue').optional().isInt({ min: 1 }).withMessage('Langue invalide'),
-      body('prix').optional().isFloat({ min: 0 }).withMessage('Le prix doit être positif'),
-      body('annee_creation').optional().isInt({ min: 1800, max: new Date().getFullYear() + 1 }).withMessage('Année de création invalide'),
+      body('titre').notEmpty().withMessage(msg('validation.titreRequis')),
+      body('id_type_oeuvre').isInt({ min: 1 }).withMessage(msg('validation.typeOeuvreRequis')),
+      body('description').optional().isLength({ max: 10000 }).withMessage(msg('validation.description10000')),
+      body('id_langue').optional().isInt({ min: 1 }).withMessage(msg('validation.langueInvalide')),
+      body('prix').optional().isFloat({ min: 0 }).withMessage(msg('validation.prixPositif')),
+      body('annee_creation').optional().isInt({ min: 1800, max: new Date().getFullYear() + 1 }).withMessage(msg('validation.anneeInvalide')),
     ],
     handleValidationErrors,
     validateWorkSubmission,

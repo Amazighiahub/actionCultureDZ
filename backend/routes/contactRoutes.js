@@ -5,6 +5,7 @@ const { verifierTurnstile } = require('../middlewares/turnstile');
 const rateLimit = require('express-rate-limit');
 const ContactService = require('../services/contact/contactService');
 const emailService = require('../services/emailService');
+const { msg } = require('../utils/messageValidation');
 
 const contactService = new ContactService(emailService);
 
@@ -20,8 +21,8 @@ const initContactRoutes = () => {
   router.post('/',
     contactLimiter,
     [
-      body('email').isEmail().withMessage('Email invalide'),
-      body('message').isLength({ min: 10, max: 2000 }).withMessage('Message requis (10-2000 caractères)'),
+      body('email').isEmail().withMessage(msg('auth.invalidEmail')),
+      body('message').isLength({ min: 10, max: 2000 }).withMessage(msg('validation.messageContact')),
       body('nom').optional().isLength({ max: 100 }),
       body('prenom').optional().isLength({ max: 100 }),
       body('sujet').optional().isLength({ max: 200 })

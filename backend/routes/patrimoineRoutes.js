@@ -14,6 +14,7 @@ const { aUnTexte } = require('../helpers/i18n');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const { msg } = require('../utils/messageValidation');
 const limiteEnvois = [mediasLimiter];
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
@@ -40,7 +41,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Relevé Excel de points de visite (modèle Taladz) : lu en mémoire, jamais stocké
   const releveUpload = [
     ...uploadClasseurXlsx,
-    [body('parentId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage('Lieu invalide')],
+    [body('parentId').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(msg('validation.lieuInvalide'))],
     handleValidationErrors
   ];
   // Propositions de modification des sites (hors équipe et créateur du site) : relecture par l'équipe
@@ -93,7 +94,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.post('/:id/noter', authenticate, requireVerifiedEmail, validateId(),
-    [body('note').isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')],
+    [body('note').isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5'))],
     handleValidationErrors,
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
@@ -105,12 +106,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       if (!site) { const e = new Error('Site introuvable'); e.statusCode = 404; e.code = 'NOT_FOUND'; throw e; }
     }),
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
-    [body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage('Langue invalide')],
+    [body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage(msg('validation.langueInvalide'))],
     handleValidationErrors,
     patrimoineController.wrap('uploadMedias'));
   // Ordre de visite des points d'un site (créateur du site ou modération, vérifié par le service)
   router.put('/:id/points/ordre', authenticate, validateId(),
-    [body('ordre').isArray({ min: 1, max: 200 }).withMessage('ordre doit être la liste des points')],
+    [body('ordre').isArray({ min: 1, max: 200 }).withMessage(msg('validation.ordrePoints'))],
     handleValidationErrors,
     patrimoineController.wrap('reordonnerPoints'));
   router.delete('/:id/medias/:mediaId', authenticate, requireModerationOuPro, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
@@ -133,11 +134,11 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Intervenants / personnalités d'un site patrimoine
   router.post('/:id/intervenants', authenticate, validateId(),
     [
-      body('id_intervenant').isInt({ min: 1 }).withMessage('id_intervenant requis'),
-      body('role_sur_site').optional().isLength({ max: 80 }).withMessage('role_sur_site trop long'),
-      body('periode').optional().isLength({ max: 100 }).withMessage('periode trop long'),
-      body('contexte').optional().isLength({ max: 5000 }).withMessage('contexte trop long'),
-      body('ordre').optional().isInt({ min: 0 }).withMessage('ordre invalide'),
+      body('id_intervenant').isInt({ min: 1 }).withMessage(msg('validation.personneRequise')),
+      body('role_sur_site').optional().isLength({ max: 80 }).withMessage(msg('validation.roleTropLong')),
+      body('periode').optional().isLength({ max: 100 }).withMessage(msg('validation.periodeTropLongue')),
+      body('contexte').optional().isLength({ max: 5000 }).withMessage(msg('validation.contexteTropLong')),
+      body('ordre').optional().isInt({ min: 0 }).withMessage(msg('validation.ordreInvalide')),
     ],
     handleValidationErrors,
     patrimoineController.wrap('rattacherPersonnalite'));
@@ -149,7 +150,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Nouvelle personnalité (fiche + rattachement) : professionnels validés et modération
   router.post('/:id/personnalites', authenticate, requireModerationOuPro, validateId(),
     [
-      body('nom').custom(v => aUnTexte(v)).withMessage('Le nom est requis'),
+      body('nom').custom(v => aUnTexte(v)).withMessage(msg('validation.nomRequis')),
       body('titre_professionnel').optional({ values: 'falsy' }).isString().isLength({ max: 255 }),
       body('date_naissance').optional({ values: 'falsy' }).isISO8601(),
       body('date_deces').optional({ values: 'falsy' }).isISO8601(),
@@ -171,8 +172,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/article-contexte/:idOeuvre', validateId('idOeuvre'), patrimoineController.wrap('contexteArticle'));
   router.post('/:id/pages', authenticate, requireModerationOuPro, validateId(),
     [
-      body('id_oeuvre').isInt({ min: 1 }).withMessage('Article invalide'),
-      body('section_patrimoine').isIn(SECTIONS_PAGES).withMessage('Section invalide')
+      body('id_oeuvre').isInt({ min: 1 }).withMessage(msg('validation.articleInvalide')),
+      body('section_patrimoine').isIn(SECTIONS_PAGES).withMessage(msg('validation.sectionInvalide'))
     ],
     handleValidationErrors,
     patrimoineController.wrap('lierPage'));
@@ -182,7 +183,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/oeuvre-lieux/:idOeuvre', optionalAuth, validateId('idOeuvre'), patrimoineController.wrap('lieuxDeOeuvre'));
   router.get('/:id/oeuvres-liees', optionalAuth, validateId(), patrimoineController.wrap('oeuvresLiees'));
   router.post('/:id/oeuvres-liees', authenticate, createContentLimiter, validateId(),
-    [body('id_oeuvre').isInt({ min: 1 }).withMessage('Œuvre invalide')],
+    [body('id_oeuvre').isInt({ min: 1 }).withMessage(msg('validation.oeuvreInvalide'))],
     handleValidationErrors,
     patrimoineController.wrap('lierOeuvre'));
 
@@ -193,9 +194,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
   const champsElement = (types, creation) => [
     creation
-      ? body('nom').isObject().custom(v => aUnTexte(v)).withMessage('Écrivez le nom, dans au moins une langue')
+      ? body('nom').isObject().custom(v => aUnTexte(v)).withMessage(msg('validation.nomUneLangue'))
       : body('nom').optional().isObject(),
-    creation ? body('type').isIn(types).withMessage('Type invalide') : body('type').optional().isIn(types),
+    creation ? body('type').isIn(types).withMessage(msg('validation.invalidType')) : body('type').optional().isIn(types),
     body('description').optional().isObject(),
   ];
   for (const [chemin, genre, types] of [['monuments', 'monument', MONUMENT_TYPES], ['vestiges', 'vestige', VESTIGE_TYPES]]) {
@@ -214,9 +215,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Articles : modération et professionnels validés (comme la modification du site)
   router.post('/:id/articles', authenticate, requireModerationOuPro, validateId(),
     [
-      body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage('Type de bloc invalide'),
-      body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage('Section invalide'),
-      body('contenu').optional().isLength({ max: 10000 }).withMessage('Contenu trop long'),
+      body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage(msg('validation.typeBlocInvalide')),
+      body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage(msg('validation.sectionInvalide')),
+      body('contenu').optional().isLength({ max: 10000 }).withMessage(msg('validation.contenuTropLong')),
     ],
     handleValidationErrors,
     patrimoineController.wrap('ajouterBloc'));
@@ -236,14 +237,14 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     validateStringLengths,
     validateGPS,
     [
-      body('nom').notEmpty().withMessage('Le nom est requis'),
-      body('typePatrimoine').optional().isIn(['ville_village', 'monument', 'musee', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre']).withMessage('Type de patrimoine invalide'),
-      body('communeId').optional().isInt({ min: 1 }).withMessage('Commune invalide'),
-      body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
-      body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
-      body('id_lieu_parent').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('Site parent invalide'),
-      body('ordre_visite').optional({ values: 'null' }).isInt({ min: 0, max: 10000 }).withMessage('Ordre de visite invalide'),
-      body('repere').optional({ values: 'null' }).isObject().withMessage('repere doit être un objet multilingue'),
+      body('nom').notEmpty().withMessage(msg('validation.nomRequis')),
+      body('typePatrimoine').optional().isIn(['ville_village', 'monument', 'musee', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre']).withMessage(msg('validation.typePatrimoineInvalide')),
+      body('communeId').optional().isInt({ min: 1 }).withMessage(msg('validation.communeInvalide')),
+      body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage(msg('validation.invalidLatitude')),
+      body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage(msg('validation.invalidLongitude')),
+      body('id_lieu_parent').optional({ values: 'null' }).isInt({ min: 1 }).withMessage(msg('validation.siteParentInvalide')),
+      body('ordre_visite').optional({ values: 'null' }).isInt({ min: 0, max: 10000 }).withMessage(msg('validation.ordreVisiteInvalide')),
+      body('repere').optional({ values: 'null' }).isObject().withMessage(msg('validation.repereMultilingue')),
     ],
     handleValidationErrors,
     patrimoineController.wrap('create'));

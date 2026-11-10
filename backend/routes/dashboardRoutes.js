@@ -8,6 +8,7 @@ const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 const cacheMiddleware = require('../middlewares/cacheMiddleware');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const { body, query, param } = require('express-validator');
+const { msg } = require('../utils/messageValidation');
 
 const initDashboardRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
@@ -269,7 +270,7 @@ const initDashboardRoutes = (models) => {
   router.patch('/users/:id/type',
     invaliderListesUtilisateurs,
     validationMiddleware.validateId('id'),
-    [body('id_type_user').isInt({ min: 1 }).withMessage('Type de compte invalide')],
+    [body('id_type_user').isInt({ min: 1 }).withMessage(msg('validation.typeCompteInvalide'))],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('CHANGE_USER_TYPE'),

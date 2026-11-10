@@ -8,6 +8,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { validateId, handleValidationErrors } = require('../middlewares/validationMiddleware');
 const paiement = require('../services/paiementDirect');
 const { moyensPaiementLimiter } = require('../middlewares/rateLimitMiddleware');
+const { msg } = require('../utils/messageValidation');
 
 const repondreErreur = (res, err) => {
   if (!err.statusCode || err.statusCode >= 500) throw err;
@@ -45,7 +46,7 @@ module.exports = (models, authMiddleware) => {
 
   // L'organisateur : « Paiement reçu » (ou correction)
   router.put('/evenements/:id/participants/:userId', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
-    [body('recu').isBoolean().withMessage('Valeur invalide')], handleValidationErrors,
+    [body('recu').isBoolean().withMessage(msg('validation.valeurInvalide'))], handleValidationErrors,
     asyncHandler(async (req, res) => {
       try {
         const c = container();

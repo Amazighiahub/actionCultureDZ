@@ -12,6 +12,7 @@ const { createContentLimiter, importLimiter, pdfLimiter } = require('../middlewa
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
+const { msg } = require('../utils/messageValidation');
 
 const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -70,12 +71,12 @@ const initEvenementRoutes = (models, authMiddleware) => {
     uploadService.uploadImage().single('affiche'),
     validateStringLengths,
     [
-      body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage('Nom de l\'événement invalide'),
-      body('nom').optional().isLength({ min: 2, max: 500 }).withMessage('Nom invalide'),
-      body('date_debut').optional().isISO8601().withMessage('Date de début invalide'),
-      body('date_fin').optional().isISO8601().withMessage('Date de fin invalide'),
-      body('capacite_max').optional().isInt({ min: 1 }).withMessage('Capacité invalide'),
-      body('tarif').optional().isFloat({ min: 0 }).withMessage('Le tarif doit être positif'),
+      body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage(msg('validation.nomEvenementInvalide')),
+      body('nom').optional().isLength({ min: 2, max: 500 }).withMessage(msg('validation.invalidName')),
+      body('date_debut').optional().isISO8601().withMessage(msg('validation.invalidStartDate')),
+      body('date_fin').optional().isISO8601().withMessage(msg('validation.invalidEndDate')),
+      body('capacite_max').optional().isInt({ min: 1 }).withMessage(msg('validation.capaciteInvalide')),
+      body('tarif').optional().isFloat({ min: 0 }).withMessage(msg('validation.tarifPositif')),
     ],
     handleValidationErrors,
     validateEventCreation,

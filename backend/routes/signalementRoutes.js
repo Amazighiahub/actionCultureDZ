@@ -6,6 +6,7 @@ const SignalementController = require('../controllers/signalementController');
 const { handleValidationErrors, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
+const { msg } = require('../utils/messageValidation');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {
@@ -104,10 +105,10 @@ const initSignalementRoutes = (models, authMiddleware) => {
     createContentLimiter,
     validateStringLengths,
     [
-      body('motif').notEmpty().withMessage('Le motif est requis'),
-      body('description').optional().isLength({ max: 5000 }).withMessage('Description trop longue (max 5000)'),
-      body('type_entite').notEmpty().withMessage('Le type d\'entité est requis'),
-      body('id_entite').isInt({ min: 1 }).withMessage('ID entité invalide'),
+      body('motif').notEmpty().withMessage(msg('validation.motifRequis')),
+      body('description').optional().isLength({ max: 5000 }).withMessage(msg('validation.description5000')),
+      body('type_entite').notEmpty().withMessage(msg('validation.typeEntiteRequis')),
+      body('id_entite').isInt({ min: 1 }).withMessage(msg('validation.entiteInvalide')),
     ],
     handleValidationErrors,
     controller.create.bind(controller)
@@ -199,8 +200,8 @@ const initSignalementRoutes = (models, authMiddleware) => {
   router.get('/',
     authenticate,
     requireAdmin,
-    query('statut').optional().isIn(STATUT_VALUES).withMessage('Statut invalide'),
-    query('motif').optional().isIn(MOTIF_VALUES).withMessage('Motif invalide'),
+    query('statut').optional().isIn(STATUT_VALUES).withMessage(msg('validation.invalidStatus')),
+    query('motif').optional().isIn(MOTIF_VALUES).withMessage(msg('signalement.invalidReason')),
     query('page').optional().isInt({ min: 1 }).toInt(),
     query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
     handleValidationErrors,

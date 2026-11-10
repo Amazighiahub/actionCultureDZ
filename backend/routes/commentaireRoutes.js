@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const router = express.Router();
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 const { commentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { msg } = require('../utils/messageValidation');
 
 module.exports = (models, middlewares = {}) => {
   const controller = require('../controllers/commentaireController');
@@ -44,10 +45,10 @@ module.exports = (models, middlewares = {}) => {
     commentLimiter,
     validateStringLengths,
     [
-      body('contenu').notEmpty().withMessage('Le contenu est requis')
-        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
-        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
-      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+      body('contenu').notEmpty().withMessage(msg('validation.contenuRequis'))
+        .isLength({ min: 3 }).withMessage(msg('validation.commentaireTropCourt'))
+        .isLength({ max: 2000 }).withMessage(msg('validation.contenu2000')),
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -90,10 +91,10 @@ module.exports = (models, middlewares = {}) => {
     commentLimiter,
     validateStringLengths,
     [
-      body('contenu').notEmpty().withMessage('Le contenu est requis')
-        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
-        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
-      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+      body('contenu').notEmpty().withMessage(msg('validation.contenuRequis'))
+        .isLength({ min: 3 }).withMessage(msg('validation.commentaireTropCourt'))
+        .isLength({ max: 2000 }).withMessage(msg('validation.contenu2000')),
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -126,10 +127,10 @@ module.exports = (models, middlewares = {}) => {
     commentLimiter,
     validateStringLengths,
     [
-      body('contenu').notEmpty().withMessage('Le contenu est requis')
-        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
-        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
-      body('note_qualite').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5').toInt(),
+      body('contenu').notEmpty().withMessage(msg('validation.contenuRequis'))
+        .isLength({ min: 3 }).withMessage(msg('validation.commentaireTropCourt'))
+        .isLength({ max: 2000 }).withMessage(msg('validation.contenu2000')),
+      body('note_qualite').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')).toInt(),
       body('commentaire_parent_id').optional({ values: 'null' }).isInt({ min: 1 }).toInt(),
     ],
     handleValidationErrors,
@@ -147,10 +148,10 @@ module.exports = (models, middlewares = {}) => {
     validateStringLengths,
     [
       body('contenu').optional()
-        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
-        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+        .isLength({ min: 3 }).withMessage(msg('validation.commentaireTropCourt'))
+        .isLength({ max: 2000 }).withMessage(msg('validation.contenu2000')),
       // Note de 1 à 5 (avant : 7 donnait une erreur 500, null effaçait la note)
-      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être comprise entre 1 et 5'),
+      body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
     async (req, res) => {
@@ -231,7 +232,7 @@ module.exports = (models, middlewares = {}) => {
     [
       // Statuts du modèle : « masque » et « signale » n'y sont pas, ils finissaient en erreur 500.
       // Masquer un commentaire = « rejete » (il disparaît du site, et peut être rétabli)
-      body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage('Statut invalide')
+      body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage(msg('validation.invalidStatus'))
     ],
     handleValidationErrors,
     async (req, res) => {

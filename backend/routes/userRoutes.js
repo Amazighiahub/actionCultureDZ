@@ -23,6 +23,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 const { verifierTurnstile } = require('../middlewares/turnstile');
+const { msg } = require('../utils/messageValidation');
 
 const initUserRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -36,24 +37,24 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/register',
     validateStringLengths,
     [
-      body('email').isString().withMessage('Email invalide').bail().isEmail().withMessage('Email invalide'),
-      body('password').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères')
-        .matches(/[A-Z]/).withMessage('Le mot de passe doit contenir au moins une majuscule')
-        .matches(/[a-z]/).withMessage('Le mot de passe doit contenir au moins une minuscule')
-        .matches(/[0-9]/).withMessage('Le mot de passe doit contenir au moins un chiffre')
-        .matches(/[^A-Za-z0-9]/).withMessage('Le mot de passe doit contenir au moins un caractère spécial'),
+      body('email').isString().withMessage(msg('auth.invalidEmail')).bail().isEmail().withMessage(msg('auth.invalidEmail')),
+      body('password').isLength({ min: 12 }).withMessage(msg('validation.motDePasse12'))
+        .matches(/[A-Z]/).withMessage(msg('validation.motDePasseMajuscule'))
+        .matches(/[a-z]/).withMessage(msg('validation.motDePasseMinuscule'))
+        .matches(/[0-9]/).withMessage(msg('auth.passwordNeedDigit'))
+        .matches(/[^A-Za-z0-9]/).withMessage(msg('validation.motDePasseSpecial')),
       body('password_confirmation').custom((val, { req }) => {
         if (val !== req.body.password) throw new Error('Les mots de passe ne correspondent pas');
         return true;
       }),
-      body('nom').notEmpty().withMessage('Le nom est requis').isLength({ min: 2 }).withMessage('Le nom doit contenir au moins 2 caractères'),
-      body('prenom').notEmpty().withMessage('Le prénom est requis').isLength({ min: 2 }).withMessage('Le prénom doit contenir au moins 2 caractères'),
-      body('sexe').optional().isIn(['M', 'F']).withMessage('Le sexe doit être M ou F'),
-      body('date_naissance').optional().isISO8601().withMessage('Date de naissance invalide'),
-      body('wilaya_residence').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Wilaya invalide'),
-      body('telephone').optional().matches(/^\+\d{7,15}$/).withMessage('Numéro de téléphone invalide'),
-      body('portfolio').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('URL de portfolio invalide'),
-      body('accepte_conditions').equals('true').withMessage('Vous devez accepter les conditions'),
+      body('nom').notEmpty().withMessage(msg('validation.nomRequis')).isLength({ min: 2 }).withMessage(msg('validation.nom2')),
+      body('prenom').notEmpty().withMessage(msg('validation.prenomRequis')).isLength({ min: 2 }).withMessage(msg('validation.prenom2')),
+      body('sexe').optional().isIn(['M', 'F']).withMessage(msg('validation.genreInvalide')),
+      body('date_naissance').optional().isISO8601().withMessage(msg('validation.naissanceInvalide')),
+      body('wilaya_residence').optional({ nullable: true }).isInt({ min: 1 }).withMessage(msg('validation.invalidWilaya')),
+      body('telephone').optional().matches(/^\+\d{7,15}$/).withMessage(msg('validation.telephoneInvalide')),
+      body('portfolio').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage(msg('validation.portfolioInvalide')),
+      body('accepte_conditions').equals('true').withMessage(msg('validation.conditionsRequises')),
     ],
     handleValidationErrors,
     // Anti-robots après la validation : un formulaire mal rempli ne consomme pas la vérification
@@ -63,8 +64,8 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/login',
     accountRateLimiter.checkAccountLock,
     [
-      body('email').isString().withMessage('Email invalide').bail().isEmail().withMessage('Email invalide'),
-      body('password').notEmpty().withMessage('Mot de passe requis'),
+      body('email').isString().withMessage(msg('auth.invalidEmail')).bail().isEmail().withMessage(msg('auth.invalidEmail')),
+      body('password').notEmpty().withMessage(msg('validation.passwordRequired')),
     ],
     handleValidationErrors,
     asyncHandler((req, res) => authController.login(req, res)));
@@ -126,8 +127,8 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/change-password', authenticate,
     strictLimiter,
     [
-      body('ancien_mot_de_passe').notEmpty().withMessage('Ancien mot de passe requis'),
-      body('nouveau_mot_de_passe').isLength({ min: 12 }).withMessage('Nouveau mot de passe minimum 12 caractères'),
+      body('ancien_mot_de_passe').notEmpty().withMessage(msg('validation.ancienMotDePasseRequis')),
+      body('nouveau_mot_de_passe').isLength({ min: 12 }).withMessage(msg('validation.nouveauMotDePasse12')),
     ],
     handleValidationErrors,
     asyncHandler((req, res) => userProfileController.changePassword(req, res)));

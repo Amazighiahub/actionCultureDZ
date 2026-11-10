@@ -6,6 +6,7 @@ const { body, query, param } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
+const { msg } = require('../utils/messageValidation');
 
 const initIntervenantRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -176,7 +177,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     authMiddleware.authenticate,
     requireModerationOuPro,
     validationMiddleware.validateId('id'),
-    [body('id_oeuvre').isInt({ min: 1 }).withMessage('Article invalide')],
+    [body('id_oeuvre').isInt({ min: 1 }).withMessage(msg('validation.articleInvalide'))],
     validationMiddleware.handleValidationErrors,
     intervenantController.wrap('lierArticle')
   );
