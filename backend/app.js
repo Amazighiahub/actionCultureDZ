@@ -52,6 +52,7 @@ const { httpsRedirect, hstsMiddleware } = require('./middlewares/httpsRedirect')
 const { languageMiddleware, setLanguageCookie } = require('./middlewares/language');
 const { SUPPORTED_LANGUAGES } = require('./helpers/i18n');
 const { i18nMiddleware } = require('./helpers/messages');
+const { traduireReponses } = require('./utils/traductionServeur');
 
 // Importation des routes
 const initRoutes = require('./routes');
@@ -177,6 +178,8 @@ class App {
     // Détecte automatiquement via: ?lang=ar, cookie, header X-Language, Accept-Language
     this.app.use(languageMiddleware);
     this.app.use(i18nMiddleware);
+    // Messages français des services, DTO et contrôleurs traduits à l'envoi (audit V11 FRM-5)
+    this.app.use(traduireReponses);
 
     // CSRF — Double Submit Cookie (set token on every response)
     this.app.use(csrfTokenProvider);
