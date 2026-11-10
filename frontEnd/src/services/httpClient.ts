@@ -589,7 +589,10 @@ class HttpClient {
       if (typeof responseData === 'object' && responseData !== null) {
         const data = responseData as Record<string, unknown>;
         message = typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : message;
-        details = typeof data.details === 'object' && data.details !== null ? data.details as Record<string, unknown> : undefined;
+        // Détail champ par champ : « details » (errorMiddleware) ou « errors » (BaseController._handleError).
+        // Avant, « errors » était ignoré : la personne ne voyait que « Données invalides ».
+        const detailServeur = data.details ?? (Array.isArray(data.errors) ? data.errors : undefined);
+        details = typeof detailServeur === 'object' && detailServeur !== null ? detailServeur as Record<string, unknown> : undefined;
         // Code du serveur d'abord (ex. MOT_DE_PASSE_REQUIS) ; sinon celui d'Axios (ERR_NETWORK…)
         codeServeur = typeof data.code === 'string' ? data.code : undefined;
       } else if (typeof responseData === 'string' && !/^\s*</.test(responseData)) {

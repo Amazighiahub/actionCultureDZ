@@ -5,29 +5,9 @@ import { httpClient, doRefreshToken } from './httpClient';
 import { uploadService as UploadService } from "./upload.service";
 import { mediaService as MediaService } from "./media.service";
 
-export interface RegisterVisitorData {
-  nom: string;
-  prenom: string;
-  sexe: 'M' | 'F';
-  date_naissance: string;
-  email: string;
-  mot_de_passe: string;
-  confirmation_mot_de_passe: string;
-  /** null = réside à l'étranger */
-  wilaya_residence: number | null;
-  /** Commune de résidence (obligatoire pour un professionnel résidant en Algérie) */
-  id_commune?: number;
-  telephone?: string;
-  accepte_conditions: boolean;
-  accepte_newsletter?: boolean;
-}
-
-export interface RegisterProfessionalData extends RegisterVisitorData {
-  photo_url?: string;
-  biographie: string;
-  site_web?: string;
-  id_type_user: number;
-}
+// Types d'inscription : définis une seule fois, dans types/models/auth.types
+import type { RegisterVisitorData, RegisterProfessionalData } from '@/types/models/auth.types';
+export type { RegisterVisitorData, RegisterProfessionalData };
 
 // Interface mise à jour pour correspondre au backend
 export interface CurrentUser {

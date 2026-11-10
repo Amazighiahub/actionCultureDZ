@@ -1,5 +1,5 @@
 import { messageErreurServeur } from '@/utils/erreurServeur';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import Header from '@/components/Header';
@@ -33,6 +33,7 @@ import { useAuth } from '@/hooks/useAuth';
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import MesSuivisCard from '@/components/user/MesSuivisCard';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
+import CompleterProfilCard from '@/components/user/CompleterProfilCard';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
 import GestionLiens from '@/components/pro/GestionLiens';
@@ -214,6 +215,13 @@ const DashboardUser = () => {
               </Link>.
             </AlertDescription>
           </Alert>
+          )}
+          {/* Inscription rapide : le reste du profil se complète ici (audit V11 UX-9) */}
+          {!isProfessional && (
+            <CompleterProfilCard
+              user={user}
+              onCompleter={() => setSearchParams({ onglet: 'profil', modifier: '1' }, { replace: true })}
+            />
           )}
         </div>
 
@@ -598,6 +606,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     nom: '',
     telephone: '',
     wilaya_residence: '',
+    sexe: '',
+    date_naissance: '',
     biographie: '',
     site_web: '',
     reseaux_sociaux: {} as Record<string, string>,
@@ -613,6 +623,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       nom: typeof user?.nom === 'object' ? user?.nom?.fr || '' : user?.nom || '',
       telephone: user?.telephone || '',
       wilaya_residence: wilayaActuelle ? String(wilayaActuelle) : '',
+      sexe: user?.sexe || '',
+      date_naissance: user?.date_naissance ? String(user.date_naissance).slice(0, 10) : '',
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
       site_web: user?.site_web || '',
       reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
@@ -621,6 +633,18 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     setLinkErrors({});
     setEditing(true);
   }, [user]);
+
+  // Arrivée depuis « Compléter mon profil » : le formulaire s'ouvre et la page y descend
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ouvrirEnModification = searchParams.get('modifier') === '1';
+  useEffect(() => {
+    if (!ouvrirEnModification || !user) return;
+    startEditing();
+    const suite = new URLSearchParams(searchParams);
+    suite.delete('modifier');
+    setSearchParams(suite, { replace: true });
+    requestAnimationFrame(() => document.getElementById('profil-informations')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [ouvrirEnModification, user, startEditing, searchParams, setSearchParams]);
 
   // Liens des professionnels : vérifiés avant l'envoi (le serveur refait la même vérification)
   const validateLinks = (): boolean => {
@@ -646,6 +670,9 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         nom: form.nom,
         telephone: form.telephone,
         ...(form.wilaya_residence ? { wilaya_residence: Number(form.wilaya_residence) } : {}),
+        // Vide = effacé (facultatifs)
+        sexe: form.sexe,
+        date_naissance: form.date_naissance,
         biographie: form.biographie,
         ...(isProfessional ? {
           site_web: form.site_web.trim(),
@@ -702,7 +729,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   };
 
   return (
-    <Card className="p-8">
+    <Card id="profil-informations" className="p-8 scroll-mt-24">
       <h2 className="text-2xl font-semibold mb-6 font-serif">{t("dashboarduser.informations_personnelles")}</h2>
 
       {/* Photo de profil */}
@@ -781,6 +808,33 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
               </div>
             )}
             {isProfessional && <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.wilayaAide', 'Votre profil public et vos œuvres apparaîtront sur la page de cette wilaya.')}</p>}
+          </div>
+          <div>
+            <label htmlFor="profil-sexe" className="block text-sm font-medium mb-2">{t('auth.register.gender', 'Genre')}</label>
+            {editing ? (
+              <select id="profil-sexe" className="w-full p-3 border rounded-lg bg-background" value={form.sexe}
+                onChange={(e) => setForm(f => ({ ...f, sexe: e.target.value }))}>
+                <option value="">{t('common.notProvided', 'Non renseigné')}</option>
+                <option value="F">{t('auth.register.female', 'Femme')}</option>
+                <option value="M">{t('auth.register.male', 'Homme')}</option>
+              </select>
+            ) : (
+              <div className="p-3 border rounded-lg bg-muted">
+                {user?.sexe === 'F' ? t('auth.register.female', 'Femme') : user?.sexe === 'M' ? t('auth.register.male', 'Homme') : <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}
+              </div>
+            )}
+          </div>
+          <div>
+            <label htmlFor="profil-naissance" className="block text-sm font-medium mb-2">{t('auth.register.birthDate', 'Date de naissance')}</label>
+            {editing ? (
+              <input id="profil-naissance" type="date" className="w-full p-3 border rounded-lg bg-background" value={form.date_naissance}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setForm(f => ({ ...f, date_naissance: e.target.value }))} />
+            ) : (
+              <div className="p-3 border rounded-lg bg-muted">
+                {user?.date_naissance ? formatDate(user.date_naissance) : <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>

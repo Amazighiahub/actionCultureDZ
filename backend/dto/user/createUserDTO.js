@@ -4,6 +4,7 @@
  */
 const BaseDTO = require('../baseDTO');
 const { REGISTRABLE_TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { erreurDateNaissance } = require('./dateNaissance');
 
 class CreateUserDTO extends BaseDTO {
   constructor(data = {}) {
@@ -19,6 +20,8 @@ class CreateUserDTO extends BaseDTO {
     // Champs optionnels
     this.sexe = BaseDTO.cleanString(data.sexe) || null;
     this.dateNaissance = BaseDTO.cleanString(data.date_naissance || data.dateNaissance) || null;
+    // Inscription rapide d'un visiteur : sans date de naissance, la personne atteste avoir l'âge minimum
+    this.attesteAgeMinimum = BaseDTO.toBool(data.atteste_age_minimum ?? data.attesteAgeMinimum);
     this.telephone = BaseDTO.cleanString(data.telephone);
     this.typeUser = data.type_user || data.typeUser || 'visiteur';
     // Absent ou non numerique => visiteur ; toute autre valeur est controlee dans validate()
@@ -127,27 +130,13 @@ class CreateUserDTO extends BaseDTO {
       errors.push({ field: 'sexe', message: 'Le sexe doit être M ou F' });
     }
 
-    // Date de naissance : date valide, pas dans le futur, âge >= 13 ans
-    if (this.dateNaissance) {
-      const birth = new Date(this.dateNaissance);
-      if (isNaN(birth.getTime())) {
-        errors.push({ field: 'date_naissance', message: 'Date de naissance invalide' });
-      } else {
-        const today = new Date();
-        if (birth > today) {
-          errors.push({ field: 'date_naissance', message: 'La date de naissance ne peut pas être dans le futur' });
-        } else {
-          // Calcul d'âge précis (mois + jour)
-          let age = today.getFullYear() - birth.getFullYear();
-          const monthDiff = today.getMonth() - birth.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--;
-          }
-          if (age < 13) {
-            errors.push({ field: 'date_naissance', message: 'Vous devez avoir au moins 13 ans' });
-          }
-        }
-      }
+    // Date de naissance : date valide, pas dans le futur, âge minimum (règle commune avec le profil).
+    // Sans date (inscription rapide), l'attestation d'âge est obligatoire.
+    const erreurNaissance = erreurDateNaissance(this.dateNaissance);
+    if (erreurNaissance) {
+      errors.push({ field: 'date_naissance', message: erreurNaissance });
+    } else if (!this.dateNaissance && !this.attesteAgeMinimum) {
+      errors.push({ field: 'atteste_age_minimum', message: 'Vous devez avoir au moins 13 ans' });
     }
 
     // Type d'utilisateur : uniquement les types inscriptibles (jamais administrateur)

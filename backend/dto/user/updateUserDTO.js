@@ -2,6 +2,7 @@
  * UpdateUserDTO - DTO pour la mise à jour d'utilisateur
  */
 const BaseDTO = require('../baseDTO');
+const { erreurDateNaissance } = require('./dateNaissance');
 
 // Réseaux sociaux qu'un professionnel peut afficher sur son profil, avec les domaines acceptés
 const SOCIAL_NETWORKS = {
@@ -26,6 +27,13 @@ class UpdateUserDTO extends BaseDTO {
     }
     if (data.telephone !== undefined) {
       this.telephone = BaseDTO.cleanString(data.telephone);
+    }
+    // Genre et date de naissance : complétés après une inscription rapide ; vide = effacé
+    if (data.sexe !== undefined) {
+      this.sexe = BaseDTO.cleanString(data.sexe) || null;
+    }
+    if (data.date_naissance !== undefined) {
+      this.dateNaissance = BaseDTO.cleanString(data.date_naissance) || null;
     }
     if (data.biographie !== undefined) {
       this.biographie = BaseDTO.normalizeMultilang(data.biographie);
@@ -149,6 +157,8 @@ class UpdateUserDTO extends BaseDTO {
     if (this.nom !== undefined) entity.nom = this.nom;
     if (this.prenom !== undefined) entity.prenom = this.prenom;
     if (this.telephone !== undefined) entity.telephone = this.telephone;
+    if (this.sexe !== undefined) entity.sexe = this.sexe;
+    if (this.dateNaissance !== undefined) entity.date_naissance = this.dateNaissance;
     if (this.biographie !== undefined) entity.biographie = this.biographie;
     if (this.entreprise !== undefined) entity.entreprise = this.entreprise;
     if (this.siteWeb !== undefined) entity.site_web = this.siteWeb;
@@ -187,6 +197,12 @@ class UpdateUserDTO extends BaseDTO {
     if (this.telephone && !this._isValidPhone(this.telephone)) {
       errors.push({ field: 'telephone', message: 'Format de téléphone invalide' });
     }
+
+    if (this.sexe && !['M', 'F'].includes(this.sexe)) {
+      errors.push({ field: 'sexe', message: 'Le sexe doit être M ou F' });
+    }
+    const erreurNaissance = erreurDateNaissance(this.dateNaissance);
+    if (erreurNaissance) errors.push({ field: 'date_naissance', message: erreurNaissance });
 
     // URL valide si fournie
     if (this.siteWeb && !this._isValidUrl(this.siteWeb)) {

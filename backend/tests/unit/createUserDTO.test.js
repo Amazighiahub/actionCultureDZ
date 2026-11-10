@@ -10,7 +10,8 @@ const base = {
   password_confirmation: 'Azerty123456!',
   nom: 'Nom',
   prenom: 'Prenom',
-  accepte_conditions: 'true'
+  accepte_conditions: 'true',
+  atteste_age_minimum: true
 };
 
 const typeErrors = (dto) => dto.validate().errors.filter(e => e.field === 'id_type_user');

@@ -237,7 +237,10 @@
       "month": "Mois",
       "year": "Année",
       "passwordHint": "12 caractères min., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial",
-      "min50chars": "(min 50 caractères)"
+      "min50chars": "(min 50 caractères)",
+      "rapideAide": "Quatre informations suffisent. Vous pourrez ajouter votre wilaya, votre date de naissance et votre téléphone plus tard, dans « Mon espace ».",
+      "genderChoose": "Choisir",
+      "atteste13Ans": "J’ai 13 ans ou plus"
     },
     "errors": {
       "required": "Ce champ est requis",
@@ -1533,7 +1536,23 @@
     "biographie": "Biographie",
     "biographiePlaceholder": "Décrivez-vous en quelques lignes...",
     "wilaya": "Wilaya de résidence",
-    "wilayaAide": "Votre profil public et vos œuvres apparaîtront sur la page de cette wilaya."
+    "wilayaAide": "Votre profil public et vos œuvres apparaîtront sur la page de cette wilaya.",
+    "completer": {
+      "titre": "Complétez votre profil",
+      "texte": "Il vous reste à ajouter : {{liste}}. Cela prend une minute, et tout est facultatif.",
+      "bouton": "Compléter mon profil",
+      "plusTard": "Plus tard",
+      "wilaya": "votre wilaya",
+      "genre": "votre genre",
+      "naissance": "votre date de naissance",
+      "telephone": "votre téléphone",
+      "confirmerTitre": "Confirmez votre adresse e-mail",
+      "confirmerTexte": "Ouvrez le lien que nous avons envoyé à {{email}}. Ensuite, vous pourrez compléter votre profil.",
+      "nouveauLien": "Recevoir un nouveau lien",
+      "lienEnvoye": "Nouveau lien envoyé. Pensez à regarder dans les courriers indésirables.",
+      "envoiEchec": "Le lien n’a pas pu être envoyé. Réessayez dans quelques minutes.",
+      "dejaEnvoye": "Un lien vient déjà de vous être envoyé. Attendez quelques minutes avant d’en demander un autre."
+    }
   },
   "dashboardpro": {
     "participants": " participants",

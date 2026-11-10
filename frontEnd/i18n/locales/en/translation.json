@@ -221,7 +221,10 @@
       "month": "Month",
       "year": "Year",
       "passwordHint": "Min. 12 characters, 1 uppercase, 1 lowercase, 1 digit, 1 special character",
-      "min50chars": "(min. 50 characters)"
+      "min50chars": "(min. 50 characters)",
+      "rapideAide": "Four details are enough. You can add your wilaya, date of birth and phone number later, in “My space”.",
+      "genderChoose": "Choose",
+      "atteste13Ans": "I am 13 or older"
     },
     "errors": {
       "fileTooLarge": {
@@ -1485,7 +1488,23 @@
     "biographie": "Biography",
     "biographiePlaceholder": "Describe yourself in a few lines...",
     "wilaya": "Wilaya of residence",
-    "wilayaAide": "Your public profile and works will appear on this wilaya’s page."
+    "wilayaAide": "Your public profile and works will appear on this wilaya’s page.",
+    "completer": {
+      "titre": "Complete your profile",
+      "texte": "Still to add: {{liste}}. It takes a minute, and everything is optional.",
+      "bouton": "Complete my profile",
+      "plusTard": "Later",
+      "wilaya": "your wilaya",
+      "genre": "your gender",
+      "naissance": "your date of birth",
+      "telephone": "your phone number",
+      "confirmerTitre": "Confirm your e-mail address",
+      "confirmerTexte": "Open the link we sent to {{email}}. You can then complete your profile.",
+      "nouveauLien": "Get a new link",
+      "lienEnvoye": "New link sent. Remember to check your spam folder.",
+      "envoiEchec": "The link could not be sent. Try again in a few minutes.",
+      "dejaEnvoye": "A link has just been sent to you. Wait a few minutes before asking for another one."
+    }
   },
   "dashboardpro": {
     "participants": "participants",

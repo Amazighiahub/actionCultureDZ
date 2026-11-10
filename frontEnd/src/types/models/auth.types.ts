@@ -18,13 +18,17 @@ export interface LoginCredentials {
 export interface RegisterVisitorData {
   nom: string;
   prenom: string;
-  sexe: 'M' | 'F';
-  date_naissance: string;
+  /** Facultatifs : un visiteur peut les ajouter plus tard dans son profil (inscription rapide) */
+  sexe?: 'M' | 'F';
+  date_naissance?: string;
+  /** Sans date de naissance : la personne atteste avoir au moins 13 ans */
+  atteste_age_minimum?: boolean;
   email: string;
   mot_de_passe: string;
   confirmation_mot_de_passe: string;
   /** null = réside à l'étranger */
-  wilaya_residence: number | null;
+  wilaya_residence?: number | null;
+  /** Commune de résidence (obligatoire pour un professionnel résidant en Algérie) */
   id_commune?: number;
   telephone?: string;
   accepte_conditions: boolean;

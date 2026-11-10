@@ -277,6 +277,10 @@ async function fillDate(u: ReturnType<typeof userEvent.setup>, year: number, mon
 function getPhoneInput() {
   return screen.getByLabelText(/auth\.register\.phone/i) as HTMLInputElement;
 }
+async function passerEnPro(u: ReturnType<typeof userEvent.setup>) {
+  await u.click(screen.getByLabelText(/auth\.register\.professional/));
+  await waitFor(() => expect(screen.getByText(/auth\.register\.professionalInfo/)).toBeInTheDocument());
+}
 function getRegisterSubmitButton() {
   return screen.getByRole('button', { name: /auth\.register\.createAccount/i });
 }
@@ -322,18 +326,40 @@ describe('Register — Formulaire d inscription', () => {
   // =========================================================================
 
   describe('Rendu', () => {
-    test('affiche tous les champs requis avec labels', () => {
+    test('visiteur : inscription rapide, quatre champs, la case d’âge et les conditions', () => {
       renderRegister();
 
-      // Champs communs obligatoires (* dans le label)
-      expect(screen.getByText(/auth\.register\.firstName/)).toBeInTheDocument();
-      expect(screen.getByText(/auth\.register\.lastName/)).toBeInTheDocument();
-      expect(screen.getByText(/auth\.register\.email/)).toBeInTheDocument();
+      expect(getPrenomInput()).toBeInTheDocument();
+      expect(getNomInput()).toBeInTheDocument();
+      expect(getRegisterEmailInput()).toBeInTheDocument();
+      expect(getPasswordInput()).toBeInTheDocument();
+      expect(screen.getByLabelText(/13 ans ou plus/)).toBeInTheDocument();
+      // Le reste se complète plus tard dans « Mon espace »
+      expect(screen.queryByText(/auth\.register\.birthDate/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/auth\.register\.gender/)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Wilaya/)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/auth\.register\.confirmPassword/)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/auth\.register\.phone/)).not.toBeInTheDocument();
+      expect(getRegisterSubmitButton()).not.toBeDisabled();
+    });
+
+    test('bouton « afficher » : le mot de passe devient lisible', async () => {
+      renderRegister();
+      expect(getPasswordInput()).toHaveAttribute('type', 'password');
+      await user.click(getPasswordInput().parentElement!.querySelector('button[aria-label="Afficher"]')!);
+      expect(getPasswordInput()).toHaveAttribute('type', 'text');
+    });
+
+    test('professionnel : formulaire complet, genre sans valeur choisie d’avance', async () => {
+      renderRegister();
+      await passerEnPro(user);
+
       expect(screen.getByText(/auth\.register\.birthDate/)).toBeInTheDocument();
       expect(screen.getByText(/auth\.register\.gender/)).toBeInTheDocument();
       // Wilaya / daïra / commune via GeoSelector
       expect(screen.getByLabelText(/^Wilaya/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Commune/)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/13 ans ou plus/)).not.toBeInTheDocument();
 
       // Mot de passe + confirmation
       expect(getPasswordInput()).toBeInTheDocument();
@@ -447,6 +473,7 @@ describe('Register — Formulaire d inscription', () => {
 
     test('confirmation differente du mot de passe affiche une erreur', async () => {
       renderRegister();
+      await passerEnPro(user);
 
       // Mot de passe valide
       await user.type(getPasswordInput(), 'SecurePass123!');
@@ -459,8 +486,9 @@ describe('Register — Formulaire d inscription', () => {
       });
     });
 
-    test('age inferieur a 13 ans affiche une erreur', () => {
+    test('age inferieur a 13 ans affiche une erreur', async () => {
       renderRegister();
+      await passerEnPro(user);
 
       // Le select année ne propose que des années où l'utilisateur a ≥13 ans.
       // Donc le composant empêche structurellement la saisie d'un âge <13 ans.
@@ -476,6 +504,7 @@ describe('Register — Formulaire d inscription', () => {
 
     test('telephone au mauvais format affiche une erreur', async () => {
       renderRegister();
+      await passerEnPro(user);
 
       await user.type(getPhoneInput(), '12');
       await user.tab();
@@ -492,8 +521,9 @@ describe('Register — Formulaire d inscription', () => {
   // =========================================================================
 
   describe('Selects', () => {
-    test('les wilayas se chargent dans le select', () => {
+    test('les wilayas se chargent dans le select', async () => {
       renderRegister();
+      await passerEnPro(user);
 
       // Les 3 wilayas mockées sont visibles comme options
       expect(screen.getByRole('option', { name: /Alger/ })).toBeInTheDocument();
@@ -567,6 +597,45 @@ describe('Register — Formulaire d inscription', () => {
           })
         );
       });
+    });
+
+    test('visiteur : sans la case d’âge, refus avec le message d’âge', async () => {
+      renderRegister();
+      await user.type(getPrenomInput(), 'Lina');
+      await user.type(getNomInput(), 'Exemple');
+      await user.type(getRegisterEmailInput(), 'lina@example.com');
+      await user.type(getPasswordInput(), 'SecurePass123!');
+      await user.click(screen.getByLabelText(/auth\.register\.acceptTerms\.prefix/));
+      fireEvent.submit(getRegisterForm());
+
+      await waitFor(() => expect(screen.getByText('auth.errors.minAge')).toBeInTheDocument());
+      expect(mockRegisterVisitor).not.toHaveBeenCalled();
+    });
+
+    test('visiteur : inscription rapide envoyée sans genre, date ni wilaya', async () => {
+      renderRegister();
+      await user.type(getPrenomInput(), 'Lina');
+      await user.type(getNomInput(), 'Exemple');
+      await user.type(getRegisterEmailInput(), 'Lina@Example.com');
+      await user.type(getPasswordInput(), 'SecurePass123!');
+      await user.click(screen.getByLabelText(/13 ans ou plus/));
+      await user.click(screen.getByLabelText(/auth\.register\.acceptTerms\.prefix/));
+      fireEvent.submit(getRegisterForm());
+
+      await waitFor(() => expect(mockRegisterVisitor).toHaveBeenCalledTimes(1));
+      const envoye = mockRegisterVisitor.mock.calls[0][0];
+      expect(envoye).toMatchObject({
+        prenom: 'Lina',
+        nom: 'Exemple',
+        email: 'lina@example.com',
+        mot_de_passe: 'SecurePass123!',
+        confirmation_mot_de_passe: 'SecurePass123!',
+        atteste_age_minimum: true,
+        accepte_conditions: true,
+      });
+      for (const champ of ['sexe', 'date_naissance', 'wilaya_residence', 'telephone']) {
+        expect(envoye).not.toHaveProperty(champ);
+      }
     });
 
     test('bouton disabled pendant le loading', () => {

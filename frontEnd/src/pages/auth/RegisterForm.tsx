@@ -42,10 +42,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const antiRobot = useAntiRobot();
 
   const [userType, setUserType] = useState<'visiteur' | 'professionnel'>('visiteur');
+  // Inscription rapide d'un visiteur : prénom, nom, e-mail, mot de passe. Genre, date de naissance,
+  // wilaya et téléphone se complètent ensuite dans « Mon espace » (audit V11 UX-9)
+  const estVisiteur = userType === 'visiteur';
+  const [voirMotDePasse, setVoirMotDePasse] = useState(false);
   const [registerForm, setRegisterForm] = useState({
     nom: '',
     prenom: '',
-    sexe: 'M' as 'M' | 'F',
+    // Pas de genre choisi d'avance (avant : « Homme » déjà réglé)
+    sexe: '' as '' | 'M' | 'F',
     date_naissance: '',
     email: '',
     mot_de_passe: '',
@@ -57,6 +62,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     telephone: '',
     accepte_conditions: false,
     accepte_newsletter: false,
+    // Visiteur sans date de naissance : « J'ai 13 ans ou plus »
+    atteste_age: false,
     // Champs professionnels
     photo_url: '',
     biographie: '',
@@ -226,11 +233,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       errors.mot_de_passe = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
     }
     
-    if (registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) {
+    // Visiteur : un seul champ de mot de passe, avec le bouton « afficher » (pas de confirmation)
+    if (!estVisiteur && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) {
       errors.confirmation_mot_de_passe = t('auth.errors.passwordMismatch');
     }
-    
-    if (!registerForm.date_naissance) {
+
+    if (estVisiteur) {
+      if (!registerForm.atteste_age) {
+        errors.atteste_age = t('auth.errors.minAge');
+      }
+    } else if (!registerForm.date_naissance) {
       errors.date_naissance = t('auth.errors.birthDateRequired');
     } else {
       const birthDate = new Date(registerForm.date_naissance);
@@ -253,7 +265,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       }
     }
     
-    if (registerForm.wilaya_residence === 0) {
+    if (!estVisiteur && registerForm.wilaya_residence === 0) {
       errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
     // Professionnel résidant en Algérie : commune obligatoire (proximité avec les lieux)
@@ -261,7 +273,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       errors.id_commune = t('auth.errors.communeRequired', 'La commune est obligatoire pour un compte professionnel');
     }
 
-    if (!telephoneValide(registerForm.telephone)) {
+    if (!estVisiteur && !telephoneValide(registerForm.telephone)) {
       errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
     }
 
@@ -356,23 +368,32 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
       // ÉTAPE 2 : INSCRIPTION AVEC LA PHOTO_URL
       // Préparer les données de base
-      const baseData = {
+      const jeton = antiRobot.lireJeton();
+      const commun = {
         nom: registerForm.nom.trim(),
         prenom: registerForm.prenom.trim(),
-        sexe: registerForm.sexe as 'M' | 'F',
-        date_naissance: registerForm.date_naissance,
         email: registerForm.email.trim().toLowerCase(),
         mot_de_passe: registerForm.mot_de_passe,
-        confirmation_mot_de_passe: registerForm.confirmation_mot_de_passe,
-        wilaya_residence: registerForm.wilaya_residence !== null ? Number(registerForm.wilaya_residence) : null,
-        ...(registerForm.id_commune ? { id_commune: registerForm.id_commune } : {}),
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false,
-        // Saisi et validé mais jamais envoyé auparavant
-        ...(normaliserTelephone(registerForm.telephone) ? { telephone: normaliserTelephone(registerForm.telephone) } : {}),
-        ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() ?? undefined } : {})
+        ...(jeton ? { turnstile_token: jeton } : {})
       };
-      
+      // Visiteur : inscription rapide, le reste du profil se complète ensuite
+      const baseData = estVisiteur ? {
+        ...commun,
+        confirmation_mot_de_passe: registerForm.mot_de_passe,
+        atteste_age_minimum: registerForm.atteste_age
+      } : {
+        ...commun,
+        confirmation_mot_de_passe: registerForm.confirmation_mot_de_passe,
+        ...(registerForm.sexe ? { sexe: registerForm.sexe } : {}),
+        date_naissance: registerForm.date_naissance,
+        wilaya_residence: registerForm.wilaya_residence !== null ? Number(registerForm.wilaya_residence) : null,
+        ...(registerForm.id_commune ? { id_commune: registerForm.id_commune } : {}),
+        // Saisi et validé mais jamais envoyé auparavant
+        ...(normaliserTelephone(registerForm.telephone) ? { telephone: normaliserTelephone(registerForm.telephone) } : {})
+      };
+
       authLogger.debug('ÉTAPE 2 - Inscription avec les données complètes');
       authLogger.debug('Données d\'inscription préparées:', {
         type: userType,
@@ -432,7 +453,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         setRegisterForm({
           nom: '',
           prenom: '',
-          sexe: 'M',
+          sexe: '',
           date_naissance: '',
           email: '',
           mot_de_passe: '',
@@ -443,6 +464,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           telephone: '',
           accepte_conditions: false,
           accepte_newsletter: false,
+          atteste_age: false,
           photo_url: '',
           biographie: '',
           secteur: '',
@@ -544,6 +566,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           </Label>
                         </div>
                       </RadioGroup>
+                      {estVisiteur && (
+                        <p className="text-sm text-muted-foreground">{t('auth.register.rapideAide', 'Quatre informations suffisent. Vous pourrez ajouter votre wilaya, votre date de naissance et votre téléphone plus tard, dans « Mon espace ».')}</p>
+                      )}
                     </div>
 
                     {/* Formulaire commun */}
@@ -594,15 +619,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                     </div>
 
+                    {!estVisiteur && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <RequiredLabel htmlFor="sexe" required>{t('auth.register.gender')}</RequiredLabel>
+                        <Label htmlFor="sexe">{t('auth.register.gender')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                         <Select 
                           value={registerForm.sexe}
                           onValueChange={(value) => setRegisterForm({...registerForm, sexe: value as 'M' | 'F'})}
                         >
-                          <SelectTrigger id="sexe" aria-required="true">
-                            <SelectValue />
+                          <SelectTrigger id="sexe">
+                            <SelectValue placeholder={t('auth.register.genderChoose', 'Choisir')} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="M">{t('auth.register.male')}</SelectItem>
@@ -653,7 +679,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         )}
                       </div>
                     </div>
-                    
+                    )}
+
                     <div className="space-y-2">
                       <RequiredLabel htmlFor="email" required>{t('auth.register.email')}</RequiredLabel>
                       <Input
@@ -678,39 +705,49 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className={`grid grid-cols-1 gap-4 ${estVisiteur ? '' : 'sm:grid-cols-2'}`}>
                       <div className="space-y-2">
                         <RequiredLabel htmlFor="password" required>{t('auth.register.password')}</RequiredLabel>
                         <p className="text-xs text-muted-foreground">{t('auth.register.passwordHint', '12 caractères min., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial')}</p>
+                        <div className="relative">
                         <Input
                           id="password"
-                          type="password"
+                          type={voirMotDePasse ? 'text' : 'password'}
                           autoComplete="new-password"
-                          placeholder="••••••••"
                           value={registerForm.mot_de_passe}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, mot_de_passe: e.target.value});
                             setRegisterErrors({...registerErrors, mot_de_passe: ''});
                           }}
                           onBlur={() => validateRegisterField('mot_de_passe')}
-                          className={registerErrors.mot_de_passe ? 'border-destructive' : ''}
+                          className={`pe-11 ${registerErrors.mot_de_passe ? 'border-destructive' : ''}`}
                           required
                           minLength={12}
                           aria-invalid={!!registerErrors.mot_de_passe}
                           aria-describedby={registerErrors.mot_de_passe ? 'auth-mot-de-passe-error' : undefined}
                         />
+                          <button
+                            type="button"
+                            onClick={() => setVoirMotDePasse((v) => !v)}
+                            className="absolute inset-y-0 end-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+                            aria-label={voirMotDePasse ? t('auth.hidePassword', 'Masquer') : t('auth.showPassword', 'Afficher')}
+                            aria-pressed={voirMotDePasse}
+                          >
+                            {voirMotDePasse ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                          </button>
+                        </div>
                         <PasswordStrengthIndicator password={registerForm.mot_de_passe} />
                         {registerErrors.mot_de_passe && (
                           <p id="auth-mot-de-passe-error" role="alert" className="text-sm text-destructive">{registerErrors.mot_de_passe}</p>
                         )}
                       </div>
+                      {!estVisiteur && (
                       <div className="space-y-2">
                         <RequiredLabel htmlFor="password-confirm" required>{t('auth.register.confirmPassword')}</RequiredLabel>
                         <Input
                           id="password-confirm"
-                          type="password"
+                          type={voirMotDePasse ? 'text' : 'password'}
                           autoComplete="new-password"
-                          placeholder="••••••••"
                           value={registerForm.confirmation_mot_de_passe}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, confirmation_mot_de_passe: e.target.value});
@@ -727,8 +764,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           <p id="auth-confirmation-error" role="alert" className="text-sm text-destructive">{registerErrors.confirmation_mot_de_passe}</p>
                         )}
                       </div>
+                      )}
                     </div>
                     
+                    {!estVisiteur && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm">
@@ -796,6 +835,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         )}
                       </div>
                     </div>
+                    )}
 
                     {/* Champs spécifiques aux professionnels */}
                     {userType === 'professionnel' && (
@@ -965,6 +1005,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                       {registerErrors.accepte_conditions && (
                         <p id="auth-conditions-error" role="alert" className="text-sm text-destructive ms-6">{registerErrors.accepte_conditions}</p>
+                      )}
+
+                      {estVisiteur && (
+                        <>
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              id="atteste-age"
+                              checked={registerForm.atteste_age}
+                              onCheckedChange={(checked) => {
+                                setRegisterForm({ ...registerForm, atteste_age: !!checked });
+                                setRegisterErrors({ ...registerErrors, atteste_age: '' });
+                              }}
+                              className={registerErrors.atteste_age ? 'border-destructive' : ''}
+                              aria-invalid={!!registerErrors.atteste_age}
+                              aria-describedby={registerErrors.atteste_age ? 'auth-age-error' : undefined}
+                            />
+                            <Label htmlFor="atteste-age" className="text-sm cursor-pointer">
+                              {t('auth.register.atteste13Ans', 'J’ai 13 ans ou plus')} *
+                            </Label>
+                          </div>
+                          {registerErrors.atteste_age && (
+                            <p id="auth-age-error" role="alert" className="text-sm text-destructive ms-6">{registerErrors.atteste_age}</p>
+                          )}
+                        </>
                       )}
                       
                       <div className="flex items-start gap-2">
