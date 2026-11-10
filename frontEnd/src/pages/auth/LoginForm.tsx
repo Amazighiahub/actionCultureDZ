@@ -195,12 +195,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               />
               <button
                 type="button"
-                tabIndex={-1}
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                // Atteignable au clavier et par les lecteurs d'écran (avant : tabIndex -1, audit V11 FRM-19)
+                className="absolute end-3 top-1/2 -translate-y-1/2 rounded text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? t('auth.hidePassword', 'Masquer') : t('auth.showPassword', 'Afficher')}
+                aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
               </button>
             </div>
             {errors.password && (

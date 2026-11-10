@@ -29,7 +29,14 @@ vi.mock('react-i18next', async (original) => ({
   useTranslation: () => ({ t: (_: string, d?: string) => d || _, i18n: { language: 'fr' } }),
 }));
 
-import InvitationInstallation from '@/components/shared/InvitationInstallation';
+// Page courante (FRM-21 : pas d'encadré sur les pages de formulaire)
+const chemin = { valeur: '/' };
+vi.mock('react-router-dom', async (original) => ({
+  ...(await original<typeof import('react-router-dom')>()),
+  useLocation: () => ({ pathname: chemin.valeur }),
+}));
+
+import InvitationInstallation, { estPageDeFormulaire } from '@/components/shared/InvitationInstallation';
 
 const telephone = (oui: boolean) => {
   window.matchMedia = vi.fn().mockReturnValue({ matches: oui }) as unknown as typeof window.matchMedia;
@@ -156,5 +163,19 @@ describe('invitation à installer', () => {
       await new Promise((r) => { setTimeout(r, 20); });
       expect(screen.queryByText(PROPOSITION)).not.toBeInTheDocument();
     });
+  });
+
+  // Audit V11 FRM-21 : l'encadré couvrait le bouton « Suivant » des formulaires sur téléphone
+  test('pages de formulaire : aucun encadré', () => {
+    expect(estPageDeFormulaire('/ajouter-oeuvre')).toBe(true);
+    expect(estPageDeFormulaire('/modifier-evenement/12')).toBe(true);
+    expect(estPageDeFormulaire('/auth')).toBe(true);
+    expect(estPageDeFormulaire('/organisations/4/modifier')).toBe(true);
+    expect(estPageDeFormulaire('/evenements/12')).toBe(false);
+    expect(estPageDeFormulaire('/')).toBe(false);
+    chemin.valeur = '/ajouter-patrimoine';
+    const { container } = render(<InvitationInstallation />);
+    expect(container).toBeEmptyDOMElement();
+    chemin.valeur = '/';
   });
 });

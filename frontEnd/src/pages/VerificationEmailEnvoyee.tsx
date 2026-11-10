@@ -26,10 +26,15 @@ const VerificationEmailEnvoyee = () => {
           </p>
 
           {state?.email && (
-            <p className="font-medium text-sm">
+            <p className="font-medium text-sm" dir="ltr">
               {state.email}
             </p>
           )}
+
+          {/* L'étape suivante, dite clairement (audit V11 FRM-15) */}
+          <p className="text-sm">
+            {t('auth.etapeSuivante', 'Ouvrez l’e-mail reçu et appuyez sur le bouton de confirmation. Pensez à regarder dans les indésirables.')}
+          </p>
 
           {state?.isProfessional && (
             <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-start text-sm text-blue-800">

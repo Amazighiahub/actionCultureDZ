@@ -1,5 +1,5 @@
 // hooks/useGeographie.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -46,6 +46,9 @@ export function useWilayas() {
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // « Réessayer » après un échec de chargement (avant : liste vide sans message, audit V11 FRM-25)
+  const [essai, setEssai] = useState(0);
+  const recharger = useCallback(() => setEssai((n) => n + 1), []);
 
   useEffect(() => {
     const loadWilayas = async () => {
@@ -73,9 +76,9 @@ export function useWilayas() {
     };
 
     loadWilayas();
-  }, []);
+  }, [essai]);
 
-  return { wilayas, loading, error };
+  return { wilayas, loading, error, recharger };
 }
 
 // =====================================================
@@ -89,6 +92,8 @@ export function useDairas(wilayaId: number | null) {
   const [dairas, setDairas] = useState<Daira[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [essai, setEssai] = useState(0);
+  const recharger = useCallback(() => setEssai((n) => n + 1), []);
 
   useEffect(() => {
     if (!wilayaId) {
@@ -120,9 +125,9 @@ export function useDairas(wilayaId: number | null) {
     };
 
     loadDairas();
-  }, [wilayaId]);
+  }, [wilayaId, essai]);
 
-  return { dairas, loading, error };
+  return { dairas, loading, error, recharger };
 }
 
 // =====================================================
@@ -136,6 +141,8 @@ export function useCommunes(dairaId: number | null) {
   const [communes, setCommunes] = useState<Commune[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [essai, setEssai] = useState(0);
+  const recharger = useCallback(() => setEssai((n) => n + 1), []);
 
   useEffect(() => {
     if (!dairaId) {
@@ -167,9 +174,9 @@ export function useCommunes(dairaId: number | null) {
     };
 
     loadCommunes();
-  }, [dairaId]);
+  }, [dairaId, essai]);
 
-  return { communes, loading, error };
+  return { communes, loading, error, recharger };
 }
 
 // =====================================================
@@ -282,9 +289,9 @@ export function useGeographicSelection() {
   const [selectedCommune, setSelectedCommune] = useState<number | null>(null);
   const [selectedLocalite, setSelectedLocalite] = useState<number | null>(null);
 
-  const { wilayas, loading: wilayasLoading, error: wilayasError } = useWilayas();
-  const { dairas, loading: dairasLoading, error: dairasError } = useDairas(selectedWilaya);
-  const { communes, loading: communesLoading, error: communesError } = useCommunes(selectedDaira);
+  const { wilayas, loading: wilayasLoading, error: wilayasError, recharger: rechargerWilayas } = useWilayas();
+  const { dairas, loading: dairasLoading, error: dairasError, recharger: rechargerDairas } = useDairas(selectedWilaya);
+  const { communes, loading: communesLoading, error: communesError, recharger: rechargerCommunes } = useCommunes(selectedDaira);
   const { localites, loading: localitesLoading, error: localitesError } = useLocalites(selectedCommune);
 
   // Réinitialiser les sélections enfants quand le parent change
@@ -352,6 +359,13 @@ export function useGeographicSelection() {
     communesLoading,
     localitesLoading,
     
+    // Recharge ce qui n'a pas pu se charger
+    recharger: () => {
+      if (wilayasError) rechargerWilayas();
+      if (dairasError) rechargerDairas();
+      if (communesError) rechargerCommunes();
+    },
+
     // Erreurs
     error: wilayasError || dairasError || communesError || localitesError,
     wilayasError,

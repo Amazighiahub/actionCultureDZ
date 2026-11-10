@@ -129,7 +129,10 @@
       "instagram": "Instagram",
       "tiktok": "TikTok",
       "facebook": "Facebook"
-    }
+    },
+    "collerDabord": "Collez d’abord le lien de l’article (il commence par https://).",
+    "nonEnregistre": "Le lien n’a pas été enregistré. Réessayez.",
+    "nonRetire": "Le lien n’a pas été retiré. Réessayez."
   },
   "auth": {
     "reprise": {
@@ -240,7 +243,10 @@
       "min50chars": "(min 50 caractères)",
       "rapideAide": "Quatre informations suffisent. Vous pourrez ajouter votre wilaya, votre date de naissance et votre téléphone plus tard, dans « Mon espace ».",
       "genderChoose": "Choisir",
-      "atteste13Ans": "J’ai 13 ans ou plus"
+      "atteste13Ans": "J’ai 13 ans ou plus",
+      "indicatif": "Indicatif du pays",
+      "rechercherPays": "Rechercher un pays…",
+      "paysIntrouvable": "Pays introuvable."
     },
     "errors": {
       "required": "Ce champ est requis",
@@ -403,7 +409,8 @@
     "sessionExpired": "Session expirée",
     "pleaseReconnect": "Veuillez vous reconnecter",
     "seoTitle": "Connexion et inscription",
-    "emailVerificationPro": "Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe."
+    "emailVerificationPro": "Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe.",
+    "etapeSuivante": "Ouvrez l’e-mail reçu et appuyez sur le bouton de confirmation. Pensez à regarder dans les indésirables."
   },
   "categories": {
     "heritageTypes": {
@@ -6094,5 +6101,8 @@
       "lienEnvoye": "Lien de confirmation envoyé.",
       "lienEnvoyeSuite": "Ouvrez l’e-mail reçu à l’adresse {{email}} et appuyez sur le lien (valable 24 heures). Votre adresse ne change qu’après ce clic. Votre adresse actuelle a aussi été prévenue."
     }
+  },
+  "geo": {
+    "erreurChargement": "La liste des wilayas et des communes n’a pas pu se charger."
   }
 }

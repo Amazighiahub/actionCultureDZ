@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Bell, Download, Loader2, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,6 +15,13 @@ import {
   abonnementActuel, activerNotifications, estInstallee, estIphone, installationProposee,
   lancerInstallation, notificationsPossibles, suivreInstallation, surTelephone,
 } from '@/utils/applicationMobile';
+
+/**
+ * Pages de formulaire : l'encadré, fixé en bas, couvrait le bouton « Suivant » ou « Enregistrer » sur
+ * téléphone (un appui tombait sur l'encadré). Il ne s'y affiche pas (audit V11 FRM-21).
+ */
+const PAGE_DE_FORMULAIRE = /^\/(auth|forgot-password|reset-password|ajouter-|modifier-|editer-|programme\/(creer|modifier)|admin\/patrimoine\/(ajouter|modifier)|organisations\/[^/]+\/modifier|articles\/[^/]+\/proposer)/i;
+export const estPageDeFormulaire = (chemin: string) => PAGE_DE_FORMULAIRE.test(chemin);
 
 const CLE_INSTALLATION = 'taladz-installation-plus-tard';
 const CLE_NOTIFICATIONS = 'taladz-notifications-plus-tard';
@@ -38,6 +46,8 @@ export default function InvitationInstallation() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { isAuthenticated, loading, sessionIncertaine } = usePermissionsContext();
+  // Suit la navigation (window.location n'était lu qu'au premier affichage)
+  const { pathname } = useLocation();
   const [proposee, setProposee] = useState(installationProposee());
   const [installationFermee, setInstallationFermee] = useState(enSilence(CLE_INSTALLATION));
   const [notificationsFermees, setNotificationsFermees] = useState(enSilence(CLE_NOTIFICATIONS));
@@ -50,12 +60,12 @@ export default function InvitationInstallation() {
     abonnementActuel().then((a) => setAbonne(!!a)).catch(() => setAbonne(true));
   }, [isAuthenticated]);
 
-  if (!surTelephone() || loading || sessionIncertaine) return null;
+  if (!surTelephone() || loading || sessionIncertaine || estPageDeFormulaire(pathname)) return null;
 
   // Application installée mais personne connectée (sur iPhone, elle ne partage pas la connexion de Safari) :
   // sans compte, les notifications ne peuvent pas lui parvenir, donc on le lui dit
   if (!isAuthenticated) {
-    if (!estInstallee() || notificationsFermees || window.location.pathname.startsWith('/auth')) return null;
+    if (!estInstallee() || notificationsFermees) return null;
     return (
       <aside
         aria-label={t('applicationMobile.titre', 'Tala DZ sur votre téléphone')}

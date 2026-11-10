@@ -193,7 +193,7 @@ vi.mock('@/components/Footer', () => ({ default: () => <footer data-testid="foot
 
 vi.mock('@/components/MultiLangInput', () => ({
   __esModule: true,
-  default: ({ name, label, value, onChange, requiredLanguages = [] }: any) => {
+  default: ({ name, label, value, onChange, requiredLanguages = [], error }: any) => {
     const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
     const [active, setActive] = React.useState('fr');
     return (
@@ -219,7 +219,10 @@ vi.mock('@/components/MultiLangInput', () => ({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onChange({ ...value, [active]: e.target.value })
           }
+          aria-invalid={!!error || undefined}
         />
+        {/* Message du champ entier (prop error de MultiLangInput) */}
+        {error && <p role="alert">{error}</p>}
       </div>
     );
   },

@@ -70,6 +70,12 @@ export default function GestionLiens() {
   const rafraichir = () => queryClient.invalidateQueries({ queryKey: ['mes-liens'] });
 
   const enregistrer = async () => {
+    // Bouton toujours actif : on explique ce qui manque (avant : grisé sans explication, audit V11 FRM-24)
+    if (!form.url.trim()) {
+      setErreur(t('liens.collerDabord', 'Collez d’abord le lien de l’article (il commence par https://).'));
+      document.getElementById('lien-url')?.focus();
+      return;
+    }
     if (!type) {
       setErreur(t('liens.lienInvalide', 'Lien invalide : il doit commencer par https://'));
       return;
@@ -90,7 +96,7 @@ export default function GestionLiens() {
         ? await httpClient.put(`/liens/${idModifie}`, corps)
         : await httpClient.post('/liens', corps);
       if (!res.success) {
-        setErreur(res.error || t('common.error', 'Erreur'));
+        setErreur(messageErreurServeur(res, t('liens.nonEnregistre', 'Le lien n’a pas été enregistré. Réessayez.')));
         return;
       }
       toast({ title: t('liens.enregistre', 'Lien enregistré') });
@@ -109,10 +115,10 @@ export default function GestionLiens() {
   const retirer = async (l: LienExterne) => {
     try {
       const res = await httpClient.delete(`/liens/${l.id_lien}`);
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw res;
       rafraichir();
     } catch (e) {
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('liens.nonRetire', 'Le lien n’a pas été retiré. Réessayez.')), variant: 'destructive' });
     }
   };
 
@@ -136,7 +142,8 @@ export default function GestionLiens() {
           <div className="md:col-span-2">
             <Label htmlFor="lien-url">{t('liens.adresse', 'Collez le lien')}</Label>
             <Input id="lien-url" type="url" inputMode="url" dir="ltr" placeholder="https://…" maxLength={500}
-              value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />
+              aria-invalid={!!erreur || undefined} aria-describedby={erreur ? 'lien-erreur' : undefined}
+              value={form.url} onChange={(e) => { setForm((f) => ({ ...f, url: e.target.value })); setErreur(''); }} />
             {type && <p className="text-sm text-muted-foreground mt-1">{t('liens.reconnu', 'Reconnu :')} {t(`liens.types.${type}`, NOMS_LIEN[type])}</p>}
           </div>
           <div>
@@ -173,10 +180,10 @@ export default function GestionLiens() {
               </SelectContent>
             </Select>
           </div>
-          {erreur && <p role="alert" className="md:col-span-2 text-sm text-destructive">{erreur}</p>}
+          {erreur && <p id="lien-erreur" role="alert" className="md:col-span-2 text-sm text-destructive">{erreur}</p>}
           <div className="md:col-span-2 flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
-            <Button type="button" onClick={enregistrer} disabled={enCours || !form.url.trim()}>
+            <Button type="button" onClick={enregistrer} disabled={enCours}>
               {enCours && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
               {t('common.save', 'Enregistrer')}
             </Button>

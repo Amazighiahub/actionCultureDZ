@@ -875,9 +875,10 @@ const AjouterEvenement = () => {
                     required
                     requiredLanguages={[]}
                     placeholder={t('events.create.eventNamePlaceholder')}
-                    aria-invalid={!!fieldErrors.nom}
+                    // Message et marque rouge sur la zone de la langue ouverte : le curseur y va en premier
+                    // (avant : aria-invalid passé ici était ignoré, le curseur sautait sur « Type », audit V11 FRM-20)
+                    error={fieldErrors.nom}
                   />
-                  {fieldErrors.nom && <p id="nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>}
                 </div>
 
                 <div className="space-y-2">

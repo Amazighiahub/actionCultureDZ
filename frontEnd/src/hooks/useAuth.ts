@@ -185,11 +185,8 @@ export function useAuth(): UseAuthReturn {
         if (needsEmailVerification) {
           // Rediriger vers page de confirmation email
           navigate('/verification-email-envoyee', {
-            state: {
-              email: data.email,
-              message: i18next.t('auth.emailVerificationPro', 'Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe.'),
-              isProfessional: true
-            }
+            // La page traduit elle-même et ajoute la note sur la validation par l'équipe (avant : dite deux fois)
+            state: { email: data.email, isProfessional: true }
           });
         } else if (needsAdminValidation) {
           // Mode dev - email vérifié mais en attente validation admin

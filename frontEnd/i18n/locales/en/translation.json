@@ -129,7 +129,10 @@
       "instagram": "Instagram",
       "tiktok": "TikTok",
       "facebook": "Facebook"
-    }
+    },
+    "collerDabord": "First paste the article link (it starts with https://).",
+    "nonEnregistre": "The link was not saved. Try again.",
+    "nonRetire": "The link was not removed. Try again."
   },
   "auth": {
     "reprise": {
@@ -224,7 +227,10 @@
       "min50chars": "(min. 50 characters)",
       "rapideAide": "Four details are enough. You can add your wilaya, date of birth and phone number later, in “My space”.",
       "genderChoose": "Choose",
-      "atteste13Ans": "I am 13 or older"
+      "atteste13Ans": "I am 13 or older",
+      "indicatif": "Country code",
+      "rechercherPays": "Search for a country…",
+      "paysIntrouvable": "Country not found."
     },
     "errors": {
       "fileTooLarge": {
@@ -403,7 +409,8 @@
     "sessionExpired": "Session expired",
     "pleaseReconnect": "Please sign in again",
     "seoTitle": "Log in and sign up",
-    "emailVerificationPro": "A verification e-mail has been sent to you. After this check, the team will validate your professional account."
+    "emailVerificationPro": "A verification e-mail has been sent to you. After this check, the team will validate your professional account.",
+    "etapeSuivante": "Open the email you received and tap the confirmation button. Remember to check your spam folder."
   },
   "categories": {
     "heritageTypes": {
@@ -6094,5 +6101,8 @@
       "lienEnvoye": "Confirmation link sent.",
       "lienEnvoyeSuite": "Open the email received at {{email}} and tap the link (valid 24 hours). Your address only changes after this click. Your current address has also been notified."
     }
+  },
+  "geo": {
+    "erreurChargement": "The list of wilayas and municipalities could not be loaded."
   }
 }

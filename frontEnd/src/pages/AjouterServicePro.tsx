@@ -475,9 +475,9 @@ const AjouterServicePro: React.FC = () => {
                     onChange={(value) => updateField('nom', value)}
                     requiredLanguages={[]}
                     placeholder="Ex: Restaurant Le Casbah"
-                    aria-invalid={!!fieldErrors.nom}
+                    // Message et marque rouge sur la zone de la langue ouverte (aria-invalid passé ici était ignoré)
+                    error={fieldErrors.nom}
                   />
-                  {fieldErrors.nom && <p id="nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>}
                 </div>
 
                 {/* Description */}

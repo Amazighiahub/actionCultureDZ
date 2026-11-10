@@ -35,7 +35,9 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
     wilayas, dairas, communes,
     setSelectedWilaya, setSelectedDaira, setSelectedCommune,
     wilayasLoading, dairasLoading, communesLoading,
+    wilayasError, dairasError, communesError, recharger,
   } = useGeographicSelection();
+  const echecChargement = !!(wilayasError || dairasError || communesError);
 
   // Sync props → hook interne
   useEffect(() => { setSelectedWilaya(wilayaId); }, [wilayaId]);
@@ -56,6 +58,13 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
 
   return (
     <div className={containerClass}>
+      {/* Liste pas chargée : on le dit, avec « Réessayer » (avant : liste vide sans explication, audit V11 FRM-25) */}
+      {echecChargement && (
+        <p role="alert" className="text-sm text-destructive sm:col-span-3">
+          {t('geo.erreurChargement', 'La liste des wilayas et des communes n’a pas pu se charger.')}{' '}
+          <button type="button" className="underline font-medium" onClick={recharger}>{t('antiRobot.reessayer', 'Réessayer')}</button>
+        </p>
+      )}
       {/* Wilaya */}
       <div className="space-y-2">
         <Label htmlFor="geo-wilaya">
