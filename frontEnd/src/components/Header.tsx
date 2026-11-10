@@ -427,7 +427,7 @@ const Header = () => {
                     size="sm"
                     className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
                   >
-                    <Link to="/auth">
+                    <Link to="/auth?tab=inscription">
                       <span className="text-xs sm:text-sm">{t('common.signup')}</span>
                     </Link>
                   </Button>
@@ -578,7 +578,7 @@ const Header = () => {
                     <Link to="/auth" onClick={() => setIsMenuOpen(false)}>{t('common.login')}</Link>
                   </Button>
                   <Button asChild className="flex-1 w-full min-h-[48px] text-base bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white">
-                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>{t('common.signup')}</Link>
+                    <Link to="/auth?tab=inscription" onClick={() => setIsMenuOpen(false)}>{t('common.signup')}</Link>
                   </Button>
                 </div>
               )}

@@ -40,6 +40,9 @@ async function hashPassword(password) {
 
 // Fonction principale de seed
 async function seedDatabase() {
+  if (!process.env.SEED_ADMIN_PASSWORD) {
+    throw new Error('SEED_ADMIN_PASSWORD manquant : choisissez le mot de passe du compte administrateur de test');
+  }
   try {
     console.log('\n🌱 Connexion à la base de données...');
     await sequelize.authenticate();
@@ -143,8 +146,9 @@ async function seedDatabase() {
       {
         nom: "Admin",
         prenom: "System",
-        email: "admin@actionculture.dz",
-        password: "admin123",
+        // Aucun identifiant réel dans le dépôt (public) : mot de passe fourni au lancement (audit V11 SEC-1)
+        email: process.env.SEED_ADMIN_EMAIL || "admin@example.com",
+        password: process.env.SEED_ADMIN_PASSWORD,
         id_type_user: typeUserMap["administrateur"],
         date_naissance: "1980-01-01",
         telephone: "0555000001",
@@ -248,7 +252,7 @@ async function seedDatabase() {
     // ========== ÉTAPE 5: Associer les utilisateurs aux rôles ==========
     console.log('\n🔗 Association des utilisateurs aux rôles...');
     const userRoleAssociations = [
-      { email: "admin@actionculture.dz", role: "Administrateur" },
+      { email: process.env.SEED_ADMIN_EMAIL || "admin@example.com", role: "Administrateur" },
       { email: "m.benali@test.dz", role: "Professionnel" },
       { email: "f.saidi@test.com", role: "User" },
       { email: "a.khedda@musee.dz", role: "Professionnel" },
@@ -447,7 +451,7 @@ async function seedDatabase() {
     console.log(`- ${evenementsData.length} événements`);
     
     console.log('\n🔑 Identifiants de connexion:');
-    console.log('Email: admin@actionculture.dz | Password: admin123');
+    console.log('Administrateur : adresse et mot de passe fournis par SEED_ADMIN_EMAIL et SEED_ADMIN_PASSWORD');
     console.log('Email: m.benali@test.dz | Password: password123');
 
   } catch (error) {

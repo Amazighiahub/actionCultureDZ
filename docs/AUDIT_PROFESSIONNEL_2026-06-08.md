@@ -574,8 +574,7 @@ Données de formulaire (prix, contacts) en plaintext dans sessionStorage.
 **Fichier :** `backend/database/seeds/run-seeds-mysql.sh:206, 224`
 
 ```bash
--d '{"email":"admin@actionculture.dz","password":"admin123"}'
-echo "Admin : admin@actionculture.dz / admin123"
+[identifiant et mot de passe retirés de ce document (audit V11 SEC-1)]
 ```
 
 Ces credentials apparaissent dans le code source, l'historique Git, et les logs CI/CD.
@@ -645,7 +644,7 @@ this._flushing = true;        // race window entre les deux lignes
 
 | # | Action | Fichier | Effort |
 |---|--------|---------|--------|
-| 1 | Changer le mot de passe admin en prod (admin123 exposé) | run-seeds-mysql.sh | 15 min |
+| 1 | Changer le mot de passe admin en prod (mot de passe exposé, retiré depuis) | run-seeds-mysql.sh | 15 min |
 | 2 | Fix prototype pollution : `for...in` → `Object.keys()` | securityMiddleware.js:123 | 30 min |
 | 3 | Fix CSRF : guard null avant timingSafeEqual | csrfMiddleware.js:85 | 20 min |
 | 4 | Supprimer token localStorage dans useNotifications | useNotifications.ts:189 | 15 min |

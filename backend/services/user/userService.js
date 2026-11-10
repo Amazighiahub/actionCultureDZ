@@ -701,9 +701,9 @@ class UserService extends BaseService {
   /**
    * Professionnels proches d'une commune / wilaya (suggestions de contributeurs, fiche lieu)
    */
-  /** Portfolio public d'un professionnel (null si le profil n'est pas public) */
-  async getPublicPortfolio(userId) {
-    return this.repository.findPublicPortfolio(userId);
+  /** Portfolio public d'un professionnel (null si le profil n'est pas public, sauf options.inclurePrive) */
+  async getPublicPortfolio(userId, options = {}) {
+    return this.repository.findPublicPortfolio(userId, options);
   }
 
   /** Professionnel validé (pour le QR code de son portfolio), ou null */

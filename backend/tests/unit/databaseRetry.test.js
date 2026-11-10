@@ -20,7 +20,6 @@ describe('config/database : relance des requêtes', () => {
     'SequelizeConnectionError: connect ECONNREFUSED 172.18.0.2:3306',
     'Error: read ECONNRESET',
     'PROTOCOL_CONNECTION_LOST',
-    'Deadlock found when trying to get lock; try restarting transaction',
   ])('relance : %s', (message) => {
     expect(retried(message)).toBe(true);
   });
@@ -30,6 +29,10 @@ describe('config/database : relance des requêtes', () => {
     'SequelizeDatabaseError: You have an error in your SQL syntax',
     'SequelizeUniqueConstraintError: Validation error',
     'SequelizeConnectionAcquireTimeoutError: Operation timeout',
+    // Interblocage : MySQL a annulé toute la transaction ; relancer la seule requête l'exécutait hors
+    // transaction et la suite de l'opération était enregistrée sans son début (audit V11 BDD-1)
+    'Deadlock found when trying to get lock; try restarting transaction',
+    'SequelizeDatabaseError: ER_LOCK_DEADLOCK',
   ])('ne relance pas : %s', (message) => {
     expect(retried(message)).toBe(false);
   });

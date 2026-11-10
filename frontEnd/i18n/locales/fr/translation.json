@@ -590,7 +590,8 @@
     "notFound": "Introuvable",
     "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?",
     "backToTop": "Retour en haut",
-    "fichierTropLourd": "Fichier trop volumineux : choisissez un fichier plus léger."
+    "fichierTropLourd": "Fichier trop volumineux : choisissez un fichier plus léger.",
+    "ok": "OK"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -2224,7 +2225,8 @@
     "mediaRetire": "Média retiré",
     "brouillonRestaure": "Votre saisie a été restaurée",
     "brouillonFichiers": "Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.",
-    "verifyUpdate": "Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer."
+    "verifyUpdate": "Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer.",
+    "contenuNonEnregistre": "Le texte de l’article n’a pas pu être enregistré. Il est toujours à l’écran : cliquez de nouveau sur « Enregistrer »."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -5062,7 +5064,10 @@
     "errors": {
       "titreRequired": "Le titre est obligatoire (au moins dans une langue)",
       "descriptionRequired": "La description est obligatoire (au moins dans une langue)",
-      "categoriesRequired": "Veuillez sélectionner au moins une catégorie"
+      "categoriesRequired": "Veuillez sélectionner au moins une catégorie",
+      "contenuNonCharge": "Le contenu de l’article n’a pas pu être chargé. Rechargez la page avant de modifier : rien ne sera enregistré tant qu’il n’est pas chargé.",
+      "langueInconnue": "La langue de l’article n’a pas pu être déterminée. Choisissez-la dans « Le texte de l’article est écrit en », puis réessayez.",
+      "blocTropLong": "Le bloc n° {{n}} est trop long : coupez-le en plusieurs paragraphes (un bloc par partie), puis enregistrez."
     },
     "savedSuccess": "Article sauvegardé avec succès!",
     "linkCopied": "Lien copié !",
@@ -5080,7 +5085,9 @@
     "video": "Vidéo",
     "voirAussi": "Voir aussi",
     "lireEn": "Lire en",
-    "removeImage": "Retirer l’image"
+    "removeImage": "Retirer l’image",
+    "imageTropGrande": "L’image est trop volumineuse (25 Mo au plus).",
+    "formatImage": "Format non accepté : choisissez une photo JPEG, PNG, GIF ou WebP."
   },
   "passwordStrength": {
     "minLength": "12 caractères minimum",

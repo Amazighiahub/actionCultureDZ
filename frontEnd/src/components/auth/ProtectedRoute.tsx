@@ -119,7 +119,7 @@ export function ProtectedRoute({
               <Button onClick={() => window.history.back()} variant="outline" className="flex-1">{t("auth_protectedroute.retour_1")}
 
               </Button>
-              <Button onClick={() => window.location.href = '/auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
+              <Button onClick={() => window.location.href = '/auth?tab=inscription'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
 
               </Button>
             </div>

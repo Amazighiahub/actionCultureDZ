@@ -22,7 +22,8 @@ describe('UserProfileController.getPortfolio', () => {
   it('renvoie le portfolio d\'un professionnel validé, en cache public', async () => {
     mockUserService.getPublicPortfolio.mockResolvedValue(portfolio());
     await controller.getPortfolio(req, res);
-    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17);
+    // Visiteur : un profil rendu privé n'est pas inclus (audit V11 SEC-2)
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { inclurePrive: false });
     expect(res.set).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public'));
     const body = res.json.mock.calls[0][0];
     expect(body.success).toBe(true);
@@ -42,6 +43,16 @@ describe('UserProfileController.getPortfolio', () => {
     mockUserService.getPublicPortfolio.mockResolvedValue(portfolio());
     await controller.getPortfolio(req, res);
     expect(res.json.mock.calls[0][0].data.estProprietaire).toBe(true);
+    expect(res.set).toHaveBeenCalledWith('Cache-Control', 'private, no-store');
+    // La personne voit sa page même si son profil est privé
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { inclurePrive: true });
+  });
+
+  it('l’équipe voit aussi un profil privé, sans cache partagé', async () => {
+    req.user = { id_user: 2, isModerateur: true };
+    mockUserService.getPublicPortfolio.mockResolvedValue(portfolio());
+    await controller.getPortfolio(req, res);
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { inclurePrive: true });
     expect(res.set).toHaveBeenCalledWith('Cache-Control', 'private, no-store');
   });
 });

@@ -145,6 +145,34 @@ describe('errorMiddleware', () => {
   });
 
   // =========================================================================
+  // errorHandler – interblocage MySQL (audit V11 BDD-1)
+  // =========================================================================
+  describe('errorHandler – interblocage', () => {
+    it('409 CONFLIT_SIMULTANE : rien n’est enregistré, la personne est invitée à réessayer', () => {
+      const error = new Error('Deadlock found when trying to get lock; try restarting transaction');
+      error.name = 'SequelizeDatabaseError';
+      error.parent = { code: 'ER_LOCK_DEADLOCK' };
+
+      errorMiddleware.errorHandler(error, req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      const jsonArg = res.json.mock.calls[0][0];
+      expect(jsonArg).toMatchObject({ success: false, code: 'CONFLIT_SIMULTANE' });
+      expect(jsonArg.error).toMatch(/rien n’a été enregistré/);
+    });
+
+    it('autre erreur de base : toujours 500', () => {
+      const error = new Error('Unknown column');
+      error.name = 'SequelizeDatabaseError';
+      error.parent = { code: 'ER_BAD_FIELD_ERROR' };
+
+      errorMiddleware.errorHandler(error, req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  // =========================================================================
   // errorHandler – SequelizeUniqueConstraintError
   // =========================================================================
   describe('errorHandler – SequelizeUniqueConstraintError', () => {

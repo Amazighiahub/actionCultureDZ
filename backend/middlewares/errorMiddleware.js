@@ -102,6 +102,18 @@ const errorMiddleware = {
       code = 'FK_CONSTRAINT';
     }
 
+    // Deux enregistrements simultanés sur les mêmes données : MySQL annule toute l'opération (rien n'est
+    // enregistré à moitié). Message clair au lieu d'une erreur serveur ; la personne peut réessayer.
+    const codeSql = error.parent?.code || error.original?.code;
+    if (error.name === 'SequelizeDatabaseError' && codeSql === 'ER_LOCK_DEADLOCK') {
+      logger.warn('Interblocage MySQL, opération annulée', { route: `${req.method} ${req.originalUrl}` });
+      return res.status(409).json({
+        success: false,
+        error: 'Une autre opération modifiait les mêmes données au même moment : rien n’a été enregistré. Réessayez.',
+        code: 'CONFLIT_SIMULTANE',
+      });
+    }
+
     if (error.name === 'SequelizeDatabaseError') {
       statusCode = 500;
       message = 'Erreur de base de données';

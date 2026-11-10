@@ -158,9 +158,10 @@ const initSitemapRoutes = (models) => {
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
 
-        // Portfolios publics : professionnels validés (compte actif)
+        // Portfolios publics : professionnels validés (compte actif) au profil public ; un profil rendu
+        // privé n'est plus signalé aux moteurs de recherche (son nom est dans l'adresse)
         models.User ? safeQuery('professionnels', () => models.User.findAll({
-          where: { statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+          where: { statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }, profil_public: true },
           attributes: ['id_user', 'nom', 'prenom', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true

@@ -19,6 +19,7 @@ const BaseDTO = require('../dto/baseDTO');
 const { translateDeep } = require('../helpers/i18n');
 const QRCode = require('qrcode');
 const { professionnelPath } = require('../utils/slug');
+const { estModeration } = require('../utils/droits');
 
 class UserProfileController extends BaseController {
   get userService() {
@@ -283,20 +284,22 @@ class UserProfileController extends BaseController {
 
   /**
    * GET /users/professionals/:id/portfolio : page publique d'un professionnel
-   * (profil, œuvres, artisanat, événements, services publiés). 404 si le profil n'est pas public.
+   * (profil, œuvres, artisanat, événements, services publiés). 404 si le profil n'est pas public,
+   * sauf pour la personne elle-même et l'équipe.
    */
   async getPortfolio(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
       // Le professionnel connecté sur sa propre page voit en plus ses outils de partage
       const isOwner = Number(req.user?.id_user) === id;
-      const data = await this.userService.getPublicPortfolio(id);
+      // Profil rendu privé : caché au public (audit V11 SEC-2), visible pour la personne et l'équipe
+      const data = await this.userService.getPublicPortfolio(id, { inclurePrive: isOwner || estModeration(req.user) });
       if (!data) {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
       data.estProprietaire = isOwner;
-      // Vue propriétaire : pas de cache partagé
-      res.set('Cache-Control', isOwner ? 'private, no-store' : 'public, max-age=120, stale-while-revalidate=30');
+      // Vue propriétaire ou équipe : pas de cache partagé
+      res.set('Cache-Control', isOwner || estModeration(req.user) ? 'private, no-store' : 'public, max-age=120, stale-while-revalidate=30');
       // La réponse dépend de la session (vue propriétaire ou publique)
       res.set('Vary', 'Cookie, Authorization');
       res.json({ success: true, data: translateDeep(data, req.lang) });

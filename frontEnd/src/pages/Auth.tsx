@@ -12,13 +12,20 @@ import { useRTL } from '@/hooks/useRTL';
 import LoginFormComponent from '@/pages/auth/LoginForm';
 import RegisterFormComponent from '@/pages/auth/RegisterForm';
 
+/** Onglet demandé par l'adresse : /auth?tab=inscription (ou « register ») ouvre l'inscription */
+const ongletDepuisAdresse = (search: string) =>
+  (['inscription', 'register'].includes(new URLSearchParams(search).get('tab') || '') ? 'inscription' : 'connexion');
+
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const { direction } = useRTL();
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState('connexion');
+  // Avant : toujours « Connexion », même après un clic sur « S'inscrire » (audit V11 UX-2)
+  const [activeTab, setActiveTab] = useState(() => ongletDepuisAdresse(location.search));
+  // Clic sur « S'inscrire » ou « Se connecter » alors que la page est déjà ouverte
+  useEffect(() => { setActiveTab(ongletDepuisAdresse(location.search)); }, [location.search]);
 
   useEffect(() => {
     if (isAuthenticated) {

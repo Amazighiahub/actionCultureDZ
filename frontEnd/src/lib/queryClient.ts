@@ -21,9 +21,11 @@ export const queryClient = new QueryClient({
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
+    // Un envoi (inscription, commentaire, avis…) n'est jamais renvoyé tout seul : une inscription refusée
+    // repartait une seconde fois, et après une coupure un commentaire déjà enregistré pouvait être publié
+    // en double (audit V11 COD-5). La personne voit l'erreur et choisit de réessayer.
     mutations: {
-      retry: 1,
-      retryDelay: 1000,
+      retry: 0,
     },
   },
 });

@@ -185,6 +185,10 @@ const createDatabaseConnection = (env = 'development') => {
       // relançait toute erreur (colonne inconnue, syntaxe...) jusqu'à 10 fois avec un délai
       // croissant : la requête dépassait 30 s et la page tombait en 408 au lieu d'une erreur claire.
       // Pool saturé : pas de relance non plus, attendre encore ne ferait qu'allonger la file.
+      // Interblocage (ER_LOCK_DEADLOCK) : JAMAIS relancé ici. MySQL a déjà annulé toute la transaction ;
+      // relancer la seule requête en échec l'exécutait hors transaction, et la suite de l'opération était
+      // enregistrée sans son début, sans aucune erreur (audit V11 BDD-1). L'erreur remonte : rien n'est
+      // enregistré, la personne est invitée à réessayer (middlewares/errorMiddleware.js).
       retry: {
         max: parseInt(process.env.DB_RETRY_MAX || '3'),
         backoffBase: 500,
@@ -198,9 +202,7 @@ const createDatabaseConnection = (env = 'development') => {
           /ECONNRESET/,
           /ECONNREFUSED/,
           /EHOSTUNREACH/,
-          /PROTOCOL_CONNECTION_LOST/,
-          /ER_LOCK_DEADLOCK/,
-          /Deadlock found/
+          /PROTOCOL_CONNECTION_LOST/
         ]
       }
     }

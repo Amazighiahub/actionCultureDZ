@@ -585,7 +585,8 @@
     "notFound": "Not found",
     "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?",
     "backToTop": "Back to top",
-    "fichierTropLourd": "File too large: choose a smaller file."
+    "fichierTropLourd": "File too large: choose a smaller file.",
+    "ok": "OK"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -2176,7 +2177,8 @@
     "mediaRetire": "Media removed",
     "brouillonRestaure": "Your input has been restored",
     "brouillonFichiers": "Your session had expired. Add the files (images, sounds) again before sending.",
-    "verifyUpdate": "The server was slow to respond: the change may have been saved. Open your dashboard to check before trying again."
+    "verifyUpdate": "The server was slow to respond: the change may have been saved. Open your dashboard to check before trying again.",
+    "contenuNonEnregistre": "The article text could not be saved. It is still on screen: click “Save” again."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -5062,7 +5064,10 @@
     "errors": {
       "titreRequired": "Title is required (in at least one language)",
       "descriptionRequired": "Description is required (in at least one language)",
-      "categoriesRequired": "Please select at least one category"
+      "categoriesRequired": "Please select at least one category",
+      "contenuNonCharge": "The article content could not be loaded. Reload the page before editing: nothing will be saved until it is loaded.",
+      "langueInconnue": "The article language could not be determined. Choose it in “The article is written in”, then try again.",
+      "blocTropLong": "Block no. {{n}} is too long: split it into several paragraphs (one block per part), then save."
     },
     "savedSuccess": "Article saved successfully!",
     "linkCopied": "Link copied!",
@@ -5080,7 +5085,9 @@
     "video": "Video",
     "voirAussi": "See also",
     "lireEn": "Read in",
-    "removeImage": "Remove image"
+    "removeImage": "Remove image",
+    "imageTropGrande": "The image is too large (25 MB maximum).",
+    "formatImage": "Format not accepted: choose a JPEG, PNG, GIF or WebP photo."
   },
   "passwordStrength": {
     "minLength": "12+ characters",

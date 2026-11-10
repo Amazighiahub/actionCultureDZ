@@ -118,12 +118,12 @@ class UserRepository extends BaseRepository {
   }
 
   /**
-   * Professionnel validé (compte actif) : identité minimale, ou null.
-   * Sert au QR code du portfolio.
+   * Professionnel validé (compte actif) au profil public : identité minimale, ou null.
+   * Sert au QR code du portfolio (un profil privé n'a pas de page publique vers laquelle mener).
    */
   async findPublicProfessional(userId) {
     return this.model.findOne({
-      where: { id_user: userId, statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+      where: { id_user: userId, statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }, profil_public: true },
       attributes: ['id_user', 'nom', 'prenom'],
       raw: true
     });
@@ -131,12 +131,14 @@ class UserRepository extends BaseRepository {
 
   /**
    * Portfolio public d'un professionnel : profil + contenus PUBLIÉS uniquement.
-   * Tout professionnel validé (compte actif) a un portfolio public. Renvoie null pour
-   * un visiteur, un compte en attente ou suspendu, ou un administrateur.
+   * Tout professionnel validé (compte actif) au profil public a un portfolio public. Renvoie null pour
+   * un visiteur, un compte en attente ou suspendu, un administrateur, ou un profil rendu privé
+   * (comme l'annuaire et la recherche), sauf `inclurePrive` : la personne elle-même ou l'équipe.
    * @param {number} userId
+   * @param {{ inclurePrive?: boolean }} [options]
    * @returns {Promise<object|null>}
    */
-  async findPublicPortfolio(userId) {
+  async findPublicPortfolio(userId, { inclurePrive = false } = {}) {
     const { Commune, Daira, Wilaya, TypeUser, Oeuvre, OeuvreUser, Media, TypeOeuvre, Artisanat, Evenement, Service } = this.models;
     const LIMIT = 60;
 
@@ -144,7 +146,8 @@ class UserRepository extends BaseRepository {
       where: {
         id_user: userId,
         statut: 'actif',
-        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }
+        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
+        ...(inclurePrive ? {} : { profil_public: true })
       },
       attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       include: [
