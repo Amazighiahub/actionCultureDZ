@@ -241,8 +241,8 @@ describe('EventRegistration', () => {
     // Notre mock Dialog affiche le DialogContent seulement quand open=true.
     // Le DialogTrigger contient le bouton — on le trouve via son texte.
     test('le bouton "Confirmer l\'inscription" est disabled pendant la soumission', async () => {
-      let resolveRegister!: (val: boolean) => void;
-      const pendingRegister = new Promise<boolean>((resolve) => {
+      let resolveRegister!: (val: { ok: boolean }) => void;
+      const pendingRegister = new Promise<{ ok: boolean }>((resolve) => {
         resolveRegister = resolve;
       });
       const mockOnRegister = vi.fn().mockReturnValue(pendingRegister);
@@ -273,7 +273,21 @@ describe('EventRegistration', () => {
         expect(confirmBtn).toBeDisabled();
       });
 
-      resolveRegister(true);
+      resolveRegister({ ok: true });
+    });
+
+    // Audit V11 FRM-8 : le refus s'affiche dans la fenêtre, qui reste ouverte
+    test('échec : le message reste dans la fenêtre d’inscription', async () => {
+      const mockOnRegister = vi.fn().mockResolvedValue({ ok: false, erreur: 'Cet événement est complet' });
+      render(<EventRegistration event={makeEvent()} onRegister={mockOnRegister} isRegistered={false} />);
+
+      await user.click(screen.getByRole('button', { name: /event\.registration\.register|S'inscrire/i }));
+      const confirmBtn = await screen.findByRole('button', { name: /event\.registration\.confirm|Confirmer/i });
+      await user.click(confirmBtn);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Cet événement est complet');
+      // Toujours ouverte : la personne peut corriger ou réessayer
+      expect(screen.getByRole('button', { name: /event\.registration\.confirm|Confirmer/i })).toBeInTheDocument();
     });
   });
 
@@ -413,7 +427,7 @@ describe('EventRegistration', () => {
     const eventChantier = () => makeEvent({ TypeEvenement: { id_type_evenement: 13, nom_type: 'Chantier-école', config_inscription: configChantier } });
 
     test('remplace le formulaire de base et bloque l\'envoi tant que les réponses obligatoires manquent', async () => {
-      const mockOnRegister = vi.fn().mockResolvedValue(true);
+      const mockOnRegister = vi.fn().mockResolvedValue({ ok: true });
       render(<EventRegistration event={eventChantier() as any} onRegister={mockOnRegister} isRegistered={false} />);
 
       await user.click(screen.getByRole('button', { name: /S'inscrire/i }));
@@ -431,7 +445,7 @@ describe('EventRegistration', () => {
     });
 
     test('affiche la question conditionnelle et envoie seulement les réponses visibles', async () => {
-      const mockOnRegister = vi.fn().mockResolvedValue(true);
+      const mockOnRegister = vi.fn().mockResolvedValue({ ok: true });
       render(<EventRegistration event={eventChantier() as any} onRegister={mockOnRegister} isRegistered={false} />);
 
       await user.click(screen.getByRole('button', { name: /S'inscrire/i }));

@@ -3473,7 +3473,7 @@
       "commentPlaceholder": "Ajoutez un commentaire ou des questions...",
       "confirm": "Confirmer l'inscription",
       "confirmed": "Inscription confirmée",
-      "date": "Date d'inscription",
+      "date": "Date de l’événement",
       "deadline": "Date limite d'inscription",
       "dialogTitle": "Inscription à l'événement",
       "event": "Événement",
@@ -3536,7 +3536,9 @@
       "invitationTitle": "Confirmez votre inscription",
       "invitationDesc": "L’organisateur a transmis votre demande d’inscription. Vous n’êtes inscrit(e) que si vous la confirmez.",
       "invitationAccept": "Confirmer mon inscription",
-      "invitationDecline": "Refuser"
+      "invitationDecline": "Refuser",
+      "nonPartie": "Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».",
+      "reponseTarde": "La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer."
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",

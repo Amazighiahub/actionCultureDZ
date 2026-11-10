@@ -43,6 +43,8 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { InscriptionPayload } from '@/services/evenement.service';
+import type { ResultatInscription } from '@/hooks/useEventDetails';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import FormulaireInscription from '@/components/event/FormulaireInscription';
 import {
   configInscriptionValide,
@@ -84,7 +86,7 @@ interface OeuvreSimple {
 
 interface EventRegistrationProps {
   event: Evenement;
-  onRegister: (data?: InscriptionPayload) => Promise<boolean>;
+  onRegister: (data?: InscriptionPayload) => Promise<ResultatInscription>;
   onUnregister?: () => Promise<boolean>;
   isRegistered?: boolean;
   /** statut_participation renvoyé par l'API (invitation, inscrit, confirme, present, absent, annule) */
@@ -282,11 +284,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     if (inscriptionConfig?.accepte_soumissions &&
         inscriptionConfig?.config_soumission?.requis &&
         selectedOeuvres.length === 0) {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('event.registration.oeuvresRequired', 'Veuillez sélectionner au moins une œuvre à soumettre'),
-        variant: 'destructive',
-      });
+      // Dans la fenêtre, comme les autres messages (avant : bandeau de 5 secondes en haut de l'écran)
+      setSubmitError(t('event.registration.oeuvresRequired', 'Veuillez sélectionner au moins une œuvre à soumettre'));
       return;
     }
 
@@ -304,7 +303,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const success = await onRegister({
+      const resultat = await onRegister({
         ...(formulaireRemplaceBase ? {} : {
           nombre_personnes: nombrePersonnes || 1,
           commentaire: commentaire.trim() || undefined
@@ -313,16 +312,19 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         reponses: formulaire ? reponsesAEnvoyer(formulaire, reponses) : undefined
       });
 
-      if (success) {
+      if (resultat.ok) {
         setIsDialogOpen(false);
         setNombrePersonnes(1);
         setCommentaire('');
         setSelectedOeuvres([]);
         setReponses({});
         setErreursFormulaire({});
+      } else if (resultat.erreur) {
+        // Message dans la fenêtre, qui reste ouverte avec les réponses déjà saisies (audit V11 FRM-8)
+        setSubmitError(resultat.erreur);
       }
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('event.registration.error', 'Une erreur est survenue lors de l\'inscription'));
+      setSubmitError(messageErreurServeur(err, t('event.registration.error', 'Une erreur est survenue lors de l\'inscription')));
     } finally {
       setIsSubmitting(false);
     }
@@ -550,7 +552,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               disabled={isSubmitting}
               onClick={async () => {
                 setIsSubmitting(true);
-                try { await onRegister(); } finally { setIsSubmitting(false); }
+                setSubmitError(null);
+                try {
+                  const resultat = await onRegister();
+                  if (!resultat.ok && resultat.erreur) setSubmitError(resultat.erreur);
+                } finally { setIsSubmitting(false); }
               }}
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" /> : <CheckCircle className="h-4 w-4 me-2" aria-hidden="true" />}
@@ -565,6 +571,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
               <XCircle className="h-4 w-4 me-2" aria-hidden="true" />
               {t('event.registration.invitationDecline', 'Refuser')}
             </Button>
+            {/* Échec de la confirmation : sous les boutons, sans disparaître (la fenêtre n'est pas ouverte ici) */}
+            {submitError && !isDialogOpen && (
+              <div className="w-full p-3 bg-destructive/10 rounded-lg text-sm text-destructive" role="alert">
+                {submitError}
+              </div>
+            )}
           </div>
         ) : isRegistered && statutAffiche === 'refused' ? (
           <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
@@ -601,7 +613,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             </Button>
           </>
         ) : canRegister ? (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(ouvert) => {
+            // À l'ouverture, l'ancien message d'échec est effacé
+            if (ouvert) setSubmitError(null);
+            setIsDialogOpen(ouvert);
+          }}>
             <DialogTrigger asChild>
               <Button className="w-full" size="lg">
                 <UserPlus className="h-4 w-4 me-2" />

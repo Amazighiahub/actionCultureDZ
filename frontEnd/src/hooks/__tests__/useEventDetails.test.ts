@@ -329,16 +329,53 @@ describe('useEventDetails', () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      let success: boolean | undefined;
+      let resultat: { ok: boolean; erreur?: string } | undefined;
       await act(async () => {
-        success = await result.current.registerToEvent();
+        resultat = await result.current.registerToEvent();
       });
 
-      expect(success).toBe(true);
+      expect(resultat?.ok).toBe(true);
       expect(mockInscription).toHaveBeenCalledWith(9, undefined);
       expect(mockToast).toHaveBeenCalledWith(
         expect.objectContaining({ title: expect.any(String) })
       );
+    });
+
+    // Audit V11 FRM-8 : le message revient à la fenêtre au lieu d'un bandeau de 5 secondes
+    it('registerToEvent : refus du serveur → sa raison, sans bandeau', async () => {
+      mockInscription.mockResolvedValueOnce({ success: false, error: 'Cet événement est complet' });
+      const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      mockToast.mockClear();
+
+      let resultat: { ok: boolean; erreur?: string } | undefined;
+      await act(async () => { resultat = await result.current.registerToEvent(); });
+
+      expect(resultat).toEqual({ ok: false, erreur: 'Cet événement est complet' });
+      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+    });
+
+    it('registerToEvent : réseau coupé → « pas partie », réessayer', async () => {
+      mockInscription.mockRejectedValueOnce(Object.assign(new Error('Problème de connexion'), { code: 'ERR_NETWORK' }));
+      const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      let resultat: { ok: boolean; erreur?: string } | undefined;
+      await act(async () => { resultat = await result.current.registerToEvent(); });
+
+      expect(resultat?.ok).toBe(false);
+      expect(resultat?.erreur).toMatch(/pas partie|nonPartie/);
+    });
+
+    it('registerToEvent : délai dépassé → vérifier avant de réessayer (pas de doublon)', async () => {
+      mockInscription.mockRejectedValueOnce(Object.assign(new Error('Trop long'), { code: 'ECONNABORTED' }));
+      const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      let resultat: { ok: boolean; erreur?: string } | undefined;
+      await act(async () => { resultat = await result.current.registerToEvent(); });
+
+      expect(resultat?.erreur).toMatch(/Rechargez|reponseTarde/);
     });
 
     it('registerToEvent refuse si non authentifié', async () => {
@@ -348,12 +385,12 @@ describe('useEventDetails', () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      let success: boolean | undefined;
+      let resultat: { ok: boolean; erreur?: string } | undefined;
       await act(async () => {
-        success = await result.current.registerToEvent();
+        resultat = await result.current.registerToEvent();
       });
 
-      expect(success).toBe(false);
+      expect(resultat?.ok).toBe(false);
       expect(mockInscription).not.toHaveBeenCalled();
       expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ action: expect.anything() }));
     });

@@ -16,6 +16,13 @@ import type { Organisation } from '@/types/models/organisation.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
+import { messageErreurServeur } from '@/utils/erreurServeur';
+
+/** Résultat d'une inscription : le message d'échec est montré là où la personne a appuyé */
+export interface ResultatInscription {
+  ok: boolean;
+  erreur?: string;
+}
 
 interface EventDetailsOptions {
   enabled?: boolean;
@@ -197,9 +204,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   const registerMutation = useMutation({
     mutationFn: async (data?: InscriptionPayload) => {
       const response = await evenementService.inscription(eventId, data);
-      if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de l\'inscription');
-      }
+      // La réponse entière : son détail par champ sert au message (avant : Error avec le texte brut)
+      if (!response.success) throw response;
       return response;
     },
     onSuccess: () => {
@@ -211,13 +217,9 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       queryClient.invalidateQueries({ queryKey: eventKey });
       queryClient.invalidateQueries({ queryKey: registrationKey });
     },
-    onError: (error: Error) => {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
+    // Pas de bandeau ici : le message est renvoyé par registerToEvent et affiché là où la personne a
+    // appuyé (dans la fenêtre d'inscription, ou sous « Confirmer mon inscription »). Avant, la fenêtre
+    // restait muette et seul un bandeau de 5 secondes apparaissait en haut (audit V11 FRM-8).
   });
 
   // Désinscription
@@ -334,17 +336,29 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   // ACTIONS WRAPPER
   // ============================================
 
-  const registerToEvent = async (data?: InscriptionPayload) => {
+  /** Inscription : `{ ok: true }`, ou `{ ok: false, erreur }` avec le message à montrer à la personne */
+  const registerToEvent = async (data?: InscriptionPayload): Promise<ResultatInscription> => {
     if (!isAuthenticated) {
       inviterConnexion(t('auth.loginToRegister', 'Connectez-vous pour vous inscrire'));
-      return false;
+      return { ok: false };
     }
 
     try {
       await registerMutation.mutateAsync(data);
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      const code = (err as { code?: string; status?: number } | null)?.code;
+      const statut = (err as { status?: number } | null)?.status;
+      // Pas de réponse : la demande n'est pas partie, on peut réessayer
+      if (!statut && code === 'ERR_NETWORK') {
+        return { ok: false, erreur: t('event.registration.nonPartie', 'Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».') };
+      }
+      // Délai dépassé : elle est peut-être arrivée ; réessayer tout de suite risquerait un doublon
+      if (!statut && code === 'ECONNABORTED') {
+        return { ok: false, erreur: t('event.registration.reponseTarde', 'La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer.') };
+      }
+      // Refus du serveur (complet, déjà inscrit…) : sa raison précise
+      return { ok: false, erreur: messageErreurServeur(err, t('event.registration.error', 'Une erreur est survenue lors de l’inscription')) };
     }
   };
 
