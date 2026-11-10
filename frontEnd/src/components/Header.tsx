@@ -83,10 +83,10 @@ const Header = () => {
     }
   };
 
-  // ✅ Fermer le menu mobile quand on redimensionne vers desktop (3xl: 1600px)
+  // Fermer le menu ☰ quand l'écran devient assez large pour le menu complet (xl : 1280 px)
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
+      if (window.innerWidth >= 1280) {
         setIsMenuOpen(false);
       }
     };
@@ -220,23 +220,26 @@ const Header = () => {
                   height={87}
                   className="h-5 sm:h-6 w-auto self-start dark:bg-stone-100 dark:rounded dark:px-1"
                 />
-                <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
+                {/* Phrase sous le logo : masquée de 1280 à 1535 px, où le menu complet a besoin de la place */}
+                <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block xl:hidden 2xl:block whitespace-nowrap">
                   {t('header.subtitle')}
                 </p>
               </div>
             </Link>
 
-            {/* Navigation desktop — visible dès lg (≥1024px) */}
-            <nav className="hidden lg:flex items-center" aria-label={t('header.nav.mainLabel', 'Navigation principale')}>
-              <div className="flex items-center gap-1">
+            {/* Menu complet à partir de 1280 px (xl). Avant : dès 1024 px, et l'en-tête (≈ 1 365 px en français)
+                poussait « Se connecter », « S'inscrire » et la langue hors de l'écran (audit V11 UX-1).
+                De 1280 à 1535 px : liens sans icône, plus serrés ; icônes à partir de 1536 px (2xl). */}
+            <nav className="hidden xl:flex items-center min-w-0" aria-label={t('header.nav.mainLabel', 'Navigation principale')}>
+              <div className="flex items-center gap-0.5 2xl:gap-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.label}
                     to={item.href}
                     aria-current={isCurrentSection(item.href) ? 'page' : undefined}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap aria-[current=page]:bg-stone-100 dark:aria-[current=page]:bg-stone-800"
+                    className="flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap aria-[current=page]:bg-stone-100 dark:aria-[current=page]:bg-stone-800"
                   >
-                    <item.icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                    <item.icon className="hidden 2xl:block h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 ))}
@@ -244,7 +247,7 @@ const Header = () => {
             </nav>
 
             {/* Actions droite */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
               {/* Installer l'application : rond vert, visible de tous tant qu'elle n'est pas installée */}
               <InstallerTalaDz rond />
@@ -434,11 +437,11 @@ const Header = () => {
                 </>
               )}
 
-              {/* Bouton hamburger — visible uniquement sur mobile (< lg) */}
+              {/* Bouton menu ☰ : téléphone, tablette et petit portable (< 1280 px, xl) */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden min-w-[40px] min-h-[40px] p-0"
+                className="xl:hidden min-w-[40px] min-h-[40px] p-0"
                 ref={menuButtonRef}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 onKeyDown={(e) => { if (e.key === 'Escape' && isMenuOpen) { e.preventDefault(); setIsMenuOpen(false); } }}
@@ -488,7 +491,7 @@ const Header = () => {
           id="mobile-menu"
           ref={mobileMenuRef}
           onKeyDown={handleMobileMenuKeyDown}
-          className={`fixed inset-0 ${sousNav ? 'top-[92px] sm:top-[100px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background lg:hidden overflow-y-auto`}
+          className={`fixed inset-0 ${sousNav ? 'top-[92px] sm:top-[100px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background xl:hidden overflow-y-auto`}
           style={{ height: sousNav ? 'calc(100dvh - 92px)' : 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
