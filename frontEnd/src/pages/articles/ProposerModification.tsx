@@ -3,7 +3,7 @@
  * d'autre. L'éditeur avancé s'ouvre sur l'article existant ; un motif est obligatoire.
  * La proposition reste un brouillon jusqu'à la décision de l'auteur ou de l'administration.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
@@ -17,6 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadService } from '@/services/upload.service';
 import { articleRevisionService, type BlocRevision } from '@/services/articleRevision.service';
 import type { ArticleSaveResponse } from '@/types/models/articles.types';
+import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
+import { cleSaisieArticle } from '@/components/article/useArticleEditor';
 
 const ProposerModification: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,21 @@ const ProposerModification: React.FC = () => {
   const { toast } = useToast();
   const [motif, setMotif] = useState('');
   const [erreurMotif, setErreurMotif] = useState(false);
+
+  // Session expirée pendant la rédaction (audit V11 FRM-23) : le motif est conservé ici, le contenu
+  // de l'article par l'éditeur (useArticleEditor). L'avis reste affiché si l'un ou l'autre est remis.
+  const { restauree: motifRestaure, oublier: oublierMotif } = useSaisieConservee({
+    cle: Number.isInteger(idOeuvre) && idOeuvre > 0 ? `revision-article:${idOeuvre}` : null,
+    valeur: { motif },
+    restaurer: (v) => setMotif(v.motif || ''),
+    actif: !!motif.trim(),
+  });
+  // Contenu en attente de l'éditeur : vu avant qu'il ne le reprenne (après le chargement de l'article)
+  const idUtilisateur = useUtilisateurOptionnel()?.id_user;
+  const [contenuEnAttente, setContenuEnAttente] = useState(false);
+  useEffect(() => {
+    if (saisieEnAttente(cleSaisieArticle(idOeuvre, 'proposition'), idUtilisateur)) setContenuEnAttente(true);
+  }, [idOeuvre, idUtilisateur]);
 
   const envoyer = async (reponse: ArticleSaveResponse) => {
     if (motif.trim().length < 5) {
@@ -59,6 +77,8 @@ const ProposerModification: React.FC = () => {
       motif: motif.trim(), titre: formData.titre, description: formData.description, blocks: blocsEnvoyes
     });
     if (!res.success) throw new Error(messageErreurServeur(res, t('revisions.envoiEchec', 'La proposition n’a pas pu être envoyée')));
+    oublierMotif();
+    setContenuEnAttente(false);
     toast({
       title: t('revisions.envoyee', 'Proposition envoyée'),
       description: t('revisions.envoyeeDetail', 'L’auteur de l’article et l’administration vont l’examiner. Vous serez prévenu de leur décision.')
@@ -95,12 +115,13 @@ const ProposerModification: React.FC = () => {
                 />
                 {erreurMotif && <p className="text-sm text-destructive">{t('revisions.motifRequis', 'Expliquez en quelques mots ce que vous ajoutez ou corrigez (motif).')}</p>}
               </div>
+              <SaisieConserveeAvis visible={motifRestaure || contenuEnAttente} />
             </CardContent>
           </Card>
 
           <ArticleEditor
             articleId={idOeuvre}
-            onBack={() => navigate(`/articles/${idOeuvre}`)}
+            onBack={() => { oublierMotif(); navigate(`/articles/${idOeuvre}`); }}
             onSave={envoyer}
             titrePage={t('revisions.titre', 'Proposer une modification')}
             libelleEnregistrer={t('revisions.envoyer', 'Envoyer la proposition')}

@@ -38,6 +38,8 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import type { TypeUser } from '@/types/models/type-user.types';
 import type { NouvelIntervenant } from '@/types/api/oeuvre-creation.types';import { useTranslation } from "react-i18next";
 import { rolesPourTypeOeuvre, libelleRole } from '@/utils/rolesOeuvre';
+import { useParams } from 'react-router-dom';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 interface IntervenantModalProps {
   isOpen: boolean;
@@ -136,6 +138,21 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
     }
   }, [isOpen]);
 
+  // Session expirée pendant la saisie : fiche de l'intervenant conservée (audit V11 FRM-23). La fenêtre
+  // dépend de la page parente : la fiche est remise quand la personne la rouvre (après la remise à zéro
+  // ci-dessus, le brouillon l'emporte). Clé de l'œuvre (/modifier-oeuvre/:id) ou d'une nouvelle œuvre.
+  const { id: idOeuvre } = useParams<{ id?: string }>();
+  const ficheCommencee = !!(formData.prenom || formData.nom || formData.email || formData.titre_professionnel
+    || formData.organisation || formData.biographie || formData.specialites?.length || formData.id_type_user);
+  const { restauree, oublier } = useSaisieConservee({
+    cle: isOpen ? `intervenant:oeuvre-${idOeuvre ?? 'nouvelle'}:nouveau` : null,
+    valeur: formData,
+    restaurer: (v) => setFormData(prev => ({ ...prev, ...v })),
+    actif: isOpen && ficheCommencee,
+  });
+  // « Annuler », Échap ou clic hors de la fenêtre : rien à garder
+  const fermer = () => { oublier(); onClose(); };
+
   // Vérifier si l'email existe
   useEffect(() => {
     const checkEmail = async () => {
@@ -218,12 +235,13 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
       temp_id: `new-${Date.now()}` // ID temporaire pour le frontend
     };
 
+    oublier();
     onConfirm(intervenant);
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(ouvert) => { if (!ouvert) fermer(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("modals_intervenantmodal.ajouter_intervenant")}</DialogTitle>
@@ -231,6 +249,8 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
 
           </DialogDescription>
         </DialogHeader>
+
+        <SaisieConserveeAvis visible={restauree} />
 
         {error &&
         <Alert variant="destructive" role="alert">
@@ -480,7 +500,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>{t("modals_intervenantmodal.annuler")}
+          <Button type="button" variant="outline" onClick={fermer}>{t("modals_intervenantmodal.annuler")}
 
           </Button>
           <Button

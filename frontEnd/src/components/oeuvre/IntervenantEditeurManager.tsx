@@ -29,6 +29,9 @@ import {
 import { oeuvreService } from '@/services/oeuvre.service';
 import { metadataService } from '@/services/metadata.service';
 import IntervenantModal from '@/components/modals/IntervenantModal';
+import { useParams } from 'react-router-dom';
+import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import EditeurModal, { libelleTypeEditeur } from '@/components/modals/EditeurModal';
 import { useRTL } from '@/hooks/useRTL';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
@@ -91,7 +94,12 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
   const [searchResults, setSearchResults] = useState<IntervenantSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedIntervenants, setSelectedIntervenants] = useState<DisplayIntervenant[]>([]);
-  const [showIntervenantModal, setShowIntervenantModal] = useState(false);
+  // Fiche d'un nouvel intervenant en cours quand la session a expiré : la fenêtre se rouvre avec le texte
+  // (même clé que IntervenantModal ; audit V11 FRM-23)
+  const { id: idOeuvreRoute } = useParams<{ id?: string }>();
+  const utilisateur = useUtilisateurOptionnel();
+  const [showIntervenantModal, setShowIntervenantModal] = useState(() =>
+    saisieEnAttente(`intervenant:oeuvre-${idOeuvreRoute ?? 'nouvelle'}:nouveau`, utilisateur?.id_user));
   const [searchError, setSearchError] = useState<string | null>(null);
   
   // États pour les éditeurs

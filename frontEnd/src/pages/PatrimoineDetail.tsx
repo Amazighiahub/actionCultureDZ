@@ -1,6 +1,6 @@
 import { lienPropositionLieu } from '@/hooks/usePeutEnrichirLieu';
 import LireAVoixHaute, { textesParLangue } from '@/components/shared/LireAVoixHaute';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
@@ -42,6 +42,8 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { mentionCredit } from '@/utils/creditPhoto';
 import { OeuvresLieesLieu, DeLaRegion } from '@/components/patrimoine/OeuvresEtRegion';
+import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 
 // Type multilingue réutilisé dans l'interface du site
 type MultilingualField = { fr?: string; ar?: string; en?: string };
@@ -50,6 +52,16 @@ type MultilingualField = { fr?: string; ar?: string; en?: string };
 const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
   if (!value) return '';
   return getLocalizedText(value, lang);
+};
+
+// Formulaires de chaque volet repliable (mêmes clés que les sections) : un texte conservé après une
+// session expirée ouvre son volet au retour ; fermé, la section n'est pas affichée (audit V11 FRM-23)
+const saisiesElements = (idLieu: number, kind: 'monument' | 'vestige') => [`lieu:${idLieu}:${kind}:ajout`, `lieu:${idLieu}:${kind}:modif`];
+const SAISIES_PAR_VOLET: Record<string, (idLieu: number) => string[]> = {
+  a_visiter: (idLieu) => [...saisiesElements(idLieu, 'monument'), ...saisiesElements(idLieu, 'vestige')],
+  monuments: (idLieu) => saisiesElements(idLieu, 'monument'),
+  vestiges: (idLieu) => saisiesElements(idLieu, 'vestige'),
+  histoire: (idLieu) => ['histoire', 'referencesHistoriques'].flatMap((s) => [`lieu:${idLieu}:${s}`, `lieu:${idLieu}:blocs:${s}`]),
 };
 
 // ⚡ Types de patrimoine disponibles
@@ -198,6 +210,20 @@ const PatrimoineDetail = () => {
   const [showVisitePlanner, setShowVisitePlanner] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
+  // Volets repliables : ceux ouverts à l'affichage (avec contenu), puis ceux que la personne ouvre ou ferme
+  const accordeonInitial = useRef<string[] | null>(null);
+  const [voletsOuverts, setVoletsOuverts] = useState<string[] | null>(null);
+  // Volets dont un formulaire a un texte conservé (session expirée) : ouverts pour qu'il réapparaisse
+  const user = useUtilisateurOptionnel();
+  const [voletsBrouillon, setVoletsBrouillon] = useState<string[]>([]);
+  useEffect(() => {
+    if (!site?.id_lieu) return;
+    const idLieu = site.id_lieu;
+    const avec = Object.keys(SAISIES_PAR_VOLET).filter((v) => SAISIES_PAR_VOLET[v](idLieu).some((c) => saisieEnAttente(c, user?.id_user)));
+    setVoletsBrouillon(avec);
+    if (avec.length) setVoletsOuverts((prev) => (prev ? Array.from(new Set([...prev, ...avec])) : prev));
+  }, [site?.id_lieu, user?.id_user]);
+
   // Partager le site
   const share = useShare();
   const handleShareSite = () => share({ title: translate(site?.nom, lang) });
@@ -206,6 +232,9 @@ const PatrimoineDetail = () => {
   // traduits par le serveur ; avant, la fiche restait dans l'ancienne langue)
   const loadSiteDetail = React.useCallback(async () => {
     if (!id) return;
+    // Les volets se replacent comme à l'affichage de la fiche (le chargement les remplace par l'attente)
+    accordeonInitial.current = null;
+    setVoletsOuverts(null);
     setLoading(true);
     setError(null);
     try {
@@ -715,9 +744,12 @@ const PatrimoineDetail = () => {
               if (sections.length === 0) return null;
               const defaultOpen = sections.filter(s => (counts[s] || 0) > 0);
               const openValues = defaultOpen.length > 0 ? defaultOpen : [sections[0]];
+              // Ouverture fixée au premier affichage (comme l'ancien defaultValue), plus les volets à texte conservé
+              if (!accordeonInitial.current) accordeonInitial.current = openValues;
+              const ouverts = voletsOuverts ?? Array.from(new Set([...accordeonInitial.current, ...voletsBrouillon]));
 
               return (
-                <Accordion type="multiple" defaultValue={openValues} className="w-full border rounded-xl overflow-hidden divide-y bg-card">
+                <Accordion type="multiple" value={ouverts} onValueChange={setVoletsOuverts} className="w-full border rounded-xl overflow-hidden divide-y bg-card">
                   {sections.map((sectionKey) => {
                     const meta = SECTION_META[sectionKey];
                     if (!meta) return null;

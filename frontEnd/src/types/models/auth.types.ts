@@ -65,7 +65,8 @@ export interface UseAuthReturn {
   
   // Actions - ✅ retournent maintenant AuthResult
   login: (credentials: LoginCredentials) => Promise<AuthResult>;
-  logout: () => Promise<void>;
+  /** retour : page où revenir après la reconnexion (déconnexion pour inactivité) */
+  logout: (options?: { retour?: string }) => Promise<void>;
   registerVisitor: (data: RegisterVisitorData) => Promise<AuthResult>;
   registerProfessional: (data: RegisterProfessionalData) => Promise<AuthResult>;
   refreshUser: () => Promise<void>;

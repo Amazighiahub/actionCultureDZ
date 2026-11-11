@@ -38,6 +38,20 @@ describe('useAuth.logout', () => {
     expect(navigate).toHaveBeenCalledWith('/auth');
   });
 
+  test('déconnexion pour inactivité : retour à la page quittée après la reconnexion (audit V11 FRM-23)', async () => {
+    logoutApi.mockResolvedValue({ success: true });
+    const { result } = renderHook(() => useAuth());
+    await act(async () => { await result.current.logout({ retour: '/admin/dashboard?onglet=moderation' }); });
+    expect(navigate).toHaveBeenCalledWith(`/auth?redirect=${encodeURIComponent('/admin/dashboard?onglet=moderation')}`);
+  });
+
+  test('retour vers un autre site refusé', async () => {
+    logoutApi.mockResolvedValue({ success: true });
+    const { result } = renderHook(() => useAuth());
+    await act(async () => { await result.current.logout({ retour: '//exemple.com/piege' }); });
+    expect(navigate).toHaveBeenCalledWith('/auth');
+  });
+
   test('vide aussi le cache si l\'appel réseau échoue', async () => {
     logoutApi.mockRejectedValue(new Error('réseau'));
     const { result } = renderHook(() => useAuth());

@@ -41,6 +41,9 @@ import {
   Loader2
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
+import { cleMessageParticipants } from './MessageParticipantsDialog';
+import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import DocumentsEvenementGestion from './DocumentsEvenementGestion';
 import { ConfirmDialog } from '@/components/shared';
 import { useToast } from '@/components/ui/use-toast';
@@ -95,6 +98,11 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
+  // Message aux participants en cours quand la session a expiré : l'onglet Participants s'ouvre
+  // directement, la fenêtre du message s'y rouvre avec le texte (audit V11 FRM-23)
+  const utilisateur = useUtilisateurOptionnel();
+  const [ongletInitial] = useState(() =>
+    (saisieEnAttente(cleMessageParticipants(evenementId), utilisateur?.id_user) ? 'participants' : 'programmes'));
   const { formatTime: hookFormatTime, formatDate } = useFormatDate();
 
   // État pour activer/désactiver la gestion des œuvres
@@ -382,7 +390,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         )}
       </div>
 
-      <Tabs defaultValue="programmes">
+      <Tabs defaultValue={ongletInitial}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <TabsList className="max-w-full overflow-x-auto justify-start">
             <TabsTrigger value="programmes">

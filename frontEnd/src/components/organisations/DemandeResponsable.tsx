@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 const DemandeResponsable: React.FC<{
   idOrganisation: number;
@@ -30,6 +31,15 @@ const DemandeResponsable: React.FC<{
   const [message, setMessage] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  // Session expirée pendant la saisie : message conservé, fenêtre rouverte au retour (audit V11 FRM-23).
+  // Avant le « return » anticipé plus bas (règle des hooks).
+  const { restauree, oublier } = useSaisieConservee({
+    cle: idOrganisation ? `revendication:${idOrganisation}` : null,
+    valeur: { message },
+    restaurer: (v) => { setMessage(v.message || ''); setErreur(null); setOuvert(true); },
+    actif: ouvert && !!message.trim(),
+  });
+  const fermer = () => { setOuvert(false); oublier(); };
   const libelle = maisonEdition
     ? t('organisations.revendication.boutonEdition', 'C’est ma maison d’édition')
     : t('organisations.revendication.bouton', 'C’est mon organisation');
@@ -39,7 +49,7 @@ const DemandeResponsable: React.FC<{
     try {
       const res = await httpClient.post<unknown>(`/organisations/${idOrganisation}/revendication`, { message });
       if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
-      setOuvert(false);
+      fermer();
       toast({ title: t('organisations.revendication.envoyee', 'Demande envoyée : l’équipe Tala DZ va la vérifier') });
       await queryClient.invalidateQueries({ queryKey: ['organisation-vitrine', idOrganisation] });
     } catch (e) {
@@ -80,7 +90,7 @@ const DemandeResponsable: React.FC<{
         )}
       </CardContent>
 
-      <Dialog open={ouvert} onOpenChange={setOuvert}>
+      <Dialog open={ouvert} onOpenChange={(o) => (o ? setOuvert(true) : fermer())}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{libelle}</DialogTitle>
@@ -92,10 +102,11 @@ const DemandeResponsable: React.FC<{
             <Label htmlFor="message-revendication">{t('organisations.revendication.message', 'Qui êtes-vous pour cette organisation ? (facultatif)')}</Label>
             <Textarea id="message-revendication" rows={4} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)}
               placeholder={t('organisations.revendication.exemple', 'Ex. : je suis le directeur ; contact : 0550 00 00 00')} />
+            <SaisieConserveeAvis visible={restauree} />
             {erreur && <p role="alert" className="text-sm text-destructive">{erreur}</p>}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOuvert(false)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button variant="ghost" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
             <Button onClick={envoyer} disabled={envoi}>{t('organisations.revendication.envoyer', 'Envoyer la demande')}</Button>
           </DialogFooter>
         </DialogContent>

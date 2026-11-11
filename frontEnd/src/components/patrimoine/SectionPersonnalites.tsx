@@ -28,6 +28,7 @@ import {
   type LieuIntervenant,
 } from '@/services/lieuIntervenant.service';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
@@ -104,6 +105,41 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   // Fiche ouverte d'une personnalité liée
   const [detail, setDetail] = useState<LieuIntervenant | null>(null);
 
+  // Session expirée pendant la saisie : texte conservé, fenêtre rouverte au retour (audit V11 FRM-23)
+  const { restauree: texteRestaure, oublier: oublierTexte } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:personnalites` : null,
+    valeur: editValue,
+    restaurer: (v) => {
+      setEditValue({ fr: '', ar: '', en: '', ...v });
+      setIsEditing(true);
+    },
+    actif: isEditing && aDuTexte(editValue),
+  });
+  const fermerTexte = () => { setIsEditing(false); oublierTexte(); };
+  // Rattachement en cours : la personnalité choisie (l'essentiel pour l'afficher et l'envoyer), la
+  // nouvelle fiche préparée et le texte saisi
+  const { restauree: lienRestaure, oublier: oublierLien } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:personnalites:lien` : null,
+    valeur: {
+      recherche: searchQuery,
+      selected: selected ? {
+        id_intervenant: selected.id_intervenant, prenom: selected.prenom, nom: selected.nom,
+        photo_url: selected.photo_url ?? null, titre_professionnel: selected.titre_professionnel ?? null,
+      } : null,
+      nouvelle, roleSurSite, periode, contexte,
+    },
+    restaurer: (v) => {
+      setSearchQuery(v.recherche || '');
+      setSelected(v.selected || null);
+      setNouvelle(v.nouvelle || null);
+      setRoleSurSite(v.roleSurSite || '');
+      setPeriode(v.periode || '');
+      setContexte(v.contexte || '');
+      setIsAddOpen(true);
+    },
+    actif: isAddOpen && !!(selected || nouvelle || roleSurSite.trim() || periode.trim() || contexte.trim() || searchQuery.trim()),
+  });
+
   const texte = translate(content, lang).trim();
   const hasContent = texte.length > 0 || blocs.length > 0 || pages.length > 0;
 
@@ -156,10 +192,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       const response = await httpClient.patch(`/patrimoine/${lieuId}/detail`, { personnalites: editValue });
       if ((response as any).success && estProposition(response)) {
         toast(toastProposition(t));
-        setIsEditing(false);
+        fermerTexte();
       } else if ((response as any).success) {
         toast({ title: t('patrimoine.contribute.saved', 'Contribution enregistrée !'), description: t('patrimoine.contribute.thanks', 'Merci pour votre contribution') });
-        setIsEditing(false);
+        fermerTexte();
         onSaved?.(editValue);
       } else {
         toast({ title: t('common.error'), description: messageErreurServeur(response, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
@@ -171,7 +207,9 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
     }
   };
 
+  // Après un envoi réussi ou « Annuler » : plus rien à conserver
   const resetAddForm = () => {
+    oublierLien();
     setSearchQuery('');
     setSearchResults([]);
     setSelected(null);
@@ -388,7 +426,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       )}
 
       {/* ── Modal texte libre ── */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+      <Dialog open={isEditing} onOpenChange={(o) => (o ? setIsEditing(true) : fermerTexte())}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">{icon} {title}</DialogTitle>
@@ -405,8 +443,9 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               maxLength={5000}
               showCharCount
             />
+            <SaisieConserveeAvis visible={texteRestaure} />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
+              <Button variant="outline" onClick={fermerTexte}>{t('common.cancel', 'Annuler')}</Button>
               <Button onClick={handleSaveText} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
                 {t('common.save', 'Enregistrer')}
@@ -559,6 +598,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               </>
             )}
 
+            <SaisieConserveeAvis visible={lienRestaure} />
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => { setIsAddOpen(false); resetAddForm(); }}>
                 {t('common.cancel', 'Annuler')}
@@ -596,6 +636,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
+          onRouvrir={() => setIsArticleEditorOpen(true)}
           onSaved={onArticlesChange}
         />
       )}

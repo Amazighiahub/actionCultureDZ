@@ -19,7 +19,7 @@
  *   - Les types code/list/table/embed pourront etre ajoutes plus tard.
  * ----------------------------------------------------------------------------
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -60,6 +60,7 @@ import {
   type PatrimoineBlockType,
   type CreatePatrimoineBlockPayload,
 } from '@/services/patrimoineArticles.service';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 // ============================================================================
 // Props
@@ -80,6 +81,8 @@ interface SectionArticleEditorProps {
   onClose: () => void;
   /** Callback apres sauvegarde reussie (creation ou suppression) */
   onSaved?: () => void;
+  /** Bloc en cours retrouvé après une session expirée : le parent rouvre la fenêtre (audit V11 FRM-23) */
+  onRouvrir?: () => void;
 }
 
 // ============================================================================
@@ -124,6 +127,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
   isOpen,
   onClose,
   onSaved,
+  onRouvrir,
 }) => {
   const { t } = useTranslation();
   // Suppression réservée à la modération (contrôlée aussi côté API)
@@ -166,12 +170,32 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
     }
   }, [lieuId, section, toast, t]);
 
+  // Vrai quand un bloc conservé vient d'être remis en place : l'ouverture qui suit ne l'efface pas
+  const blocRestaure = useRef(false);
   useEffect(() => {
     if (isOpen) {
       loadBlocks();
-      resetForm();
+      if (blocRestaure.current) blocRestaure.current = false;
+      else resetForm();
     }
   }, [isOpen, loadBlocks, resetForm]);
+
+  // Session expirée pendant la saisie d'un bloc : texte conservé, fenêtre rouverte au retour (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:blocs:${section}` : null,
+    valeur: { type: newType, contenu: newContent, auteur: newAuthor, niveau: newLevel, alt: newAlt },
+    restaurer: (v) => {
+      if (!isOpen) blocRestaure.current = true;
+      setNewType(v.type || 'text');
+      setNewContent(v.contenu || '');
+      setNewAuthor(v.auteur || '');
+      setNewLevel(v.niveau || 'h2');
+      setNewAlt(v.alt || '');
+      onRouvrir?.();
+    },
+    actif: isOpen && !!(newContent.trim() || newAuthor.trim() || newAlt.trim()),
+  });
+  const fermer = () => { oublier(); onClose(); };
 
   // ---------------------------------------------------------------- creation
   const buildPayload = (): CreatePatrimoineBlockPayload | null => {
@@ -243,6 +267,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
     if (res.success && res.data) {
       setBlocks((prev) => [...prev, res.data as PatrimoineBlock]);
       resetForm();
+      oublier();
       toast({
         title: t('patrimoine.editor.added', 'Bloc ajoute'),
         description: t('patrimoine.contribute.thanks', 'Merci pour votre contribution'),
@@ -282,7 +307,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
 
   // ---------------------------------------------------------------- rendu
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && fermer()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -465,8 +490,9 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
             </div>
           )}
 
+          <SaisieConserveeAvis visible={restauree} />
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={fermer}>
               {t('common.close', 'Fermer')}
             </Button>
             <Button type="button" onClick={handleAdd} disabled={saving}>

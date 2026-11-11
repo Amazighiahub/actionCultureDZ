@@ -32,6 +32,7 @@ import {
   lienEcrirePage, retirerPagePatrimoine,
 } from '@/services/patrimoineArticles.service';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
@@ -82,6 +83,18 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   const [saving, setSaving] = useState(false);
   const [editValue, setEditValue] = useState<MultilingualField>({ fr: '', ar: '', en: '' });
   const [isArticleEditorOpen, setIsArticleEditorOpen] = useState(false);
+  // Session expirée pendant la saisie : texte conservé, fenêtre rouverte au retour (audit V11 FRM-23).
+  // Avant le « return » anticipé plus bas (règle des hooks) ; la clé contient la section (8 sur la page).
+  const { restauree, oublier } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:${fieldName}` : null,
+    valeur: editValue,
+    restaurer: (v) => {
+      setEditValue({ fr: '', ar: '', en: '', ...v });
+      setIsEditing(true);
+    },
+    actif: isEditing && aDuTexte(editValue),
+  });
+  const fermerEditeur = () => { setIsEditing(false); oublier(); };
 
   // fieldName n'est typé `string` côté API mais doit correspondre aux 8 sections
   // patrimoine valides côté backend. On filtre defensivement : si la section
@@ -128,10 +141,10 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
       if ((response as any).success && estProposition(response)) {
         // Proposition à relire : la fiche garde son texte actuel
         toast(toastProposition(t));
-        setIsEditing(false);
+        fermerEditeur();
       } else if ((response as any).success) {
         toast({ title: t('patrimoine.contribute.saved', 'Contribution enregistrée !'), description: t('patrimoine.contribute.thanks', 'Merci pour votre contribution') });
-        setIsEditing(false);
+        fermerEditeur();
         onSaved?.(editValue);
       } else {
         toast({ title: t('common.error'), description: messageErreurServeur(response, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
@@ -185,7 +198,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
         </CardContent>
 
         {/* Modal d'édition */}
-        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <Dialog open={isEditing} onOpenChange={(o) => (o ? setIsEditing(true) : fermerEditeur())}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">{icon} {title}</DialogTitle>
@@ -202,8 +215,9 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
                 maxLength={5000}
                 showCharCount
               />
+              <SaisieConserveeAvis visible={restauree} />
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
+                <Button variant="outline" onClick={fermerEditeur}>{t('common.cancel', 'Annuler')}</Button>
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                   {t('common.save', 'Enregistrer')}
@@ -223,6 +237,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
+          onRouvrir={() => setIsArticleEditorOpen(true)}
           onSaved={onArticlesChange}
         />
       )}
@@ -258,7 +273,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
       </Card>
 
       {/* Modal d'édition */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+      <Dialog open={isEditing} onOpenChange={(o) => (o ? setIsEditing(true) : fermerEditeur())}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">{icon} {title}</DialogTitle>
@@ -275,8 +290,9 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
               maxLength={5000}
               showCharCount
             />
+            <SaisieConserveeAvis visible={restauree} />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
+              <Button variant="outline" onClick={fermerEditeur}>{t('common.cancel', 'Annuler')}</Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                 {t('common.save', 'Enregistrer')}
@@ -295,6 +311,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           sectionIcon={icon}
           isOpen={isArticleEditorOpen}
           onClose={() => setIsArticleEditorOpen(false)}
+          onRouvrir={() => setIsArticleEditorOpen(true)}
           onSaved={onArticlesChange}
         />
       )}

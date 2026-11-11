@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AideRedaction, ChoixModele, estBlocVide } from './ModelesEtAide';
+import { SaisieConserveeAvis } from '@/hooks/useSaisieConservee';
 import { directionTexte } from '@/utils/directionTexte';
 import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
@@ -137,6 +138,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
 
       <div className="container py-8">
         <div className="max-w-5xl mx-auto">
+          {/* Texte gardé pendant une session expirée : avis durable (le bandeau disparaît en 5 s) */}
+          <div className="mb-4 empty:hidden"><SaisieConserveeAvis visible={!!editor.saisieRestauree} /></div>
           {/* Header */}
           {/* Passe à la ligne sur téléphone : « Sauvegarder » sortait de l'écran */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">

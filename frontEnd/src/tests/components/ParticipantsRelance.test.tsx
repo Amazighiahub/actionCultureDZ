@@ -2,8 +2,8 @@
  * Bouton « Renvoyer à ceux qui n'ont pas fini » : visible seulement s'il y a quelqu'un à relancer,
  * avec le bon nombre, une confirmation avant l'envoi et un bilan.
  */
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const { mockGet, mockPost, mockToast } = vi.hoisted(() => ({
@@ -28,6 +28,9 @@ vi.mock('react-i18next', async (original) => ({
   }),
 }));
 vi.mock('@/components/event/ImportInscriptionsDialog', () => ({ default: () => null }));
+// Personne vue par la conservation du texte (session expirée) ; personne par défaut
+const utilisateur = { valeur: null as { id_user: number } | null };
+vi.mock('@/providers/PermissionsProvider', () => ({ useUtilisateurOptionnel: () => utilisateur.valeur }));
 
 import ParticipantsManager from '@/components/event/ParticipantsManager';
 
@@ -80,6 +83,46 @@ describe('mention sous chaque participant', () => {
     expect(screen.getByText('Mot de passe déjà choisi')).toBeInTheDocument();
     const grises = screen.getAllByRole('button', { name: /Renvoyer l’email/ }).filter((b) => (b as HTMLButtonElement).disabled);
     expect(grises).toHaveLength(1);
+  });
+});
+
+describe('message aux participants conservé quand la session expire (audit V11 FRM-23)', () => {
+  beforeEach(() => { sessionStorage.clear(); utilisateur.valeur = { id_user: 7 }; });
+  afterEach(() => { utilisateur.valeur = null; });
+  // La fenêtre charge le nombre d'inscrits et les messages déjà envoyés
+  const afficher = (liste: unknown[]) => {
+    mockGet.mockImplementation(async (url: string) => (url.endsWith('/participants/messages')
+      ? { success: true, data: { nombres: { tous: 1, confirme: 1, en_attente: 0 }, messages: [] } }
+      : url.includes('/participants') ? { success: true, data: liste } : { success: true, data: [] }));
+    return render(<ParticipantsManager evenementId={2} evenementNom="Chantier" />);
+  };
+
+  test('le message est gardé pour cet événement et la fenêtre se rouvre au retour', async () => {
+    const user = userEvent.setup();
+    const vue = afficher([participant(1, true)]);
+    await user.click(await screen.findByRole('button', { name: /Écrire aux participants/ }));
+    await user.type(await screen.findByLabelText('Message'), 'Rendez-vous samedi à 8 h');
+    act(() => { window.dispatchEvent(new Event('auth:expired')); });
+    vue.unmount();
+    expect(JSON.parse(sessionStorage.getItem('saisie:7:message-participants:2') || 'null')?.valeur?.champs?.message).toBe('Rendez-vous samedi à 8 h');
+
+    afficher([participant(1, true)]);
+    expect(await screen.findByLabelText('Message')).toHaveValue('Rendez-vous samedi à 8 h');
+    expect(screen.getByRole('status')).toHaveTextContent(/session avait expiré/);
+  });
+
+  test('une autre personne connectée ensuite : fenêtre fermée, rien de repris', async () => {
+    const user = userEvent.setup();
+    const vue = afficher([participant(1, true)]);
+    await user.click(await screen.findByRole('button', { name: /Écrire aux participants/ }));
+    await user.type(await screen.findByLabelText('Message'), 'Rendez-vous samedi à 8 h');
+    act(() => { window.dispatchEvent(new Event('auth:expired')); });
+    vue.unmount();
+
+    utilisateur.valeur = { id_user: 8 };
+    afficher([participant(1, true)]);
+    await screen.findByText(/Nom1/);
+    expect(screen.queryByLabelText('Message')).toBeNull();
   });
 });
 

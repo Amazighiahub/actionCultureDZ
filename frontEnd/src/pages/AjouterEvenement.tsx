@@ -6,7 +6,7 @@ const CHAMP_EVENEMENT_DU_SERVEUR: Record<string, string> = {
   id_lieu: 'lieu', id_organisation: 'organisation', url_virtuel: 'urlVirtuel', affiche: 'affiche',
   contact_email: 'contactEmail', date_limite_inscription: 'dateLimite', tarif: 'tarif', tarification: 'tarif',
 };
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -27,6 +27,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 
 // Import des hooks de localisation
 import { useRTL } from '@/hooks/useRTL';
+import { useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 // Import des services
@@ -139,58 +140,27 @@ const AjouterEvenement = () => {
   const [affichePreview, setAffichePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const DRAFT_KEY = 'eventculture_draft_event';
-
-  // Restaurer le brouillon si l'utilisateur revient après création d'organisation
-  useEffect(() => {
-    if (isEditMode) return; // Pas de restauration en mode édition
-    try {
-      const saved = sessionStorage.getItem(DRAFT_KEY);
-      if (saved) {
-        const draft = JSON.parse(saved);
-        // Expirer les brouillons de plus de 30 minutes (le temps de se reconnecter après une session expirée)
-        if (draft.savedAt && Date.now() - draft.savedAt > 30 * 60 * 1000) {
-          sessionStorage.removeItem(DRAFT_KEY);
-          return;
-        }
-        if (draft.formData) setFormData(draft.formData);
-        if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
-        if (draft.selectedWilayaId) setSelectedWilayaId(draft.selectedWilayaId);
-        if (draft.selectedOrganisationId) setSelectedOrganisationId(draft.selectedOrganisationId);
-        if (draft.tarifForm) setTarifForm(draft.tarifForm);
-        if (draft.isVirtual !== undefined) setIsVirtual(draft.isVirtual);
-        sessionStorage.removeItem(DRAFT_KEY);
-        setIsDirty(true);
-        toast({ title: t('events.create.draftRestored', 'Brouillon restauré'), description: t('events.create.draftRestoredDesc', 'Vos données précédentes ont été restaurées.') });
-      }
-    } catch { /* ignore parsing errors */ }
-  }, [isEditMode]);
-
-  // Session expirée pendant la saisie (httpClient émet « auth:expired », puis la connexion ramène ici) :
-  // même brouillon que pour la création d'une organisation
-  const brouillonRef = useRef({ formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual });
-  brouillonRef.current = { formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual };
-  useEffect(() => {
-    if (isEditMode) return;
-    const garder = () => {
-      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), ...brouillonRef.current })); } catch { /* stockage plein */ }
-    };
-    window.addEventListener('auth:expired', garder);
-    return () => window.removeEventListener('auth:expired', garder);
-  }, [isEditMode]);
+  // Brouillon de l'événement : gardé quand la session expire pendant la saisie (httpClient émet
+  // « auth:expired », puis la connexion ramène ici) et avant d'aller créer une organisation. Mécanisme
+  // commun, la personne est dans la clé (avant : clé fixe recopiée dans useAjouterOeuvre ; audit V11 FRM-23)
+  const { garder: garderBrouillon, oublier: oublierBrouillon } = useSaisieConservee({
+    cle: isEditMode ? null : 'evenement:nouveau',
+    valeur: { formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual },
+    restaurer: (draft) => {
+      if (draft.formData) setFormData(draft.formData);
+      if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
+      if (draft.selectedWilayaId) setSelectedWilayaId(draft.selectedWilayaId);
+      if (draft.selectedOrganisationId) setSelectedOrganisationId(draft.selectedOrganisationId);
+      if (draft.tarifForm) setTarifForm(draft.tarifForm);
+      if (draft.isVirtual !== undefined) setIsVirtual(draft.isVirtual);
+      setIsDirty(true);
+      toast({ title: t('events.create.draftRestored', 'Brouillon restauré'), description: t('events.create.draftRestoredDesc', 'Vos données précédentes ont été restaurées.') });
+    },
+    actif: !isEditMode && isDirty,
+  });
 
   const saveDraftAndNavigate = (path: string) => {
-    try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
-        savedAt: Date.now(),
-        formData,
-        selectedLieuId,
-        selectedWilayaId,
-        selectedOrganisationId,
-        tarifForm,
-        isVirtual,
-      }));
-    } catch { /* storage full — proceed without saving */ }
+    garderBrouillon();
     navigate(path);
   };
 
@@ -572,7 +542,7 @@ const AjouterEvenement = () => {
 
       if (response.success) {
         setIsDirty(false);
-        sessionStorage.removeItem(DRAFT_KEY);
+        oublierBrouillon();
         queryClient.invalidateQueries({ queryKey: ['evenements'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
         queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });

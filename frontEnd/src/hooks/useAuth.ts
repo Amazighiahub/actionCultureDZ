@@ -105,9 +105,10 @@ export function useAuth(): UseAuthReturn {
   }, [location.search, location.state, navigate, refreshPermissions]);
 
   /**
-   * Déconnexion
+   * Déconnexion. « retour » : page où revenir après la reconnexion (déconnexion pour inactivité :
+   * avant, l'administrateur arrivait sur /auth sans être ramené à sa page, audit V11 FRM-23)
    */
-  const logout = useCallback(async (): Promise<void> => {
+  const logout = useCallback(async (options?: { retour?: string }): Promise<void> => {
     try {
       await authService.logout();
     } catch {
@@ -117,14 +118,11 @@ export function useAuth(): UseAuthReturn {
       // réapparaître pour le suivant (poste partagé). Brouillons gardés à l'expiration de session aussi
       // (pas dans clearSession : elle s'exécute sur /auth juste après l'expiration, avant la reconnexion).
       oublierSaisiesConservees();
-      try {
-        sessionStorage.removeItem('eventculture_draft_oeuvre');
-        sessionStorage.removeItem('eventculture_draft_event');
-      } catch { /* stockage indisponible */ }
       await queryClient.cancelQueries();
       queryClient.clear();
       await refreshPermissions();
-      navigate('/auth');
+      const retour = options?.retour ? getSafeRedirectPath(options.retour) : null;
+      navigate(retour && retour !== '/' ? `/auth?redirect=${encodeURIComponent(retour)}` : '/auth');
     }
   }, [navigate, refreshPermissions]);
 

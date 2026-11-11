@@ -30,6 +30,7 @@ import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 type MultiLangText = {
   fr: string;
@@ -86,8 +87,26 @@ const AjouterArtisanat: React.FC = () => {
   const refErreur = useDefilerVersErreur(error);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  // Modification : artisanat chargé (la saisie conservée ne doit être remise qu'après)
+  const [artisanatCharge, setArtisanatCharge] = useState(false);
+  // Saisie remise après une session expirée : les photos choisies (fichiers) sont à rajouter
+  const [photosARajouter, setPhotosARajouter] = useState(false);
 
   useUnsavedChanges(isDirty);
+
+  // Session expirée pendant la saisie : formulaire conservé, remis au retour (audit V11 FRM-23).
+  // Modification : clé connue une fois l'artisanat chargé ; le brouillon passe après et l'emporte.
+  // Jamais les photos (fichiers, aperçus). Avant le « return » du chargement plus bas (règle des hooks).
+  const { restauree, oublier } = useSaisieConservee({
+    cle: isEditMode ? (artisanatCharge && editId ? `artisanat:${editId}` : null) : 'artisanat:nouveau',
+    valeur: { formData, avaitPhotos: medias.length > 0 },
+    restaurer: (v) => {
+      setFormData({ ...INITIAL_FORM, ...v.formData });
+      setPhotosARajouter(!!v.avaitPhotos);
+      setIsDirty(true);
+    },
+    actif: isDirty && !success,
+  });
 
   // Metadata
   const [materiaux, setMateriaux] = useState<Materiau[]>([]);
@@ -135,6 +154,7 @@ const AjouterArtisanat: React.FC = () => {
             return typeof t === 'string' ? t : '';
           }).filter(Boolean),
         });
+        setArtisanatCharge(true);
         // Artisanat loaded for editing
       } else {
         setError(t('ajouterArtisanat.errors.notFound', 'Artisanat introuvable'));
@@ -183,6 +203,7 @@ const AjouterArtisanat: React.FC = () => {
 
       setMedias(prev => [...prev, ...newFiles]);
       setIsDirty(true);
+      setPhotosARajouter(false);
 
       // Create previews
       setPreviews(prev => [...prev, ...newFiles.map(file => URL.createObjectURL(file))]);
@@ -304,6 +325,7 @@ const AjouterArtisanat: React.FC = () => {
         }
 
         setSuccess(true);
+        oublier();
         rafraichirTableauDeBord();
         naviguerPlusTard('/dashboard-pro');
       } else {
@@ -374,6 +396,14 @@ const AjouterArtisanat: React.FC = () => {
 
         <form onSubmit={handleSubmit} noValidate>
           <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
+          {restauree && (
+            <div className="mb-4 space-y-2">
+              <SaisieConserveeAvis visible={restauree} />
+              {photosARajouter && (
+                <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')}</p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
             <div className="lg:col-span-2 space-y-6 min-w-0">
@@ -718,7 +748,7 @@ const AjouterArtisanat: React.FC = () => {
                     variant="outline"
                     className="w-full"
                     size="lg"
-                    onClick={() => navigate('/dashboard-pro')}
+                    onClick={() => { oublier(); navigate('/dashboard-pro'); }}
                   >
                     {t('common.cancel', 'Annuler')}
                   </Button>

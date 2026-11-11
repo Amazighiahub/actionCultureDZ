@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -98,6 +99,8 @@ const ModifierPatrimoine: React.FC = () => {
   const [parentChoisi, setParentChoisi] = useState<{ id: number; nom: string } | null>(null);
   const [rechercheSite, setRechercheSite] = useState('');
   const [sitesTrouves, setSitesTrouves] = useState<Array<{ id_lieu: number; nom: string }>>([]);
+  // Fiche telle que chargée (pour savoir si elle a été modifiée)
+  const [formCharge, setFormCharge] = useState<string | null>(null);
   const [form, setForm] = useState({
     nom: {} as Multilingue, adresse: {} as Multilingue, repere: {} as Multilingue,
     typePatrimoine: 'monument', latitude: 0, longitude: 0,
@@ -118,13 +121,15 @@ const ModifierPatrimoine: React.FC = () => {
       const parentActuel = s.Ancetres?.length ? s.Ancetres[s.Ancetres.length - 1] : null;
       setParentChoisi(parentActuel ? { id: parentActuel.id_lieu, nom: texteLangue(parentActuel.nom) } : null);
       const d = s.DetailLieu || {};
-      setForm({
+      const charge = {
         nom: enObjet(s.nom), adresse: enObjet(s.adresse), repere: enObjet(s.repere),
         typePatrimoine: s.typePatrimoine || 'monument',
         latitude: Number(s.latitude) || 0, longitude: Number(s.longitude) || 0,
         description: enObjet(d.description), histoire: enObjet(d.histoire),
         horaires: enObjet(d.horaires), referencesHistoriques: enObjet(d.referencesHistoriques)
-      });
+      };
+      setForm(charge);
+      setFormCharge(JSON.stringify(charge));
     } catch (e) {
       setErreurChargement(e instanceof Error ? e.message : t('common.error', 'Erreur'));
     } finally {
@@ -135,6 +140,21 @@ const ModifierPatrimoine: React.FC = () => {
   }, [siteId]);
 
   useEffect(() => { charger(); }, [charger]);
+
+  // Session expirée pendant la saisie : fiche et rattachement conservés, remis au retour (audit V11 FRM-23).
+  // Clé connue une fois le site chargé : le brouillon passe après le chargement et l'emporte.
+  // Le type et la carte ne passent pas par onInput : la fiche est aussi comparée à celle chargée.
+  const ficheModifiee = isDirty || (formCharge !== null && JSON.stringify(form) !== formCharge);
+  const { restauree, oublier } = useSaisieConservee({
+    cle: site ? `patrimoine:${siteId}` : null,
+    valeur: { form, parentChoisi },
+    restaurer: (v) => {
+      setForm(f => ({ ...f, ...v.form }));
+      if (v.parentChoisi !== undefined) setParentChoisi(v.parentChoisi);
+      setIsDirty(true);
+    },
+    actif: ficheModifiee,
+  });
 
   // Même règle que le serveur : modération, créateur du site, ou créateur du site d'un point de visite
   const parent = site?.Ancetres?.length ? site.Ancetres[site.Ancetres.length - 1] : null;
@@ -162,6 +182,8 @@ const ModifierPatrimoine: React.FC = () => {
       });
       if (!res.success) throw new Error(res.error);
       setIsDirty(false);
+      setFormCharge(JSON.stringify(form));
+      oublier();
       rafraichirTableauDeBord();
       toast({ title: t('patrimoine.edit.saved', 'Modifications enregistrées') });
       // Recharger : le rattachement change le titre de la page et la liste des points
@@ -293,6 +315,7 @@ const ModifierPatrimoine: React.FC = () => {
 
         {site && peutModifier && (
           <>
+            <SaisieConserveeAvis visible={restauree} />
             <Card>
               <CardHeader>
                 <CardTitle>{t('patrimoine.edit.general', 'Informations')}</CardTitle>

@@ -43,6 +43,7 @@ import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/compon
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -104,6 +105,25 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicates, setDuplicates] = useState<Array<{ id_lieu: number; nom: any; typePatrimoine: string }>>([]);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  // Saisie remise après une session expirée : les photos choisies (fichiers) sont à rajouter
+  const [photosARajouter, setPhotosARajouter] = useState(false);
+
+  // Session expirée pendant la saisie : étape, lieu, nom, type, position et crédit conservés, remis au
+  // retour (audit V11 FRM-23). Un point de visite a sa clé (son site). Jamais les photos (fichiers, aperçus).
+  const saisieCommencee = isDirty || aDuTexte(formData.nom) || !!formData.typePatrimoine || formData.wilayaId !== null;
+  const { restauree, oublier } = useSaisieConservee({
+    cle: parentId ? `patrimoine:point:${parentId}` : 'patrimoine:nouveau',
+    valeur: { formData, interieur, step, creditPhotos, avaitPhotos: medias.length > 0 },
+    restaurer: (v) => {
+      setFormData({ ...INITIAL_FORM, ...v.formData });
+      setInterieur(!!v.interieur);
+      setStep(Math.min(Math.max(Number(v.step) || 1, parentId ? 2 : 1), 3));
+      setCreditPhotos({ ...CREDIT_VIDE, ...v.creditPhotos });
+      setPhotosARajouter(!!v.avaitPhotos);
+      setIsDirty(true);
+    },
+    actif: saisieCommencee,
+  });
 
   useEffect(() => {
     if (!parentId) return;
@@ -198,6 +218,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
     }
 
     setMedias(prev => [...prev, ...validFiles]);
+    if (validFiles.length > 0) setPhotosARajouter(false);
     setMediaPreviews(prev => [...prev, ...validFiles.map(f => URL.createObjectURL(f))]);
     e.target.value = '';
     setErrors(prev => { const { medias: _, ...rest } = prev; return rest; });
@@ -260,6 +281,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
           });
           queryClient.invalidateQueries({ queryKey: ['patrimoine'] });
           setIsDirty(false);
+          oublier();
           navigate('/patrimoine');
           return;
         }
@@ -276,6 +298,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
         rafraichirTableauDeBord();
         queryClient.invalidateQueries({ queryKey: ['patrimoine'] });
         setIsDirty(false);
+        oublier();
         navigate(`/patrimoine/${siteId}`);
       } else {
         // Gestion erreur 409 (doublon)
@@ -362,6 +385,15 @@ const AjouterPatrimoineRapide: React.FC = () => {
         </p>
 
         {stepIndicator}
+
+        {restauree && (
+          <div className="mb-6 space-y-2">
+            <SaisieConserveeAvis visible={restauree} />
+            {photosARajouter && (
+              <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')}</p>
+            )}
+          </div>
+        )}
 
         {/* ÉTAPE 1 : Localisation */}
         {step === 1 && (

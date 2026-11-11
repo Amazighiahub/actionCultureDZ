@@ -2,7 +2,7 @@
  * ParticipantsManager - Gestion des participants d'un événement
  * Permet au professionnel de voir les participants, leurs œuvres soumises et leurs profils
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ConfirmDialog } from '@/components/shared';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -53,7 +53,9 @@ import {
   Send
 } from 'lucide-react';
 import ImportInscriptionsDialog from './ImportInscriptionsDialog';
-import MessageParticipantsDialog from './MessageParticipantsDialog';
+import MessageParticipantsDialog, { cleMessageParticipants } from './MessageParticipantsDialog';
+import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import EcrireAvecMessagerie from './EcrireAvecMessagerie';
 import { httpClient } from '@/services/httpClient';
 import { paiementService } from '@/services/paiement.service';
@@ -172,6 +174,13 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const { formatPrice } = useLocalizedNumber();
   const [importOuvert, setImportOuvert] = useState(false);
   const [messageOuvert, setMessageOuvert] = useState(false);
+  // Retour après une session expirée pendant l'écriture aux participants : la fenêtre se rouvre avec le
+  // message conservé (audit V11 FRM-23). useLayoutEffect : avant que la fenêtre ne reprenne le brouillon
+  // (son effet ordinaire passe après), sinon il ne serait plus « en attente »
+  const user = useUtilisateurOptionnel();
+  useLayoutEffect(() => {
+    if (evenementId && saisieEnAttente(cleMessageParticipants(evenementId), user?.id_user)) setMessageOuvert(true);
+  }, [evenementId, user?.id_user]);
   const { td } = useTranslateData();
   const { formatDate } = useLocalizedDate();
   const { toast } = useToast();

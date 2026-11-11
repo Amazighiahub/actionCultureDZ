@@ -5,7 +5,7 @@
  * - personne qui a proposé : l'état de ses propositions (en attente, refusée et pourquoi) ;
  * - tout le monde : l'historique des contributions acceptées (qui, quand, pourquoi).
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Check, GitPullRequestArrow, History, Loader2, X } from 'lucide-react';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import {
   articleRevisionService, comparerBlocs,
   type BlocRevision, type RevisionDetail, type RevisionResume
@@ -93,6 +94,26 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
   }, [idOeuvre]);
   useEffect(() => { if (propositionAOuvrir && user) ouvrir(propositionAOuvrir); }, [propositionAOuvrir, user, ouvrir]);
 
+  // Session expirée pendant l'écriture du motif de refus : motif conservé pour cette proposition ; au
+  // retour, la proposition se rouvre et le motif réapparaît (audit V11 FRM-23)
+  const cleRefus = (idRevision: number) => `refus-revision:${idOeuvre}:${idRevision}`;
+  const { restauree: refusRestaure, oublier: oublierRefus } = useSaisieConservee({
+    cle: detail ? cleRefus(detail.id_revision) : null,
+    valeur: { motif: motifRefus },
+    restaurer: (v) => { setMotifRefus(v.motif || ''); setRefusOuvert(true); },
+    actif: !!detail && refusOuvert && !!motifRefus.trim(),
+  });
+  const refusRouvert = useRef(false);
+  useEffect(() => {
+    if (refusRouvert.current || !user?.id_user) return;
+    const enAttenteBrouillon = revisions.find(r => r.statut === 'en_attente' && saisieEnAttente(cleRefus(r.id_revision), user.id_user));
+    if (!enAttenteBrouillon) return;
+    refusRouvert.current = true;
+    if (detail?.id_revision !== enAttenteBrouillon.id_revision) ouvrir(enAttenteBrouillon.id_revision);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleRefus ne dépend que de idOeuvre
+  }, [revisions, user?.id_user, ouvrir]);
+  const fermerDetail = () => { setDetail(null); oublierRefus(); };
+
   const comparaison = useMemo(() => (detail ? comparerBlocs(blocsActuels, detail.contenu.blocks || []) : []), [detail, blocsActuels]);
   const titreChange = detail && detail.contenu.titre != null && getLocalizedText(detail.contenu.titre) !== getLocalizedText(titreActuel);
   const chapeauChange = detail && detail.contenu.description != null && getLocalizedText(detail.contenu.description) !== getLocalizedText(descriptionActuelle);
@@ -110,7 +131,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
         throw Object.assign(new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue'))), { code: (res as { code?: string }).code });
       }
       toast({ title: decision === 'accepter' ? t('revisions.acceptee', 'Proposition acceptée : l’article est mis à jour') : t('revisions.refusee', 'Proposition refusée') });
-      setDetail(null);
+      fermerDetail();
       await charger();
       if (decision === 'accepter') onAcceptee();
     } catch (e) {
@@ -183,7 +204,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
         </div>
       )}
 
-      <Dialog open={!!detail} onOpenChange={(o) => { if (!o) setDetail(null); }}>
+      <Dialog open={!!detail} onOpenChange={(o) => { if (!o) fermerDetail(); }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {detail && (
             <>
@@ -233,6 +254,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
                     <div className="space-y-1.5">
                       <Label htmlFor="motif-refus">{t('revisions.pourquoiRefus', 'Pourquoi refusez-vous ? (la personne recevra ce message)')}</Label>
                       <Textarea id="motif-refus" value={motifRefus} onChange={(e) => setMotifRefus(e.target.value)} rows={2} maxLength={2000} />
+                      <SaisieConserveeAvis visible={refusRestaure} />
                     </div>
                   )}
                   <div className="flex flex-wrap justify-end gap-2">

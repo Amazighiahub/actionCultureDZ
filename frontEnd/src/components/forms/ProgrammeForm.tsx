@@ -27,6 +27,8 @@ import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
 import { intervenantValide } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
 import { nombreHorsLimites } from '@/utils/validationChamps';
+import { useParams } from 'react-router-dom';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 export interface ProgrammeFormData {
   // Informations de base
@@ -225,6 +227,10 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const [newMateriel, setNewMateriel] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [onglet, setOnglet] = useState('basic');
+  // Saisie de la personne (et non le pré-remplissage) : seule elle est conservée si la session expire
+  const [modifie, setModifie] = useState(false);
+  const [donneesAppliquees, setDonneesAppliquees] = useState(false);
+  const saisir: typeof setFormData = (maj) => { setFormData(maj); setModifie(true); };
 
   // Nouvelle activité : premier jour de l'événement proposé (modifiable dans « Horaires »)
   const premierJour = availableDates[0] || '';
@@ -243,7 +249,30 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     if (appliedInitialData.current === key) return;
     appliedInitialData.current = key;
     setFormData(prev => ({ ...prev, ...initialData }));
+    setDonneesAppliquees(true);
   }, [initialData]);
+
+  // Session expirée pendant la saisie : activité conservée, remise au retour (audit V11 FRM-23).
+  // Nouvelle activité : clé de l'événement ; modification : clé de l'activité (page /programme/modifier/…),
+  // connue une fois ses données appliquées ; le brouillon passe après et l'emporte. Dans une fenêtre
+  // sans numéro d'activité (gestion de l'événement), la modification n'est pas conservée.
+  const { programmeId } = useParams<{ programmeId?: string }>();
+  const idProgramme = programmeId ? parseInt(programmeId, 10) || null : null;
+  const cleSaisie = mode === 'create'
+    ? `programme:evenement-${eventId}:nouveau`
+    : mode === 'edit' && idProgramme && donneesAppliquees ? `programme:${idProgramme}` : null;
+  const { restauree, oublier } = useSaisieConservee({
+    cle: cleSaisie,
+    valeur: { formData, onglet },
+    restaurer: (v) => {
+      setFormData(prev => ({ ...prev, ...v.formData }));
+      if (v.onglet) setOnglet(v.onglet);
+      setModifie(true);
+    },
+    actif: modifie && !success,
+  });
+  // Enregistrement réussi (page de création ou de modification) : plus rien à garder
+  useEffect(() => { if (success) oublier(); }, [success, oublier]);
 
   const handleChange = (field: keyof ProgrammeFormData, value: any) => {
     const newFormData = { ...formData, [field]: value };
@@ -263,7 +292,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       }
     }
 
-    setFormData(newFormData);
+    saisir(newFormData);
 
     // Effacer l'erreur si elle existe
     if (errors[field]) {
@@ -272,12 +301,12 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   };
 
   const handleMultiLangChange = (field: 'titre' | 'description' | 'lieu_specifique', value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    saisir(prev => ({ ...prev, [field]: value }));
   };
 
   const addMateriel = () => {
     if (newMateriel.trim() && !formData.materiel_requis.includes(newMateriel.trim())) {
-      setFormData(prev => ({
+      saisir(prev => ({
         ...prev,
         materiel_requis: [...prev.materiel_requis, newMateriel.trim()]
       }));
@@ -286,7 +315,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   };
 
   const removeMateriel = (index: number) => {
-    setFormData(prev => ({
+    saisir(prev => ({
       ...prev,
       materiel_requis: prev.materiel_requis.filter((_, i) => i !== index)
     }));
@@ -304,14 +333,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       honoraires: undefined,
       frais_deplacement: undefined
     };
-    setFormData(prev => ({
+    saisir(prev => ({
       ...prev,
       intervenants: [...prev.intervenants, newIntervenant]
     }));
   };
 
   const updateIntervenant = (index: number, field: keyof IntervenantData, value: any) => {
-    setFormData(prev => ({
+    saisir(prev => ({
       ...prev,
       intervenants: prev.intervenants.map((intervenant, i) =>
         i === index ? { ...intervenant, [field]: value } : intervenant
@@ -320,7 +349,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   };
 
   const removeIntervenant = (index: number) => {
-    setFormData(prev => ({
+    saisir(prev => ({
       ...prev,
       intervenants: prev.intervenants.filter((_, i) => i !== index)
     }));
@@ -390,6 +419,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6 min-w-0" noValidate>
       <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
+      <SaisieConserveeAvis visible={restauree} />
 
       {/* Messages d'erreur et succès */}
       {error && (
@@ -679,7 +709,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         index={index}
                         valeur={intervenant}
                         disabled={isReadOnly}
-                        onChange={(maj) => setFormData(prev => ({
+                        onChange={(maj) => saisir(prev => ({
                           ...prev,
                           intervenants: prev.intervenants.map((it, i) => (i === index ? { ...it, ...maj } : it))
                         }))}
@@ -858,7 +888,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-6 border-t">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          <Button type="button" variant="outline" onClick={() => { oublier(); onCancel(); }} disabled={loading}>
             <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
             {t('programme.form.actions.cancel')}
           </Button>

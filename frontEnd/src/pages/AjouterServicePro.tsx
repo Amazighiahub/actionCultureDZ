@@ -35,6 +35,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
@@ -115,6 +116,10 @@ const AjouterServicePro: React.FC = () => {
   const [formData, setFormData] = useState<ServiceFormData>(INITIAL_FORM);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  // Modification : service chargé (la saisie conservée ne doit être remise qu'après)
+  const [serviceCharge, setServiceCharge] = useState(false);
+  // Saisie remise après une session expirée : la photo choisie (fichier) est à rajouter
+  const [photoARajouter, setPhotoARajouter] = useState(false);
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -162,6 +167,7 @@ const AjouterServicePro: React.FC = () => {
           disponible: svc.disponible !== false,
         });
         if (typeof svc.photo_url === 'string' && svc.photo_url) setPhotoPreview(svc.photo_url);
+        setServiceCharge(true);
         // Service loaded for editing
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.serviceNotFound'), variant: 'destructive' });
@@ -179,6 +185,20 @@ const AjouterServicePro: React.FC = () => {
     if (!isEditMode && lieuId > 0) setFormData(prev => ({ ...prev, id_lieu: lieuId }));
   }, [searchParams, isEditMode]);
 
+  // Session expirée pendant la saisie : formulaire conservé, remis au retour (audit V11 FRM-23).
+  // Modification : clé connue une fois le service chargé ; le brouillon passe après et l'emporte.
+  // Jamais la photo (fichier, aperçu) : seulement les champs saisis.
+  const { restauree, oublier } = useSaisieConservee({
+    cle: isEditMode ? (serviceCharge && editId ? `service:${editId}` : null) : 'service:nouveau',
+    valeur: { formData, avaitPhoto: !!photoFile },
+    restaurer: (v) => {
+      setFormData({ ...INITIAL_FORM, ...v.formData });
+      setPhotoARajouter(!!v.avaitPhoto);
+      setIsDirty(true);
+    },
+    actif: isDirty,
+  });
+
   // Gérer le changement de photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,6 +212,7 @@ const AjouterServicePro: React.FC = () => {
         return;
       }
       setPhotoFile(file);
+      setPhotoARajouter(false);
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -357,6 +378,7 @@ const AjouterServicePro: React.FC = () => {
         }
 
         setIsDirty(false);
+        oublier();
         // Le tableau de bord affiche tout de suite le service (et son statut)
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-services'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
@@ -424,6 +446,14 @@ const AjouterServicePro: React.FC = () => {
 
         <form onSubmit={handleSubmit} noValidate>
           <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
+          {restauree && (
+            <div className="mb-4 space-y-2">
+              <SaisieConserveeAvis visible={restauree} />
+              {photoARajouter && (
+                <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')}</p>
+              )}
+            </div>
+          )}
           <div className="grid gap-6">
             {/* Type de service */}
             <Card>
@@ -726,7 +756,7 @@ const AjouterServicePro: React.FC = () => {
 
             {/* Submit */}
             <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+              <Button type="button" variant="outline" onClick={() => { oublier(); navigate(-1); }}>
                 {t('common.cancel', 'Annuler')}
               </Button>
               <Button

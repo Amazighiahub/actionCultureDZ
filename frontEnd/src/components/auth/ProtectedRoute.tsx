@@ -48,8 +48,9 @@ export function ProtectedRoute({
       title: t('auth.idleLogout', 'Session expirée'),
       description: t('auth.idleLogoutDesc', 'Vous avez été déconnecté pour inactivité.'),
     });
-    logout();
-  }, [toast, t, logout]);
+    // Retour à la page quittée après la reconnexion
+    logout({ retour: `${location.pathname}${location.search}` });
+  }, [toast, t, logout, location.pathname, location.search]);
 
   // Comptes administrateurs seulement : les autres restent connectés sur leur appareil (90 jours)
   useIdleTimeout({

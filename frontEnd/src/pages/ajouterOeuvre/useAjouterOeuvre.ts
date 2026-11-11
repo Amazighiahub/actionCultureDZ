@@ -7,6 +7,7 @@ import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useRTL } from '@/hooks/useRTL';
+import { useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useToast } from '@/hooks/use-toast';
 import { mediaService } from '@/services/media.service';
@@ -167,30 +168,19 @@ export function useAjouterOeuvre() {
   // le nouvel essai le complète au lieu d'en créer un second
   const articleCreeRef = useRef<{ oeuvreId: number; articleRecordId?: number } | null>(null);
 
-  // Brouillon gardé quand la session expire pendant la saisie (httpClient émet « auth:expired » puis
-  // renvoie vers la connexion, qui ramène ici) : la saisie revient, sauf les fichiers joints
-  const BROUILLON_OEUVRE = 'eventculture_draft_oeuvre';
-  const saisieRef = useRef({ formData, contributeurs, editeurs, nouveauxIntervenants });
-  saisieRef.current = { formData, contributeurs, editeurs, nouveauxIntervenants };
-  useEffect(() => {
-    const garder = () => {
-      try {
-        sessionStorage.setItem(BROUILLON_OEUVRE, JSON.stringify({ savedAt: Date.now(), editId, ...saisieRef.current }));
-      } catch { /* stockage plein : rien à faire */ }
-    };
-    window.addEventListener('auth:expired', garder);
-    return () => window.removeEventListener('auth:expired', garder);
-  }, [editId]);
+  // Track unsaved changes
+  const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
+  useUnsavedChanges(isDirty);
 
-  /** Remet le brouillon de cette œuvre (création ou modification), s'il date de moins de 30 minutes */
-  const restaurerBrouillon = useCallback(() => {
-    try {
-      const brut = sessionStorage.getItem(BROUILLON_OEUVRE);
-      if (!brut) return;
-      const brouillon = JSON.parse(brut);
-      if ((brouillon.editId ?? null) !== (editId ?? null)) return;
-      sessionStorage.removeItem(BROUILLON_OEUVRE);
-      if (!brouillon.savedAt || Date.now() - brouillon.savedAt > 30 * 60 * 1000) return;
+  // Saisie gardée quand la session expire (httpClient émet « auth:expired » puis renvoie vers la
+  // connexion, qui ramène ici) : la saisie revient, sauf les fichiers joints. Mécanisme commun
+  // (avant : clé fixe, sans la personne, recopiée dans AjouterEvenement ; audit V11 FRM-23).
+  // En modification, la clé n'existe qu'une fois l'œuvre chargée : le brouillon remplace les valeurs chargées.
+  const [oeuvreEditionChargee, setOeuvreEditionChargee] = useState(false);
+  const { oublier: oublierBrouillonOeuvre } = useSaisieConservee({
+    cle: isEditMode ? (oeuvreEditionChargee && editId ? `oeuvre:${editId}` : null) : 'oeuvre:nouvelle',
+    valeur: { formData, contributeurs, editeurs, nouveauxIntervenants },
+    restaurer: (brouillon) => {
       if (brouillon.formData) setFormData(brouillon.formData);
       if (Array.isArray(brouillon.contributeurs)) setContributeurs(brouillon.contributeurs);
       if (Array.isArray(brouillon.editeurs)) setEditeurs(brouillon.editeurs);
@@ -199,15 +189,9 @@ export function useAjouterOeuvre() {
         title: t('ajouteroeuvre.brouillonRestaure', 'Votre saisie a été restaurée'),
         description: t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')
       });
-    } catch { /* brouillon illisible : ignoré */ }
-  }, [editId]);
-  useEffect(() => {
-    if (!isEditMode) restaurerBrouillon();
-  }, [isEditMode, restaurerBrouillon]);
-
-  // Track unsaved changes
-  const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
-  useUnsavedChanges(isDirty);
+    },
+    actif: isDirty,
+  });
 
   // ============================================================================
   // EFFETS
@@ -312,7 +296,7 @@ export function useAjouterOeuvre() {
         // Les extraits se gèrent dans leur propre bloc, pas dans la liste des médias
         setMediasEnregistres(tousMedias.filter(m => m.id_media !== idPdf && m.id_media !== idAudio));
         // Saisie en cours perdue par une session expirée : elle remplace les valeurs chargées
-        restaurerBrouillon();
+        setOeuvreEditionChargee(true);
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
@@ -717,12 +701,14 @@ export function useAjouterOeuvre() {
         toast(lien.success
           ? { title: t('ajouteroeuvre.succes'), description: t('patrimoine.pages.ajoutee', 'Article enregistré : il apparaîtra après validation par l’équipe Tala DZ.') }
           : { title: t('toasts.warning'), description: t('patrimoine.pages.lienEchec', 'Article enregistré, mais il n’a pas pu être relié à la page.'), variant: 'destructive' });
+        oublierBrouillonOeuvre();
         navigate(cibleArticle.retour);
         return;
       }
       if (soumission.success) {
         toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
       }
+      oublierBrouillonOeuvre();
       navigate(`/articles/${oeuvreId}`);
 
     } catch (error: unknown) {
@@ -973,6 +959,7 @@ export function useAjouterOeuvre() {
             variant: 'destructive',
           });
         }
+        oublierBrouillonOeuvre();
         rafraichirTableauDeBord();
         navigate('/dashboard-pro');
 

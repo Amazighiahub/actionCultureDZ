@@ -32,6 +32,7 @@ import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide } from '@/utils/validationChamps';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { organisationPath } from '@/utils/slug';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import type { Wilaya } from '@/types';
 import i18n from 'i18next';
 
@@ -63,6 +64,10 @@ const AjouterOrganisation = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [logoFichier, setLogoFichier] = useState<File | null>(null);
   const [logoApercu, setLogoApercu] = useState<string | null>(null);
+  // Modification : page chargée (la saisie conservée ne doit être remise qu'après)
+  const [pageChargee, setPageChargee] = useState(false);
+  // Saisie remise après une session expirée : le logo choisi (fichier) est à rajouter
+  const [logoARajouter, setLogoARajouter] = useState(false);
   const [formData, setFormData] = useState({
     nom: { ...VIDE },
     description: { ...VIDE },
@@ -133,8 +138,24 @@ const AjouterOrganisation = () => {
       });
       setOrigine({ statut: o.statut, nom: textes(o.nom), type: o.id_type_organisation ? String(o.id_type_organisation) : '' });
       if (o.logo_url) setLogoApercu(getAssetUrl(o.logo_url, { width: 224 }));
+      setPageChargee(true);
     }).catch(() => {});
   }, [idModif, navigate]);
+
+  // Session expirée pendant la saisie : formulaire conservé, remis au retour (audit V11 FRM-23).
+  // Modification : clé connue une fois la page chargée ; le brouillon passe après et l'emporte.
+  // Jamais le logo choisi (fichier, aperçu) : seulement les champs saisis et l'adresse du logo déjà en ligne.
+  const { restauree, oublier } = useSaisieConservee({
+    cle: idModif ? (pageChargee ? `organisation:${idModif}` : null) : 'organisation:nouvelle',
+    valeur: { formData, avaitLogo: !!logoFichier },
+    restaurer: (v) => {
+      setFormData(prev => ({ ...prev, ...v.formData, nom: { ...VIDE, ...v.formData?.nom }, description: { ...VIDE, ...v.formData?.description } }));
+      setLogoApercu(v.formData?.logo_url ? getAssetUrl(v.formData.logo_url, { width: 224 }) : null);
+      setLogoARajouter(!!v.avaitLogo);
+      setIsDirty(true);
+    },
+    actif: isDirty,
+  });
 
   const loadTypes = async () => {
     try {
@@ -155,6 +176,7 @@ const AjouterOrganisation = () => {
       return;
     }
     setLogoFichier(fichier);
+    setLogoARajouter(false);
     setLogoApercu(URL.createObjectURL(fichier));
     setFieldErrors(prev => { const next = { ...prev }; delete next.logo; return next; });
     setIsDirty(true);
@@ -257,6 +279,7 @@ const AjouterOrganisation = () => {
 
       if (response.success) {
         setIsDirty(false);
+        oublier();
         if (idModif) await queryClient.invalidateQueries({ queryKey: ['organisation-vitrine'] });
         toast({
           title: t('common.success', 'Succès'),
@@ -317,6 +340,14 @@ const AjouterOrganisation = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
+            {restauree && (
+              <div className="space-y-2">
+                <SaisieConserveeAvis visible={restauree} />
+                {logoARajouter && (
+                  <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')}</p>
+                )}
+              </div>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -513,7 +544,7 @@ const AjouterOrganisation = () => {
             )}
 
             <div className="flex flex-col sm:flex-row justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate(retour)}>
+              <Button type="button" variant="outline" onClick={() => { oublier(); navigate(retour); }}>
                 {t('common.cancel', 'Annuler')}
               </Button>
               <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={loading}>

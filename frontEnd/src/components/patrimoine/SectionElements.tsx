@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import MultiLangInput from '@/components/MultiLangInput';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 type MultilingualField = Record<string, string | undefined>;
 
@@ -201,6 +202,34 @@ export default function SectionElements({
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Session expirée pendant la saisie : élément en cours conservé, fenêtre rouverte au retour (audit V11 FRM-23)
+  const { restauree: ajoutRestaure, oublier: oublierAjout } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:${kind}:ajout` : null,
+    valeur: addForm.payload(),
+    restaurer: (v) => {
+      addForm.setNom(v.nom || {});
+      addForm.setType(v.type || '');
+      addForm.setDescription(v.description || {});
+      setAddOpen(true);
+    },
+    actif: addOpen && (aDuTexte(addForm.nom) || aDuTexte(addForm.description) || !!addForm.type),
+  });
+  // Modification : l'élément est retrouvé par son identifiant (supprimé entre-temps : rien n'est rouvert)
+  const { restauree: modifRestauree, oublier: oublierModif } = useSaisieConservee({
+    cle: lieuId ? `lieu:${lieuId}:${kind}:modif` : null,
+    valeur: { id: editItem?.id ?? null, ...editForm.payload() },
+    restaurer: (v) => {
+      const item = items.find((i) => i.id === v.id);
+      if (!item) return;
+      editForm.setNom(v.nom || {});
+      editForm.setType(v.type || item.type);
+      editForm.setDescription(v.description || {});
+      setEditItem(item);
+    },
+    actif: !!editItem,
+  });
+  const fermerModif = () => { setEditItem(null); oublierModif(); };
+
   async function handleAdd() {
     if (champManquant(addForm)) return;
     setAddSaving(true);
@@ -213,11 +242,13 @@ export default function SectionElements({
         toast(toastProposition(t));
         setAddOpen(false);
         addForm.reset();
+        oublierAjout();
       } else if (res.success && res.data) {
         onItemAdded(res.data);
         toast({ title: lib.added });
         setAddOpen(false);
         addForm.reset();
+        oublierAjout();
       }
     } catch {
       toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.elements.erreurAjout', 'Impossible d’ajouter l’élément'), variant: 'destructive' });
@@ -242,11 +273,11 @@ export default function SectionElements({
       );
       if (res.success && estProposition(res)) {
         toast(toastProposition(t));
-        setEditItem(null);
+        fermerModif();
       } else if (res.success && res.data) {
         onItemUpdated?.(res.data);
         toast({ title: t('patrimoine.elements.modifie', 'Modification enregistrée') });
-        setEditItem(null);
+        fermerModif();
       }
     } catch {
       toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.elements.erreurModif', 'Impossible de modifier l’élément'), variant: 'destructive' });
@@ -333,7 +364,7 @@ export default function SectionElements({
 
       {/* Bouton Ajouter */}
       {isAuthenticated && (
-        <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) addForm.reset(); }}>
+        <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) { addForm.reset(); oublierAjout(); } }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="w-full border-dashed hover:border-solid hover:bg-primary/5">
               <Plus className="h-4 w-4 me-2" />
@@ -344,19 +375,21 @@ export default function SectionElements({
             <DialogHeader>
               <DialogTitle>{lib.add}</DialogTitle>
             </DialogHeader>
-            <ElementForm cfg={cfg} form={addForm} saving={addSaving} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} submitLabel={t('patrimoine.elements.ajouter', 'Ajouter')} />
+            <SaisieConserveeAvis visible={ajoutRestaure} />
+            <ElementForm cfg={cfg} form={addForm} saving={addSaving} onSubmit={handleAdd} onCancel={() => { setAddOpen(false); oublierAjout(); }} submitLabel={t('patrimoine.elements.ajouter', 'Ajouter')} />
           </DialogContent>
         </Dialog>
       )}
 
       {/* Dialog Modifier */}
-      <Dialog open={!!editItem} onOpenChange={(v) => { if (!v) setEditItem(null); }}>
+      <Dialog open={!!editItem} onOpenChange={(v) => { if (!v) fermerModif(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{lib.edit}</DialogTitle>
           </DialogHeader>
+          <SaisieConserveeAvis visible={modifRestauree} />
           {editItem && (
-            <ElementForm cfg={cfg} form={editForm} saving={editSaving} onSubmit={handleEdit} onCancel={() => setEditItem(null)} submitLabel={t('common.save', 'Enregistrer')} />
+            <ElementForm cfg={cfg} form={editForm} saving={editSaving} onSubmit={handleEdit} onCancel={fermerModif} submitLabel={t('common.save', 'Enregistrer')} />
           )}
         </DialogContent>
       </Dialog>

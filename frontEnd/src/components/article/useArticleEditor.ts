@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ArticleImporte } from '@/utils/importArticle';
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 
@@ -49,6 +51,25 @@ const SCIENTIFIC_TEMPLATE: ArticleBlock[] = [
   { type_block: 'heading', contenu: 'Références', metadata: { level: 2 }, ordre: 13, visible: true },
   { type_block: 'text', contenu: '[1] Nom, P. (Année). Titre de l\'article. Nom du journal, Volume(Numéro), pages. DOI\n[2] Nom, P. (Année). Titre du livre. Éditeur.', metadata: { alignment: 'left' }, ordre: 14, visible: true },
 ];
+
+/**
+ * Rédaction conservée quand la session expire (audit V11 FRM-23) : une clé par usage de l'éditeur.
+ * Nouvel article (ajout d'œuvre, mode article), modification par l'auteur (/editer-article/:id) et
+ * proposition de modification (/articles/:id/proposer) ne partagent jamais leur brouillon.
+ */
+export type ModeSaisieArticle = 'creation' | 'modification' | 'proposition';
+export const modeSaisieArticle = (articleId: string | number | undefined, chemin: string): ModeSaisieArticle =>
+  !articleId ? 'creation' : /\/proposer\/?$/.test(chemin) ? 'proposition' : 'modification';
+export const cleSaisieArticle = (articleId: string | number | undefined, mode: ModeSaisieArticle) =>
+  `article:${articleId || 'nouveau'}:${mode}`;
+
+/** Bloc gardé dans le brouillon : sans le fichier d'une photo pas encore envoyée, ni son aperçu temporaire */
+const blocSansFichier = (b: ArticleBlock): ArticleBlock => {
+  const { _uid: _u, ...bloc } = b as ArticleBlock & { _uid?: string };
+  const { tempFile: _f, ...metadata } = (bloc.metadata || {}) as Record<string, unknown>;
+  const apercu = typeof bloc.media?.url === 'string' && bloc.media.url.startsWith('blob:');
+  return { ...bloc, metadata, media: apercu ? undefined : bloc.media } as ArticleBlock;
+};
 
 export function useArticleEditor({ articleId, initialData, onSave }: Pick<ArticleEditorProps, 'articleId' | 'initialData' | 'onSave'>) {
   const { t, i18n } = useTranslation();
@@ -121,13 +142,46 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   const signatureActuelle = useRef(signature);
   signatureActuelle.current = signature;
   const reference = useRef<string | null>(null);
+  const referenceFigee = useRef(false);
   useEffect(() => {
     if (loading) return;
-    // Après le chargement et le modèle d'article scientifique éventuel
-    const minuterie = setTimeout(() => { reference.current = signatureActuelle.current; }, 300);
+    // Après le chargement et le modèle d'article scientifique éventuel (sauf brouillon remis : la
+    // référence reste alors le contenu chargé, et la rédaction remise compte comme une modification)
+    const minuterie = setTimeout(() => { if (!referenceFigee.current) reference.current = signatureActuelle.current; }, 300);
     return () => clearTimeout(minuterie);
   }, [loading]);
   const modifie = reference.current !== null && reference.current !== signature;
+
+  // Session expirée pendant la rédaction : titre, chapeau, traductions et blocs conservés, remis au retour
+  // (audit V11 FRM-23). Article existant : clé connue une fois son contenu chargé ; le brouillon passe
+  // après et l'emporte. Jamais les photos pas encore envoyées (fichier, aperçu) : à rajouter.
+  const { pathname } = useLocation();
+  const cleSaisie = cleSaisieArticle(articleId, modeSaisieArticle(articleId, pathname));
+  const [fichiersARajouter, setFichiersARajouter] = useState(false);
+  const { restauree: saisieRestauree, oublier: oublierSaisie } = useSaisieConservee({
+    cle: articleId && !contenuCharge ? null : cleSaisie,
+    valeur: {
+      formData, translations, langueTexte,
+      blocks: blocks.map(blocSansFichier),
+      avaitFichiers: blocks.some(b => !!(b.metadata as Record<string, unknown> | undefined)?.tempFile),
+    },
+    restaurer: (v) => {
+      reference.current = signatureActuelle.current;
+      referenceFigee.current = true;
+      if (v.formData) setFormData(prev => ({ ...prev, ...v.formData }));
+      if (v.translations) setTranslations(v.translations);
+      if (Array.isArray(v.blocks)) setBlocks(v.blocks.map(b => ({ ...b, _uid: generateBlockUid() } as ArticleBlock)));
+      if (v.langueTexte) { setLangueTexte(v.langueTexte); setEditLang(v.langueTexte); }
+      setFichiersARajouter(!!v.avaitFichiers);
+      toast({
+        title: t('ajouteroeuvre.brouillonRestaure', 'Votre saisie a été restaurée'),
+        description: v.avaitFichiers
+          ? t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')
+          : t('saisie.conservee', 'Votre session avait expiré : votre texte a été conservé. Vérifiez-le, puis envoyez-le de nouveau.'),
+      });
+    },
+    actif: modifie,
+  });
 
   const [newTag, setNewTag] = useState('');
   const [expandedSections, setExpandedSections] = useState({
@@ -420,7 +474,10 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
       if (onSave) {
         await onSave(response);
+        // Envoi réussi (onSave rejette en cas d'échec) : plus rien à garder
+        oublierSaisie();
       } else {
+        oublierSaisie();
         toast({
           title: t('common.success', 'Succès'),
           description: t('article.savedSuccess', 'Article sauvegardé avec succès!'),
@@ -439,6 +496,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   return {
     // State
     loading, saving, error, fieldErrors, activeTab, setActiveTab, modifie,
+    // Rédaction remise après une session expirée (avis à afficher), photos à rajouter
+    saisieRestauree, fichiersARajouter,
     metadata, formData, setFormData,
     blocks, editLang, setEditLang, langueTexte, setLangueTexte,
     translations, setTranslations,

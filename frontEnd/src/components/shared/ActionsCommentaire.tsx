@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { commentaireService } from '@/services/commentaire.service';
 import { MOTIFS_SIGNALEMENT } from '@/utils/motifsSignalement';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 interface Props {
   commentaire: { id_commentaire?: number; id?: number; id_user?: number; contenu: string; User?: object | null };
@@ -45,6 +46,25 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
 
   const id = commentaire.id_commentaire ?? commentaire.id;
   const idAuteur = commentaire.id_user ?? (commentaire.User as { id_user?: number } | null | undefined)?.id_user;
+
+  // Session expirée pendant la modification ou le signalement : texte conservé, fenêtre rouverte au
+  // retour (audit V11 FRM-23). Avant le « return » anticipé (règle des hooks) ; une clé par action.
+  const { restauree: modificationRestauree, oublier: oublierModification } = useSaisieConservee({
+    cle: id ? `commentaire:${id}:modifier` : null,
+    valeur: { texte },
+    restaurer: (v) => { setTexte(v.texte || ''); setErreur(null); setFenetre('modifier'); },
+    // Seulement un texte changé (la fenêtre s'ouvre avec le commentaire actuel)
+    actif: fenetre === 'modifier' && !!texte.trim() && texte.trim() !== (commentaire.contenu || '').trim(),
+  });
+  const { restauree: signalementRestaure, oublier: oublierSignalement } = useSaisieConservee({
+    cle: id ? `commentaire:${id}:signaler` : null,
+    valeur: { motif, precision },
+    restaurer: (v) => { setMotif(v.motif || ''); setPrecision(v.precision || ''); setErreur(null); setFenetre('signaler'); },
+    actif: fenetre === 'signaler' && !!(motif || precision.trim()),
+  });
+  /** Fermer une fenêtre (« Annuler », croix ou action réussie) : plus rien à conserver */
+  const fermer = () => { setFenetre(null); oublierModification(); oublierSignalement(); };
+
   if (!isAuthenticated || !user || !id) return null;
   const estAuteur = Number(idAuteur) === Number(user.id_user);
 
@@ -66,7 +86,7 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
         return false;
       }
       toast({ title: reussite });
-      setFenetre(null);
+      fermer();
       onChange?.();
       return true;
     } finally {
@@ -125,7 +145,7 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={fenetre === 'modifier'} onOpenChange={(o) => { if (!o) setFenetre(null); }}>
+      <Dialog open={fenetre === 'modifier'} onOpenChange={(o) => { if (!o) fermer(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('comments.actions.modifierTitre', 'Modifier votre commentaire')}</DialogTitle>
@@ -133,15 +153,16 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
           </DialogHeader>
           <Textarea dir="auto" value={texte} onChange={(e) => setTexte(e.target.value)} maxLength={2000} className="min-h-[120px]"
             aria-label={t('comments.actions.modifierTitre', 'Modifier votre commentaire')} />
+          <SaisieConserveeAvis visible={modificationRestauree} />
           {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFenetre(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button variant="outline" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
             <Button onClick={enregistrer} disabled={envoi}>{t('common.save', 'Enregistrer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={fenetre === 'signaler'} onOpenChange={(o) => { if (!o) setFenetre(null); }}>
+      <Dialog open={fenetre === 'signaler'} onOpenChange={(o) => { if (!o) fermer(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('comments.actions.signalerTitre', 'Signaler ce commentaire')}</DialogTitle>
@@ -165,10 +186,11 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
               <Label htmlFor={`precision-${id}`}>{t('comments.actions.precision', 'Précision (facultatif)')}</Label>
               <Textarea id={`precision-${id}`} dir="auto" value={precision} onChange={(e) => setPrecision(e.target.value)} maxLength={1000} />
             </div>
+            <SaisieConserveeAvis visible={signalementRestaure} />
           </div>
           {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFenetre(null)}>{t('common.cancel', 'Annuler')}</Button>
+            <Button variant="outline" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
             <Button onClick={signaler} disabled={envoi}>{t('comments.actions.envoyer', 'Envoyer le signalement')}</Button>
           </DialogFooter>
         </DialogContent>
@@ -176,7 +198,7 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
 
       <ConfirmDialog
         open={fenetre === 'supprimer'}
-        onOpenChange={(o) => { if (!o) setFenetre(null); }}
+        onOpenChange={(o) => { if (!o) fermer(); }}
         title={t('comments.actions.supprimerTitre', 'Supprimer ce commentaire ?')}
         description={erreur || t('comments.actions.supprimerAide', 'Il disparaîtra du site.')}
         confirmLabel={t('comments.actions.supprimer', 'Supprimer')}
@@ -191,7 +213,7 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
 
       <ConfirmDialog
         open={fenetre === 'masquer'}
-        onOpenChange={(o) => { if (!o) setFenetre(null); }}
+        onOpenChange={(o) => { if (!o) fermer(); }}
         title={t('comments.actions.masquerTitre', 'Masquer ce commentaire ?')}
         description={erreur || t('comments.actions.masquerAide', 'Il ne sera plus visible sur le site, sans être effacé.')}
         confirmLabel={t('comments.actions.masquer', 'Masquer')}

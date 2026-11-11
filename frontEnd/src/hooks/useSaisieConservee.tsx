@@ -77,16 +77,18 @@ export function useSaisieConservee<T>({ cle, valeur, restaurer, actif = true, pa
   restaurerRef.current = restaurer;
   const [restauree, setRestauree] = useState(false);
 
+  /** Écrit la saisie tout de suite (aussi utilisé avant de quitter la page pour y revenir, ex. créer une organisation) */
+  const garder = useCallback(() => {
+    const { valeur: v, actif: a, cleStockage: c } = courant.current;
+    if (!a || !c) return;
+    try { sessionStorage.setItem(c, JSON.stringify({ v: 1, savedAt: Date.now(), valeur: v })); } catch { /* stockage plein ou bloqué */ }
+  }, []);
+
   // Sauvegarde au moment où la session expire
   useEffect(() => {
-    const garder = () => {
-      const { valeur: v, actif: a, cleStockage: c } = courant.current;
-      if (!a || !c) return;
-      try { sessionStorage.setItem(c, JSON.stringify({ v: 1, savedAt: Date.now(), valeur: v })); } catch { /* stockage plein ou bloqué */ }
-    };
     window.addEventListener('auth:expired', garder);
     return () => window.removeEventListener('auth:expired', garder);
-  }, []);
+  }, [garder]);
 
   // Restauration, une seule fois, quand la clé est connue
   const dejaLu = useRef<string | null>(null);
@@ -106,7 +108,7 @@ export function useSaisieConservee<T>({ cle, valeur, restaurer, actif = true, pa
     if (c) { try { sessionStorage.removeItem(c); } catch { /* rien */ } }
   }, []);
 
-  return { restauree, oublier };
+  return { restauree, oublier, garder };
 }
 
 /** Avis durable sous le formulaire après une restauration (un bandeau de 5 s ne suffit pas) */

@@ -23,6 +23,7 @@ import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { messageErreurServeur, reponseEchec } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 type Cible = 'tous' | 'confirme' | 'en_attente';
 interface MessageEnvoye {
@@ -45,6 +46,9 @@ interface Programme { url: string; nom: string }
 const VIDE = { titre: '', message: '', point_rencontre: '', lien_whatsapp: '', lien_drive: '' };
 const PDF_MAX = 50 * 1024 * 1024;
 
+/** Clé du message en cours (session expirée) : la même sert au parent pour rouvrir la fenêtre (audit V11 FRM-23) */
+export const cleMessageParticipants = (evenementId: number) => `message-participants:${evenementId}`;
+
 interface Props {
   evenementId: number;
   ouvert: boolean;
@@ -63,6 +67,19 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
+  // Session expirée pendant l'écriture : message conservé (le PDF déjà en ligne, par son lien) ; la
+  // fenêtre est rouverte par le parent, qui voit le brouillon en attente (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: evenementId ? cleMessageParticipants(evenementId) : null,
+    valeur: { cible, champs, programme },
+    restaurer: (v) => {
+      setCible(v.cible || 'tous');
+      setChamps({ ...VIDE, ...v.champs });
+      setProgramme(v.programme?.url ? v.programme : null);
+    },
+    actif: ouvert && (Object.values(champs).some((c) => !!c.trim()) || !!programme),
+  });
+
   const charger = async () => {
     const res = await httpClient.get<Liste>(`/evenements/${evenementId}/participants/messages`);
     if (res.success && res.data) setListe(res.data);
@@ -77,6 +94,7 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
 
   const fermer = () => {
     setChamps(VIDE); setProgramme(null); setErreur(null); setCible('tous');
+    oublier();
     onFermer();
   };
 
@@ -125,6 +143,7 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
         : t('pro.participants.messages.envoyeDesc', '{{n}} personne(s) le reçoivent sur le site et par email.', { n: res.data?.destinataires ?? 0 })
     });
     setChamps(VIDE); setProgramme(null);
+    oublier();
     await charger();
   };
 
@@ -223,6 +242,7 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
             </div>
           </div>
 
+          <SaisieConserveeAvis visible={restauree} />
           {erreur && <p className="text-sm text-destructive" role="alert">{erreur}</p>}
         </div>
 

@@ -1,5 +1,5 @@
-import { describe, test, expect, vi } from 'vitest';
-import { render as rtlRender, screen } from '@testing-library/react';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import type { PatrimoineBlock, PagePatrimoine } from '@/services/patrimoineArticles.service';
@@ -14,6 +14,9 @@ vi.mock('@/hooks/usePeutEnrichirLieu', () => ({ usePeutEnrichirLieu: () => mockP
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/services/httpClient', () => ({ httpClient: { patch: vi.fn(), delete: vi.fn() } }));
 vi.mock('@/components/patrimoine/SectionArticleEditor', () => ({ default: () => null }));
+// Personne connectée vue par la conservation du texte (session expirée)
+const utilisateur = { valeur: null as { id_user: number } | null };
+vi.mock('@/providers/PermissionsProvider', () => ({ useUtilisateurOptionnel: () => utilisateur.valeur }));
 
 import SectionEnrichissable from '../SectionEnrichissable';
 
@@ -90,6 +93,61 @@ describe('SectionEnrichissable — articles de la section', () => {
       <SectionEnrichissable {...props} content={{ fr: 'x' }} blocs={[bloc(1, 'video', 'https://exemple.dz/v', { url: 'https://exemple.dz/v' })]} />
     );
     expect(container.querySelector('iframe')).toBeNull();
+  });
+});
+
+describe('SectionEnrichissable — texte conservé quand la session expire (audit V11 FRM-23)', () => {
+  beforeEach(() => { sessionStorage.clear(); utilisateur.valeur = { id_user: 7 }; });
+  afterEach(() => { utilisateur.valeur = null; });
+
+  const ecrirePuisExpirer = async () => {
+    const u = userEvent.setup();
+    const vue = render(<SectionEnrichissable {...props} content={{ fr: 'Couscous' }} />);
+    await u.click(screen.getByRole('button', { name: /Modifier/ }));
+    const zone = within(screen.getByRole('dialog')).getByRole('textbox');
+    await u.clear(zone);
+    await u.type(zone, 'Couscous aux fèves');
+    act(() => { window.dispatchEvent(new Event('auth:expired')); });
+    vue.unmount();
+  };
+
+  test('le texte est gardé pour ce lieu et cette section, puis remis dans la fenêtre rouverte', async () => {
+    await ecrirePuisExpirer();
+    const garde = JSON.parse(sessionStorage.getItem('saisie:7:lieu:67:gastronomie') || 'null');
+    expect(garde?.valeur?.fr).toBe('Couscous aux fèves');
+
+    render(<SectionEnrichissable {...props} content={{ fr: 'Couscous' }} />);
+    const fenetre = await screen.findByRole('dialog');
+    expect(within(fenetre).getByRole('textbox')).toHaveValue('Couscous aux fèves');
+    expect(within(fenetre).getByRole('status')).toHaveTextContent(/session avait expiré/);
+    // Utilisé une seule fois
+    expect(sessionStorage.getItem('saisie:7:lieu:67:gastronomie')).toBeNull();
+  });
+
+  test('une autre section du même lieu ne reprend pas le texte', async () => {
+    await ecrirePuisExpirer();
+    render(<SectionEnrichissable {...props} fieldName="traditions" content={{ fr: 'Fêtes' }} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sessionStorage.getItem('saisie:7:lieu:67:gastronomie')).not.toBeNull();
+  });
+
+  test('une autre personne connectée ensuite ne voit pas le texte', async () => {
+    await ecrirePuisExpirer();
+    utilisateur.valeur = { id_user: 8 };
+    render(<SectionEnrichissable {...props} content={{ fr: 'Couscous' }} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByDisplayValue('Couscous aux fèves')).toBeNull();
+  });
+
+  test('« Annuler » oublie le texte', async () => {
+    const u = userEvent.setup();
+    render(<SectionEnrichissable {...props} content={{ fr: 'Couscous' }} />);
+    await u.click(screen.getByRole('button', { name: /Modifier/ }));
+    await u.type(within(screen.getByRole('dialog')).getByRole('textbox'), ' et fèves');
+    act(() => { window.dispatchEvent(new Event('auth:expired')); });
+    expect(sessionStorage.getItem('saisie:7:lieu:67:gastronomie')).not.toBeNull();
+    await u.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(sessionStorage.getItem('saisie:7:lieu:67:gastronomie')).toBeNull();
   });
 });
 

@@ -26,6 +26,15 @@ describe('texte conservé quand la session expire (audit V11 FRM-23)', () => {
     expect(saisieEnAttente('avis-oeuvre:42', 7)).toBe(false);
   });
 
+  it('garder() écrit tout de suite (avant de quitter la page pour y revenir)', () => {
+    const premier = monter('Festival de Thala');
+    act(() => { premier.result.current.garder(); });
+    premier.unmount();
+    const restaurer = vi.fn();
+    monter('', restaurer);
+    expect(restaurer).toHaveBeenCalledWith({ texte: 'Festival de Thala' });
+  });
+
   it('rien d’écrit : rien n’est gardé', () => {
     const { unmount } = monter('');
     act(() => { window.dispatchEvent(new Event('auth:expired')); });
