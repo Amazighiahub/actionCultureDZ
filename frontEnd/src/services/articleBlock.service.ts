@@ -6,6 +6,8 @@ import { Oeuvre } from '@/types/models/oeuvre.types';
 import { oeuvreService } from './oeuvre.service';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import { CreateOeuvreResponse } from '@/types/api/oeuvre-creation.types';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 export interface ArticleBlock {
   id_block?: number;
@@ -74,8 +76,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -91,8 +92,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -108,8 +108,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -125,8 +124,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -141,8 +139,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -158,8 +155,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -174,8 +170,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -195,8 +190,7 @@ class ArticleBlockService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -248,8 +242,7 @@ class ArticleBlockService {
 
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -288,8 +281,7 @@ async saveBlocksForArticle(
     return await this.createMultipleBlocks(blocksData);
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la sauvegarde des blocs'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -322,8 +314,7 @@ async uploadBlockImage(
     );
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -358,8 +349,7 @@ async uploadBlockVideo(
     );
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de l\'upload de la vidéo'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -386,8 +376,7 @@ async exportToMarkdown(articleId: number): Promise<ApiResponse<string>> {
     };
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de l\'export'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -406,8 +395,7 @@ async importFromMarkdown(
     );
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de l\'import'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -426,8 +414,7 @@ async searchBlocks(
     );
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la recherche'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -452,8 +439,7 @@ async getBlocksStats(articleId: number): Promise<ApiResponse<{
     }>(`/articles/${articleId}/blocks/stats`);
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la récupération des statistiques'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -494,8 +480,7 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
     };
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la récupération'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }

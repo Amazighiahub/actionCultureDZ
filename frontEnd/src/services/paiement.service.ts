@@ -3,6 +3,7 @@
  */
 import { httpClient } from './httpClient';
 import type { ApiResponse } from '@/config/api';
+import { reponseEchec } from '@/utils/erreurServeur';
 
 export interface MoyensPaiement {
   titulaire?: string | null;
@@ -29,11 +30,8 @@ export interface PaiementInscription {
   organisateur_indisponible?: boolean;
 }
 
-const erreur = (e: unknown, defaut: string) => ({
-  success: false as const,
-  error: e instanceof Error && e.message ? e.message : defaut,
-  code: (e as { code?: string })?.code,
-});
+// Échec : message lisible, détail des champs, code et statut gardés (audit V11 FRM-18)
+const erreur = (e: unknown, defaut: string) => reponseEchec(e, defaut);
 
 export const paiementService = {
   async mesMoyens(): Promise<ApiResponse<MoyensPaiement | null>> {

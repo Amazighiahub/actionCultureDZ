@@ -1318,7 +1318,7 @@
     "verifying": "Verifying your account...",
     "noToken": "No verification token was provided.",
     "successRedirect": "Your account has been verified successfully! Redirecting...",
-    "invalidToken": "The token is invalid or has expired.",
+    "invalidToken": "This link is no longer valid (already used or too old). Log in: in “My space” you can get a new link.",
     "serverError": "Unable to communicate with the server."
   },
   "oeuvredetailpage": {
@@ -5066,7 +5066,7 @@
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",
     "emailUpdatedSuccess": "Your email address has been updated successfully.",
-    "tokenInvalidOrExpired": "Token is invalid or expired.",
+    "tokenInvalidOrExpired": "This link is no longer valid (already used or too old). Ask again from “My space”, “Account security” card.",
     "confirmationFailed": "Unable to confirm email change.",
     "confirming": "Confirming...",
     "emailUpdated": "Email updated",

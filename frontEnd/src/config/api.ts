@@ -109,6 +109,10 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
   details?: ValidationError[] | Record<string, unknown>;
+  /** Code de l'erreur (serveur : CONFLICT, VALIDATION_ERROR… ; réseau : ERR_NETWORK, ECONNABORTED) */
+  code?: string;
+  /** Statut HTTP d'une réponse refusée (absent si le réseau est coupé) */
+  status?: number;
   pagination?: PaginationInfo;
 }
 

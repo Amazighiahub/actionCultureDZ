@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const ConfirmEmailChange = () => {
   const { t } = useTranslation();
@@ -36,12 +37,13 @@ const ConfirmEmailChange = () => {
           setMessage(t('emailChange.emailUpdatedSuccess'));
         } else {
           setStatus('error');
-          setMessage(response.error || t('emailChange.tokenInvalidOrExpired'));
+          setMessage(t('emailChange.tokenInvalidOrExpired'));
         }
       } catch (error: unknown) {
         setStatus('error');
-        const err = error as Record<string, Record<string, Record<string, string>>>;
-        setMessage(err?.response?.data?.error || t('emailChange.confirmationFailed'));
+        // Lien refusé : message clair (le serveur répond en anglais) ; réseau ou panne : message habituel
+        const statut = (error as { status?: number } | null)?.status;
+        setMessage(statut && statut < 500 ? t('emailChange.tokenInvalidOrExpired') : messageErreurServeur(error, t('emailChange.confirmationFailed')));
       }
     };
 

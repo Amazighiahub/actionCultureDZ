@@ -27,6 +27,7 @@ import {
   getIntervenantNom,
   type LieuIntervenant,
 } from '@/services/lieuIntervenant.service';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
@@ -161,10 +162,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
         setIsEditing(false);
         onSaved?.(editValue);
       } else {
-        toast({ title: t('common.error'), description: (response as any).error || 'Erreur lors de la sauvegarde', variant: 'destructive' });
+        toast({ title: t('common.error'), description: messageErreurServeur(response, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
       }
     } catch (err: unknown) {
-      toast({ title: t('common.error'), description: err instanceof Error ? err.message : 'Erreur lors de la sauvegarde', variant: 'destructive' });
+      toast({ title: t('common.error'), description: messageErreurServeur(err, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -225,10 +226,10 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       setIntervenants(prev => [...prev, lien]);
       setIsAddOpen(false);
       resetAddForm();
-      toast({ title: 'Personnalité ajoutée', description: `${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)} a été associé à ce site` });
+      toast({ title: t('personnalites.ajoutee', 'Personnalité ajoutée'), description: `${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)}` });
     } catch (err: unknown) {
-      const msg = (err as any)?.response?.data?.error || (err instanceof Error ? err.message : 'Erreur');
-      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      // Raison du serveur (avant : « response.data.error », toujours vide : « Erreur » seul, audit V11 FRM-18)
+      toast({ title: t('common.error'), description: messageErreurServeur(err, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
     } finally {
       setAdding(false);
     }
@@ -242,9 +243,9 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
     try {
       await lieuIntervenantService.remove(lieuId, lieuIntervenantId);
       setIntervenants(prev => prev.filter(i => i.id_lieu_intervenant !== lieuIntervenantId));
-      toast({ title: 'Personnalité retirée', description: `${nom} a été retiré de ce site` });
+      toast({ title: t('personnalites.retiree', 'Personnalité retirée'), description: nom });
     } catch {
-      toast({ title: t('common.error'), description: 'Impossible de retirer cette personnalité', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('personnalites.retraitEchec', 'Impossible de retirer cette personnalité'), variant: 'destructive' });
     }
   };
 

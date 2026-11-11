@@ -7,6 +7,8 @@ import { mediaService } from './media.service';
 import { Evenement } from '@/types/models/evenement.types';
 import { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Reponses } from '@/utils/formulaireInscription';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 /** Données d'inscription : formulaire de base et/ou réponses au formulaire du type d'événement */
 export interface InscriptionPayload {
@@ -199,8 +201,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
         };
       }
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la vérification'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -331,8 +332,7 @@ async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
     };
   } catch (error: unknown) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la récupération des événements'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }

@@ -16,14 +16,15 @@ import { oublierSaisiesConservees } from '@/hooks/useSaisieConservee';
 import i18next from 'i18next';
 
 /**
- * Inscription refusée : message, code du serveur (CONFLICT = e-mail déjà utilisé) et détail des champs,
- * pour que le formulaire place l'erreur sous le bon champ (avant : un bandeau de 5 secondes en haut)
+ * Connexion ou inscription refusée : message, code et statut du serveur, détail des champs. Le formulaire
+ * s'appuie sur le statut et le code (401 = identifiants incorrects, CONFLICT = e-mail déjà utilisé), et non
+ * sur des mots du message, qui est traduit par le serveur (audit V11 FRM-5, FRM-9, FRM-18).
  */
-function echecInscription(source: unknown): AuthResult {
+function echecAuth(source: unknown, defaut: string): AuthResult {
   const s = source as { code?: unknown; status?: unknown } | null;
   return {
     success: false,
-    error: messageErreurServeur(source, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription')),
+    error: messageErreurServeur(source, defaut),
     code: typeof s?.code === 'string' ? s.code : undefined,
     status: typeof s?.status === 'number' ? s.status : undefined,
     champs: detailsDesChamps(source),
@@ -93,15 +94,10 @@ export function useAuth(): UseAuthReturn {
         return { success: true };
       }
       
-      // ✅ Retourner le message d'erreur du backend
-      return { 
-        success: false, 
-        error: messageErreurServeur(response, i18next.t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'))
-      };
+      return echecAuth(response, i18next.t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'));
     } catch (error: unknown) {
       return {
-        success: false,
-        error: messageErreurServeur(error, i18next.t('auth.errors.loginError', 'Erreur lors de la connexion'))
+        ...echecAuth(error, i18next.t('auth.errors.loginError', 'Erreur lors de la connexion'))
       };
     } finally {
       setLoginLoading(false);
@@ -163,9 +159,9 @@ export function useAuth(): UseAuthReturn {
         return { success: true };
       }
       
-      return echecInscription(response);
+      return echecAuth(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'));
     } catch (error: unknown) {
-      return echecInscription(error);
+      return echecAuth(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'));
     } finally {
       setRegisterLoading(false);
     }
@@ -210,9 +206,9 @@ export function useAuth(): UseAuthReturn {
         return { success: true };
       }
       
-      return echecInscription(response);
+      return echecAuth(response, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'));
     } catch (error: unknown) {
-      return echecInscription(error);
+      return echecAuth(error, i18next.t('auth.errors.registerError', 'Erreur lors de l’inscription'));
     } finally {
       setRegisterLoading(false);
     }

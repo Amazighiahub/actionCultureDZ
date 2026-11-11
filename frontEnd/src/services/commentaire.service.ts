@@ -1,6 +1,8 @@
 // services/commentaire.service.ts - VERSION CORRIGÉE
 import { httpClient } from './httpClient';
 import type { ApiResponse, PaginatedResponse } from '@/config/api';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 interface Commentaire {
   id_commentaire: number;
@@ -161,8 +163,7 @@ class CommentaireService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -182,8 +183,7 @@ class CommentaireService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -222,8 +222,7 @@ class CommentaireService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -237,8 +236,7 @@ class CommentaireService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -252,7 +250,7 @@ class CommentaireService {
         type_entite: 'commentaire', id_entite: id, motif, ...(description ? { description } : {})
       });
     } catch (error: unknown) {
-      return { success: false, error: error instanceof Error ? error.message : 'Erreur inconnue' };
+      return { ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue')) };
     }
   }
 
@@ -271,8 +269,7 @@ class CommentaireService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

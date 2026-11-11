@@ -115,17 +115,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
         // Un seul message, dans le formulaire (avant : aussi en bulle en haut de l'écran, qui cachait le titre
         // et répétait le même texte). Sur le(s) champ(s) concerné(s), ou au-dessus du bouton.
-        const errLower = (result.error || '').toLowerCase();
-        const isGeneric = errLower.includes('incorrect') || errLower.includes('invalid');
-        const isEmailError = errLower.includes('email') || errLower.includes('utilisateur') || errLower.includes('user') || errLower.includes('trouvé') || errLower.includes('found');
-        const isPasswordError = errLower.includes('mot de passe') || errLower.includes('password');
-
-        if (isGeneric || (isEmailError && isPasswordError)) {
+        // Identifiants refusés : statut 401 (le serveur ne dit jamais lequel des deux est faux, par sécurité).
+        // Avant : reconnu par des mots du message, qui est maintenant traduit (en arabe, plus rien n'était repéré).
+        if (result.status === 401) {
           setErrors({ email: t('auth.errors.checkEmail', 'Vérifiez votre email'), password: t('auth.errors.checkPassword', 'Vérifiez votre mot de passe'), general: errorMessage });
-        } else if (isPasswordError) {
-          setErrors({ password: errorMessage });
-        } else if (isEmailError) {
-          setErrors({ email: errorMessage });
         } else {
           // Ni l'e-mail ni le mot de passe (coupure de réseau, serveur indisponible…) : message général au-dessus
           // du bouton. Avant : affiché sous le champ e-mail, comme si l'adresse était fausse (audit V11 FRM-2)

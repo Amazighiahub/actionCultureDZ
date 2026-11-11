@@ -9,6 +9,8 @@ import {
 } from '@/config/api';
 import { httpClient } from './httpClient';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 interface UploadResponse {
   url: string;
@@ -167,8 +169,7 @@ class UploadService {
       return result;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -196,8 +197,7 @@ class UploadService {
       return result;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -227,8 +227,7 @@ class UploadService {
       return result;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -256,8 +255,7 @@ class UploadService {
       return result;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -351,8 +349,7 @@ class UploadService {
       }
       
       return {
-        success: false,
-        error: error instanceof Error ? error.message : "Erreur lors de l'upload"
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

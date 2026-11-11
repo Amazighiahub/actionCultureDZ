@@ -5,6 +5,7 @@ import { authService } from '@/services/auth.service';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from 'lucide-react';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const VerifyEmailPage = () => {
   const { token } = useParams<{token: string;}>();
@@ -41,12 +42,14 @@ const VerifyEmailPage = () => {
 
         } else {
           setStatus('error');
-          setMessage(response.error || t('verifyemailpage.invalidToken'));
+          setMessage(t('verifyemailpage.invalidToken'));
         }
       } catch (error: unknown) {
         setStatus('error');
-        const err = error as Record<string, Record<string, Record<string, string>>>;
-        setMessage(err?.response?.data?.error || t('verifyemailpage.serverError'));
+        // Lien refusé (déjà utilisé, trop ancien) : le dire clairement (avant : « Impossible de communiquer
+        // avec le serveur », faux ; le serveur répond en anglais « Invalid token »). Réseau : message habituel.
+        const statut = (error as { status?: number } | null)?.status;
+        setMessage(statut && statut < 500 ? t('verifyemailpage.invalidToken') : messageErreurServeur(error, t('verifyemailpage.serverError')));
       }
     };
 

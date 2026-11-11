@@ -4,6 +4,8 @@ import { httpClient } from './httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 import type { ApiResponse } from '@/config/api';
 import type { Media } from '@/types/models/media.types';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 interface MediaUploadResponse extends UploadResponse {
   media_id?: number;
@@ -151,8 +153,7 @@ export class MediaService {
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -237,8 +238,7 @@ export class MediaService {
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -352,8 +352,7 @@ export class MediaService {
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -409,8 +408,7 @@ export class MediaService {
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -446,8 +444,7 @@ export class MediaService {
       return result;
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la suppression'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -477,8 +474,7 @@ export class MediaService {
       return await httpClient.get<Media[]>(endpoint);
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la récupération'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

@@ -15,6 +15,7 @@ import type {
 } from '../types/models/references.types';
 import { Wilaya } from '@/types';
 import { TypeUser } from '@/types/models/type-user.types';
+import { reponseEchec } from '@/utils/erreurServeur';
 
 // Types pour la hiérarchie des catégories
 export interface CategoryGroupedByGenre {
@@ -71,8 +72,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des métadonnées'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -126,8 +126,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la récupération des catégories'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -158,8 +157,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la récupération des genres'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -182,8 +180,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la validation'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -198,8 +195,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'œuvres'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -214,8 +210,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des langues'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -230,8 +225,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'événements'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -246,8 +240,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'utilisateurs'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -257,7 +250,7 @@ export class MetadataService {
     try {
       return await httpClient.get(API_ENDPOINTS.metadata.typesOrganisations);
     } catch (error: unknown) {
-      return { success: false, error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d’organisation' };
+      return { ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue')) };
     }
   }
 
@@ -275,8 +268,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des éditeurs'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -295,8 +287,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la création de l\'éditeur'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -316,8 +307,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des tags'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -329,8 +319,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la création du tag'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -345,8 +334,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des matériaux'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -357,8 +345,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des techniques'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -373,8 +360,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des genres'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }
@@ -389,8 +375,7 @@ export class MetadataService {
       return response;
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement des wilayas'
+        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

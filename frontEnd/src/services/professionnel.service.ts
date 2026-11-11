@@ -9,6 +9,8 @@ import type {
   EntityStatsResponse, ProfileUpdateData, ProfileResponse,
   PortfolioMediaResponse, CalendarEventData, FAQItem
 } from '@/types/api/professionnel.types';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 interface DashboardStats {
   oeuvres: {
@@ -237,8 +239,7 @@ class ProfessionnelService {
       };
     } catch (error: unknown) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload du portfolio'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

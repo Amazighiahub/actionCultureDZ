@@ -1367,7 +1367,7 @@
     "verifying": "Vérification de votre compte en cours...",
     "noToken": "Aucun jeton de vérification n'a été fourni.",
     "successRedirect": "Votre compte a été vérifié avec succès ! Redirection en cours...",
-    "invalidToken": "Le jeton est invalide ou a expiré.",
+    "invalidToken": "Ce lien n’est plus valable (il a déjà servi ou il est trop ancien). Connectez-vous : dans « Mon espace », vous pourrez recevoir un nouveau lien.",
     "serverError": "Impossible de communiquer avec le serveur."
   },
   "oeuvredetailpage": {
@@ -4814,7 +4814,7 @@
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",
     "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
-    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "tokenInvalidOrExpired": "Ce lien n’est plus valable (il a déjà servi ou il est trop ancien). Refaites la demande depuis « Mon espace », carte « Sécurité du compte ».",
     "confirmationFailed": "Impossible de confirmer le changement d'email.",
     "confirming": "Confirmation en cours...",
     "emailUpdated": "Email mis à jour",

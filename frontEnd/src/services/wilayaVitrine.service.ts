@@ -1,6 +1,8 @@
 /** Page d'une wilaya, et liens entre une œuvre et un lieu */
 import { httpClient } from '@/services/httpClient';
 import { oeuvrePath, artisanatPath } from '@/utils/slug';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 export interface ListeTotal<T> { liste: T[]; total: number }
 
@@ -60,7 +62,7 @@ export const wilayaVitrineService = {
     ?? { peut_relier: false, lieux: [] },
   // httpClient rejette les erreurs : sans ce repli, le bouton restait bloqué sans aucun message
   relier: (idLieu: number, idOeuvre: number) => httpClient.post(`/patrimoine/${idLieu}/oeuvres-liees`, { id_oeuvre: idOeuvre })
-    .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined })),
+    .catch((e: unknown) => reponseEchec(e, i18next.t('common.errorOccurred', 'Une erreur est survenue'))),
   retirer: (idLieu: number, idLien: number) => httpClient.delete(`/patrimoine/${idLieu}/pages/${idLien}`)
-    .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined }))
+    .catch((e: unknown) => reponseEchec(e, i18next.t('common.errorOccurred', 'Une erreur est survenue')))
 };

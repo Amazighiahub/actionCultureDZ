@@ -34,6 +34,7 @@ import { mentionCredit, type CreditPhoto, type LicencePhoto } from '@/utils/cred
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -166,7 +167,7 @@ const ModifierPatrimoine: React.FC = () => {
       // Recharger : le rattachement change le titre de la page et la liste des points
       if (estModeration && (parentChoisi?.id ?? null) !== (site?.id_lieu_parent ?? null)) charger();
     } catch (e) {
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error && e.message ? e.message : t('patrimoine.edit.saveError', 'Les modifications n’ont pas pu être enregistrées'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('patrimoine.edit.saveError', 'Les modifications n’ont pas pu être enregistrées')), variant: 'destructive' });
     } finally {
       setEnregistrement(false);
     }

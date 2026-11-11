@@ -165,50 +165,39 @@ describe('VerifyEmailPage — Vérification email', () => {
   // TOKEN INVALIDE
   // =========================================================================
 
-  test('token invalide (réponse erreur API) affiche le message', async () => {
-    mockVerifyEmail.mockResolvedValueOnce({
-      success: false,
-      error: 'Token expiré ou invalide',
-    });
+  // Audit V11 FRM-18 : un lien refusé disait « Impossible de communiquer avec le serveur » (faux) ;
+  // le serveur répond en anglais (« Invalid token »), le site affiche son propre message traduit
+  test('lien refusé (réponse sans succès) : « ce lien n’est plus valable »', async () => {
+    mockVerifyEmail.mockResolvedValueOnce({ success: false, error: 'Invalid token' });
 
     render(<VerifyEmailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Token expiré ou invalide')).toBeInTheDocument();
+      expect(screen.getByText('verifyemailpage.invalidToken')).toBeInTheDocument();
     });
-
-    // Le titre d'erreur
+    expect(screen.queryByText('Invalid token')).not.toBeInTheDocument();
     expect(screen.getByText('verifyemailpage.erreur_lors_vrification')).toBeInTheDocument();
-
-    // Le lien retour
     expect(screen.getByText('verifyemailpage.retour_page_daccueil')).toBeInTheDocument();
   });
 
-  // =========================================================================
-  // ERREUR RÉSEAU
-  // =========================================================================
-
-  test('erreur réseau affiche le message serveur', async () => {
-    mockVerifyEmail.mockRejectedValueOnce({
-      response: { data: { error: 'Erreur serveur 500' } },
-    });
+  test('lien refusé (erreur 400 du serveur) : même message, pas « serveur injoignable »', async () => {
+    mockVerifyEmail.mockRejectedValueOnce({ status: 400, code: 'INVALID_TOKEN', message: 'Invalid token' });
 
     render(<VerifyEmailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Erreur serveur 500')).toBeInTheDocument();
+      expect(screen.getByText('verifyemailpage.invalidToken')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('verifyemailpage.erreur_lors_vrification')).toBeInTheDocument();
+    expect(screen.queryByText('verifyemailpage.serverError')).not.toBeInTheDocument();
   });
 
-  test('erreur réseau sans response.data affiche le fallback i18n', async () => {
-    mockVerifyEmail.mockRejectedValueOnce(new Error('Network failure'));
+  test('réseau coupé : le message de connexion (déjà traduit par httpClient)', async () => {
+    mockVerifyEmail.mockRejectedValueOnce({ code: 'ERR_NETWORK', message: 'Problème de connexion. Vérifiez votre connexion internet et réessayez.' });
 
     render(<VerifyEmailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('verifyemailpage.serverError')).toBeInTheDocument();
+      expect(screen.getByText('Problème de connexion. Vérifiez votre connexion internet et réessayez.')).toBeInTheDocument();
     });
   });
 });

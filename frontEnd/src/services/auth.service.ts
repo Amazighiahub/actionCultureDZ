@@ -7,6 +7,8 @@ import { mediaService as MediaService } from "./media.service";
 
 // Types d'inscription : définis une seule fois, dans types/models/auth.types
 import type { RegisterVisitorData, RegisterProfessionalData } from '@/types/models/auth.types';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 export type { RegisterVisitorData, RegisterProfessionalData };
 
 // Interface mise à jour pour correspondre au backend
@@ -320,8 +322,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     return response;
   } catch (error) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de la mise à jour du profil'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -345,8 +346,7 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<{ url: string; fi
     return uploadResult;
   } catch (error) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur lors de l\'upload de la photo'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }
@@ -382,8 +382,7 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
     return uploadResult;
   } catch (error) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur upload photo'
+      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
     };
   }
 }

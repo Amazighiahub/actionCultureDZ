@@ -7,6 +7,7 @@ import type { Favori, FavoriStats, PopularItem, GroupedFavoris } from '@/service
 import { useToast } from '@/components/ui/use-toast';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { PaginationParams } from '@/config/api';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 interface UseFavorisOptions {
   type?: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
@@ -119,7 +120,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
     onError: (error) => {
       toast({
         title: t('toasts.error'),
-        description: error.message || t('toasts.addToFavoritesFailed'),
+        description: messageErreurServeur(error, t('toasts.addToFavoritesFailed')),
         variant: "destructive",
       });
     }
@@ -143,7 +144,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
     onError: (error) => {
       toast({
         title: t('toasts.error'),
-        description: error.message || t('toasts.removeFromFavoritesFailed'),
+        description: messageErreurServeur(error, t('toasts.removeFromFavoritesFailed')),
         variant: "destructive",
       });
     }

@@ -5,6 +5,8 @@
 import { httpClient } from './httpClient';
 import type { ApiResponse } from '@/config/api';
 import type { MoyensPaiement } from './paiement.service';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 export type ModeLivraison = 'algerie' | 'etranger' | 'main_propre' | 'a_convenir';
 export type StatutCommande = 'en_attente' | 'payee' | 'envoyee' | 'annulee';
@@ -65,7 +67,8 @@ export interface NouvelleCommande {
   message?: string;
 }
 
-const erreur = (e: unknown) => ({ success: false as const, error: e instanceof Error && e.message ? e.message : 'Erreur' });
+// Échec : message lisible, détail des champs, code et statut gardés (avant : le texte seul, audit V11 FRM-18)
+const erreur = (e: unknown) => reponseEchec(e, i18next.t('common.errorOccurred', 'Une erreur est survenue'));
 
 export const commandeService = {
   async offre(idOeuvre: number): Promise<ApiResponse<OffreOeuvre>> {

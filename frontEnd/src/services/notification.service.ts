@@ -19,6 +19,8 @@ import {
   mapAPISummaryToSummary,
   formatNotificationDate
 } from '../types/models/notification.types';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 // Copiez-collez ceci à la FIN de notification.service.ts
 // Remplacez la section export type { ... } existante
 
@@ -327,7 +329,7 @@ async getNotifications(
     } catch (error) {
       return {
         connected: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
   }

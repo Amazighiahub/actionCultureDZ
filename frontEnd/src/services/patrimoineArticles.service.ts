@@ -19,6 +19,8 @@
  */
 import { ApiResponse, API_ENDPOINTS } from '@/config/api';
 import { httpClient } from './httpClient';
+import { reponseEchec } from '@/utils/erreurServeur';
+import i18next from 'i18next';
 
 // ============================================================================
 // TYPES
@@ -122,8 +124,7 @@ class PatrimoineArticlesService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue')),
       };
     }
   }
@@ -145,8 +146,7 @@ class PatrimoineArticlesService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue')),
       };
     }
   }
@@ -165,8 +165,7 @@ class PatrimoineArticlesService {
       );
     } catch (error) {
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue')),
       };
     }
   }

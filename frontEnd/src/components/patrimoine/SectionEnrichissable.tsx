@@ -31,6 +31,7 @@ import {
   type PagePatrimoine,
   lienEcrirePage, retirerPagePatrimoine,
 } from '@/services/patrimoineArticles.service';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
@@ -133,10 +134,10 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
         setIsEditing(false);
         onSaved?.(editValue);
       } else {
-        toast({ title: t('common.error'), description: (response as any).error || t('patrimoine.contribute.saveFailed'), variant: 'destructive' });
+        toast({ title: t('common.error'), description: messageErreurServeur(response, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
       }
     } catch (err: unknown) {
-      toast({ title: t('common.error'), description: err instanceof Error ? err.message : t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde'), variant: 'destructive' });
+      toast({ title: t('common.error'), description: messageErreurServeur(err, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
     } finally {
       setSaving(false);
     }

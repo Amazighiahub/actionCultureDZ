@@ -42,6 +42,7 @@ import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -286,11 +287,13 @@ const AjouterPatrimoineRapide: React.FC = () => {
         }
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : '';
-      if (errMsg.includes('409') || errMsg.includes('existe déjà') || errMsg.includes('DUPLICATE')) {
+      // Doublon reconnu par le statut 409, et non par des mots français du message (traduit en arabe
+      // par le serveur depuis l'audit V11 FRM-5, il n'était plus reconnu)
+      const e = err as { status?: number; code?: string } | null;
+      if (e?.status === 409 || e?.code === 'DUPLICATE') {
         toast({ title: t('patrimoine.duplicate.found', 'Site déjà existant'), description: t('patrimoine.duplicate.tryEnrich', 'Un site avec ce nom existe dans cette commune.'), variant: 'destructive' });
       } else {
-        toast({ title: t('common.error'), description: errMsg || t('patrimoine.errors.createFailed'), variant: 'destructive' });
+        toast({ title: t('common.error'), description: messageErreurServeur(err, t('patrimoine.errors.createFailed')), variant: 'destructive' });
       }
     } finally {
       setLoading(false);

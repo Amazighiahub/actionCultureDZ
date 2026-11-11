@@ -1,3 +1,4 @@
+import type { ApiResponse } from '@/config/api';
 import { useEffect, useRef } from 'react';
 /**
  * Message à montrer quand le serveur refuse un formulaire.
@@ -26,6 +27,24 @@ export function messageErreurServeur(source: unknown, defaut: string): string {
   const s = source as { error?: unknown; message?: unknown } | null;
   const base = typeof s?.error === 'string' ? s.error : typeof s?.message === 'string' ? s.message : '';
   return base && !TECHNIQUE.test(base) ? base : defaut;
+}
+
+/**
+ * Échec renvoyé par un service (au lieu de lancer l'erreur) : garde le message lisible, le détail des champs,
+ * le code et le statut. Avant, les services ne gardaient que le texte (« error.message ») : « Données
+ * invalides » sans dire quel champ, et ni « réseau coupé » ni « délai dépassé » ne pouvaient être reconnus
+ * (audit V11 FRM-18).
+ */
+export function reponseEchec(err: unknown, defaut = 'Erreur'): ApiResponse<never> & { success: false; error: string } {
+  const e = err as { code?: unknown; status?: unknown } | null;
+  const details = detailsDesChamps(err);
+  return {
+    success: false,
+    error: messageErreurServeur(err, defaut),
+    ...(details.length ? { details: details as ApiResponse['details'] } : {}),
+    ...(typeof e?.code === 'string' ? { code: e.code } : {}),
+    ...(typeof e?.status === 'number' ? { status: e.status } : {}),
+  };
 }
 
 /** Résultat d'un envoi (inscription, commentaire…) : le message d'échec est montré là où la personne a appuyé */
