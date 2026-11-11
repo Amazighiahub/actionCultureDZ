@@ -173,9 +173,11 @@ const EventDetailsPage: React.FC = () => {
 
         {/* Contenu principal */}
         <div className="container py-8">
-          <div className="grid gap-8 lg:grid-cols-3">
+          {/* Sur téléphone, l'inscription (prix, places, bouton) vient juste après l'en-tête : avant, elle était
+              sous tout le contenu, à plus de deux écrans (audit V11 UX-8). Sur ordinateur, colonne de droite. */}
+          <div className="grid gap-8 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
             {/* Colonne principale */}
-            <div className="lg:col-span-2 space-y-8 min-w-0">
+            <div className="lg:col-span-2 lg:row-span-2 lg:col-start-1 lg:row-start-1 space-y-8 min-w-0">
               {/* Onglets simples sans Radix */}
               <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 flex-nowrap">
@@ -299,9 +301,8 @@ const EventDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Inscription */}
+            {/* Inscription */}
+            <div id="inscription" className="order-first lg:order-none lg:col-start-3 lg:row-start-1 scroll-mt-24">
               <ErrorBoundary>
                 <Suspense fallback={<SectionFallback />}>
                   <EventRegistration
@@ -315,6 +316,10 @@ const EventDetailsPage: React.FC = () => {
                   />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6 lg:col-start-3 lg:row-start-2">
 
               {/* Organisateurs */}
               <ErrorBoundary>

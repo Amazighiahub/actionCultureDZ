@@ -36,6 +36,9 @@ const EventHero: React.FC<EventHeroProps> = ({
   // Gratuit, prix, ou « Tarif selon votre profil » (le prix se découvre à l'inscription)
   const modeTarif = tarificationDe(event).mode;
   const { td, safe } = useTranslateData();
+  // Événement passé : pas de bouton « S'inscrire »
+  const finEvenement = event.date_fin || event.date_debut;
+  const termine = finEvenement ? new Date(finEvenement) <= new Date() : false;
 
   // Calculer le pourcentage de remplissage
   const capacityPercentage = event.capacite_max
@@ -119,6 +122,15 @@ const EventHero: React.FC<EventHeroProps> = ({
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
+              {/* Téléphone : l'action principale d'abord, elle mène à la carte d'inscription (audit V11 UX-8) */}
+              {!termine && (
+                <Button size="lg" className="lg:hidden" asChild>
+                  <a href="#inscription">
+                    <Ticket className="h-5 w-5 me-2" />
+                    {t('event.registration.register', "S'inscrire")}
+                  </a>
+                </Button>
+              )}
               {modeTarif !== 'gratuit' && (
                 <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-4 py-2">
                   <Ticket className="h-5 w-5 text-primary" />
@@ -245,6 +257,15 @@ const EventHero: React.FC<EventHeroProps> = ({
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
+                {/* Téléphone : l'action principale d'abord, elle mène à la carte d'inscription (audit V11 UX-8) */}
+                {!termine && (
+                  <Button size="lg" className="lg:hidden" asChild>
+                    <a href="#inscription">
+                      <Ticket className="h-5 w-5 me-2" />
+                      {t('event.registration.register', "S'inscrire")}
+                    </a>
+                  </Button>
+                )}
                 {modeTarif !== 'gratuit' && (
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
                     <Ticket className="h-5 w-5 text-white" />
