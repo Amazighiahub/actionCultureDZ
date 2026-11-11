@@ -80,7 +80,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       if (response.success && response.data) {
         return response.data;
       }
-      throw new Error(response.error || 'Œuvre non trouvée');
+      // Statut et code gardés : pas de nouvel essai après un 404, et la page distingue « introuvable » d'une panne
+      throw Object.assign(new Error(response.error || 'Œuvre non trouvée'), { status: response.status, code: response.code });
     },
     enabled: enabled && oeuvreId > 0,
     staleTime: 2 * 60 * 1000,
@@ -294,6 +295,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
 
     // Erreurs
     error: oeuvreQuery.error?.message || null,
+    erreurChargement: oeuvreQuery.error,
+    recharger: () => { oeuvreQuery.refetch(); },
 
     // Favoris
     isFavorite,

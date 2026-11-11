@@ -6108,5 +6108,14 @@
   },
   "saisie": {
     "conservee": "Votre session avait expiré : votre texte a été conservé. Vérifiez-le, puis envoyez-le de nouveau."
+  },
+  "introuvable": {
+    "message": "Ce contenu n’existe pas ou n’est plus publié.",
+    "connexionTitre": "Chargement impossible",
+    "connexionMessage": "La page n’a pas pu être chargée. Vérifiez votre connexion, puis réessayez.",
+    "lieu": "Ce lieu n’existe pas ou n’est plus publié.",
+    "evenement": "Cet événement n’existe pas ou n’est plus publié.",
+    "oeuvre": "Cette œuvre n’existe pas ou n’est plus publiée.",
+    "artisanat": "Cet objet d’artisanat n’existe pas ou n’est plus publié."
   }
 }

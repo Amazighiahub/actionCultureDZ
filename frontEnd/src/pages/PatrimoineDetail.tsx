@@ -15,7 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2, Pencil,
-  CheckCircle2, XCircle, Info, History, Image as ImageIcon, Play,
+  CheckCircle2, Info, History, Image as ImageIcon, Play,
   Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
@@ -43,6 +43,7 @@ import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { mentionCredit } from '@/utils/creditPhoto';
 import { OeuvresLieesLieu, DeLaRegion } from '@/components/patrimoine/OeuvresEtRegion';
 import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 
 // Type multilingue réutilisé dans l'interface du site
@@ -205,7 +206,8 @@ const PatrimoineDetail = () => {
     if (`/patrimoine/${id}` !== canonique) naviguerVersCanonique(canonique + window.location.search + window.location.hash, { replace: true });
   }, [site, id, naviguerVersCanonique]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Erreur reçue telle quelle : « introuvable » (404) et « pas pu répondre » ne disent pas la même chose
+  const [error, setError] = useState<unknown>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showVisitePlanner, setShowVisitePlanner] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -242,11 +244,12 @@ const PatrimoineDetail = () => {
       if (response.success && response.data) {
         setSite(response.data as unknown as SitePatrimoineDetail);
       } else {
-        setError(t('patrimoine.notFound', 'Site non trouvé'));
+        setError(response);
       }
     } catch (err) {
+      // Avant : toute erreur, même un lieu retiré (404), devenait « Erreur de connexion au serveur »
       console.error('Erreur chargement site:', err);
-      setError(t('oeuvre.errors.connectionError', 'Erreur de connexion au serveur'));
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -324,25 +327,13 @@ const PatrimoineDetail = () => {
 
   if (error || !site) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
-        <SEOHead title={t('patrimoine.notFound', 'Site non trouvé')} noindex />
-        <Header />
-        <main className="container py-8">
-          <Card className="text-center py-12">
-            <CardContent>
-              <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">{t('common.error', 'Erreur')}</h2>
-              <p className="text-muted-foreground mb-4">{error || t('patrimoine.notFound', 'Site non trouvé')}</p>
-              <Button onClick={() => navigate('/patrimoine')}>
-                <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
-                {t('common.back', 'Retour')}
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
+      <ContenuIntrouvable
+        erreur={error}
+        titre={t('patrimoine.notFound', 'Site non trouvé')}
+        message={t('introuvable.lieu', 'Ce lieu n’existe pas ou n’est plus publié.')}
+        lienListe={{ to: '/patrimoine', libelle: t('patrimoine.backToList', 'Retour à la liste') }}
+        onReessayer={loadSiteDetail}
+      />
     );
   }
 

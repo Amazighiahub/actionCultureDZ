@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useShare } from '@/hooks/useShare';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
@@ -38,6 +37,7 @@ import BoutonSuivre from '@/components/shared/BoutonSuivre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
 import { idFromSlug, artisanatPath } from '@/utils/slug';
+import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 
 interface ArtisanatData {
   id_artisanat: number;
@@ -119,7 +119,8 @@ const ArtisanatDetail: React.FC = () => {
 
   const [artisanat, setArtisanat] = useState<ArtisanatData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Erreur reçue telle quelle : la page distingue « introuvable » d'une panne (audit V11 UX-7)
+  const [error, setError] = useState<unknown>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
@@ -159,12 +160,11 @@ const ArtisanatDetail: React.FC = () => {
           } catch { /* ignore */ }
         }
       } else {
-        setError(messageErreurServeur(response, t('artisanat.notFound', 'Artisanat non trouvé')));
+        setError(response);
       }
     } catch (err) {
       console.error('Erreur chargement artisanat:', err);
-      // Fiche introuvable (404) ou refusée : la raison du serveur ; réseau coupé : texte déjà traduit par httpClient
-      setError(messageErreurServeur(err, t('errors.loadingFailed', 'Erreur lors du chargement')));
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -262,22 +262,13 @@ const ArtisanatDetail: React.FC = () => {
 
   if (error || !artisanat) {
     return (
-      <>
-        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
-        <SEOHead title={t('artisanat.notFound', 'Artisanat non trouvé')} noindex />
-        <Header />
-        <main className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h1 className="text-2xl font-bold mb-2">{error || t('artisanat.notFound', 'Artisanat non trouvé')}</h1>
-            <Button onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
-              {t('common.backToList', 'Retour à la liste')}
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </>
+      <ContenuIntrouvable
+        erreur={error}
+        titre={t('artisanat.notFound', 'Artisanat non trouvé')}
+        message={t('introuvable.artisanat', 'Cet objet d’artisanat n’existe pas ou n’est plus publié.')}
+        lienListe={{ to: '/artisanat', libelle: t('common.backToList', 'Retour à la liste') }}
+        onReessayer={() => { if (id) loadArtisanat(idFromSlug(id) ?? 0); }}
+      />
     );
   }
 

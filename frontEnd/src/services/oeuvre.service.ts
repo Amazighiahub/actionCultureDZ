@@ -467,10 +467,9 @@ class OeuvreService {
     try {
       return await httpClient.get<Oeuvre>(`/oeuvres/${id}`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération')
-      };
+      // Statut gardé : une œuvre absente (404) n'est pas redemandée, et la page dit « introuvable »
+      // au lieu de 7 s d'attente (audit V11 UX-7)
+      return reponseEchec(error, i18next.t('errors.loadingFailed', 'Erreur lors du chargement'));
     }
   }
 

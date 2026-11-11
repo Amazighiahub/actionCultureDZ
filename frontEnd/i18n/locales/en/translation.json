@@ -6108,5 +6108,14 @@
   },
   "saisie": {
     "conservee": "Your session had expired: your text was kept. Check it, then send it again."
+  },
+  "introuvable": {
+    "message": "This content does not exist or is no longer published.",
+    "connexionTitre": "Could not load",
+    "connexionMessage": "The page could not be loaded. Check your connection, then try again.",
+    "lieu": "This place does not exist or is no longer published.",
+    "evenement": "This event does not exist or is no longer published.",
+    "oeuvre": "This work does not exist or is no longer published.",
+    "artisanat": "This craft item does not exist or is no longer published."
   }
 }

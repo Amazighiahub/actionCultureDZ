@@ -90,7 +90,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
           ? response.data
           : { ...response.data, tarif: Number(tarif) };
       }
-      throw new Error(response.error || 'Événement non trouvé');
+      throw Object.assign(new Error(response.error || 'Événement non trouvé'), { status: response.status, code: response.code });
     },
     enabled: enabled && eventId > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -395,6 +395,9 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
     // Erreurs
     error: eventQuery.error?.message || null,
+    // Erreur complète (statut) pour la page « introuvable », et nouvel essai après une panne (audit V11 UX-7)
+    erreurChargement: eventQuery.error,
+    recharger: () => { eventQuery.refetch(); },
 
     // Favoris
     isFavorite,

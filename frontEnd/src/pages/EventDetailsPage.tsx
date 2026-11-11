@@ -31,6 +31,7 @@ const EventDocuments = React.lazy(() => import('@/components/event/EventDocument
 const EventProgram = React.lazy(() => import('./event/EventProgram'));
 const EventGallery = React.lazy(() => import('./event/EventGallery'));
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
+import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 const EventComments = React.lazy(() => import('./event/EventComments'));
 const EventOrganizers = React.lazy(() => import('./event/EventOrganizers'));
 const EventRegistration = React.lazy(() => import('./event/EventRegistration'));
@@ -67,6 +68,8 @@ const EventDetailsPage: React.FC = () => {
     organizers,
     loading,
     error,
+    erreurChargement,
+    recharger,
     isFavorite,
     toggleFavorite,
     addComment,
@@ -116,20 +119,13 @@ const EventDetailsPage: React.FC = () => {
   // Erreur
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
-        <SEOHead title={t('event.notFound', 'Événement non trouvé')} noindex />
-        <Header />
-        <main className="container py-8">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">{t('event.notFound', 'Événement non trouvé')}</h2>
-            <Button onClick={() => navigate('/evenements')}>
-              {t('event.backToList', 'Retour aux événements')}
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <ContenuIntrouvable
+        erreur={erreurChargement}
+        titre={t('event.notFound', 'Événement non trouvé')}
+        message={t('introuvable.evenement', 'Cet événement n’existe pas ou n’est plus publié.')}
+        lienListe={{ to: '/evenements', libelle: t('event.backToList', 'Retour à la liste') }}
+        onReessayer={recharger}
+      />
     );
   }
 

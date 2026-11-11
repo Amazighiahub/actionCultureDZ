@@ -57,6 +57,7 @@ import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import { idFromSlug, oeuvrePath, artisanatPath } from '@/utils/slug';
 import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
+import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -148,6 +149,8 @@ const OeuvreDetailPage: React.FC = () => {
     comments,
     loading,
     error,
+    erreurChargement,
+    recharger,
     isFavorite,
     toggleFavorite,
     addComment,
@@ -389,20 +392,13 @@ const OeuvreDetailPage: React.FC = () => {
   // Erreur
   if (error || !oeuvre) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
-        <SEOHead title={t('oeuvre.notFound', 'Œuvre non trouvée')} noindex />
-        <Header />
-        <main className="container py-8">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">{t('oeuvre.notFound', 'Œuvre non trouvée')}</h2>
-            <Button onClick={() => navigate('/oeuvres')}>
-              {t('oeuvre.backToList', 'Retour aux œuvres')}
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <ContenuIntrouvable
+        erreur={erreurChargement}
+        titre={t('oeuvre.notFound', 'Œuvre non trouvée')}
+        message={t('introuvable.oeuvre', 'Cette œuvre n’existe pas ou n’est plus publiée.')}
+        lienListe={{ to: '/oeuvres', libelle: t('oeuvre.backToList', 'Retour à la liste') }}
+        onReessayer={recharger}
+      />
     );
   }
 
