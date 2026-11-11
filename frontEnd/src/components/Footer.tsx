@@ -90,8 +90,9 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* QR code de la plateforme (image statique : l'URL taladz.com ne change pas) */}
-            <div className="flex items-center gap-4">
+            {/* QR code de la plateforme (image statique : l'URL taladz.com ne change pas).
+                Masqué sur téléphone : on y est déjà sur le site, il ne servirait qu'à alourdir la page (audit V11 UX-19) */}
+            <div className="hidden md:flex items-center gap-4">
               <div className="rounded-lg bg-white p-1.5 border flex-shrink-0">
                 <img
                   src="/images/qrcode-taladz.svg"

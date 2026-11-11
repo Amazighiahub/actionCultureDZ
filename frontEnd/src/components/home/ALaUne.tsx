@@ -18,14 +18,13 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { Evenement } from '@/types';
 import EnTeteSection from './EnTeteSection';
 import { evenementPath } from '@/utils/slug';
+import { echeanceEvenement, libelleEcheance } from '@/utils/statutEvenement';
 
 type EvenementAccueil = Evenement & {
   image_url?: string | null;
   TypeEvenement?: { nom_type?: unknown } | null;
   Lieu?: { id_lieu?: number; nom?: unknown } | null;
 };
-
-const JOUR = 24 * 60 * 60 * 1000;
 
 const ALaUne: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -60,17 +59,8 @@ const ALaUne: React.FC = () => {
     return `${formatDate(d, { day: 'numeric', month: 'long' })} – ${formatDate(f, complet)}`;
   };
 
-  // « Dans 4 jours », « Demain », « Aujourd'hui », « En cours »
-  const quand = (e: EvenementAccueil) => {
-    if (!e.date_debut) return null;
-    const debut = new Date(e.date_debut).getTime(), fin = e.date_fin ? new Date(e.date_fin).getTime() : debut;
-    const maintenant = Date.now();
-    if (maintenant >= debut && maintenant <= fin) return t('home.aLaUne.enCours', 'En ce moment');
-    const jours = Math.ceil((new Date(new Date(e.date_debut).toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / JOUR);
-    if (jours <= 0) return t('home.aLaUne.aujourdhui', 'Aujourd’hui');
-    if (jours === 1) return t('home.aLaUne.demain', 'Demain');
-    return t('home.aLaUne.dansJours', { defaultValue: 'Dans {{count}} jours', count: jours });
-  };
+  // « Dans 4 jours », « Demain », « Aujourd'hui », « En ce moment » (règle partagée avec la liste des événements)
+  const quand = (e: EvenementAccueil) => libelleEcheance(echeanceEvenement(e.date_debut, e.date_fin), t);
 
   const [premier, ...suivants] = evenements;
 

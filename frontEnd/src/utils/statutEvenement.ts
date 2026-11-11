@@ -35,3 +35,80 @@ export function finEffective(dateDebut?: string | Date | null, dateFin?: string 
   const local = new Date(ref.getTime() + UNE_HEURE);
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1) - UNE_HEURE);
 }
+
+const UN_JOUR = 24 * UNE_HEURE;
+
+/** Jour civil en Algérie (UTC+1), sous la forme d'un nombre de jours depuis 1970 */
+const jourAlgerie = (d: Date) => Math.floor((d.getTime() + UNE_HEURE) / UN_JOUR);
+
+export type Echeance =
+  | { cle: 'enCours' }
+  | { cle: 'aujourdhui' }
+  | { cle: 'demain' }
+  | { cle: 'dansJours'; jours: number }
+  | { cle: 'termine' };
+
+/**
+ * Échéance d'un événement pour le public : « En ce moment », « Aujourd'hui », « Demain »,
+ * « Dans N jours » ou « Terminé ». Remplace le statut interne (« Publié ») sur les cartes
+ * (audit V11 UX-17) ; aussi utilisé par « À la une » de l'accueil.
+ */
+export function echeanceEvenement(
+  dateDebut?: string | Date | null,
+  dateFin?: string | Date | null,
+  maintenant: Date = new Date()
+): Echeance | null {
+  if (!dateDebut) return null;
+  const debut = new Date(dateDebut);
+  if (Number.isNaN(debut.getTime())) return null;
+  const fin = finEffective(dateDebut, dateFin);
+  if (fin && fin <= maintenant) return { cle: 'termine' };
+  const jours = jourAlgerie(debut) - jourAlgerie(maintenant);
+  // Jour enregistré sans heure : l'heure n'est pas connue, on dit « Aujourd'hui » et non « En ce moment »
+  const debutSansHeure = debut.getUTCHours() === 0 && debut.getUTCMinutes() === 0 && debut.getUTCSeconds() === 0;
+  if (debut <= maintenant && !(debutSansHeure && jours === 0)) return { cle: 'enCours' };
+  if (jours <= 0) return { cle: 'aujourdhui' };
+  if (jours === 1) return { cle: 'demain' };
+  return { cle: 'dansJours', jours };
+}
+
+type Traduire = (cle: string, options?: Record<string, unknown>) => string;
+
+/** Libellé traduit d'une échéance (clés de « À la une » de l'accueil) */
+export function libelleEcheance(echeance: Echeance | null, t: Traduire): string | null {
+  if (!echeance) return null;
+  switch (echeance.cle) {
+    case 'enCours': return t('home.aLaUne.enCours', { defaultValue: 'En ce moment' });
+    case 'aujourdhui': return t('home.aLaUne.aujourdhui', { defaultValue: 'Aujourd’hui' });
+    case 'demain': return t('home.aLaUne.demain', { defaultValue: 'Demain' });
+    case 'dansJours': return t('home.aLaUne.dansJours', { defaultValue: 'Dans {{count}} jours', count: echeance.jours });
+    case 'termine': return t('events.statuses.termine', { defaultValue: 'Terminé' });
+  }
+}
+
+export type PeriodeEvenements = 'tous' | 'weekend' | 'mois';
+
+/** Date « AAAA-MM-JJ » d'un jour compté depuis 1970 */
+const iso = (jour: number) => new Date(jour * UN_JOUR).toISOString().slice(0, 10);
+
+/**
+ * Bornes du filtre « Quand ? » de la liste des événements, en jours civils de l'Algérie.
+ * Le week-end algérien est le vendredi et le samedi : du dimanche au jeudi, c'est le prochain ;
+ * le vendredi ou le samedi, c'est celui en cours. « Ce mois-ci » couvre le mois civil entier.
+ */
+export function bornesPeriode(
+  periode: PeriodeEvenements,
+  maintenant: Date = new Date()
+): { dateDebut?: string; dateFin?: string } {
+  if (periode === 'tous') return {};
+  const jour = jourAlgerie(maintenant);
+  const local = new Date(jour * UN_JOUR);
+  if (periode === 'weekend') {
+    const js = local.getUTCDay(); // 0 = dimanche … 5 = vendredi, 6 = samedi
+    const vendredi = js === 6 ? jour - 1 : jour + (5 - js);
+    return { dateDebut: iso(vendredi), dateFin: iso(vendredi + 1) };
+  }
+  const premier = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) / UN_JOUR;
+  const dernier = Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + 1, 0) / UN_JOUR;
+  return { dateDebut: iso(premier), dateFin: iso(dernier) };
+}

@@ -810,7 +810,17 @@
       "aConvenir": "to be agreed",
       "autreProfessionnel": "The price for “Other” is optional: if empty or lower, the person pays the professional price.",
       "prixAConvenir": "Price to be agreed with the organiser."
-    }
+    },
+    "filters": {
+      "period": "When?",
+      "anyDate": "Any date",
+      "weekend": "This weekend",
+      "month": "This month",
+      "wilaya": "Wilaya",
+      "allWilayas": "All wilayas"
+    },
+    "resultsFound_one": "{{count}} event found",
+    "resultsFound_other": "{{count}} events found"
   },
   "footer": {
     "legal": "Legal",
@@ -849,7 +859,12 @@
       "scientific": "Scientific",
       "art": "Artworks",
       "mainLabel": "Main navigation",
-      "subLabel": "Section categories"
+      "subLabel": "Section categories",
+      "music": "Music",
+      "research": "Scientific research",
+      "concerts": "Concerts",
+      "festivals": "Festivals",
+      "conferences": "Talks"
     },
     "subtitle": "The source of Algerian culture",
     "title": "Tala DZ",
@@ -1260,7 +1275,15 @@
       "total": "Works",
       "new": "New releases",
       "types": "Types",
-      "classics": "Classics"
+      "classics": "Classics",
+      "totalCount_one": "{{count}} work",
+      "totalCount_other": "{{count}} works",
+      "typesCount_one": "{{count}} type",
+      "typesCount_other": "{{count}} types",
+      "newCount_one": "{{count}} new release",
+      "newCount_other": "{{count}} new releases",
+      "classicsCount_one": "{{count}} classic",
+      "classicsCount_other": "{{count}} classics"
     },
     "types": {
       "album": "Album",
@@ -1313,7 +1336,9 @@
     },
     "noResults": "No works found",
     "noResultsDesc": "Try changing your search criteria",
-    "resultsHeading": "Works list"
+    "resultsHeading": "Works list",
+    "resultsFound_one": "{{count}} work found",
+    "resultsFound_other": "{{count}} works found"
   },
   "verifyemailpage": {
     "vrification_russie": "Verification Successful!",
@@ -1907,7 +1932,13 @@
       "products": "Products",
       "materials": "Materials",
       "techniques": "Techniques",
-      "artisans": "Artisans"
+      "artisans": "Artisans",
+      "productsCount_one": "{{count}} product",
+      "productsCount_other": "{{count}} products",
+      "artisansCount_one": "{{count}} artisan",
+      "artisansCount_other": "{{count}} artisans",
+      "materialsCount_one": "{{count}} material",
+      "materialsCount_other": "{{count}} materials"
     },
     "searchPlaceholder": "Search for a craft product...",
     "filterByMaterial": "Material",
@@ -1938,7 +1969,9 @@
     "addToFavorites": "Add to favourites",
     "resultsHeading": "Crafts list",
     "delai": "Made in {{jours}} days",
-    "enStock": "In stock: {{n}}"
+    "enStock": "In stock: {{n}}",
+    "resultsFound_one": "{{count}} product found",
+    "resultsFound_other": "{{count}} products found"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -2052,7 +2085,8 @@
     "messageRequis": "Write your message.",
     "merciEnvoye": "Thank you, your message has been sent.",
     "reponseA": "We will reply to {{email}}.",
-    "autreMessage": "Write another message"
+    "autreMessage": "Write another message",
+    "sommaire": "On this page"
   },
   "ajouteroeuvre": {
     "extrait": "Book excerpt",
@@ -3372,7 +3406,8 @@
       "author": "Author",
       "comments": "Comments",
       "gallery": "Gallery",
-      "info": "Information"
+      "info": "Information",
+      "label": "Work sections"
     },
     "tags": "Tags",
     "team": "Team",
@@ -3450,7 +3485,11 @@
     "discoverArtistWorks": "Discover more works by the artist",
     "discoverAuthorWorks": "Discover more works by the author",
     "noOtherArtistWorks": "No other works by this artist available.",
-    "noOtherAuthorWorks": "No other works by this author available."
+    "noOtherAuthorWorks": "No other works by this author available.",
+    "nbPages_one": "{{count}} page",
+    "nbPages_other": "{{count}} pages",
+    "nbContributeurs_one": "{{count}} contributor",
+    "nbContributeurs_other": "{{count}} contributors"
   },
   "event": {
     "accessibility": "Accessibility",
@@ -3551,7 +3590,14 @@
       "invitationDecline": "Decline",
       "nonPartie": "Your registration was not sent. Check your connection, then tap “Confirm registration” again.",
       "reponseTarde": "The reply is taking long. Reload the page to check whether your registration was saved before trying again.",
-      "cancelFailed": "Your registration could not be cancelled. Please try again."
+      "cancelFailed": "Your registration could not be cancelled. Please try again.",
+      "nombrePersonnesLabel": "Number of people",
+      "limiteOeuvres_one": "Up to {{count}} work for this event",
+      "limiteOeuvres_other": "Up to {{count}} works for this event",
+      "maxOeuvres_one": "Up to {{count}} work",
+      "maxOeuvres_other": "Up to {{count}} works",
+      "nbPersonnes_one": "{{count}} person",
+      "nbPersonnes_other": "{{count}} people"
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -3563,7 +3609,8 @@
       "program": "Program",
       "participants": "Participants",
       "services": "Services",
-      "metadata": "Metadata"
+      "metadata": "Metadata",
+      "label": "Event sections"
     },
     "roles": {
       "organisateur_principal": "Main Organizer",
@@ -4427,6 +4474,16 @@
       "titre": "Thank you for this place!",
       "texte": "It will be published after the team reviews it. You will get a notification.",
       "sansPhotos": "It will be published after the team reviews it. Some photos could not be sent."
+    },
+    "sitesCount_one": "{{count}} site",
+    "sitesCount_other": "{{count}} sites",
+    "card": {
+      "monuments_one": "{{count}} monument",
+      "monuments_other": "{{count}} monuments",
+      "vestiges_one": "{{count}} remains",
+      "vestiges_other": "{{count}} remains",
+      "services_one": "{{count}} service",
+      "services_other": "{{count}} services"
     }
   },
   "toasts": {
@@ -4855,6 +4912,19 @@
       "etape1": "Choose what interests you: history, architecture, nature, art…",
       "etape2": "Tell us how much time you have and how you travel.",
       "etape3": "The site draws your route. At each stop, open the place to read or listen to its history."
+    },
+    "modesTransport": {
+      "walk": "On foot",
+      "bike": "Bike",
+      "car": "Car"
+    },
+    "centresInteret": {
+      "history": "History",
+      "architecture": "Architecture",
+      "art": "Art",
+      "nature": "Nature",
+      "religion": "Religion",
+      "gastronomy": "Gastronomy"
     }
   },
   "multilang": {
@@ -5339,7 +5409,8 @@
       "document": "Documents",
       "diaporama": "Slideshows",
       "audio": "Audio"
-    }
+    },
+    "mediaNumero": "Media {{n}}"
   },
   "gestionArtisanat": {
     "errors": {
@@ -5421,7 +5492,8 @@
     "hint": "Scanned with a phone, it opens your portfolio. Add it to your business cards, posters or stand.",
     "downloadPng": "Download (PNG)",
     "downloadSvg": "For printing (SVG)",
-    "button": "QR code"
+    "button": "QR code",
+    "imprimer": "Printable QR code"
   },
   "rating": {
     "value": "Rating: {{value}} out of {{max}}",
@@ -5548,7 +5620,9 @@
     "ecrireArticle": "Write an article about this personality",
     "articles": "Articles",
     "aucunArticle": "No full article about this personality yet.",
-    "sesLieux": "Places"
+    "sesLieux": "Places",
+    "retiree": "Figure removed",
+    "retraitEchec": "This figure could not be removed"
   },
   "gastronomie": {
     "menu": "Gastronomy",
@@ -6027,7 +6101,8 @@
     "reessayer": "Try again",
     "refuse": "The anti-robot check failed: please redo it.",
     "secours": "If the problem persists, write to us at contact@taladz.com.",
-    "attendre": "Before sending, wait for the green tick or check the verification box just above."
+    "attendre": "Before sending, wait for the green tick or check the verification box just above.",
+    "chargement": "Checking you’re not a robot…"
   },
   "aideArticle": {
     "titre": "How to write a great article?",

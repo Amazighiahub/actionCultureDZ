@@ -9,7 +9,7 @@ const CHAMP_EVENEMENT_DU_SERVEUR: Record<string, string> = {
 import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -59,6 +59,7 @@ const LieuSelector = React.lazy(() =>
 
 const AjouterEvenement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
@@ -238,7 +239,8 @@ const AjouterEvenement = () => {
         description: t('auth.mustBeConnected'),
         variant: "destructive",
       });
-      navigate('/auth');
+      // Après la connexion, retour à ce formulaire (audit V11 UX-29)
+      navigate(`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
       return;
     }
 

@@ -270,12 +270,10 @@ const OeuvreContributeurs: React.FC<OeuvreContributeursProps> = ({ contributeurs
       <Card className="bg-muted/50">
         <CardContent className="p-4">
           <div className="flex items-center justify-between text-sm">
+            {/* Avant : « contributeur(s) » + « 3 Personnes » ; un seul libellé accordé (audit V11 UX-31) */}
             <span className="text-muted-foreground">
-              {t('oeuvre.totalContributors', 'Total des contributeurs')}
+              {t('oeuvre.nbContributeurs', { count: contributeurs.length, defaultValue_one: '{{count}} contributeur', defaultValue_other: '{{count}} contributeurs', defaultValue: '{{count}} contributeurs' })}
             </span>
-            <Badge variant="secondary">
-              {contributeurs.length} {t('oeuvre.people', 'personnes')}
-            </Badge>
           </div>
         </CardContent>
       </Card>

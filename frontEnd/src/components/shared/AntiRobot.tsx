@@ -8,6 +8,7 @@
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 
 const CLE_PUBLIQUE = '0x4AAAAAAF5D0z5lk5MJfYfY';
 // Clé de test publique de Cloudflare (toujours acceptée) : en développement, le serveur local n'a pas de clé secrète
@@ -66,6 +67,8 @@ const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, classNa
   const rappel = useRef(onJeton);
   rappel.current = onJeton;
   const [erreur, setErreur] = useState(false);
+  // Vrai quand le widget est affiché : avant, la zone restait vide le temps du chargement (audit V11 UX-36)
+  const [pret, setPret] = useState(false);
   const [essai, setEssai] = useState(0);
   const langue = i18n?.language?.startsWith('ar') ? 'ar' : i18n?.language?.startsWith('en') ? 'en' : 'fr';
 
@@ -80,9 +83,12 @@ const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, classNa
     if (!antiRobotActif) return;
     let annule = false;
     setErreur(false);
+    setPret(false);
     chargerScript()
       .then(() => {
-        if (annule || !zone.current || !window.turnstile) return;
+        if (annule || !zone.current) return;
+        // Script chargé sans l'objet attendu : message d'erreur plutôt qu'un indicateur sans fin
+        if (!window.turnstile) { setErreur(true); return; }
         idWidget.current = window.turnstile.render(zone.current, {
           sitekey: CLE_TURNSTILE,
           action,
@@ -93,6 +99,7 @@ const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, classNa
           'expired-callback': () => rappel.current(null),
           'error-callback': () => { rappel.current(null); setErreur(true); },
         });
+        setPret(true);
       })
       .catch(() => { if (!annule) setErreur(true); });
     return () => {
@@ -106,6 +113,13 @@ const AntiRobot = forwardRef<AntiRobotHandle, Props>(({ action, onJeton, classNa
   if (!antiRobotActif) return null;
   return (
     <div className={className}>
+      {/* Indicateur pendant le chargement de la vérification (contact, inscription, newsletter, mot de passe) */}
+      {!pret && !erreur && (
+        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          {t('antiRobot.chargement', 'Vérification anti-robots…')}
+        </p>
+      )}
       <div ref={zone} />
       {attente && !erreur && (
         <p role="alert" className="mt-1 text-sm text-destructive">

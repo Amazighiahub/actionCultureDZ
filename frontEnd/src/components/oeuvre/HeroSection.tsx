@@ -134,6 +134,14 @@ const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
   return <Icon className="h-5 w-5" />;
 };
 
+/**
+ * L'en-tête affiche-t-il déjà la description en entier ? Oui pour les livres, films, albums et articles
+ * (HeroLivre, HeroFilm, HeroAlbum, HeroArticle) ; non pour l'en-tête par défaut (art, artisanat…).
+ * La fiche s'en sert pour ne pas la répéter juste en dessous (audit V11 UX-18).
+ */
+export const enTeteAfficheDescription = (typeId?: number | null): boolean =>
+  typeId === 1 || typeId === 2 || typeId === 3 || typeId === 4 || typeId === 5;
+
 export const HeroSection: React.FC<HeroSectionProps> = ({
   oeuvre,
   medias,

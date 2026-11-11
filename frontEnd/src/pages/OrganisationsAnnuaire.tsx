@@ -158,7 +158,8 @@ const OrganisationsAnnuaire: React.FC = () => {
               {t('organisations.invitationDetail', 'Créez la page de votre organisation : vos événements et vos publications y seront réunis. Elle est publiée après vérification par l’équipe Tala DZ.')}
             </p>
             <Button asChild>
-              <Link to={isAuthenticated ? '/ajouter-organisation' : '/auth'}>{t('organisations.creer', 'Créer la page de mon organisation')}</Link>
+              {/* Sans compte : inscription, puis retour au formulaire de l'organisation (audit V11 UX-29) */}
+              <Link to={isAuthenticated ? '/ajouter-organisation' : `/auth?tab=inscription&redirect=${encodeURIComponent('/ajouter-organisation')}`}>{t('organisations.creer', 'Créer la page de mon organisation')}</Link>
             </Button>
           </CardContent>
         </Card>

@@ -281,8 +281,9 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                               ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{translate(service.nom, lang)}</Link>
                               : translate(service.nom, lang)}
                           </p>
+                          {/* Teintes 700 : petit texte lisible sur fond clair (audit V11 UX-24) */}
                           {service.disponible !== undefined && (
-                            <span className={`text-xs ${service.disponible ? 'text-green-600' : 'text-red-500'}`}>
+                            <span className={`text-xs ${service.disponible ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
                               {service.disponible
                                 ? t('services.open', '● Disponible')
                                 : t('services.closed', '● Indisponible')}

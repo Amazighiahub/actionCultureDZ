@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   BookOpen, Calendar, Globe, Hash, Tag, Layers,
-  Clock, FileText, Award, Building, MapPin, Star,
+  FileText, Award, Building, MapPin, Star,
   Beaker, ExternalLink, CheckCircle, BookMarked, Film, Music
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -30,11 +30,19 @@ const getLocalizedText = (value: unknown, fallback: string = ''): string => text
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;
   compact?: boolean;
+  /** L'en-tête de la fiche montre déjà la description : on ne la répète pas ici (audit V11 UX-18) */
+  descriptionDansEnTete?: boolean;
 }
 
-const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
+const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descriptionDansEnTete = false }) => {
   const { t } = useTranslation();
   const oeuvreAny = oeuvre as Oeuvre & Record<string, unknown>;
+  // Textes comparés dans la langue affichée : les champs multilingues sont des objets, deux objets
+  // de même contenu sont toujours « différents » si on les compare directement
+  const texteDescription = getLocalizedText(oeuvre.description).trim();
+  const texteResume = getLocalizedText(oeuvreAny.resume).trim();
+  const resumeDistinct = texteResume !== '' && texteResume !== texteDescription;
+  const afficherDescription = !descriptionDansEnTete || !texteDescription;
 
   // Version compacte pour la sidebar
   if (compact) {
@@ -134,44 +142,45 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
   // Version complète
   return (
     <div className="space-y-6">
-      {/* Description */}
+      {/* Description (sauf si l'en-tête l'affiche déjà) et résumé seulement s'il dit autre chose */}
+      {(afficherDescription || resumeDistinct) && (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            {t('oeuvre.description', 'Description')}
+          <CardTitle as="h2" className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
+            {afficherDescription ? t('oeuvre.description', 'Description') : t('oeuvre.summary', 'Résumé')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {oeuvre.description ? (
+          {afficherDescription && (texteDescription ? (
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
-                {getLocalizedText(oeuvre.description)}
+              <p dir="auto" className="whitespace-pre-line text-muted-foreground leading-relaxed">
+                {texteDescription}
               </p>
             </div>
           ) : (
             <p className="text-muted-foreground italic">
               {t('oeuvre.noDescription', 'Aucune description disponible')}
             </p>
-          )}
+          ))}
 
-          {/* Résumé si différent */}
-          {oeuvreAny.resume && oeuvreAny.resume !== oeuvre.description && (
-            <div className="mt-4 pt-4 border-t">
-              <h4 className="font-medium mb-2">{t('oeuvre.summary', 'Résumé')}</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-line">
-                {getLocalizedText(oeuvreAny.resume)}
+          {resumeDistinct && (
+            <div className={afficherDescription ? 'mt-4 pt-4 border-t' : undefined}>
+              {afficherDescription && <h3 className="font-medium mb-2">{t('oeuvre.summary', 'Résumé')}</h3>}
+              <p dir="auto" className="text-sm text-muted-foreground whitespace-pre-line">
+                {texteResume}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Métadonnées détaillées */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-primary" />
+          <CardTitle as="h2" className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-primary" aria-hidden="true" />
             {t('oeuvre.metadata', 'Informations détaillées')}
           </CardTitle>
         </CardHeader>
@@ -216,34 +225,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
               </div>
             )}
 
-            {/* ISBN (depuis Livre) */}
-            {oeuvre.Livre?.isbn && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Hash className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">ISBN</p>
-                  <p className="font-mono">{oeuvre.Livre.isbn}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Durée (depuis Film) */}
-            {oeuvre.Film?.duree_minutes && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('oeuvre.duration', 'Durée')}</p>
-                  <p className="font-medium">{oeuvre.Film.duree_minutes} min</p>
-                </div>
-              </div>
-            )}
+            {/* ISBN et durée du film : donnés une seule fois, dans « Détails du livre » / « Détails du film » (audit V11 UX-18) */}
 
             {/* Lieu d'origine */}
-            {oeuvreAny.lieu_origine && (
+            {getLocalizedText(oeuvreAny.lieu_origine) && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <MapPin className="h-5 w-5 text-primary" />
@@ -265,10 +250,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h3 className="font-medium mb-4 flex items-center gap-2">
                   <Beaker className="h-4 w-4 text-primary" />
                   {t('oeuvre.scientificDetails', 'Détails scientifiques')}
-                </h4>
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
                   {oeuvre.ArticleScientifique.journal && (
                     <div className="flex items-start gap-3">
@@ -364,10 +349,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h3 className="font-medium mb-4 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary" />
                   {t('oeuvre.articleDetails', 'Détails de l\'article')}
-                </h4>
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
                   {oeuvre.Article.auteur && (
                     <div>
@@ -416,10 +401,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h3 className="font-medium mb-4 flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-primary" />
                   {t('oeuvre.bookDetails', 'Détails du livre')}
-                </h4>
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
                   {oeuvre.Livre.isbn && (
                     <div>
@@ -430,7 +415,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {oeuvre.Livre.nb_pages && (
                     <div>
                       <p className="text-xs text-muted-foreground">{t('oeuvre.pages', 'Pages')}</p>
-                      <p className="font-medium text-sm">{oeuvre.Livre.nb_pages} pages</p>
+                      <p className="font-medium text-sm">{t('oeuvre.nbPages', { count: Number(oeuvre.Livre.nb_pages), defaultValue_one: '{{count}} page', defaultValue_other: '{{count}} pages', defaultValue: '{{count}} pages' })}</p>
                     </div>
                   )}
                   {oeuvre.Livre.format && (
@@ -455,10 +440,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h3 className="font-medium mb-4 flex items-center gap-2">
                   <Film className="h-4 w-4 text-primary" />
                   {t('oeuvre.filmDetails', 'Détails du film')}
-                </h4>
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
                   {oeuvre.Film.duree_minutes && (
                     <div>
@@ -494,10 +479,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h3 className="font-medium mb-4 flex items-center gap-2">
                   <Music className="h-4 w-4 text-primary" />
                   {t('oeuvre.albumDetails', 'Détails de l\'album')}
-                </h4>
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
                   {oeuvre.AlbumMusical.format && (
                     <div>
@@ -579,10 +564,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Building className="h-4 w-4" />
                   {t('oeuvre.publishers', 'Éditeurs')}
-                </h4>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Editeurs.map((editeur) => {
                     const page = pageEditeur(editeur);
@@ -606,10 +591,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Layers className="h-4 w-4" />
                   {t('oeuvre.genres', 'Genres')}
-                </h4>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {(oeuvreAny.Genres as Array<{ id_genre?: number; nom?: unknown }>).map((genre, idx) => (
                     <Badge key={genre.id_genre ?? idx} variant="secondary">
@@ -626,10 +611,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Tag className="h-4 w-4" />
                   {t('oeuvre.categories', 'Catégories')}
-                </h4>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Categories.map((cat) => (
                     <Badge key={cat.id_categorie} variant="outline">
@@ -646,10 +631,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Hash className="h-4 w-4" />
                   {t('oeuvre.tags', 'Tags')}
-                </h4>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Tags.map((tag) => (
                     <Badge key={tag.id_tag} variant="secondary">
@@ -666,10 +651,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Award className="h-4 w-4 text-yellow-500" />
                   {t('oeuvre.awards', 'Récompenses')}
-                </h4>
+                </h3>
                 <ul className="space-y-2">
                   {(oeuvreAny.recompenses as unknown[]).map((recompense, index: number) => (
                     <li key={index} className="flex items-center gap-2 text-sm">

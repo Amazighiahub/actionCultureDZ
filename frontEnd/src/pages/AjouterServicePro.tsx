@@ -4,7 +4,7 @@
  */
 import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
@@ -102,6 +102,7 @@ const INITIAL_FORM: ServiceFormData = {
 const AjouterServicePro: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
@@ -413,7 +414,8 @@ const AjouterServicePro: React.FC = () => {
               <p className="text-muted-foreground mb-4">
                 {t('service.authRequired', 'Vous devez être connecté en tant que professionnel pour ajouter un service.')}
               </p>
-              <Button onClick={() => navigate('/auth')}>
+              {/* Après la connexion, retour à ce formulaire (audit V11 UX-29) */}
+              <Button onClick={() => navigate(`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`)}>
                 {t('common.login', 'Se connecter')}
               </Button>
             </CardContent>

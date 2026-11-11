@@ -442,16 +442,21 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
 
             {/* Vues et Avis */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
+              {/* Compteurs à zéro masqués (audit V11 UX-18) */}
+              {viewCount > 0 && (
               <div className="flex items-center gap-2">
-                <Headphones className="h-5 w-5" />
+                <Headphones className="h-5 w-5" aria-hidden="true" />
                 <span className="font-medium">{formatNumber(viewCount)}</span>
                 <span className="text-sm">{t('works.stats.listens', 'écoutes')}</span>
               </div>
+              )}
+              {commentsCount > 0 && (
               <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="h-5 w-5" aria-hidden="true" />
                 <span className="font-medium">{formatNumber(commentsCount)}</span>
                 <span className="text-sm">{t('works.stats.reviews', 'avis')}</span>
               </div>
+              )}
               {oeuvre.AlbumMusical?.duree && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />

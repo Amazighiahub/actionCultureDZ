@@ -4,6 +4,7 @@
  */
 import { noteMoyenne } from '@/utils/noteMoyenne';
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,7 @@ const CommentItem: React.FC<{ comment: Comment; onChange?: () => void }> = ({ co
 // Composant principal
 const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId, onChange }) => {
   const { t } = useTranslation();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
   const [newComment, setNewComment] = useState('');
@@ -233,7 +235,8 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
               {t('comments.loginRequired', 'Connectez-vous pour laisser un avis')}
             </p>
             <Button asChild>
-              <a href="/auth">{t('auth.login.submit', 'Se connecter')}</a>
+              {/* Retour sur cette page après la connexion (audit V11 UX-29) */}
+              <Link to={`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`}>{t('auth.login.submit', 'Se connecter')}</Link>
             </Button>
           </CardContent>
         </Card>

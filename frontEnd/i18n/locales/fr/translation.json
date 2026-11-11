@@ -859,7 +859,17 @@
       "aConvenir": "à convenir",
       "autreProfessionnel": "Le prix de « Autre » est facultatif : vide ou plus bas, la personne paie le prix professionnel.",
       "prixAConvenir": "Prix à convenir avec l’organisateur."
-    }
+    },
+    "filters": {
+      "period": "Quand ?",
+      "anyDate": "Toutes les dates",
+      "weekend": "Ce week-end",
+      "month": "Ce mois-ci",
+      "wilaya": "Wilaya",
+      "allWilayas": "Toutes les wilayas"
+    },
+    "resultsFound_one": "{{count}} événement trouvé",
+    "resultsFound_other": "{{count}} événements trouvés"
   },
   "footer": {
     "legal": "Légal",
@@ -898,7 +908,12 @@
       "scientific": "Scientifiques",
       "art": "Œuvres d'art",
       "mainLabel": "Navigation principale",
-      "subLabel": "Catégories de la rubrique"
+      "subLabel": "Catégories de la rubrique",
+      "music": "Musique",
+      "research": "Recherche scientifique",
+      "concerts": "Concerts",
+      "festivals": "Festivals",
+      "conferences": "Conférences"
     },
     "subtitle": "La source de la culture algérienne",
     "title": "Tala DZ",
@@ -1309,7 +1324,15 @@
       "total": "Œuvres",
       "new": "Nouveautés",
       "types": "Types",
-      "classics": "Classiques"
+      "classics": "Classiques",
+      "totalCount_one": "{{count}} œuvre",
+      "totalCount_other": "{{count}} œuvres",
+      "typesCount_one": "{{count}} type",
+      "typesCount_other": "{{count}} types",
+      "newCount_one": "{{count}} nouveauté",
+      "newCount_other": "{{count}} nouveautés",
+      "classicsCount_one": "{{count}} classique",
+      "classicsCount_other": "{{count}} classiques"
     },
     "types": {
       "album": "Album",
@@ -1362,7 +1385,9 @@
     },
     "noResults": "Aucune œuvre trouvée",
     "noResultsDesc": "Essayez de modifier vos critères de recherche",
-    "resultsHeading": "Liste des œuvres"
+    "resultsHeading": "Liste des œuvres",
+    "resultsFound_one": "{{count}} œuvre trouvée",
+    "resultsFound_other": "{{count}} œuvres trouvées"
   },
   "verifyemailpage": {
     "vrification_russie": "Vérification Réussie !",
@@ -1956,7 +1981,13 @@
       "products": "Produits",
       "materials": "Matériaux",
       "techniques": "Techniques",
-      "artisans": "Artisans"
+      "artisans": "Artisans",
+      "productsCount_one": "{{count}} produit",
+      "productsCount_other": "{{count}} produits",
+      "artisansCount_one": "{{count}} artisan",
+      "artisansCount_other": "{{count}} artisans",
+      "materialsCount_one": "{{count}} matériau",
+      "materialsCount_other": "{{count}} matériaux"
     },
     "searchPlaceholder": "Rechercher un produit artisanal...",
     "filterByMaterial": "Matériau",
@@ -1987,7 +2018,9 @@
     "addToFavorites": "Ajouter aux favoris",
     "resultsHeading": "Liste des produits artisanaux",
     "delai": "Fabrication : {{jours}} jours",
-    "enStock": "En stock : {{n}}"
+    "enStock": "En stock : {{n}}",
+    "resultsFound_one": "{{count}} produit trouvé",
+    "resultsFound_other": "{{count}} produits trouvés"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -2101,7 +2134,8 @@
     "messageRequis": "Écrivez votre message.",
     "merciEnvoye": "Merci, votre message est bien parti.",
     "reponseA": "Nous vous répondrons à l’adresse {{email}}.",
-    "autreMessage": "Écrire un autre message"
+    "autreMessage": "Écrire un autre message",
+    "sommaire": "Sur cette page"
   },
   "ajouteroeuvre": {
     "extrait": "Extrait du livre",
@@ -3377,7 +3411,8 @@
       "author": "Auteur",
       "comments": "Commentaires",
       "gallery": "Galerie",
-      "info": "Informations"
+      "info": "Informations",
+      "label": "Rubriques de l’œuvre"
     },
     "tags": "Tags",
     "team": "Équipe",
@@ -3455,7 +3490,11 @@
     "discoverArtistWorks": "Découvrir d'autres œuvres de l'artiste",
     "discoverAuthorWorks": "Découvrir d'autres œuvres de l'auteur",
     "noOtherArtistWorks": "Aucune autre œuvre de cet artiste disponible.",
-    "noOtherAuthorWorks": "Aucune autre œuvre de cet auteur disponible."
+    "noOtherAuthorWorks": "Aucune autre œuvre de cet auteur disponible.",
+    "nbPages_one": "{{count}} page",
+    "nbPages_other": "{{count}} pages",
+    "nbContributeurs_one": "{{count}} contributeur",
+    "nbContributeurs_other": "{{count}} contributeurs"
   },
   "event": {
     "accessibility": "Accessibilité",
@@ -3556,7 +3595,14 @@
       "invitationDecline": "Refuser",
       "nonPartie": "Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».",
       "reponseTarde": "La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer.",
-      "cancelFailed": "La désinscription n’a pas abouti. Réessayez."
+      "cancelFailed": "La désinscription n’a pas abouti. Réessayez.",
+      "nombrePersonnesLabel": "Nombre de personnes",
+      "limiteOeuvres_one": "{{count}} œuvre au maximum pour cet événement",
+      "limiteOeuvres_other": "{{count}} œuvres au maximum pour cet événement",
+      "maxOeuvres_one": "{{count}} œuvre au maximum",
+      "maxOeuvres_other": "{{count}} œuvres au maximum",
+      "nbPersonnes_one": "{{count}} personne",
+      "nbPersonnes_other": "{{count}} personnes"
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -3568,7 +3614,8 @@
       "program": "Programme",
       "participants": "Participants",
       "services": "Services",
-      "metadata": "Métadonnées"
+      "metadata": "Métadonnées",
+      "label": "Rubriques de l’événement"
     },
     "roles": {
       "organisateur_principal": "Organisateur principal",
@@ -4432,6 +4479,16 @@
       "titre": "Merci pour ce lieu !",
       "texte": "Il sera publié après vérification par l’équipe. Vous recevrez une notification.",
       "sansPhotos": "Il sera publié après vérification par l’équipe. Certaines photos n’ont pas pu être envoyées."
+    },
+    "sitesCount_one": "{{count}} site",
+    "sitesCount_other": "{{count}} sites",
+    "card": {
+      "monuments_one": "{{count}} monument",
+      "monuments_other": "{{count}} monuments",
+      "vestiges_one": "{{count}} vestige",
+      "vestiges_other": "{{count}} vestiges",
+      "services_one": "{{count}} service",
+      "services_other": "{{count}} services"
     }
   },
   "toasts": {
@@ -4603,6 +4660,19 @@
       "etape1": "Choisissez ce qui vous intéresse : histoire, architecture, nature, art…",
       "etape2": "Indiquez le temps dont vous disposez et votre moyen de transport.",
       "etape3": "Le site trace votre parcours. À chaque étape, ouvrez le lieu pour lire ou écouter son histoire."
+    },
+    "modesTransport": {
+      "walk": "À pied",
+      "bike": "Vélo",
+      "car": "Voiture"
+    },
+    "centresInteret": {
+      "history": "Histoire",
+      "architecture": "Architecture",
+      "art": "Art",
+      "nature": "Nature",
+      "religion": "Religion",
+      "gastronomy": "Gastronomie"
     }
   },
   "multilang": {
@@ -5339,7 +5409,8 @@
       "document": "Documents",
       "diaporama": "Diaporamas",
       "audio": "Audio"
-    }
+    },
+    "mediaNumero": "Média {{n}}"
   },
   "gestionArtisanat": {
     "errors": {
@@ -5421,7 +5492,8 @@
     "hint": "Scanné avec un téléphone, il ouvre votre portfolio. Ajoutez-le à vos cartes de visite, affiches ou à votre stand.",
     "downloadPng": "Télécharger (PNG)",
     "downloadSvg": "Pour impression (SVG)",
-    "button": "QR code"
+    "button": "QR code",
+    "imprimer": "QR code à imprimer"
   },
   "rating": {
     "value": "Note : {{value}} sur {{max}}",
@@ -5548,7 +5620,9 @@
     "ecrireArticle": "Écrire un article sur cette personnalité",
     "articles": "Articles",
     "aucunArticle": "Aucun article complet sur cette personnalité pour l’instant.",
-    "sesLieux": "Ses lieux"
+    "sesLieux": "Ses lieux",
+    "retiree": "Personnalité retirée",
+    "retraitEchec": "Impossible de retirer cette personnalité"
   },
   "gastronomie": {
     "menu": "Gastronomie",
@@ -6027,7 +6101,8 @@
     "reessayer": "Réessayer",
     "refuse": "La vérification anti-robots a échoué : recommencez-la.",
     "secours": "Si le problème continue, écrivez-nous à contact@taladz.com.",
-    "attendre": "Avant d’envoyer, attendez la coche verte ou cochez la case de vérification juste au-dessus."
+    "attendre": "Avant d’envoyer, attendez la coche verte ou cochez la case de vérification juste au-dessus.",
+    "chargement": "Vérification anti-robots…"
   },
   "aideArticle": {
     "titre": "Comment réussir son article ?",

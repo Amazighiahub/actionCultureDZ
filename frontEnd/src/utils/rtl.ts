@@ -471,34 +471,32 @@ export const toLatinNumerals = (text: string): string => {
   return text.replace(/[\u0660-\u0669\u066B\u066C]/g, (match) => LATIN_NUMERALS[match] || match);
 };
 
+// Chiffres occidentaux (0-9) en arabe aussi : usage algérien, comme useLocalizedNumber et le reste du site
+// (avant : chiffres arabes-indiens « ٥٬٠٠٠ » forcés, audit V11 UX-30). toArabicNumerals reste disponible.
+const LOCALE_ARABE_DZ = 'ar-DZ-u-nu-latn';
+const localeAffichage = (language: string): string => (['ar', 'ar-DZ'].includes(language) ? LOCALE_ARABE_DZ : language);
+
 // Helper pour formater automatiquement les nombres selon la langue
 export const localizeNumber = (value: number | string, language: string): string => {
   const stringValue = value.toString();
-  // Pour l'arabe et les sites algériens, toujours utiliser les chiffres arabes
-  return ['ar', 'ar-DZ'].includes(language) ? toArabicNumerals(stringValue) : stringValue;
+  // Chiffres arabes-indiens saisis : ramenés aux chiffres occidentaux en arabe
+  return ['ar', 'ar-DZ'].includes(language) ? toLatinNumerals(stringValue) : stringValue;
 };
 
 // Formater les nombres pour l'affichage (avec séparateurs de milliers)
-export const formatNumber = (value: number, language: string): string => {
-  // Pour l'arabe, utiliser les chiffres arabes avec les séparateurs appropriés
-  if (['ar', 'ar-DZ'].includes(language)) {
-    const formatted = value.toLocaleString('ar-DZ');
-    return toArabicNumerals(formatted);
-  }
-  return value.toLocaleString(language);
-};
+export const formatNumber = (value: number, language: string): string =>
+  value.toLocaleString(localeAffichage(language));
 
 // Formater les prix en dinars algériens
 export const formatCurrency = (value: number, language: string = 'ar-DZ'): string => {
   if (['ar', 'ar-DZ'].includes(language)) {
-    // Format: ٥٬٠٠٠ د.ج
-    const formatted = value.toLocaleString('ar-DZ', {
+    // Format : 5.000 د.ج.
+    return value.toLocaleString(LOCALE_ARABE_DZ, {
       style: 'currency',
       currency: 'DZD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
     });
-    return toArabicNumerals(formatted);
   }
   return value.toLocaleString(language, {
     style: 'currency',
@@ -509,15 +507,21 @@ export const formatCurrency = (value: number, language: string = 'ar-DZ'): strin
 // Formater les dates en arabe
 export const formatDate = (date: Date, language: string = 'ar-DZ'): string => {
   if (['ar', 'ar-DZ'].includes(language)) {
-    const formatted = date.toLocaleDateString('ar-DZ', {
+    return date.toLocaleDateString(LOCALE_ARABE_DZ, {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
-    return toArabicNumerals(formatted);
   }
   return date.toLocaleDateString(language);
 };
+
+/**
+ * Séparateur d'une liste affichée (adresse, rôles…) : virgule arabe « ، » en arabe, virgule latine sinon
+ * (audit V11 UX-30). Ex. : [commune, wilaya].filter(Boolean).join(separateurListe(lang))
+ */
+export const separateurListe = (language?: string | null): string =>
+  (language || '').toLowerCase().startsWith('ar') ? '، ' : ', ';
 
 /**
  * Exemples d'utilisation pour un site algérien:
@@ -530,11 +534,11 @@ export const formatDate = (date: Date, language: string = 'ar-DZ'): string => {
  *
  * // Affichage des prix
  * const price = 5000;
- * console.log(formatCurrency(price)); // ٥٬٠٠٠ د.ج
+ * console.log(formatCurrency(price)); // 5.000 د.ج.
  *
  * // Affichage des nombres
  * const quantity = 123;
- * console.log(formatNumber(quantity)); // ١٢٣
+ * console.log(formatNumber(quantity)); // 123
  *
  * // Classes conditionnelles
  * <div className={rtlClasses.marginStart(4, true)}> // mr-4 en RTL

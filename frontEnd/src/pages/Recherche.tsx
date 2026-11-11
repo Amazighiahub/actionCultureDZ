@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { httpClient } from '@/services/httpClient';
+import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
@@ -98,11 +99,9 @@ export default function Recherche() {
       staleTime: 60_000,
     })),
   });
-  const wilayas = useQuery({
-    queryKey: ['wilayas-liste'],
-    queryFn: () => chercher('/metadata/wilayas', {}),
-    staleTime: 60 * 60_000,
-  });
+  // Même requête que DashboardUser et WilayaVitrine (même clé, même forme : une liste) ; avant, une copie
+  // sous la même clé gardait « null » en cas d'échec et faisait planter ces pages
+  const wilayas = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60_000 });
 
   const cherche = simplifier(terme);
   const groupes: Groupe[] = [

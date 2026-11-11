@@ -5,12 +5,14 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { evenementPath, idFromSlug } from '@/utils/slug';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/Utils';
-import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin, Tag } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin, Tag, QrCode } from 'lucide-react';
 
 // Composants partagés
 import { LoadingSkeleton } from '@/components/shared';
@@ -50,7 +52,7 @@ const SectionFallback: React.FC = () => (
 const EventDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('info');
 
   // Scroll to top when navigating to a different event
@@ -129,6 +131,20 @@ const EventDetailsPage: React.FC = () => {
     );
   }
 
+  // Titre dans la langue du site (pour le partage depuis le QR code)
+  const titreEvenement = getLocalizedText(event.nom_evenement, i18n.language);
+
+  // Onglets de la fiche (« Services » seulement si l'événement a un lieu)
+  const onglets = [
+    { key: 'info', icon: Info, label: t('event.tabs.info', 'Informations') },
+    { key: 'program', icon: Calendar, label: t('event.tabs.program', 'Programme') },
+    { key: 'gallery', icon: Image, label: t('event.tabs.gallery', 'Galerie') },
+    { key: 'participants', icon: Users, label: `${t('event.tabs.participants', 'Participants')} (${publicParticipants.total})` },
+    { key: 'comments', icon: MessageCircle, label: `${t('event.tabs.comments', 'Avis')} (${comments?.length || 0})` },
+    ...(event.Lieu?.id_lieu ? [{ key: 'services', icon: MapPin, label: t('event.tabs.services', 'Services') }] : []),
+    { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Métadonnées') },
+  ];
+
   const seoKeywords = [
     event.nom_evenement || event.titre, event.TypeEvenement?.nom,
     event.Lieu?.nom, 'événement culturel', 'culture algérienne', 'Algérie'
@@ -178,127 +194,118 @@ const EventDetailsPage: React.FC = () => {
           <div className="grid gap-8 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
             {/* Colonne principale */}
             <div className="lg:col-span-2 lg:row-span-2 lg:col-start-1 lg:row-start-1 space-y-8 min-w-0">
-              {/* Onglets simples sans Radix */}
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 flex-nowrap">
-                  {[
-                    { key: 'info', icon: Info, label: t('event.tabs.info', 'Informations') },
-                    { key: 'program', icon: Calendar, label: t('event.tabs.program', 'Programme') },
-                    { key: 'gallery', icon: Image, label: t('event.tabs.gallery', 'Galerie') },
-                    { key: 'participants', icon: Users, label: `${t('event.tabs.participants', 'Participants')} (${publicParticipants.total})` },
-                    { key: 'comments', icon: MessageCircle, label: `${t('event.tabs.comments', 'Avis')} (${comments?.length || 0})` },
-                    ...(event.Lieu?.id_lieu ? [{ key: 'services', icon: MapPin, label: t('event.tabs.services', 'Services') }] : []),
-                    { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Métadonnées') },
-                  ].map(({ key, icon: Icon, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => setActiveTab(key)}
-                      className={cn(
-                        'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors flex-shrink-0',
-                        activeTab === key
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </button>
-                  ))}
+              {/* Onglets Radix : rôles tablist/tab, aria-selected et flèches du clavier fournis par le kit.
+                  Sur téléphone la rangée défile, avec un fondu sur les bords pour signaler la suite (audit V11 UX-21). */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} dir={i18n.dir()}>
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                  <TabsList aria-label={t('event.tabs.label', 'Rubriques de l’événement')} className="h-auto justify-start gap-1 rounded-lg p-1 flex-nowrap w-max">
+                    {onglets.map(({ key, icon: Icon, label }) => (
+                      <TabsTrigger
+                        key={key}
+                        value={key}
+                        className="gap-2 rounded-md flex-shrink-0"
+                      >
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                        {label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
                 </div>
-              </div>
 
-              {/* Contenu de l'onglet actif */}
-              <div className="mt-6">
-                {activeTab === 'info' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventInfo event={event} />
-                      <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-
-                {activeTab === 'program' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventProgram programs={programs || []} />
-                      <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-
-                {activeTab === 'gallery' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      {/* Les PDF sont dans « Documents à télécharger », pas dans la galerie */}
-                      <EventGallery medias={(medias || []).filter(m => m.type_media !== 'document')} />
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-
-                {activeTab === 'participants' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventParticipants
-                        participants={publicParticipants.participants}
-                        total={publicParticipants.total}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-
-                {activeTab === 'info' && <LiensDuContenu type="evenement" id={event.id_evenement} className="mt-8" />}
-
-                {activeTab === 'comments' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventComments
-                        comments={comments || []}
-                        onAddComment={addComment}
-                        eventId={event.id_evenement}
-                        onChange={rafraichirCommentaires}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-
-                {activeTab === 'services' && event.Lieu?.id_lieu && (
-                  <div className="space-y-6">
-                    {event.Lieu.latitude && event.Lieu.longitude && (
-                      <ErrorBoundary>
-                        <Suspense fallback={<SectionFallback />}>
-                          <CarteInteractiveUnifiee
-                            lieux={[event.Lieu]}
-                            center={[event.Lieu.latitude, event.Lieu.longitude]}
-                            zoom={14}
-                            height="350px"
-                            showFilters={true}
-                            showFullscreen={true}
-                          />
-                        </Suspense>
-                      </ErrorBoundary>
-                    )}
+                {/* Contenu de l'onglet actif (seul l'onglet ouvert est monté) */}
+                <div className="mt-6">
+                  <TabsContent value="info" className="mt-0">
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
-                        <ServicesProximite
-                          lieuId={event.Lieu.id_lieu}
-                          lieuName={event.Lieu.nom || ''}
-                          variant="full"
-                          showTitle={true}
+                        <EventInfo event={event} />
+                        <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
+                      </Suspense>
+                    </ErrorBoundary>
+                    <LiensDuContenu type="evenement" id={event.id_evenement} className="mt-8" />
+                  </TabsContent>
+
+                  <TabsContent value="program" className="mt-0">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventProgram programs={programs || []} />
+                        <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
+                      </Suspense>
+                    </ErrorBoundary>
+                  </TabsContent>
+
+                  <TabsContent value="gallery" className="mt-0">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        {/* Les PDF sont dans « Documents à télécharger », pas dans la galerie */}
+                        <EventGallery medias={(medias || []).filter(m => m.type_media !== 'document')} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </TabsContent>
+
+                  <TabsContent value="participants" className="mt-0">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventParticipants
+                          participants={publicParticipants.participants}
+                          total={publicParticipants.total}
                         />
                       </Suspense>
                     </ErrorBoundary>
-                  </div>
-                )}
+                  </TabsContent>
 
-                {activeTab === 'metadata' && (
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventMetadata event={event} />
-                    </Suspense>
-                  </ErrorBoundary>
-                )}
-              </div>
+                  <TabsContent value="comments" className="mt-0">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventComments
+                          comments={comments || []}
+                          onAddComment={addComment}
+                          eventId={event.id_evenement}
+                          onChange={rafraichirCommentaires}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </TabsContent>
+
+                  {event.Lieu?.id_lieu && (
+                  <TabsContent value="services" className="mt-0">
+                    <div className="space-y-6">
+                      {event.Lieu.latitude && event.Lieu.longitude && (
+                        <ErrorBoundary>
+                          <Suspense fallback={<SectionFallback />}>
+                            <CarteInteractiveUnifiee
+                              lieux={[event.Lieu]}
+                              center={[event.Lieu.latitude, event.Lieu.longitude]}
+                              zoom={14}
+                              height="350px"
+                              showFilters={true}
+                              showFullscreen={true}
+                            />
+                          </Suspense>
+                        </ErrorBoundary>
+                      )}
+                      <ErrorBoundary>
+                        <Suspense fallback={<SectionFallback />}>
+                          <ServicesProximite
+                            lieuId={event.Lieu.id_lieu}
+                            lieuName={event.Lieu.nom || ''}
+                            variant="full"
+                            showTitle={true}
+                          />
+                        </Suspense>
+                      </ErrorBoundary>
+                    </div>
+                  </TabsContent>
+                  )}
+
+                  <TabsContent value="metadata" className="mt-0">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventMetadata event={event} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </TabsContent>
+                </div>
+              </Tabs>
             </div>
 
             {/* Inscription */}
@@ -328,12 +335,33 @@ const EventDetailsPage: React.FC = () => {
                 </Suspense>
               </ErrorBoundary>
 
-              {/* QR Code */}
-              <ErrorBoundary>
-                <Suspense fallback={<SectionFallback />}>
-                  <EventQRCode eventId={event.id_evenement} eventTitle={event.nom_evenement} />
-                </Suspense>
-              </ErrorBoundary>
+              {/* QR Code : carte sur ordinateur ; sur téléphone, un bouton l'ouvre dans un dialogue
+                  (on est déjà sur la page : le grand QR ne sert qu'à l'imprimer, audit V11 UX-19) */}
+              <div className="hidden md:block">
+                <ErrorBoundary>
+                  <Suspense fallback={<SectionFallback />}>
+                    <EventQRCode eventId={event.id_evenement} eventTitle={titreEvenement} />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+              <div className="md:hidden">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <QrCode className="h-4 w-4 me-2" aria-hidden="true" />
+                      {t('qrcode.imprimer', 'QR code à imprimer')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+                    <DialogHeader><DialogTitle>{t('event.qrcode.title', 'QR Code de l’événement')}</DialogTitle></DialogHeader>
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventQRCode eventId={event.id_evenement} eventTitle={titreEvenement} enDialogue />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
 

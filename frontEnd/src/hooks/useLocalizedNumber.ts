@@ -2,8 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 
 /**
- * Hook pour la localisation des nombres avec support des chiffres arabes-indiens
- * et gestion des langues Tamazight
+ * Hook pour la localisation des nombres (prix, distances, durées) et gestion des langues Tamazight.
+ * Chiffres occidentaux (0-9) dans toutes les langues, arabe compris : usage algérien, et le reste du site
+ * (dates, compteurs, traductions) les affiche déjà (audit V11 UX-30). convertToArabicNumerals reste
+ * disponible pour un appel explicite.
  */
 
 type NumberFormat = 'decimal' | 'currency' | 'percent' | 'unit';
@@ -23,22 +25,13 @@ interface LocalizedNumberOptions {
 
 // Mapping des codes de langue personnalisés vers les codes BCP 47 valides
 const LOCALE_MAPPING: Record<string, string> = {
-  'ar': 'ar-DZ',
-  'ar-DZ': 'ar-DZ',
+  // « -u-nu-latn » : chiffres 0-9 imposés, quel que soit le navigateur (« 28.000 د.ج. »)
+  'ar': 'ar-DZ-u-nu-latn',
+  'ar-DZ': 'ar-DZ-u-nu-latn',
   'fr': 'fr-FR',
   'en': 'en-US',
   'tz-ltn': 'fr-FR', // Utilise le français comme fallback pour Tamazight Latin
   'tz-tfng': 'fr-FR', // Utilise le français comme fallback pour Tifinagh
-};
-
-// Systèmes de numération par langue
-const NUMBERING_SYSTEMS: Record<string, string> = {
-  'ar': 'arab', // Chiffres arabes-indiens ٠١٢٣٤٥٦٧٨٩
-  'ar-DZ': 'arab',
-  'fr': 'latn', // Chiffres latins 0123456789
-  'en': 'latn',
-  'tz-ltn': 'latn',
-  'tz-tfng': 'latn' // Tifinagh utilise généralement les chiffres latins
 };
 
 // Convertisseur de chiffres latins vers arabes-indiens
@@ -356,11 +349,6 @@ export const useLocalizedNumber = () => {
       formatted = value.toString();
     }
 
-    // Convertir en chiffres arabes-indiens si la langue est l'arabe
-    if (language === 'ar' || language === 'ar-DZ') {
-      formatted = convertToArabicNumerals(formatted);
-    }
-
     return formatted;
   };
 
@@ -506,18 +494,12 @@ export const useLocalizedNumber = () => {
 
   // Obtenir le séparateur décimal
   const getDecimalSeparator = (): string => {
-    if (i18n.language === 'ar' || i18n.language === 'ar-DZ') {
-      return '٫';
-    }
     const formatted = formatters.decimal.format(1.1);
     return formatted.charAt(1);
   };
 
   // Obtenir le séparateur de milliers
   const getThousandsSeparator = (): string => {
-    if (i18n.language === 'ar' || i18n.language === 'ar-DZ') {
-      return '٬';
-    }
     const formatted = formatters.decimal.format(1000);
     return formatted.charAt(1);
   };

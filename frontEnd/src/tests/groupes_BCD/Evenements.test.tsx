@@ -16,7 +16,8 @@ import React from 'react';
 // vi.hoisted — contrôle de useEvenements depuis chaque test
 // ---------------------------------------------------------------------------
 
-const { mockUseEvenements, mockNavigate } = vi.hoisted(() => ({
+const { mockUseEvenements, mockNavigate, useEvenementsSpy } = vi.hoisted(() => ({
+  useEvenementsSpy: vi.fn(),
   mockUseEvenements: {
     evenements: [] as any[],
     loading: false,
@@ -40,14 +41,31 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    // Texte de repli, ou options i18next (pluriels : defaultValue_one / _other, {{count}})
+    t: (key: string, opt?: string | Record<string, any>) => {
+      if (typeof opt === 'string') return opt;
+      if (!opt) return key;
+      const modele = (opt.count === 1 ? opt.defaultValue_one : opt.defaultValue_other) ?? opt.defaultValue ?? key;
+      return String(modele).replace(/{{(\w+)}}/g, (_: string, k: string) => String(opt[k] ?? ''));
+    },
     i18n: { language: 'fr' },
   }),
 }));
 
 // useEvenements — mock contrôlé par test
 vi.mock('@/hooks/useEvenements', () => ({
-  useEvenements: () => mockUseEvenements,
+  useEvenements: (options: unknown) => { useEvenementsSpy(options); return mockUseEvenements; },
+}));
+
+// Liste des wilayas du filtre
+vi.mock('@/hooks/useGeographie', () => ({
+  useWilayas: () => ({
+    wilayas: [{ id_wilaya: 16, codeW: 16, nom: 'الجزائر', wilaya_name_ascii: 'Alger' }],
+    loading: false,
+    error: null,
+    recharger: vi.fn(),
+  }),
+  formatWilayaName: (w: { codeW: number; wilaya_name_ascii: string }) => `${String(w.codeW).padStart(2, '0')} - ${w.wilaya_name_ascii}`,
 }));
 
 vi.mock('@/hooks/useDebouncedValue', () => ({
@@ -80,7 +98,6 @@ vi.mock('@/components/shared', () => ({
       <button onClick={() => onPageChange(currentPage + 1)}>Next</button>
     </div>
   ),
-  StatusBadge: ({ status }: any) => <span>{status}</span>,
 }));
 
 vi.mock('@/components/shared/ErrorBoundary', () => ({
@@ -131,8 +148,8 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, variant, className }: any) => (
-    <span className={className} data-variant={variant}>{children}</span>
+  Badge: ({ children, variant, className, ...rest }: any) => (
+    <span className={className} data-variant={variant} {...rest}>{children}</span>
   ),
 }));
 
@@ -379,6 +396,62 @@ describe('Evenements', () => {
           screen.getByRole('button', { name: /Réinitialiser les filtres|common\.resetFilters/i })
         ).toBeInTheDocument();
       });
+    });
+  });
+
+  // =========================================================================
+  // Audit V11 UX-17 — cartes publiques et filtres wilaya / période
+  // =========================================================================
+
+  describe('UX-17 — échéance et filtres', () => {
+    test('la carte ne montre pas le statut interne « Publié » mais l\'échéance', () => {
+      const demain = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString();
+      setEvenementsState({
+        evenements: [{ id_evenement: 3, nom_evenement: 'Salon du livre', statut: 'publie', date_debut: demain, date_fin: null, tarif: 0, gratuit: true }],
+      });
+
+      render(<Evenements />);
+
+      expect(screen.queryByText(/publi/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId('echeance-evenement')).toHaveTextContent(/Demain|Dans \d+ jours/);
+    });
+
+    test('un événement passé reste affiché, marqué « Terminé »', () => {
+      setEvenementsState({
+        evenements: [{ id_evenement: 4, nom_evenement: 'Festival passé', statut: 'publie', date_debut: '2025-01-10T10:00:00Z', date_fin: '2025-01-12T18:00:00Z' }],
+      });
+
+      render(<Evenements />);
+
+      expect(screen.getByText('Festival passé')).toBeInTheDocument();
+      expect(screen.getByTestId('echeance-evenement')).toHaveTextContent('Terminé');
+    });
+
+    test('le compteur de résultats accorde le pluriel', () => {
+      setEvenementsState({ evenements: SAMPLE_EVENTS });
+      render(<Evenements />);
+      expect(screen.getByText('2 événements trouvés')).toBeInTheDocument();
+    });
+
+    test('choisir une wilaya transmet son identifiant à useEvenements', async () => {
+      setEvenementsState({ evenements: SAMPLE_EVENTS });
+      render(<Evenements />);
+
+      await user.click(screen.getByRole('option', { name: '16 - Alger' }));
+
+      expect(useEvenementsSpy).toHaveBeenLastCalledWith(expect.objectContaining({ wilayaId: 16 }));
+    });
+
+    test('« Ce week-end » transmet un vendredi et le samedi suivant', async () => {
+      setEvenementsState({ evenements: SAMPLE_EVENTS });
+      render(<Evenements />);
+
+      expect((useEvenementsSpy.mock.calls.at(-1)![0] as { dateDebut?: string }).dateDebut).toBeUndefined();
+      await user.click(screen.getByRole('option', { name: 'Ce week-end' }));
+
+      const options = useEvenementsSpy.mock.calls.at(-1)![0] as { dateDebut: string; dateFin: string };
+      expect(new Date(`${options.dateDebut}T12:00:00Z`).getUTCDay()).toBe(5);
+      expect(new Date(`${options.dateFin}T12:00:00Z`).getUTCDay()).toBe(6);
     });
   });
 

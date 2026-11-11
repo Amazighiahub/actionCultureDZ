@@ -33,7 +33,10 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    // Repli texte, ou options i18next (pluriels : defaultValue / {{count}})
+    t: (key: string, fallback?: string | { defaultValue?: string; count?: number }) =>
+      typeof fallback === 'string' ? fallback
+        : fallback?.defaultValue ? fallback.defaultValue.replace('{{count}}', String(fallback.count ?? '')) : key,
     i18n: { language: 'fr' },
   }),
 }));

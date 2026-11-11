@@ -1,5 +1,5 @@
 import MissionModule from '@/components/shared/MissionModule';
-import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Clock, Star, QrCode, Compass, Building2, Landmark,
-  Trees, Search, RefreshCw, AlertCircle, Eye, Loader2, BookOpen
+  Trees, Search, AlertCircle, Eye, Loader2, BookOpen
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
@@ -105,18 +105,20 @@ const Patrimoine = () => {
   const { isAuthenticated } = useAuth();
   const lang = i18n.language || 'fr';
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   // Recherche envoyée au serveur à partir de 2 caractères
   const recherche = debouncedSearch.trim().length >= 2 ? debouncedSearch.trim() : '';
-  const [filterType, setFilterType] = useState<string | null>(null);
-
-  // Lire le query param ?type=X (depuis la sous-nav du Header)
-  useEffect(() => {
-    const typeParam = searchParams.get('type');
-    setFilterType(typeParam);
-  }, [searchParams]);
+  // Type choisi : porté par l'adresse (?type=X), comme la sous-navigation de l'en-tête ;
+  // avant, les puces changeaient un état local et la bande restait sur l'ancien type (audit V11 UX-14)
+  const filterType = searchParams.get('type');
+  const setFilterType = (type: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (type) next.set('type', type);
+    else next.delete('type');
+    setSearchParams(next, { replace: true });
+  };
 
   // Types patrimoine — cachés 10min, rarement changent
   const { data: typesPatrimoine = [] } = useQuery<TypePatrimoineOption[]>({
@@ -194,21 +196,21 @@ const Patrimoine = () => {
       />
       <Header />
 
-      <main className="container py-12">
+      <main className="container py-6 sm:py-12">
         <MissionModule module="patrimoine" />
-        {/* En-tête */}
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
+        {/* En-tête plus court sur téléphone : le premier résultat remonte (audit V11 UX-15) */}
+        <div className="text-center space-y-2 sm:space-y-4 mb-6 sm:mb-12">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
             {t('sections.heritage.title', 'Patrimoine Culturel')}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             {t('sections.heritage.subtitle', 'Découvrez les trésors du patrimoine algérien')}
           </p>
         </div>
 
         {/* Barre de recherche et filtres */}
         <div className="mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
@@ -219,23 +221,24 @@ const Patrimoine = () => {
                 className="ps-10"
               />
             </div>
-            <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 me-2 ${loading ? 'animate-spin' : ''}`} />
-              {t('common.refresh', 'Actualiser')}
-            </Button>
-            <Button asChild>
-              <Link to={isAuthenticated ? '/ajouter-patrimoine' : '/auth'}>
-                <MapPin className="h-4 w-4 me-2" aria-hidden="true" />
-                {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
-              </Link>
-            </Button>
-            {/* Page statique (public/guide) : lien classique */}
-            <Button asChild variant="outline">
-              <a href={lienGuide(lang)}>
-                <BookOpen className="h-4 w-4 me-2" aria-hidden="true" />
-                {t('common.contributorGuide', 'Guide du contributeur')}
-              </a>
-            </Button>
+            {/* « Actualiser » retiré : la carte d'erreur propose « Réessayer ». Sur téléphone, les deux
+                boutons tiennent sur une ligne au lieu de trois boutons pleine largeur (audit V11 UX-15) */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-4">
+              <Button asChild className="h-auto min-h-10 whitespace-normal">
+                {/* Sans compte : après la connexion, retour au formulaire (audit V11 UX-29) */}
+                <Link to={isAuthenticated ? '/ajouter-patrimoine' : `/auth?tab=inscription&redirect=${encodeURIComponent('/ajouter-patrimoine')}`}>
+                  <MapPin className="h-4 w-4 me-2 shrink-0" aria-hidden="true" />
+                  {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
+                </Link>
+              </Button>
+              {/* Page statique (public/guide) : lien classique */}
+              <Button asChild variant="outline" className="h-auto min-h-10 whitespace-normal">
+                <a href={lienGuide(lang)}>
+                  <BookOpen className="h-4 w-4 me-2 shrink-0" aria-hidden="true" />
+                  {t('common.contributorGuide', 'Guide du contributeur')}
+                </a>
+              </Button>
+            </div>
           </div>
 
           {/* ⚡ Filtres par type de patrimoine (dynamiques depuis l'API) */}
@@ -250,8 +253,8 @@ const Patrimoine = () => {
               {t('patrimoine.filters.all', 'Tous')}
             </Button>
 
-            {/* Types de patrimoine depuis l'API */}
-            {typesPatrimoine.map(typeOption => {
+            {/* Types de patrimoine depuis l'API (types sans lieu masqués, sauf celui choisi) */}
+            {typesPatrimoine.filter(typeOption => typeOption.count > 0 || typeOption.value === filterType).map(typeOption => {
               const Icon = getTypeIcon(typeOption.value);
               return (
                 <Button
@@ -309,7 +312,7 @@ const Patrimoine = () => {
               {t('sections.heritage.otherSites', 'Sites patrimoniaux')}
             </h2>
             <Badge variant="secondary">
-              {totalSites} {t('common.results', 'résultats')}
+              {t('patrimoine.sitesCount', { count: totalSites, defaultValue_one: '{{count}} site', defaultValue_other: '{{count}} sites', defaultValue: '{{count}} sites' })}
             </Badge>
           </div>
 
@@ -359,46 +362,50 @@ const Patrimoine = () => {
                     )}
                   </div>
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="font-serif line-clamp-1">
-                          {translate(site.nom, lang)}
-                        </CardTitle>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <MapPin className="h-3 w-3" />
-                          <span>
+                    {/* Nom sur deux lignes, le type passe sous le nom à côté du lieu : le nom n'est
+                        plus coupé par le badge (audit V11 UX-16) */}
+                    <div className="space-y-1">
+                      <CardTitle className="font-serif line-clamp-2">
+                        {translate(site.nom, lang)}
+                      </CardTitle>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1 min-w-0">
+                          <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+                          <span className="truncate">
                             {(lang === 'ar' && site.wilaya?.nom) || (site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
                           </span>
-                        </div>
+                        </span>
+                        <Badge variant="outline">
+                          {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, t('patrimoine.types.autre', 'Site'))}
+                        </Badge>
                       </div>
-                      {/* ⚡ Badge du type de patrimoine */}
-                      <Badge variant="outline">
-                        {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, site.typePatrimoine || 'Site')}
-                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {translate(site.DetailLieu?.description, lang) || t('sections.heritage.noDescription', 'Description à venir...')}
-                    </p>
+                    {/* Pas de texte provisoire (« Description à venir... ») : rien si la description manque */}
+                    {translate(site.DetailLieu?.description, lang) && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {translate(site.DetailLieu?.description, lang)}
+                      </p>
+                    )}
 
                     {/* Stats rapides */}
                     <div className="flex flex-wrap gap-2 text-xs">
                       {site.monuments && site.monuments.length > 0 && (
                         <Badge variant="secondary">
                           <Landmark className="h-3 w-3 me-1" />
-                          {site.monuments.length} monuments
+                          {t('patrimoine.card.monuments', { count: site.monuments.length, defaultValue_one: '{{count}} monument', defaultValue_other: '{{count}} monuments', defaultValue: '{{count}} monuments' })}
                         </Badge>
                       )}
                       {site.vestiges && site.vestiges.length > 0 && (
                         <Badge variant="secondary">
                           <Building2 className="h-3 w-3 me-1" />
-                          {site.vestiges.length} vestiges
+                          {t('patrimoine.card.vestiges', { count: site.vestiges.length, defaultValue_one: '{{count}} vestige', defaultValue_other: '{{count}} vestiges', defaultValue: '{{count}} vestiges' })}
                         </Badge>
                       )}
                       {site.services && site.services.filter(s => s.disponible).length > 0 && (
                         <Badge variant="secondary">
-                          {site.services.filter(s => s.disponible).length} services
+                          {t('patrimoine.card.services', { count: site.services.filter(s => s.disponible).length, defaultValue_one: '{{count}} service', defaultValue_other: '{{count}} services', defaultValue: '{{count}} services' })}
                         </Badge>
                       )}
                     </div>

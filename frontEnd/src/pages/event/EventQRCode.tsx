@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QrCode, Download, Copy, Check, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,11 @@ import { evenementService } from '@/services/evenement.service';
 interface EventQRCodeProps {
   eventId: number;
   eventTitle?: string;
+  /** Dans un dialogue : sans carte ni titre (le dialogue porte déjà le titre, audit V11 UX-19) */
+  enDialogue?: boolean;
 }
 
-export default function EventQRCode({ eventId, eventTitle }: EventQRCodeProps) {
+export default function EventQRCode({ eventId, eventTitle, enDialogue = false }: EventQRCodeProps) {
   const { t } = useTranslation();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [eventUrl, setEventUrl] = useState<string>('');
@@ -72,35 +74,33 @@ export default function EventQRCode({ eventId, eventTitle }: EventQRCodeProps) {
     }
   };
 
+  // Carte dans la colonne latérale ; simple bloc dans un dialogue
+  const cadre = (classes: string, contenu: React.ReactNode) => enDialogue
+    ? <div className={classes}>{contenu}</div>
+    : <Card><CardContent className={`p-6 ${classes}`}>{contenu}</CardContent></Card>;
+
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6 flex flex-col items-center gap-4">
-          <div className="w-64 h-64 bg-muted animate-pulse rounded-lg" />
-          <div className="w-32 h-4 bg-muted animate-pulse rounded" />
-        </CardContent>
-      </Card>
-    );
+    return cadre('flex flex-col items-center gap-4', <>
+      <div className="w-64 h-64 bg-muted animate-pulse rounded-lg" />
+      <div className="w-32 h-4 bg-muted animate-pulse rounded" />
+    </>);
   }
 
   if (!qrDataUrl) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          <QrCode className="h-12 w-12 mx-auto mb-2 opacity-40" />
-          <p>{t('event.qrcode.unavailable', 'QR Code non disponible')}</p>
-        </CardContent>
-      </Card>
-    );
+    return cadre('text-center text-muted-foreground', <>
+      <QrCode className="h-12 w-12 mx-auto mb-2 opacity-40" aria-hidden="true" />
+      <p>{t('event.qrcode.unavailable', 'QR Code non disponible')}</p>
+    </>);
   }
 
-  return (
-    <Card>
-      <CardContent className="p-6 flex flex-col items-center gap-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <QrCode className="h-5 w-5" />
-          {t('event.qrcode.title', 'QR Code de l\'événement')}
-        </h3>
+  return cadre('flex flex-col items-center gap-4', <>
+        {/* Titre de section de la colonne latérale (h2 sous le H1 de l'événement, audit V11 UX-25) */}
+        {!enDialogue && (
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <QrCode className="h-5 w-5" aria-hidden="true" />
+            {t('event.qrcode.title', 'QR Code de l\'événement')}
+          </h2>
+        )}
 
         <div className="bg-white p-4 rounded-xl shadow-sm border">
           <img
@@ -130,7 +130,5 @@ export default function EventQRCode({ eventId, eventTitle }: EventQRCodeProps) {
             {t('event.qrcode.share', 'Partager')}
           </Button>
         </div>
-      </CardContent>
-    </Card>
-  );
+  </>);
 }

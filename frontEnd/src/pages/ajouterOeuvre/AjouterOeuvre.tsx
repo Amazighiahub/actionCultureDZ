@@ -2,6 +2,7 @@ import { useDefilerVersErreur } from '@/utils/erreurServeur';
 import MediasEnregistres from './MediasEnregistres';
 import ExtraitFichiersLivre from './ExtraitFichiersLivre';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,7 @@ const getTypeIcon = (typeId: number): React.ReactNode => {
 
 const AjouterOeuvre: React.FC = () => {
   const hook = useAjouterOeuvre();
+  const location = useLocation();
   const refErreur = useDefilerVersErreur(hook.submitError);
   const {
     t, direction, navigate,
@@ -186,11 +188,12 @@ const AjouterOeuvre: React.FC = () => {
               />
               <ConseilReferencement type="oeuvre" className="mb-6" />
 
+              {/* « Se connecter » ramène à ce formulaire après la connexion (audit V11 UX-29) */}
               {!isAuthenticated &&
               <Alert className="mb-6">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{t("ajouteroeuvre.vous_devez_tre")}
-                    <Button type="button" variant="link" className="px-1" onClick={() => navigate('/auth')}>{t("ajouteroeuvre.connecter")}</Button>
+                    <Button type="button" variant="link" className="px-1" onClick={() => navigate(`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`)}>{t("ajouteroeuvre.connecter")}</Button>
                   </AlertDescription>
                 </Alert>
               }

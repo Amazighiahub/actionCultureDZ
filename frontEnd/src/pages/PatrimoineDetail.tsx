@@ -16,7 +16,8 @@ import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2, Pencil,
   CheckCircle2, Info, History, Image as ImageIcon, Play,
-  Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints
+  Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints,
+  Leaf, Drama, Amphora, UserRound
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { httpClient } from '@/services/httpClient';
@@ -355,6 +356,37 @@ const PatrimoineDetail = () => {
   const lieuLisible = [...new Set([nomGeo(site.commune), nomGeo(site.daira), nomGeo(site.wilaya)].filter(Boolean))].join(', ')
     || translate(site.adresse, lang);
   const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
+
+  // Contenu du QR code, partagé par la carte (ordinateur) et le dialogue (téléphone)
+  const contenuQr = (
+    <CardContent className="text-center space-y-4">
+      {qrDataUrl ? (
+        <img
+          src={qrDataUrl}
+          alt={t('patrimoine.qrCode', 'QR Code')}
+          className="w-40 h-40 mx-auto border rounded-lg bg-white p-2"
+        />
+      ) : (
+        <div className="w-40 h-40 mx-auto border rounded-lg bg-muted flex items-center justify-center">
+          <QrCode className="h-16 w-16 text-muted-foreground animate-pulse" />
+        </div>
+      )}
+      <p className="text-sm text-muted-foreground">
+        {t('patrimoine.scanQR', 'Scannez pour accéder aux informations')}
+      </p>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" className="flex-1" onClick={downloadQRCode}>
+          <Download className="h-4 w-4 me-2" />
+          {t('common.download', 'Télécharger')}
+        </Button>
+        <Button variant="outline" size="sm" className="flex-1" onClick={handleShareSite}>
+          <Share2 className="h-4 w-4 me-2" />
+          {t('common.share', 'Partager')}
+        </Button>
+      </div>
+    </CardContent>
+  );
+
   // Sections « Culture & Patrimoine vivant » : masquées pour un visiteur quand elles sont toutes vides
   const blocsDe = (section: string) => blocsArticles.filter(b => b.section_patrimoine === section);
   const pagesDe = (section: string) => pagesDetaillees.filter(pg => pg.section_patrimoine === section);
@@ -591,7 +623,7 @@ const PatrimoineDetail = () => {
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle as="h2" className="flex items-center gap-2">
                   <Info className="h-5 w-5" />
                   {t('patrimoine.description', 'Description')}
                 </CardTitle>
@@ -608,7 +640,7 @@ const PatrimoineDetail = () => {
             {(points.length > 0 || canAddContent) && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle as="h2" className="flex items-center gap-2">
                     <Footprints className="h-5 w-5" />
                     {t('patrimoine.points.title', 'Points à visiter')}
                     {points.length > 0 && <Badge variant="secondary" className="font-normal">{points.length}</Badge>}
@@ -641,7 +673,7 @@ const PatrimoineDetail = () => {
             {(audios.length > 0 || canAddContent) && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle as="h2" className="flex items-center gap-2">
                     <Headphones className="h-5 w-5" />
                     {t('patrimoine.audio.title', 'Écouter')}
                   </CardTitle>
@@ -956,17 +988,18 @@ const PatrimoineDetail = () => {
             {/* ════════════════════════════════════════════════════════════ */}
             {(isAuthenticated || cultureRemplie) && <div className="space-y-6 mt-8">
               <div className="flex items-center gap-3 pb-3 border-b">
-                <span className="text-2xl">🌿</span>
+                <Leaf className="h-6 w-6 text-primary shrink-0" aria-hidden="true" />
                 <div>
-                  <h2 className="text-lg font-semibold">{t('patrimoine.sections.cultureVivante', 'Culture & Patrimoine vivant')}</h2>
+                  {/* Même taille que les titres de cartes : la section mère ne doit pas paraître plus petite (audit V11 UX-25) */}
+                  <h2 className="text-2xl font-semibold font-serif">{t('patrimoine.sections.cultureVivante', 'Culture & Patrimoine vivant')}</h2>
                   <p className="text-sm text-muted-foreground">{t('patrimoine.sections.cultureVivanteDesc', 'Enrichissez ces sections avec vos connaissances')}</p>
                 </div>
               </div>
               <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" blocs={blocsDe('architecture')} pages={pagesDe('architecture')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" blocs={blocsDe('traditions')} pages={pagesDe('traditions')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
+              <SectionEnrichissable icon={<Drama className="h-5 w-5 text-primary" aria-hidden="true" />} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" blocs={blocsDe('traditions')} pages={pagesDe('traditions')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
               <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" blocs={blocsDe('gastronomie')} pages={pagesDe('gastronomie')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" blocs={blocsDe('artisanat_local')} pages={pagesDe('artisanat_local')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
-              <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} pages={pagesDe('personnalites')} onPagesChange={() => chargerPages(site.id_lieu)} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
+              <SectionEnrichissable icon={<Amphora className="h-5 w-5 text-primary" aria-hidden="true" />} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" blocs={blocsDe('artisanat_local')} pages={pagesDe('artisanat_local')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
+              <SectionPersonnalites icon={<UserRound className="h-5 w-5 text-primary" aria-hidden="true" />} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} idCreateurSite={site.id_createur} blocs={blocsDe('personnalites')} pages={pagesDe('personnalites')} onPagesChange={() => chargerPages(site.id_lieu)} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
               <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" blocs={blocsDe('infos_pratiques')} pages={pagesDe('infos_pratiques')} onPagesChange={() => chargerPages(site.id_lieu)} peutEcrireArticle={peutEcrireArticle} onArticlesChange={() => chargerArticles(site.id_lieu)} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
             </div>}
 
@@ -986,7 +1019,7 @@ const PatrimoineDetail = () => {
             {/* Informations pratiques */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('patrimoine.practicalInfo', 'Informations pratiques')}</CardTitle>
+                <CardTitle as="h2">{t('patrimoine.practicalInfo', 'Informations pratiques')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Horaires */}
@@ -1032,47 +1065,37 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
 
-            {/* QR Code */}
-            <Card>
+            {/* QR Code : carte sur ordinateur ; sur téléphone, un bouton ouvre le même contenu dans un dialogue
+                (le visiteur est déjà sur la page, un grand QR n'y sert qu'à l'imprimer, audit V11 UX-19) */}
+            <Card className="hidden md:block">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <QrCode className="h-5 w-5" />
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <QrCode className="h-5 w-5" aria-hidden="true" />
                   {t('patrimoine.qrCode', 'QR Code')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center space-y-4">
-                {qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="QR Code"
-                    className="w-40 h-40 mx-auto border rounded-lg bg-white p-2"
-                  />
-                ) : (
-                  <div className="w-40 h-40 mx-auto border rounded-lg bg-muted flex items-center justify-center">
-                    <QrCode className="h-16 w-16 text-muted-foreground animate-pulse" />
-                  </div>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  {t('patrimoine.scanQR', 'Scannez pour accéder aux informations')}
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={downloadQRCode}>
-                    <Download className="h-4 w-4 me-2" />
-                    {t('common.download', 'Télécharger')}
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={handleShareSite}>
-                    <Share2 className="h-4 w-4 me-2" />
-                    {t('common.share', 'Partager')}
-                  </Button>
-                </div>
-              </CardContent>
+              {contenuQr}
             </Card>
+            <div className="md:hidden">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <QrCode className="h-4 w-4 me-2" aria-hidden="true" />
+                    {t('qrcode.imprimer', 'QR code à imprimer')}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+                  <DialogHeader><DialogTitle>{t('patrimoine.qrCode', 'QR Code')}</DialogTitle></DialogHeader>
+                  {contenuQr}
+                </DialogContent>
+              </Dialog>
+            </div>
 
             {/* Statistiques */}
             {site.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>{t('patrimoine.stats', 'Statistiques')}</CardTitle>
+                  <CardTitle as="h2">{t('patrimoine.stats', 'Statistiques')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 text-center">

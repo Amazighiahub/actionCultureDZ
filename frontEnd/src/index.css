@@ -52,7 +52,7 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-arabic: 'Noto Sans Arabic', 'Tajawal', sans-serif;
-  --font-tifinagh: 'Noto Sans Tifinagh', sans-serif;
+  --font-tifinagh: 'Noto Sans Tifinagh', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; /* latin en repli : accents conservés (audit V11 UX-23) */
 
   /* Tailles de police fluides - optimisées pour lisibilité */
   --text-xs: 0.75rem;
@@ -741,7 +741,7 @@
 
 [lang="tz-tfng"],
 .font-tifinagh {
-  font-family: var(--font-tifinagh), "Noto Sans Tifinagh", sans-serif;
+  font-family: var(--font-tifinagh);
   line-height: 1.8;
   letter-spacing: 0.04em;
 }

@@ -36,6 +36,7 @@ interface HeroArticleProps {
 const HeroArticle: React.FC<HeroArticleProps> = ({
   oeuvre,
   titre,
+  description,
   typeId,
   mainContributors,
   gt,
@@ -199,8 +200,9 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                   {isScientific ? t('oeuvre.abstract', 'Abstract') : t('oeuvre.summary', 'Résumé')}
                 </h3>
-                <p className="leading-relaxed text-foreground/90">
-                  {typeof oeuvre.description === 'string' ? oeuvre.description : (oeuvre.description as any)?.fr || ''}
+                {/* Dans la langue du site (avant : toujours la version française) */}
+                <p dir="auto" className="leading-relaxed text-foreground/90">
+                  {description}
                 </p>
               </CardContent>
             </Card>
@@ -230,14 +232,19 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
 
             {/* Stats */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 ms-auto text-sm text-muted-foreground">
+              {/* Compteurs à zéro masqués (audit V11 UX-18) */}
+              {viewCount > 0 && (
               <div className="flex items-center gap-1.5">
-                <Eye className="h-4 w-4" />
+                <Eye className="h-4 w-4" aria-hidden="true" />
                 <span>{formatNumber(viewCount)} {t('works.stats.views', 'vues')}</span>
               </div>
+              )}
+              {commentsCount > 0 && (
               <div className="flex items-center gap-1.5">
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
                 <span>{formatNumber(commentsCount)} {t('works.stats.reviews', 'avis')}</span>
               </div>
+              )}
             </div>
           </div>
 

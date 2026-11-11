@@ -32,8 +32,7 @@ import {
   LazyImage, 
   LoadingSkeleton, 
   EmptyState, 
-  Pagination,
-  StatusBadge 
+  Pagination
 } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import SEOHead from '@/components/SEOHead';
@@ -42,13 +41,15 @@ import SEOHead from '@/components/SEOHead';
 import { useEvenements } from '@/hooks/useEvenements';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { statutAffiche } from '@/utils/statutEvenement';
+import { statutAffiche, echeanceEvenement, libelleEcheance, bornesPeriode, type PeriodeEvenements } from '@/utils/statutEvenement';
+import { useWilayas, formatWilayaName } from '@/hooks/useGeographie';
 import { evenementPath } from '@/utils/slug';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 
 // Types d'événements — labels resolved via t() in JSX
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
 const STATUS_OPTION_VALUES = ['tous', 'a_venir', 'en_cours', 'termine'];
+const PERIODE_VALUES: PeriodeEvenements[] = ['tous', 'weekend', 'mois'];
 
 // Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
 const STRETCHED_LINK_CLASS =
@@ -61,6 +62,11 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
   const { t } = useTranslation();
+  // Échéance lisible par le public (« Demain », « Dans 4 jours », « Terminé ») au lieu du statut
+  // interne « Publié » (audit V11 UX-17)
+  const termine = statutAffiche(event.statut as string | undefined, event.date_debut as string | undefined, event.date_fin as string | undefined) === 'termine';
+  const echeance = termine ? { cle: 'termine' as const } : echeanceEvenement(event.date_debut as string | undefined, event.date_fin as string | undefined);
+  const libelleQuand = libelleEcheance(echeance, t);
   const { formatPrice } = useLocalizedNumber();
   const { formatDate } = useFormatDate();
   const eventTitle = event.nom_evenement || event.titre;
@@ -83,10 +89,12 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
           fallback="/images/placeholder-event.svg"
         />
         
-        {/* Badge statut */}
-        <div className="absolute top-3 start-3">
-          <StatusBadge status={statutAffiche(event.statut as string | undefined, event.date_debut as string | undefined, event.date_fin as string | undefined)} />
-        </div>
+        {/* Échéance */}
+        {libelleQuand && (
+          <div className="absolute top-3 start-3">
+            <Badge variant={termine ? 'secondary' : 'default'} data-testid="echeance-evenement">{libelleQuand}</Badge>
+          </div>
+        )}
 
         {/* Date badge */}
         {event.date_debut && (
@@ -179,13 +187,17 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
 
 // Composant principal
 const Evenements: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
 
   // États des filtres
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
   const [typeFilter, setTypeFilter] = useState('tous');
+  // Wilaya et période (audit V11 UX-17) ; les événements passés restent visibles (choix du propriétaire)
+  const [wilayaFilter, setWilayaFilter] = useState('toutes');
+  const [periodeFilter, setPeriodeFilter] = useState<PeriodeEvenements>('tous');
+  const { wilayas, loading: wilayasLoading } = useWilayas();
 
   // Lire le query param ?type=X (depuis la sous-nav du Header)
   useEffect(() => {
@@ -210,7 +222,9 @@ const Evenements: React.FC = () => {
   } = useEvenements({
     search: debouncedSearch,
     statut: statusFilter !== 'tous' ? statusFilter : undefined,
-    type: typeFilter !== 'tous' ? typeFilter : undefined
+    type: typeFilter !== 'tous' ? typeFilter : undefined,
+    wilayaId: wilayaFilter !== 'toutes' ? Number(wilayaFilter) : undefined,
+    ...bornesPeriode(periodeFilter),
   });
 
   // Reset des filtres
@@ -218,9 +232,12 @@ const Evenements: React.FC = () => {
     setSearchQuery('');
     setStatusFilter('tous');
     setTypeFilter('tous');
+    setWilayaFilter('toutes');
+    setPeriodeFilter('tous');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'tous' || typeFilter !== 'tous';
+  const hasActiveFilters = searchQuery || statusFilter !== 'tous' || typeFilter !== 'tous'
+    || wilayaFilter !== 'toutes' || periodeFilter !== 'tous';
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,7 +264,7 @@ const Evenements: React.FC = () => {
         {/* Filtres */}
         <Card className="mb-8">
           <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-3">
               {/* Recherche */}
               <div className="relative flex-1">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -260,9 +277,44 @@ const Evenements: React.FC = () => {
                 />
               </div>
 
+              {/* Listes : deux par ligne sur téléphone */}
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+              {/* Filtre période */}
+              <Select value={periodeFilter} onValueChange={(v) => setPeriodeFilter(v as PeriodeEvenements)}>
+                <SelectTrigger className="w-full sm:w-[160px]" aria-label={t('events.filters.period', 'Quand ?')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIODE_VALUES.map((periode) => (
+                    <SelectItem key={periode} value={periode}>
+                      {periode === 'tous'
+                        ? t('events.filters.anyDate', 'Toutes les dates')
+                        : periode === 'weekend'
+                          ? t('events.filters.weekend', 'Ce week-end')
+                          : t('events.filters.month', 'Ce mois-ci')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Filtre wilaya */}
+              <Select value={wilayaFilter} onValueChange={setWilayaFilter} disabled={wilayasLoading && wilayas.length === 0}>
+                <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('events.filters.wilaya', 'Wilaya')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="toutes">{t('events.filters.allWilayas', 'Toutes les wilayas')}</SelectItem>
+                  {wilayas.map((w) => (
+                    <SelectItem key={w.id_wilaya} value={String(w.id_wilaya)}>
+                      {formatWilayaName(w, i18n.language)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {/* Filtre statut */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]" aria-label={t('common.status', 'Statut')}>
+                <SelectTrigger className="w-full sm:w-[150px]" aria-label={t('common.status', 'Statut')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -278,7 +330,7 @@ const Evenements: React.FC = () => {
 
               {/* Filtre type */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]" aria-label={t('common.type', 'Type')}>
+                <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('common.type', 'Type')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -291,6 +343,7 @@ const Evenements: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
               {/* Boutons */}
               <div className="flex gap-2">
@@ -330,7 +383,12 @@ const Evenements: React.FC = () => {
             <>
               {/* Stats */}
               <div className="mb-6 text-sm text-muted-foreground">
-                {pagination?.total || evenements.length} {t('events.resultsCount', 'événement(s) trouvé(s)')}
+                {t('events.resultsFound', {
+                  count: pagination?.total || evenements.length,
+                  defaultValue_one: '{{count}} événement trouvé',
+                  defaultValue_other: '{{count}} événements trouvés',
+                  defaultValue: '{{count}} événements trouvés',
+                })}
               </div>
 
               {/* Grille des événements */}

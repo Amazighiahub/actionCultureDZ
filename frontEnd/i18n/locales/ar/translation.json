@@ -819,7 +819,21 @@
       "aConvenir": "للاتفاق",
       "autreProfessionnel": "سعر «أخرى» اختياري: إن تُرك فارغًا أو كان أقل، يدفع المشارك سعر المهنيين.",
       "prixAConvenir": "السعر يُتّفق عليه مع المنظّم."
-    }
+    },
+    "filters": {
+      "period": "متى؟",
+      "anyDate": "كل التواريخ",
+      "weekend": "نهاية هذا الأسبوع",
+      "month": "هذا الشهر",
+      "wilaya": "الولاية",
+      "allWilayas": "كل الولايات"
+    },
+    "resultsFound_zero": "لا توجد فعاليات",
+    "resultsFound_one": "فعالية واحدة",
+    "resultsFound_two": "فعاليتان",
+    "resultsFound_few": "{{count}} فعاليات",
+    "resultsFound_many": "{{count}} فعالية",
+    "resultsFound_other": "{{count}} فعالية"
   },
   "footer": {
     "legal": "قانوني",
@@ -858,7 +872,12 @@
       "scientific": "علمية",
       "art": "أعمال فنية",
       "mainLabel": "التنقل الرئيسي",
-      "subLabel": "فئات القسم"
+      "subLabel": "فئات القسم",
+      "music": "موسيقى",
+      "research": "بحث علمي",
+      "concerts": "حفلات موسيقية",
+      "festivals": "مهرجانات",
+      "conferences": "محاضرات"
     },
     "subtitle": "مصدر الثقافة الجزائرية",
     "title": "ثالا دي زد",
@@ -1846,7 +1865,31 @@
       "total": "الأعمال",
       "new": "الجديد",
       "types": "الأنواع",
-      "classics": "الكلاسيكيات"
+      "classics": "الكلاسيكيات",
+      "totalCount_zero": "لا توجد أعمال",
+      "totalCount_one": "عمل واحد",
+      "totalCount_two": "عملان",
+      "totalCount_few": "{{count}} أعمال",
+      "totalCount_many": "{{count}} عملًا",
+      "totalCount_other": "{{count}} عمل",
+      "typesCount_zero": "لا أنواع",
+      "typesCount_one": "نوع واحد",
+      "typesCount_two": "نوعان",
+      "typesCount_few": "{{count}} أنواع",
+      "typesCount_many": "{{count}} نوعًا",
+      "typesCount_other": "{{count}} نوع",
+      "newCount_zero": "لا إصدارات جديدة",
+      "newCount_one": "إصدار جديد واحد",
+      "newCount_two": "إصداران جديدان",
+      "newCount_few": "{{count}} إصدارات جديدة",
+      "newCount_many": "{{count}} إصدارًا جديدًا",
+      "newCount_other": "{{count}} إصدار جديد",
+      "classicsCount_zero": "لا أعمال كلاسيكية",
+      "classicsCount_one": "عمل كلاسيكي واحد",
+      "classicsCount_two": "عملان كلاسيكيان",
+      "classicsCount_few": "{{count}} أعمال كلاسيكية",
+      "classicsCount_many": "{{count}} عملًا كلاسيكيًا",
+      "classicsCount_other": "{{count}} عمل كلاسيكي"
     },
     "types": {
       "album": "ألبوم",
@@ -1902,7 +1945,13 @@
     },
     "noResults": "لم يتم العثور على أي عمل",
     "noResultsDesc": "حاول تعديل معايير البحث",
-    "resultsHeading": "قائمة الأعمال"
+    "resultsHeading": "قائمة الأعمال",
+    "resultsFound_zero": "لا توجد أعمال",
+    "resultsFound_one": "عمل واحد",
+    "resultsFound_two": "عملان",
+    "resultsFound_few": "{{count}} أعمال",
+    "resultsFound_many": "{{count}} عملًا",
+    "resultsFound_other": "{{count}} عمل"
   },
   "verifyemailpage": {
     "vrification_russie": "تم التحقق بنجاح!",
@@ -2498,7 +2547,25 @@
       "products": "المنتجات",
       "materials": "المواد",
       "techniques": "التقنيات",
-      "artisans": "الحرفيون"
+      "artisans": "الحرفيون",
+      "productsCount_zero": "لا توجد منتجات",
+      "productsCount_one": "منتج واحد",
+      "productsCount_two": "منتجان",
+      "productsCount_few": "{{count}} منتجات",
+      "productsCount_many": "{{count}} منتجًا",
+      "productsCount_other": "{{count}} منتج",
+      "artisansCount_zero": "لا حرفيين",
+      "artisansCount_one": "حرفي واحد",
+      "artisansCount_two": "حرفيان",
+      "artisansCount_few": "{{count}} حرفيين",
+      "artisansCount_many": "{{count}} حرفيًا",
+      "artisansCount_other": "{{count}} حرفي",
+      "materialsCount_zero": "لا مواد",
+      "materialsCount_one": "مادة واحدة",
+      "materialsCount_two": "مادتان",
+      "materialsCount_few": "{{count}} مواد",
+      "materialsCount_many": "{{count}} مادة",
+      "materialsCount_other": "{{count}} مادة"
     },
     "searchPlaceholder": "ابحث عن منتج حرفي...",
     "filterByMaterial": "المادة",
@@ -2529,7 +2596,13 @@
     "addToFavorites": "إضافة إلى المفضلة",
     "resultsHeading": "قائمة المنتجات الحرفية",
     "delai": "مدة الصنع: {{jours}} يوم",
-    "enStock": "متوفر: {{n}}"
+    "enStock": "متوفر: {{n}}",
+    "resultsFound_zero": "لا توجد منتجات",
+    "resultsFound_one": "منتج واحد",
+    "resultsFound_two": "منتجان",
+    "resultsFound_few": "{{count}} منتجات",
+    "resultsFound_many": "{{count}} منتجًا",
+    "resultsFound_other": "{{count}} منتج"
   },
   "apropos": {
     "title_transmission": "النقل",
@@ -2643,7 +2716,8 @@
     "messageRequis": "اكتب رسالتك.",
     "merciEnvoye": "شكرًا، أُرسلت رسالتك.",
     "reponseA": "سنردّ عليك على العنوان {{email}}.",
-    "autreMessage": "كتابة رسالة أخرى"
+    "autreMessage": "كتابة رسالة أخرى",
+    "sommaire": "في هذه الصفحة"
   },
   "ajouteroeuvre": {
     "extrait": "مقتطف من الكتاب",
@@ -3490,7 +3564,8 @@
       "author": "المؤلف",
       "comments": "التعليقات",
       "gallery": "المعرض",
-      "info": "المعلومات"
+      "info": "المعلومات",
+      "label": "أقسام العمل"
     },
     "tags": "الوسوم",
     "team": "الفريق",
@@ -3568,7 +3643,19 @@
     "discoverArtistWorks": "اكتشف أعمالاً أخرى للفنان",
     "discoverAuthorWorks": "اكتشف أعمالاً أخرى للمؤلف",
     "noOtherArtistWorks": "لا تتوفر أعمال أخرى لهذا الفنان.",
-    "noOtherAuthorWorks": "لا تتوفر أعمال أخرى لهذا المؤلف."
+    "noOtherAuthorWorks": "لا تتوفر أعمال أخرى لهذا المؤلف.",
+    "nbPages_zero": "لا صفحات",
+    "nbPages_one": "صفحة واحدة",
+    "nbPages_two": "صفحتان",
+    "nbPages_few": "{{count}} صفحات",
+    "nbPages_many": "{{count}} صفحة",
+    "nbPages_other": "{{count}} صفحة",
+    "nbContributeurs_zero": "لا مساهمين",
+    "nbContributeurs_one": "مساهم واحد",
+    "nbContributeurs_two": "مساهمان",
+    "nbContributeurs_few": "{{count}} مساهمين",
+    "nbContributeurs_many": "{{count}} مساهمًا",
+    "nbContributeurs_other": "{{count}} مساهم"
   },
   "event": {
     "accessibility": "إمكانية الوصول",
@@ -3669,7 +3756,26 @@
       "invitationDecline": "رفض",
       "nonPartie": "لم يُرسَل تسجيلك. تحقّق من الاتصال، ثم اضغط مرة أخرى على «تأكيد التسجيل».",
       "reponseTarde": "الردّ يتأخّر. أعد تحميل الصفحة للتأكّد من تسجيلك قبل المحاولة من جديد.",
-      "cancelFailed": "تعذّر إلغاء التسجيل. أعد المحاولة."
+      "cancelFailed": "تعذّر إلغاء التسجيل. أعد المحاولة.",
+      "nombrePersonnesLabel": "عدد الأشخاص",
+      "limiteOeuvres_zero": "لا أعمال لهذه الفعالية",
+      "limiteOeuvres_one": "عمل واحد كحد أقصى لهذه الفعالية",
+      "limiteOeuvres_two": "عملان كحد أقصى لهذه الفعالية",
+      "limiteOeuvres_few": "{{count}} أعمال كحد أقصى لهذه الفعالية",
+      "limiteOeuvres_many": "{{count}} عملًا كحد أقصى لهذه الفعالية",
+      "limiteOeuvres_other": "{{count}} عمل كحد أقصى لهذه الفعالية",
+      "maxOeuvres_zero": "لا أعمال",
+      "maxOeuvres_one": "عمل واحد كحد أقصى",
+      "maxOeuvres_two": "عملان كحد أقصى",
+      "maxOeuvres_few": "{{count}} أعمال كحد أقصى",
+      "maxOeuvres_many": "{{count}} عملًا كحد أقصى",
+      "maxOeuvres_other": "{{count}} عمل كحد أقصى",
+      "nbPersonnes_zero": "لا أشخاص",
+      "nbPersonnes_one": "شخص واحد",
+      "nbPersonnes_two": "شخصان",
+      "nbPersonnes_few": "{{count}} أشخاص",
+      "nbPersonnes_many": "{{count}} شخصًا",
+      "nbPersonnes_other": "{{count}} شخص"
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -3681,7 +3787,8 @@
       "program": "البرنامج",
       "participants": "المشاركون",
       "services": "الخدمات",
-      "metadata": "البيانات الوصفية"
+      "metadata": "البيانات الوصفية",
+      "label": "أقسام الفعالية"
     },
     "roles": {
       "organisateur_principal": "المنظم الرئيسي",
@@ -4545,6 +4652,32 @@
       "titre": "شكرًا على هذا المكان!",
       "texte": "سيُنشر بعد مراجعة الفريق. ستصلك إشعار.",
       "sansPhotos": "سيُنشر بعد مراجعة الفريق. تعذّر إرسال بعض الصور."
+    },
+    "sitesCount_zero": "لا توجد مواقع",
+    "sitesCount_one": "موقع واحد",
+    "sitesCount_two": "موقعان",
+    "sitesCount_few": "{{count}} مواقع",
+    "sitesCount_many": "{{count}} موقعًا",
+    "sitesCount_other": "{{count}} موقع",
+    "card": {
+      "monuments_zero": "لا معالم",
+      "monuments_one": "معلم واحد",
+      "monuments_two": "معلمان",
+      "monuments_few": "{{count}} معالم",
+      "monuments_many": "{{count}} معلمًا",
+      "monuments_other": "{{count}} معلم",
+      "vestiges_zero": "لا آثار",
+      "vestiges_one": "أثر واحد",
+      "vestiges_two": "أثران",
+      "vestiges_few": "{{count}} آثار",
+      "vestiges_many": "{{count}} أثرًا",
+      "vestiges_other": "{{count}} أثر",
+      "services_zero": "لا خدمات",
+      "services_one": "خدمة واحدة",
+      "services_two": "خدمتان",
+      "services_few": "{{count}} خدمات",
+      "services_many": "{{count}} خدمة",
+      "services_other": "{{count}} خدمة"
     }
   },
   "toasts": {
@@ -4981,6 +5114,19 @@
       "etape1": "اختر ما يهمّك: التاريخ، العمارة، الطبيعة، الفن…",
       "etape2": "حدّد الوقت المتاح لك ووسيلة تنقلك.",
       "etape3": "يرسم الموقع مسارك. في كل محطة، افتح المكان لتقرأ تاريخه أو تستمع إليه."
+    },
+    "modesTransport": {
+      "walk": "سيرًا على الأقدام",
+      "bike": "دراجة",
+      "car": "سيارة"
+    },
+    "centresInteret": {
+      "history": "التاريخ",
+      "architecture": "العمارة",
+      "art": "الفن",
+      "nature": "الطبيعة",
+      "religion": "الدين",
+      "gastronomy": "فن الطبخ"
     }
   },
   "multilang": {
@@ -5465,7 +5611,8 @@
       "document": "وثائق",
       "diaporama": "عروض صور",
       "audio": "تسجيلات صوتية"
-    }
+    },
+    "mediaNumero": "وسيط {{n}}"
   },
   "gestionArtisanat": {
     "errors": {
@@ -5547,7 +5694,8 @@
     "hint": "عند مسحه بالهاتف يفتح ملفك المهني. أضفه إلى بطاقات العمل أو الملصقات أو جناحك.",
     "downloadPng": "تنزيل (PNG)",
     "downloadSvg": "للطباعة (SVG)",
-    "button": "رمز QR"
+    "button": "رمز QR",
+    "imprimer": "رمز QR للطباعة"
   },
   "rating": {
     "value": "التقييم: {{value}} من {{max}}",
@@ -5674,7 +5822,9 @@
     "ecrireArticle": "اكتب مقالًا عن هذه الشخصية",
     "articles": "مقالات",
     "aucunArticle": "لا يوجد بعد مقال كامل عن هذه الشخصية.",
-    "sesLieux": "أماكنها"
+    "sesLieux": "أماكنها",
+    "retiree": "أُزيلت الشخصية",
+    "retraitEchec": "تعذّرت إزالة هذه الشخصية"
   },
   "gastronomie": {
     "menu": "فن الطبخ",
@@ -6217,7 +6367,8 @@
     "reessayer": "إعادة المحاولة",
     "refuse": "فشل التحقق من أنكم لستم روبوتًا: أعيدوه.",
     "secours": "إذا استمرت المشكلة، راسلونا على contact@taladz.com.",
-    "attendre": "قبل الإرسال، انتظر العلامة الخضراء أو أكّد خانة التحقق في الأعلى."
+    "attendre": "قبل الإرسال، انتظر العلامة الخضراء أو أكّد خانة التحقق في الأعلى.",
+    "chargement": "جارٍ التحقق من أنك لست روبوتًا…"
   },
   "aideArticle": {
     "titre": "كيف تنجحون مقالكم؟",

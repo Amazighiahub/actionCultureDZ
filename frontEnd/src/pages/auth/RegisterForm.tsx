@@ -34,6 +34,16 @@ import type { AuthResult } from '@/types/models/auth.types';
 import { Link } from 'react-router-dom';
 
 
+/**
+ * Mot de passe écrit de gauche à droite même en arabe, y compris affiché en clair (audit V11 UX-22).
+ * Le bouton « œil » reste en fin de ligne (à gauche en arabe) : la marge intérieure suit. « ! » :
+ * la règle input[type=…] d'index.css passe sinon devant les classes de marge.
+ */
+const CLASSES_MOT_DE_PASSE = '!pe-11 rtl:!pe-3 rtl:!ps-11 rtl:!text-right';
+// Case à cocher et son libellé : ligne de 44 px de haut, toute cliquable (audit V11 UX-34)
+const CLASSES_CASE = 'mt-3';
+const CLASSES_LIBELLE_CASE = 'text-sm leading-5 cursor-pointer py-3';
+
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
@@ -697,6 +707,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       <Input
                         id="email"
                         type="email"
+                        // E-mail écrit de gauche à droite, même en arabe (audit V11 UX-22)
+                        dir="ltr"
                         autoComplete="email"
                         maxLength={255}
                         placeholder={t('auth.register.emailPlaceholder')}
@@ -735,6 +747,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         <Input
                           id="password"
                           type={voirMotDePasse ? 'text' : 'password'}
+                          dir="ltr"
                           autoComplete="new-password"
                           value={registerForm.mot_de_passe}
                           onChange={(e) => {
@@ -742,7 +755,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             setRegisterErrors({...registerErrors, mot_de_passe: ''});
                           }}
                           onBlur={() => validateRegisterField('mot_de_passe')}
-                          className={`pe-11 ${registerErrors.mot_de_passe ? 'border-destructive' : ''}`}
+                          className={`${CLASSES_MOT_DE_PASSE} ${registerErrors.mot_de_passe ? 'border-destructive' : ''}`}
                           required
                           minLength={12}
                           aria-invalid={!!registerErrors.mot_de_passe}
@@ -769,6 +782,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         <Input
                           id="password-confirm"
                           type={voirMotDePasse ? 'text' : 'password'}
+                          dir="ltr"
                           autoComplete="new-password"
                           value={registerForm.confirmation_mot_de_passe}
                           onChange={(e) => {
@@ -776,7 +790,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             setRegisterErrors({...registerErrors, confirmation_mot_de_passe: ''});
                           }}
                           onBlur={() => validateRegisterField('confirmation_mot_de_passe')}
-                          className={registerErrors.confirmation_mot_de_passe ? 'border-destructive' : ''}
+                          className={`rtl:!text-right ${registerErrors.confirmation_mot_de_passe ? 'border-destructive' : ''}`}
                           required
                           minLength={12}
                           aria-invalid={!!registerErrors.confirmation_mot_de_passe}
@@ -792,22 +806,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     {!estVisiteur && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
+                        {/* Case du kit (avant : case native de 13 px) et libellé cliquable sur 44 px (audit V11 UX-34) */}
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="etranger"
                             checked={registerForm.wilaya_residence === null}
-                            onChange={(e) => {
+                            onCheckedChange={(checked) => {
                               setRegisterForm({
                                 ...registerForm,
-                                wilaya_residence: e.target.checked ? null : 0,
+                                wilaya_residence: checked === true ? null : 0,
                                 dairaId: null,
                                 id_commune: null
                               });
                               setRegisterErrors({ ...registerErrors, wilaya_residence: '', id_commune: '' });
                             }}
                           />
-                          {t('auth.register.foreignResident', 'Étranger (hors Algérie)')}
-                        </label>
+                          <Label htmlFor="etranger" className={CLASSES_LIBELLE_CASE}>
+                            {t('auth.register.foreignResident', 'Étranger (hors Algérie)')}
+                          </Label>
+                        </div>
                         {registerForm.wilaya_residence !== null && (
                           <GeoSelector
                             wilayaId={registerForm.wilaya_residence || null}
@@ -956,6 +973,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           <Input
                             id="portfolio"
                             type="url"
+                            // Adresse web écrite de gauche à droite, même en arabe (audit V11 UX-22)
+                            dir="ltr"
                             autoComplete="url"
                             maxLength={2048}
                             placeholder="https://monportfolio.com"
@@ -1000,7 +1019,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                     )}
                     
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       <div className="flex items-start gap-2">
                         <Checkbox 
                           id="conditions"
@@ -1010,11 +1029,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             setRegisterErrors({...registerErrors, accepte_conditions: ''});
                           }}
                           required
-                          className={registerErrors.accepte_conditions ? 'border-destructive' : ''}
+                          className={`${CLASSES_CASE} ${registerErrors.accepte_conditions ? 'border-destructive' : ''}`}
                           aria-invalid={!!registerErrors.accepte_conditions}
                           aria-describedby={registerErrors.accepte_conditions ? 'auth-conditions-error' : undefined}
                         />
-                        <Label htmlFor="conditions" className="text-sm cursor-pointer">
+                        <Label htmlFor="conditions" className={CLASSES_LIBELLE_CASE}>
                           {t('auth.register.acceptTerms.prefix')}{' '}
                           <a href="/a-propos#conditions" className="text-primary underline">
                             {t('auth.register.acceptTerms.terms')}
@@ -1039,11 +1058,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                                 setRegisterForm({ ...registerForm, atteste_age: !!checked });
                                 setRegisterErrors({ ...registerErrors, atteste_age: '' });
                               }}
-                              className={registerErrors.atteste_age ? 'border-destructive' : ''}
+                              className={`${CLASSES_CASE} ${registerErrors.atteste_age ? 'border-destructive' : ''}`}
                               aria-invalid={!!registerErrors.atteste_age}
                               aria-describedby={registerErrors.atteste_age ? 'auth-age-error' : undefined}
                             />
-                            <Label htmlFor="atteste-age" className="text-sm cursor-pointer">
+                            <Label htmlFor="atteste-age" className={CLASSES_LIBELLE_CASE}>
                               {t('auth.register.atteste13Ans', 'J’ai 13 ans ou plus')} *
                             </Label>
                           </div>
@@ -1058,8 +1077,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           id="newsletter"
                           checked={registerForm.accepte_newsletter}
                           onCheckedChange={(checked) => setRegisterForm({...registerForm, accepte_newsletter: !!checked})}
+                          className={CLASSES_CASE}
                         />
-                        <Label htmlFor="newsletter" className="text-sm cursor-pointer">
+                        <Label htmlFor="newsletter" className={CLASSES_LIBELLE_CASE}>
                           {t('auth.register.newsletter')}
                         </Label>
                       </div>

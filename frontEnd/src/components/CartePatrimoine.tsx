@@ -78,7 +78,8 @@ const CarteSites: React.FC<{ monuments: Monument[]; height: string }> = ({ monum
                   className="w-full h-24 object-cover rounded mb-2"
                   loading="lazy"
                 />
-                <Link to={`/patrimoine/${monument.id}`} className="text-sm font-medium text-primary hover:underline">
+                {/* Lien de 44 px de haut, plus facile à toucher dans la fenêtre du lieu (audit V11 UX-34) */}
+                <Link to={`/patrimoine/${monument.id}`} className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
                   {t('common_cartepatrimoine.plus_dinformations')}
                 </Link>
               </div>
@@ -130,7 +131,8 @@ const CartePatrimoine: React.FC = () => {
       {/* Carte principale */}
       <Card className="overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+          {/* Le bouton passe sous le titre s'il manque de place (avant : collé au titre sur téléphone) */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 font-serif">
               <Navigation className="h-6 w-6 text-primary" />
               <span>{t("common_cartepatrimoine.carte_interactive_patrimoine")}</span>

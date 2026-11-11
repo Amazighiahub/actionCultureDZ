@@ -150,19 +150,21 @@ const Header = () => {
       { to: '/oeuvres', label: t('common.all', 'Tous') },
       { to: '/oeuvres?type=1', label: t('header.nav.books', 'Livres'), icon: BookOpen },
       { to: '/oeuvres?type=2', label: t('header.nav.films', 'Films'), icon: Film },
-      { to: '/oeuvres?type=3', label: t('header.nav.albums', 'Albums'), icon: Music },
+      { to: '/oeuvres?type=3', label: t('header.nav.music', 'Musique'), icon: Music },
       { to: '/oeuvres?type=4', label: t('header.nav.articles', 'Articles'), icon: FileText },
-      { to: '/oeuvres?type=5', label: t('header.nav.scientific', 'Scientifiques'), icon: Beaker },
+      { to: '/oeuvres?type=5', label: t('header.nav.research', 'Recherche scientifique'), icon: Beaker },
       { to: '/oeuvres?type=6', label: t('header.nav.art', 'Œuvres d\'art'), icon: Palette },
       // Annuaire des organisations, filtré sur les maisons d'édition
       { to: '/organisations?categorie=edition', label: t('organisations.menu.edition', 'Maisons d\'édition'), icon: Library },
     ],
+    // Libellés au pluriel propres à la bande : les clés events.types.* servent aussi
+    // aux badges de type (au singulier), on ne les touche pas (audit V11 UX-31).
     '/evenements': [
       { to: '/evenements', label: t('common.all', 'Tous') },
       { to: '/evenements?type=exposition', label: t('events.types.exposition', 'Expositions') },
-      { to: '/evenements?type=concert', label: t('events.types.concert', 'Concerts') },
-      { to: '/evenements?type=festival', label: t('events.types.festival', 'Festivals') },
-      { to: '/evenements?type=conference', label: t('events.types.conference', 'Conférences') },
+      { to: '/evenements?type=concert', label: t('header.nav.concerts', 'Concerts') },
+      { to: '/evenements?type=festival', label: t('header.nav.festivals', 'Festivals') },
+      { to: '/evenements?type=conference', label: t('header.nav.conferences', 'Conférences') },
       { to: '/evenements?type=atelier', label: t('events.types.atelier', 'Ateliers') },
       { to: '/evenements?type=spectacle', label: t('events.types.spectacle', 'Spectacles') },
       // Annuaire des organisations, filtré sur les associations
@@ -468,9 +470,11 @@ const Header = () => {
           Fixe sous l'en-tête : l'espaceur réserve sa hauteur pour ne pas masquer le titre de la page. */}
       {sousNav && (
         <>
-          <nav className="fixed top-[52px] sm:top-[60px] start-0 end-0 z-40 w-full h-10 bg-stone-800 dark:bg-stone-900 border-b border-stone-700" aria-label={t('header.nav.subLabel', 'Catégories de la rubrique')}>
+          <nav className="fixed top-[52px] sm:top-[60px] start-0 end-0 z-40 w-full h-11 bg-stone-800 dark:bg-stone-900 border-b border-stone-700" aria-label={t('header.nav.subLabel', 'Catégories de la rubrique')}>
             <div className="w-full h-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
-              <ul className="flex h-full items-center justify-start sm:justify-center gap-1 overflow-x-auto scrollbar-hide">
+              {/* Sur téléphone, bords estompés des deux côtés (quel que soit le sens d'écriture) :
+                  ils signalent que la bande défile (audit V11 UX-14). */}
+              <ul className="flex h-full items-center justify-start sm:justify-center gap-1 overflow-x-auto scrollbar-hide px-3 sm:px-0 [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-16px),transparent)] sm:[mask-image:none]">
                 {sousNav.map(({ to, label, icon: Icon }) => {
                   const actif = `${location.pathname}${location.search}` === to;
                   return (
@@ -478,7 +482,7 @@ const Header = () => {
                       <Link
                         to={to}
                         aria-current={actif ? 'page' : undefined}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded transition-colors whitespace-nowrap ${actif ? 'bg-stone-100 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700'}`}
+                        className={`flex items-center gap-1.5 min-h-[40px] px-3 py-2 text-sm font-medium rounded transition-colors whitespace-nowrap ${actif ? 'bg-stone-100 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700'}`}
                       >
                         {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
                         {label}
@@ -489,7 +493,7 @@ const Header = () => {
               </ul>
             </div>
           </nav>
-          <div className="h-10" aria-hidden="true" />
+          <div className="h-11" aria-hidden="true" />
         </>
       )}
 
@@ -499,8 +503,8 @@ const Header = () => {
           id="mobile-menu"
           ref={mobileMenuRef}
           onKeyDown={handleMobileMenuKeyDown}
-          className={`fixed inset-0 ${sousNav ? 'top-[92px] sm:top-[100px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background xl:hidden overflow-y-auto`}
-          style={{ height: sousNav ? 'calc(100dvh - 92px)' : 'calc(100dvh - 52px)' }}
+          className={`fixed inset-0 ${sousNav ? 'top-[96px] sm:top-[104px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background xl:hidden overflow-y-auto`}
+          style={{ height: sousNav ? 'calc(100dvh - 96px)' : 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
             {/* Recherche générale, en tête du menu (audit V11 UX-13) */}

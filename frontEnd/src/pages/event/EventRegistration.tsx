@@ -253,7 +253,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     if (selectedOeuvres.length >= maxSoumissions) {
       toast({
         title: t('event.registration.limitTitle', 'Limite atteinte'),
-        description: t('event.registration.limitDesc', 'Maximum {{max}} œuvre(s) autorisée(s) pour cet événement', { max: maxSoumissions }),
+        description: t('event.registration.limiteOeuvres', { count: maxSoumissions, defaultValue_one: '{{count}} œuvre au maximum pour cet événement', defaultValue_other: '{{count}} œuvres au maximum pour cet événement', defaultValue: '{{count}} œuvres au maximum pour cet événement' }),
         variant: 'destructive',
       });
       return;
@@ -765,7 +765,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                           }
                           {inscriptionConfig.config_soumission?.max_soumissions && (
                             <span className="block mt-1">
-                              {t('event.registration.maxWorks', 'Maximum: {{max}} œuvre(s)', { max: inscriptionConfig.config_soumission.max_soumissions })}
+                              {t('event.registration.maxOeuvres', { count: inscriptionConfig.config_soumission.max_soumissions, defaultValue_one: '{{count}} œuvre au maximum', defaultValue_other: '{{count}} œuvres au maximum', defaultValue: '{{count}} œuvres au maximum' })}
                             </span>
                           )}
                         </p>
@@ -874,8 +874,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                   </div>
                   {!formulaireRemplaceBase && (
                     <div className="flex justify-between">
-                      <span>{t('event.registration.people', 'Personnes')}</span>
-                      <span>{nombrePersonnes}</span>
+                      {/* Avant : « Personnes 1 » (libellé au pluriel fixe) ; le nombre porte maintenant l'accord (audit V11 UX-31) */}
+                      <span>{t('event.registration.nombrePersonnesLabel', 'Nombre de personnes')}</span>
+                      <span>{t('event.registration.nbPersonnes', { count: nombrePersonnes, defaultValue_one: '{{count}} personne', defaultValue_other: '{{count}} personnes', defaultValue: '{{count}} personnes' })}</span>
                     </div>
                   )}
                   {selectedOeuvres.length > 0 && (

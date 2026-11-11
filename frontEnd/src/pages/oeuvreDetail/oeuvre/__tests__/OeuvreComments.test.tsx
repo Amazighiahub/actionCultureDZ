@@ -14,6 +14,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
 // vi.hoisted
@@ -151,12 +152,15 @@ function renderComments({
   onAddComment = vi.fn().mockResolvedValue({ ok: true }),
   oeuvreId = 1,
 } = {}) {
+  // Le lien « Se connecter » ramène sur la page courante : il lui faut un routeur
   return render(
-    <OeuvreComments
-      comments={comments}
-      onAddComment={onAddComment}
-      oeuvreId={oeuvreId}
-    />
+    <MemoryRouter initialEntries={['/oeuvres/12-le-livre?onglet=avis']}>
+      <OeuvreComments
+        comments={comments}
+        onAddComment={onAddComment}
+        oeuvreId={oeuvreId}
+      />
+    </MemoryRouter>
   );
 }
 
@@ -366,6 +370,14 @@ describe('OeuvreComments', () => {
         screen.getByText(/Connectez-vous pour laisser un avis|comments\.loginRequired/i)
       ).toBeInTheDocument();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
+
+    test('le lien de connexion ramène sur la fiche après la connexion (audit V11 UX-29)', () => {
+      mockIsAuthenticated.value = false;
+      renderComments();
+
+      expect(screen.getByRole('link', { name: /Se connecter|auth\.login\.submit/i }))
+        .toHaveAttribute('href', `/auth?redirect=${encodeURIComponent('/oeuvres/12-le-livre?onglet=avis')}`);
     });
   });
 

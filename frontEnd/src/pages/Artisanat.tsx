@@ -109,6 +109,7 @@ const Artisanat: React.FC = () => {
   const displayedArtisanats = useMemo(() => {
     return artisanats;
   }, [artisanats]);
+  const totalProduits = stats?.total ?? stats?.total_produits ?? displayedArtisanats.length;
 
   // Reset des filtres
   const resetFilters = () => {
@@ -133,22 +134,30 @@ const Artisanat: React.FC = () => {
       <main className="container py-8">
         <MissionModule module="artisanat" />
         {/* En-tête */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">
+        {/* En-tête plus court sur téléphone : le premier résultat remonte (audit V11 UX-15) */}
+        <div className="text-center mb-6 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight font-serif mb-2 sm:mb-4">
             {t('artisanat.title', 'Artisanat Algérien')}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             {t('artisanat.subtitleShort', 'Découvrez les métiers d\'art et les créations artisanales traditionnelles d\'Algérie')}
           </p>
         </div>
 
-        {/* Stats rapides */}
-        <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
+        {/* Stats rapides : une seule ligne de texte sur téléphone, tuiles à partir de 640 px */}
+        <p className="sm:hidden mb-4 text-center text-sm text-muted-foreground">
+          {[
+            t('artisanat.stats.productsCount', { count: totalProduits, defaultValue_one: '{{count}} produit', defaultValue_other: '{{count}} produits', defaultValue: '{{count}} produits' }),
+            (stats?.total_artisans || 0) > 0 && t('artisanat.stats.artisansCount', { count: stats?.total_artisans, defaultValue_one: '{{count}} artisan', defaultValue_other: '{{count}} artisans', defaultValue: '{{count}} artisans' }),
+            materiaux.length > 0 && t('artisanat.stats.materialsCount', { count: materiaux.length, defaultValue_one: '{{count}} matériau', defaultValue_other: '{{count}} matériaux', defaultValue: '{{count}} matériaux' }),
+          ].filter(Boolean).join(' · ')}
+        </p>
+        <div className="hidden sm:grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
           <Card className="p-4 text-center">
             <div className="flex justify-center mb-2">
               <Package className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-2xl font-bold text-primary">{stats?.total ?? stats?.total_produits ?? displayedArtisanats.length}</p>
+            <p className="text-2xl font-bold text-primary">{totalProduits}</p>
             <p className="text-sm text-muted-foreground">{t('artisanat.stats.products', 'Produits')}</p>
           </Card>
           <Card className="p-4 text-center">
@@ -177,9 +186,9 @@ const Artisanat: React.FC = () => {
         </div>
 
         {/* Filtres */}
-        <Card className="mb-8">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -192,9 +201,11 @@ const Artisanat: React.FC = () => {
                 />
               </div>
 
+              {/* Listes deux par ligne sur téléphone */}
+              <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
               {/* Filtre matériau */}
               <Select value={selectedMateriau} onValueChange={handleMateriauChange}>
-                <SelectTrigger className="w-[180px]" aria-label={t('artisanat.filterByMaterial', 'Matériau')}>
+                <SelectTrigger className="w-full md:w-[180px]" aria-label={t('artisanat.filterByMaterial', 'Matériau')}>
                   <SelectValue placeholder={t('artisanat.filterByMaterial', 'Matériau')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,7 +220,7 @@ const Artisanat: React.FC = () => {
 
               {/* Filtre technique */}
               <Select value={selectedTechnique} onValueChange={setSelectedTechnique}>
-                <SelectTrigger className="w-[180px]" aria-label={t('artisanat.filterByTechnique', 'Technique')}>
+                <SelectTrigger className="w-full md:w-[180px]" aria-label={t('artisanat.filterByTechnique', 'Technique')}>
                   <SelectValue placeholder={t('artisanat.filterByTechnique', 'Technique')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -224,7 +235,7 @@ const Artisanat: React.FC = () => {
 
               {/* Tri */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[150px]" aria-label={t('common.sortBy', 'Trier par')}>
+                <SelectTrigger className="w-full md:w-[150px]" aria-label={t('common.sortBy', 'Trier par')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,6 +256,7 @@ const Artisanat: React.FC = () => {
                 <Button variant="outline" size="icon" onClick={loadArtisanats} aria-label={t('common.refresh', 'Actualiser')}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>
+              </div>
               </div>
             </div>
           </CardContent>
@@ -273,7 +285,12 @@ const Artisanat: React.FC = () => {
             <>
               {/* Stats résultats */}
               <div className="mb-6 text-sm text-muted-foreground">
-                {displayedArtisanats.length} {t('artisanat.resultsCount', 'produit(s) trouvé(s)')}
+                {t('artisanat.resultsFound', {
+                  count: displayedArtisanats.length,
+                  defaultValue_one: '{{count}} produit trouvé',
+                  defaultValue_other: '{{count}} produits trouvés',
+                  defaultValue: '{{count}} produits trouvés',
+                })}
               </div>
 
               {/* Grille des artisanats */}

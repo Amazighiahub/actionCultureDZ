@@ -16,6 +16,15 @@ import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthInd
 import { detailsDesChamps, messageErreurServeur } from '@/utils/erreurServeur';
 import { erreurMotDePasse } from '@/utils/motDePasse';
 
+/**
+ * Mot de passe écrit de gauche à droite même en arabe, y compris affiché en clair (audit V11 UX-22).
+ * Le bouton « œil » reste en fin de ligne (à gauche en arabe) : la marge intérieure suit. « ! » :
+ * la règle input[type=…] d'index.css passe sinon devant les classes de marge.
+ */
+const CLASSES_MOT_DE_PASSE = '!pe-11 rtl:!pe-3 rtl:!ps-11 rtl:!text-right';
+// Bouton « œil » : 44 px de large, sur toute la hauteur du champ (audit V11 UX-34)
+const CLASSES_OEIL = 'absolute inset-y-0 end-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground';
+
 const ResetPassword = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -258,6 +267,7 @@ const ResetPassword = () => {
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
+                      dir="ltr"
                       autoComplete="new-password"
                       placeholder="••••••••"
                       value={password}
@@ -266,7 +276,7 @@ const ResetPassword = () => {
                         setErrors({ ...errors, password: undefined });
                       }}
                       onBlur={() => validateField('password')}
-                      className={errors.password ? 'border-destructive pe-10' : 'pe-10'}
+                      className={`${CLASSES_MOT_DE_PASSE} ${errors.password ? 'border-destructive' : ''}`}
                       disabled={loading}
                       aria-invalid={!!errors.password}
                       aria-describedby={errors.password ? 'reset-password-error' : undefined}
@@ -274,7 +284,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className={CLASSES_OEIL}
                       aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -295,6 +305,7 @@ const ResetPassword = () => {
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? 'text' : 'password'}
+                      dir="ltr"
                       autoComplete="new-password"
                       placeholder="••••••••"
                       value={confirmPassword}
@@ -303,7 +314,7 @@ const ResetPassword = () => {
                         setErrors({ ...errors, confirmPassword: undefined });
                       }}
                       onBlur={() => validateField('confirmPassword')}
-                      className={errors.confirmPassword ? 'border-destructive pe-10' : 'pe-10'}
+                      className={`${CLASSES_MOT_DE_PASSE} ${errors.confirmPassword ? 'border-destructive' : ''}`}
                       disabled={loading}
                       aria-invalid={!!errors.confirmPassword}
                       aria-describedby={errors.confirmPassword ? 'reset-confirm-error' : undefined}
@@ -311,7 +322,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className={CLASSES_OEIL}
                       aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -343,7 +354,8 @@ const ResetPassword = () => {
                 </Button>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  {/* Zone tactile de 44 px de haut, sans décaler la page (audit V11 UX-34) */}
+                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1 py-3 -my-3 px-2 -mx-2">
                     <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.resetPassword.backToLogin')}
                   </Link>

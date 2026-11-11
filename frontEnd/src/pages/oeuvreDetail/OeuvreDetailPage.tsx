@@ -20,7 +20,7 @@ import {
   Info, Users, Image, MessageCircle, Calendar, ArrowLeft,
   BookOpen, Sparkles, ThumbsUp, Send, Loader2,
   Share2, MapPin, CalendarCheck, ImageIcon,
-  Palette, Ruler, Frame, PenTool, Stamp, CheckCircle2, Weight, Tag
+  Palette, Ruler, Frame, PenTool, Stamp, Weight, Tag
 } from 'lucide-react';
 
 // Composants partagés
@@ -30,7 +30,7 @@ import SEOHead, { buildOeuvreJsonLd, buildBreadcrumbJsonLd } from '@/components/
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 
 // ✅ Import du HeroSection avec effet flip 3D
-import { HeroSection } from '@/components/oeuvre/HeroSection';
+import { HeroSection, enTeteAfficheDescription } from '@/components/oeuvre/HeroSection';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getMainImage } from '@/types/models/media-extended.types';
 import { EVENEMENT_LIRE_EXTRAIT, extraitsFichiers } from '@/components/oeuvre/HeroLivre';
@@ -99,6 +99,9 @@ const SectionFallback: React.FC = () => (
 );
 
 // extractContributeurs supprimé — on utilise contributeurs du hook useOeuvreDetails
+
+// Onglets de la fiche œuvre : colonne icône + libellé sur téléphone, ligne à partir de sm
+const classeOngletOeuvre = 'flex-col sm:flex-row gap-1 sm:gap-0 text-xs sm:text-sm whitespace-normal text-center leading-tight';
 
 const OeuvreDetailPage: React.FC = () => {
   const { formatPrice } = useLocalizedNumber();
@@ -328,7 +331,8 @@ const OeuvreDetailPage: React.FC = () => {
   // Ouvrir modal commentaire
   const openCommentModal = () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      // Retour sur cette fiche après la connexion (audit V11 UX-29)
+      navigate(`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
       return;
     }
     setShowCommentModal(true);
@@ -603,24 +607,11 @@ const OeuvreDetailPage: React.FC = () => {
                       {/* Commande : paiement direct à l'artiste */}
                       <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="w-full sm:w-auto" />
 
-                      {/* Statut */}
-                      {oeuvre.statut === 'publie' && (
-                        <div className="flex items-center gap-3 text-green-600">
-                          <CheckCircle2 className="h-5 w-5" />
-                          <p className="font-medium">{t('oeuvre.verified', 'Œuvre vérifiée et publiée')}</p>
-                        </div>
-                      )}
+                      {/* Plus de mention « Œuvre vérifiée et publiée » : toute œuvre visible du public l'est (audit V11 UX-17) */}
                     </div>
                   </div>
 
-                  {/* Description courte */}
-                  {oeuvre.description && (
-                    <div className="border-t pt-4">
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                        {getTranslation(oeuvre.description, lang)}
-                      </p>
-                    </div>
-                  )}
+                  {/* Plus de description courte ici : l'onglet « Description », juste en dessous, la donne en entier (audit V11 UX-18) */}
                 </div>
               </div>
             </div>
@@ -629,20 +620,24 @@ const OeuvreDetailPage: React.FC = () => {
 
         {/* Contenu principal avec Tabs */}
         <div className="container max-w-6xl py-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="description">
-                <Info className="h-4 w-4 me-2" />
+          {/* Sur téléphone, icône au-dessus du libellé et retour à la ligne : « Auteur & Œuvres » et
+              « Commentaires (n) » ne débordent plus des trois colonnes (audit V11 UX-21) */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={i18n.dir()}>
+            <TabsList aria-label={t('oeuvre.tabs.label', 'Rubriques de l’œuvre')} className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="description" className={classeOngletOeuvre}>
+                <Info className="h-4 w-4 sm:me-2 shrink-0" aria-hidden="true" />
                 {t('oeuvre.tabs.info', 'Description')}
               </TabsTrigger>
-              <TabsTrigger value="auteur">
-                <BookOpen className="h-4 w-4 me-2" />
+              <TabsTrigger value="auteur" className={classeOngletOeuvre}>
+                <BookOpen className="h-4 w-4 sm:me-2 shrink-0" aria-hidden="true" />
                 {t('oeuvre.tabs.author', 'Auteur & Œuvres')}
               </TabsTrigger>
-              <TabsTrigger value="comments">
-                <MessageCircle className="h-4 w-4 me-2" />
-                {t('oeuvre.tabs.comments', 'Commentaires')}
-                {comments && comments.length > 0 && ` (${comments.length})`}
+              <TabsTrigger value="comments" className={classeOngletOeuvre}>
+                <MessageCircle className="h-4 w-4 sm:me-2 shrink-0" aria-hidden="true" />
+                <span>
+                  {t('oeuvre.tabs.comments', 'Commentaires')}
+                  {comments && comments.length > 0 && ` (${comments.length})`}
+                </span>
               </TabsTrigger>
             </TabsList>
 
@@ -650,14 +645,14 @@ const OeuvreDetailPage: React.FC = () => {
             <TabsContent value="description" className="mt-6">
               <ErrorBoundary>
                 <Suspense fallback={<SectionFallback />}>
-                  <OeuvreInfo oeuvre={oeuvre} />
+                  <OeuvreInfo oeuvre={oeuvre} descriptionDansEnTete={enTeteAfficheDescription(oeuvre.id_type_oeuvre)} />
                 </Suspense>
               </ErrorBoundary>
 
               {/* Contributeurs */}
               <Card className="mt-6">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle as="h2" className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
                     {t('oeuvre.team', 'Équipe de création')}
                   </CardTitle>
@@ -675,7 +670,7 @@ const OeuvreDetailPage: React.FC = () => {
               {mediasGalerie.length > 0 && (
                 <Card className="mt-6">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle as="h2" className="flex items-center gap-2">
                       <Image className="h-5 w-5 text-primary" />
                       {t('oeuvre.tabs.gallery', 'Galerie')}
                     </CardTitle>
@@ -696,7 +691,7 @@ const OeuvreDetailPage: React.FC = () => {
               {/* Bibliographie de l'auteur */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-xl flex items-center">
+                  <CardTitle as="h2" className="text-xl flex items-center">
                     <BookOpen className="h-5 w-5 me-2 text-primary" />
                     {oeuvre.OeuvreArt ? t('oeuvre.artistPresentation', "Présentation de l'artiste") : t('oeuvre.authorBibliography', "Bibliographie de l'auteur")}
                   </CardTitle>
@@ -732,7 +727,7 @@ const OeuvreDetailPage: React.FC = () => {
               {/* Autres œuvres de l'auteur */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl flex items-center">
+                  <CardTitle as="h2" className="text-xl flex items-center">
                     <Sparkles className="h-5 w-5 me-2 text-primary" />
                     {oeuvre.OeuvreArt ? t('oeuvre.discoverArtistWorks', "Découvrir d'autres œuvres de l'artiste") : t('oeuvre.discoverAuthorWorks', "Découvrir d'autres œuvres de l'auteur")}
                   </CardTitle>
@@ -817,7 +812,7 @@ const OeuvreDetailPage: React.FC = () => {
           {/* Section Actions - Toujours visible */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center">
+              <CardTitle as="h2" className="text-lg flex items-center">
                 <Share2 className="h-5 w-5 me-2 text-primary" />
                 {t('oeuvredetailpage.actions', 'Actions')}
               </CardTitle>
@@ -846,7 +841,7 @@ const OeuvreDetailPage: React.FC = () => {
           {evenementsCreateur.length > 0 && (
             <Card className="mt-8">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center">
+                <CardTitle as="h2" className="text-lg flex items-center">
                   <CalendarCheck className="h-5 w-5 me-2 text-primary" />
                   {t('oeuvredetailpage.prochains_vnements', 'Prochains événements')}
                 </CardTitle>

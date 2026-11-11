@@ -237,15 +237,19 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
 
   return (
     <div className="space-y-4">
-      {/* Filtres */}
+      {/* Filtres seulement s'il y a au moins deux types de médias, bascule grille/liste seulement à partir
+          de deux médias : sinon ces boutons ne servent à rien (audit V11 UX-18). Libellés traduits. */}
+      {(mediaTypes.length >= 2 || medias.length >= 2) && (
       <div className="flex flex-wrap items-center justify-between gap-4">
+        {mediaTypes.length >= 2 ? (
         <div className="flex flex-wrap gap-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilter('all')}
+            aria-pressed={filter === 'all'}
           >
-            Tous ({medias.length})
+            {t('gallery.all', 'Tous')} ({medias.length})
           </Button>
           {mediaTypes.map((type) => {
             const Icon = mediaIcons[type] || ImageIcon;
@@ -256,14 +260,17 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
                 variant={filter === type ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter(type)}
+                aria-pressed={filter === type}
               >
-                <Icon className="h-4 w-4 me-1" />
-                {type} ({count})
+                <Icon className="h-4 w-4 me-1" aria-hidden="true" />
+                {t(`gallery.types.${type}`, { defaultValue: type })} ({count})
               </Button>
             );
           })}
         </div>
+        ) : <span />}
 
+        {medias.length >= 2 && (
         <div className="flex gap-1 border rounded-lg p-1">
           <Button
             variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
@@ -284,7 +291,9 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
             <List className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
+        )}
       </div>
+      )}
 
       {/* Galerie */}
       {viewMode === 'grid' ? (
@@ -316,12 +325,13 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{media.titre || `${media.type_media} ${index + 1}`}</p>
+                  <p className="font-medium truncate">{media.titre || t('gallery.mediaNumero', 'Média {{n}}', { n: index + 1 })}</p>
                   {media.description && <p className="text-sm text-muted-foreground truncate">{media.description}</p>}
                 </div>
+                {/* Type traduit (avant : valeur brute « image », « video ») */}
                 <Badge variant="outline">
-                  <Icon className="h-3 w-3 me-1" />
-                  {media.type_media}
+                  <Icon className="h-3 w-3 me-1" aria-hidden="true" />
+                  {t(`gallery.types.${media.type_media}`, { defaultValue: media.type_media })}
                 </Badge>
               </div>
             );

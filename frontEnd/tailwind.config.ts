@@ -40,7 +40,13 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
         arabic: ["Noto Sans Arabic", "Arial", "sans-serif"],
-        tifinagh: ["Noto Sans Tifinagh", "Arial Unicode MS", "sans-serif"],
+        // Police latine en repli : le texte latin garde ses accents (audit V11 UX-23)
+        tifinagh: ["Noto Sans Tifinagh", "Inter", "system-ui", "Arial Unicode MS", "sans-serif"],
+      },
+      // Anneau de focus par défaut (classe « ring-2 » sans couleur) : olive du thème au lieu du bleu
+      // de Tailwind, comme la règle :focus-visible d'index.css (audit V11 UX-33)
+      ringColor: {
+        DEFAULT: "hsl(var(--ring))",
       },
       colors: {
         border: "hsl(var(--border))",

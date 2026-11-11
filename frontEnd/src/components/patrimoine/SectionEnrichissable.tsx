@@ -163,7 +163,8 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-            <CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle>
+            {/* Sous-section du H2 « Culture & Patrimoine vivant » de la fiche lieu : h3 (audit V11 UX-25) */}
+            <CardTitle as="h3" className="flex items-center gap-2">{icon} {title}</CardTitle>
             {isAuthenticated && (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">

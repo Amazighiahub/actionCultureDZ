@@ -270,7 +270,8 @@ const HeroSection: React.FC = () => {
                   px-5 sm:px-6
                 "
               >
-                <Link to={isAuthenticated ? '/ajouter-patrimoine' : '/auth'}>
+                {/* Sans compte : inscription, puis retour au formulaire d'ajout (audit V11 UX-29) */}
+                <Link to={isAuthenticated ? '/ajouter-patrimoine' : `/auth?tab=inscription&redirect=${encodeURIComponent('/ajouter-patrimoine')}`}>
                   {isAuthenticated ? t('home.hero.addSite', 'Ajouter un site') : t('home.hero.contribute', 'Contribuer')}
                 </Link>
               </Button>

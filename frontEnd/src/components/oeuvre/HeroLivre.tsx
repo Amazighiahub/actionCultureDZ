@@ -122,7 +122,8 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:to-black flex flex-col items-center justify-center p-6 text-center">
                           <BookOpen className="h-12 w-12 text-amber-400/50 mb-4" />
-                          <h3 className="text-lg font-bold font-serif line-clamp-3 text-amber-50">{titre}</h3>
+                          {/* Titre dessiné sur la couverture : décor, pas un titre de la page (le H1 est plus bas, audit V11 UX-25) */}
+                          <p aria-hidden="true" className="text-lg font-bold font-serif line-clamp-3 text-amber-50">{titre}</p>
                           {mainContributors.length > 0 && (
                             <p className="text-sm text-amber-200/80 mt-2">{gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}</p>
                           )}
@@ -188,7 +189,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                               <BookMarked className="h-8 w-8 text-amber-400" />
                               <Badge variant="outline" className="border-amber-400/50 text-amber-200 bg-amber-950/50">{typeOeuvre}</Badge>
                             </div>
-                            <h3 className="text-xl font-bold font-serif mb-3 text-amber-100">{titre}</h3>
+                            <p aria-hidden="true" className="text-xl font-bold font-serif mb-3 text-amber-100">{titre}</p>
                             <div className="flex-1 overflow-hidden">
                               <Quote className="h-5 w-5 text-amber-500/50 mb-2" />
                               <p className="text-sm leading-relaxed text-amber-100/90 line-clamp-[8]">{description || t('works.noDescriptionBook', 'Aucune description disponible pour cet ouvrage.')}</p>
@@ -236,7 +237,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
           <div className="lg:col-span-3 space-y-6">
             <div>
               <div className={`flex flex-wrap items-center gap-3 mb-4 ${rtlClasses.flexRow}`}>
-                <Badge className="bg-amber-600 text-white">
+                <Badge className="bg-amber-700 text-white">
                   <BookOpen className={`h-3 w-3 ${rtlClasses.marginEnd(1)}`} />
                   {t('works.types.book', 'Livre')}
                 </Badge>
@@ -344,10 +345,10 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               </Card>
             )}
 
-            {/* Vues et Avis */}
+            {/* Vues et avis : seulement s'il y en a (« 0 vues · 0 avis » n'apprend rien, audit V11 UX-18) */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
-              <div className="flex items-center gap-2"><Eye className="h-5 w-5" /><span className="font-medium">{formatNumber(viewCount)}</span><span className="text-sm">{t('works.stats.views', 'vues')}</span></div>
-              <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5" /><span className="font-medium">{formatNumber(commentsCount)}</span><span className="text-sm">{t('works.stats.reviews', 'avis')}</span></div>
+              {viewCount > 0 && <div className="flex items-center gap-2"><Eye className="h-5 w-5" aria-hidden="true" /><span className="font-medium">{formatNumber(viewCount)}</span><span className="text-sm">{t('works.stats.views', 'vues')}</span></div>}
+              {commentsCount > 0 && <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5" aria-hidden="true" /><span className="font-medium">{formatNumber(commentsCount)}</span><span className="text-sm">{t('works.stats.reviews', 'avis')}</span></div>}
               {oeuvre.Livre?.nb_pages && (
                 <div className="flex items-center gap-2"><BookOpen className="h-5 w-5" /><span className="font-medium">{formatNumber(oeuvre.Livre.nb_pages)}</span><span className="text-sm">{t('works.fields.pages', 'pages')}</span></div>
               )}

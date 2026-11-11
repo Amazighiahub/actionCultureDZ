@@ -39,7 +39,13 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    // Texte de repli, ou options i18next (pluriels : defaultValue_one / _other, {{count}})
+    t: (key: string, opt?: string | Record<string, any>) => {
+      if (typeof opt === 'string') return opt;
+      if (!opt) return key;
+      const modele = (opt.count === 1 ? opt.defaultValue_one : opt.defaultValue_other) ?? opt.defaultValue ?? key;
+      return String(modele).replace(/{{(\w+)}}/g, (_: string, k: string) => String(opt[k] ?? ''));
+    },
     i18n: { language: 'fr' },
   }),
 }));

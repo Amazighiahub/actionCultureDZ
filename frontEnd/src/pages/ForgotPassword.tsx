@@ -115,7 +115,8 @@ const ForgotPassword = () => {
                 <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>{t('auth.forgotPassword.emailSentTitle')}</CardTitle>
+                {/* Titre principal de la page (avant : h3 sans h1, audit V11 UX-25, UX-36) */}
+                <CardTitle as="h1">{t('auth.forgotPassword.emailSentTitle')}</CardTitle>
                 <CardDescription>
                   {t('auth.forgotPassword.emailSentDescription')}
                 </CardDescription>
@@ -143,7 +144,8 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  {/* Zone tactile de 44 px de haut, sans décaler la page (audit V11 UX-34) */}
+                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1 py-3 -my-3 px-2 -mx-2">
                     <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>
@@ -170,7 +172,8 @@ const ForgotPassword = () => {
               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <Mail className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle>{t('auth.forgotPassword.title')}</CardTitle>
+              {/* Titre principal de la page (avant : h3 sans h1, audit V11 UX-25, UX-36) */}
+              <CardTitle as="h1">{t('auth.forgotPassword.title')}</CardTitle>
               <CardDescription>
                 {t('auth.forgotPassword.description')}
               </CardDescription>
@@ -183,6 +186,8 @@ const ForgotPassword = () => {
                   <Input
                     id="email"
                     type="email"
+                    // E-mail écrit de gauche à droite, même en arabe (audit V11 UX-22)
+                    dir="ltr"
                     autoComplete="email"
                     maxLength={255}
                     placeholder={t('auth.forgotPassword.emailPlaceholder')}
@@ -219,7 +224,8 @@ const ForgotPassword = () => {
                 </Button>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  {/* Zone tactile de 44 px de haut, sans décaler la page (audit V11 UX-34) */}
+                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1 py-3 -my-3 px-2 -mx-2">
                     <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>

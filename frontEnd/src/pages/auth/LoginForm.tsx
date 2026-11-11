@@ -14,6 +14,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { emailValide } from '@/utils/validationChamps';
 
+/**
+ * Mot de passe écrit de gauche à droite même en arabe, y compris affiché en clair (audit V11 UX-22).
+ * Le bouton « œil » reste en fin de ligne (à gauche en arabe) : la marge intérieure suit. « ! » :
+ * la règle input[type=…] d'index.css passe sinon devant les classes de marge.
+ */
+const CLASSES_MOT_DE_PASSE = '!pe-11 rtl:!pe-3 rtl:!ps-11 rtl:!text-right';
+
 interface LoginFormProps {
   onSwitchToRegister: () => void;
 }
@@ -147,6 +154,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             <Input
               id="login-email"
               type="email"
+              // E-mail écrit de gauche à droite, même en arabe (audit V11 UX-22)
+              dir="ltr"
               autoComplete="email"
               maxLength={255}
               placeholder={t('auth.login.emailPlaceholder', 'votre@email.com')}
@@ -173,6 +182,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <Input
                 id="login-password"
                 type={showPassword ? 'text' : 'password'}
+                dir="ltr"
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={formData.mot_de_passe}
@@ -180,7 +190,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   setFormData({ ...formData, mot_de_passe: e.target.value });
                   setErrors({ ...errors, password: '' });
                 }}
-                className={`pe-10 ${errors.password ? 'border-destructive' : ''}`}
+                className={`${CLASSES_MOT_DE_PASSE} ${errors.password ? 'border-destructive' : ''}`}
                 disabled={loginLoading}
                 required
                 aria-invalid={!!errors.password}
@@ -189,7 +199,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <button
                 type="button"
                 // Atteignable au clavier et par les lecteurs d'écran (avant : tabIndex -1, audit V11 FRM-19)
-                className="absolute end-3 top-1/2 -translate-y-1/2 rounded text-muted-foreground hover:text-foreground transition-colors"
+                // Zone de 44 px de large, sur toute la hauteur du champ (audit V11 UX-34)
+                className="absolute inset-y-0 end-0 flex w-11 items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? t('auth.hidePassword', 'Masquer') : t('auth.showPassword', 'Afficher')}
                 aria-pressed={showPassword}
@@ -211,7 +222,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
           {/* Options */}
           <div className="flex items-center justify-end">
-            <Button variant="link" size="sm" className="px-0" type="button" asChild>
+            <Button variant="link" size="sm" className="px-0 min-h-11" type="button" asChild>
               <Link to="/forgot-password">
                 {t('auth.login.forgotPassword', 'Mot de passe oublié ?')}
               </Link>
@@ -240,7 +251,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             {t('auth.login.noAccount', 'Pas encore de compte ?')}{' '}
             <Button
               variant="link"
-              className="p-0 h-auto"
+              className="p-0 h-auto py-3 -my-3"
               type="button"
               onClick={onSwitchToRegister}
             >

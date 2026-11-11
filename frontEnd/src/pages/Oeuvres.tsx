@@ -317,18 +317,29 @@ const Oeuvres: React.FC = () => {
       <main className="container py-8">
         <MissionModule module="oeuvres" />
         {/* En-tête */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight font-serif mb-4">
+        {/* En-tête plus court sur téléphone : le premier résultat remonte (audit V11 UX-15) */}
+        <div className="text-center mb-6 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight font-serif mb-2 sm:mb-4">
             {t('works.title', 'Œuvres culturelles')}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             {t('works.subtitleShort', 'Explorez la richesse du patrimoine culturel algérien')}
           </p>
         </div>
 
-        {/* Stats rapides */}
+        {/* Stats rapides : une seule ligne de texte sur téléphone, tuiles à partir de 640 px */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
+          <p className="sm:hidden mb-4 text-center text-sm text-muted-foreground">
+            {[
+              t('works.stats.totalCount', { count: stats.total || 0, defaultValue_one: '{{count}} œuvre', defaultValue_other: '{{count}} œuvres', defaultValue: '{{count}} œuvres' }),
+              t('works.stats.typesCount', { count: typesOeuvres?.length || 0, defaultValue_one: '{{count}} type', defaultValue_other: '{{count}} types', defaultValue: '{{count}} types' }),
+              (stats.nouveautes || 0) > 0 && t('works.stats.newCount', { count: stats.nouveautes, defaultValue_one: '{{count}} nouveauté', defaultValue_other: '{{count}} nouveautés', defaultValue: '{{count}} nouveautés' }),
+              (stats.classiques || 0) > 0 && t('works.stats.classicsCount', { count: stats.classiques, defaultValue_one: '{{count}} classique', defaultValue_other: '{{count}} classiques', defaultValue: '{{count}} classiques' }),
+            ].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        {stats && (
+          <div className="hidden sm:grid grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4 mb-8">
             <Card className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">{stats.total || 0}</p>
               <p className="text-sm text-muted-foreground">{t('works.stats.total', 'Œuvres')}</p>
@@ -354,9 +365,9 @@ const Oeuvres: React.FC = () => {
         )}
 
         {/* Filtres */}
-        <Card className="mb-8">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -369,9 +380,11 @@ const Oeuvres: React.FC = () => {
                 />
               </div>
 
+              {/* Listes et boutons sur une seule ligne sur téléphone */}
+              <div className="flex gap-2 md:gap-4">
               {/* Filtre type */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]" aria-label={t('works.filterByType', 'Type')}>
+                <SelectTrigger className="flex-1 min-w-0 md:flex-none md:w-[180px]" aria-label={t('works.filterByType', 'Type')}>
                   <SelectValue placeholder={t('works.filterByType', 'Type')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -386,7 +399,7 @@ const Oeuvres: React.FC = () => {
 
               {/* Tri */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[150px]" aria-label={t('common.sortBy', 'Trier par')}>
+                <SelectTrigger className="flex-1 min-w-0 md:flex-none md:w-[150px]" aria-label={t('common.sortBy', 'Trier par')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -406,6 +419,7 @@ const Oeuvres: React.FC = () => {
                 <Button variant="outline" size="icon" onClick={loadOeuvres} aria-label={t('common.refresh', 'Actualiser')}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>
+              </div>
               </div>
             </div>
           </CardContent>
@@ -434,7 +448,12 @@ const Oeuvres: React.FC = () => {
             <>
               {/* Stats résultats */}
               <div className="mb-6 text-sm text-muted-foreground">
-                {displayedOeuvres.length} {t('works.resultsCount', 'œuvre(s) trouvée(s)')}
+                {t('works.resultsFound', {
+                  count: displayedOeuvres.length,
+                  defaultValue_one: '{{count}} œuvre trouvée',
+                  defaultValue_other: '{{count}} œuvres trouvées',
+                  defaultValue: '{{count}} œuvres trouvées',
+                })}
               </div>
 
               {/* Grille des œuvres */}

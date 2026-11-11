@@ -111,7 +111,8 @@ const APropos = () => {
     icon: Users,
     title: t("apropos.title_accessibilit"),
     description: t("apropos.description_rendre_culture_accessible"),
-    color: 'text-secondary'
+    // text-secondary (beige pâle) était quasi invisible sur fond clair (audit V11 UX-24)
+    color: 'text-secondary-foreground'
   },
   {
     icon: Globe,
@@ -119,6 +120,14 @@ const APropos = () => {
     description: t("apropos.description_mettre_lumire_richesse"),
     color: 'text-accent'
   }];
+
+  // Ancres déjà posées sur la page (le pied de page y renvoie aussi)
+  const sommaire = [
+  { ancre: 'mission', libelle: t('apropos.notre_mission', 'Notre mission') },
+  { ancre: 'contact', libelle: t('apropos.nous_contacter', 'Nous contacter') },
+  { ancre: 'conditions', libelle: t('apropos.conditions', "Conditions d'utilisation") },
+  { ancre: 'confidentialite', libelle: t('apropos.confidentialite', 'Politique de confidentialité') },
+  { ancre: 'mentions-legales', libelle: t('apropos.mentionsLegales', 'Mentions légales') }];
 
 
   return (
@@ -133,16 +142,30 @@ const APropos = () => {
 
       <main className="container py-12">
         {/* En-tête */}
-        <div className="text-center space-y-4 mb-16">
+        <div className="text-center space-y-4 mb-6">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">{t("apropos.propos_culture_algrie")}
 
           </h1>
         </div>
 
+        {/* Sommaire : la page regroupe mission, contact et textes légaux ; liens vers les ancres existantes
+            (audit V11 UX-27). Le défilement vers l'ancre est géré par ScrollToTop. */}
+        <nav aria-label={t('apropos.sommaire', 'Sur cette page')} className="mb-12">
+          <ul className="flex flex-wrap justify-center gap-2">
+            {sommaire.map(({ ancre, libelle }) =>
+            <li key={ancre}>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`#${ancre}`}>{libelle}</a>
+                </Button>
+              </li>
+            )}
+          </ul>
+        </nav>
+
         <div className="grid lg:grid-cols-2 gap-12 mb-16">
           {/* Mission */}
           <div className="space-y-6">
-            <Card className="p-8">
+            <Card className="p-8 scroll-mt-24" id="mission">
               <h2 className="text-2xl font-semibold mb-6 font-serif">{t("apropos.notre_mission")}</h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>{t("apropos.culture_algrie_est")}
@@ -272,7 +295,7 @@ const APropos = () => {
         <div className="space-y-8 mb-16">
 
           {/* ── CONDITIONS D'UTILISATION ── */}
-          <Card className="p-8" id="conditions">
+          <Card className="p-8 scroll-mt-24" id="conditions">
             <h2 className="text-2xl font-semibold mb-6 font-serif">{t("apropos.conditions", "Conditions d'utilisation")}</h2>
             <div className="text-sm text-muted-foreground space-y-4">
               <div>
@@ -299,7 +322,7 @@ const APropos = () => {
           </Card>
 
           {/* ── POLITIQUE DE CONFIDENTIALITÉ (RGPD Art. 13) ── */}
-          <Card className="p-8" id="confidentialite">
+          <Card className="p-8 scroll-mt-24" id="confidentialite">
             <h2 className="text-2xl font-semibold mb-6 font-serif">{t("apropos.confidentialite", "Politique de confidentialité")}</h2>
             <div className="text-sm text-muted-foreground space-y-4">
 
@@ -380,7 +403,7 @@ const APropos = () => {
           </Card>
 
           {/* ── MENTIONS LÉGALES ── */}
-          <Card className="p-8" id="mentions-legales">
+          <Card className="p-8 scroll-mt-24" id="mentions-legales">
             <h2 className="text-2xl font-semibold mb-6 font-serif">{t("apropos.mentionsLegales", "Mentions légales")}</h2>
             <div className="text-sm text-muted-foreground space-y-4">
               <div>
@@ -401,7 +424,7 @@ const APropos = () => {
           </Card>
 
           {/* ── RESSOURCES ── */}
-          <Card className="p-8" id="ressources">
+          <Card className="p-8 scroll-mt-24" id="ressources">
             <h2 className="text-2xl font-semibold mb-4 font-serif">{t("apropos.ressources", "Ressources")}</h2>
             <div className="text-sm text-muted-foreground space-y-3">
               <p>{t("apropos.ressourcesText", "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.")}</p>

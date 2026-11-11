@@ -4,7 +4,7 @@
  */
 import LireAVoixHaute, { type LangueLue } from '@/components/shared/LireAVoixHaute';
 import i18nAide from 'i18next';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { tarifAvecUnite } from '@/components/services/typesService';
@@ -150,8 +150,12 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
 
   // États du formulaire
   const [step, setStep] = useState<'config' | 'loading' | 'result'>('config');
+  const refDialogue = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(240); // 4 heures par défaut
-  const [transport, setTransport] = useState<'marche' | 'velo' | 'voiture'>('voiture');
+  // Moyen de transport par défaut selon le lieu : à pied dans une ville ou un village (centre, médina,
+  // ksar), en voiture ailleurs (sites souvent éloignés les uns des autres). Avant : toujours « Voiture »
+  // (audit V11 UX-28). Le planificateur est monté à chaque ouverture : le défaut suit le lieu affiché.
+  const [transport, setTransport] = useState<'marche' | 'velo' | 'voiture'>(() => siteType === 'ville_village' ? 'marche' : 'voiture');
   const [interests, setInterests] = useState<string[]>(['histoire', 'architecture']);
   const [includeRestaurants, setIncludeRestaurants] = useState(true);
   const [includeHotels, setIncludeHotels] = useState(false);
@@ -165,12 +169,12 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
 
   // Options d'intérêts
   const INTERESTS_OPTIONS = [
-    { value: 'histoire', label: t('visit.interests.history', 'Histoire'), icon: Landmark },
-    { value: 'architecture', label: t('visit.interests.architecture', 'Architecture'), icon: Landmark },
-    { value: 'art', label: t('visit.interests.art', 'Art'), icon: Camera },
-    { value: 'nature', label: t('visit.interests.nature', 'Nature'), icon: TreePine },
-    { value: 'religion', label: t('visit.interests.religion', 'Religion'), icon: Church },
-    { value: 'gastronomie', label: t('visit.interests.gastronomy', 'Gastronomie'), icon: Utensils },
+    { value: 'histoire', label: t('visit.centresInteret.history', 'Histoire'), icon: Landmark },
+    { value: 'architecture', label: t('visit.centresInteret.architecture', 'Architecture'), icon: Landmark },
+    { value: 'art', label: t('visit.centresInteret.art', 'Art'), icon: Camera },
+    { value: 'nature', label: t('visit.centresInteret.nature', 'Nature'), icon: TreePine },
+    { value: 'religion', label: t('visit.centresInteret.religion', 'Religion'), icon: Church },
+    { value: 'gastronomie', label: t('visit.centresInteret.gastronomy', 'Gastronomie'), icon: Utensils },
   ];
 
   // Toggle un intérêt
@@ -239,7 +243,14 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      {/* À l'ouverture, le focus va sur le dialogue lui-même et non sur son 1er élément (le résumé
+          « Comment choisir… » s'affichait entouré) ; Tab mène ensuite au 1er champ, le piège du clavier de
+          Radix reste actif (audit V11 UX-28) */}
+      <DialogContent
+        ref={refDialogue}
+        className="max-w-4xl max-h-[90dvh] overflow-hidden flex flex-col focus-visible:outline-none"
+        onOpenAutoFocus={(e) => { e.preventDefault(); refDialogue.current?.focus({ preventScroll: true }); }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Route className="h-5 w-5 text-primary" />
@@ -250,7 +261,8 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pe-4">
+        {/* min-h-0 : la zone défile dans la hauteur du dialogue au lieu de passer sous les boutons du bas */}
+        <ScrollArea className="flex-1 min-h-0 pe-4">
           {/* Étape Configuration */}
           {step === 'config' && (
             <div className="space-y-6 py-4">
@@ -310,21 +322,21 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                     <RadioGroupItem value="marche" id="marche" />
                     <Label htmlFor="marche" className="flex items-center gap-1 cursor-pointer">
                       <Footprints className="h-4 w-4" />
-                      {t('visit.transport.walk', 'À pied')}
+                      {t('visit.modesTransport.walk', 'À pied')}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <RadioGroupItem value="velo" id="velo" />
                     <Label htmlFor="velo" className="flex items-center gap-1 cursor-pointer">
                       <Bike className="h-4 w-4" />
-                      {t('visit.transport.bike', 'Vélo')}
+                      {t('visit.modesTransport.bike', 'Vélo')}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <RadioGroupItem value="voiture" id="voiture" />
                     <Label htmlFor="voiture" className="flex items-center gap-1 cursor-pointer">
                       <Car className="h-4 w-4" />
-                      {t('visit.transport.car', 'Voiture')}
+                      {t('visit.modesTransport.car', 'Voiture')}
                     </Label>
                   </div>
                 </RadioGroup>
