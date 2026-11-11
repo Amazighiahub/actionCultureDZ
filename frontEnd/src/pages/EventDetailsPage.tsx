@@ -19,6 +19,8 @@ import SEOHead, { buildEvenementJsonLd, buildBreadcrumbJsonLd } from '@/componen
 
 // Hook personnalisé
 import { useEventDetails } from '@/hooks/useEventDetails';
+import { saisieEnAttente } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 // Haut de page (photo, titre) chargé avec la page : en chargement séparé, il ajoutait une attente
 // de 0,4 à 0,7 s sur téléphone avant l'affichage de la photo
 import EventHero from './event/EventHero';
@@ -74,6 +76,13 @@ const EventDetailsPage: React.FC = () => {
     isRegistered,
     registrationStatus
   } = useEventDetails(idFromSlug(id) ?? 0);
+
+  // Retour après une session expirée pendant l'écriture d'un avis : l'onglet des avis s'ouvre pour que
+  // le texte conservé réapparaisse (l'onglet n'est affiché que s'il est ouvert, audit V11 FRM-23)
+  const user = useUtilisateurOptionnel();
+  useEffect(() => {
+    if (event?.id_evenement && saisieEnAttente(`avis-evenement:${event.id_evenement}`, user?.id_user)) setActiveTab('comments');
+  }, [event?.id_evenement, user?.id_user]);
 
   // Adresse lisible et partageable : /evenements/1 -> /evenements/1-salon-de-la-poterie-…
   const cheminCanonique = event ? evenementPath(event.id_evenement, event.nom_evenement) : null;

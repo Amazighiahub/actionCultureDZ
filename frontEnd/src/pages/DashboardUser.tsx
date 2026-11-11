@@ -35,6 +35,7 @@ import MesSuivisCard from '@/components/user/MesSuivisCard';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
 import CompleterProfilCard from '@/components/user/CompleterProfilCard';
 import SecuriteCompteCard from '@/components/user/SecuriteCompteCard';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
 import GestionLiens from '@/components/pro/GestionLiens';
@@ -621,6 +622,13 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   // Refus du serveur à l'enregistrement : encadré près du bouton, qui reste affiché (avant : bandeau de 5 s)
   const [erreurEnregistrement, setErreurEnregistrement] = useState<string | null>(null);
   const refErreurEnregistrement = useDefilerVersErreur(erreurEnregistrement);
+  // Session expirée pendant la modification : saisie conservée, mode modification rouvert (audit V11 FRM-23)
+  const { restauree: profilRestaure, oublier: oublierProfil } = useSaisieConservee({
+    cle: 'profil',
+    valeur: form,
+    restaurer: (v) => { setForm(v); setEditing(true); },
+    actif: editing,
+  });
 
   // Initialiser le formulaire quand user change
   const startEditing = useCallback(() => {
@@ -690,6 +698,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       });
       if (response.success) {
         toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
+        oublierProfil();
         setEditing(false);
         await refreshUser();
       } else {
@@ -959,6 +968,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       {/* Articles de presse et liens : sur le portfolio, et sur l'œuvre ou l'événement choisi */}
       {isProfessional && <GestionLiens />}
 
+      {editing && <div className="mt-8"><SaisieConserveeAvis visible={profilRestaure} /></div>}
       {erreurEnregistrement && editing && (
         <Alert ref={refErreurEnregistrement} variant="destructive" className="mt-8" role="alert">
           <AlertCircle className="h-4 w-4" />
@@ -970,7 +980,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
         {editing ? (
           <>
-            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>{t('common.cancel', 'Annuler')}</Button>
+            <Button variant="outline" onClick={() => { setEditing(false); oublierProfil(); }} disabled={saving}>{t('common.cancel', 'Annuler')}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <RefreshCw className="h-4 w-4 me-2 animate-spin" /> : null}
               {t('common.save', 'Enregistrer')}

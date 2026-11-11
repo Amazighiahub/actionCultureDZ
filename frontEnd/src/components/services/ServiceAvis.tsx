@@ -2,6 +2,7 @@
  * Avis des visiteurs sur un service : note moyenne (calculée par le serveur), avis publiés,
  * formulaire (un avis par membre, pas sur son propre service) et réponse du professionnel.
  */
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,12 +24,21 @@ const auteur = (a: AvisService) => a.User ? `${getLocalizedText(a.User.prenom)} 
 // Saisie d'un avis ou d'une réponse ; renvoie le message d'erreur du serveur s'il refuse
 const Saisie: React.FC<{
   id: string; avecNote: boolean; libelle: string; onEnvoyer: (contenu: string, note?: number) => Promise<string | null>; onAnnuler?: () => void;
-}> = ({ id, avecNote, libelle, onEnvoyer, onAnnuler }) => {
+  /** Nom du brouillon gardé si la session expire pendant l'écriture (ex. « avis-service:12 ») */
+  cleSaisie?: string;
+}> = ({ id, avecNote, libelle, onEnvoyer, onAnnuler, cleSaisie }) => {
   const { t } = useTranslation();
   const [contenu, setContenu] = useState('');
   const [note, setNote] = useState(0);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  // Texte et note conservés si la session expire pendant la saisie (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: cleSaisie || null,
+    valeur: { texte: contenu, note },
+    restaurer: (v) => { setContenu(v.texte || ''); setNote(v.note || 0); },
+    actif: !!contenu.trim(),
+  });
 
   const envoyer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +50,7 @@ const Saisie: React.FC<{
     const refus = await onEnvoyer(contenu.trim(), avecNote && note ? note : undefined);
     setEnvoi(false);
     setErreur(refus);
-    if (!refus) { setContenu(''); setNote(0); }
+    if (!refus) { setContenu(''); setNote(0); oublier(); }
   };
 
   return (
@@ -54,6 +64,7 @@ const Saisie: React.FC<{
       <Textarea id={id} value={contenu} onChange={(e) => setContenu(e.target.value)} maxLength={2000}
         placeholder={libelle} className="min-h-[90px]" aria-label={libelle}
         aria-invalid={!!erreur} aria-describedby={erreur ? `${id}-erreur` : undefined} />
+      <SaisieConserveeAvis visible={restauree} />
       {erreur && (
         <p id={`${id}-erreur`} role="alert" className="flex items-center gap-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}
@@ -129,7 +140,7 @@ const ServiceAvis: React.FC<{ serviceId: number; proprietaireId?: number | null 
           ) : dejaDonne ? (
             <p className="text-sm text-muted-foreground">{t('servicesVisiteurs.avis.dejaDonne', 'Merci ! Vous avez déjà donné votre avis sur ce service.')}</p>
           ) : (
-            <Saisie id="avis-service" avecNote libelle={t('servicesVisiteurs.avis.placeholder', 'Racontez votre visite : accueil, qualité, prix…')}
+            <Saisie id="avis-service" cleSaisie={`avis-service:${serviceId}`} avecNote libelle={t('servicesVisiteurs.avis.placeholder', 'Racontez votre visite : accueil, qualité, prix…')}
               onEnvoyer={(contenu, n) => publier(contenu, n)} />
           )}
         </CardContent>

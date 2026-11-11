@@ -1,4 +1,6 @@
 // pages/articles/ArticleViewPage.tsx
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { echecCommentaire } from '@/utils/envoiCommentaire';
 import CouvertureAuto from '@/components/article/CouvertureAuto';
 import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
 import { classesBlocTexte, formeDuBloc, ressembleAPoeme } from '@/utils/poeme';
@@ -56,7 +58,6 @@ import { commentaireService } from '@/services/commentaire.service';
 import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
 import { Pencil } from 'lucide-react';
 import { authService } from '@/services/auth.service';
-import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { getContexteArticle, cleSectionPatrimoine, type ContexteArticle } from '@/services/patrimoineArticles.service';
@@ -236,9 +237,17 @@ const ArticleViewPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { t, i18n } = useTranslation();
   const { formatDate: hookFormatDate } = useFormatDate();
-  const { toast } = useToast();
 
   const articleId = idFromSlug(id) ?? 0;
+  // Commentaire : erreur dans la fenêtre (avant : bandeau de 5 s avec le texte brut, audit V11 FRM-14) et
+  // texte conservé si la session expire pendant l'écriture, fenêtre rouverte au retour (FRM-23)
+  const [erreurCommentaire, setErreurCommentaire] = useState<string | null>(null);
+  const { restauree: commentaireRestaure, oublier: oublierCommentaire } = useSaisieConservee({
+    cle: articleId ? `commentaire-article:${articleId}` : null,
+    valeur: { texte: commentContent, parent: replyToComment },
+    restaurer: (v) => { setCommentContent(v.texte || ''); setReplyToComment(v.parent ?? null); setShowCommentModal(true); },
+    actif: showCommentModal && !!commentContent.trim(),
+  });
   // Adresse lisible et partageable : /articles/40 -> /articles/40-titre-de-l-article
   useEffect(() => {
     if (!oeuvre || ![4, 5].includes(oeuvre.id_type_oeuvre as number)) return;
@@ -392,6 +401,7 @@ const ArticleViewPage: React.FC = () => {
     if (!oeuvre || !commentContent.trim()) return;
 
     setCommentLoading(true);
+    setErreurCommentaire(null);
     try {
       const result = await commentaireService.createCommentaireOeuvre(oeuvre.id_oeuvre, {
         contenu: commentContent.trim(),
@@ -420,20 +430,12 @@ const ArticleViewPage: React.FC = () => {
         setCommentContent('');
         setShowCommentModal(false);
         setReplyToComment(null);
+        oublierCommentaire();
       } else {
-        toast({
-          title: t('common.error', 'Erreur'),
-          description: result.error || t('article.commentError', 'Erreur lors de l\'ajout du commentaire'),
-          variant: 'destructive',
-        });
+        setErreurCommentaire(echecCommentaire(result, t).erreur || null);
       }
     } catch (err) {
-      console.error('Erreur ajout commentaire:', err);
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('article.commentError', 'Erreur lors de l\'ajout du commentaire'),
-        variant: 'destructive',
-      });
+      setErreurCommentaire(echecCommentaire(err, t).erreur || null);
     } finally {
       setCommentLoading(false);
     }
@@ -448,6 +450,7 @@ const ArticleViewPage: React.FC = () => {
     setReplyToComment(parentId);
     setShowCommentModal(true);
     setCommentContent('');
+    setErreurCommentaire(null);
   };
 
   // Texte des blocs dans la langue du visiteur (texte d'origine là où la traduction manque)
@@ -1211,12 +1214,16 @@ const ArticleViewPage: React.FC = () => {
                 placeholder={t("articles_articleviewpage.placeholder_crivez_votre_commentaire")}
                 className="min-h-[120px] resize-none"
                 value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                disabled={commentLoading} />
-              
+                onChange={(e) => { setCommentContent(e.target.value); setErreurCommentaire(null); }}
+                disabled={commentLoading}
+                aria-invalid={!!erreurCommentaire || undefined}
+                aria-describedby={erreurCommentaire ? 'article-comment-erreur' : undefined} />
+
               <p className="text-xs text-muted-foreground text-end">
                 {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
+              <SaisieConserveeAvis visible={commentaireRestaure} />
+              {erreurCommentaire && <p id="article-comment-erreur" role="alert" className="text-sm text-destructive">{erreurCommentaire}</p>}
             </div>
           </div>
           <DialogFooter>
@@ -1226,6 +1233,7 @@ const ArticleViewPage: React.FC = () => {
                 setShowCommentModal(false);
                 setCommentContent('');
                 setReplyToComment(null);
+                oublierCommentaire();
               }}
               disabled={commentLoading}>{t("articles_articleviewpage.annuler")}
 

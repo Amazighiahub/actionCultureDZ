@@ -12,6 +12,7 @@ import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { queryClient } from '@/lib/queryClient';
 import { detailsDesChamps, messageErreurServeur } from '@/utils/erreurServeur';
+import { oublierSaisiesConservees } from '@/hooks/useSaisieConservee';
 import i18next from 'i18next';
 
 /**
@@ -117,7 +118,13 @@ export function useAuth(): UseAuthReturn {
       // déconnexion locale même si l'appel réseau échoue
     } finally {
       // Vider le cache des requêtes : rien de l'utilisateur précédent ne doit
-      // réapparaître pour le suivant (poste partagé)
+      // réapparaître pour le suivant (poste partagé). Brouillons gardés à l'expiration de session aussi
+      // (pas dans clearSession : elle s'exécute sur /auth juste après l'expiration, avant la reconnexion).
+      oublierSaisiesConservees();
+      try {
+        sessionStorage.removeItem('eventculture_draft_oeuvre');
+        sessionStorage.removeItem('eventculture_draft_event');
+      } catch { /* stockage indisponible */ }
       await queryClient.cancelQueries();
       queryClient.clear();
       await refreshPermissions();

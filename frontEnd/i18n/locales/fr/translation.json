@@ -6104,5 +6104,8 @@
   },
   "geo": {
     "erreurChargement": "La liste des wilayas et des communes n’a pas pu se charger."
+  },
+  "saisie": {
+    "conservee": "Votre session avait expiré : votre texte a été conservé. Vérifiez-le, puis envoyez-le de nouveau."
   }
 }

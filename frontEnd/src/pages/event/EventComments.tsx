@@ -14,6 +14,7 @@ import {
   Send, AlertCircle, User, Clock, Loader2
 } from 'lucide-react';
 import type { ResultatEnvoi } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
@@ -177,7 +178,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 const EventComments: React.FC<EventCommentsProps> = ({
   comments,
   onAddComment,
-  eventId: _eventId,
+  eventId,
   onChange
 }) => {
   const { t } = useTranslation();
@@ -187,6 +188,13 @@ const EventComments: React.FC<EventCommentsProps> = ({
   const [rating, setRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Texte et note conservés si la session expire pendant la saisie (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: eventId ? `avis-evenement:${eventId}` : null,
+    valeur: { texte: newComment, note: rating },
+    restaurer: (v) => { setNewComment(v.texte || ''); setRating(v.note || 0); },
+    actif: !!newComment.trim(),
+  });
 
   // Calculer la moyenne des notes
   // (protégé : sans aucune note, la division donnait NaN)
@@ -227,6 +235,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
       if (resultat.ok) {
         setNewComment('');
         setRating(0);
+        oublier();
       } else if (resultat.erreur) {
         setError(resultat.erreur);
       }
@@ -314,6 +323,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
               </div>
 
               {/* Erreur */}
+              <SaisieConserveeAvis visible={restauree} />
               {error && (
                 <div id="event-comment-error" role="alert" className="flex items-center gap-2 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />

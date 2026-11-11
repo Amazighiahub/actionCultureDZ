@@ -172,6 +172,14 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   );
 }
 
+/**
+ * Personne connectée, sans exiger le fournisseur (renvoie null en dehors) : pour les fonctions d'appoint
+ * utilisées aussi dans des composants affichés seuls, comme la conservation du texte (useSaisieConservee)
+ */
+export function useUtilisateurOptionnel(): CurrentUser | null {
+  return useContext(PermissionsContext)?.user ?? null;
+}
+
 export function usePermissionsContext() {
   const context = useContext(PermissionsContext);
   if (!context) {

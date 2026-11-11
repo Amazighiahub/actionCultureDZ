@@ -6104,5 +6104,8 @@
   },
   "geo": {
     "erreurChargement": "The list of wilayas and municipalities could not be loaded."
+  },
+  "saisie": {
+    "conservee": "Your session had expired: your text was kept. Check it, then send it again."
   }
 }

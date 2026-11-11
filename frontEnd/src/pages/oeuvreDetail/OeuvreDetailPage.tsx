@@ -55,6 +55,8 @@ import { evenementPath, professionnelPath } from '@/utils/slug';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import { idFromSlug, oeuvrePath, artisanatPath } from '@/utils/slug';
+import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -151,6 +153,20 @@ const OeuvreDetailPage: React.FC = () => {
     addComment,
     rafraichirCommentaires
   } = useOeuvreDetails(idFromSlug(id) ?? 0);
+
+  // Session expirée pendant l'écriture : texte conservé et fenêtre rouverte au retour (audit V11 FRM-23)
+  const user = useUtilisateurOptionnel();
+  const idOeuvre = idFromSlug(id);
+  const { restauree: commentaireRestaure, oublier: oublierCommentaire } = useSaisieConservee({
+    cle: idOeuvre ? `commentaire-oeuvre:${idOeuvre}` : null,
+    valeur: { texte: commentContent },
+    restaurer: (v) => { setCommentContent(v.texte || ''); setShowCommentModal(true); },
+    actif: showCommentModal && !!commentContent.trim(),
+  });
+  // Avis en cours dans l'onglet des avis : l'onglet s'ouvre pour que le texte réapparaisse
+  useEffect(() => {
+    if (oeuvre?.id_oeuvre && saisieEnAttente(`avis-oeuvre:${oeuvre.id_oeuvre}`, user?.id_user)) setActiveTab('comments');
+  }, [oeuvre?.id_oeuvre, user?.id_user]);
 
   // Mémoriser seoKeywords et seoJsonLd pour stabiliser les références entre renders
   // (sinon SEOHead boucle son useEffect et bloque la navigation entre pages)
@@ -294,6 +310,7 @@ const OeuvreDetailPage: React.FC = () => {
       if (resultat.ok) {
         setCommentContent('');
         setShowCommentModal(false);
+        oublierCommentaire();
       } else if (resultat.erreur) {
         // Dans la fenêtre, qui reste ouverte avec le texte (audit V11 FRM-14)
         setErreurCommentaire(resultat.erreur);
@@ -905,6 +922,7 @@ const OeuvreDetailPage: React.FC = () => {
               <p className="text-xs text-muted-foreground text-end">
                 {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
+              <SaisieConserveeAvis visible={commentaireRestaure} />
               {erreurCommentaire && <p id="comment-erreur" role="alert" className="text-sm text-destructive">{erreurCommentaire}</p>}
             </div>
           </div>
@@ -914,6 +932,7 @@ const OeuvreDetailPage: React.FC = () => {
               onClick={() => {
                 setShowCommentModal(false);
                 setCommentContent('');
+                oublierCommentaire();
               }}
               disabled={commentLoading}
             >

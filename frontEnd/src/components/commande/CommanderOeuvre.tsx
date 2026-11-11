@@ -17,6 +17,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import ListeMoyensPaiement from '@/components/paiement/ListeMoyensPaiement';
 import { commandeService, type Commande, type ModeLivraison, type OffreOeuvre } from '@/services/commande.service';
 import { detailsDesChamps, echecEnvoi } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 const ORDRE: ModeLivraison[] = ['algerie', 'etranger', 'main_propre', 'a_convenir'];
 
@@ -49,6 +50,21 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
   const [erreur, setErreur] = useState<string | null>(null);
   const [erreursChamps, setErreursChamps] = useState<ErreursCommande>({});
   const [faite, setFaite] = useState<Commande | null>(null);
+  // Session expirée pendant la saisie : commande en cours conservée, fenêtre rouverte au retour (audit V11 FRM-23).
+  // Avant le « return » anticipé plus bas (règle des hooks).
+  const { restauree, oublier } = useSaisieConservee({
+    cle: `commande-oeuvre:${idOeuvre}`,
+    valeur: { quantite, livraison, adresse, telephone, message },
+    restaurer: (v) => {
+      setQuantite(v.quantite || 1);
+      setLivraison(v.livraison || '');
+      setAdresse(v.adresse || '');
+      setTelephone(v.telephone || '');
+      setMessage(v.message || '');
+      setOuvert(true);
+    },
+    actif: ouvert && !faite,
+  });
 
   useEffect(() => {
     let actif = true;
@@ -119,6 +135,7 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
         message: message.trim() || undefined,
       });
       if (!r?.success || !r.data) throw r;
+      oublier();
       setFaite(r.data);
     } catch (err) {
       // Refus du serveur sur un champ : sous ce champ ; sinon un message qui dit si la commande est partie
@@ -250,6 +267,7 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
                 {t('commande.partage', 'Le vendeur verra votre nom, votre adresse e-mail et, si vous les indiquez, votre adresse de livraison et votre téléphone.')}
               </p>
 
+              <SaisieConserveeAvis visible={restauree} />
               {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
               <Button className="w-full" onClick={envoyer} disabled={envoi}>
                 {envoi && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}

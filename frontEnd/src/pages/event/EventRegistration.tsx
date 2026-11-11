@@ -45,6 +45,7 @@ import type { Evenement } from '@/types/models/evenement.types';
 import type { InscriptionPayload } from '@/services/evenement.service';
 import type { ResultatInscription } from '@/hooks/useEventDetails';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import FormulaireInscription from '@/components/event/FormulaireInscription';
 import {
   configInscriptionValide,
@@ -136,6 +137,19 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const partiel = tarification.mode === 'profil' && !!tarification.partiel_pourcent
     && reponses[PRESENCE_PARTIELLE.cle] === PRESENCE_PARTIELLE.valeur;
   const [erreursFormulaire, setErreursFormulaire] = useState<Record<string, ErreurChamp>>({});
+  // Session expirée pendant la saisie : réponses conservées, fenêtre rouverte au retour (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: event.id_evenement ? `inscription-evenement:${event.id_evenement}` : null,
+    valeur: { nombrePersonnes, commentaire, reponses, selectedOeuvres },
+    restaurer: (v) => {
+      setNombrePersonnes(v.nombrePersonnes || 1);
+      setCommentaire(v.commentaire || '');
+      setReponses(v.reponses || {});
+      setSelectedOeuvres(v.selectedOeuvres || []);
+      setIsDialogOpen(true);
+    },
+    actif: isDialogOpen,
+  });
 
   const changerReponse = (cle: string, valeur: ValeurReponse) => {
     setReponses(prev => ({ ...prev, [cle]: valeur }));
@@ -313,6 +327,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       });
 
       if (resultat.ok) {
+        oublier();
         setIsDialogOpen(false);
         setNombrePersonnes(1);
         setCommentaire('');
@@ -881,6 +896,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 </div>
               </div>
 
+              <SaisieConserveeAvis visible={restauree} />
               {submitError && (
                 <div className="w-full p-3 bg-destructive/10 rounded-lg text-sm text-destructive" role="alert">
                   {submitError}

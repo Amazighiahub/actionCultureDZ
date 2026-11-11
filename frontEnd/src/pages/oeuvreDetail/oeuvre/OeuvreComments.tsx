@@ -16,6 +16,7 @@ import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import type { ResultatEnvoi } from '@/utils/erreurServeur';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
@@ -85,7 +86,7 @@ const CommentItem: React.FC<{ comment: Comment; onChange?: () => void }> = ({ co
 };
 
 // Composant principal
-const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId: _oeuvreId, onChange }) => {
+const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId, onChange }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
 
@@ -93,6 +94,13 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
   const [rating, setRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Texte et note conservés si la session expire pendant la saisie (audit V11 FRM-23)
+  const { restauree, oublier } = useSaisieConservee({
+    cle: oeuvreId ? `avis-oeuvre:${oeuvreId}` : null,
+    valeur: { texte: newComment, note: rating },
+    restaurer: (v) => { setNewComment(v.texte || ''); setRating(v.note || 0); },
+    actif: !!newComment.trim(),
+  });
 
   // Moyenne des notes
   // Une note par personne (les notes en double ne comptent qu'une fois)
@@ -130,6 +138,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
       if (resultat.ok) {
         setNewComment('');
         setRating(0);
+        oublier();
       } else if (resultat.erreur) {
         setError(resultat.erreur);
       }
@@ -200,6 +209,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
               <p className="text-xs text-muted-foreground text-end mt-1">
                 {newComment.length}/2000
               </p>
+              <SaisieConserveeAvis visible={restauree} />
               {error && (
                 <div id="oeuvre-comment-error" role="alert" className="flex items-center gap-2 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />

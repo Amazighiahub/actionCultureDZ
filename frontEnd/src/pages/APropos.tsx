@@ -14,6 +14,7 @@ import SEOHead from '@/components/SEOHead';
 import { httpClient } from '@/services/httpClient';
 import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
 import { emailValide } from '@/utils/validationChamps';
+import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 const CONTACT_EMAIL = 'contact@taladz.com';
 
@@ -34,6 +35,15 @@ const APropos = () => {
   const [erreurServeur, setErreurServeur] = useState<string | null>(null);
   const refErreurServeur = useDefilerVersErreur(erreurServeur);
   const [envoyeA, setEnvoyeA] = useState<string | null>(null);
+  // Une personne connectée peut voir sa session expirer pendant qu'elle écrit (la cloche interroge le serveur
+  // chaque minute) : le message est conservé et remis au retour (audit V11 FRM-23). Sans compte : clé « public ».
+  const { restauree, oublier } = useSaisieConservee({
+    cle: 'contact',
+    valeur: formData,
+    restaurer: (v) => setFormData(v),
+    actif: !!formData.message.trim(),
+    parUtilisateur: false,
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const champ = e.target.id;
@@ -76,6 +86,7 @@ const APropos = () => {
       // httpClient : jeton anti-CSRF exigé par l'API (un fetch direct était refusé : aucun message n'arrivait)
       const data = await httpClient.post('/contact', { ...formData, ...(antiRobot.lireJeton() ? { turnstile_token: antiRobot.lireJeton() } : {}) });
       if (data.success) {
+        oublier();
         setEnvoyeA(formData.email.trim());
         setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
       } else {
@@ -232,6 +243,7 @@ const APropos = () => {
 
                 <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
 
+                <SaisieConserveeAvis visible={restauree} />
                 {erreurServeur && (
                   <div ref={refErreurServeur} role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{erreurServeur}</div>
                 )}
