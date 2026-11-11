@@ -21,6 +21,8 @@ const crypto = require('crypto');
 
 const CSRF_COOKIE = 'csrf_token';
 const CSRF_HEADER = 'x-csrf-token';
+// Cookie absent ou différent (onglet ouvert longtemps, cookies effacés) : phrase compréhensible, codes inchangés
+const MESSAGE_CSRF = 'Votre session a expiré : rechargez la page, puis réessayez.';
 const TOKEN_LENGTH = 32; // 256 bits
 
 /**
@@ -77,7 +79,7 @@ function csrfVerifier(req, res, next) {
   if (!cookieToken || !headerToken) {
     return res.status(403).json({
       success: false,
-      error: 'CSRF token missing',
+      error: MESSAGE_CSRF,
       code: 'CSRF_MISSING',
     });
   }
@@ -87,7 +89,7 @@ function csrfVerifier(req, res, next) {
       !crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken))) {
     return res.status(403).json({
       success: false,
-      error: 'CSRF token mismatch',
+      error: MESSAGE_CSRF,
       code: 'CSRF_MISMATCH',
     });
   }

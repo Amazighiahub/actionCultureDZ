@@ -571,7 +571,9 @@
     "portfolioInvalide": "Invalid portfolio link (it must start with https://)",
     "conditionsRequises": "You must accept the terms",
     "ancienMotDePasseRequis": "The current password is required",
-    "nouveauMotDePasse12": "The new password must have at least 12 characters"
+    "nouveauMotDePasse12": "The new password must have at least 12 characters",
+    "texteTropLong": "This text is too long (${max} characters at most)",
+    "lienInvalide": "This link is incomplete or wrong"
   },
   "article": {
     "blockCreated": "Block created successfully",

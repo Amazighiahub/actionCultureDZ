@@ -71,7 +71,7 @@ describe('errorMiddleware en production', () => {
       const res = { status: jest.fn().mockReturnThis(), json: jest.fn(), headersSent: false };
       errorHandler(new TypeError("Cannot read properties of undefined (reading 'id_user')"), { method: 'GET', originalUrl: '/api/x', path: '/api/x', t: (k) => k }, res, () => {});
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json.mock.calls[0][0].error).toBe('Erreur interne du serveur');
+      expect(res.json.mock.calls[0][0].error).toBe('Erreur serveur');
     });
     process.env.NODE_ENV = prev;
   });

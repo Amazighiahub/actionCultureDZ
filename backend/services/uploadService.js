@@ -139,7 +139,7 @@ class UploadService {
       if (allowed.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Format d\'image non supporte. Formats acceptes : JPG, PNG, GIF, WEBP'));
+        cb(new Error('Format d\'image non supporté. Formats acceptés : JPG, PNG, GIF, WEBP'));
       }
     };
     return multer({
@@ -163,7 +163,7 @@ class UploadService {
       if (allowed.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Format de document non supporte'));
+        cb(new Error('Format de document non supporté'));
       }
     };
     return multer({

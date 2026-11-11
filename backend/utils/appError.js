@@ -74,29 +74,33 @@ class AppError extends Error {
     if (error instanceof AppError) {
       return error;
     }
+    const { messageValidationBase, MESSAGE_REFERENCE, MESSAGE_SESSION } = AppError;
 
     // Erreurs de base de données Sequelize
     if (error.name === 'SequelizeValidationError') {
-      const messages = error.errors.map(e => e.message).join(', ');
-      return AppError.badRequest(messages, 'DB_VALIDATION_ERROR');
+      // Pas le texte anglais de Sequelize (noms de colonnes) : phrase courte par champ
+      const details = (error.errors || []).map(e => ({ field: e.path, message: messageValidationBase(e) }));
+      return AppError.badRequest('Données invalides', 'DB_VALIDATION_ERROR', details);
     }
 
     if (error.name === 'SequelizeUniqueConstraintError') {
-      const field = error.fields ? Object.keys(error.fields)[0] : 'field';
-      return AppError.conflict(`${field} doit être unique`, 'UNIQUE_CONSTRAINT');
+      const field = error.fields ? Object.keys(error.fields)[0] : null;
+      const conflit = AppError.conflict('Cette valeur est déjà utilisée', 'UNIQUE_CONSTRAINT');
+      if (field) conflit.details = [{ field, message: 'Cette valeur est déjà utilisée' }];
+      return conflit;
     }
 
-    if (error.name === 'SequeleizeForeignKeyConstraintError') {
-      return AppError.badRequest('Référence invalide', 'FK_CONSTRAINT');
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return AppError.badRequest(MESSAGE_REFERENCE, 'FK_CONSTRAINT');
     }
 
     // Erreurs JWT
     if (error.name === 'JsonWebTokenError') {
-      return AppError.unauthorized('Token invalide', 'INVALID_TOKEN');
+      return AppError.unauthorized(MESSAGE_SESSION, 'INVALID_TOKEN');
     }
 
     if (error.name === 'TokenExpiredError') {
-      return AppError.unauthorized('Token expiré', 'TOKEN_EXPIRED');
+      return AppError.unauthorized(MESSAGE_SESSION, 'TOKEN_EXPIRED');
     }
 
     // Erreurs Multer (uploads)
@@ -127,5 +131,18 @@ class AppError extends Error {
     };
   }
 }
+
+// Phrases communes à AppError.fromError et à middlewares/errorMiddleware.js (traduites par
+// i18n/serveur) : jamais le texte technique de Sequelize ou de JWT (audit V11 FRM-17)
+AppError.MESSAGE_SESSION = 'Votre session a expiré : reconnectez-vous.';
+AppError.MESSAGE_REFERENCE = 'Un des éléments choisis n’existe plus : rechargez la page, puis réessayez.';
+/** Phrase courte pour un champ refusé par le modèle (au lieu de « notNull Violation: Evenement.nom… ») */
+AppError.messageValidationBase = (item) => {
+  const cle = item?.validatorKey;
+  if (cle === 'len') return 'Texte trop long';
+  if (cle === 'isEmail') return 'Format d\'email invalide';
+  if (cle === 'is_null' || cle === 'notEmpty' || /notNull/i.test(item?.type || '')) return 'Ce champ est requis';
+  return 'Valeur invalide';
+};
 
 module.exports = AppError;

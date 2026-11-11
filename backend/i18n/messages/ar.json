@@ -571,7 +571,9 @@
     "portfolioInvalide": "رابط ملف الأعمال غير صالح (يجب أن يبدأ بـ https://)",
     "conditionsRequises": "يجب الموافقة على الشروط",
     "ancienMotDePasseRequis": "كلمة المرور الحالية مطلوبة",
-    "nouveauMotDePasse12": "يجب أن تحتوي كلمة المرور الجديدة على 12 حرفًا على الأقل"
+    "nouveauMotDePasse12": "يجب أن تحتوي كلمة المرور الجديدة على 12 حرفًا على الأقل",
+    "texteTropLong": "هذا النص طويل جدًا (${max} حرف على الأكثر)",
+    "lienInvalide": "هذا الرابط ناقص أو خاطئ"
   },
   "article": {
     "blockCreated": "تم إنشاء الكتلة بنجاح",

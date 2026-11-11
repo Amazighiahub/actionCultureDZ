@@ -94,7 +94,7 @@ const CompleterProfilCard = ({ user, onCompleter }: Props) => {
         if (!res.success) throw res;
         setEnvoi({ etat: 'envoye' });
       } catch (err) {
-        // Un lien vient de partir (à l'inscription) : le serveur répond 429 « Verification already sent »
+        // Un lien vient de partir (à l'inscription) : le serveur répond 429 (lien déjà envoyé)
         if ((err as { status?: number } | null)?.status === 429) {
           setEnvoi({ etat: 'erreur', message: t('dashboarduser.completer.dejaEnvoye', 'Un lien vient déjà de vous être envoyé. Attendez quelques minutes avant d’en demander un autre.') });
           return;

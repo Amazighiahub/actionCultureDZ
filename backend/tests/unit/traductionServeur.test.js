@@ -18,19 +18,35 @@ const HORS_PERIMETRE = new Set([
   'Queue non disponible', 'UserRepository non disponible', 'Origine non autorisee',
   'API Action Culture - Full Documentation', 'API Intervenants i18n - Documentation',
   'API Notifications i18n - Documentation', 'API Upload - Action Culture', 'Auth service unavailable',
-  'Buffer vide ou trop court', 'CSRF token mismatch', 'CSRF token missing', 'Invalid email headers',
-  'Module article blocks operational', 'Request timeout', 'Service unhealthy',
+  'Buffer vide ou trop court', 'Invalid email headers',
+  'Module article blocks operational', 'Service unhealthy', 'Type de fichier non autorise',
+  // Erreurs de démarrage, de configuration ou internes (journalisées, jamais renvoyées telles quelles)
+  'Modèle Signalement non disponible', 'Job non trouvé', 'Requetes sans origin non autorisees en production',
+  'ServiceContainer non initialisé. Appelez initialize(models) d\'abord.', 'Configuration Twilio incomplète',
+  'Configuration Vonage incomplète', 'Configuration MessageBird incomplète', 'Configuration Meta WhatsApp incomplète',
+  'models doit contenir une instance sequelize', 'authMiddleware doit être un objet avec les méthodes authenticate, isAdmin, etc.',
+  '❌ ERREUR CRITIQUE: JWT_SECRET non défini en production!',
+  '❌ ERREUR CRITIQUE: JWT_SECRET contient une valeur d\'exemple non sécurisée!',
+  '[SECURITY] Redis en production sans authentification — configurer REDIS_PASSWORD ou inclure les credentials dans REDIS_URL',
 ]);
 // Appels d'erreur : tout texte avec une espace est un message pour la personne (avec ou sans accent)
 const APPELS_ERREUR = 3;
 const FRANCAIS = /[éèêàùçôîûœ]|\b(le|la|les|du|des|est|requis|requise|invalide|introuvable|vous|non|pas|une?|déjà|aucun|aucune|cette|votre|doit)\b/i;
-const CH = "'((?:[^'\\\\]|\\\\.)*)'";
+// Texte entre apostrophes ou entre guillemets (avant : apostrophes seulement, d'où des oublis, audit V11 FRM-17)
+const CH = `(?:'((?:[^'\\\\\\n]|\\\\.)*)'|"((?:[^"\\\\\\n]|\\\\.)*)")`;
 const MOTIFS = [
   new RegExp(`_(?:validation|conflict|forbidden|unauthorized|badRequest|notFound)Error\\(\\s*${CH}`, 'g'),
   new RegExp(`AppError\\.\\w+\\(\\s*${CH}`, 'g'),
   new RegExp(`new AppError\\(\\s*${CH}`, 'g'),
   new RegExp(`\\bmessage:\\s*${CH}`, 'g'),
   new RegExp(`\\berror:\\s*${CH}`, 'g'),
+  // Erreurs lancées avec un statut (new Error + statusCode), aide erreur(), clé erreur:, limites par
+  // personne, phrases mises en constante
+  new RegExp(`new Error\\(\\s*${CH}`, 'g'),
+  new RegExp(`\\berreur\\(\\s*${CH}`, 'g'),
+  new RegExp(`\\berreur:\\s*${CH}`, 'g'),
+  new RegExp(`limiteParPersonne\\([^)]*?,\\s*${CH}\\s*\\)`, 'g'),
+  new RegExp(`\\bMESSAGE_[A-Z_]+\\s*=\\s*${CH}`, 'g'),
 ];
 
 const fichiers = (dossier) => fs.readdirSync(dossier, { withFileTypes: true }).flatMap((e) => {
@@ -79,7 +95,7 @@ describe('messages du serveur traduits à l’envoi', () => {
         const source = fs.readFileSync(fichier, 'utf8');
         MOTIFS.forEach((motif, rang) => {
           for (const m of source.matchAll(motif)) {
-            const texte = m[1].replace(/\\'/g, '\'');
+            const texte = (m[1] ?? m[2]).replace(/\\(['"])/g, '$1');
             if (texte.includes('\n') || HORS_PERIMETRE.has(texte) || /^[a-z]+(\.[a-zA-Z]+)+$/.test(texte)) continue;
             // AppError.notFound('<nom>') : le nom doit être traduit (message « <nom> non trouvé(e) »)
             if (/AppError\.notFound\(/.test(m[0])) {

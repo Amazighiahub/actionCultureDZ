@@ -27,7 +27,7 @@ class EmailVerificationService {
    */
   async sendVerificationEmail(userId, ip) {
     if (!userId) {
-      const err = new Error('userId is required');
+      const err = new Error('Données invalides');
       err.statusCode = 400;
       err.code = 'BAD_REQUEST';
       throw err;
@@ -36,14 +36,14 @@ class EmailVerificationService {
     const user = await this.models.User.findByPk(userId);
 
     if (!user) {
-      const err = new Error('User not found');
+      const err = new Error('Utilisateur introuvable');
       err.statusCode = 404;
       err.code = 'NOT_FOUND';
       throw err;
     }
 
     if (user.email_verifie) {
-      const err = new Error('Email already verified');
+      const err = new Error('Votre adresse e-mail est déjà confirmée.');
       err.statusCode = 400;
       err.code = 'ALREADY_VERIFIED';
       throw err;
@@ -61,7 +61,7 @@ class EmailVerificationService {
     });
 
     if (envoiRecent > 0) {
-      const err = new Error('Verification already sent');
+      const err = new Error('Un lien vient déjà d’être envoyé : attendez quelques minutes avant d’en demander un autre.');
       err.statusCode = 429;
       err.code = 'RATE_LIMITED';
       throw err;
@@ -102,7 +102,7 @@ class EmailVerificationService {
    */
   async verifyEmail(token, ip) {
     if (!token) {
-      const err = new Error('Token is required');
+      const err = new Error('Lien incomplet : ouvrez le lien reçu par e-mail.');
       err.statusCode = 400;
       err.code = 'BAD_REQUEST';
       throw err;
@@ -115,7 +115,7 @@ class EmailVerificationService {
     );
 
     if (!result.success) {
-      const err = new Error(result.error || 'Invalid token');
+      const err = new Error('Ce lien n’est plus valable : il a déjà servi ou il est trop ancien.');
       err.statusCode = 400;
       err.code = 'INVALID_TOKEN';
       throw err;
@@ -147,7 +147,7 @@ class EmailVerificationService {
    */
   async requestPasswordReset(email, ip) {
     if (!email) {
-      const err = new Error('Email is required');
+      const err = new Error('L\'email est requis');
       err.statusCode = 400;
       err.code = 'BAD_REQUEST';
       throw err;
@@ -217,7 +217,7 @@ class EmailVerificationService {
    */
   async resetPassword(token, newPassword, ip) {
     if (!token || !newPassword) {
-      const err = new Error('Token and new password are required');
+      const err = new Error('Indiquez le nouveau mot de passe.');
       err.statusCode = 400;
       err.code = 'BAD_REQUEST';
       throw err;
@@ -225,31 +225,31 @@ class EmailVerificationService {
 
     // Validation du mot de passe
     if (newPassword.length < 12) {
-      const err = new Error('Password too short');
+      const err = new Error('Le mot de passe doit contenir au moins 12 caractères');
       err.statusCode = 400;
       err.code = 'PASSWORD_MIN_LENGTH';
       throw err;
     }
     if (!/[a-z]/.test(newPassword)) {
-      const err = new Error('Password must contain lowercase');
+      const err = new Error('Le mot de passe doit contenir au moins une minuscule');
       err.statusCode = 400;
       err.code = 'PASSWORD_LOWERCASE';
       throw err;
     }
     if (!/[A-Z]/.test(newPassword)) {
-      const err = new Error('Password must contain uppercase');
+      const err = new Error('Le mot de passe doit contenir au moins une majuscule');
       err.statusCode = 400;
       err.code = 'PASSWORD_UPPERCASE';
       throw err;
     }
     if (!/[0-9]/.test(newPassword)) {
-      const err = new Error('Password must contain digit');
+      const err = new Error('Le mot de passe doit contenir au moins un chiffre');
       err.statusCode = 400;
       err.code = 'PASSWORD_DIGIT';
       throw err;
     }
     if (!/[^A-Za-z0-9]/.test(newPassword)) {
-      const err = new Error('Password must contain special character');
+      const err = new Error('Le mot de passe doit contenir au moins un caractère spécial');
       err.statusCode = 400;
       err.code = 'PASSWORD_SPECIAL';
       throw err;
@@ -262,7 +262,7 @@ class EmailVerificationService {
     );
 
     if (!result.success) {
-      const err = new Error(result.error || 'Invalid token');
+      const err = new Error('Ce lien n’est plus valable : il a déjà servi ou il est trop ancien.');
       err.statusCode = 400;
       err.code = 'INVALID_TOKEN';
       throw err;
@@ -308,7 +308,7 @@ class EmailVerificationService {
    */
   async requestEmailChange(userId, newEmail, password, ip) {
     if (!newEmail || !password) {
-      const err = new Error('New email and password are required');
+      const err = new Error('Indiquez la nouvelle adresse et votre mot de passe.');
       err.statusCode = 400;
       err.code = 'BAD_REQUEST';
       throw err;
@@ -316,7 +316,7 @@ class EmailVerificationService {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
-      const err = new Error('Invalid email format');
+      const err = new Error('Format d\'email invalide');
       err.statusCode = 400;
       err.code = 'INVALID_EMAIL';
       throw err;
@@ -329,7 +329,7 @@ class EmailVerificationService {
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      const err = new Error('Wrong password');
+      const err = new Error('Mot de passe incorrect');
       err.statusCode = 401;
       err.code = 'WRONG_PASSWORD';
       throw err;
@@ -343,7 +343,7 @@ class EmailVerificationService {
     });
 
     if (emailExists) {
-      const err = new Error('Email already used');
+      const err = new Error('Cet email est déjà utilisé');
       err.statusCode = 409;
       err.code = 'EMAIL_CONFLICT';
       throw err;
@@ -382,7 +382,7 @@ class EmailVerificationService {
     );
 
     if (!result.success) {
-      const err = new Error(result.error || 'Invalid token');
+      const err = new Error('Ce lien n’est plus valable : il a déjà servi ou il est trop ancien.');
       err.statusCode = 400;
       err.code = 'INVALID_TOKEN';
       throw err;

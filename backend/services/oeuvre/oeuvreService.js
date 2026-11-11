@@ -696,7 +696,7 @@ class OeuvreService extends BaseService {
     await this._oeuvrePourMedias(oeuvreId, userId, isAdmin);
     const ids = Array.isArray(orderedIds) ? orderedIds.map(Number) : [];
     if (!ids.length || ids.some(id => !Number.isInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
-      throw this._validationError("orderedIds doit être la liste des médias de l'œuvre");
+      throw this._validationError("L'ordre doit reprendre tous les médias de l'œuvre");
     }
     const medias = await this.models.Media.findAll({ where: { id_oeuvre: oeuvreId, id_media: ids }, attributes: ['id_media'] });
     if (medias.length !== ids.length) throw this._validationError("Un des médias n'appartient pas à cette œuvre");

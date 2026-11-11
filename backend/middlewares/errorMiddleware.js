@@ -2,6 +2,8 @@ const AppError = require('../utils/appError');
 const logger = require('../utils/logger');
 const { repondreSiConflit } = require('../utils/conflitSimultane');
 
+const { messageValidationBase, MESSAGE_REFERENCE, MESSAGE_SESSION } = AppError;
+
 const errorMiddleware = {
   // Gestionnaire d'erreurs 404
   notFound: (req, res, next) => {
@@ -69,17 +71,19 @@ const errorMiddleware = {
     }
 
     let statusCode = error.status || error.statusCode || 500;
-    let message = error.message || 'Erreur interne du serveur';
+    let message = error.message || 'Erreur serveur';
     let code;
 
     // Erreurs Sequelize
     if (error.name === 'SequelizeValidationError') {
       statusCode = 400;
-      message = 'Erreur de validation des données';
+      message = 'Données invalides';
       code = 'DB_VALIDATION_ERROR';
-      const details = error.errors.map(err => ({
+      // Texte de Sequelize en anglais avec noms de modèle et de colonne (« notNull Violation: Evenement.nom… ») :
+      // une phrase courte à la place ; le champ reste dans « field » pour placer l'erreur sous le bon champ
+      const details = (error.errors || []).map(err => ({
         field: err.path,
-        message: err.message,
+        message: messageValidationBase(err),
         ...(isProduction ? {} : { value: err.value })
       }));
       return res.status(statusCode).json({ success: false, error: message, code, details });
@@ -91,7 +95,7 @@ const errorMiddleware = {
       code = 'UNIQUE_CONSTRAINT';
       const details = error.errors.map(err => ({
         field: err.path,
-        message: `${err.path} doit être unique`,
+        message: 'Cette valeur est déjà utilisée',
         ...(isProduction ? {} : { value: err.value })
       }));
       return res.status(statusCode).json({ success: false, error: message, code, details });
@@ -99,7 +103,7 @@ const errorMiddleware = {
 
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       statusCode = 400;
-      message = 'Référence invalide vers une ressource inexistante';
+      message = MESSAGE_REFERENCE;
       code = 'FK_CONSTRAINT';
     }
 
@@ -119,13 +123,13 @@ const errorMiddleware = {
     // Erreurs JWT
     if (error.name === 'JsonWebTokenError') {
       statusCode = 401;
-      message = 'Token invalide';
+      message = MESSAGE_SESSION;
       code = 'INVALID_TOKEN';
     }
 
     if (error.name === 'TokenExpiredError') {
       statusCode = 401;
-      message = 'Token expiré';
+      message = MESSAGE_SESSION;
       code = 'TOKEN_EXPIRED';
     }
 
@@ -139,7 +143,7 @@ const errorMiddleware = {
     // En production, ne jamais renvoyer le message technique d'une erreur 500
     // (noms de tables, chemins, détails internes) : il est journalisé ci-dessus.
     if (statusCode >= 500 && process.env.NODE_ENV === 'production') {
-      message = 'Erreur interne du serveur';
+      message = 'Erreur serveur';
     }
 
     res.status(statusCode).json({

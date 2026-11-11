@@ -97,7 +97,7 @@ const ResetPassword = () => {
 
   /**
    * Erreur du serveur : lue par son code et le détail des champs, plus par des mots-clés (le serveur
-   * écrit « Invalid token » en anglais ; « Données invalides » s'affichait sans dire quoi faire,
+   * écrivait « Invalid token » en anglais ; « Données invalides » s'affichait sans dire quoi faire,
    * audit V11 FRM-6). Lien plus valable : message clair et bouton pour en demander un autre.
    */
   const montrerErreur = (source: unknown) => {

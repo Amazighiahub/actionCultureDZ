@@ -140,7 +140,10 @@ describe('errorMiddleware', () => {
       expect(jsonArg.success).toBe(false);
       expect(jsonArg.code).toBe('DB_VALIDATION_ERROR');
       // In non-development env, validation details are masked
-      expect(jsonArg.error).toBe('Erreur de validation des données');
+      expect(jsonArg.error).toBe('Données invalides');
+      // Ni le texte anglais de Sequelize ni le nom du modèle : une phrase courte par champ (audit V11 FRM-17)
+      expect(jsonArg.details.map((d) => d.field)).toEqual(['email', 'nom']);
+      expect(jsonArg.details.every((d) => !/is required/.test(d.message))).toBe(true);
     });
   });
 

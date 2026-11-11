@@ -18,7 +18,8 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
       if (!id || isNaN(id)) {
         return res.status(400).json({
           success: false,
-          error: `${paramName} invalide`
+          error: req.t ? req.t('validation.lienInvalide') : 'Ce lien est incomplet ou erroné',
+          code: 'INVALID_ID'
         });
       }
       next();

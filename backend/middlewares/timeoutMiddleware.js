@@ -17,7 +17,7 @@ function createTimeoutMiddleware(ms = 30000) {
       if (!res.headersSent) {
         res.status(408).json({
           success: false,
-          error: 'Request timeout',
+          error: 'Le serveur met trop de temps à répondre. Réessayez.',
           code: 'REQUEST_TIMEOUT',
           requestId: req.requestId
         });

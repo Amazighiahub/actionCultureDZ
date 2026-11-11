@@ -52,7 +52,7 @@ describe('timeoutMiddleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        error: 'Request timeout',
+        error: 'Le serveur met trop de temps à répondre. Réessayez.',
         code: 'REQUEST_TIMEOUT'
       })
     );

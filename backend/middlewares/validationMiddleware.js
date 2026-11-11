@@ -41,9 +41,11 @@ const validationMiddleware = {
       const id = parseInt(req.params[paramName]);
       
       if (isNaN(id) || id <= 0) {
+        // Sans le nom technique du paramètre (avant : « ID userId invalide »)
         return res.status(400).json({
           success: false,
-          error: `ID ${paramName} invalide`
+          error: req.t ? req.t('validation.lienInvalide') : 'Ce lien est incomplet ou erroné',
+          code: 'INVALID_ID'
         });
       }
       
@@ -166,27 +168,34 @@ const validationMiddleware = {
       message: 50000
     };
 
-    const checkValue = (value, key) => {
+    // Limite dépassée (nombre de caractères), ou 0 si la valeur convient
+    const limiteDepassee = (value, key) => {
       const limit = maxLengths[key] || maxLengths.default;
       if (typeof value === 'string' && value.length > limit) {
-        return false;
+        return limit;
       }
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         for (const [, v] of Object.entries(value)) {
-          if (typeof v === 'string' && v.length > maxLengths.default) return false;
+          if (typeof v === 'string' && v.length > maxLengths.default) return maxLengths.default;
         }
       }
-      return true;
+      return 0;
     };
 
     if (req.body) {
       for (const [key, value] of Object.entries(req.body)) {
-        if (!checkValue(value, key)) {
+        const max = limiteDepassee(value, key);
+        if (max) {
+          // Sans le nom technique du champ (avant : « Le champ nom_evenement est trop long ») ; le champ
+          // est dans « details » pour que le formulaire place le message au bon endroit
+          const message = req.t
+            ? req.t('validation.texteTropLong', { max })
+            : `Ce texte est trop long (${max} caractères au plus)`;
           return res.status(400).json({
             success: false,
-            error: req.t
-              ? req.t('validation.fieldTooLong', { field: key })
-              : `Field '${key}' exceeds maximum length`
+            error: message,
+            code: 'TEXT_TOO_LONG',
+            details: [{ field: key, message }]
           });
         }
       }
