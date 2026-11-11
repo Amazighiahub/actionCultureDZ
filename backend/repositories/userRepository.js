@@ -10,7 +10,7 @@ const crypto = require('crypto');
 // Compte réservé « Utilisateur supprimé » (voir _getDeletedUserSentinel)
 const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
 const { PUBLIC_USER_PROFILE_ATTRIBUTES, PROFESSIONAL_TYPE_IDS, stripPrivateContact } = require('../constants/publicAttributes');
-const { conditionNom } = require('./rechercheNom');
+const { conditionNom, colonnesNom } = require('./rechercheNom');
 const { STATUTS_EVENEMENT_PUBLICS } = require('../services/liensExternes');
 
 
@@ -110,7 +110,8 @@ class UserRepository extends BaseRepository {
     const wilayaDemandee = Number(wilaya);
     const sequelize = this.model.sequelize;
     // « poétesse », « céramiste » : les métiers saisis par le professionnel sont cherchés aussi
-    const nom = conditionNom(sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`', autres: ['CAST(`User`.`specialites` AS CHAR)'] });
+    const recherche = (await colonnesNom(this.models)).user ? '`User`.`nom_recherche`' : null;
+    const nom = conditionNom(sequelize, q, { nom: '`User`.`nom`', prenom: '`User`.`prenom`', recherche, autres: ['CAST(`User`.`specialites` AS CHAR)'] });
 
     const moi = '`User`.`id_user`';
     const conditions = [];

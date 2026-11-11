@@ -10,6 +10,7 @@ const { Op } = require('sequelize');
 const { pasTermine } = require('../helpers/finEvenement');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const { aColonne, motifLike } = require('../utils/colonnesCalculees');
 const { sanitizeLike } = require('../utils/sanitize');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const { supprimerLieu } = require('./patrimoine/suppressionLieu');
@@ -35,6 +36,17 @@ class LieuService extends BaseService {
    */
   _buildMultiLangSearch(field, search) {
     return buildMultiLangSearch(this.sequelize, field, search, 'Lieu');
+  }
+
+  /**
+   * Recherche dans le nom et l'adresse : colonne texte_recherche (5 langues, sans accents ni majuscules)
+   * quand la migration est passée ; sinon une extraction JSON par langue et par ligne (audit V11 BDD-3)
+   */
+  async _conditionsRecherche(search) {
+    if (await aColonne(this.models.Lieu, 'texte_recherche')) {
+      return [this.sequelize.literal(`\`Lieu\`.\`texte_recherche\` LIKE ${motifLike(this.sequelize, search)}`)];
+    }
+    return [...this._buildMultiLangSearch('nom', search), ...this._buildMultiLangSearch('adresse', search)];
   }
 
   /**
@@ -94,15 +106,24 @@ class LieuService extends BaseService {
   }
 
   /**
-   * Ordre par nom multilingue avec fallback sur id_lieu
+   * Tri par nom : `order`, et `attributes` à passer aussi à la requête (la colonne nom_tri doit être lue
+   * pour que la requête paginée de Sequelize, en deux niveaux, puisse trier dessus)
    */
-  _orderByName(lang) {
+  async _triParNom(lang) {
     const safeLang = (lang || 'fr').replace(/[^a-z-]/gi, '');
-    try {
-      return [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${safeLang}"')`), 'ASC']];
-    } catch {
-      return [['id_lieu', 'ASC']];
+    // Français : colonne nom_tri, indexée (première langue remplie, le français d'abord)
+    if (safeLang === 'fr' && await aColonne(this.models.Lieu, 'nom_tri')) {
+      return {
+        order: [[this.sequelize.literal('`Lieu`.`nom_tri`'), 'ASC'], ['id_lieu', 'ASC']],
+        attributes: { include: [[this.sequelize.literal('`Lieu`.`nom_tri`'), 'nom_tri']] },
+      };
     }
+    // Autres langues : nom dans la langue, comparé sans accents ni majuscules (le JSON brut se triait
+    // dans un ordre faux : « Écomusée » après « Zaouïa »)
+    return {
+      order: [[this.sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${safeLang}"')) COLLATE utf8mb4_0900_ai_ci`), 'ASC'], ['id_lieu', 'ASC']],
+      attributes: undefined,
+    };
   }
 
   // ========================================================================
@@ -167,10 +188,7 @@ class LieuService extends BaseService {
 
     // Recherche multilingue
     if (search) {
-      where[Op.or] = [
-        ...this._buildMultiLangSearch('nom', search),
-        ...this._buildMultiLangSearch('adresse', search)
-      ];
+      where[Op.or] = await this._conditionsRecherche(search);
     }
 
     // Evenements actifs
@@ -184,13 +202,8 @@ class LieuService extends BaseService {
       });
     }
 
-    // Ordre
-    let order = [['id_lieu', 'ASC']];
-    try {
-      order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${lang.replace(/[^a-z-]/gi, '')}"')`), 'ASC']];
-    } catch {
-      // Fallback sur l'ID
-    }
+    // Ordre : nom (même règle que les autres listes de lieux)
+    const { order, attributes } = await this._triParNom(lang);
 
     const result = await this.models.Lieu.findAndCountAll({
       where,
@@ -198,6 +211,7 @@ class LieuService extends BaseService {
       offset: parseInt(offset),
       include,
       order,
+      ...(attributes ? { attributes } : {}),
       distinct: true,
       subQuery: false
     });
@@ -250,7 +264,7 @@ class LieuService extends BaseService {
         { model: this.models.Service, separate: true },
         { model: this.models.LieuMedia, separate: true }
       ],
-      order: this._orderByName(lang),
+      ...(await this._triParNom(lang)),
       distinct: true
     });
 
@@ -448,10 +462,7 @@ class LieuService extends BaseService {
 
     // Recherche multilingue
     if (q) {
-      where[Op.or] = [
-        ...this._buildMultiLangSearch('nom', q),
-        ...this._buildMultiLangSearch('adresse', q)
-      ];
+      where[Op.or] = await this._conditionsRecherche(q);
     }
 
     if (type) {
@@ -543,7 +554,7 @@ class LieuService extends BaseService {
     const result = await this.models.Lieu.findAndCountAll({
       where,
       include,
-      order: this._orderByName(lang),
+      ...(await this._triParNom(lang)),
       limit: parseInt(limit),
       offset: parseInt(offset),
       distinct: true

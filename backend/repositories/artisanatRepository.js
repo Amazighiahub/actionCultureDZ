@@ -5,7 +5,7 @@
 
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
-const { conditionAuteurOeuvre } = require('./rechercheNom');
+const { conditionAuteurOeuvre, colonnesNom } = require('./rechercheNom');
 
 class ArtisanatRepository extends BaseRepository {
   constructor(models) {
@@ -156,7 +156,7 @@ class ArtisanatRepository extends BaseRepository {
       const champs = ['titre', 'description'].flatMap(champ =>
         ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
       // Ou le nom de l'artisan
-      const auteur = conditionAuteurOeuvre(this.model.sequelize, query);
+      const auteur = conditionAuteurOeuvre(this.model.sequelize, query, 'Oeuvre', await colonnesNom(this.models));
       oeuvreInc.where = {
         statut: 'publie',
         [Op.or]: [

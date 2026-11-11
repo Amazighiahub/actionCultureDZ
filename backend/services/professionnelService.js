@@ -6,7 +6,7 @@ const { Op, literal } = require('sequelize');
 const { attributsComptes, verifierPlacePourRetablir, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
 const { mergeTranslations } = require('../helpers/i18n');
 const { pasTermine, termine } = require('../helpers/finEvenement');
-const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const { buildMultiLangSearch, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const logger = require('../utils/logger');
 const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireInscription');
@@ -34,8 +34,7 @@ class ProfessionnelService {
     if (search) {
       const safeSearch = `%${sanitizeLike(search)}%`;
       where[Op.or] = [
-        ...buildMultiLangSearch(this.sequelize, 'nom', search),
-        ...buildMultiLangSearch(this.sequelize, 'prenom', search),
+        ...(await rechercheNomPersonne(this.sequelize, this.models.User, search, 'User')),
         ...buildMultiLangSearch(this.sequelize, 'biographie', search),
         { entreprise: { [Op.like]: safeSearch } }
       ];

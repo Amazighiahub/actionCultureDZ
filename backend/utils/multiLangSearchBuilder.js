@@ -286,9 +286,28 @@ function conditionRecherche(sequelize, champ, terme, table) {
   return { [Op.or]: buildMultiLangSearch(sequelize, champ, sanitizeLike(terme.trim()), table) };
 }
 
+/**
+ * Recherche d'une personne (compte ou intervenant) par prénom ou nom, dans toutes les langues : colonne
+ * nom_recherche quand la migration 20261216-recherche-noms est passée (une comparaison au lieu de dix
+ * extractions JSON par ligne), sinon prénom et nom langue par langue. `terme` : déjà passé par sanitizeLike,
+ * comme pour buildMultiLangSearch. Audit V11 BDD-3.
+ * @returns {Promise<Array>} conditions à mettre dans un Op.or
+ */
+async function rechercheNomPersonne(sequelize, model, terme, tableName = null) {
+  if (!terme || typeof terme !== 'string') return [];
+  const { aColonne } = require('./colonnesCalculees');
+  if (await aColonne(model, 'nom_recherche')) {
+    const table = tableName ? sanitizeTableName(tableName) : null;
+    const ref = table ? `\`${table}\`.\`nom_recherche\`` : '`nom_recherche`';
+    return [sequelize.literal(`${ref} LIKE ${sequelize.escape(`%${terme.trim()}%`)}`)];
+  }
+  return [...buildMultiLangSearch(sequelize, 'nom', terme, tableName), ...buildMultiLangSearch(sequelize, 'prenom', terme, tableName)];
+}
+
 module.exports = {
   // Fonctions principales
   buildMultiLangSearch,
+  rechercheNomPersonne,
   conditionRecherche,
   buildMultiFieldSearch,
   buildMultiLangOrder,

@@ -361,6 +361,8 @@ class App {
       // Initialiser le viewCounter avec les modèles pour le flush batch
       const viewCounter = require('./utils/viewCounter');
       viewCounter.setModels(db);
+      // Colonnes calculées des comptes d'inscriptions (audit V11 BDD-6) : sans elles, ancien calcul
+      require('./utils/comptesEvenement').detecterColonnePersonnes(db.EvenementUser).catch(() => {});
       
       const createAuthMiddleware = require('./middlewares/authMiddleware');
       if (createAuthMiddleware && this.models.User) {

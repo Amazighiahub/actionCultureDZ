@@ -7,7 +7,7 @@
 const BaseService = require('./core/baseService');
 const { Op, Sequelize } = require('sequelize');
 const { mergeTranslations, createMultiLang, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
-const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLangSearchBuilder');
+const { buildMultiLangSearch, buildMultiLangOrder, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../utils/carteArticle');
@@ -198,8 +198,7 @@ class IntervenantService extends BaseService {
     const safeLang = lang.replace(/[^a-z-]/gi, '');
     const where = {
       [Op.or]: [
-        ...buildMultiLangSearch(this.sequelize, 'nom', q),
-        ...buildMultiLangSearch(this.sequelize, 'prenom', q),
+        ...(await rechercheNomPersonne(this.sequelize, this.models.Intervenant, q, 'Intervenant')),
         ...buildMultiLangSearch(this.sequelize, 'biographie', q),
         { organisation: { [Op.like]: `%${sanitizeLike(q)}%` } },
         { titre_professionnel: { [Op.like]: `%${sanitizeLike(q)}%` } }

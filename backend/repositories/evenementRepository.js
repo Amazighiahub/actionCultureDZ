@@ -4,6 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const { aColonne, motifLike } = require('../utils/colonnesCalculees');
 const AppError = require('../utils/appError');
 const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../constants/publicAttributes');
 
@@ -90,6 +91,26 @@ class EvenementRepository extends BaseRepository {
   }
 
   /**
+   * Texte cherché dans le nom et la description, toutes langues, sans accents ni majuscules : colonne
+   * texte_recherche quand la migration 20261216-recherche-noms est passée, sinon une extraction JSON par
+   * langue et par ligne (audit V11 BDD-3)
+   */
+  async _conditionTexte(q) {
+    const alias = this.model.name;
+    if (await aColonne(this.model, 'texte_recherche')) {
+      return literal(`\`${alias}\`.\`texte_recherche\` LIKE ${motifLike(this.model.sequelize, q)}`);
+    }
+    const pattern = `%${this._sanitizeSearchQuery(String(q).trim())}%`;
+    const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+    return {
+      [Op.or]: ['nom_evenement', 'description'].flatMap((field) => [
+        seqWhere(col(`${alias}.${field}`), { [Op.like]: pattern }),
+        ...langs.map((l) => seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col(`${alias}.${field}`), literal(`'$."${l}"'`)))), { [Op.like]: pattern.toLowerCase() }))
+      ])
+    };
+  }
+
+  /**
    * Filtres de la liste publique : texte (toutes langues), statut d'affichage, type.
    * @param {{ q?: string, statut?: string, type?: string }} filters
    * @returns {Promise<object>} conditions Sequelize (à combiner avec le reste du where)
@@ -99,15 +120,7 @@ class EvenementRepository extends BaseRepository {
     const now = new Date();
 
     if (q && String(q).trim().length >= 2) {
-      const pattern = `%${this._sanitizeSearchQuery(String(q).trim())}%`;
-      const alias = this.model.name;
-      const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-      and.push({
-        [Op.or]: ['nom_evenement', 'description'].flatMap((field) => [
-          seqWhere(col(`${alias}.${field}`), { [Op.like]: pattern }),
-          ...langs.map((l) => seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col(`${alias}.${field}`), literal(`'$."${l}"'`)))), { [Op.like]: pattern.toLowerCase() }))
-        ])
-      });
+      and.push(await this._conditionTexte(q));
     }
 
     // Statuts tels qu'affichés sur le site (calculés aussi depuis les dates)
@@ -172,6 +185,7 @@ class EvenementRepository extends BaseRepository {
     const visibleStatuts = ['publie', 'planifie', 'en_cours', 'termine'];
     const where = { ...options.where, statut: { [Op.in]: visibleStatuts }, ...(extra.length ? { [Op.and]: extra } : {}) };
     // À venir et en cours d'abord (date croissante), puis les terminés (le plus récent d'abord)
+    if (await aColonne(this.model, 'fin_effective')) return this._pagePubliee(where, p, l);
     const alias = this.model.name;
     const passe = `(\`${alias}\`.\`statut\` = 'termine' OR ${finSql(alias)} <= NOW())`;
     const ordre = [
@@ -192,6 +206,43 @@ class EvenementRepository extends BaseRepository {
       })
     ]);
 
+    return {
+      data: rows,
+      pagination: {
+        page: p, limit: l, total,
+        totalPages: Math.ceil(total / l),
+        hasNext: p * l < total,
+        hasPrev: p > 1
+      }
+    };
+  }
+
+  /**
+   * Page de la liste publique avec la colonne fin_effective (migration 20261217-liste-evenements) : deux
+   * lectures dans l'ordre de l'index (statut, fin_effective, date_debut) au lieu d'un tri de tous les
+   * événements sur une expression calculée (audit V11 BDD-6). Même ordre : à venir et en cours par date
+   * croissante, puis terminés du plus récent au plus ancien ; les terminés ne sont lus que si la page
+   * n'est pas pleine.
+   */
+  async _pagePubliee(where, p, l) {
+    const maintenant = new Date();
+    const aVenir = { [Op.and]: [where, { statut: { [Op.ne]: 'termine' }, fin_effective: { [Op.gt]: maintenant } }] };
+    const passes = { [Op.and]: [where, { [Op.or]: [{ statut: 'termine' }, { fin_effective: { [Op.lte]: maintenant } }] }] };
+    const [total, nbAVenir] = await Promise.all([this.model.count({ where }), this.model.count({ where: aVenir })]);
+    const commun = { attributes: { include: attributsComptes() }, include: this._defaultIncludes(), subQuery: false };
+    const debut = (p - 1) * l;
+    const rows = debut < nbAVenir
+      ? await this.model.findAll({ ...commun, where: aVenir, order: [['date_debut', 'ASC'], ['id_evenement', 'ASC']], limit: l, offset: debut })
+      : [];
+    if (rows.length < l) {
+      rows.push(...await this.model.findAll({
+        ...commun,
+        where: passes,
+        order: [['date_debut', 'DESC'], ['id_evenement', 'DESC']],
+        limit: l - rows.length,
+        offset: Math.max(0, debut - nbAVenir)
+      }));
+    }
     return {
       data: rows,
       pagination: {
@@ -355,6 +406,16 @@ class EvenementRepository extends BaseRepository {
    * Recherche événements (multilingue)
    */
   async searchEvenements(query, options = {}) {
+    if (await aColonne(this.model, 'texte_recherche')) {
+      const { page = 1, limit = 20 } = options;
+      return this.findAll({
+        ...options,
+        page,
+        limit,
+        where: { [Op.and]: [await this._conditionTexte(query), { ...options.additionalWhere, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }] },
+        include: this._defaultIncludes()
+      });
+    }
     return this.search(query, ['nom_evenement', 'description'], {
       ...options,
       additionalWhere: { ...options.additionalWhere, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },

@@ -12,10 +12,21 @@ const { literal, Op } = require('sequelize');
 /** Statuts qui occupent une place (capacité de l'événement) */
 const STATUTS_PLACE_PRISE = ['inscrit', 'confirme', 'present', 'absent'];
 
+// Colonne nb_personnes (migration 20261217-liste-evenements) : même nombre, calculé à l'écriture et lu
+// dans l'index ; détectée une fois au démarrage (detecterColonnePersonnes), sinon extraction JSON à chaque
+// ligne (audit V11 BDD-6)
+let colonnePersonnes = false;
+
 /** Nombre de personnes d'une inscription (table `alias`), 1 par défaut */
-const personnesSql = (alias = 'eu') =>
-  `GREATEST(1, COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(${alias}.reponses_inscription, '$.nombre_personnes')) AS UNSIGNED), 1))`;
-const PERSONNES_SQL = personnesSql();
+const personnesSql = (alias = 'eu') => (colonnePersonnes
+  ? `${alias}.nb_personnes`
+  : `GREATEST(1, COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(${alias}.reponses_inscription, '$.nombre_personnes')) AS UNSIGNED), 1))`);
+
+/** Au démarrage : la colonne nb_personnes existe-t-elle ? */
+async function detecterColonnePersonnes(modelEvenementUser) {
+  colonnePersonnes = await require('./colonnesCalculees').aColonne(modelEvenementUser, 'nb_personnes');
+  return colonnePersonnes;
+}
 
 /**
  * @param {string} alias - alias SQL de la table evenement dans la requête (nom du modèle par défaut)
@@ -24,8 +35,8 @@ const PERSONNES_SQL = personnesSql();
 function attributsComptes(alias = 'Evenement') {
   const id = `\`${alias}\`.\`id_evenement\``;
   return [
-    [literal(`(SELECT COALESCE(SUM(${PERSONNES_SQL}), 0) FROM evenementusers eu WHERE eu.id_evenement = ${id} AND eu.statut_participation NOT IN ('annule', 'invitation'))`), 'nombre_inscrits'],
-    [literal(`(SELECT COALESCE(SUM(${PERSONNES_SQL}), 0) FROM evenementusers eu WHERE eu.id_evenement = ${id} AND eu.statut_participation IN ('confirme', 'present'))`), 'nombre_participants']
+    [literal(`(SELECT COALESCE(SUM(${personnesSql()}), 0) FROM evenementusers eu WHERE eu.id_evenement = ${id} AND eu.statut_participation NOT IN ('annule', 'invitation'))`), 'nombre_inscrits'],
+    [literal(`(SELECT COALESCE(SUM(${personnesSql()}), 0) FROM evenementusers eu WHERE eu.id_evenement = ${id} AND eu.statut_participation IN ('confirme', 'present'))`), 'nombre_participants']
   ];
 }
 
@@ -48,4 +59,4 @@ async function verifierPlacePourRetablir(models, idEvenement, inscription) {
   }
 }
 
-module.exports = { attributsComptes, STATUTS_PLACE_PRISE, personnesSql, verifierPlacePourRetablir };
+module.exports = { attributsComptes, STATUTS_PLACE_PRISE, personnesSql, verifierPlacePourRetablir, detecterColonnePersonnes };

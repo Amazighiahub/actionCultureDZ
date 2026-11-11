@@ -4,6 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const { aColonne } = require('../utils/colonnesCalculees');
 const { Op, literal } = require('sequelize');
 const { MAX_NIVEAUX_LIEU } = require('../constants/patrimoineTypes');
 const { whereServicesVisibles } = require('../utils/servicesVisibles');
@@ -337,11 +338,16 @@ class PatrimoineRepository extends BaseRepository {
       ['adresse', 'fr'], ['adresse', 'ar']
     ];
 
+    // Colonne texte_recherche (nom et adresse, 5 langues) quand la migration est passée : plus
+    // d'extraction JSON par ligne (audit V11 BDD-3)
+    const colonne = await aColonne(this.model, 'texte_recherche');
     const where = {
       statut: 'publie',
       ...(typePatrimoine ? { typePatrimoine: String(typePatrimoine) } : {}),
-      [Op.or]: champs.map(([champ, langue]) =>
-        literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
+      [Op.or]: colonne
+        ? [literal(`\`Lieu\`.\`texte_recherche\` LIKE ${pattern}`)]
+        : champs.map(([champ, langue]) =>
+          literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`))
     };
 
     return this.findAll({
