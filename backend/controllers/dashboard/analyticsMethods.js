@@ -86,8 +86,8 @@ const analyticsMethods = {
 
   async getAuditLogs(req, res) {
     try {
-      const { page = 1, limit = 50, userId, action } = req.query;
-      const data = await container.analyticsService.getAuditLogs({ page, limit, userId, action });
+      const { page = 1, limit = 50, userId, action, startDate, endDate } = req.query;
+      const data = await container.analyticsService.getAuditLogs({ page, limit, userId, action, startDate, endDate });
       res.json({ success: true, data });
     } catch (error) {
       console.error('Erreur getAuditLogs:', error.message);

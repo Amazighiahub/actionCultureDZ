@@ -88,11 +88,20 @@ class DashboardAnalyticsService {
   /**
    * Logs d'audit paginés
    */
-  async getAuditLogs({ page = 1, limit = 50, userId, action } = {}) {
+  async getAuditLogs({ page = 1, limit = 50, userId, action, startDate, endDate } = {}) {
     const offset = (page - 1) * limit;
     const where = {};
     if (userId) where.id_admin = userId;
     if (action) where.action = action;
+    // Période (dates ISO déjà vérifiées par la route) : avant, acceptée mais jamais appliquée
+    const debut = startDate ? new Date(startDate) : null;
+    const fin = endDate ? new Date(endDate) : null;
+    if ((debut && !Number.isNaN(debut.getTime())) || (fin && !Number.isNaN(fin.getTime()))) {
+      where.date_action = {
+        ...(debut && !Number.isNaN(debut.getTime()) ? { [Op.gte]: debut } : {}),
+        ...(fin && !Number.isNaN(fin.getTime()) ? { [Op.lte]: fin } : {}),
+      };
+    }
 
     const logs = await this.models.AuditLog.findAndCountAll({
       where,

@@ -117,14 +117,8 @@ const initDashboardRoutes = (models) => {
     dashboardController.getDetailedStats
   );
 
-  // Obtenir les détails d'un utilisateur
-  router.get('/users/:id',
-    validationMiddleware.validateId('id'),
-    cacheMiddleware.conditionalCache(300),
-    dashboardController.getUserDetails
-  );
-
-  // Recherche d'utilisateurs
+  // Recherche d'utilisateurs : déclarée AVANT /users/:id, sinon « search » était pris pour un identifiant
+  // et la recherche répondait 400
   router.get('/users/search',
     [
       query('q').notEmpty().withMessage((value, { req }) => req.t('validation.searchRequired')),
@@ -148,6 +142,13 @@ const initDashboardRoutes = (models) => {
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('EXPORT_USERS'),
     dashboardController.exportUsers
+  );
+
+  // Détails d'un utilisateur : après les adresses fixes (/users/search, /users/export), qu'il captait avant
+  router.get('/users/:id',
+    validationMiddleware.validateId('id'),
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.getUserDetails
   );
 
   // Validation d'un utilisateur (PATCH)
@@ -511,7 +512,7 @@ const initDashboardRoutes = (models) => {
   );
 
   // ========================================
-  // AUDIT ET LOGS (SUPER ADMIN SEULEMENT)
+  // AUDIT ET LOGS (ADMINISTRATEURS)
   // ========================================
 
   router.get('/audit/logs',
@@ -523,8 +524,9 @@ const initDashboardRoutes = (models) => {
       query('endDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate'))
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.requireRole(['Super Admin']),
-    cacheMiddleware.conditionalCache(300),
+    // Administrateurs (router.use(requireAdmin) plus haut) : le rôle « Super Admin » demandé ici
+    // n'existe pas, la route était fermée à tous (audit V11 COD-B1). Pas de cache : chaque consultation
+    // doit être journalisée, et les nouvelles lignes visibles tout de suite
     auditMiddleware.logAction('VIEW_AUDIT_LOGS'),
     dashboardController.getAuditLogs
   );
@@ -532,8 +534,9 @@ const initDashboardRoutes = (models) => {
   router.get('/audit/user/:userId',
     validationMiddleware.validateId('userId'),
     validationMiddleware.validatePagination,
-    authMiddleware.requireRole(['Super Admin']),
-    cacheMiddleware.conditionalCache(300),
+    // Administrateurs (router.use(requireAdmin) plus haut) : le rôle « Super Admin » demandé ici
+    // n'existe pas, la route était fermée à tous (audit V11 COD-B1). Pas de cache : chaque consultation
+    // doit être journalisée, et les nouvelles lignes visibles tout de suite
     auditMiddleware.logAction('VIEW_USER_AUDIT'),
     (req, res) => {
       req.query.userId = req.params.userId;
@@ -587,11 +590,12 @@ const initDashboardRoutes = (models) => {
   );
 
   // ========================================
-  // CONFIGURATION ET PARAMÈTRES (SUPER ADMIN)
+  // CONFIGURATION ET PARAMÈTRES (ADMINISTRATEURS)
   // ========================================
 
   router.get('/config/permissions',
-    authMiddleware.requireRole(['Super Admin']),
+    // Administrateurs (router.use(requireAdmin) plus haut) : le rôle « Super Admin » demandé ici
+    // n'existe pas, la route était fermée à tous (audit V11 COD-B1)
     cacheMiddleware.conditionalCache(3600),
     (req, res) => {
       res.json({
