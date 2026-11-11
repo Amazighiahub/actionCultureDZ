@@ -877,6 +877,10 @@
       "nouvelle": "New notification",
       "nouvelles": "{{n}} new notifications",
       "voir": "View"
+    },
+    "mobile": {
+      "contribuer": "Contribute: suggest a place",
+      "aussi": "Also to discover"
     }
   },
   "home": {

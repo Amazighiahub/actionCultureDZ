@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag, PlusCircle, Map as MapIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import { InstallerTalaDz } from '@/components/shared/PiedDePageApplication';
 import NotificationBell from '@/components/NotificationBell';
 import { professionnelPath } from '@/utils/slug';
+import { lienSommaireGuides } from '@/utils/lienGuide';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -508,6 +509,42 @@ const Header = () => {
                   <span>{item.label}</span>
                 </Link>
               ))}
+            </nav>
+
+            {/* Liens qui n'étaient que dans le pied de page, 10 à 12 écrans plus bas : la contribution
+                citoyenne, les organisations, les wilayas et le guide (audit V11 UX-12). La langue est déjà
+                dans la barre du haut. */}
+            <Button asChild className="w-full min-h-[48px] text-base">
+              <Link to="/ajouter-patrimoine" onClick={() => setIsMenuOpen(false)}>
+                <PlusCircle className="h-5 w-5 me-2" aria-hidden="true" />
+                {t('header.mobile.contribuer', 'Contribuer : proposer un lieu')}
+              </Link>
+            </Button>
+            <nav className="space-y-1 pt-2 border-t" aria-label={t('header.mobile.aussi', 'À découvrir aussi')}>
+              {[
+                { icon: Building2, label: t('organisations.menu.toutes', 'Organisations'), href: '/organisations' },
+                { icon: MapIcon, label: t('wilaya.toutes', 'Les wilayas'), href: '/wilayas' },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  aria-current={isCurrentSection(item.href) ? 'page' : undefined}
+                  className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px] aria-[current=page]:bg-stone-100 dark:aria-[current=page]:bg-stone-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+              {/* Guides : pages statiques, hors de l'application (lien ordinaire, comme le pied de page) */}
+              <a
+                href={lienSommaireGuides(i18n.language)}
+                className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px]"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <BookOpen className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                <span>{t('common.contributorGuide', 'Guide du contributeur')}</span>
+              </a>
             </nav>
 
             {/* Actions mobile */}

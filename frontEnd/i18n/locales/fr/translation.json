@@ -926,6 +926,10 @@
       "nouvelle": "Nouvelle notification",
       "nouvelles": "{{n}} nouvelles notifications",
       "voir": "Voir"
+    },
+    "mobile": {
+      "contribuer": "Contribuer : proposer un lieu",
+      "aussi": "À découvrir aussi"
     }
   },
   "home": {
