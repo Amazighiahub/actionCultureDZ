@@ -6121,5 +6121,22 @@
     "evenement": "This event does not exist or is no longer published.",
     "oeuvre": "This work does not exist or is no longer published.",
     "artisanat": "This craft item does not exist or is no longer published."
+  },
+  "recherche": {
+    "ouvrir": "Search the site",
+    "titre": "Search Tala DZ",
+    "placeholder": "A place, a wilaya, an event, a work, a person…",
+    "placeholderCourt": "Search a place, an event…",
+    "aide": "Type at least 2 letters: for example “Tlemcen”, “chaâbi” or “pottery”.",
+    "enCours": "Searching…",
+    "nombre": "{{count}} result(s) for “{{terme}}”",
+    "aucun": "No results for “{{terme}}”. Try another word or spelling.",
+    "parcourir": "Browse heritage",
+    "wilayas": "Wilayas",
+    "lieux": "Places and heritage",
+    "evenements": "Events",
+    "oeuvres": "Works and crafts",
+    "professionnels": "Professionals",
+    "organisations": "Organisations"
   }
 }

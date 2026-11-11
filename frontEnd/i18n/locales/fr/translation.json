@@ -6121,5 +6121,22 @@
     "evenement": "Cet événement n’existe pas ou n’est plus publié.",
     "oeuvre": "Cette œuvre n’existe pas ou n’est plus publiée.",
     "artisanat": "Cet objet d’artisanat n’existe pas ou n’est plus publié."
+  },
+  "recherche": {
+    "ouvrir": "Rechercher sur le site",
+    "titre": "Rechercher sur Tala DZ",
+    "placeholder": "Un lieu, une wilaya, un événement, une œuvre, une personne…",
+    "placeholderCourt": "Rechercher un lieu, un événement…",
+    "aide": "Écrivez au moins 2 lettres : par exemple « Tlemcen », « chaâbi » ou « poterie ».",
+    "enCours": "Recherche en cours…",
+    "nombre": "{{count}} résultat(s) pour « {{terme}} »",
+    "aucun": "Aucun résultat pour « {{terme}} ». Essayez un autre mot, ou une autre orthographe.",
+    "parcourir": "Parcourir le patrimoine",
+    "wilayas": "Wilayas",
+    "lieux": "Lieux et patrimoine",
+    "evenements": "Événements",
+    "oeuvres": "Œuvres et artisanat",
+    "professionnels": "Professionnels",
+    "organisations": "Organisations"
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag, PlusCircle, Map as MapIcon } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag, PlusCircle, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -253,6 +253,13 @@ const Header = () => {
               {/* Installer l'application : rond vert, visible de tous tant qu'elle n'est pas installée */}
               <InstallerTalaDz rond />
 
+              {/* Recherche générale : tout le site en une fois (audit V11 UX-13) */}
+              <Button variant="ghost" asChild className="min-w-[44px] min-h-[44px] p-0">
+                <Link to="/recherche" aria-label={t('recherche.ouvrir', 'Rechercher sur le site')} title={t('recherche.ouvrir', 'Rechercher sur le site')}>
+                  <Search className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </Button>
+
               {/* Selecteur de langue */}
               <LanguageSelector
                 variant="compact"
@@ -496,6 +503,26 @@ const Header = () => {
           style={{ height: sousNav ? 'calc(100dvh - 92px)' : 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
+            {/* Recherche générale, en tête du menu (audit V11 UX-13) */}
+            <form
+              role="search"
+              className="relative"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = String(new FormData(e.currentTarget).get('q') || '').trim();
+                setIsMenuOpen(false);
+                navigate(q ? `/recherche?q=${encodeURIComponent(q)}` : '/recherche');
+              }}
+            >
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <input
+                name="q"
+                type="search"
+                placeholder={t('recherche.placeholderCourt', 'Rechercher un lieu, un événement…')}
+                aria-label={t('recherche.ouvrir', 'Rechercher sur le site')}
+                className="w-full h-12 rounded-lg border bg-background !ps-10 pe-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </form>
             <nav className="space-y-1" aria-label={t('header.nav.mainLabel', 'Navigation principale')}>
               {navigationItems.map((item) => (
                 <Link
