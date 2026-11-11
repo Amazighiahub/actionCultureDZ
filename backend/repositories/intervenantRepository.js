@@ -5,7 +5,9 @@
 const BaseRepository = require('./baseRepository');
 const { PUBLIC_USER_ATTRIBUTES, PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
-const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLangSearchBuilder');
+const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const { triParNom } = require('../utils/triParNom');
+const { bornerPagination } = require('../utils/pagination');
 const { sanitizeLike } = require('../utils/sanitize');
 
 class IntervenantRepository extends BaseRepository {
@@ -19,7 +21,10 @@ class IntervenantRepository extends BaseRepository {
    * Recherche paginée avec filtres et tri multilingue
    */
   async findFiltered({ page = 1, limit = 20, search, organisation, pays_origine, actif, verifie, order = 'nom', direction = 'ASC', lang = 'fr' }) {
-    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    // Plafonds communs des listes : 100 par page, page 500 au plus (audit V11 BDD-12)
+    const borne = bornerPagination(page, limit);
+    const safeLimit = borne.limit;
+    page = borne.page;
     const offset = (page - 1) * safeLimit;
     const where = {};
 
@@ -43,12 +48,14 @@ class IntervenantRepository extends BaseRepository {
     const safeDirection = direction?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
     let orderClause;
     if (['nom', 'prenom', 'biographie'].includes(order)) {
-      orderClause = [buildMultiLangOrder(this.sequelize, order, lang, safeDirection, 'Intervenant')];
+      // Nom : colonne nom_tri indexée en français ; sinon texte dans la langue, sans accents ni
+      // majuscules (avant : JSON brut, ordre binaire faux) (audit V11 BDD-15)
+      orderClause = (await triParNom(this.model, { lang, champ: order, colonne: order === 'nom' ? 'nom_tri' : null, direction: safeDirection })).order;
     } else if (order && (!this.model.rawAttributes || this.model.rawAttributes[order])) {
       orderClause = [[order, safeDirection]];
     } else {
       // Colonne inconnue (avant : erreur 500) : tri par nom
-      orderClause = [buildMultiLangOrder(this.sequelize, 'nom', lang, safeDirection, 'Intervenant')];
+      orderClause = (await triParNom(this.model, { lang, direction: safeDirection })).order;
     }
 
     const include = [];
@@ -61,15 +68,17 @@ class IntervenantRepository extends BaseRepository {
       });
     }
 
-    // Route publique : fiche publique uniquement (ni email, ni téléphone, ni date de naissance)
-    const { rows, count } = await this.model.findAndCountAll({
+    // Total sans la jointure du compte (facultative : elle ne change pas le nombre), puis la page
+    // (audit V11 BDD-12). Route publique : fiche publique uniquement (ni email, ni téléphone, ni
+    // date de naissance)
+    const count = await this.model.count({ where });
+    const rows = count === 0 ? [] : await this.model.findAll({
       where,
       attributes: PUBLIC_INTERVENANT_ATTRIBUTES,
       include,
       limit: safeLimit,
       offset,
-      order: orderClause,
-      distinct: true
+      order: orderClause
     });
 
     return {

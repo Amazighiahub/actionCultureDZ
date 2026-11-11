@@ -17,7 +17,7 @@ const collectAttributes = (includes, acc = []) => {
   return acc;
 };
 
-const fakeModel = () => ({ sequelize: {}, findAll: jest.fn().mockResolvedValue([]), findByPk: jest.fn().mockResolvedValue(null), findAndCountAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }) });
+const fakeModel = () => ({ sequelize: {}, findAll: jest.fn().mockResolvedValue([]), findByPk: jest.fn().mockResolvedValue(null), findAndCountAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }), count: jest.fn().mockResolvedValue(1) });
 
 describe('Includes publics', () => {
   it('événement : Organisateur sans email', () => {
@@ -40,7 +40,7 @@ describe('Includes publics', () => {
     const models = { Intervenant: fakeModel(), User: {}, Programme: {} };
     const repo = new IntervenantRepository(models);
     await repo.findFiltered({ order: 'date_creation' });
-    const listQuery = models.Intervenant.findAndCountAll.mock.calls[0][0];
+    const listQuery = models.Intervenant.findAll.mock.calls[0][0];
     for (const k of PRIVATE_KEYS) expect(listQuery.attributes).not.toContain(k);
     expect(listQuery.where.actif).toBe(true);
     for (const k of PRIVATE_KEYS) expect(collectAttributes(listQuery.include)).not.toContain(k);

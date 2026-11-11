@@ -165,7 +165,11 @@ class UserService extends BaseService {
 
     // 5. Générer les tokens
     const refreshToken = this._generateRefreshToken();
-    const session = await this._saveRefreshToken(user.id_user, refreshToken);
+    // Lecture des anciennes connexions, fermeture des plus vieilles et ouverture de la nouvelle :
+    // une seule transaction, comme à l'inscription et au renouvellement
+    const session = await this.repository.withTransaction(
+      (transaction) => this._saveRefreshToken(user.id_user, refreshToken, transaction)
+    );
     const token = this._generateToken(user, session.id_session);
 
     // 6. Transformer en DTO
@@ -1022,7 +1026,12 @@ class UserService extends BaseService {
     const options = transaction ? { transaction } : {};
     const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
-    await SessionConnexion.destroy({ where: { expire_le: { [Op.lt]: new Date() } }, ...options });
+    // Connexions expirées de CETTE personne seulement (index id_user) : elles ne comptent pas dans la
+    // limite d'appareils. La purge de toute la table est faite la nuit par cronService.cleanExpiredTokens
+    // (avant : à chaque connexion et à chaque renouvellement, avec un verrou de plage sur expire_le
+    // partagé par toutes les connexions simultanées ; audit V11 BDD-17). Une connexion expirée reste
+    // refusée au renouvellement (refreshToken compare expire_le), purgée ou non.
+    await SessionConnexion.destroy({ where: { id_user: userId, expire_le: { [Op.lt]: new Date() } }, ...options });
     // Au-delà de la limite, la connexion la plus ancienne se ferme
     const anciennes = await SessionConnexion.findAll({
       where: { id_user: userId },

@@ -13,7 +13,8 @@ const row = (data) => ({
 
 const makeRepo = (rows) => {
   const User = {
-    findAndCountAll: jest.fn().mockResolvedValue({ rows, count: rows.length }),
+    // Liste paginée du dépôt de base : total (count) puis page (findAll) (audit V11 BDD-12)
+    count: jest.fn().mockResolvedValue(rows.length),
     findAll: jest.fn().mockResolvedValue(rows),
     // Recherche nom / prénom par langue (buildMultiLangSearch)
     sequelize: { escape: (v) => `'${v}'`, literal: (val) => ({ val }) }
@@ -30,7 +31,7 @@ describe('findValidatedProfessionals (public)', () => {
   it('limite les colonnes et respecte email_public / telephone_public', async () => {
     const { repo, User } = makeRepo(people());
     const result = await repo.findValidatedProfessionals({ page: 1, limit: 10 });
-    const query = User.findAndCountAll.mock.calls[0][0];
+    const query = User.findAll.mock.calls[0][0];
     expect(query.attributes).toEqual(PUBLIC_USER_PROFILE_ATTRIBUTES);
     expect(query.where.statut).toBe('actif');
     expect(result.data[0].email).toBe('a@x.dz');
@@ -44,7 +45,7 @@ describe('findValidatedProfessionals (public)', () => {
     const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
     const [m1, m2] = PROFESSIONAL_TYPE_IDS;
     await repo.findValidatedProfessionals({ types: `${m1},${m2},29,abc`, typesOrganisation: '12,14', propose: 'oeuvres,services,x' });
-    const { where } = User.findAndCountAll.mock.calls[0][0];
+    const { where } = User.count.mock.calls[0][0];
     const { Op } = require('sequelize');
     // Administrateur (29) et valeurs invalides ignorés
     expect(where.id_type_user[Op.in]).toEqual([m1, m2]);
@@ -57,7 +58,7 @@ describe('findValidatedProfessionals (public)', () => {
   it('valeurs piégées dans les filtres : ignorées, aucune condition ajoutée', async () => {
     const { repo, User } = makeRepo([]);
     await repo.findValidatedProfessionals({ typesOrganisation: "1' OR '1", propose: 'DROP' });
-    const { where } = User.findAndCountAll.mock.calls[0][0];
+    const { where } = User.count.mock.calls[0][0];
     const { Op } = require('sequelize');
     expect(where[Op.and]).toBeUndefined();
   });
@@ -67,7 +68,7 @@ describe('searchUsers', () => {
   it('utilisateur standard : pas de recherche par email, comptes actifs, colonnes publiques', async () => {
     const { repo, User } = makeRepo(people());
     await repo.searchUsers('gmail', { page: 1, limit: 10 });
-    const query = User.findAndCountAll.mock.calls[0][0];
+    const query = User.findAll.mock.calls[0][0];
     const { Op } = require('sequelize');
     const fields = query.where[Op.or].map(c => Object.keys(c)[0]);
     expect(fields).not.toContain('email');
@@ -78,7 +79,7 @@ describe('searchUsers', () => {
   it('admin : recherche complète (email inclus, tous statuts)', async () => {
     const { repo, User } = makeRepo(people());
     await repo.searchUsers('gmail', { page: 1, limit: 10 }, { includePrivate: true });
-    const query = User.findAndCountAll.mock.calls[0][0];
+    const query = User.findAll.mock.calls[0][0];
     const { Op } = require('sequelize');
     expect(query.where[Op.or].map(c => Object.keys(c)[0])).toContain('email');
     expect(query.where.statut).toBeUndefined();

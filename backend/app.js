@@ -769,48 +769,20 @@ class App {
   }
 
   // Tâches planifiées
+  // Le nettoyage du journal d'audit et celui des fichiers temporaires sont planifiés par cronService,
+  // sous son verrou distribué et à l'heure d'Algérie (avant : deux cron.schedule ici, sans verrou ni
+  // fuseau, et un doublon du nettoyage des fichiers temporaires ; audit V11 BDD-19). Il ne reste ici
+  // qu'à lui passer les réglages de l'application ; les tâches démarrent avec bootBackgroundServices.
   async startScheduledTasks() {
     if (!this.config.features.scheduledTasks) {
       console.log('⏰ Tâches planifiées désactivées');
       return;
     }
 
-    try {
-      let cron;
-      try {
-        cron = require('node-cron');
-      } catch (error) {
-        console.log('⚠️ node-cron non installé, tâches planifiées désactivées');
-        return;
-      }
-      
-      // Nettoyer les anciens logs si les audits sont activés
-      if (this.config.features.auditLogs) {
-        cron.schedule('0 3 * * *', async () => {
-          console.log('🧹 Nettoyage des anciens logs d\'audit...');
-          try {
-            await auditMiddleware.cleanOldLogs(this.config.maintenance.auditLogRetentionDays);
-          } catch (error) {
-            console.error('❌ Erreur lors du nettoyage des logs:', error);
-          }
-        });
-      }
-
-      // Nettoyer les fichiers temporaires (toutes les 6 heures)
-      cron.schedule('0 */6 * * *', async () => {
-        console.log('🧹 Nettoyage des fichiers temporaires...');
-        try {
-          const { cleanAllTemporaryFiles } = require('./scripts/cleanTempFiles');
-          await cleanAllTemporaryFiles();
-        } catch (error) {
-          console.error('❌ Erreur lors du nettoyage des fichiers temporaires:', error);
-        }
-      });
-
-      console.log('⏰ Tâches planifiées démarrées');
-    } catch (error) {
-      console.error('❌ Erreur lors du démarrage des tâches planifiées:', error);
-    }
+    require('./services/cronService').configurer({
+      auditLogs: this.config.features.auditLogs,
+      auditLogRetentionDays: this.config.maintenance.auditLogRetentionDays
+    });
   }
 
   // Initialisation complète
@@ -840,7 +812,7 @@ class App {
       this.initializeRoutes();
       this.initializeErrorHandling();
 
-      // Démarrer les tâches planifiées locales (audit logs, temp files)
+      // Réglages des tâches de maintenance (journal d'audit, fichiers temporaires) pour cronService
       await this.startScheduledTasks();
 
       // Démarrer les services background (queue email Bull + crons métier)

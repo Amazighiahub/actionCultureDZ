@@ -451,37 +451,41 @@ class OeuvreRepository extends BaseRepository {
   /**
    * Statistiques œuvres
    */
-  async getStats() {
-    const [
-      total,
-      published,
-      pending,
-      rejected,
-      byType
-    ] = await Promise.all([
-      this.count(),
-      this.count({ statut: 'publie' }),
-      this.count({ statut: 'en_attente' }),
-      this.count({ statut: 'rejete' }),
-      this.model.findAll({
-        attributes: [
-          'id_type_oeuvre',
-          [fn('COUNT', col('id_oeuvre')), 'count']
-        ],
-        where: { statut: 'publie' },
-        group: ['id_type_oeuvre'],
-        raw: true,
-        limit: 50
-      })
-    ]);
+  /**
+   * @param {{ publiques?: boolean }} [options] publiques : œuvres publiées seulement (route publique
+   *   /statistics : ni brouillons, ni en attente, ni refusées) ; sinon tous les statuts (administration)
+   */
+  async getStats({ publiques = false } = {}) {
+    // Un seul passage sur la table au lieu de 4 COUNT lancés en parallèle (4 connexions du pool), puis
+    // la répartition par type : une connexion à la fois (audit V11 BDD-18)
+    const ligne = await this.model.findOne({
+      attributes: [
+        [fn('COUNT', col('id_oeuvre')), 'total'],
+        [literal('SUM(`statut` = \'publie\')'), 'published'],
+        [literal('SUM(`statut` = \'en_attente\')'), 'pending'],
+        [literal('SUM(`statut` = \'rejete\')'), 'rejected']
+      ],
+      where: publiques ? { statut: 'publie' } : {},
+      raw: true
+    });
+    const nombre = (v) => Number(v) || 0;
 
-    return {
-      total,
-      published,
-      pending,
-      rejected,
-      byType
-    };
+    const byType = await this.model.findAll({
+      attributes: [
+        'id_type_oeuvre',
+        [fn('COUNT', col('id_oeuvre')), 'count']
+      ],
+      where: { statut: 'publie' },
+      group: ['id_type_oeuvre'],
+      raw: true,
+      limit: 50
+    });
+
+    const total = nombre(ligne?.total);
+    const published = nombre(ligne?.published);
+    // Public : ce que le site montre ; les œuvres en attente ou refusées ne sont pas exposées
+    if (publiques) return { total, published, byType };
+    return { total, published, pending: nombre(ligne?.pending), rejected: nombre(ligne?.rejected), byType };
   }
 }
 

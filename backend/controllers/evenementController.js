@@ -41,7 +41,9 @@ class EvenementController extends BaseController {
       const { page, limit } = this._paginate(req);
       // Filtres de la page Événements (ignorés auparavant : recherche et listes déroulantes sans effet)
       const type = req.query.type_evenement || req.query.type;
-      const options = { page, limit, filters: { q, statut, type } };
+      // Wilaya et période (« ce week-end », « ce mois-ci ») de la page Événements (audit V11 UX-17)
+      const { wilaya_id: wilaya, date_debut: dateDebut, date_fin: dateFin } = req.query;
+      const options = { page, limit, filters: { q, statut, type, wilaya, dateDebut, dateFin } };
 
       let result;
       if (upcoming === 'true') {
@@ -339,6 +341,16 @@ class EvenementController extends BaseController {
   async getStats(req, res) {
     try {
       const stats = await this.evenementService.getStats();
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // Route publique : événements visibles sur le site seulement (audit V11 BDD-18)
+  async getPublicStats(req, res) {
+    try {
+      const stats = await this.evenementService.getPublicStats();
       res.json({ success: true, data: stats });
     } catch (error) {
       this._handleError(res, error);

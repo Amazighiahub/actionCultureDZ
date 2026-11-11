@@ -20,6 +20,7 @@
 const { peutGerer, estModeration } = require('../utils/droits');
 const logger = require('../utils/logger');
 const { repondreSiConflit } = require('../utils/conflitSimultane');
+const { bornerPagination } = require('../utils/pagination');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -107,8 +108,8 @@ class BaseController {
    * @returns {{ page: number, limit: number, offset: number }}
    */
   _paginate(req, defaults = {}) {
-    const page = Math.max(1, parseInt(req.query.page) || defaults.page || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || defaults.limit || 20));
+    // Mêmes plafonds que les listes du dépôt de base : 100 par page, page 500 au plus (audit V11 BDD-12)
+    const { page, limit } = bornerPagination(parseInt(req.query.page) || defaults.page, parseInt(req.query.limit) || defaults.limit, 20);
     const offset = (page - 1) * limit;
     return { page, limit, offset };
   }

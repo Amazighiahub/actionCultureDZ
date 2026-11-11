@@ -7,8 +7,9 @@
 const BaseService = require('./core/baseService');
 const { Op, Sequelize } = require('sequelize');
 const { mergeTranslations, createMultiLang, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
-const { buildMultiLangSearch, buildMultiLangOrder, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
+const { buildMultiLangSearch, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
+const { triParNom } = require('../utils/triParNom');
 const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../utils/carteArticle');
 const { peutGerer } = require('../utils/droits');
@@ -195,7 +196,6 @@ class IntervenantService extends BaseService {
   }
 
   async searchIntervenants(q, limit = 10, lang = 'fr') {
-    const safeLang = lang.replace(/[^a-z-]/gi, '');
     const where = {
       [Op.or]: [
         ...(await rechercheNomPersonne(this.sequelize, this.models.Intervenant, q, 'Intervenant')),
@@ -210,7 +210,9 @@ class IntervenantService extends BaseService {
       where,
       attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation', 'specialites', 'photo_url'],
       limit: parseInt(limit),
-      order: [[this.sequelize.literal(`JSON_EXTRACT(\`nom\`, '$${(() => { return safeLang.includes('-') ? '."' + safeLang + '"' : '.' + safeLang; })()}')`), 'ASC']]
+      // Nom : colonne nom_tri indexée en français, sinon texte dans la langue sans accents ni majuscules
+      // (avant : JSON brut sans JSON_UNQUOTE, ordre binaire faux) (audit V11 BDD-15)
+      order: (await triParNom(this.models.Intervenant, { lang })).order
     });
   }
 

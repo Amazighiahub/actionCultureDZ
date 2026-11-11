@@ -33,9 +33,18 @@ async function administrateur(select, idChoisi = null) {
   return premier ? premier.id_user : null;
 }
 
-async function creerSites(queryInterface, sites, { wilayaId, idCreateur }) {
+/**
+ * Crée les sites et leurs points. Une seule transaction pour toute la liste (audit V11 BDD-10) : une
+ * erreur au milieu n'y laisse plus de lieu sans détail ni de site sans sa demande de validation.
+ */
+async function creerSites(queryInterface, sites, options) {
   const s = queryInterface.sequelize;
-  const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
+  return s.transaction((transaction) => creerSitesDans(s, transaction, sites, options));
+}
+
+async function creerSitesDans(s, transaction, sites, { wilayaId, idCreateur }) {
+  const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT, transaction });
+  const executer = (sql, replacements) => s.query(sql, { replacements, transaction });
 
   const communes = new Map();
   const commune = async (nom) => {
@@ -59,29 +68,29 @@ async function creerSites(queryInterface, sites, { wilayaId, idCreateur }) {
   };
 
   const creerLieu = async (l, idCommune, idParent, ordre) => {
-    const [idLieu] = await s.query(
+    const [idLieu] = await executer(
       `INSERT INTO lieu (typeLieu, typePatrimoine, communeId, nom, adresse, latitude, longitude, id_createur, statut,
                          id_lieu_parent, ordre_visite, createdAt, updatedAt)
        VALUES ('Commune', ?, ?, ?, ?, ?, ?, ?, 'brouillon', ?, ?, NOW(), NOW())`,
-      { replacements: [l.typePatrimoine, idCommune, json(l.nom), json(l.adresse || {}), l.latitude, l.longitude,
-        idCreateur, idParent, ordre] }
+      [l.typePatrimoine, idCommune, json(l.nom), json(l.adresse || {}), l.latitude, l.longitude,
+        idCreateur, idParent, ordre]
     );
     const d = l.detail || { description: l.description };
-    await s.query(
+    await executer(
       `INSERT INTO detail_lieux (id_lieu, description, horaires, histoire, referencesHistoriques, gastronomie, traditions,
                                  artisanat_local, personnalites, architecture, infos_pratiques, nb_notations, nb_contributions,
                                  createdAt, updatedAt)
        VALUES (?, ?, '{}', ?, ?, ?, ?, ?, NULL, ?, ?, 0, 0, NOW(), NOW())`,
-      { replacements: [idLieu, json(d.description || {}), json(d.histoire || {}), json(d.referencesHistoriques || {}),
-        json(d.gastronomie), json(d.traditions), json(d.artisanat_local), json(d.architecture), json(d.infos_pratiques)] }
+      [idLieu, json(d.description || {}), json(d.histoire || {}), json(d.referencesHistoriques || {}),
+        json(d.gastronomie), json(d.traditions), json(d.artisanat_local), json(d.architecture), json(d.infos_pratiques)]
     );
     return idLieu;
   };
 
-  const demande = (idLieu, nom) => s.query(
+  const demande = (idLieu, nom) => executer(
     `INSERT INTO proposition_lieu (id_lieu, id_user, action, donnees, statut, date_creation)
      VALUES (?, ?, 'creation', ?, 'en_attente', NOW())`,
-    { replacements: [idLieu, idCreateur, json({ corps: { nom } })] }
+    [idLieu, idCreateur, json({ corps: { nom } })]
   );
 
   for (const site of sites) {
@@ -95,7 +104,7 @@ async function creerSites(queryInterface, sites, { wilayaId, idCreateur }) {
       );
       if (!l) continue;
       idSite = l.id_lieu;
-      await completerSiVide(s, select, idSite, site.detail || {});
+      await completerSiVide(executer, select, idSite, site.detail || {});
     } else {
       const idCommune = await commune(site.commune);
       if (!idCommune) continue; // commune absente : rien à rattacher
@@ -122,7 +131,7 @@ async function creerSites(queryInterface, sites, { wilayaId, idCreateur }) {
 }
 
 /** Remplit les textes encore vides d'un lieu existant (jamais une saisie déjà faite) */
-async function completerSiVide(s, select, idLieu, detail) {
+async function completerSiVide(executer, select, idLieu, detail) {
   const cles = Object.keys(detail);
   if (!cles.length) return;
   const [d] = await select(`SELECT ${cles.join(', ')} FROM detail_lieux WHERE id_lieu = ?`, [idLieu]);
@@ -133,26 +142,52 @@ async function completerSiVide(s, select, idLieu, detail) {
   };
   const aRemplir = cles.filter((c) => vide(d[c]));
   if (aRemplir.length) {
-    await s.query(`UPDATE detail_lieux SET ${aRemplir.map((c) => `${c} = ?`).join(', ')}, updatedAt = NOW() WHERE id_lieu = ?`,
-      { replacements: [...aRemplir.map((c) => json(detail[c])), idLieu] });
+    await executer(`UPDATE detail_lieux SET ${aRemplir.map((c) => `${c} = ?`).join(', ')}, updatedAt = NOW() WHERE id_lieu = ?`,
+      [...aRemplir.map((c) => json(detail[c])), idLieu]);
   }
 }
 
-/** Retire les lieux de cette liste restés en brouillon (un lieu publié entre-temps est gardé) */
-async function retirerSites(queryInterface, sites) {
+/**
+ * Retire les lieux de cette liste restés en brouillon (un lieu publié entre-temps est gardé).
+ * Descente étroite (audit V11 BDD-10) : seulement dans la wilaya de la migration et, si `createurs` est
+ * donné, seulement les lieux de ces comptes (null = lieu sans propriétaire). Avant : tout brouillon du
+ * même nom français, dans n'importe quelle wilaya et de n'importe qui. Une seule transaction.
+ * @param {{ wilayaId: number, createurs?: Array<number|null> }} filtre
+ */
+async function retirerSites(queryInterface, sites, { wilayaId, createurs } = {}) {
+  if (!wilayaId) throw new Error('retirerSites : wilayaId obligatoire');
   const s = queryInterface.sequelize;
   // Un site existant (existantSeulement) n'est jamais retiré, seulement les points ajoutés ici
   const noms = sites.flatMap((site) => [...(site.existantSeulement ? [] : [site.nom.fr]), ...(site.points || []).map((p) => p.nom.fr)]);
-  const lignes = await s.query(
-    `SELECT id_lieu FROM lieu WHERE statut = 'brouillon' AND JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) IN (?)
-      ORDER BY id_lieu_parent IS NULL, id_lieu DESC`,
-    { replacements: [noms], type: s.QueryTypes.SELECT }
-  );
-  for (const { id_lieu: id } of lignes) {
-    await s.query('DELETE FROM proposition_lieu WHERE id_lieu = ?', { replacements: [id] });
-    await s.query('DELETE FROM detail_lieux WHERE id_lieu = ?', { replacements: [id] });
-    await s.query('DELETE FROM lieu WHERE id_lieu = ?', { replacements: [id] });
+  if (!noms.length) return;
+
+  const conditions = [];
+  const replacements = [wilayaId, noms];
+  if (Array.isArray(createurs)) {
+    const ids = [...new Set(createurs.filter((id) => id != null))];
+    const parCompte = [];
+    if (createurs.includes(null)) parCompte.push('l.id_createur IS NULL');
+    if (ids.length) { parCompte.push('l.id_createur IN (?)'); replacements.push(ids); }
+    if (!parCompte.length) return;
+    conditions.push(`(${parCompte.join(' OR ')})`);
   }
+
+  await s.transaction(async (transaction) => {
+    const lignes = await s.query(
+      `SELECT l.id_lieu FROM lieu l
+         JOIN communes c ON c.id_commune = l.communeId
+         JOIN dairas d ON d.id_daira = c.dairaId
+        WHERE d.wilayaId = ? AND l.statut = 'brouillon' AND JSON_UNQUOTE(JSON_EXTRACT(l.nom, '$.fr')) IN (?)
+          ${conditions.map((c) => `AND ${c}`).join(' ')}
+        ORDER BY l.id_lieu_parent IS NULL, l.id_lieu DESC`,
+      { replacements, type: s.QueryTypes.SELECT, transaction }
+    );
+    for (const { id_lieu: id } of lignes) {
+      await s.query('DELETE FROM proposition_lieu WHERE id_lieu = ?', { replacements: [id], transaction });
+      await s.query('DELETE FROM detail_lieux WHERE id_lieu = ?', { replacements: [id], transaction });
+      await s.query('DELETE FROM lieu WHERE id_lieu = ?', { replacements: [id], transaction });
+    }
+  });
 }
 
 module.exports = { administrateur, creerSites, retirerSites };

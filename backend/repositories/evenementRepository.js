@@ -14,6 +14,9 @@ const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
 const { attributsComptes, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
 const { pasTermine, termine, finSql } = require('../helpers/finEvenement');
 
+// Statuts des événements visibles sur le site (liste publique, statistiques publiques)
+const STATUTS_VISIBLES = ['publie', 'planifie', 'en_cours', 'termine'];
+
 class EvenementRepository extends BaseRepository {
   constructor(models) {
     super(models.Evenement);
@@ -115,12 +118,34 @@ class EvenementRepository extends BaseRepository {
    * @param {{ q?: string, statut?: string, type?: string }} filters
    * @returns {Promise<object>} conditions Sequelize (à combiner avec le reste du where)
    */
-  async _buildPublicFilters({ q, statut, type } = {}) {
+  async _buildPublicFilters({ q, statut, type, wilaya, dateDebut, dateFin } = {}) {
     const and = [];
     const now = new Date();
 
     if (q && String(q).trim().length >= 2) {
       and.push(await this._conditionTexte(q));
+    }
+
+    // Wilaya du lieu (lieu → commune → daïra → wilaya) ; identifiant entier vérifié : pas d'injection
+    // possible. Avant, le filtre envoyé par la page Événements était ignoré (audit V11 UX-17)
+    const idWilaya = Number(wilaya);
+    if (Number.isInteger(idWilaya) && idWilaya > 0) {
+      and.push({
+        id_lieu: {
+          [Op.in]: literal(`(SELECT l.id_lieu FROM lieu l JOIN communes c ON c.id_commune = l.communeId
+            JOIN dairas d ON d.id_daira = c.dairaId WHERE d.wilayaId = ${idWilaya})`)
+        }
+      });
+    }
+
+    // Période (« ce week-end », « ce mois-ci ») : jours d'Algérie (UTC+1) ; un événement est gardé s'il
+    // chevauche la période (commencé avant sa fin, pas terminé avant son début)
+    const jour = /^\d{4}-\d{2}-\d{2}$/;
+    if (jour.test(String(dateFin || ''))) {
+      and.push({ date_debut: { [Op.lte]: new Date(`${dateFin}T23:59:59+01:00`) } });
+    }
+    if (jour.test(String(dateDebut || ''))) {
+      and.push(seqWhere(literal(finSql(this.model.name)), { [Op.gte]: new Date(`${dateDebut}T00:00:00+01:00`) }));
     }
 
     // Statuts tels qu'affichés sur le site (calculés aussi depuis les dates)
@@ -182,8 +207,7 @@ class EvenementRepository extends BaseRepository {
     // Les événements terminés restent visibles (« Tous » et « Terminés ») : ils ne sont jamais archivés
     // automatiquement ; seule l'administration retire un événement (annulation ou suppression).
     // Avant, « Tous » les cachait : un salon passé disparaissait de la liste dès le lendemain.
-    const visibleStatuts = ['publie', 'planifie', 'en_cours', 'termine'];
-    const where = { ...options.where, statut: { [Op.in]: visibleStatuts }, ...(extra.length ? { [Op.and]: extra } : {}) };
+    const where = { ...options.where, statut: { [Op.in]: STATUTS_VISIBLES }, ...(extra.length ? { [Op.and]: extra } : {}) };
     // À venir et en cours d'abord (date croissante), puis les terminés (le plus récent d'abord)
     if (await aColonne(this.model, 'fin_effective')) return this._pagePubliee(where, p, l);
     const alias = this.model.name;
@@ -817,30 +841,48 @@ class EvenementRepository extends BaseRepository {
 
   /**
    * Statistiques événements
+   * @param {{ publiques?: boolean }} [options] publiques : seulement les événements visibles sur le site
+   *   (route publique /statistics) ; sinon tous (administration), brouillons et annulés compris
    */
-  async getStats() {
+  async getStats({ publiques = false } = {}) {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sequelize = this.model.sequelize;
+    const where = publiques ? { statut: { [Op.in]: STATUTS_VISIBLES } } : {};
 
-    const [total, upcoming, ongoing, thisMonthCount, byType] = await Promise.all([
-      this.count(),
-      this.count({ date_debut: { [Op.gt]: now }, statut: { [Op.in]: ['publie', 'planifie'] } }),
-      this.count({ statut: 'en_cours' }),
-      this.count({ date_creation: { [Op.gte]: thisMonth } }),
-      this.models.TypeEvenement ? this.model.findAll({
-        attributes: [
-          'id_type_evenement',
-          [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id_evenement')), 'count']
-        ],
-        include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] }],
-        group: ['id_type_evenement', 'TypeEvenement.id_type_evenement'],
-        raw: false,
-        limit: 50
-      }) : []
-    ]);
+    // Un seul passage sur la table au lieu de 4 COUNT lancés en parallèle (4 connexions du pool), puis
+    // la répartition par type : une connexion à la fois (audit V11 BDD-18)
+    const ligne = await this.model.findOne({
+      attributes: [
+        [fn('COUNT', col('id_evenement')), 'total'],
+        [literal(`SUM(\`date_debut\` > ${sequelize.escape(now)} AND \`statut\` IN ('publie', 'planifie'))`), 'upcoming'],
+        [literal('SUM(`statut` = \'en_cours\')'), 'ongoing'],
+        [literal(`SUM(\`date_creation\` >= ${sequelize.escape(thisMonth)})`), 'thisMonth']
+      ],
+      where,
+      raw: true
+    });
+    const nombre = (v) => Number(v) || 0;
 
-    return { total, upcoming, ongoing, thisMonth: thisMonthCount, byType };
+    const byType = this.models.TypeEvenement ? await this.model.findAll({
+      attributes: [
+        'id_type_evenement',
+        [fn('COUNT', col('id_evenement')), 'count']
+      ],
+      where,
+      include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] }],
+      group: ['id_type_evenement', 'TypeEvenement.id_type_evenement'],
+      raw: false,
+      limit: 50
+    }) : [];
+
+    return {
+      total: nombre(ligne?.total),
+      upcoming: nombre(ligne?.upcoming),
+      ongoing: nombre(ligne?.ongoing),
+      thisMonth: nombre(ligne?.thisMonth),
+      byType
+    };
   }
 }
 

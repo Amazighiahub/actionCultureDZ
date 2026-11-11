@@ -6,7 +6,7 @@
  */
 const BaseService = require('./core/baseService');
 const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
-const { Op } = require('sequelize');
+const { Op, Transaction } = require('sequelize');
 const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { csvCell } = require('../utils/csv');
 const { peutGerer, estModeration } = require('../utils/droits');
@@ -58,33 +58,31 @@ class ProgrammeService extends BaseService {
   async createProgramme(evenementId, userId, lang, data) {
     const { titre, description, intervenants = [], id_lieu, ...rest } = data;
 
-    const evenement = await this.models.Evenement.findByPk(evenementId);
-    if (!evenement) return { error: 'evenementNotFound' };
-
-    // Seul le propriétaire de l'événement peut gérer les programmes
-    if (evenement.id_user !== userId) {
-      return { error: 'forbidden' };
-    }
-
-    // Vérifier que l'événement est modifiable
-    const unmodifiableStatuses = ['annule', 'termine'];
-    if (unmodifiableStatuses.includes(evenement.statut)) {
-      return { error: 'forbidden' };
-    }
-
-    if (id_lieu) {
-      const lieu = await this.models.Lieu.findByPk(id_lieu);
-      if (!lieu) return { error: 'lieuNotFound' };
-    }
-
+    // Lectures et écritures sur une seule connexion : la ligne de l'événement est verrouillée
+    // jusqu'au commit, ce qui empêche deux ajouts simultanés de prendre le même ordre
     const transaction = await this.sequelize.transaction();
     try {
+      const evenement = await this.models.Evenement.findByPk(evenementId, { transaction, lock: Transaction.LOCK.UPDATE });
+      const refus = !evenement ? 'evenementNotFound' : this._refusEvenement(evenement, userId);
+      if (refus) {
+        await transaction.rollback();
+        return { error: refus };
+      }
+
+      if (id_lieu) {
+        const lieu = await this.models.Lieu.findByPk(id_lieu, { transaction });
+        if (!lieu) {
+          await transaction.rollback();
+          return { error: 'lieuNotFound' };
+        }
+      }
+
       const programmeData = {
         titre: this._prepareMultiLang(titre, lang) || {},
         description: this._prepareMultiLang(description, lang) || { fr: '' },
         id_evenement: evenementId,
         id_lieu,
-        ordre: rest.ordre || await this.repository.getNextOrdre(evenementId),
+        ordre: rest.ordre || await this.repository.getNextOrdre(evenementId, { transaction }),
         statut: 'planifie',
         ...this._optionsActivite(rest),
         ...this._pickFields(rest, ['date_programme', 'heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
@@ -109,6 +107,29 @@ class ProgrammeService extends BaseService {
       if (!transaction.finished) await transaction.rollback();
       throw error;
     }
+  }
+
+  /**
+   * Seul le propriétaire de l'événement gère ses activités, et pas sur un événement annulé ou terminé.
+   * @returns {string|null} code d'erreur, ou null si la modification est permise
+   */
+  _refusEvenement(evenement, userId) {
+    if (evenement.id_user !== userId) return 'forbidden';
+    if (['annule', 'termine'].includes(evenement.statut)) return 'forbidden';
+    return null;
+  }
+
+  /**
+   * Relit l'activité DANS la transaction, avec son événement, et verrouille les lignes lues
+   * (SELECT ... FOR UPDATE sur la jointure) : la vérification du propriétaire et du statut de
+   * l'événement vaut jusqu'au commit, et toute la requête n'utilise qu'une connexion.
+   */
+  async _lirePourModification(id, transaction, include = []) {
+    return this.repository.model.findByPk(id, {
+      include: [{ model: this.models.Evenement, as: 'Evenement' }, ...include],
+      transaction,
+      lock: Transaction.LOCK.UPDATE
+    });
   }
 
   /** Options enregistrées de l'activité ; « tous niveaux » n'a pas de valeur en base : colonne vide */
@@ -162,25 +183,18 @@ class ProgrammeService extends BaseService {
 
     const transaction = await this.sequelize.transaction();
     try {
-      const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement, as: 'Evenement' }]
-      });
+      const programme = await this._lirePourModification(id, transaction);
 
       if (!programme) {
         await transaction.rollback();
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId) {
+      // Propriétaire de l'événement, et événement encore modifiable
+      const refus = this._refusEvenement(programme.Evenement, userId);
+      if (refus) {
         await transaction.rollback();
-        return { error: 'forbidden' };
-      }
-
-      // Vérifier que l'événement est modifiable
-      const unmodifiableStatuses = ['annule', 'termine'];
-      if (unmodifiableStatuses.includes(programme.Evenement.statut)) {
-        await transaction.rollback();
-        return { error: 'forbidden' };
+        return { error: refus };
       }
 
       if (titre !== undefined) {
@@ -221,12 +235,9 @@ class ProgrammeService extends BaseService {
   async deleteProgramme(id, userId, contexte = {}) {
     const transaction = await this.sequelize.transaction();
     try {
-      const programme = await this.repository.model.findByPk(id, {
-        include: [
-          { model: this.models.Evenement, as: 'Evenement' },
-          { model: this.models.Intervenant, as: 'Intervenants', attributes: ['prenom', 'nom'], through: { attributes: [] }, required: false }
-        ]
-      });
+      const programme = await this._lirePourModification(id, transaction, [
+        { model: this.models.Intervenant, as: 'Intervenants', attributes: ['prenom', 'nom'], through: { attributes: [] }, required: false }
+      ]);
 
       if (!programme) {
         await transaction.rollback();
@@ -275,9 +286,7 @@ class ProgrammeService extends BaseService {
   async updateStatut(id, userId, statut) {
     const transaction = await this.sequelize.transaction();
     try {
-      const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement, as: 'Evenement' }]
-      });
+      const programme = await this._lirePourModification(id, transaction);
 
       if (!programme) {
         await transaction.rollback();
@@ -326,9 +335,7 @@ class ProgrammeService extends BaseService {
   async duplicateProgramme(id, userId) {
     const transaction = await this.sequelize.transaction();
     try {
-      const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement, as: 'Evenement' }]
-      });
+      const programme = await this._lirePourModification(id, transaction);
 
       if (!programme) {
         await transaction.rollback();
@@ -346,7 +353,7 @@ class ProgrammeService extends BaseService {
         id_evenement: programme.id_evenement,
         id_lieu: programme.id_lieu,
         lieu_specifique: programme.lieu_specifique,
-        ordre: await this.repository.getNextOrdre(programme.id_evenement),
+        ordre: await this.repository.getNextOrdre(programme.id_evenement, { transaction }),
         statut: 'planifie',
         type_activite: programme.type_activite,
         duree_estimee: programme.duree_estimee,
@@ -365,15 +372,15 @@ class ProgrammeService extends BaseService {
   }
 
   async reorderProgrammes(evenementId, userId, programmes) {
-    const evenement = await this.models.Evenement.findByPk(evenementId);
-    if (!evenement) return { error: 'evenementNotFound' };
-
-    if (evenement.id_user !== userId) {
-      return { error: 'forbidden' };
-    }
-
     const transaction = await this.sequelize.transaction();
     try {
+      // Même connexion que les mises à jour, événement verrouillé (comme l'ajout d'une activité)
+      const evenement = await this.models.Evenement.findByPk(evenementId, { transaction, lock: Transaction.LOCK.UPDATE });
+      if (!evenement || evenement.id_user !== userId) {
+        await transaction.rollback();
+        return { error: evenement ? 'forbidden' : 'evenementNotFound' };
+      }
+
       for (const item of programmes) {
         await this.repository.model.update(
           { ordre: item.ordre },

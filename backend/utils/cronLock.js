@@ -2,112 +2,101 @@
  * CronLock - Verrou distribué pour empêcher l'exécution simultanée
  * de tâches cron sur plusieurs instances (PM2 cluster, Docker replicas).
  *
- * Utilise une table DB `cron_locks` avec un verrou advisory MySQL.
- * Si la table n'existe pas, les jobs s'exécutent sans verrou (mode dégradé).
+ * Verrou nommé de MySQL (GET_LOCK / RELEASE_LOCK) pris sur UNE connexion réservée pendant toute
+ * la tâche (audit V11 BDD-19). Avant : table `cron_locks` créée à l'exécution, verrou de 5 min
+ * pour toutes les tâches (la newsletter pouvait repartir sur une autre instance en plein envoi)
+ * et, sur une erreur SQL, la tâche passait quand même sans verrou.
+ * Maintenant :
+ * - le verrou dure exactement le temps de la tâche, quelle qu'elle soit (plus de durée à deviner) ;
+ * - si la connexion tombe, MySQL libère le verrou tout seul (plus de verrou orphelin) ;
+ * - plus de CREATE TABLE au démarrage d'une tâche ;
+ * - si le verrou ne peut pas être demandé (base injoignable, erreur SQL), la tâche est sautée et
+ *   l'erreur journalisée : elle repassera à sa prochaine heure.
  */
+const logger = require('./logger');
+
+// Longueur maximale d'un nom de verrou MySQL
+const LONGUEUR_NOM_MAX = 64;
 
 class CronLock {
   constructor(sequelize) {
     this.sequelize = sequelize;
-    this.tableReady = null; // lazy init
   }
 
-  /**
-   * Crée la table cron_locks si elle n'existe pas
-   */
-  async _ensureTable() {
-    if (this.tableReady) return this.tableReady;
+  /** Nom du verrou : propre à la base (deux bases sur le même serveur ne se bloquent pas) */
+  _nomVerrou(jobName) {
+    const base = this.sequelize.config?.database || 'app';
+    return `${base}:cron:${jobName}`.slice(0, LONGUEUR_NOM_MAX);
+  }
 
-    this.tableReady = this.sequelize.query(`
-      CREATE TABLE IF NOT EXISTS cron_locks (
-        job_name VARCHAR(100) PRIMARY KEY,
-        locked_by VARCHAR(255) NOT NULL,
-        locked_at DATETIME NOT NULL,
-        expires_at DATETIME NOT NULL
-      ) ENGINE=InnoDB
-    `).then(() => true).catch((err) => {
-      console.warn('⚠️ CronLock: impossible de créer la table cron_locks:', err.message);
-      return false;
+  /** Requête sur la connexion réservée (connexion mysql2 du pool de Sequelize) */
+  _requete(connexion, sql, valeurs) {
+    return new Promise((resolve, reject) => {
+      connexion.query({ sql, values: valeurs }, (err, lignes) => (err ? reject(err) : resolve(lignes)));
     });
-
-    return this.tableReady;
   }
 
   /**
-   * Tente d'acquérir un verrou pour un job donné.
+   * Tente de prendre le verrou, sans attendre.
    * @param {string} jobName - Nom unique du job
-   * @param {number} ttlSeconds - Durée max du verrou (défaut: 300s / 5min)
-   * @returns {boolean} true si le verrou a été acquis
+   * @returns {Promise<object|null>} la connexion qui tient le verrou, ou null (déjà pris ou erreur)
    */
-  async acquire(jobName, ttlSeconds = 300) {
-    const ready = await this._ensureTable();
-    if (!ready) return true; // mode dégradé: on laisse passer
-
-    const instanceId = `${process.env.HOSTNAME || 'local'}-${process.pid}`;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
-
+  async acquire(jobName) {
+    const cm = this.sequelize.connectionManager;
+    let connexion;
     try {
-      // Supprimer les verrous expirés
-      await this.sequelize.query(
-        'DELETE FROM cron_locks WHERE job_name = :jobName AND expires_at < :now',
-        { replacements: { jobName, now }, type: this.sequelize.QueryTypes.DELETE }
-      );
-
-      // Tenter l'insertion (échoue si le verrou existe déjà = une autre instance l'a)
-      await this.sequelize.query(
-        'INSERT INTO cron_locks (job_name, locked_by, locked_at, expires_at) VALUES (:jobName, :lockedBy, :now, :expiresAt)',
-        { replacements: { jobName, lockedBy: instanceId, now, expiresAt }, type: this.sequelize.QueryTypes.INSERT }
-      );
-
-      return true;
+      connexion = await cm.getConnection({ type: 'write' });
+      const [ligne] = await this._requete(connexion, 'SELECT GET_LOCK(?, 0) AS ok', [this._nomVerrou(jobName)]);
+      if (Number(ligne?.ok) === 1) return connexion;
+      cm.releaseConnection(connexion);
+      return null;
     } catch (err) {
-      // ER_DUP_ENTRY = une autre instance a le verrou
-      if (err.original?.code === 'ER_DUP_ENTRY') {
-        return false;
-      }
-      console.warn(`⚠️ CronLock.acquire(${jobName}):`, err.message);
-      return true; // mode dégradé
+      // Pas de « mode dégradé » : sans verrou certain, la tâche ne tourne pas
+      logger.error(`CronLock.acquire(${jobName}) : verrou impossible, tâche sautée :`, err.message);
+      if (connexion) await this._abandonner(connexion);
+      return null;
     }
   }
 
   /**
-   * Libère le verrou après exécution
+   * Libère le verrou et rend la connexion au pool. Si la libération échoue, la connexion est
+   * détruite : MySQL libère alors le verrou de lui-même.
    */
-  async release(jobName) {
+  async release(jobName, connexion) {
+    if (!connexion) return;
     try {
-      await this.sequelize.query(
-        'DELETE FROM cron_locks WHERE job_name = :jobName AND locked_by = :lockedBy',
-        {
-          replacements: {
-            jobName,
-            lockedBy: `${process.env.HOSTNAME || 'local'}-${process.pid}`
-          },
-          type: this.sequelize.QueryTypes.DELETE
-        }
-      );
+      await this._requete(connexion, 'SELECT RELEASE_LOCK(?) AS ok', [this._nomVerrou(jobName)]);
+      this.sequelize.connectionManager.releaseConnection(connexion);
     } catch (err) {
-      console.warn(`⚠️ CronLock.release(${jobName}):`, err.message);
+      logger.warn(`CronLock.release(${jobName}) :`, err.message);
+      await this._abandonner(connexion);
     }
+  }
+
+  async _abandonner(connexion) {
+    try {
+      await this.sequelize.connectionManager.destroyConnection(connexion);
+    } catch (_) { /* connexion déjà fermée */ }
   }
 
   /**
    * Exécute une tâche avec verrou distribué
    * @param {string} jobName
    * @param {Function} taskFn - Async function à exécuter
-   * @param {number} ttlSeconds
+   * @returns {Promise<boolean>} true si la tâche a tourné, false si elle a été sautée
    */
-  async withLock(jobName, taskFn, ttlSeconds = 300) {
-    const acquired = await this.acquire(jobName, ttlSeconds);
-    if (!acquired) {
-      console.log(`🔒 CronLock: job "${jobName}" déjà en cours sur une autre instance, skip.`);
-      return;
+  async withLock(jobName, taskFn) {
+    const connexion = await this.acquire(jobName);
+    if (!connexion) {
+      logger.info(`CronLock : tâche "${jobName}" déjà en cours ailleurs ou verrou indisponible, sautée`);
+      return false;
     }
 
     try {
       await taskFn();
+      return true;
     } finally {
-      await this.release(jobName);
+      await this.release(jobName, connexion);
     }
   }
 }

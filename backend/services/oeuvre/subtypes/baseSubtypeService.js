@@ -5,6 +5,7 @@
  * sa propre logique de création/mise à jour avec les champs spécifiques.
  */
 
+const { Transaction } = require('sequelize');
 const logger = require('../../../utils/logger');
 
 class BaseSubtypeService {
@@ -71,7 +72,14 @@ class BaseSubtypeService {
     // Valider via le DTO si disponible
     this._validateDTO(detailsSpecifiques);
 
-    const existing = await this.model.findOne({ where: { id_oeuvre: oeuvreId } });
+    // Lecture dans la transaction de l'enregistrement, ligne verrouillée (FOR UPDATE) : deux
+    // enregistrements simultanés ne voient plus « pas de sous-type » chacun de leur côté (avant :
+    // lecture sur une autre connexion, deux lignes créées). Si la ligne manque, le verrou porte sur
+    // l'emplacement : le second enregistrement attend, ou échoue, mais n'ajoute pas de doublon.
+    const existing = await this.model.findOne({
+      where: { id_oeuvre: oeuvreId },
+      ...(transaction ? { transaction, lock: Transaction.LOCK.UPDATE } : {})
+    });
     if (!existing) {
       // Si le sous-type n'existe pas encore, on le crée
       return this.createForOeuvre(oeuvreId, detailsSpecifiques, transaction);

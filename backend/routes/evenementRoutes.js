@@ -30,7 +30,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
     req.query.upcoming = 'true';
     evenementController.list(req, res);
   }));
-  router.get('/statistics', cachePublic, asyncHandler((req, res) => evenementController.getStats(req, res)));
+  router.get('/statistics', cachePublic, asyncHandler((req, res) => evenementController.getPublicStats(req, res)));
   router.get('/search', cachePublic, asyncHandler((req, res) => evenementController.search(req, res)));
   router.get('/wilaya/:wilayaId', cachePublic, asyncHandler((req, res) => evenementController.getByWilaya(req, res)));
   router.get('/oeuvre/:oeuvreId', cachePublic, asyncHandler((req, res) => evenementController.getByOeuvre(req, res)));

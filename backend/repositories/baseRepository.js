@@ -2,7 +2,73 @@
  * BaseRepository - Classe de base pour le pattern Repository
  * Fournit les opérations CRUD de base et la gestion des requêtes
  */
-const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
+const { Op, fn, col, literal, where: seqWhere, Utils } = require('sequelize');
+const { bornerPagination } = require('../utils/pagination');
+
+const estObjetSimple = (v) => v !== null && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
+
+/**
+ * Le filtre principal peut-il viser une table jointe ? Oui s'il contient une clé « $Alias.col$ » ou un
+ * fragment SQL (literal, fn, col, where) qui nomme l'un des alias joints.
+ */
+const filtreViseJointure = (filtre, alias) => {
+  const textes = [];
+  const parcourir = (v) => {
+    if (v === null || v === undefined) return;
+    if (Array.isArray(v)) { v.forEach(parcourir); return; }
+    if (v instanceof Utils.SequelizeMethod) {
+      // Literal (val), Col (col), Fn (fn, args), Where (attribute, logic), Json (conditions, path, value)
+      for (const champ of ['val', 'col', 'fn', 'args', 'attribute', 'logic', 'conditions', 'path', 'value']) {
+        if (typeof v[champ] === 'string') textes.push(v[champ]);
+        else parcourir(v[champ]);
+      }
+      return;
+    }
+    if (estObjetSimple(v)) {
+      for (const cle of Object.keys(v)) {
+        if (cle.startsWith('$')) textes.push(cle);
+        parcourir(v[cle]);
+      }
+      for (const sym of Object.getOwnPropertySymbols(v)) parcourir(v[sym]);
+    }
+  };
+  parcourir(filtre);
+  if (textes.some((t) => t.startsWith('$'))) return true;
+  const motifs = alias.map((a) => new RegExp(`(^|[^A-Za-z0-9_])${a.replace(/[^A-Za-z0-9_]/g, '')}([^A-Za-z0-9_]|$)`));
+  return textes.some((t) => motifs.some((m) => m.test(t)));
+};
+
+/**
+ * Jointures utiles au COMPTE d'une liste (audit V11 BDD-12). Une jointure facultative (LEFT JOIN sans
+ * condition) ne change pas le nombre de lignes distinctes : ne restent que celles qui filtrent
+ * (required, where, through.where) et leurs parentes. Renvoie null quand on ne peut pas trancher
+ * (include non standard, filtre principal qui vise une jointure) : le compte garde alors toutes les
+ * jointures, comme avant.
+ */
+const jointuresDuCompte = (includes, filtre) => {
+  if (!Array.isArray(includes) || includes.length === 0) return [];
+  const alias = [];
+  const standard = (liste) => liste.every((inc) => {
+    if (!estObjetSimple(inc) || inc.all || (!inc.model && !inc.association)) return false;
+    const nom = inc.as || (typeof inc.association === 'string' ? inc.association : inc.association?.as) || inc.model?.name;
+    if (nom) alias.push(nom);
+    return !inc.include || (Array.isArray(inc.include) && standard(inc.include));
+  });
+  if (!standard(includes)) return null;
+  if (filtreViseJointure(filtre, alias)) return null;
+
+  const filtrante = (inc) => !inc.separate && (
+    inc.required === true
+    || (inc.required !== false && Boolean(inc.where || inc.through?.where))
+    || (inc.include || []).some(filtrante)
+  );
+  const elaguer = (liste) => liste.filter(filtrante).map((inc) => {
+    const copie = { ...inc, attributes: [] };
+    if (inc.include) copie.include = elaguer(inc.include);
+    return copie;
+  });
+  return elaguer(includes);
+};
 
 class BaseRepository {
   constructor(model) {
@@ -36,24 +102,33 @@ class BaseRepository {
    */
   async findAll(options = {}) {
     const {
-      page = 1,
-      limit = 20,
       where = {},
       include,
       order = [['date_creation', 'DESC']],
       attributes
     } = options;
+    const { page, limit } = bornerPagination(options.page, options.limit);
 
     const offset = (page - 1) * limit;
+    const includes = this._mergeIncludes(include);
 
-    const { rows, count } = await this.model.findAndCountAll({
+    // Le total ne garde que les jointures qui filtrent (avant : toutes, photos, auteur, lieu..., à
+    // chaque page de chaque liste), puis vient la page. L'un après l'autre : une seule connexion du
+    // pool par liste (audit V11 BDD-12, BDD-18).
+    const jointures = jointuresDuCompte(includes, where);
+    const count = await this.model.count({
       where,
-      include: this._mergeIncludes(include),
+      include: jointures === null ? includes : jointures,
+      distinct: true,
+      col: this.model.primaryKeyAttribute
+    });
+    const rows = count === 0 ? [] : await this.model.findAll({
+      where,
+      include: includes,
       order,
       limit,
       offset,
-      attributes,
-      distinct: true
+      attributes
     });
 
     return {
@@ -273,3 +348,4 @@ class BaseRepository {
 }
 
 module.exports = BaseRepository;
+module.exports.jointuresDuCompte = jointuresDuCompte;

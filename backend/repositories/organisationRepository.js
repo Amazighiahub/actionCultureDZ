@@ -76,8 +76,9 @@ class OrganisationRepository extends BaseRepository {
     return this.model.findOne({ where: { [Op.or]: conditions } });
   }
 
-  async create(data) {
-    return this.model.create(data);
+  /** @param {Object} [options] - { transaction } */
+  async create(data, options = {}) {
+    return this.model.create(data, { transaction: options.transaction });
   }
 
   // ==========================================================================
@@ -239,12 +240,14 @@ class OrganisationRepository extends BaseRepository {
 
   /**
    * Lie un utilisateur à une organisation (findOrCreate pour éviter les doublons).
+   * @param {Object} [options] - { transaction } : celle de la création de l'organisation
    */
-  async linkUser(userId, orgId, role = 'membre') {
+  async linkUser(userId, orgId, role = 'membre', options = {}) {
     const { UserOrganisation } = this.models;
     const [record] = await UserOrganisation.findOrCreate({
       where: { id_user: userId, id_organisation: orgId },
-      defaults: { role, actif: true }
+      defaults: { role, actif: true },
+      transaction: options.transaction
     });
     return record;
   }

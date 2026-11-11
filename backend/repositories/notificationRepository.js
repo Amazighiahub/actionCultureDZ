@@ -3,7 +3,7 @@
  * Toutes les requêtes Sequelize liées aux notifications utilisateur
  */
 const BaseRepository = require('./baseRepository');
-const { Op } = require('sequelize');
+const { Op, fn, literal } = require('sequelize');
 
 class NotificationRepository extends BaseRepository {
   constructor(models) {
@@ -79,18 +79,28 @@ class NotificationRepository extends BaseRepository {
    * Résumé : total, non lues, par type, dernières
    */
   async getSummary(userId) {
-    const [total, nonLues, parType] = await Promise.all([
-      this.count({ id_user: userId }),
-      this.count({ id_user: userId, lu: false }),
-      this.model.findAll({
-        where: { id_user: userId, lu: false },
-        attributes: [
-          'type_notification',
-          [this.models.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        group: ['type_notification']
-      })
-    ]);
+    // Une seule requête groupée par type (avant : 3 lancées en parallèle, 3 connexions du pool pour
+    // chaque ouverture de la cloche) ; total et non lues en sont déduits (audit V11 BDD-18)
+    const lignes = await this.model.findAll({
+      where: { id_user: userId },
+      attributes: [
+        'type_notification',
+        [fn('COUNT', literal('*')), 'total'],
+        [literal('SUM(`lu` = 0)'), 'nonLues']
+      ],
+      group: ['type_notification'],
+      raw: true
+    });
+    let total = 0;
+    let nonLues = 0;
+    const parType = {};
+    for (const ligne of lignes) {
+      const n = Number(ligne.nonLues) || 0;
+      total += Number(ligne.total) || 0;
+      nonLues += n;
+      // Comme avant : par type, les non lues seulement, et seulement les types qui en ont
+      if (n > 0) parType[ligne.type_notification] = n;
+    }
 
     const dernieres = await this.model.findAll({
       where: { id_user: userId, lu: false },
@@ -102,10 +112,7 @@ class NotificationRepository extends BaseRepository {
     return {
       total,
       nonLues,
-      parType: parType.reduce((acc, item) => {
-        acc[item.type_notification] = parseInt(item.dataValues.count);
-        return acc;
-      }, {}),
+      parType,
       dernieres
     };
   }

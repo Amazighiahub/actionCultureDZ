@@ -11,6 +11,7 @@ const { pasTermine } = require('../helpers/finEvenement');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { aColonne, motifLike } = require('../utils/colonnesCalculees');
+const { triParNom } = require('../utils/triParNom');
 const { sanitizeLike } = require('../utils/sanitize');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const { supprimerLieu } = require('./patrimoine/suppressionLieu');
@@ -110,20 +111,9 @@ class LieuService extends BaseService {
    * pour que la requête paginée de Sequelize, en deux niveaux, puisse trier dessus)
    */
   async _triParNom(lang) {
-    const safeLang = (lang || 'fr').replace(/[^a-z-]/gi, '');
-    // Français : colonne nom_tri, indexée (première langue remplie, le français d'abord)
-    if (safeLang === 'fr' && await aColonne(this.models.Lieu, 'nom_tri')) {
-      return {
-        order: [[this.sequelize.literal('`Lieu`.`nom_tri`'), 'ASC'], ['id_lieu', 'ASC']],
-        attributes: { include: [[this.sequelize.literal('`Lieu`.`nom_tri`'), 'nom_tri']] },
-      };
-    }
-    // Autres langues : nom dans la langue, comparé sans accents ni majuscules (le JSON brut se triait
-    // dans un ordre faux : « Écomusée » après « Zaouïa »)
-    return {
-      order: [[this.sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${safeLang}"')) COLLATE utf8mb4_0900_ai_ci`), 'ASC'], ['id_lieu', 'ASC']],
-      attributes: undefined,
-    };
+    // Règle commune aux listes triées par nom (utils/triParNom.js) : colonne nom_tri indexée en
+    // français, sinon nom dans la langue comparé sans accents ni majuscules
+    return triParNom(this.models.Lieu, { lang });
   }
 
   // ========================================================================

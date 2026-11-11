@@ -84,11 +84,15 @@ class ProgrammeRepository extends BaseRepository {
   }
 
   /**
-   * Trouve le prochain ordre disponible pour un événement
+   * Trouve le prochain ordre disponible pour un événement.
+   * Appelé dans la transaction de l'ajout (options.transaction), après le verrou posé sur la ligne
+   * de l'événement : deux ajouts simultanés ne lisent plus le même maximum.
+   * @param {Object} [options] - { transaction }
    */
-  async getNextOrdre(evenementId) {
+  async getNextOrdre(evenementId, options = {}) {
     const maxOrdre = await this.model.max('ordre', {
-      where: { id_evenement: evenementId }
+      where: { id_evenement: evenementId },
+      transaction: options.transaction
     });
     return (maxOrdre || 0) + 1;
   }

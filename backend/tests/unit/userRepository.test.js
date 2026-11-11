@@ -61,14 +61,12 @@ describe("UserRepository", () => {
       const mockUsers = [
         global.createTestUser({ statut: "en_attente_validation" })
       ];
-      mockModels.User.findAndCountAll.mockResolvedValue({
-        rows: mockUsers,
-        count: 1
-      });
+      mockModels.User.count.mockResolvedValue(1);
+      mockModels.User.findAll.mockResolvedValue(mockUsers);
 
       const result = await userRepository.findPendingValidation();
 
-      expect(mockModels.User.findAndCountAll).toHaveBeenCalledWith(
+      expect(mockModels.User.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             statut: "en_attente_validation"

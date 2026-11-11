@@ -53,13 +53,22 @@ module.exports = {
   },
 
   async down(queryInterface) {
+    // Descente étroite : seulement ce que la montée a posé, c'est-à-dire les demandes et les rattachements
+    // au compte administrateur qu'elle a choisi (avant : toute demande en attente et tout propriétaire
+    // de ces lieux étaient effacés). Une seule transaction.
     const s = queryInterface.sequelize;
-    const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
-    for (const { id_lieu: idSite } of await sitesEnBrouillon(select)) {
-      await s.query("DELETE FROM proposition_lieu WHERE id_lieu = ? AND action = 'creation' AND statut = 'en_attente'",
-        { replacements: [idSite] });
-      await s.query('UPDATE lieu SET id_createur = NULL WHERE id_lieu = ? OR id_lieu_parent = ?',
-        { replacements: [idSite, idSite] });
-    }
+    await s.transaction(async (transaction) => {
+      const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT, transaction });
+      const idAdmin = await administrateur(select, ID_ADMIN_CHOISI);
+      if (!idAdmin) return; // la montée n'a rien fait sans administrateur
+      for (const { id_lieu: idSite } of await sitesEnBrouillon(select)) {
+        await s.query(
+          "DELETE FROM proposition_lieu WHERE id_lieu = ? AND id_user = ? AND action = 'creation' AND statut = 'en_attente'",
+          { replacements: [idSite, idAdmin], transaction }
+        );
+        await s.query('UPDATE lieu SET id_createur = NULL WHERE id_createur = ? AND (id_lieu = ? OR id_lieu_parent = ?)',
+          { replacements: [idAdmin, idSite, idSite], transaction });
+      }
+    });
   },
 };

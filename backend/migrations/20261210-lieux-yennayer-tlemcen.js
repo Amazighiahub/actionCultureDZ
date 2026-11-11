@@ -174,7 +174,13 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await retirerSites(queryInterface, SITES);
+    // Descente étroite : brouillons de la wilaya de Tlemcen (13) créés ici, sans propriétaire (cas de la
+    // production, rattachés ensuite par 20261211 dont la descente les rend sans propriétaire) ou au compte
+    // administrateur pris par cette migration ou par 20261211 (n° 75 choisi)
+    const s = queryInterface.sequelize;
+    const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
+    const createurs = [null, await administrateur(select), await administrateur(select, 75)];
+    await retirerSites(queryInterface, SITES, { wilayaId: 13, createurs });
   },
 
   _SITES: SITES,

@@ -175,7 +175,13 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await retirerSites(queryInterface, SITES);
+    // Descente étroite : brouillons de la wilaya de Batna (5) créés ici, au compte administrateur de la montée.
+    // Les textes vides de « Batna centre » remplis par la montée (completerSiVide) ne sont PAS retirés :
+    // rien ne permet de les distinguer d'une saisie faite depuis, et les effacer pourrait perdre ce travail.
+    const s = queryInterface.sequelize;
+    const select = (sql, replacements) => s.query(sql, { replacements, type: s.QueryTypes.SELECT });
+    const idAdmin = await administrateur(select, ID_ADMIN_CHOISI);
+    await retirerSites(queryInterface, SITES, { wilayaId: 5, createurs: [idAdmin] });
   },
 
   _SITES: SITES,

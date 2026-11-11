@@ -211,31 +211,8 @@ const createAuditMiddleware = (injectedModels) => {
     }
   };
 
-  // Middleware pour nettoyer les anciens logs
-  const cleanOldLogs = async (daysToKeep = 90) => {
-    try {
-      if (!AuditLog) {
-        logger.warn('AuditLog non disponible pour le nettoyage');
-        return;
-      }
-
-      const { Op } = require('sequelize');
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-      
-      const result = await AuditLog.destroy({
-        where: {
-          date_action: {
-            [Op.lt]: cutoffDate
-          }
-        }
-      });
-      
-      logger.info(`${result} logs d'audit supprimés (plus de ${daysToKeep} jours)`);
-    } catch (error) {
-      logger.error('Erreur nettoyage logs:', error.message);
-    }
-  };
+  // (Nettoyage des anciens logs : tâche « clean-old-audit-logs » de cronService, par lots et sous
+  // verrou ; l'ancienne fonction cleanOldLogs supprimait tout en un seul DELETE, hors verrou.)
 
   // Retourner tous les middlewares
   return {
@@ -244,7 +221,6 @@ const createAuditMiddleware = (injectedModels) => {
     logDataAccess,
     logUnauthorizedAccess,
     logManualAction,
-    cleanOldLogs,
     
     // Aliases pour compatibilité
     log: logAction,

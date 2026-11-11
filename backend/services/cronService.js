@@ -33,6 +33,17 @@ class CronService {
     this.services = null;
     this.isRunning = false;
     this.cronLock = null;
+    // Réglages venus de la configuration de l'application (app.js, avant initialize)
+    this.reglages = { auditLogs: false, auditLogRetentionDays: 365 };
+  }
+
+  /**
+   * Réglages de l'application pour les tâches de maintenance (journal d'audit). Appelé par app.js
+   * avant initialize : ces tâches étaient planifiées dans app.js, hors du verrou distribué.
+   * @param {{ auditLogs?: boolean, auditLogRetentionDays?: number }} reglages
+   */
+  configurer(reglages = {}) {
+    this.reglages = { ...this.reglages, ...reglages };
   }
 
   /**
@@ -95,8 +106,15 @@ class CronService {
     // 6. Vérification des événements à venir - Toutes les 30 minutes
     this.scheduleJob('upcoming-events-check', '*/30 * * * *', () => this.checkUpcomingEvents());
 
-    // 7. Nettoyage des fichiers temporaires - Tous les jours à 4h
-    this.scheduleJob('clean-temp-files', '0 4 * * *', () => this.cleanTempFiles());
+    // 7. Nettoyage des fichiers temporaires - Toutes les 6 heures (une seule tâche : app.js en
+    // planifiait une seconde, hors verrou, sur les mêmes dossiers)
+    this.scheduleJob('clean-temp-files', '0 */6 * * *', () => this.cleanTempFiles());
+
+    // Journal d'audit : lignes plus vieilles que la durée de conservation - Tous les jours à 3h
+    // (planifié avant dans app.js, hors verrou)
+    if (this.reglages.auditLogs) {
+      this.scheduleJob('clean-old-audit-logs', '0 3 * * *', () => this.cleanOldAuditLogs());
+    }
 
     // Photos envoyées sans compte (inscription) : effacées si aucun compte ne les utilise après 2 h
     this.scheduleJob('nettoyer-quarantaine', '20 * * * *', () => require('./nettoyageQuarantaine').nettoyerQuarantaine(this.models));
@@ -215,6 +233,14 @@ class CronService {
    */
   async cleanExpiredTokens() {
     await require('./newsletterAbonnes').purgerNonConfirmes(this.models);
+
+    // Connexions expirées de tous les comptes, par lots (avant : à chaque connexion et renouvellement
+    // de jeton ; audit V11 BDD-17). Elles sont refusées au renouvellement même avant cette purge.
+    if (this.models?.SessionConnexion) {
+      const sessions = await this._supprimerParLots(this.models.SessionConnexion, { expire_le: { [Op.lt]: new Date() } });
+      logger.info(`🧹 ${sessions} connexion(s) expirée(s) supprimée(s)`);
+    }
+
     if (!this.models?.EmailVerification) return;
 
     const result = await this.models.EmailVerification.destroy({
@@ -496,30 +522,57 @@ class CronService {
   }
 
   /**
-   * 7. Nettoyer les fichiers temporaires
+   * 7. Nettoyer les fichiers temporaires : dossiers de scripts/cleanTempFiles (uploads/temp, temp,
+   * temp_images) et UPLOAD_TEMP_DIR, au-delà de TEMP_FILES_RETENTION_HOURS (24 h par défaut).
+   * Une erreur sur un fichier ou un dossier n'arrête pas le reste (le script, lui, quitte le
+   * processus sur erreur : il n'est plus appelé par le serveur).
    */
   async cleanTempFiles() {
     const fs = require('fs').promises;
     const path = require('path');
-    
-    const tempDir = process.env.UPLOAD_TEMP_DIR || 'uploads/temp';
-    
-    try {
-      const files = await fs.readdir(tempDir);
-      const now = Date.now();
-      const maxAge = 24 * 60 * 60 * 1000; // 24 heures
-      
-      await Promise.all(files.map(async (file) => {
-        const filePath = path.join(tempDir, file);
-        const stats = await fs.stat(filePath);
-        if (now - stats.mtimeMs > maxAge) {
-          await fs.unlink(filePath);
-          logger.info(`🗑️ Fichier temporaire supprimé: ${file}`);
+    const { TEMP_DIRS, RETENTION_HOURS } = require('../scripts/cleanTempFiles');
+
+    const dossiers = [...new Set([process.env.UPLOAD_TEMP_DIR || 'uploads/temp', ...TEMP_DIRS].map(d => path.resolve(d)))];
+    const maxAge = RETENTION_HOURS * 60 * 60 * 1000;
+    const now = Date.now();
+    let total = 0;
+
+    for (const dossier of dossiers) {
+      let fichiers;
+      try {
+        fichiers = await fs.readdir(dossier);
+      } catch (error) {
+        if (error.code !== 'ENOENT') logger.error(`Erreur lecture du dossier temporaire ${dossier}:`, error.message);
+        continue;
+      }
+      for (const fichier of fichiers) {
+        const chemin = path.join(dossier, fichier);
+        try {
+          const stats = await fs.stat(chemin);
+          if (now - stats.mtimeMs > maxAge) {
+            await fs.rm(chemin, { recursive: true, force: true });
+            total += 1;
+          }
+        } catch (error) {
+          logger.warn(`Fichier temporaire ${chemin} non supprimé:`, error.message);
         }
-      }));
-    } catch (error) {
-      logger.error('Erreur nettoyage fichiers temp:', error);
+      }
     }
+    if (total) logger.info(`🗑️ ${total} fichier(s) temporaire(s) supprimé(s)`);
+    return total;
+  }
+
+  /**
+   * Journal d'audit : lignes plus anciennes que la durée de conservation (au moins 12 mois,
+   * config maintenance.auditLogRetentionDays), par lots de 5 000.
+   */
+  async cleanOldAuditLogs() {
+    if (!this.models?.AuditLog) return 0;
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - this.reglages.auditLogRetentionDays);
+    const result = await this._supprimerParLots(this.models.AuditLog, { date_action: { [Op.lt]: dateLimit } });
+    logger.info(`🧹 ${result} ligne(s) du journal d'audit supprimée(s) (plus de ${this.reglages.auditLogRetentionDays} jours)`);
+    return result;
   }
 
   /**

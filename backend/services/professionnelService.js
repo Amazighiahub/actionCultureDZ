@@ -8,6 +8,8 @@ const { mergeTranslations } = require('../helpers/i18n');
 const { pasTermine, termine } = require('../helpers/finEvenement');
 const { buildMultiLangSearch, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
+const { triParNom } = require('../utils/triParNom');
+const { bornerPagination } = require('../utils/pagination');
 const logger = require('../utils/logger');
 const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireInscription');
 const { configAvecProfil, tarificationDe } = require('./evenement/tarification');
@@ -24,7 +26,8 @@ class ProfessionnelService {
   // ========================================================================
 
   async getAllProfessionnels({ page = 1, limit = 20, search, specialite, wilaya, verifie, lang = 'fr' }) {
-    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    // Plafonds communs des listes : 100 par page, page 500 au plus (audit V11 BDD-12)
+    ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
 
     const where = {
@@ -55,14 +58,15 @@ class ProfessionnelService {
       });
     }
 
-    const safeLang = lang.replace(/[^a-z-]/gi, '');
+    // Nom dans la langue, sans accents ni majuscules (avant : JSON brut, ordre binaire faux) ; la colonne
+    // user.nom_tri sera prise d'elle-même quand sa migration existera (audit V11 BDD-15)
     const { rows, count } = await this.models.User.findAndCountAll({
       where,
       include,
       attributes: { exclude: ['password', 'reset_token'] },
-      limit: parseInt(limit),
+      limit,
       offset,
-      order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$."${safeLang}"')`), 'ASC']]
+      order: (await triParNom(this.models.User, { lang })).order
     });
 
     return {
@@ -163,7 +167,7 @@ class ProfessionnelService {
   // ========================================================================
 
   async getMesOeuvres(userId, { page = 1, limit = 20, statut }) {
-    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
     const where = { saisi_par: userId };
     if (statut) where.statut = statut;
@@ -187,7 +191,7 @@ class ProfessionnelService {
   }
 
   async getMyOeuvres(userId, { page = 1, limit = 20, statut, type }) {
-    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
     const where = { saisi_par: userId };
 
@@ -258,7 +262,7 @@ class ProfessionnelService {
   // ========================================================================
 
   async getMesEvenements(userId, { page = 1, limit = 20, statut }) {
-    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
     const where = { id_user: userId };
     if (statut) where.statut = statut;
@@ -282,7 +286,7 @@ class ProfessionnelService {
   }
 
   async getMyEvenements(userId, { page = 1, limit = 20, statut }) {
-    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
     const where = { id_user: userId };
 

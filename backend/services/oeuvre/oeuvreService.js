@@ -756,7 +756,9 @@ class OeuvreService extends BaseService {
    * Statistiques publiques des œuvres
    */
   async getPublicStats() {
-    return this.cache.getOrSet('public_stats', () => this.repository.getStats(), 5 * 60 * 1000);
+    // Œuvres publiées seulement (avant : total de toutes les œuvres, en attente et refusées exposées)
+    // (audit V11 BDD-18)
+    return this.cache.getOrSet('public_stats', () => this.repository.getStats({ publiques: true }), 5 * 60 * 1000);
   }
 
   // ============================================================================

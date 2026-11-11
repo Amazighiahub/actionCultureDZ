@@ -208,26 +208,10 @@ const createDatabaseConnection = (env = 'development') => {
     }
   );
 
-  // Reconnexion automatique sur perte de connexion
-  const handleDisconnect = () => {
-    sequelize.authenticate()
-      .then(() => logger.info('✅ Connexion DB rétablie'))
-      .catch((err) => {
-        logger.error(`❌ Reconnexion DB échouée: ${err.message} — nouvelle tentative dans 5s`);
-        setTimeout(handleDisconnect, 5000);
-      });
-  };
-
-  // Écouter les erreurs du pool de connexions
-  const pool = sequelize.connectionManager.pool;
-  if (pool) {
-    const originalDestroy = pool._destroy;
-    pool._destroy = function(resource) {
-      logger.warn('⚠️ Connexion DB perdue, tentative de reconnexion...');
-      handleDisconnect();
-      return originalDestroy ? originalDestroy.call(this, resource) : undefined;
-    };
-  }
+  // Pas de crochet de reconnexion ici : l'ancien remplaçait pool._destroy, que sequelize-pool 7 n'appelle
+  // jamais (il ne s'exécutait donc pas). Le pool écarte lui-même une connexion morte et en ouvre une
+  // nouvelle à la requête suivante ; les requêtes coupées sont relancées par `retry` ci-dessus
+  // (audit V11 BDD-18).
 
   return sequelize;
 };

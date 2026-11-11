@@ -1100,6 +1100,14 @@ class EvenementService extends BaseService {
   async getStats() {
     return this.cache.getOrSet('stats', () => this.repository.getStats(), 5 * 60 * 1000);
   }
+
+  /**
+   * Statistiques publiques (cached 5 min) : seulement les événements visibles sur le site, ni
+   * brouillons, ni en attente, ni annulés (audit V11 BDD-18)
+   */
+  async getPublicStats() {
+    return this.cache.getOrSet('public_stats', () => this.repository.getStats({ publiques: true }), 5 * 60 * 1000);
+  }
 }
 
 module.exports = EvenementService;

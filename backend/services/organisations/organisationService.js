@@ -111,17 +111,23 @@ class OrganisationService extends BaseService {
     }
 
     // Nouvelle organisation : utilisable tout de suite par ses membres (événements),
-    // sa page publique attend la vérification de l'équipe
-    const organisation = await this.repository.create({
-      ...champsVitrine(data),
-      nom: nomI18n,
-      id_type_organisation,
-      description: descI18n,
-      site_web: site_web || null,
-      statut: 'en_attente'
+    // sa page publique attend la vérification de l'équipe.
+    // Création et lien du responsable dans une même transaction : si le lien échoue, aucune
+    // organisation sans responsable ne reste en base (audit V11 BDD-13)
+    const organisation = await this.withTransaction(async (transaction) => {
+      const creee = await this.repository.create({
+        ...champsVitrine(data),
+        nom: nomI18n,
+        id_type_organisation,
+        description: descI18n,
+        site_web: site_web || null,
+        statut: 'en_attente'
+      }, { transaction });
+      await this.repository.linkUser(userId, creee.id_organisation, 'responsable', { transaction });
+      return creee;
     });
 
-    await this.repository.linkUser(userId, organisation.id_organisation, 'responsable');
+    // Après le commit : la modération n'est prévenue que d'une organisation réellement enregistrée
     await this._prevenirModeration(organisation, userId);
     return { organisation, created: true };
   }
