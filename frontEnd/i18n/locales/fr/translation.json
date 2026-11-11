@@ -3551,7 +3551,8 @@
       "invitationAccept": "Confirmer mon inscription",
       "invitationDecline": "Refuser",
       "nonPartie": "Votre inscription n’est pas partie. Vérifiez votre connexion, puis appuyez de nouveau sur « Confirmer l’inscription ».",
-      "reponseTarde": "La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer."
+      "reponseTarde": "La réponse tarde. Rechargez la page pour voir si votre inscription a été enregistrée avant de réessayer.",
+      "cancelFailed": "La désinscription n’a pas abouti. Réessayez."
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",

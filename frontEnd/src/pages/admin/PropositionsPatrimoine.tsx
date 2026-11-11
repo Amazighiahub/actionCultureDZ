@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Inbox, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,14 +87,14 @@ const PropositionsPatrimoine: React.FC = () => {
     setEnvoi(true);
     try {
       const res = await httpClient.patch<unknown>(`/patrimoine/propositions/${p.id}`, { decision, ...(raison ? { motif: raison } : {}) });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       toast({ title: decision === 'acceptee'
         ? t('admin.patrimoine.propositions.acceptee', 'Proposition publiée : son auteur est prévenu')
         : t('admin.patrimoine.propositions.refusee', 'Proposition refusée : son auteur est prévenu') });
       setRefus(null); setMotif('');
       await queryClient.invalidateQueries({ queryKey: cle });
     } catch (e) {
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setEnvoi(false);
     }

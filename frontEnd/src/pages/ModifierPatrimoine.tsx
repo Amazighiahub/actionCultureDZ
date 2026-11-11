@@ -202,11 +202,12 @@ const ModifierPatrimoine: React.FC = () => {
       const res = await patrimoineService.uploadMedias(siteId, fichiers, undefined, {
         credit: creditNouvelles.credit, licence: creditNouvelles.licence || undefined
       });
-      if (!res.success || !res.data) throw new Error(res.error);
+      // La réponse d'échec est relancée telle quelle : détail des champs gardé
+      if (!res.success || !res.data) throw res;
       setMedias(prev => [...prev, ...(res.data as unknown as Media[])]);
       toast({ title: t('patrimoine.edit.photosAdded', 'Photos ajoutées') });
     } catch (err) {
-      toast({ title: t('common.error', 'Erreur'), description: err instanceof Error && err.message ? err.message : t('patrimoine.edit.uploadError', 'L’envoi a échoué'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('patrimoine.edit.uploadError', 'L’envoi a échoué')), variant: 'destructive' });
     } finally {
       setEnvoiPhotos(false);
     }
@@ -217,11 +218,11 @@ const ModifierPatrimoine: React.FC = () => {
     setSuppression(true);
     try {
       const res = await patrimoineService.deleteMedia(siteId, mediaASupprimer.id);
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw res;
       setMedias(prev => prev.filter(m => m.id !== mediaASupprimer.id));
       toast({ title: t('patrimoine.edit.mediaDeleted', 'Supprimé') });
     } catch (err) {
-      toast({ title: t('common.error', 'Erreur'), description: err instanceof Error && err.message ? err.message : t('patrimoine.edit.deleteError', 'La suppression a échoué'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('patrimoine.edit.deleteError', 'La suppression a échoué')), variant: 'destructive' });
     } finally {
       setSuppression(false);
       setMediaASupprimer(null);
@@ -231,16 +232,23 @@ const ModifierPatrimoine: React.FC = () => {
   const enregistrerCredit = async () => {
     if (!creditEdite || !siteId) return;
     setEnregistrementCredit(true);
-    const res = await patrimoineService.updateMediaCredit(siteId, creditEdite.media.id, {
-      credit: creditEdite.valeur.credit, licence: creditEdite.valeur.licence
-    });
-    setEnregistrementCredit(false);
-    if (res.success && res.data) {
-      const { credit, licence } = res.data;
-      setMedias(prev => prev.map(m => (m.id === creditEdite.media.id ? { ...m, credit, licence } : m)));
-      setCreditEdite(null);
-    } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
+    const echec = t('patrimoine.edit.saveError', 'Les modifications n’ont pas pu être enregistrées');
+    // Crédit refusé (trop long…) : httpClient rejette ; sans catch, rien ne s'affichait et le bouton restait bloqué
+    try {
+      const res = await patrimoineService.updateMediaCredit(siteId, creditEdite.media.id, {
+        credit: creditEdite.valeur.credit, licence: creditEdite.valeur.licence
+      });
+      if (res.success && res.data) {
+        const { credit, licence } = res.data;
+        setMedias(prev => prev.map(m => (m.id === creditEdite.media.id ? { ...m, credit, licence } : m)));
+        setCreditEdite(null);
+      } else {
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, echec), variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, echec), variant: 'destructive' });
+    } finally {
+      setEnregistrementCredit(false);
     }
   };
 

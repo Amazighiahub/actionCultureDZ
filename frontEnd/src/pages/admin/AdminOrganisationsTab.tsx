@@ -6,6 +6,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building, CheckCircle, XCircle, Eye, RefreshCw, Search, Merge } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,7 +57,7 @@ const AdminOrganisationsTab: React.FC = () => {
     queryKey: cle,
     queryFn: async () => {
       const res = await httpClient.get<OrganisationModeration[]>('/organisations/admin/liste');
-      if (!res.success) throw new Error(res.error || 'erreur');
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.error', 'Erreur')));
       return res.data || [];
     }
   });
@@ -73,13 +74,13 @@ const AdminOrganisationsTab: React.FC = () => {
     setEnvoi(true);
     try {
       const res = await httpClient.patch<unknown>(`/organisations/${id}/statut`, { statut: decision, ...(raison ? { motif: raison } : {}) });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       toast({ title: decision === 'valide' ? t('admin.organisations.publiee', 'Page publiée') : t('admin.organisations.refusee', 'Page refusée : les responsables sont prévenus') });
       setRefus(null);
       setMotif('');
       await queryClient.invalidateQueries({ queryKey: cle });
     } catch (e) {
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setEnvoi(false);
     }

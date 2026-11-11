@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Loader2, Send, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,13 +64,13 @@ export default function MessagesAbonnesCard() {
         ...(modele === 'oeuvre' ? { id_oeuvre: Number(contenu) } : {}),
         ...(modele === 'evenement' ? { id_evenement: Number(contenu) } : {}),
       });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('messagesPro.echec', 'Le message n’a pas pu être envoyé. Réessayez.')));
       toast({ title: t('messagesPro.envoye', { count: res.data?.prevenus ?? 0, defaultValue: 'Message envoyé à {{count}} personne(s)' }) });
       await charger();
     } catch (e) {
       toast({
         title: t('common.error', 'Erreur'),
-        description: (e instanceof Error && e.message) || t('messagesPro.echec', 'Le message n’a pas pu être envoyé. Réessayez.'),
+        description: messageErreurServeur(e, t('messagesPro.echec', 'Le message n’a pas pu être envoyé. Réessayez.')),
         variant: 'destructive',
       });
     } finally {

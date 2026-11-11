@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useQueryClient } from '@tanstack/react-query';
 import { KeyRound, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,12 +38,13 @@ const DemandeResponsable: React.FC<{
     setEnvoi(true); setErreur(null);
     try {
       const res = await httpClient.post<unknown>(`/organisations/${idOrganisation}/revendication`, { message });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       setOuvert(false);
       toast({ title: t('organisations.revendication.envoyee', 'Demande envoyée : l’équipe Tala DZ va la vérifier') });
       await queryClient.invalidateQueries({ queryKey: ['organisation-vitrine', idOrganisation] });
     } catch (e) {
-      setErreur(e instanceof Error && e.message ? e.message : t('common.error', 'Erreur'));
+      // Refus du serveur (message trop long…) : sa raison précise, détail des champs compris
+      setErreur(messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')));
     } finally {
       setEnvoi(false);
     }

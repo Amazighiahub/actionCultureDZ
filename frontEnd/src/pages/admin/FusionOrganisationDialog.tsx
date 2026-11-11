@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Merge, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,10 +60,10 @@ const FusionOrganisationDialog: React.FC<{
     setErreur(null);
     try {
       const res = await httpClient.get<Apercu>(`/organisations/${garde.id_organisation}/fusion`, { doublons: choisies.join(',') });
-      if (!res.success || !res.data) throw new Error(res.error);
+      if (!res.success || !res.data) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       setApercu(res.data);
     } catch (e) {
-      setErreur(e instanceof Error && e.message ? e.message : t('common.error', 'Erreur'));
+      setErreur(messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')));
     }
   };
 
@@ -71,10 +72,10 @@ const FusionOrganisationDialog: React.FC<{
     setEnvoi(true);
     try {
       const res = await httpClient.post<unknown>(`/organisations/${garde.id_organisation}/fusion`, { doublons: choisies });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       onFusionnee();
     } catch (e) {
-      setErreur(e instanceof Error && e.message ? e.message : t('common.error', 'Erreur'));
+      setErreur(messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')));
     } finally {
       setEnvoi(false);
     }

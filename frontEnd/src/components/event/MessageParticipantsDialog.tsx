@@ -22,6 +22,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import { messageErreurServeur, reponseEchec } from '@/utils/erreurServeur';
 
 type Cible = 'tous' | 'confirme' | 'en_attente';
 interface MessageEnvoye {
@@ -98,7 +99,7 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
     if (res.success && res.data?.url) {
       setProgramme({ url: res.data.url, nom: fichier.name });
     } else {
-      setErreur(res.error || t('pro.participants.messages.pdfEchec', 'Le PDF n’a pas pu être envoyé, réessayez.'));
+      setErreur(messageErreurServeur(res, t('pro.participants.messages.pdfEchec', 'Le PDF n’a pas pu être envoyé, réessayez.')));
     }
   };
 
@@ -106,12 +107,15 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
 
   const envoyer = async () => {
     setEnCours(true); setErreur(null);
+    const echec = t('pro.participants.actions.error', 'Une erreur est survenue');
+    // Message refusé (objet trop long, quota) : httpClient rejette ; on garde l'échec pour montrer la raison
+    // du serveur et réactiver « Envoyer » (avant : rien ne s'affichait, le bouton restait bloqué)
     const res = await httpClient.post<{ destinataires: number; email_etat: string }>(`/evenements/${evenementId}/participants/messages`, {
       cible, ...champs, lien_programme: programme?.url || ''
-    });
+    }).catch((e: unknown) => reponseEchec(e, echec));
     setEnCours(false);
     if (!res.success) {
-      setErreur(res.error || t('pro.participants.actions.error', 'Une erreur est survenue'));
+      setErreur(messageErreurServeur(res, echec));
       return;
     }
     toast({

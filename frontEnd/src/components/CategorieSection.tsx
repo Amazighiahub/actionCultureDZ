@@ -9,6 +9,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
 import type { CategoryGroupedByGenre } from '@/services/metadata.service';import { useTranslation } from "react-i18next";
 import { t } from 'i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 interface CategorySelectionProps {
   typeOeuvreId: number;
@@ -57,11 +58,12 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
           onCategoriesChange(validCategories);
         }
       } else {
-        throw new Error(response.error || 'Erreur inconnue');
+        throw new Error(messageErreurServeur(response, t('ajouteroeuvre.categoriesLoadError', 'Impossible de charger les catégories')));
       }
     } catch (err) {
       console.error('Erreur chargement catégories:', err);
-      setError('Impossible de charger les catégories disponibles');
+      // Texte traduit (avant : en français dans l'interface arabe)
+      setError(messageErreurServeur(err, t('ajouteroeuvre.categoriesLoadError', 'Impossible de charger les catégories')));
       setCategoriesGrouped([]);
     } finally {
       setLoading(false);

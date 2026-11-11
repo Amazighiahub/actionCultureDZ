@@ -13,6 +13,7 @@ import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHo
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
@@ -117,10 +118,10 @@ const EditProgrammePage: React.FC = () => {
 
           setProgrammeData(formData);
         } else {
-          setError(response.error || t('programmePages.errors.loadFailed'));
+          setError(messageErreurServeur(response, t('programmePages.errors.loadFailed', 'Erreur lors du chargement du programme')));
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+        setError(messageErreurServeur(err, t('programmePages.errors.loadFailed', 'Erreur lors du chargement du programme')));
       } finally {
         setFetchLoading(false);
       }
@@ -172,10 +173,11 @@ const EditProgrammePage: React.FC = () => {
         // Rediriger vers la page de l'événement après 2 secondes
         naviguerPlusTard(`/evenements/${eventId}`);
       } else {
-        setError(response.error || t('programmePages.errors.updateFailed'));
+        setError(messageErreurServeur(response, t('programmePages.errors.updateFailed', 'Erreur lors de la mise à jour du programme')));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+      // Raison du serveur, détail des champs compris (heures, intervenants) ; avant : « Données invalides »
+      setError(messageErreurServeur(err, t('programmePages.errors.updateFailed', 'Erreur lors de la mise à jour du programme')));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);

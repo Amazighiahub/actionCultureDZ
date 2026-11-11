@@ -7,6 +7,7 @@ import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { TypeOeuvre } from '@/types/models/references.types';
 // Copie de secours par langue : les titres sont traduits par le serveur
 import i18n from 'i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 export interface UseOeuvresReturn {
   // États
@@ -46,7 +47,7 @@ const PAGE_SIZE = 50;
 const fetchOeuvresPage = async (pageNumber: number) => {
   const result = await oeuvreService.getOeuvres({ limit: PAGE_SIZE, page: pageNumber, statut: 'publie' });
   if (!result.success || !result.data) {
-    throw new Error(result.error || 'Erreur lors du chargement des œuvres');
+    throw new Error(messageErreurServeur(result, i18n.t('toasts.loadOeuvresFailed', 'Impossible de charger les œuvres')));
   }
   let items: Oeuvre[] = [];
   let pagination: { totalPages?: number; pages?: number } | undefined;
@@ -117,8 +118,9 @@ export function useOeuvres(): UseOeuvresReturn {
       });
       setPage(next);
       setHasMore(more);
-    } catch {
-      setError('Impossible de charger les œuvres');
+    } catch (err) {
+      // Textes traduits : ce message s'affiche sur /oeuvres, aussi en arabe
+      setError(messageErreurServeur(err, i18n.t('toasts.loadOeuvresFailed', 'Impossible de charger les œuvres')));
     } finally {
       setLoadingMore(false);
     }
@@ -161,16 +163,16 @@ export function useOeuvres(): UseOeuvresReturn {
                 return o.id_type_oeuvre !== 7;
               });
               setOeuvres(filteredData);
-              setError('Limite de requêtes atteinte. Affichage des données en cache.');
+              setError(i18n.t('toasts.rateLimitReached', 'Limite de requêtes atteinte'));
               return;
             } catch (e) {
             }
           }
         }
         
-        setError('Trop de requêtes. Veuillez patienter quelques instants.');
+        setError(i18n.t('toasts.rateLimitReached', 'Limite de requêtes atteinte'));
       } else {
-        setError('Impossible de charger les œuvres');
+        setError(messageErreurServeur(err, i18n.t('toasts.loadOeuvresFailed', 'Impossible de charger les œuvres')));
       }
     } finally {
       setLoading(false);

@@ -23,6 +23,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { metadataService } from '@/services/metadata.service';
 import { API_ENDPOINTS } from '@/config/api';
 import FormPageHeader from '@/components/shared/FormPageHeader';
@@ -271,7 +272,7 @@ const AjouterOrganisation = () => {
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || t('organisations.create.error', 'Erreur lors de la création'),
+          description: messageErreurServeur(response, t('organisations.create.error', 'Erreur lors de la création')),
           variant: 'destructive',
         });
       }
@@ -279,7 +280,8 @@ const AjouterOrganisation = () => {
       console.error('Erreur enregistrement organisation:', error);
       toast({
         title: t('common.error', 'Erreur'),
-        description: error instanceof Error && error.message ? error.message : t('organisations.create.error', 'Erreur lors de la création'),
+        // Refus du serveur (site web, nom…) : sa raison, champ compris (avant : « Données invalides »)
+        description: messageErreurServeur(error, t('organisations.create.error', 'Erreur lors de la création')),
         variant: 'destructive',
       });
     } finally {

@@ -14,6 +14,7 @@ import { programmeService } from '@/services/programme.service';
 import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
@@ -114,10 +115,11 @@ const CreateProgrammePage: React.FC = () => {
         // Rediriger vers la page de l'événement après 2 secondes
         naviguerPlusTard(`/evenements/${eventId}`);
       } else {
-        setError(response.error || t('programmePages.errors.createFailed'));
+        setError(messageErreurServeur(response, t('programmePages.errors.createFailed', 'Erreur lors de la création du programme')));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+      // Raison du serveur, détail des champs compris (heures, intervenants) ; avant : « Données invalides »
+      setError(messageErreurServeur(err, t('programmePages.errors.createFailed', 'Erreur lors de la création du programme')));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);

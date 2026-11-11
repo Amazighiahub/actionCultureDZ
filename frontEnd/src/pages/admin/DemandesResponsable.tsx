@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { KeyRound, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +49,7 @@ const DemandesResponsable: React.FC = () => {
     setEnvoi(true);
     try {
       const res = await httpClient.patch<unknown>(`/organisations/revendications/${d.id}`, { decision, ...(raison ? { motif: raison } : {}) });
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       toast({ title: decision === 'acceptee'
         ? t('admin.organisations.revendications.acceptee', 'Demande acceptée : il gère maintenant la page')
         : t('admin.organisations.revendications.refusee', 'Demande refusée : le demandeur est prévenu') });
@@ -56,7 +57,7 @@ const DemandesResponsable: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: cle });
       await queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
     } catch (e) {
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setEnvoi(false);
     }

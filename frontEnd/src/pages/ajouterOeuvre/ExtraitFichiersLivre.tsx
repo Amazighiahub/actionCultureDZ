@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import type { MediaEnregistre } from './MediasEnregistres';
 
@@ -81,10 +82,11 @@ const ExtraitFichiersLivre: React.FC<Props> = ({ oeuvreId, enregistres, choisis,
         onRetire(genre);
         toast({ title: t('ajouteroeuvre.extraitRetire', 'Extrait retiré') });
       } else {
-        toast({ title: t('common.error', 'Erreur'), description: r?.error, variant: 'destructive' });
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(r, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
       }
-    } catch {
-      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
+    } catch (err) {
+      // Retrait refusé par le serveur : httpClient.delete rejette, sa raison est ici (avant : « Erreur » seul)
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setEnCours(null);
     }

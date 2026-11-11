@@ -14,7 +14,7 @@ import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import { messageErreurServeur, detailsDesChamps } from '@/utils/erreurServeur';
 import { mapToBackendDTO, type CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import type { TagMotCle, TypeOeuvre, Categorie } from '@/types/models/references.types';
@@ -362,7 +362,7 @@ export function useAjouterOeuvre() {
       if (response.success && response.data) {
         setMetadata(response.data as ExtendedMetadata);
       } else {
-        setSubmitError(response.error || t('oeuvre.errors.loadRefFailed', 'Impossible de charger les données de référence'));
+        setSubmitError(messageErreurServeur(response, t('oeuvre.errors.loadRefFailed', 'Impossible de charger les données de référence')));
       }
     } catch (error) {
       console.error('Erreur chargement métadonnées:', error);
@@ -900,11 +900,14 @@ export function useAjouterOeuvre() {
               const res = await httpClient.upload(`/oeuvres/${oeuvreId}/extrait/${genre}`, fd, (p) => setUploadProgress(progressLabel(p)));
               if (!res?.success) {
                 failedMedias++;
-                if (res?.error) toast({ title: t('ajouteroeuvre.extraitRefuse', 'Extrait non envoyé'), description: res.error, variant: 'destructive' });
+                toast({ title: t('ajouteroeuvre.extraitRefuse', 'Extrait non envoyé'), description: messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
               }
             } catch (err) {
+              // Refus du serveur (extrait trop long, mauvais format) : httpClient.upload rejette, la raison
+              // est ici (avant : l'échec était compté sans dire pourquoi)
               console.error('Erreur envoi extrait:', err);
               failedMedias++;
+              toast({ title: t('ajouteroeuvre.extraitRefuse', 'Extrait non envoyé'), description: messageErreurServeur(err, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
             }
           }
         };
@@ -928,7 +931,25 @@ export function useAjouterOeuvre() {
         }
 
         if (!oeuvreResponse.success) {
-          setSubmitError(oeuvreResponse.error || (isEditMode ? t('ajouteroeuvre.updateError', 'Erreur lors de la mise à jour') : t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre')));
+          // Refus du serveur : chaque raison sous son champ (titre, année, prix…), comme les erreurs vérifiées
+          // sur la page ; le bandeau du haut seulement s'il reste une raison sans champ connu (audit V11 FRM-18)
+          const parChamp: Record<string, string> = {};
+          let sansChamp = false;
+          for (const d of detailsDesChamps(oeuvreResponse)) {
+            // « titre.fr » → titre ; « details_specifiques.livre.isbn » → isbn
+            const morceaux = String(d.field || '').split(/[.[\]]/).filter(Boolean);
+            const champ = CHAMPS_OEUVRE_DANS_L_ORDRE.find((c) => c === morceaux[0] || c === morceaux[morceaux.length - 1]);
+            if (!champ) sansChamp = true;
+            else if (!parChamp[champ]) parChamp[champ] = String(d.message);
+          }
+          const premier = CHAMPS_OEUVRE_DANS_L_ORDRE.find((f) => parChamp[f]);
+          if (premier) {
+            setFieldErrors(parChamp);
+            requestAnimationFrame(() => allerAuChampOeuvre(premier));
+          }
+          if (!premier || sansChamp) {
+            setSubmitError(messageErreurServeur(oeuvreResponse, isEditMode ? t('ajouteroeuvre.updateError', 'Erreur lors de la mise à jour') : t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre')));
+          }
           return;
         }
 
@@ -989,12 +1010,12 @@ export function useAjouterOeuvre() {
             setSubmitError(t('ajouteroeuvre.verifyError', 'Impossible de vérifier si l\'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.'));
           }
         } else {
-          setSubmitError(errorMessage || t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre'));
+          setSubmitError(messageErreurServeur(error, t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre')));
         }
       }
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
-      setSubmitError(error instanceof Error ? error.message : t('ajouteroeuvre.saveError', 'Une erreur est survenue lors de l\'enregistrement'));
+      setSubmitError(messageErreurServeur(error, t('ajouteroeuvre.saveError', 'Une erreur est survenue lors de l\'enregistrement')));
     } finally {
       setLoading(false);
       setUploadProgress('');

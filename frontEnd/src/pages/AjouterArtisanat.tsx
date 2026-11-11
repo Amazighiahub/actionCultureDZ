@@ -310,7 +310,8 @@ const AjouterArtisanat: React.FC = () => {
         setError(messageErreurServeur(response, isEditMode ? t('ajouterArtisanat.errors.updateFailed', 'Erreur lors de la mise à jour') : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
+      // Refus du serveur (400 rejeté par httpClient) : sa raison, champ compris (avant : « Données invalides »)
+      setError(messageErreurServeur(err, isEditMode ? t('ajouterArtisanat.errors.updateFailed', 'Erreur lors de la mise à jour') : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
     } finally {
       setLoading(false);
     }

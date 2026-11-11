@@ -82,3 +82,29 @@ describe('mention sous chaque participant', () => {
     expect(grises).toHaveLength(1);
   });
 });
+
+describe('refus du serveur (audit V11 FRM-18)', () => {
+  test('renvoi refusé : la raison du serveur est montrée et le bouton redevient cliquable', async () => {
+    const user = userEvent.setup();
+    // httpClient rejette une réponse 4xx avec une HttpError { message, status, code }
+    mockPost.mockRejectedValue(Object.assign(new Error('Quota d’e-mails du jour atteint'), { status: 429, code: 'QUOTA' }));
+    afficher([participant(1, false, 'invitation')]);
+
+    const bouton = await screen.findByRole('button', { name: /Renvoyer l’email/ });
+    await user.click(bouton);
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'Quota d’e-mails du jour atteint', variant: 'destructive',
+    })));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Renvoyer l’email/ })).toBeEnabled());
+  });
+
+  test('refus sans message lisible : texte par défaut', async () => {
+    const user = userEvent.setup();
+    mockPost.mockRejectedValue(Object.assign(new Error('Request failed with status code 500'), { status: 500 }));
+    afficher([participant(1, false, 'invitation')]);
+
+    await user.click(await screen.findByRole('button', { name: /Renvoyer l’email/ }));
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ description: 'Une erreur est survenue' })));
+  });
+});

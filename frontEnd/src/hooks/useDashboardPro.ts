@@ -9,6 +9,7 @@ import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { serviceService } from '@/services/service.service';
 import { httpClient } from '@/services/httpClient';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useToast } from '@/components/ui/use-toast';
 
 interface UseDashboardProOptions {
@@ -300,7 +301,10 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       }
       
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de la suppression');
+        // Statut et code gardés pour reconnaître un élément déjà supprimé (404)
+        throw Object.assign(new Error(messageErreurServeur(response, t('toasts.deleteFailed', 'Erreur de suppression'))), {
+          status: response.status, code: response.code,
+        });
       }
 
       toast({
@@ -334,10 +338,13 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       
       return true;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : `Impossible de supprimer le ${type}`;
+      // Texte traduit (avant : « Impossible de supprimer le oeuvre », en français et avec le nom technique)
+      const message = messageErreurServeur(error, t('toasts.deleteFailed', 'Erreur de suppression'));
+      const echec = error as { status?: number; code?: string } | null;
 
       // Cas fréquent: élément déjà supprimé côté backend mais encore visible en cache local
-      if (message.includes('404') || message.toLowerCase().includes('non trouv')) {
+      // (reconnu au statut, plus aux mots français du message)
+      if (echec?.status === 404 || echec?.code === 'NOT_FOUND') {
         // Cache handled by React Query invalidation
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-oeuvres'] });
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
@@ -366,7 +373,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     try {
       const response = await evenementService.cancel(id, motif || 'Annulé par l\'organisateur');
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de l\'annulation');
+        throw new Error(messageErreurServeur(response, t('toasts.eventCancelFailed', "Erreur lors de l'annulation")));
       }
       toast({
         title: t('toasts.success', 'Succès'),
@@ -387,7 +394,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
       return true;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      const message = messageErreurServeur(error, t('toasts.eventCancelFailed', "Erreur lors de l'annulation"));
       toast({
         title: t('toasts.error', 'Erreur'),
         description: message,

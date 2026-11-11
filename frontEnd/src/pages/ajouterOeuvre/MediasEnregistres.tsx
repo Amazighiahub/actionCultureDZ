@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { oeuvreService } from '@/services/oeuvre.service';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
@@ -45,7 +46,7 @@ const MediasEnregistres: React.FC<Props> = ({ oeuvreId, medias, onRetire }) => {
       toast({ title: t('ajouteroeuvre.mediaRetire', 'Média retiré') });
       setARetirer(null);
     } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('common.deleteError', 'Impossible de supprimer')), variant: 'destructive' });
     }
   };
 

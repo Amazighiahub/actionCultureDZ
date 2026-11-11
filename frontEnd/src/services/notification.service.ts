@@ -19,7 +19,7 @@ import {
   mapAPISummaryToSummary,
   formatNotificationDate
 } from '../types/models/notification.types';
-import { reponseEchec } from '@/utils/erreurServeur';
+import { messageErreurServeur, reponseEchec } from '@/utils/erreurServeur';
 import i18next from 'i18next';
 // Copiez-collez ceci à la FIN de notification.service.ts
 // Remplacez la section export type { ... } existante
@@ -121,7 +121,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors du marquage');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       // ✅ Correction : Utiliser l'événement correct ou commenter si non nécessaire
@@ -154,7 +154,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors du marquage');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       // ✅ Correction : Commenter l'émission socket non définie
@@ -185,7 +185,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors du marquage');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       return {
@@ -206,7 +206,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de la suppression');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
     } catch (error) {
       throw error;
@@ -223,7 +223,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de la suppression');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       return {
@@ -244,7 +244,7 @@ async getNotifications(
       );
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Erreur lors de la récupération');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       // Format du serveur ; valeurs absentes : oui, sauf la newsletter (accord préalable)
@@ -279,7 +279,7 @@ async getNotifications(
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de la mise à jour');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       // Le serveur renvoie les préférences enregistrées (sinon, on les relit)
@@ -300,7 +300,7 @@ async getNotifications(
       );
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Erreur lors de l\'envoi');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       return response.data;
@@ -347,7 +347,7 @@ async getNotifications(
       );
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Erreur lors de l\'envoi');
+        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
       }
 
       return response.data;

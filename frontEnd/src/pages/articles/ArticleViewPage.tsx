@@ -86,6 +86,7 @@ import Header from '@/components/Header';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { rafraichirFavoris } from '@/lib/queryClient';
 import { idFromSlug, oeuvrePath } from '@/utils/slug';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 // Nom de chaque langue écrit dans cette langue
 const NOMS_LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
@@ -304,7 +305,7 @@ const ArticleViewPage: React.FC = () => {
       const oeuvreResponse = await oeuvreService.getOeuvreById(articleId);
 
       if (!oeuvreResponse.success || !oeuvreResponse.data) {
-        throw new Error('Article non trouvé');
+        throw new Error(t('articles_articleviewpage.article_introuvable', 'Article introuvable'));
       }
 
       const oeuvreData = oeuvreResponse.data;
@@ -343,7 +344,7 @@ const ArticleViewPage: React.FC = () => {
 
     } catch (err: unknown) {
       console.error('Erreur chargement article:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+      setError(messageErreurServeur(err, t('errors.loadingFailed', 'Erreur lors du chargement')));
     } finally {
       setLoading(false);
     }

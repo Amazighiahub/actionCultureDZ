@@ -18,6 +18,7 @@ import { Loader2, Upload, Info } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
 import { texteLangue } from '@/utils/programmeIntervenants';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 type Multilingue = Record<string, string | undefined>;
 
@@ -104,7 +105,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
     httpClient.get<Fiche>(`/intervenants/${idIntervenant}/edition`)
       .then(res => {
         if (!actif) return;
-        if (!res.success || !res.data) { setErreur(res.error || t('common.error', 'Erreur')); return; }
+        if (!res.success || !res.data) { setErreur(messageErreurServeur(res, t('common.error', 'Erreur'))); return; }
         const f = res.data;
         setFiche(f);
         setForm({
@@ -116,7 +117,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
           biographie: enObjet(f.biographie)
         });
       })
-      .catch(() => actif && setErreur(t('common.error', 'Erreur')))
+      .catch((err: unknown) => actif && setErreur(messageErreurServeur(err, t('common.error', 'Erreur'))))
       .finally(() => actif && setChargement(false));
     return () => { actif = false; };
     // Recharger seulement quand l'intervenant change (pas à chaque changement de langue)
@@ -130,7 +131,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
     try {
       const res = await uploadService.uploadImage(fichier);
       if (res.success && res.data?.url) setForm(f => ({ ...f, photo_url: res.data!.url }));
-      else setErreur(res.error || t('upload.error', 'Échec de l’envoi de la photo'));
+      else setErreur(messageErreurServeur(res, t('upload.error', 'Échec de l’envoi de la photo')));
     } finally {
       setPhotoEnvoi(false);
       if (fichierRef.current) fichierRef.current.value = '';
@@ -170,9 +171,12 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
     setEnvoi(true); setErreur(null);
     try {
       const res = await httpClient.put(`/intervenants/${idIntervenant}`, donnees);
-      if (!res.success) { setErreur(res.error || t('common.error', 'Erreur')); return; }
+      if (!res.success) { setErreur(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue'))); return; }
       onSaved?.({ prenom: form.prenom.trim(), nom: form.nom.trim() });
       onClose();
+    } catch (err) {
+      // Fiche refusée (dates, site web…) : httpClient rejette ; la raison du serveur est montrée dans la fiche
+      setErreur(messageErreurServeur(err, t('common.errorOccurred', 'Une erreur est survenue')));
     } finally {
       setEnvoi(false);
     }

@@ -24,6 +24,7 @@ import { Loader2, Building2, Globe, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
 import type { Editeur } from '@/types/models/references.types';
 import { useTranslation } from "react-i18next";
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { TFunction } from 'i18next';
 
 // Types d'éditeurs (valeur enregistrée → libellé traduit)
@@ -137,7 +138,8 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
         onConfirm(response.data);
         onClose();
       } else {
-        setError(response.error || t('editeur.errors.createFailed', 'Erreur lors de la création de l\'éditeur'));
+        // Raison du serveur, détail des champs compris (nom, site web)
+        setError(messageErreurServeur(response, t('editeur.errors.createFailed', 'Erreur lors de la création de l\'éditeur')));
       }
     } catch (err) {
       console.error('Erreur création éditeur:', err);

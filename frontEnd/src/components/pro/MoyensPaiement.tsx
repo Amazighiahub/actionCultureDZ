@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { AlertCircle, ChevronDown, ChevronUp, Loader2, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,8 @@ const MoyensPaiement: React.FC = () => {
     if (!r?.success) {
       // Le serveur demande le mot de passe (cas non vu ici) : le champ apparaît
       if (r?.code === 'MOT_DE_PASSE_REQUIS' || r?.code === 'MOT_DE_PASSE_INCORRECT') setMdpDemande(true);
-      setErreur(r?.error || t('common.error', 'Erreur'));
+      // Raison du serveur, détail des champs compris (RIP, CCP)
+      setErreur(messageErreurServeur(r, t('common.errorOccurred', 'Une erreur est survenue')));
       return;
     }
     setRenseigne(!!r.data);

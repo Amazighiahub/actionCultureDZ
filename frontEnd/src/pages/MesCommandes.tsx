@@ -19,6 +19,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import ListeMoyensPaiement from '@/components/paiement/ListeMoyensPaiement';
 import { commandeService, type Commande, type StatutCommande } from '@/services/commande.service';
 import { oeuvrePath } from '@/utils/slug';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const STYLE: Record<StatutCommande, { icone: React.ElementType; classe: string }> = {
   en_attente: { icone: Clock, classe: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200' },
@@ -56,7 +57,7 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
     const r = await commandeService.mettreAJour(c.id_commande, d).catch(() => null);
     setEnCours(false);
     if (r?.success && r.data) { onMaj(r.data); setMontant(''); }
-    else toast({ title: t('common.error', 'Erreur'), description: r?.error, variant: 'destructive' });
+    else toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(r, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
   };
 
   return (

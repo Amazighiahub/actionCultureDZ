@@ -7,6 +7,8 @@ import { notificationService } from '../services/notification.service';
 import { activerNotifications } from '@/utils/applicationMobile';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import { queryClient } from '@/lib/queryClient';
+import i18next from 'i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 /** La cloche de l'en-tête relit son nombre de non lues après une lecture ou une suppression */
 const rafraichirCloche = () => queryClient.invalidateQueries({ queryKey: ['notifications', 'cloche'] });
@@ -64,7 +66,7 @@ export function useNotifications(): UseNotificationsReturn {
       await fn();
     } catch (err: unknown) {
       if (isMountedRef.current) {
-        const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+        const errorMessage = messageErreurServeur(err, i18next.t('common.errorOccurred', 'Une erreur est survenue'));
         setError(errorMessage);
       }
     }

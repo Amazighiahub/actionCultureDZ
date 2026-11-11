@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useShare } from '@/hooks/useShare';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
@@ -158,11 +159,12 @@ const ArtisanatDetail: React.FC = () => {
           } catch { /* ignore */ }
         }
       } else {
-        setError(response.error || t('artisanat.notFound', 'Artisanat non trouvé'));
+        setError(messageErreurServeur(response, t('artisanat.notFound', 'Artisanat non trouvé')));
       }
     } catch (err) {
       console.error('Erreur chargement artisanat:', err);
-      setError(t('errors.loadingFailed', 'Erreur lors du chargement'));
+      // Fiche introuvable (404) ou refusée : la raison du serveur ; réseau coupé : texte déjà traduit par httpClient
+      setError(messageErreurServeur(err, t('errors.loadingFailed', 'Erreur lors du chargement')));
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,10 +58,10 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
         const avecPhoto = tous.filter(s => s.medias && s.medias[0]);
         return (avecPhoto.length >= 3 ? avecPhoto : tous).slice(0, 6);
       }
-      throw new Error(response.error || t('errors.loadingError'));
+      throw new Error(messageErreurServeur(response, t('errors.loadingError', 'Erreur de chargement')));
     },
   });
-  const error = queryError ? (queryError instanceof Error ? queryError.message : t('errors.generic.message')) : null;
+  const error = queryError ? messageErreurServeur(queryError, t('errors.generic.message')) : null;
   const loadSites = () => { void refetch(); };
 
   if (error) {

@@ -16,6 +16,7 @@ import { uploadService } from '@/services/upload.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { ConfirmDialog } from '@/components/shared';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const PDF_MAX = 50 * 1024 * 1024;
 const MAX_DOCUMENTS = 5;
@@ -69,15 +70,20 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
     try {
       const envoye = await uploadService.uploadDocument(fichier);
       if (!envoye.success || !envoye.data?.url) {
-        throw new Error(envoye.error || t('pro.participants.messages.pdfEchec', 'Le PDF n’a pas pu être envoyé, réessayez.'));
+        setErreur(messageErreurServeur(envoye, t('pro.participants.messages.pdfEchec', 'Le PDF n’a pas pu être envoyé, réessayez.')));
+        return;
       }
       const res = await evenementService.ajouterDocument(evenementId, envoye.data.url, titre.trim());
-      if (!res.success) throw new Error(res.error);
+      if (!res.success) {
+        setErreur(messageErreurServeur(res, t('event.documents.echecTitre', 'Document non ajouté')));
+        return;
+      }
       setTitre(''); setFichier(null); setCleChamp(c => c + 1);
       toast({ title: t('event.documents.ajoute', 'Document ajouté à la page de l’événement') });
       queryClient.invalidateQueries({ queryKey: cle });
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : t('common.error', 'Erreur'));
+      // Refus du serveur (titre trop long…) : sa raison, détail des champs compris, plutôt que « Données invalides »
+      setErreur(messageErreurServeur(e, t('event.documents.echecTitre', 'Document non ajouté')));
     } finally {
       setEnvoi(false);
     }
@@ -86,13 +92,19 @@ const DocumentsEvenementGestion: React.FC<{ evenementId: number }> = ({ evenemen
   const retirer = async () => {
     if (aRetirer === null) return;
     setRetraitEnCours(true);
-    const res = await evenementService.retirerDocument(evenementId, aRetirer);
-    setRetraitEnCours(false);
-    setARetirer(null);
-    if (res.success) {
-      queryClient.invalidateQueries({ queryKey: cle });
-    } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
+    // Retrait refusé : httpClient rejette ; sans catch, rien ne s'affichait et la confirmation restait bloquée
+    try {
+      const res = await evenementService.retirerDocument(evenementId, aRetirer);
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: cle });
+      } else {
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('common.deleteError', 'Impossible de supprimer')), variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('common.deleteError', 'Impossible de supprimer')), variant: 'destructive' });
+    } finally {
+      setRetraitEnCours(false);
+      setARetirer(null);
     }
   };
 

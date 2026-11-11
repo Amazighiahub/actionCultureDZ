@@ -2,6 +2,7 @@
 import { httpClient } from '@/services/httpClient';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
 import { evenementService } from '@/services/evenement.service';
@@ -353,12 +354,13 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         // Les deux listes (tous les utilisateurs, en attente) : le compte supprimé disparaît des deux
         await Promise.all([loadAllUsers(), loadPendingUsers()]);
       } else {
-        toast({ title: t('toasts.error'), description: response.error || t('toasts.userDeleteFailed'), variant: "destructive" });
+        toast({ title: t('toasts.error'), description: messageErreurServeur(response, t('toasts.userDeleteFailed', "Impossible de supprimer l'utilisateur")), variant: "destructive" });
       }
     } catch (error) {
       toast({
         title: t('toasts.error'),
-        description: t('toasts.userDeleteFailed'),
+        // Raison du serveur (compte administrateur, contenus liés…) plutôt qu'un échec générique
+        description: messageErreurServeur(error, t('toasts.userDeleteFailed', "Impossible de supprimer l'utilisateur")),
         variant: "destructive"
       });
     }
@@ -509,7 +511,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       toast({
         title: t('toasts.error'),
         // Message du serveur (œuvre déjà traitée, motif manquant…) plutôt qu'un échec générique
-        description: error instanceof Error && error.message ? error.message : t('toasts.oeuvreValidationFailed'),
+        description: messageErreurServeur(error, t('toasts.oeuvreValidationFailed', "Impossible de valider l'œuvre")),
         variant: "destructive"
       });
     }
@@ -557,12 +559,13 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         });
         await loadEvenements();
       } else {
-        toast({ title: t('toasts.error'), description: response.error || t('toasts.statusUpdateFailed'), variant: 'destructive' });
+        toast({ title: t('toasts.error'), description: messageErreurServeur(response, t('toasts.statusUpdateFailed', 'Impossible de mettre à jour le statut')), variant: 'destructive' });
       }
     } catch (error) {
       toast({
         title: t('toasts.error'),
-        description: t('toasts.statusUpdateFailed'),
+        // Refus du serveur (motif manquant ou trop court…) : sa raison, au lieu d'un échec générique
+        description: messageErreurServeur(error, t('toasts.statusUpdateFailed', 'Impossible de mettre à jour le statut')),
         variant: "destructive"
       });
     }
@@ -834,12 +837,13 @@ const validateService = async (serviceId: number, validated: boolean, motif?: st
       });
       await loadServices();
     } else {
-      toast({ title: t('toasts.error'), description: response.error || t('toasts.serviceValidationFailed', 'Erreur de validation'), variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: messageErreurServeur(response, t('toasts.serviceValidationFailed', 'Erreur de validation')), variant: 'destructive' });
     }
   } catch (error) {
     toast({
       title: t('toasts.error'),
-      description: t('toasts.serviceValidationFailed', 'Erreur de validation'),
+      // Refus du serveur (motif manquant…) : sa raison, au lieu d'un échec générique
+      description: messageErreurServeur(error, t('toasts.serviceValidationFailed', 'Erreur de validation')),
       variant: "destructive"
     });
   }
@@ -862,7 +866,7 @@ const validateService = async (serviceId: number, validated: boolean, motif?: st
       toast({
         title: t('toasts.error'),
         // Message du serveur (compte administrateur, signalement déjà traité…) plutôt qu'un échec générique
-        description: error instanceof Error && error.message ? error.message : t('toasts.signalementProcessFailed'),
+        description: messageErreurServeur(error, t('toasts.signalementProcessFailed', 'Impossible de traiter le signalement')),
         variant: "destructive"
       });
     }

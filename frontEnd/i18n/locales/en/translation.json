@@ -3546,7 +3546,8 @@
       "invitationAccept": "Confirm my registration",
       "invitationDecline": "Decline",
       "nonPartie": "Your registration was not sent. Check your connection, then tap “Confirm registration” again.",
-      "reponseTarde": "The reply is taking long. Reload the page to check whether your registration was saved before trying again."
+      "reponseTarde": "The reply is taking long. Reload the page to check whether your registration was saved before trying again.",
+      "cancelFailed": "Your registration could not be cancelled. Please try again."
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",

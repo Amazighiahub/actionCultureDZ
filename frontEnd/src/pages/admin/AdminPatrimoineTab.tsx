@@ -6,6 +6,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,7 +109,7 @@ const AdminPatrimoineTab: React.FC = () => {
         // Le serveur explique le refus (ex. site qui accueille des événements)
         toast({
           title: t('common.error', 'Une erreur est survenue'),
-          description: error instanceof Error ? error.message : undefined,
+          description: messageErreurServeur(error, t('common.deleteError', 'Impossible de supprimer')),
           variant: 'destructive',
         });
       } finally {

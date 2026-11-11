@@ -20,6 +20,7 @@ import {
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { httpClient } from '@/services/httpClient';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { messageErreurServeur, reponseEchec } from '@/utils/erreurServeur';
 
 type Action = 'inviter' | 'deja_inscrit' | 'doublon' | 'invalide';
 interface LigneApercu {
@@ -78,10 +79,13 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
   const lireApercu = async (choix: Record<number, string> = profilsChoisis) => {
     if (!fichier) return;
     setEnCours(true); setErreur(null);
+    const echecLecture = t('pro.participants.import.erreurLecture', 'Le fichier n’a pas pu être lu.');
+    // httpClient.upload rejette un refus du serveur (fichier refusé) : on le garde comme un échec pour
+    // afficher sa raison et retirer « en cours » (avant : rien ne s'affichait, l'indicateur restait)
     const res = await httpClient.upload<Apercu>(`/evenements/${evenementId}/participants/import/apercu`,
-      formulaire({ profils: JSON.stringify(choix) }));
+      formulaire({ profils: JSON.stringify(choix) })).catch((e: unknown) => reponseEchec(e, echecLecture));
     setEnCours(false);
-    if (!res.success || !res.data) { setErreur(res.error || t('pro.participants.import.erreurLecture', 'Le fichier n’a pas pu être lu.')); return; }
+    if (!res.success || !res.data) { setErreur(messageErreurServeur(res, echecLecture)); return; }
     if (!apercu) setCochees(new Set(res.data.lignes.filter(l => IMPORTABLES.includes(l.action)).map(l => l.ligne)));
     setApercu(res.data);
   };
@@ -94,10 +98,12 @@ const ImportInscriptionsDialog: React.FC<Props> = ({ evenementId, ouvert, onFerm
 
   const importer = async () => {
     setEnCours(true); setErreur(null);
+    const echecImport = t('pro.participants.import.erreurImport', 'L’import a échoué.');
     const res = await httpClient.upload<Bilan>(`/evenements/${evenementId}/participants/import`,
-      formulaire({ lignes: JSON.stringify([...cochees]), inviter: String(inviter), profils: JSON.stringify(profilsChoisis) }));
+      formulaire({ lignes: JSON.stringify([...cochees]), inviter: String(inviter), profils: JSON.stringify(profilsChoisis) }))
+      .catch((e: unknown) => reponseEchec(e, echecImport));
     setEnCours(false);
-    if (!res.success || !res.data) { setErreur(res.error || t('pro.participants.import.erreurImport', 'L’import a échoué.')); return; }
+    if (!res.success || !res.data) { setErreur(messageErreurServeur(res, echecImport)); return; }
     setBilan(res.data);
     onImporte();
   };

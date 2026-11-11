@@ -67,6 +67,7 @@ import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 import ReponsesInscription from '@/components/event/ReponsesInscription';
 import { professionnelService } from '@/services/professionnel.service';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { ConfigInscription, Reponses } from '@/utils/formulaireInscription';
 
 interface ParticipantsManagerProps {
@@ -210,12 +211,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   /** Email « Choisir mon mot de passe » renvoyé (nouveau lien de 8 jours) */
   const renvoyerInvitation = async (userId: number) => {
     setRenvoiEnCours(userId);
-    const res = await httpClient.post<{ email: string }>(`/evenements/${evenementId}/participants/${userId}/invitation`, {});
-    setRenvoiEnCours(null);
-    if (res.success) {
-      toast({ title: t('pro.participants.invitation.envoyee', 'Email envoyé'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 8 jours, a été envoyé à {{email}}.', { email: res.data?.email || '' }) });
-    } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
+    // Un refus du serveur (quota du jour, 400) rejette : sans catch, rien ne s'affichait et le bouton restait bloqué
+    try {
+      const res = await httpClient.post<{ email: string }>(`/evenements/${evenementId}/participants/${userId}/invitation`, {});
+      if (res.success) {
+        toast({ title: t('pro.participants.invitation.envoyee', 'Email envoyé'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 8 jours, a été envoyé à {{email}}.', { email: res.data?.email || '' }) });
+      } else {
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
+    } finally {
+      setRenvoiEnCours(null);
     }
   };
 
@@ -224,10 +231,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     setRelanceOuverte(false);
     setRelanceEnCours(true);
     const res = await httpClient.post<{ envoyes: number; echecs: number; restants: number }>(`/evenements/${evenementId}/participants/invitations`, {})
-      .catch((e: unknown) => ({ success: false as const, error: e instanceof Error ? e.message : undefined, data: undefined }));
+      .catch((e: unknown) => ({ success: false as const, error: messageErreurServeur(e, t('pro.participants.actions.error', 'Une erreur est survenue')), data: undefined }));
     setRelanceEnCours(false);
     if (!res.success || !res.data) {
-      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
       return;
     }
     const { envoyes, echecs, restants } = res.data;
@@ -242,13 +249,21 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const changerProfil = async (userId: number, profil: string) => {
     setProfilEnCours(userId);
-    const res = await httpClient.put(`/evenements/${evenementId}/participants/${userId}/profil`, { profil });
-    setProfilEnCours(null);
+    // Profil refusé par le serveur : la raison est montrée et le sélecteur débloqué (avant : rejet silencieux)
+    let res;
+    try {
+      res = await httpClient.put(`/evenements/${evenementId}/participants/${userId}/profil`, { profil });
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
+      return;
+    } finally {
+      setProfilEnCours(null);
+    }
     if (res.success) {
       toast({ title: t('pro.participants.profil.modifie', 'Profil modifié'), description: t('pro.participants.profil.modifieDesc', 'Le prix a été recalculé. Aucun message n’a été envoyé.') });
       await loadParticipants();
     } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error || t('pro.participants.actions.error', 'Une erreur est survenue'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
     }
   };
 
@@ -258,7 +273,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     const r = await paiementService.confirmerPaiement(evenementId, idParticipant, recu);
     setPaiementEnCours(null);
     if (!r?.success) {
-      toast({ title: t('common.error', 'Erreur'), description: r?.error, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(r, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
       return;
     }
     toast({ title: recu ? t('paiement.orga.confirme', 'Paiement enregistré : le participant est prévenu') : t('paiement.orga.corrige', 'Paiement retiré') });
@@ -295,7 +310,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     if (!response.success) {
       toast({
         title: t('toasts.exportFailed', 'Échec de l\'export'),
-        description: response.error,
+        description: messageErreurServeur(response, t('toasts.exportFailed', 'Erreur export')),
         variant: 'destructive'
       });
     }
@@ -364,7 +379,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || t('pro.participants.actions.error', 'Une erreur est survenue'),
+          description: messageErreurServeur(response, t('pro.participants.actions.error', 'Une erreur est survenue')),
           variant: 'destructive'
         });
       }
@@ -372,7 +387,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       console.error('Erreur action participant:', error);
       toast({
         title: t('common.error', 'Erreur'),
-        description: t('pro.participants.actions.error', 'Une erreur est survenue'),
+        description: messageErreurServeur(error, t('pro.participants.actions.error', 'Une erreur est survenue')),
         variant: 'destructive'
       });
     } finally {

@@ -7,6 +7,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { evenementService } from '@/services/evenement.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { Evenement } from '@/types/models/evenement.types';
+import i18next from 'i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 interface UseEvenementsOptions {
   search?: string;
@@ -107,7 +109,8 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
           page: paginationData?.page || 1
         };
       }
-      throw new Error(response.error || 'Erreur lors du chargement des événements');
+      // Message affiché sur /evenements : traduit, jamais un texte français fixe
+      throw new Error(messageErreurServeur(response, i18next.t('toasts.loadEventsFailed', 'Impossible de charger les événements')));
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     placeholderData: (previousData) => previousData, // Garde les données précédentes pendant le chargement
@@ -199,7 +202,7 @@ export function useUpcomingEvents(limit: number = 6) {
         }
         return responseData || [];
       }
-      throw new Error(response.error || 'Erreur lors du chargement');
+      throw new Error(messageErreurServeur(response, i18next.t('toasts.loadEventsFailed', 'Impossible de charger les événements')));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -220,7 +223,7 @@ export function useEvenementStats() {
       if (response.success && response.data) {
         return response.data;
       }
-      throw new Error(response.error || 'Erreur lors du chargement des statistiques');
+      throw new Error(messageErreurServeur(response, i18next.t('errors.loadingError', 'Erreur de chargement')));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

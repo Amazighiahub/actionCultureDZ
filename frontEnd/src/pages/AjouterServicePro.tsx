@@ -367,7 +367,8 @@ const AjouterServicePro: React.FC = () => {
 
         navigate('/dashboard-pro');
       } else {
-        throw new Error(data.error || (isEditMode ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création'));
+        // Raison du serveur, détail des champs compris (avant : repli en français dans l'interface arabe)
+        throw new Error(messageErreurServeur(data, isEditMode ? t('toasts.updateError', 'Erreur lors de la mise à jour') : t('ajouterService.errors.createFailed', 'Erreur lors de la création du service')));
       }
     } catch (err: unknown) {
       console.error('Erreur création service:', err);

@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Download, FileSpreadsheet, Images, CheckCircle2, XCircle, RefreshCw, Upload, Loader2, BookOpen } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -24,8 +25,6 @@ import { rafraichirTableauDeBord } from '@/lib/queryClient';
 interface LigneApercu { ligne: number; titre: string; auteur: string; isbn: string | null; couverture: string | null; etat: 'nouveau' | 'existe' | 'erreur'; erreurs: string[] }
 interface Apercu { resume: { total: number; nouveaux: number; existants: number; erreurs: number; sansCouverture: number }; imagesSansLivre: string[]; lignes: LigneApercu[] }
 interface Bilan { crees: Array<{ ligne: number; id_oeuvre: number; couverture: string | null }>; lies: Array<{ ligne: number }>; aVerifier?: Array<{ ligne: number }>; dejaPresents?: Array<{ ligne: number }>; echecs: Array<{ ligne: number; erreur: string }>; ignorees: number }
-
-const message = (e: unknown, defaut: string) => (e instanceof Error && e.message ? e.message : defaut);
 
 const ImportCatalogue: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -66,7 +65,7 @@ const ImportCatalogue: React.FC = () => {
       if (!res.success || !res.data) throw new Error(res.error);
       setApercu(res.data);
     } catch (e) {
-      setErreur(message(e, t('catalogue.erreurLecture', 'Le fichier n’a pas pu être lu')));
+      setErreur(messageErreurServeur(e, t('catalogue.erreurLecture', 'Le fichier n’a pas pu être lu')));
     } finally {
       setEtape('choix');
     }
@@ -99,7 +98,7 @@ const ImportCatalogue: React.FC = () => {
       setEtape('fini');
       rafraichirTableauDeBord();
     } catch (e) {
-      setErreur(message(e, t('catalogue.erreurImport', 'L’import a échoué')));
+      setErreur(messageErreurServeur(e, t('catalogue.erreurImport', 'L’import a échoué')));
       setEtape('choix');
     }
   };

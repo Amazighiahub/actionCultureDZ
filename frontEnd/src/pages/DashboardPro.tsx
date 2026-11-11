@@ -1,4 +1,5 @@
 import MessagesAbonnesCard from '@/components/pro/MessagesAbonnesCard';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { abonnementActuel, activerNotifications, notificationsPossibles } from '@/utils/applicationMobile';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -450,7 +451,7 @@ const DashboardPro = () => {
       toast({ title: t('dashboardpro.oeuvreSubmitted', 'Œuvre envoyée'), description: t('dashboardpro.oeuvreSubmittedDesc', 'Elle sera visible après validation par l’équipe Tala DZ.') });
       refreshAll();
     } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('service.errors.submitFailed', 'Erreur lors de la soumission')), variant: 'destructive' });
     }
   };
 

@@ -1,5 +1,6 @@
 // services/oeuvre.service.ts - Version complètement corrigée
-import { messageErreurServeur } from '@/utils/erreurServeur';
+import i18next from 'i18next';
+import { reponseEchec } from '@/utils/erreurServeur';
 import {
   CreateOeuvreCompleteDTO,
   CreateOeuvreResponse,
@@ -97,45 +98,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-// Helper pour extraire le message d'erreur de réponse API
-function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) {
-    const axiosError = error as {
-      response?: {
-        data?: {
-          error?: string;
-          details?: Array<{ field?: string; message?: string }> | Record<string, unknown>;
-          errors?: Array<{ field?: string; message?: string }>;
-        };
-      };
-    };
-    const apiError = axiosError.response?.data?.error;
-    const apiDetails = axiosError.response?.data?.details;
-    const apiErrors = axiosError.response?.data?.errors;
-
-    const detailItems = Array.isArray(apiDetails)
-      ? apiDetails
-      : Array.isArray(apiErrors)
-        ? apiErrors
-        : [];
-
-    const formattedDetails = detailItems
-      .map((item) => {
-        const field = item.field ? `${item.field}: ` : '';
-        return item.message ? `${field}${item.message}` : null;
-      })
-      .filter((item): item is string => Boolean(item));
-
-    if (formattedDetails.length > 0) {
-      const baseMessage = apiError || error.message || fallback;
-      return `${baseMessage} — ${formattedDetails.join(' | ')}`;
-    }
-
-    return apiError || error.message || fallback;
-  }
-  return fallback;
-}
-
 class OeuvreService {
   /**
    * Créer une nouvelle œuvre AVEC médias
@@ -171,10 +133,7 @@ class OeuvreService {
       return oeuvreResult;
 
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: messageErreurServeur(error, 'Erreur lors de la création')
-      };
+      return reponseEchec(error, i18next.t('ajouteroeuvre.createError', "Erreur lors de la création de l'oeuvre"));
     }
   }
 
@@ -213,10 +172,9 @@ class OeuvreService {
         }
       }
 
-      return {
-        success: false,
-        error: getApiErrorMessage(error, 'Erreur lors de la création')
-      };
+      // Détail des champs, code et statut gardés : le formulaire place chaque refus sous son champ
+      // (avant : getApiErrorMessage cherchait « error.response », absent d'une HttpError, et perdait tout)
+      return reponseEchec(error, i18next.t('ajouteroeuvre.createError', "Erreur lors de la création de l'oeuvre"));
     }
   }
 
@@ -300,10 +258,9 @@ class OeuvreService {
       return response;
 
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getApiErrorMessage(error, 'Erreur lors de la création')
-      };
+      // Détail des champs, code et statut gardés : le formulaire place chaque refus sous son champ
+      // (avant : getApiErrorMessage cherchait « error.response », absent d'une HttpError, et perdait tout)
+      return reponseEchec(error, i18next.t('ajouteroeuvre.createError', "Erreur lors de la création de l'oeuvre"));
     }
   }
 
@@ -524,10 +481,7 @@ class OeuvreService {
     try {
       return await httpClient.post<Oeuvre>(`/oeuvres/${oeuvreId}/submit`, {});
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getApiErrorMessage(error, 'Erreur lors de la soumission pour validation')
-      };
+      return reponseEchec(error, i18next.t('service.errors.submitFailed', 'Erreur lors de la soumission'));
     }
   }
 
@@ -593,10 +547,7 @@ class OeuvreService {
     try {
       return await httpClient.put(`/oeuvres/${id}`, data);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: messageErreurServeur(error, 'Erreur lors de la mise à jour')
-      };
+      return reponseEchec(error, i18next.t('ajouteroeuvre.updateError', 'Erreur lors de la mise à jour'));
     }
   }
 
@@ -607,10 +558,8 @@ class OeuvreService {
     try {
       return await httpClient.delete(`/oeuvres/${id}`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la suppression')
-      };
+      // Statut gardé : le tableau de bord reconnaît une œuvre déjà supprimée (404)
+      return reponseEchec(error, i18next.t('toasts.deleteFailed', 'Erreur de suppression'));
     }
   }
 
@@ -691,10 +640,7 @@ class OeuvreService {
     try {
       return await httpClient.delete(`/oeuvres/${oeuvreId}/medias/${mediaId}`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la suppression du média')
-      };
+      return reponseEchec(error, i18next.t('common.deleteError', 'Impossible de supprimer'));
     }
   }
   /**

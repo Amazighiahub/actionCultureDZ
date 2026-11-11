@@ -3,6 +3,7 @@ import type { ArticleImporte } from '@/utils/importArticle';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 import { articleBlockService } from '@/services/articleBlock.service';
 import { metadataService } from '@/services/metadata.service';
@@ -427,7 +428,9 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
       }
     } catch (error: any) {
       console.error('Erreur sauvegarde:', error);
-      setError(error.message || 'Erreur lors de la sauvegarde');
+      // Raison du serveur, détail des champs compris (ex. proposition de modification refusée) ;
+      // avant : « Données invalides », ou un repli en français dans l'interface arabe
+      setError(messageErreurServeur(error, t('ajouteroeuvre.articleSaveError', "Erreur lors de la sauvegarde de l'article")));
     } finally {
       setSaving(false);
     }

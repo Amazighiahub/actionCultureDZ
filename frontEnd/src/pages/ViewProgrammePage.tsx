@@ -13,6 +13,7 @@ import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeFo
 import { programmeService, IntervenantUser } from '@/services/programme.service';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/hooks/useAuth';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
@@ -91,10 +92,10 @@ const ViewProgrammePage: React.FC = () => {
 
           setProgrammeData(formData);
         } else {
-          setError(response.error || t('programmePages.errors.loadFailed'));
+          setError(messageErreurServeur(response, t('programmePages.errors.loadFailed', 'Erreur lors du chargement du programme')));
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+        setError(messageErreurServeur(err, t('programmePages.errors.loadFailed', 'Erreur lors du chargement du programme')));
       } finally {
         setLoading(false);
       }
@@ -122,10 +123,10 @@ const ViewProgrammePage: React.FC = () => {
           rafraichirTableauDeBord();
           navigate(`/evenements/${eventId}`);
         } else {
-          setError(response.error || t('programmePages.errors.deleteFailed'));
+          setError(messageErreurServeur(response, t('programmePages.errors.deleteFailed', 'Erreur lors de la suppression du programme')));
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+        setError(messageErreurServeur(err, t('programmePages.errors.deleteFailed', 'Erreur lors de la suppression du programme')));
       }
     }
   };
@@ -142,10 +143,10 @@ const ViewProgrammePage: React.FC = () => {
         rafraichirTableauDeBord();
         navigate(`/programme/${eventId}/${response.data.id_programme}`);
       } else {
-        setError(response.error || t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication'));
+        setError(messageErreurServeur(response, t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication')));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
+      setError(messageErreurServeur(err, t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication')));
     } finally {
       setDuplicating(false);
     }

@@ -366,14 +366,15 @@ const AjouterEvenement = () => {
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || t('organisations.create.error', 'Erreur lors de la création'),
+          description: messageErreurServeur(response, t('organisations.create.error', 'Erreur lors de la création')),
           variant: 'destructive',
         });
       }
-    } catch {
+    } catch (err) {
+      // Le POST rejette un refus du serveur (nom déjà pris, champ invalide) : sa raison plutôt qu'un texte fixe
       toast({
         title: t('common.error', 'Erreur'),
-        description: t('organisations.create.error', 'Erreur lors de la création'),
+        description: messageErreurServeur(err, t('organisations.create.error', 'Erreur lors de la création')),
         variant: 'destructive',
       });
     } finally {

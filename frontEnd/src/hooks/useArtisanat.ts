@@ -6,6 +6,7 @@ import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 // Copie de secours par langue : les titres sont traduits par le serveur
 import i18n from 'i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 /** Extended Artisanat with optional `prix` field that may come from API responses */
 interface ArtisanatWithPrix extends Artisanat {
@@ -135,7 +136,7 @@ export function useArtisanat(): UseArtisanatReturn {
   const fetchPage = useCallback(async (pageNumber: number) => {
     const result = await artisanatService.getAll({ limit: PAGE_SIZE, page: pageNumber, sort: sortBy });
     if (!result.success) {
-      throw new Error(result.error || 'Erreur lors du chargement des artisanats');
+      throw new Error(messageErreurServeur(result, i18n.t('errors.loadingCraftsError', 'Échec du chargement des artisanats')));
     }
     let items: Artisanat[] = [];
     if (Array.isArray(result.data)) {
@@ -164,8 +165,9 @@ export function useArtisanat(): UseArtisanatReturn {
       });
       setPage(next);
       setHasMore(more);
-    } catch {
-      setError('Impossible de charger les produits artisanaux');
+    } catch (err) {
+      // Textes traduits : ce message s'affiche sur /artisanat, aussi en arabe
+      setError(messageErreurServeur(err, i18n.t('errors.loadingCraftsError', 'Échec du chargement des artisanats')));
     } finally {
       setLoadingMore(false);
     }
@@ -204,16 +206,16 @@ export function useArtisanat(): UseArtisanatReturn {
             try {
               const artisanatsData = JSON.parse(backup);
               setArtisanats(artisanatsData);
-              setError('Limite de requêtes atteinte. Affichage des données en cache.');
+              setError(i18n.t('toasts.rateLimitReached', 'Limite de requêtes atteinte'));
               return;
             } catch (e) {
             }
           }
         }
 
-        setError('Trop de requêtes. Veuillez patienter quelques instants.');
+        setError(i18n.t('toasts.rateLimitReached', 'Limite de requêtes atteinte'));
       } else {
-        setError('Impossible de charger les produits artisanaux');
+        setError(messageErreurServeur(err, i18n.t('errors.loadingCraftsError', 'Échec du chargement des artisanats')));
       }
     } finally {
       setLoading(false);

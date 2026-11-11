@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from "react-i18next";
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
@@ -144,7 +145,7 @@ const EditArticle: React.FC = () => {
         ...liensArticle(contributeurs, editeurs),
       } as any);
       if (!miseAJour.success) {
-        throw new Error(miseAJour.error || t('toasts.updateError'));
+        throw new Error(messageErreurServeur(miseAJour, t('toasts.updateError', 'Erreur lors de la mise à jour')));
       }
 
       // 3. Blocs (la route remplace les anciens en une seule transaction)
@@ -154,7 +155,7 @@ const EditArticle: React.FC = () => {
         blocks: blocsPrets,
       } as any);
       if (!enregistrement.success) {
-        throw new Error(enregistrement.error || t('toasts.articleBlocksSaveFailed'));
+        throw new Error(messageErreurServeur(enregistrement, t('toasts.articleBlocksSaveFailed', "L'article a été mis à jour mais certains blocs n'ont pas pu être sauvegardés.")));
       }
 
       rafraichirTableauDeBord();
@@ -167,7 +168,7 @@ const EditArticle: React.FC = () => {
       console.error('❌ Erreur mise à jour article:', err);
       toast({
         title: t('toasts.error'),
-        description: err instanceof Error ? err.message : t('toasts.updateError'),
+        description: messageErreurServeur(err, t('toasts.updateError', 'Erreur lors de la mise à jour')),
         variant: 'destructive',
       });
       throw err;

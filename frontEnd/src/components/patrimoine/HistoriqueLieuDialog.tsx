@@ -18,6 +18,7 @@ import {
 import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 type Valeur = string | Record<string, string | undefined> | null;
 
@@ -72,24 +73,38 @@ const HistoriqueLieuDialog: React.FC<Props> = ({ lieuId, onRestaure }) => {
   const [enCours, setEnCours] = useState(false);
 
   const charger = useCallback(async () => {
-    const res = await httpClient.get<LigneHistorique[]>(`/patrimoine/${lieuId}/historique`);
-    setLignes(res.success && Array.isArray(res.data) ? res.data : []);
-  }, [lieuId]);
+    try {
+      const res = await httpClient.get<LigneHistorique[]>(`/patrimoine/${lieuId}/historique`);
+      setLignes(res.success && Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      // Refus ou réseau coupé : sans cela, l'attente restait affichée sans fin
+      setLignes([]);
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('errors.loadingFailed', 'Erreur lors du chargement')), variant: 'destructive' });
+    }
+  }, [lieuId, t, toast]);
 
   useEffect(() => { if (ouvert) charger(); }, [ouvert, charger]);
 
   const restaurer = async () => {
     if (!aRestaurer) return;
     setEnCours(true);
-    const res = await httpClient.post(`/patrimoine/${lieuId}/historique/${aRestaurer.id_historique}/restaurer`, {});
-    setEnCours(false);
-    setARestaurer(null);
+    // Retour refusé : httpClient rejette ; sans catch, rien ne s'affichait et la confirmation restait bloquée
+    let res;
+    try {
+      res = await httpClient.post(`/patrimoine/${lieuId}/historique/${aRestaurer.id_historique}/restaurer`, {});
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
+      return;
+    } finally {
+      setEnCours(false);
+      setARestaurer(null);
+    }
     if (res.success) {
       toast({ title: t('patrimoine.historique.restaure', 'Version précédente remise'), description: t('patrimoine.historique.restaureDesc', 'Le texte d’avant est de nouveau affiché.') });
       await charger();
       onRestaure();
     } else {
-      toast({ title: t('common.error', 'Erreur'), description: res.error || t('common.errorOccurred', 'Une erreur est survenue'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     }
   };
 

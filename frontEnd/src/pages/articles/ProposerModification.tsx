@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { GitPullRequestArrow } from 'lucide-react';
 import Header from '@/components/Header';
 import ArticleEditor from '@/components/article/ArticleEditor';
@@ -57,7 +58,7 @@ const ProposerModification: React.FC = () => {
     const res = await articleRevisionService.proposer(idOeuvre, {
       motif: motif.trim(), titre: formData.titre, description: formData.description, blocks: blocsEnvoyes
     });
-    if (!res.success) throw new Error(res.error || t('revisions.envoiEchec', 'La proposition n’a pas pu être envoyée'));
+    if (!res.success) throw new Error(messageErreurServeur(res, t('revisions.envoiEchec', 'La proposition n’a pas pu être envoyée')));
     toast({
       title: t('revisions.envoyee', 'Proposition envoyée'),
       description: t('revisions.envoyeeDetail', 'L’auteur de l’article et l’administration vont l’examiner. Vous serez prévenu de leur décision.')

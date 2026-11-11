@@ -51,6 +51,7 @@ import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 interface GestionEvenementProps {
   evenementId: number;
@@ -259,7 +260,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       setEditingProgramme(null);
     } catch (error) {
       console.error('Erreur sauvegarde programme:', error);
-      toast({ title: t('common.error'), description: t('programme.saveError', 'Erreur lors de la sauvegarde'), variant: 'destructive' });
+      // Refus du serveur (httpClient rejette) : sa raison, détail des champs compris, plutôt qu'un texte fixe
+      toast({ title: t('common.error'), description: messageErreurServeur(error, t('programme.saveError', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
     }
   };
 
@@ -272,11 +274,11 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         toast({ title: t('common.success'), description: t('programme.deleted', 'Programme supprimé') });
         loadProgrammes();
       } else {
-        toast({ title: t('common.error'), description: response.error || t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
+        toast({ title: t('common.error'), description: messageErreurServeur(response, t('programme.deleteError', 'Erreur lors de la suppression')), variant: 'destructive' });
       }
     } catch (error) {
       console.error('Erreur suppression programme:', error);
-      toast({ title: t('common.error'), description: t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
+      toast({ title: t('common.error'), description: messageErreurServeur(error, t('programme.deleteError', 'Erreur lors de la suppression')), variant: 'destructive' });
     } finally {
       setSuppressionEnCours(false);
       setProgrammeASupprimer(null);
@@ -323,7 +325,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       }
     } catch (error) {
       console.error('Erreur ajout œuvre:', error);
-      toast({ title: t('common.error'), description: t('oeuvres.addError', 'Erreur lors de l\'ajout'), variant: 'destructive' });
+      toast({ title: t('common.error'), description: messageErreurServeur(error, t('oeuvres.addError', 'Erreur lors de l\'ajout')), variant: 'destructive' });
     } finally {
       setAddingOeuvre(false);
     }
@@ -340,7 +342,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       }
     } catch (error) {
       console.error('Erreur suppression œuvre:', error);
-      toast({ title: t('common.error'), description: t('oeuvres.removeError', 'Erreur lors de la suppression'), variant: 'destructive' });
+      toast({ title: t('common.error'), description: messageErreurServeur(error, t('oeuvres.removeError', 'Erreur lors de la suppression')), variant: 'destructive' });
     }
   };
 
@@ -361,7 +363,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       loadOeuvres();
     } catch (error) {
       console.error('Erreur réorganisation:', error);
-      toast({ title: t('common.error', 'Erreur'), description: error instanceof Error ? error.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(error, t('programme.saveError', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
     }
   };
 

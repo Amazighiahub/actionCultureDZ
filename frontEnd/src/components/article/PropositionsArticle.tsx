@@ -7,6 +7,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import { Check, GitPullRequestArrow, History, Loader2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -106,7 +107,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
     try {
       const res = await articleRevisionService.decider(idOeuvre, detail.id_revision, decision, motifRefus.trim() || undefined, forcer);
       if (!res.success) {
-        throw Object.assign(new Error(res.error), { code: (res as { code?: string }).code });
+        throw Object.assign(new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue'))), { code: (res as { code?: string }).code });
       }
       toast({ title: decision === 'accepter' ? t('revisions.acceptee', 'Proposition acceptée : l’article est mis à jour') : t('revisions.refusee', 'Proposition refusée') });
       setDetail(null);
@@ -121,7 +122,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
         }
         return;
       }
-      toast({ title: t('common.error', 'Erreur'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setEnvoi(false);
     }

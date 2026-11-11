@@ -16,7 +16,7 @@ import type { Organisation } from '@/types/models/organisation.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
-import { echecEnvoi, type ResultatEnvoi } from '@/utils/erreurServeur';
+import { echecEnvoi, messageErreurServeur, type ResultatEnvoi } from '@/utils/erreurServeur';
 import { echecCommentaire } from '@/utils/envoiCommentaire';
 
 /** Résultat d'une inscription : le message d'échec est montré là où la personne a appuyé */
@@ -225,7 +225,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     mutationFn: async () => {
       const response = await evenementService.desinscription(eventId);
       if (!response.success) {
-        throw new Error(response.error || 'Erreur lors de la désinscription');
+        throw new Error(messageErreurServeur(response, t('event.registration.cancelFailed', 'La désinscription n’a pas abouti. Réessayez.')));
       }
       return response;
     },
@@ -240,7 +240,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     onError: (error: Error) => {
       toast({
         title: t('common.error', 'Erreur'),
-        description: error.message,
+        // Refus du serveur (4xx) : sa raison, détail des champs compris ; sinon un texte traduit
+        description: messageErreurServeur(error, t('event.registration.cancelFailed', 'La désinscription n’a pas abouti. Réessayez.')),
         variant: 'destructive',
       });
     },

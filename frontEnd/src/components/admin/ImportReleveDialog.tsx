@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
@@ -99,11 +100,12 @@ const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenCha
     setEnCours(true); setErreur(null);
     try {
       const res = await patrimoineService.apercuReleve(fichier, parentId);
-      if (!res.success || !res.data) throw new Error(res.error || '');
+      if (!res.success || !res.data) throw new Error(messageErreurServeur(res, t('admin.patrimoine.import.errors.read', 'Fichier illisible.')));
       setApercu(res.data);
       setEtape('apercu');
     } catch (e) {
-      setErreur((e as Error).message || t('admin.patrimoine.import.errors.read', 'Fichier illisible.'));
+      // Lignes refusées par le serveur : leur détail ; sinon un texte traduit
+      setErreur(messageErreurServeur(e, t('admin.patrimoine.import.errors.read', 'Fichier illisible.')));
     } finally {
       setEnCours(false);
     }
@@ -114,12 +116,12 @@ const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenCha
     setEnCours(true); setErreur(null);
     try {
       const res = await patrimoineService.importerReleve(fichier, parentId);
-      if (!res.success || !res.data) throw new Error(res.error || '');
+      if (!res.success || !res.data) throw new Error(messageErreurServeur(res, t('common.errorOccurred', 'Une erreur est survenue')));
       setBilan(res.data);
       setEtape('bilan');
       onImported?.();
     } catch (e) {
-      setErreur((e as Error).message || t('common.error', 'Une erreur est survenue'));
+      setErreur(messageErreurServeur(e, t('common.errorOccurred', 'Une erreur est survenue')));
     } finally {
       setEnCours(false);
     }
