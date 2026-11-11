@@ -757,7 +757,7 @@ class UserService extends BaseService {
     // Valider ne sert qu'à sortir un compte de l'attente : un compte suspendu/banni
     // se réactive via reactivate (réservé à l'admin).
     if (user.statut !== 'en_attente_validation') {
-      throw this._conflictError(`Seul un compte en attente peut être validé (statut: ${user.statut})`);
+      throw this._conflictError('Seul un compte en attente peut être validé');
     }
     await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validatorId, userId, 'votre propre compte');
 
@@ -792,7 +792,7 @@ class UserService extends BaseService {
       throw this._forbiddenError('Impossible de refuser un compte administrateur ou modérateur');
     }
     if (user.statut !== 'en_attente_validation') {
-      throw this._conflictError(`Seul un compte en attente peut être refusé (statut: ${user.statut})`);
+      throw this._conflictError('Seul un compte en attente peut être refusé');
     }
 
     if (!motif || motif.trim().length === 0) {

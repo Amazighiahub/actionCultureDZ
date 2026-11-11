@@ -192,7 +192,7 @@ class UpdateOeuvreDTO extends BaseDTO {
       if (!validStatuts.includes(this.statut)) {
         errors.push({
           field: 'statut',
-          message: `Statut invalide. Valeurs acceptées: ${validStatuts.join(', ')}`
+          message: 'Statut invalide'
         });
       }
     }

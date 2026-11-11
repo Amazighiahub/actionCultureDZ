@@ -107,7 +107,7 @@ class AlbumMusicalDTO extends BaseSubtypeDTO {
     }
 
     if (this.format !== undefined && !FORMATS.includes(this.format)) {
-      errors.push({ field: 'format', message: `Format inconnu (attendu : ${FORMATS.join(', ')})` });
+      errors.push({ field: 'format', message: 'Format inconnu' });
     }
 
     if (this.nbPistes !== undefined && this.nbPistes !== null && (!Number.isInteger(this.nbPistes) || this.nbPistes < 1 || this.nbPistes > 500)) {

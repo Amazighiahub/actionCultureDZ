@@ -80,7 +80,7 @@ class ArticleDTO extends BaseSubtypeDTO {
       if (!validStatuts.includes(this.statut)) {
         errors.push({
           field: 'statut',
-          message: `Statut invalide. Valeurs acceptées: ${validStatuts.join(', ')}`
+          message: 'Statut invalide'
         });
       }
     }
@@ -91,7 +91,7 @@ class ArticleDTO extends BaseSubtypeDTO {
       if (!validNiveaux.includes(this.niveauCredibilite)) {
         errors.push({
           field: 'niveau_credibilite',
-          message: `Niveau de crédibilité invalide. Valeurs acceptées: ${validNiveaux.join(', ')}`
+          message: 'Niveau de crédibilité invalide'
         });
       }
     }

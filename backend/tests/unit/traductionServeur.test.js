@@ -110,4 +110,60 @@ describe('messages du serveur traduits à l’envoi', () => {
     }
     expect([...manquants]).toEqual([]);
   });
+
+  it('chaque message à variables (`…${x}…`) a son modèle traduit (audit V11 FRM-17)', () => {
+    // Même appels d'erreur que plus haut, mais pour un texte entre accents graves ; une suite « + '…' »
+    // (phrase coupée sur deux lignes) est recollée. Chaque ${…} devient « 7 », puis le texte doit avoir
+    // la forme d'un modèle de la section _modeles.
+    const GABARIT = '`((?:[^`\\\\]|\\\\.)*)`((?:\\s*\\+\\s*\'(?:[^\'\\\\]|\\\\.)*\')*)';
+    const APPELS = [
+      `_(?:validation|conflict|forbidden|unauthorized|badRequest|notFound)Error\\(\\s*`,
+      `AppError\\.(?!notFound)\\w+\\(\\s*`, 'new AppError\\(\\s*', 'new Error\\(\\s*', '\\berreur\\(\\s*',
+      '\\b(?:error|erreur):\\s*', 'throw this\\._\\w+\\(\\s*',
+      // message: d'un détail de champ seulement (les notifications, enregistrées en base, sont à part)
+      'field:\\s*[^,{}]+,\\s*message:\\s*',
+    ].map((a) => new RegExp(a + GABARIT, 'g'));
+    // Internes (500 masqués, journaux, démarrage) ou phrases de succès hors de ce constat
+    const INTERNES = [/^Module non trouvé/, /is not a function$/, /^Le template /, /^Événement 7 introuvable$/,
+      /^Upload Cloudinary/, /^Service inconnu/, /^CircuitBreaker/, /^PDF non traité/, /^Account temporarily/, /^Retry in/,
+      /^Invalid creation year/, /^Field '/, /signalements traités$/, / pour 7 utilisateurs$/, /^7 non trouvé\(e\)$/,
+      /^Resource with id 7$/, /^❌ ERREUR CRITIQUE/];
+    const { correspondAUnModele } = require('../../utils/traductionServeur');
+    const manquants = new Set();
+    for (const dossier of DOSSIERS) {
+      for (const fichier of fichiers(path.join(RACINE, dossier))) {
+        const source = fs.readFileSync(fichier, 'utf8');
+        for (const appel of APPELS) {
+          for (const m of source.matchAll(appel)) {
+            if (!m[1].includes('${')) continue;
+            const suite = [...(m[2] || '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((s) => s[1]).join('');
+            const texte = (m[1] + suite).replace(/\$\{(?:[^{}]|\{[^}]*\})*\}/g, '7').replace(/\\(['"`])/g, '$1');
+            if (!FRANCAIS.test(texte.replace(/7/g, '')) || INTERNES.some((r) => r.test(texte))) continue;
+            if (!correspondAUnModele(texte)) manquants.add(`${path.relative(RACINE, fichier)} : ${texte}`);
+          }
+        }
+      }
+    }
+    expect([...manquants]).toEqual([]);
+  });
+
+  it('modèles : nombres et textes recopiés, libellés traduits, libellé inconnu laissé en français', () => {
+    expect(traduireTexteServeur('Il en reste 3 seulement.', 'ar')).toBe('لم يتبقَّ سوى 3.');
+    expect(traduireTexteServeur('Numéro de CCP : de 6 à 12 chiffres', 'en')).toBe('CCP number: 6 to 12 digits');
+    expect(traduireTexteServeur('Le profil « Étudiant » est en double', 'en')).toBe('The profile “Étudiant” appears twice');
+    expect(traduireTexteServeur('Consignes invalide', 'ar')).toBe('التعليمات: قيمة غير صالحة');
+    expect(traduireTexteServeur('Inconnu invalide', 'ar')).toBe('Inconnu invalide');
+    // Une phrase exacte du dictionnaire passe avant les modèles
+    expect(traduireTexteServeur('Téléphone invalide', 'ar')).toBe(ar['Téléphone invalide']);
+  });
+
+  it('mêmes modèles et libellés en arabe et en anglais, mêmes repères que le français', () => {
+    expect(Object.keys(ar._modeles).sort()).toEqual(Object.keys(en._modeles).sort());
+    expect(Object.keys(ar._libelles).sort()).toEqual(Object.keys(en._libelles).sort());
+    const reperes = (s) => (s.match(/\{[ntl]\d\}/g) || []).sort();
+    for (const [cle, texte] of Object.entries(ar._modeles)) {
+      expect([cle, reperes(texte)]).toEqual([cle, reperes(cle)]);
+      expect([cle, reperes(en._modeles[cle])]).toEqual([cle, reperes(cle)]);
+    }
+  });
 });

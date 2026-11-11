@@ -66,7 +66,7 @@ const moderationMethods = {
           result = await this.bulkModerateAction(data, req.user.id_user);
           break;
         default:
-          return res.status(400).json({ success: false, error: `Action non reconnue: ${action}` });
+          return res.status(400).json({ success: false, error: req.t ? req.t('validation.invalidAction') : 'Action invalide' });
       }
 
       this.clearCache(entityType);

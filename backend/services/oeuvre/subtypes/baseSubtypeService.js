@@ -100,7 +100,8 @@ class BaseSubtypeService {
     const dto = this.DTOClass.fromRequest(ds);
     const validation = dto.validate();
     if (!validation.valid) {
-      const err = new Error(`Validation ${this.modelName} échouée`);
+      // Le détail de chaque champ est dans err.errors (avant : « Validation AlbumMusical échouée »)
+      const err = new Error('Données invalides');
       err.code = 'VALIDATION_ERROR';
       err.errors = validation.errors;
       err.statusCode = 400;
@@ -120,16 +121,10 @@ class BaseSubtypeService {
   _wrapUniqueConstraintError(err) {
     if (err.name !== 'SequelizeUniqueConstraintError') return err;
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    const detail = err.errors?.[0];
-    const field = detail?.path || 'valeur';
-    const value = !isProduction ? detail?.value : undefined;
+    const field = err.errors?.[0]?.path || 'valeur';
 
-    const wrapped = new Error(
-      value != null
-        ? `La valeur "${value}" du champ "${field}" est déjà utilisée par une autre œuvre`
-        : `Un(e) autre œuvre utilise déjà cette valeur pour le champ "${field}"`
-    );
+    // Phrase sans nom de colonne ni valeur (« isbn », « 978-… ») ; le champ reste dans le détail
+    const wrapped = new Error('Cette valeur est déjà utilisée par une autre œuvre');
     wrapped.code = 'UNIQUE_CONSTRAINT';
     wrapped.statusCode = 409;
     wrapped.errors = [{ field, message: wrapped.message }];

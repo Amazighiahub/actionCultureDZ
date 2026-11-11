@@ -168,8 +168,8 @@ class BaseController {
     const response = {
       success: false,
       error: (IS_PRODUCTION && statusCode === 500)
-        ? 'Internal server error'
-        : (error.message || 'Internal server error'),
+        ? 'Erreur serveur'
+        : (error.message || 'Erreur serveur'),
       // En production, pas de code système (ECONNREFUSED, ETIMEDOUT…) sur une erreur 500
       code: (IS_PRODUCTION && statusCode === 500) ? 'INTERNAL_ERROR' : code
     };

@@ -25,6 +25,54 @@ const FORMULES_NON_TROUVE = {
   en: (nom) => `${nom} not found`,
 };
 
+/**
+ * Messages à variables (« Il en reste 3 seulement. », « Bloc 2 : type inconnu ») : section « _modeles »
+ * du dictionnaire, clé = phrase française avec des repères (audit V11 FRM-17) :
+ * - {n1}, {n2} : nombre, recopié ;
+ * - {t1}, {t2} : texte saisi par quelqu'un (nom de profil, titres d'événements…), recopié tel quel ;
+ * - {l1} : libellé fixe (« Adresse », « Le lien du programme »…), traduit par la section « _libelles » ;
+ *   libellé inconnu : la phrase reste en français (même principe que les textes absents).
+ */
+const REPERE = /\{([ntl])(\d)\}/g;
+const echapper = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const motifDuModele = (cle) => {
+  const reperes = [];
+  let source = '';
+  let fin = 0;
+  for (const m of cle.matchAll(REPERE)) {
+    source += echapper(cle.slice(fin, m.index));
+    source += m[1] === 'n' ? '(-?\\d+(?:[.,]\\d+)?)' : '(.+?)';
+    reperes.push(m[1] + m[2]);
+    fin = m.index + m[0].length;
+  }
+  return { motif: new RegExp(`^${source}${echapper(cle.slice(fin))}$`), reperes };
+};
+// Les motifs viennent des clés françaises (identiques dans chaque langue) : compilés une fois
+const MODELES = Object.keys(DICTIONNAIRES.en._modeles || DICTIONNAIRES.ar._modeles || {})
+  .map((cle) => ({ cle, ...motifDuModele(cle) }));
+
+function traduireParModele(texte, dico) {
+  const traductions = dico._modeles || {};
+  const libelles = dico._libelles || {};
+  for (const { cle, motif, reperes } of MODELES) {
+    const m = motif.exec(texte);
+    if (!m || typeof traductions[cle] !== 'string') continue;
+    const valeurs = {};
+    let complet = true;
+    reperes.forEach((r, i) => {
+      if (r[0] === 'l') {
+        if (typeof libelles[m[i + 1]] === 'string') valeurs[r] = libelles[m[i + 1]];
+        else complet = false;
+      } else valeurs[r] = m[i + 1];
+    });
+    if (complet) return traductions[cle].replace(REPERE, (tout, type, rang) => valeurs[type + rang] ?? tout);
+  }
+  return null;
+}
+
+/** Vrai si le texte a la forme d'un des modèles (pour le garde-fou des tests) */
+const correspondAUnModele = (texte) => MODELES.some(({ motif }) => motif.test(texte));
+
 /** Texte français → langue demandée (inchangé si inconnu, ou si la langue est le français) */
 function traduireTexteServeur(texte, langue) {
   if (typeof texte !== 'string') return texte;
@@ -38,7 +86,7 @@ function traduireTexteServeur(texte, langue) {
     const nom = PAR_IDENTIFIANT.test(m[1]) ? ressources.Ressource : ressources[m[1]];
     if (nom) return FORMULES_NON_TROUVE[langue](nom);
   }
-  return texte;
+  return traduireParModele(texte, dico) ?? texte;
 }
 
 const traduireListe = (liste, langue) => liste.map((element) => {
@@ -78,4 +126,4 @@ function traduireReponses(req, res, next) {
   next();
 }
 
-module.exports = { traduireTexteServeur, traduireCorps, traduireReponses };
+module.exports = { traduireTexteServeur, traduireCorps, traduireReponses, correspondAUnModele };
