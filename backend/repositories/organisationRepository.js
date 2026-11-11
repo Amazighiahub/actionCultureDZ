@@ -92,14 +92,46 @@ class OrganisationRepository extends BaseRepository {
     ];
   }
 
-  /** Organisations vérifiées, pour l'annuaire */
-  async findAnnuaire() {
+  /**
+   * Organisations vérifiées, pour l'annuaire. Wilaya et types filtrés par MySQL (avant : toutes lues,
+   * avec leur description, puis filtrées en JavaScript ; audit V11 BDD-7).
+   * @param {{ idWilaya?: number|null, idsTypes?: number[]|null, avecSansType?: boolean }} filtres
+   */
+  async findAnnuaire({ idWilaya = null, idsTypes = null, avecSansType = false } = {}) {
+    const where = { statut: 'valide' };
+    if (idWilaya) where.id_wilaya = idWilaya;
+    if (idsTypes) {
+      where[Op.or] = [{ id_type_organisation: idsTypes }, ...(avecSansType ? [{ id_type_organisation: null }] : [])];
+    }
     return this.model.findAll({
-      where: { statut: 'valide' },
+      where,
       attributes: ['id_organisation', 'nom', 'description', 'logo_url', 'id_type_organisation', 'id_wilaya', 'site_web'],
       include: this._vitrineIncludes(),
       order: [['id_organisation', 'DESC']]
     });
+  }
+
+  /**
+   * Filtres de l'annuaire : nombre d'organisations vérifiées par type, et wilayas présentes. Un seul
+   * comptage groupé, sans lire les fiches.
+   */
+  async facettesAnnuaire() {
+    const lignes = await this.model.sequelize.query(
+      `SELECT t.code AS code, o.id_wilaya AS id_wilaya, w.nom AS nom, w.wilaya_name_ascii AS wilaya_name_ascii, COUNT(*) AS n
+         FROM organisation o
+         LEFT JOIN typeorganisation t ON t.id_type_organisation = o.id_type_organisation
+         LEFT JOIN wilayas w ON w.id_wilaya = o.id_wilaya
+        WHERE o.statut = 'valide'
+        GROUP BY t.code, o.id_wilaya, w.nom, w.wilaya_name_ascii`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    return lignes.map(l => ({ ...l, n: Number(l.n) }));
+  }
+
+  /** Types d'organisation (petite table) : pour traduire une famille de l'annuaire en types */
+  async typesOrganisation() {
+    if (!this.models.TypeOrganisation) return [];
+    return this.models.TypeOrganisation.findAll({ attributes: ['id_type_organisation', 'code'], raw: true });
   }
 
   /** Toutes les organisations, pour la modération */

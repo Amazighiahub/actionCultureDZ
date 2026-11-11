@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { param, body } = require('express-validator');
 const serviceController = require('../controllers/serviceController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
@@ -22,7 +23,8 @@ const initServiceRoutes = (models, authMiddleware) => {
   router.get('/', asyncHandler((req, res) => serviceController.list(req, res)));
   router.get('/search', asyncHandler((req, res) => serviceController.search(req, res)));
   // Page « Services aux visiteurs » : services validés, filtres type / wilaya / texte
-  router.get('/annuaire', asyncHandler((req, res) => serviceController.annuaire(req, res)));
+  // Même réponse pour tous : gardée 3 minutes, comme les listes publiques (audit V11 BDD-7)
+  router.get('/annuaire', publicHttpCache(180), asyncHandler((req, res) => serviceController.annuaire(req, res)));
   router.get('/lieu/:lieuId', asyncHandler((req, res) => serviceController.getByLieu(req, res)));
 
   // ============================================================================

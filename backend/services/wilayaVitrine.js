@@ -161,7 +161,7 @@ async function vitrineWilaya(models, idWilaya, organisations) {
     idsPersonnes.length ? listerOeuvres(models, avecTypes([TYPE_ARTISANAT])) : { liste: [], total: 0 },
     listerEvenements(models, idWilaya),
     listerLieux(models, idWilaya),
-    organisations.annuaire({ wilaya: idWilaya })
+    organisations.annuaire({ wilaya: idWilaya, facettes: false })
   ]);
 
   return {

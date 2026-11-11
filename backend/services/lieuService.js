@@ -143,10 +143,13 @@ class LieuService extends BaseService {
       });
     }
 
-    // DetailLieu (seulement si pas trop de donnees)
+    // DetailLieu : la note seulement. Les textes de la fiche (description, histoire, traditions,
+    // gastronomie…) ne servent pas à une liste et pesaient des centaines de Ko par appel avec de vrais
+    // textes ; ils restent dans la fiche (/lieux/:id) (audit V11 BDD-5)
     if (this.models.DetailLieu && parseInt(limit) <= 50) {
       include.push({
         model: this.models.DetailLieu,
+        attributes: ['id_detailLieu', 'id_lieu', 'noteMoyenne', 'nb_notations'],
         required: false
       });
     }

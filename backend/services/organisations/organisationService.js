@@ -134,8 +134,17 @@ class OrganisationService extends BaseService {
    * Annuaire : organisations vérifiées, filtrées par famille (associations, edition…),
    * wilaya et texte ; avec le nombre d'événements et d'œuvres de chacune.
    */
-  async annuaire({ categorie = null, wilaya = null, q = '' } = {}) {
-    const lignes = (await this.repository.findAnnuaire()).map(o => o.get({ plain: true }));
+  async annuaire({ categorie = null, wilaya = null, q = '', facettes = true } = {}) {
+    // Wilaya et famille filtrées par MySQL ; les compteurs ne portent que sur les organisations gardées
+    // (avant : toutes les organisations lues et comptées à chaque visite, et pour chaque vitrine de
+    // wilaya ; audit V11 BDD-7)
+    const filtres = { idWilaya: wilaya ? Number(wilaya) : null };
+    if (categorie) {
+      const types = await this.repository.typesOrganisation();
+      filtres.idsTypes = types.filter(t => categorieDuType(t.code) === categorie).map(t => t.id_type_organisation);
+      filtres.avecSansType = categorie === 'autres';
+    }
+    const lignes = (await this.repository.findAnnuaire(filtres)).map(o => o.get({ plain: true }));
     const compteurs = await this.repository.compteurs(lignes.map(o => o.id_organisation));
     let organisations = lignes.map(o => ({
       ...o,
@@ -143,14 +152,24 @@ class OrganisationService extends BaseService {
       ...compteurs.get(o.id_organisation)
     }));
 
-    // Familles et wilayas réellement présentes, pour les filtres
+    // Familles et wilayas réellement présentes (toutes organisations vérifiées), pour les filtres :
+    // un comptage groupé, sans relire les fiches. Inutile pour la vitrine d'une wilaya.
     const categories = {};
-    for (const o of organisations) categories[o.categorie] = (categories[o.categorie] || 0) + 1;
-    const wilayas = [...new Map(organisations.filter(o => o.Wilaya).map(o => [o.Wilaya.id_wilaya, o.Wilaya])).values()]
-      .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
+    let wilayas = [];
+    if (facettes) {
+      const groupes = await this.repository.facettesAnnuaire();
+      const parWilaya = new Map();
+      for (const g of groupes) {
+        const c = categorieDuType(g.code);
+        categories[c] = (categories[c] || 0) + g.n;
+        if (g.id_wilaya && !parWilaya.has(g.id_wilaya)) {
+          parWilaya.set(g.id_wilaya, { id_wilaya: g.id_wilaya, nom: g.nom, wilaya_name_ascii: g.wilaya_name_ascii });
+        }
+      }
+      wilayas = [...parWilaya.values()]
+        .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
+    }
 
-    if (categorie) organisations = organisations.filter(o => o.categorie === categorie);
-    if (wilaya) organisations = organisations.filter(o => o.id_wilaya === Number(wilaya));
     const recherche = sansAccent(q).trim();
     if (recherche) {
       organisations = organisations.filter(o => textes(o.nom).includes(recherche) || textes(o.description).includes(recherche));

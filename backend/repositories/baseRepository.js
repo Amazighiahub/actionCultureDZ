@@ -76,7 +76,11 @@ class BaseRepository {
     const { include, attributes, transaction, lock } = options;
 
     return this.model.findByPk(id, {
-      include: this._mergeIncludes(include),
+      // Lecture verrouillée (FOR UPDATE) : la seule ligne demandée, sans les jointures par défaut. Avec
+      // elles, MySQL verrouillait aussi chaque ligne jointe : le type d'événement (toutes les inscriptions
+      // aux concerts passaient une par une), le lieu et le compte de l'organisateur (audit V11 BDD-2).
+      // Les appels verrouillés ne lisent que des colonnes de la ligne (statut, dates, propriétaire).
+      include: lock && !include ? [] : this._mergeIncludes(include),
       attributes,
       ...(transaction ? { transaction } : {}),
       ...(lock ? { lock } : {})

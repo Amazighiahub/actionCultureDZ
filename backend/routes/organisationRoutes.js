@@ -5,6 +5,7 @@ const { body, param } = require('express-validator');
 const container = require('../services/serviceContainer');
 const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
 const controller = require('../controllers/organisationController');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 
@@ -27,7 +28,8 @@ module.exports = (_models, authMiddleware) => {
    * GET /api/organisations?categorie=&wilaya=&q=
    * Annuaire public des organisations vérifiées
    */
-  router.get('/', (req, res) => controller.annuaire(req, res));
+  // Même réponse pour tous (noms dans toutes les langues) : gardée 3 minutes, comme les listes publiques
+  router.get('/', publicHttpCache(180), (req, res) => controller.annuaire(req, res));
 
   /**
    * GET /api/organisations/ressemblantes?nom=&exclure=
