@@ -3,7 +3,9 @@
  * Fournit les opérations CRUD de base et la gestion des requêtes
  */
 const { Op, fn, col, literal, where: seqWhere, Utils } = require('sequelize');
-const { bornerPagination } = require('../utils/pagination');
+const { bornerPagination, decalage, construirePagination } = require('../utils/pagination');
+const { aColonne, motifLike } = require('../utils/colonnesCalculees');
+const { SUPPORTED_LANGUAGES, cheminJson } = require('../constants/langues');
 
 const estObjetSimple = (v) => v !== null && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
 
@@ -109,7 +111,7 @@ class BaseRepository {
     } = options;
     const { page, limit } = bornerPagination(options.page, options.limit);
 
-    const offset = (page - 1) * limit;
+    const offset = decalage(page, limit);
     const includes = this._mergeIncludes(include);
 
     // Le total ne garde que les jointures qui filtrent (avant : toutes, photos, auteur, lieu..., à
@@ -133,14 +135,7 @@ class BaseRepository {
 
     return {
       data: rows,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        totalPages: Math.ceil(count / limit),
-        hasNext: page * limit < count,
-        hasPrev: page > 1
-      }
+      pagination: construirePagination(count, page, limit)
     };
   }
 
@@ -259,33 +254,44 @@ class BaseRepository {
   async search(query, fields = ['nom', 'titre', 'description'], options = {}) {
     const { page = 1, limit = 20, additionalWhere = {} } = options;
 
-    // Sanitize la requête - échapper les caractères spéciaux SQL
-    const sanitizedQuery = this._sanitizeSearchQuery(query);
-    const searchPattern = `%${sanitizedQuery}%`;
-
     // Alias de la table dans la requête = nom du modèle (« Evenement »), pas le nom de table
     // (« evenement ») : MySQL sous Linux distingue la casse, la recherche échouait en 500
     const alias = this.model.name;
-    const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-    const searchConditions = fields.map(field => {
-      const qualifiedCol = col(`${alias}.${field}`);
-      return {
-        [Op.or]: [
-          seqWhere(qualifiedCol, { [Op.like]: searchPattern }),
-          ...langs.map(lang =>
-            // Chemin entre guillemets (tiret de "tz-ltn") ; JSON_UNQUOTE + LOWER : recherche insensible à la casse
-            seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', qualifiedCol, literal(`'$."${lang}"'`)))), { [Op.like]: searchPattern.toLowerCase() })
-          )
-        ]
-      };
-    });
+
+    let condition;
+    // Colonne calculée texte_recherche (migrations 20261120 et 20261216 : œuvre, lieu, événement) quand
+    // la table l'a : nom ou titre et description (adresse pour un lieu), 5 langues, sans accents ni
+    // majuscules, une comparaison au lieu de 5 extractions JSON par champ et par ligne. Elle couvre les
+    // champs que les appelants passent ; `colonneRecherche: null` force la lecture champ par champ.
+    // Sinon (parcours, service, base des essais) : le JSON, langue par langue (audit V11 COD-B5).
+    const { colonneRecherche = 'texte_recherche' } = options;
+    if (colonneRecherche && await aColonne(this.model, colonneRecherche)) {
+      const motif = motifLike(this.model.sequelize, String(query || '').substring(0, 200));
+      condition = literal(`\`${alias}\`.\`${colonneRecherche}\` LIKE ${motif}`);
+    } else {
+      // Sanitize la requête - échapper les caractères spéciaux SQL
+      const searchPattern = `%${this._sanitizeSearchQuery(query)}%`;
+      const searchConditions = fields.map(field => {
+        const qualifiedCol = col(`${alias}.${field}`);
+        return {
+          [Op.or]: [
+            seqWhere(qualifiedCol, { [Op.like]: searchPattern }),
+            ...SUPPORTED_LANGUAGES.map(lang =>
+              // JSON_UNQUOTE + LOWER : recherche insensible à la casse
+              seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', qualifiedCol, literal(`'$.${cheminJson(lang)}'`)))), { [Op.like]: searchPattern.toLowerCase() })
+            )
+          ]
+        };
+      });
+      condition = { [Op.or]: searchConditions };
+    }
 
     return this.findAll({
       page,
       limit,
       where: {
         [Op.and]: [
-          { [Op.or]: searchConditions },
+          condition,
           additionalWhere
         ]
       },

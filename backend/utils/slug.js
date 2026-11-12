@@ -1,12 +1,13 @@
+const { texteLisible } = require('../helpers/i18n');
+const { sansAccent } = require('./texte');
+
 /**
  * Adresses lisibles « 17-amina-benali » (même règle que frontEnd/src/utils/slug.ts).
  * Seul le numéro identifie la page ; le texte est décoratif.
  */
 function slugify(text) {
-  return String(text || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
+  // Sans accents ni majuscules : règle commune de utils/texte.js
+  return sansAccent(text || '')
     .replace(/œ/g, 'oe')
     .replace(/æ/g, 'ae')
     .replace(/[^a-z0-9]+/g, '-')
@@ -15,18 +16,14 @@ function slugify(text) {
     .replace(/-+$/g, '');
 }
 
-/** Texte d'un champ multilingue ({ fr, ar, ... } ou JSON) : français d'abord */
+/**
+ * Texte d'un champ multilingue ({ fr, ar, ... } ou JSON) pour une adresse : français, puis anglais, puis
+ * arabe. Ordre propre aux adresses, à garder : slugify ne garde que les lettres latines, l'anglais donne
+ * donc une adresse lisible là où l'arabe la viderait (texteLisible met l'arabe avant l'anglais). Même
+ * lecture que texteLisible (helpers/i18n.js) avec l'anglais en langue de secours (audit V11 COD-B3).
+ */
 function plainText(value) {
-  if (!value) return '';
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object') return plainText(parsed);
-    } catch { /* texte simple */ }
-    return value;
-  }
-  if (typeof value === 'object') return value.fr || value.en || value.ar || Object.values(value).find(Boolean) || '';
-  return String(value);
+  return texteLisible(value, 'fr', 'en');
 }
 
 /** Chemin public du portfolio d'un professionnel */

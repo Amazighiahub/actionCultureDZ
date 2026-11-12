@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const { texteLisible } = require('../../helpers/i18n');
 
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
@@ -563,18 +564,6 @@ module.exports = (sequelize) => {
   // MÉTHODES D'INSTANCE
   // =============================================================================
   
-  // ⚡ NOUVELLE MÉTHODE - Obtenir le nom complet traduit
-  User.prototype.getNomComplet = function(lang = 'fr') {
-    const prenom = this.prenom?.[lang] || this.prenom?.fr || this.prenom?.ar || '';
-    const nom = this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-    return `${prenom} ${nom}`.trim();
-  };
-  
-  // ⚡ NOUVELLE MÉTHODE - Obtenir la biographie traduite
-  User.prototype.getBiographie = function(lang = 'fr') {
-    return this.biographie?.[lang] || this.biographie?.fr || this.biographie?.ar || '';
-  };
-  
   User.prototype.toPublicJSON = function(lang = 'fr') {
     const values = this.toJSON();
 
@@ -587,8 +576,8 @@ module.exports = (sequelize) => {
     PRIVATE_FIELDS.forEach(f => delete values[f]);
 
     // Traduire les champs
-    values.nom_display = this.getNomComplet(lang);
-    values.biographie_display = this.getBiographie(lang);
+    values.nom_display = `${texteLisible(this.prenom, lang)} ${texteLisible(this.nom, lang)}`.trim();
+    values.biographie_display = texteLisible(this.biographie, lang);
     
     if (!values.profil_public) {
       delete values.email;

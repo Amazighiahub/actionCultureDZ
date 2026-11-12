@@ -41,14 +41,5 @@ module.exports = (sequelize) => {
     });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  TypeUser.prototype.getNomType = function(lang = 'fr') {
-    return this.nom_type?.[lang] || this.nom_type?.fr || this.nom_type?.ar || '';
-  };
-
-  TypeUser.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return TypeUser;
 };

@@ -46,14 +46,5 @@ module.exports = (sequelize) => {
     Monument.belongsTo(models.DetailLieu, { foreignKey: 'id_detail_lieu' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Monument.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Monument.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || this.description?.ar || '';
-  };
-
   return Monument;
 };

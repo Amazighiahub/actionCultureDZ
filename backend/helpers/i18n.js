@@ -1,53 +1,7 @@
 // helpers/i18n.js
 // Fonctions utilitaires pour l'internationalisation (i18n)
 
-const { sanitizeLike } = require('../utils/sanitize');
-
-const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-const DEFAULT_LANGUAGE = 'fr';
-
-/**
- * Traduit un champ JSON multilingue vers une langue spécifique
- * @param {Object|string} field - Champ JSON ou string
- * @param {string} lang - Code de langue cible
- * @param {string} fallbackLang - Langue de fallback (défaut: fr)
- * @returns {string} - Valeur traduite
- */
-const translate = (field, lang = DEFAULT_LANGUAGE, fallbackLang = DEFAULT_LANGUAGE) => {
-  // Si c'est déjà une string, la retourner
-  if (typeof field === 'string') {
-    return field;
-  }
-  
-  // Si null ou undefined
-  if (!field) {
-    return '';
-  }
-  
-  // Si c'est un objet JSON avec les traductions
-  if (typeof field === 'object') {
-    // Essayer la langue demandée
-    if (field[lang]) {
-      return field[lang];
-    }
-    
-    // Fallback vers la langue par défaut
-    if (field[fallbackLang]) {
-      return field[fallbackLang];
-    }
-    
-    // Fallback vers français
-    if (field['fr']) {
-      return field['fr'];
-    }
-    
-    // Retourner la première valeur disponible
-    const values = Object.values(field).filter(v => v && typeof v === 'string');
-    return values[0] || '';
-  }
-  
-  return String(field);
-};
+const { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE, cheminJson } = require('../constants/langues');
 
 /**
  * Traduit récursivement tous les champs d'un objet ou tableau
@@ -150,17 +104,36 @@ const lireMultiLang = (value) => {
 };
 
 /**
- * Texte affichable d'un champ multilingue (objet, texte JSON ou simple chaîne) :
- * la langue demandée, sinon le français, sinon l'arabe, sinon la première langue remplie.
- * Un texte écrit seulement en tamazight ou en anglais n'est donc jamais vide.
+ * Texte affichable d'un champ multilingue (objet, texte JSON ou simple chaîne) : la seule lecture d'un
+ * texte multilingue du serveur (audit V11 COD-B3). Ordre : la langue demandée, la langue de secours
+ * (si donnée), le français, l'arabe, puis les autres langues du site dans leur ordre (en, tz-ltn,
+ * tz-tfng), puis toute autre clé remplie. Une langue vide ou faite d'espaces est sautée : un texte écrit
+ * seulement en tamazight ou en anglais n'est donc jamais vide.
+ * @param {Object|string|null} value
+ * @param {string} [lang] langue demandée
+ * @param {string|null} [secours] langue essayée juste après (adresses : l'anglais avant l'arabe, utils/slug.js)
+ * @returns {string} '' si aucune langue n'est remplie
  */
-const texteLisible = (value, lang = DEFAULT_LANGUAGE) => {
+const texteLisible = (value, lang = DEFAULT_LANGUAGE, secours = null) => {
   const v = lireMultiLang(value);
   if (v == null) return '';
   if (typeof v !== 'object') return String(v);
   const rempli = (x) => (typeof x === 'string' && x.trim() ? x : '');
-  return rempli(v[lang]) || rempli(v.fr) || rempli(v.ar) || Object.values(v).map(rempli).find(Boolean) || '';
+  for (const cle of [lang, secours, 'fr', 'ar', ...SUPPORTED_LANGUAGES]) {
+    if (cle && rempli(v[cle])) return v[cle];
+  }
+  return Object.values(v).map(rempli).find(Boolean) || '';
 };
+
+/**
+ * Ancien nom de texteLisible, gardé pour ses appelants. Différences avec l'ancienne version : un texte
+ * JSON est relu, une langue faite d'espaces est sautée, l'arabe passe avant les autres langues.
+ * @param {Object|string} field
+ * @param {string} [lang]
+ * @param {string} [fallbackLang] langue essayée après la langue demandée (défaut : français)
+ * @returns {string}
+ */
+const translate = (field, lang = DEFAULT_LANGUAGE, fallbackLang = DEFAULT_LANGUAGE) => texteLisible(field, lang, fallbackLang);
 
 /** Vrai si au moins une langue est remplie */
 const aUnTexte = (value) => texteLisible(value).trim().length > 0;
@@ -232,41 +205,6 @@ const prepareMultiLangField = (value, lang = DEFAULT_LANGUAGE, existingValue = n
 };
 
 /**
- * Construit une clause WHERE pour recherche multilingue
- * @param {string} field - Nom du champ
- * @param {string} searchTerm - Terme de recherche
- * @param {string} lang - Langue de recherche (optionnel, cherche dans toutes si non spécifié)
- * @returns {Object} - Clause Sequelize
- */
-const buildMultiLangSearch = (field, searchTerm, lang = null) => {
-  const { Op, Sequelize } = require('sequelize');
-  
-  if (!searchTerm) return {};
-  
-  const searchPattern = `%${sanitizeLike(searchTerm)}%`;
-  
-  if (lang) {
-    // Recherche dans une langue spécifique
-    const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
-    return Sequelize.where(
-      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
-      { [Op.like]: searchPattern }
-    );
-  }
-  
-  // Recherche dans toutes les langues
-  const conditions = SUPPORTED_LANGUAGES.map(l => {
-    const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-    return Sequelize.where(
-      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
-      { [Op.like]: searchPattern }
-    );
-  });
-  
-  return { [Op.or]: conditions };
-};
-
-/**
  * Construit une clause WHERE pour correspondance exacte (insensible à la casse) sur un champ JSON multilingue.
  * Cherche dans toutes les langues : si la valeur existe dans n'importe quelle langue, retourne un match.
  * Utilisé par findOrCreate pour éviter les doublons.
@@ -282,36 +220,16 @@ const buildMultiLangExactMatch = (field, value) => {
   const normalized = value.trim().toLowerCase();
   if (!normalized) return {};
 
-  const conditions = SUPPORTED_LANGUAGES.map(l => {
-    const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-    return Sequelize.where(
-      Sequelize.fn('LOWER',
-        Sequelize.fn('JSON_UNQUOTE',
-          Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`))
-        )
-      ),
-      normalized
-    );
-  });
+  const conditions = SUPPORTED_LANGUAGES.map(l => Sequelize.where(
+    Sequelize.fn('LOWER',
+      Sequelize.fn('JSON_UNQUOTE',
+        Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'$.${cheminJson(l)}'`))
+      )
+    ),
+    normalized
+  ));
 
   return { [Op.or]: conditions };
-};
-
-/**
- * Construit une clause ORDER BY pour tri multilingue
- * @param {string} field - Nom du champ
- * @param {string} lang - Langue pour le tri
- * @param {string} direction - ASC ou DESC
- * @returns {Array} - Clause Sequelize pour order
- */
-const buildMultiLangOrder = (field, lang = DEFAULT_LANGUAGE, direction = 'ASC') => {
-  const { Sequelize } = require('sequelize');
-  
-  const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
-  return [
-    Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
-    direction
-  ];
 };
 
 /**
@@ -332,7 +250,7 @@ const hasTranslation = (field, lang) => {
  */
 const getTranslationStatus = (field) => {
   if (!field || typeof field !== 'object') {
-    return { percentage: 0, missing: SUPPORTED_LANGUAGES, complete: [] };
+    return { percentage: 0, missing: [...SUPPORTED_LANGUAGES], complete: [] };
   }
   
   const complete = SUPPORTED_LANGUAGES.filter(lang => hasTranslation(field, lang));
@@ -353,9 +271,7 @@ module.exports = {
   aUnTexte,
   mergeTranslations,
   prepareMultiLangField,
-  buildMultiLangSearch,
   buildMultiLangExactMatch,
-  buildMultiLangOrder,
   hasTranslation,
   getTranslationStatus
 };

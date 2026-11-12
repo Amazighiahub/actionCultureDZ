@@ -16,7 +16,7 @@ import {
 import { LazyImage } from '@/components/shared';
 import { oeuvreService } from '@/services/oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
-import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { oeuvrePath } from '@/utils/slug';
 
 interface RelatedOeuvresProps {
@@ -34,7 +34,7 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 // Carte d'œuvre compacte
 const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
   const { i18n } = useTranslation();
-  const lang = (i18n.language || 'fr') as SupportedLanguage;
+  const lang = i18n.language || 'fr';
 
   return (
     <Link to={oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, oeuvre.id_type_oeuvre)} onClick={scrollToTop} className={CARD_LINK_CLASS}>
@@ -43,7 +43,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
         <div className="relative aspect-[3/4] overflow-hidden">
           <LazyImage
             src={(oeuvre as Oeuvre & Record<string, unknown>).image_url || (oeuvre as Oeuvre & Record<string, unknown>).couverture_url || '/images/placeholder-oeuvre.svg'}
-            alt={getTranslation(oeuvre.titre, lang)}
+            alt={getLocalizedText(oeuvre.titre, lang)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             fallback="/images/placeholder-oeuvre.svg"
           />
@@ -55,7 +55,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
           {oeuvre.TypeOeuvre && (
             <div className="absolute top-2 start-2">
               <Badge variant="secondary" className="bg-black/50 text-white border-0 text-xs">
-                {getTranslation(oeuvre.TypeOeuvre.nom_type, lang)}
+                {getLocalizedText(oeuvre.TypeOeuvre.nom_type, lang)}
               </Badge>
             </div>
           )}
@@ -74,7 +74,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
         {/* Contenu */}
         <CardContent className="p-3">
           <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-            {getTranslation(oeuvre.titre, lang)}
+            {getLocalizedText(oeuvre.titre, lang)}
           </h4>
         
           {(oeuvre as Oeuvre & Record<string, unknown>).sous_titre && (

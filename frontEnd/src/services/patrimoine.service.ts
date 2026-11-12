@@ -3,6 +3,8 @@ import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/c
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
+import type { TypePatrimoine } from '@/utils/typesPatrimoine';
 
 interface SitePatrimoine {
   id: number;
@@ -10,7 +12,7 @@ interface SitePatrimoine {
   nom: string;
   nom_ar?: string;
   description: string;
-  type: 'monument' | 'vestige' | 'musee' | 'site_naturel' | 'autre';
+  type: TypePatrimoine;
   epoque?: string;
   wilaya_id: number;
   commune_id?: number;
@@ -187,6 +189,15 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
 
   async getSiteDetail(id: number): Promise<ApiResponse<SitePatrimoine>> {
     return httpClient.get<SitePatrimoine>(API_ENDPOINTS.patrimoine.siteDetail(id));
+  }
+
+  /** Sites de la commune au nom proche (au plus 5), avant de créer un site. Passe par httpClient : adresse
+   *  de l'API, langue et jetons comme les autres appels (avant : fetch direct sur /api, audit V11 COD-14) */
+  async checkDuplicate(nom: string, communeId: number): Promise<ApiResponse<{
+    exists: boolean;
+    sites?: Array<{ id_lieu: number; nom: TexteMultilingue; typePatrimoine: TypePatrimoine }>;
+  }>> {
+    return httpClient.get(API_ENDPOINTS.patrimoine.checkDuplicate, { nom, communeId });
   }
 
   // ⚡ Obtenir les types de patrimoine avec comptages

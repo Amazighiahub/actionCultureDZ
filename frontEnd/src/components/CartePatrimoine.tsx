@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Maximize2, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { patrimoineService } from '@/services/patrimoine.service';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import 'leaflet/dist/leaflet.css';
 
 // Fix pour les icônes Leaflet
@@ -108,7 +109,7 @@ const CartePatrimoine: React.FC = () => {
             .filter((s: any) => s.latitude != null && s.longitude != null)
             .map((s: any) => ({
               id: s.id_lieu || s.id,
-              nom: typeof s.nom === 'object' ? (s.nom[lang] || s.nom.fr || '') : (s.nom || ''),
+              nom: getLocalizedText(s.nom, lang),
               position: [parseFloat(s.latitude), parseFloat(s.longitude)] as [number, number],
               region: s.Commune?.nom || s.wilaya || '',
               type: s.typePatrimoine || 'monument',

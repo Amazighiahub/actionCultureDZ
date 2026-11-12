@@ -1,5 +1,6 @@
 const BaseService = require('../core/baseService');
 const { texteLisible } = require('../../helpers/i18n');
+const { sansAccent } = require('../../utils/texte');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { categorieDuType } = require('./categories');
 const fusion = require('./fusionOrganisations');
@@ -20,7 +21,6 @@ const importsEnCours = new Set();
 // (verrou en mémoire, suffisant avec un seul processus Node)
 const creationsEnCours = new Set();
 
-const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Même nom dans chaque langue (espaces de début et de fin ignorés)
 function memesTextes(a, b) {
   const objet = (v) => (v && typeof v === 'object' ? v : { fr: v });

@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { httpClient } from '@/services/httpClient';
 import { cleSectionPatrimoine, type CarteArticle } from '@/services/patrimoineArticles.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import EnTeteSection from './EnTeteSection';
 import { oeuvrePath } from '@/utils/slug';
 
@@ -50,8 +50,8 @@ const ALire: React.FC = () => {
 
   // Fil de l'article : « Casbah d'Alger › Gastronomie locale » ou le nom de la personnalité
   const fil = (a: ArticleALire) => {
-    if (a.lieu) return `${texteLangue(a.lieu.nom, lang)} › ${t(`patrimoine.sections.${cleSectionPatrimoine(a.lieu.section_patrimoine)}`)}`;
-    if (a.personnalite) return `${texteLangue(a.personnalite.prenom, lang)} ${texteLangue(a.personnalite.nom, lang)}`.trim();
+    if (a.lieu) return `${getLocalizedText(a.lieu.nom, lang)} › ${t(`patrimoine.sections.${cleSectionPatrimoine(a.lieu.section_patrimoine)}`)}`;
+    if (a.personnalite) return `${getLocalizedText(a.personnalite.prenom, lang)} ${getLocalizedText(a.personnalite.nom, lang)}`.trim();
     return t('article.article', 'Article');
   };
   const [une, ...autres] = articles;
@@ -74,8 +74,8 @@ const ALire: React.FC = () => {
               <Link to={oeuvrePath(une.id_oeuvre, une.titre, 4)} className="block">
                 <div className="overflow-hidden rounded-2xl aspect-[16/10]"><Vignette image={une.image} grand /></div>
                 <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">{fil(une)}</p>
-                <h3 className="mt-2 font-serif text-2xl md:text-3xl font-bold leading-tight group-hover:text-primary transition-colors">{texteLangue(une.titre, lang)}</h3>
-                {texteLangue(une.resume, lang) && <p className="mt-3 text-lg text-muted-foreground line-clamp-3">{texteLangue(une.resume, lang)}</p>}
+                <h3 className="mt-2 font-serif text-2xl md:text-3xl font-bold leading-tight group-hover:text-primary transition-colors">{getLocalizedText(une.titre, lang)}</h3>
+                {getLocalizedText(une.resume, lang) && <p className="mt-3 text-lg text-muted-foreground line-clamp-3">{getLocalizedText(une.resume, lang)}</p>}
                 {une.auteur && <p className="mt-3 text-sm font-medium">{une.auteur}</p>}
               </Link>
             </article>
@@ -88,7 +88,7 @@ const ALire: React.FC = () => {
                       <div className="overflow-hidden rounded-xl aspect-[4/3]"><Vignette image={a.image} /></div>
                       <div className="min-w-0">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary truncate">{fil(a)}</p>
-                        <p className="mt-1 font-serif text-lg font-bold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{texteLangue(a.titre, lang)}</p>
+                        <p className="mt-1 font-serif text-lg font-bold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{getLocalizedText(a.titre, lang)}</p>
                       </div>
                     </Link>
                   </li>

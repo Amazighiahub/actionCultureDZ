@@ -5,6 +5,7 @@
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const { decalage, construirePagination } = require('../utils/pagination');
 
 class LieuRepository extends BaseRepository {
   constructor(models) {
@@ -50,7 +51,7 @@ class LieuRepository extends BaseRepository {
     if (statut) where.statut = statut;
 
     const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
-    const offset = (page - 1) * safeLimit;
+    const offset = decalage(page, safeLimit);
 
     const { rows, count } = await this.model.findAndCountAll({
       where,
@@ -63,14 +64,7 @@ class LieuRepository extends BaseRepository {
 
     return {
       data: rows,
-      pagination: {
-        page,
-        limit: safeLimit,
-        total: count,
-        totalPages: Math.ceil(count / safeLimit),
-        hasNext: page * safeLimit < count,
-        hasPrev: page > 1
-      }
+      pagination: construirePagination(count, page, safeLimit)
     };
   }
 

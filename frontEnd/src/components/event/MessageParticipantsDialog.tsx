@@ -18,7 +18,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
@@ -58,7 +58,7 @@ interface Props {
 const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFermer }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const [liste, setListe] = useState<Liste | null>(null);
   const [cible, setCible] = useState<Cible>('tous');
   const [champs, setChamps] = useState(VIDE);

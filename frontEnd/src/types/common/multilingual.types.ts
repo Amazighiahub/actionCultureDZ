@@ -1,8 +1,7 @@
 // types/common/multilingual.types.ts
 // Types communs pour le multilingue dans tout le projet
 
-import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
-import i18n from 'i18next';
+import { aDuTexte } from '@/utils/getLocalizedText';
 
 export interface TranslatableValue {
   fr?: string;
@@ -13,13 +12,14 @@ export interface TranslatableValue {
   [key: string]: string | undefined;
 }
 
-export interface RequiredTranslatableValue {
+// Type (et non interface) : reste assignable à TranslatableValue, qui a une signature d'index
+export type RequiredTranslatableValue = {
   fr: string;
   ar: string;
   en: string;
   'tz-ltn'?: string;
   'tz-tfng'?: string;
-}
+};
 
 /** Texte saisi dans une ou plusieurs langues, ou ancien texte simple (audit V11 COD-8) */
 export type TexteMultilingue = string | TranslatableValue | null | undefined;
@@ -116,12 +116,7 @@ export const LANGUAGE_FONT_CLASSES: Partial<Record<SupportedLanguage, string>> =
   'tz-tfng': 'tifinagh-font'
 };
 
-// Helpers pour le multilingue
-export function getTranslation(value: TranslatableValue | undefined, lang: SupportedLanguage = 'fr'): string {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-}
-
+// Helpers pour le multilingue (lecture d'un texte : getLocalizedText de utils/getLocalizedText.ts, audit V11 COD-1)
 export function setTranslation(value: TranslatableValue, lang: SupportedLanguage, text: string): TranslatableValue {
   return {
     ...value,
@@ -141,8 +136,4 @@ export function createEmptyTranslation(): RequiredTranslatableValue {
 
 export function hasRequiredTranslations(value: TranslatableValue): boolean {
   return aDuTexte(value);
-}
-
-export function getFirstAvailableTranslation(value: TranslatableValue): string {
-  return getLocalizedText(value, i18n.language);
 }

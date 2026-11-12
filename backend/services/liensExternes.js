@@ -7,7 +7,7 @@
 const { Op } = require('sequelize');
 
 const MAX_LIENS = 100;
-const STATUTS_EVENEMENT_PUBLICS = ['publie', 'planifie', 'en_cours', 'termine', 'reporte', 'annule'];
+const { EVENEMENT_PUBLIC: STATUTS_EVENEMENT_PUBLICS } = require('../constants/statuts');
 const RESEAUX = {
   youtube: ['youtube.com', 'youtu.be'],
   instagram: ['instagram.com'],

@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { Building, Calendar, Landmark, MapPin, Palette, Search, Users, type LucideIcon } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -18,11 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { httpClient } from '@/services/httpClient';
-import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useWilayas } from '@/hooks/useGeographie';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
-import { evenementPath, lieuPath, oeuvrePath, organisationPath, professionnelPath, wilayaPath } from '@/utils/slug';
+import { nomWilaya } from '@/components/gastronomie/PlatCard';
+import { evenementPath, lieuPath, oeuvrePath, organisationPath, professionnelPath, sansAccent, wilayaPath } from '@/utils/slug';
 
 const PAR_GROUPE = 6;
 
@@ -56,9 +56,6 @@ const liste = (data: unknown, cles: string[] = []): Brut[] => {
   }
   return [];
 };
-
-/** Texte comparé sans accents ni majuscules (wilayas, cherchées sur place) */
-const simplifier = (v: unknown) => String(v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** Une recherche existante ; un échec n'empêche pas les autres groupes de s'afficher */
 const chercher = async (adresse: string, params: Record<string, unknown>): Promise<unknown> => {
@@ -99,17 +96,17 @@ export default function Recherche() {
       staleTime: 60_000,
     })),
   });
-  // Même requête que DashboardUser et WilayaVitrine (même clé, même forme : une liste) ; avant, une copie
-  // sous la même clé gardait « null » en cas d'échec et faisait planter ces pages
-  const wilayas = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60_000 });
+  // Même liste en cache que les autres pages (audit V11 COD-11) ; avant, une copie sous la même clé
+  // gardait « null » en cas d'échec et faisait planter ces pages
+  const { wilayas, loading: wilayasEnCours } = useWilayas();
 
-  const cherche = simplifier(terme);
+  const cherche = sansAccent(terme);
   const groupes: Groupe[] = [
     {
-      id: 'wilayas', titre: t('recherche.wilayas', 'Wilayas'), icone: MapPin, charge: wilayas.isLoading,
-      resultats: actif ? liste(wilayas.data).filter((w) => simplifier(w.wilaya_name_ascii).includes(cherche) || simplifier(w.nom).includes(cherche))
+      id: 'wilayas', titre: t('recherche.wilayas', 'Wilayas'), icone: MapPin, charge: wilayasEnCours,
+      resultats: actif ? wilayas.filter((w) => sansAccent(w.wilaya_name_ascii).includes(cherche) || sansAccent(w.nom).includes(cherche))
         .slice(0, PAR_GROUPE).map((w) => ({
-          cle: `w${w.id_wilaya}`, titre: nomWilaya(w as unknown as Wilaya, lang), lien: wilayaPath(Number(w.id_wilaya), w.wilaya_name_ascii),
+          cle: `w${w.id_wilaya}`, titre: nomWilaya(w, lang), lien: wilayaPath(Number(w.id_wilaya), w.wilaya_name_ascii),
         })) : [],
     },
     {

@@ -23,17 +23,13 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SEOHead from '@/components/SEOHead';
 import { lienGuide } from '@/utils/lienGuide';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
+import type { TypePatrimoine } from '@/utils/typesPatrimoine';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
 
 const SITES_PAGE_SIZE = 12;
-
-// Helper pour traduire les champs multilingues
-const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
 
 // Composant de fallback pour la carte
 const MapSkeleton = () => (
@@ -66,9 +62,6 @@ const SiteCardSkeleton = () => (
   </Card>
 );
 
-// ⚡ Types de patrimoine
-type TypePatrimoine = 'ville_village' | 'monument' | 'musee' | 'site_archeologique' | 'site_naturel' | 'edifice_religieux' | 'palais_forteresse' | 'autre';
-
 interface TypePatrimoineOption {
   value: string;
   label: string;
@@ -77,15 +70,15 @@ interface TypePatrimoineOption {
 
 interface SitePatrimoine {
   id_lieu: number;
-  nom: string | { fr?: string; ar?: string; en?: string };
-  adresse: string | { fr?: string; ar?: string; en?: string };
+  nom: string | TranslatableValue;
+  adresse: string | TranslatableValue;
   latitude: number;
   longitude: number;
   typeLieu: string;
   typePatrimoine?: TypePatrimoine; // ⚡ Nouveau champ
   DetailLieu?: {
-    description?: string | { fr?: string; ar?: string; en?: string };
-    horaires?: string | { fr?: string; ar?: string; en?: string };
+    description?: string | TranslatableValue;
+    horaires?: string | TranslatableValue;
     noteMoyenne?: number;
     Monuments?: Array<{ id: number; nom: string | object; type: string }>;
     Vestiges?: Array<{ id: number; nom: string | object; type: string }>;
@@ -173,7 +166,7 @@ const Patrimoine = () => {
 
   // ⚡ Icônes pour les types de patrimoine
   const getTypeIcon = (type: string) => {
-    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+    const icons: Record<TypePatrimoine, React.ComponentType<{ className?: string }>> = {
       ville_village: Compass,
       monument: Landmark,
       musee: Building2,
@@ -183,7 +176,7 @@ const Patrimoine = () => {
       palais_forteresse: Building2,
       autre: Compass
     };
-    return icons[type] || Compass;
+    return icons[type as TypePatrimoine] || Compass;
   };
 
   return (
@@ -344,7 +337,7 @@ const Patrimoine = () => {
                   <div className="aspect-video relative overflow-hidden">
                     <img
                       src={optimizeImageUrl(getMainImage(site), 640)}
-                      alt={translate(site.nom, lang)}
+                      alt={getLocalizedText(site.nom, lang)}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
@@ -366,13 +359,13 @@ const Patrimoine = () => {
                         plus coupé par le badge (audit V11 UX-16) */}
                     <div className="space-y-1">
                       <CardTitle className="font-serif line-clamp-2">
-                        {translate(site.nom, lang)}
+                        {getLocalizedText(site.nom, lang)}
                       </CardTitle>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1 min-w-0">
                           <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
                           <span className="truncate">
-                            {(lang === 'ar' && site.wilaya?.nom) || (site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
+                            {(lang === 'ar' && site.wilaya?.nom) || (site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || getLocalizedText(site.adresse, lang)}
                           </span>
                         </span>
                         <Badge variant="outline">
@@ -383,9 +376,9 @@ const Patrimoine = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Pas de texte provisoire (« Description à venir... ») : rien si la description manque */}
-                    {translate(site.DetailLieu?.description, lang) && (
+                    {getLocalizedText(site.DetailLieu?.description, lang) && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {translate(site.DetailLieu?.description, lang)}
+                        {getLocalizedText(site.DetailLieu?.description, lang)}
                       </p>
                     )}
 
@@ -414,7 +407,7 @@ const Patrimoine = () => {
                     {site.DetailLieu?.horaires && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>{translate(site.DetailLieu.horaires, lang)}</span>
+                        <span>{getLocalizedText(site.DetailLieu.horaires, lang)}</span>
                       </div>
                     )}
 
@@ -422,7 +415,7 @@ const Patrimoine = () => {
                       <Button asChild className="flex-1 w-full btn-hover">
                         <Link
                           to={`/patrimoine/${site.id_lieu}`}
-                          aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${translate(site.nom, lang)}`}
+                          aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${getLocalizedText(site.nom, lang)}`}
                         >
                           <Eye className="h-4 w-4 me-2" aria-hidden="true" />
                           {t('sections.heritage.discover', 'Découvrir')}

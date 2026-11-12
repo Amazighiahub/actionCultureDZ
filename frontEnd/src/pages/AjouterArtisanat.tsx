@@ -25,24 +25,17 @@ import { metadataService } from '@/services/metadata.service';
 import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormPageHeader from '@/components/shared/FormPageHeader';
-import { aDuTexte } from '@/utils/getLocalizedText';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import type { RequiredTranslatableValue } from '@/types/common/multilingual.types';
 import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
-type MultiLangText = {
-  fr: string;
-  ar: string;
-  en: string;
-  'tz-ltn': string;
-  'tz-tfng': string;
-};
-
 interface FormData {
-  nom: MultiLangText;
-  description: MultiLangText;
+  nom: RequiredTranslatableValue;
+  description: RequiredTranslatableValue;
   id_materiau: number;
   id_technique: number;
   prix_min?: number;
@@ -131,7 +124,7 @@ const AjouterArtisanat: React.FC = () => {
       const response = await artisanatService.getForEdit(editId);
       if (response.success && response.data) {
         const art = response.data as Record<string, unknown>;
-        const toObj = (v: unknown): MultiLangText => {
+        const toObj = (v: unknown): RequiredTranslatableValue => {
           if (typeof v === 'object' && v !== null) {
             const obj = v as Record<string, unknown>;
             return { fr: (obj.fr as string) || '', ar: (obj.ar as string) || '', en: (obj.en as string) || '', 'tz-ltn': (obj['tz-ltn'] as string) || '', 'tz-tfng': (obj['tz-tfng'] as string) || '' };
@@ -339,17 +332,17 @@ const AjouterArtisanat: React.FC = () => {
     }
   };
 
+  // Nom d'un matériau ou d'une technique : objet multilingue, ou ce même objet écrit en JSON
   const getLocalizedName = (item: { nom?: string | Record<string, string> } | null) => {
     if (!item) return '';
     if (typeof item.nom === 'string') {
       try {
-        const parsed = JSON.parse(item.nom) as Record<string, string>;
-        return parsed[currentLang] || parsed.fr || item.nom;
+        return getLocalizedText(JSON.parse(item.nom), currentLang, item.nom);
       } catch {
         return item.nom;
       }
     }
-    return item.nom?.[currentLang] || item.nom?.fr || '';
+    return getLocalizedText(item.nom, currentLang);
   };
 
   if (loadingMetadata) {
@@ -420,7 +413,7 @@ const AjouterArtisanat: React.FC = () => {
                     label={t('ajouterArtisanat.nom', 'Nom du produit')}
                     value={formData.nom}
                     onChange={(value) => {
-                      setFormData(prev => ({ ...prev, nom: value as MultiLangText }));
+                      setFormData(prev => ({ ...prev, nom: value as RequiredTranslatableValue }));
                       setFieldErrors(prev => ({ ...prev, nom: '' }));
                       setIsDirty(true);
                     }}
@@ -436,7 +429,7 @@ const AjouterArtisanat: React.FC = () => {
                     label={t('ajouterArtisanat.description', 'Description')}
                     value={formData.description}
                     onChange={(value) => {
-                      setFormData(prev => ({ ...prev, description: value as MultiLangText }));
+                      setFormData(prev => ({ ...prev, description: value as RequiredTranslatableValue }));
                       setIsDirty(true);
                     }}
                     type="textarea"

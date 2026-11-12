@@ -69,6 +69,7 @@ import MoyensPaiement from '@/components/pro/MoyensPaiement';
 import AccesCommandes from '@/components/commande/AccesCommandes';
 import { lireSpecialites } from '@/utils/specialites';
 import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
 
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
 interface DashboardItem {
@@ -119,8 +120,6 @@ interface ItemRowProps {
   /** Absent : pas de bouton « Supprimer » (un site patrimoine ne se supprime que par la modération) */
   onDelete?: (item: DashboardItem) => void;
 }
-
-type MultiLangValue = string | Record<string, string> | undefined | null;
 
 // Helper pour le badge statut événement
 const getEventStatusBadge = (statut: string | undefined, t: (key: string, fallback?: string) => string) => {
@@ -249,7 +248,7 @@ const DashboardPro = () => {
     if (!items || !debouncedSearch) return items;
     return items.filter((item) => {
       // Extraire les valeurs string des champs (y compris objets multilingues)
-      const getValue = (field: MultiLangValue): string => {
+      const getValue = (field: TexteMultilingue): string => {
         if (!field) return '';
         if (typeof field === 'string') return field;
         if (typeof field === 'object' && !Array.isArray(field)) {

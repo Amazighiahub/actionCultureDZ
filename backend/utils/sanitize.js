@@ -15,4 +15,20 @@ function sanitizeLike(input, maxLength = 200) {
     .substring(0, maxLength);
 }
 
-module.exports = { sanitizeLike };
+/**
+ * Échappe les caractères HTML (& < > " ') d'un texte à insérer dans une page ou un e-mail.
+ * null / undefined → '' ; toute autre valeur est convertie en texte (0 → « 0 »).
+ * @param {*} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+module.exports = { sanitizeLike, escapeHtml };

@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import ListeMoyensPaiement from '@/components/paiement/ListeMoyensPaiement';
 import { commandeService, type Commande, type StatutCommande } from '@/services/commande.service';
 import { oeuvrePath } from '@/utils/slug';
@@ -32,7 +32,7 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatPrice } = useLocalizedNumber();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const [enCours, setEnCours] = useState(false);
   const [montant, setMontant] = useState('');
   const vendeur = c.role === 'vendeur';
@@ -70,7 +70,7 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
               : <span className="font-semibold" dir="auto">{c.titre}</span>}
             <p className="text-muted-foreground">
               {vendeur ? t('commande.par', 'Commandé par {{nom}}', { nom: c.acheteur.nom }) : t('commande.vendeurNom', 'Vendu par {{nom}}', { nom: c.vendeur.nom })}
-              {' · '}{formatDate(c.date_creation)}
+              {' · '}{formatDate(c.date_creation, { dateStyle: 'medium' })}
             </p>
           </div>
           <Badge className={`gap-1 ${S.classe}`} variant="secondary"><S.icone className="h-3.5 w-3.5" aria-hidden="true" />{statutLibelle[c.statut]}</Badge>

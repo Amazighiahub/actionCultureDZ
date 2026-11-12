@@ -734,7 +734,10 @@
       "contactTelephone": "هاتف التواصل",
       "startDatePast": "لا يمكن أن يكون تاريخ البداية في الماضي",
       "dateLimiteApresDebut": "يجب أن يكون آخر أجل للتسجيل في يوم البداية على الأكثر",
-      "virtualUrlInvalide": "يجب أن يبدأ الرابط بـ https://‎ (مثال: https://meet.google.com/…)"
+      "virtualUrlInvalide": "يجب أن يبدأ الرابط بـ https://‎ (مثال: https://meet.google.com/…)",
+      "orgEnAttente": "في انتظار المصادقة",
+      "idOrganisateur": "المنظِّم (رقم الحساب)",
+      "idOrganisateurAide": "اتركه فارغًا لتكون أنت المنظِّم. وإلا يصبح صاحب هذا الحساب هو المنظِّم ويمكنه تعديل الفعالية."
     },
     "types": {
       "concert": "حفلة موسيقية",

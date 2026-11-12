@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { LazyImage, StatusBadge } from '@/components/shared';
 import { evenementService } from '@/services/evenement.service';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -112,10 +111,9 @@ interface EventFeatureCardProps {
 
 const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
-  const { formatDate: formatDateLocale } = useFormatDate();
 
   const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
@@ -150,7 +148,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
                   {Number(partiesEvenement(event.date_debut).date.slice(8))}
                 </div>
                 <div className="text-xs uppercase text-muted-foreground">
-                  {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
+                  {formatDate(new Date(event.date_debut), { month: 'short' })}
                 </div>
               </div>
             </div>

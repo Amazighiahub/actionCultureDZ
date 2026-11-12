@@ -34,14 +34,5 @@ module.exports = (sequelize) => {
     Materiau.hasMany(models.Artisanat, { foreignKey: 'id_materiau', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Materiau.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Materiau.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Materiau;
 };

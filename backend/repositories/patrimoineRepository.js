@@ -8,6 +8,8 @@ const { aColonne } = require('../utils/colonnesCalculees');
 const { Op, literal } = require('sequelize');
 const { MAX_NIVEAUX_LIEU } = require('../constants/patrimoineTypes');
 const { whereServicesVisibles } = require('../utils/servicesVisibles');
+const { decalage, construirePagination } = require('../utils/pagination');
+const { EVENEMENT_VISIBLE } = require('../constants/statuts');
 
 class PatrimoineRepository extends BaseRepository {
   constructor(models) {
@@ -211,7 +213,7 @@ class PatrimoineRepository extends BaseRepository {
         include,
         order: [['createdAt', 'DESC']],
         limit: l,
-        offset: (p - 1) * l,
+        offset: decalage(p, l),
         subQuery: false
       })
     ]);
@@ -220,14 +222,7 @@ class PatrimoineRepository extends BaseRepository {
 
     return {
       data,
-      pagination: {
-        page: p,
-        limit: l,
-        total,
-        totalPages: Math.ceil(total / l),
-        hasNext: p * l < total,
-        hasPrev: p > 1
-      }
+      pagination: construirePagination(total, p, l)
     };
   }
 
@@ -249,7 +244,8 @@ class PatrimoineRepository extends BaseRepository {
           model: this.models.Evenement,
           as: 'Evenement',
           required: true,
-          where: { statut: { [Op.in]: ['publie', 'planifie', 'en_cours', 'termine', 'reporte'] } },
+          // Visibles et reportés ; pas les annulés ni les non publics
+          where: { statut: { [Op.in]: [...EVENEMENT_VISIBLE, 'reporte'] } },
           attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut']
         }],
         order: [['date_programme', 'ASC'], ['heure_debut', 'ASC']]

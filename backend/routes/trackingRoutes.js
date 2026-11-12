@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const VueController = require('../controllers/vueController');
 const { viewLimiter } = require('../middlewares/rateLimitMiddleware');
+const { bornerPagination, decalage, construirePagination } = require('../utils/pagination');
+const { EVENEMENT_PUBLIC, EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 
 // Factory function qui reçoit les modèles et middlewares
 const initTrackingRoutes = (models, authMiddleware) => {
@@ -109,7 +111,8 @@ const initTrackingRoutes = (models, authMiddleware) => {
 
   // Chiffres d'un contenu pas encore public (brouillon, en attente, refusé) : seulement son auteur et
   // l'administration (avant : n'importe qui pouvait sonder les brouillons par leur numéro)
-  const STATUTS_PUBLICS = ['publie', 'planifie', 'en_cours', 'termine', 'reporte', 'annule', 'valide', 'actif'];
+  // Statuts publics de tous les types suivis (événement, œuvre, lieu…), plus « valide » et « actif »
+  const STATUTS_PUBLICS = [...EVENEMENT_PUBLIC, 'valide', 'actif'];
   const statsVisibles = async (req, res, next) => {
     try {
       let e = req.entity;
@@ -227,7 +230,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
             break;
           case 'evenement':
             entities = await models.Evenement.findAll({
-              where: { id_evenement: entityIds, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+              where: { id_evenement: entityIds, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
               attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'image_url']
             });
             break;
@@ -286,27 +289,25 @@ const initTrackingRoutes = (models, authMiddleware) => {
     authenticate,
     async (req, res) => {
       try {
-        const { page = 1, limit = 20, type } = req.query;
-        
+        const { type } = req.query;
+        // Bornée comme les autres listes (avant : limit sans plafond, « abc » donnait NaN)
+        const { page, limit } = bornerPagination(req.query.page, req.query.limit, 20);
+
         const where = { id_user: req.user.id_user };
         if (type) where.type_entite = type;
 
         const { count, rows } = await models.Vue.findAndCountAll({
           where,
           order: [['date_vue', 'DESC']],
-          limit: parseInt(limit),
-          offset: (parseInt(page) - 1) * parseInt(limit)
+          limit,
+          offset: decalage(page, limit)
         });
 
         res.json({
           success: true,
           data: rows,
-          pagination: {
-            total: count,
-            pages: Math.ceil(count / limit),
-            currentPage: parseInt(page),
-            perPage: parseInt(limit)
-          }
+          // currentPage / perPage : anciens noms, gardés à côté des champs communs
+          pagination: { ...construirePagination(count, page, limit), currentPage: page, perPage: limit }
         });
       } catch (error) {
         res.status(500).json({

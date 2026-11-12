@@ -14,7 +14,7 @@ import {
   Globe, Accessibility, Baby, Award, CheckCircle, AlertCircle,
   Navigation, ExternalLink, Tag
 } from 'lucide-react';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
@@ -27,7 +27,7 @@ interface EventInfoProps {
 
 const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData(); // Pour traduire les champs JSON multilingues
   // Seulement http(s) : ce lien est saisi par l'organisateur

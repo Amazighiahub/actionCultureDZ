@@ -60,7 +60,7 @@ import EcrireAvecMessagerie from './EcrireAvecMessagerie';
 import { httpClient } from '@/services/httpClient';
 import { paiementService } from '@/services/paiement.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
@@ -185,7 +185,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     if (evenementId && saisieEnAttente(cleMessageParticipants(evenementId), user?.id_user)) setMessageOuvert(true);
   }, [evenementId, user?.id_user]);
   const { td } = useTranslateData();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { toast } = useToast();
 
   const [participants, setParticipants] = useState<Participant[]>([]);

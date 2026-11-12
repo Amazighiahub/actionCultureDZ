@@ -77,6 +77,26 @@ class OeuvreService extends BaseService {
    *   À passer à false quand on ré-hydrate l'œuvre après une mutation, sinon créer
    *   ou éditer une œuvre lui donnerait artificiellement une vue.
    */
+  /**
+   * Traduction d'une langue (administration, PATCH …/translation/:lang) : les champs reçus sont fusionnés
+   * dans le texte multilingue, les autres langues restent intactes. La route l'appelait mais la méthode
+   * n'existait pas : erreur 500 à chaque appel (audit V11).
+   */
+  async updateTranslation(id, lang, champs = {}) {
+    const { mergeTranslations } = require('../../helpers/i18n');
+    const ligne = await this.models.Oeuvre.findByPk(id);
+    if (!ligne) throw this._notFoundError(id);
+    const updates = {};
+    for (const champ of ['titre', 'description']) {
+      const valeur = champs[champ];
+      if (typeof valeur === 'string' && valeur.trim()) updates[champ] = mergeTranslations(ligne[champ], { [lang]: valeur.trim() });
+    }
+    if (!Object.keys(updates).length) throw this._validationError('Aucun champ valide à mettre à jour');
+    await ligne.update(updates);
+    this.cache?.invalidate?.();
+    return this.findWithFullDetails(id, { incrementViews: false });
+  }
+
   async findWithFullDetails(id, options = {}) {
     const { incrementViews = true } = options;
 

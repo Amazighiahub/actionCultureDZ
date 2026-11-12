@@ -17,6 +17,7 @@ import { messageErreurServeur } from '@/utils/erreurServeur';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/hooks/useAuth';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 const ViewProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
@@ -50,7 +51,7 @@ const ViewProgrammePage: React.FC = () => {
 
           // Stocker le nom du lieu
           if (programme.Lieu?.nom) {
-            setLieuNom(typeof programme.Lieu.nom === 'object' ? (programme.Lieu.nom as any).fr || '' : programme.Lieu.nom);
+            setLieuNom(getLocalizedText(programme.Lieu.nom, i18n.language));
           }
 
           // Transformer les données pour le formulaire
@@ -197,8 +198,7 @@ const ViewProgrammePage: React.FC = () => {
     );
   }
 
-  const titres = (programmeData?.titre || {}) as Record<string, string | undefined>;
-  const programmeTitle = titres[i18n.language] || titres.fr || Object.values(titres).find(Boolean) || t('programmePages.seoTitle', 'Programme');
+  const programmeTitle = getLocalizedText(programmeData?.titre, i18n.language, t('programmePages.seoTitle', 'Programme'));
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -315,8 +315,9 @@ const ViewProgrammePage: React.FC = () => {
             <div className="space-y-4">
               {rawIntervenants.map((intervenant) => {
                 const pi = intervenant.ProgrammeIntervenant;
-                const nom = typeof intervenant.nom === 'object' ? (intervenant.nom as any).fr || '' : intervenant.nom || '';
-                const prenom = typeof intervenant.prenom === 'object' ? (intervenant.prenom as any).fr || '' : intervenant.prenom || '';
+                // Dans la langue du site (avant : toujours la version française)
+                const nom = getLocalizedText(intervenant.nom, i18n.language);
+                const prenom = getLocalizedText(intervenant.prenom, i18n.language);
                 return (
                   <div
                     key={intervenant.id_intervenant ?? intervenant.id_user}

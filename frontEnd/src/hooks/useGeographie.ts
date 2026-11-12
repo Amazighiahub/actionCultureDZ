@@ -1,7 +1,10 @@
 // hooks/useGeographie.ts
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
+import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 
 // =====================================================
 // TYPES (alignés avec les modèles Sequelize backend)
@@ -39,47 +42,36 @@ export interface Localite {
 // HOOK: useWilayas
 // =====================================================
 
+/** Clé du cache de la liste des wilayas : la même pour toutes les pages qui la lisent */
+export const CLE_WILAYAS = ['wilayas-liste'] as const;
+
 /**
- * Hook pour charger toutes les wilayas
+ * Liste des wilayas, lue une seule fois et gardée en cache (React Query). Seule lecture du site :
+ * avant, cinq copies (useEffect, services, pages) refaisaient l'appel à chaque écran (audit V11 COD-11).
+ * La liste vient de wilayaVitrineService.wilayas (toujours une liste, jamais null) : même clé et même
+ * forme que DashboardUser, qui lit aussi ce cache.
  */
 export function useWilayas() {
-  const [wilayas, setWilayas] = useState<Wilaya[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // « Réessayer » après un échec de chargement (avant : liste vide sans message, audit V11 FRM-25)
-  const [essai, setEssai] = useState(0);
-  const recharger = useCallback(() => setEssai((n) => n + 1), []);
+  const { t } = useTranslation();
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: CLE_WILAYAS,
+    // Les champs renvoyés par /metadata/wilayas sont ceux de Wilaya (id_wilaya, codeW, nom, wilaya_name_ascii)
+    queryFn: async () => (await wilayaVitrineService.wilayas()) as Wilaya[],
+    staleTime: 60 * 60 * 1000,
+  });
+  // « Réessayer » après un échec de chargement (audit V11 FRM-25)
+  const recharger = useCallback(() => { void refetch(); }, [refetch]);
 
-  useEffect(() => {
-    const loadWilayas = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await httpClient.get<{ success: boolean; data: Wilaya[] }>(
-          API_ENDPOINTS.metadata.geographie.wilayas
-        );
-        
-        if (response.success && response.data?.data) {
-          setWilayas(response.data.data);
-        } else if (response.success && Array.isArray(response.data)) {
-          // Fallback si la réponse est directement un tableau
-          setWilayas(response.data);
-        } else {
-          setError(response.error || 'Erreur lors du chargement des wilayas');
-        }
-      } catch (err) {
-        setError('Impossible de charger les wilayas');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadWilayas();
-  }, [essai]);
-
-  return { wilayas, loading, error, recharger };
+  return {
+    wilayas: data ?? AUCUNE_WILAYA,
+    loading: isLoading,
+    error: isError ? t('events.create.loadWilayasFailed', 'Erreur lors du chargement des wilayas') : null,
+    recharger,
+  };
 }
+
+/** Liste vide stable : un tableau neuf à chaque rendu relancerait les effets qui en dépendent */
+const AUCUNE_WILAYA: Wilaya[] = [];
 
 // =====================================================
 // HOOK: useDairas
@@ -224,56 +216,6 @@ export function useLocalites(communeId: number | null) {
   }, [communeId]);
 
   return { localites, loading, error };
-}
-
-// =====================================================
-// HOOK: useSearchWilayas
-// =====================================================
-
-/**
- * Hook pour rechercher des wilayas
- */
-export function useSearchWilayas(query: string) {
-  const [results, setResults] = useState<Wilaya[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!query || query.length < 2) {
-      setResults([]);
-      return;
-    }
-
-    const searchWilayas = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await httpClient.get<{ success: boolean; data: Wilaya[] }>(
-          API_ENDPOINTS.metadata.geographie.searchWilayas,
-          { q: query }
-        );
-        
-        if (response.success && response.data?.data) {
-          setResults(response.data.data);
-        } else if (response.success && Array.isArray(response.data)) {
-          setResults(response.data);
-        } else {
-          setError(response.error || 'Erreur lors de la recherche');
-        }
-      } catch (err) {
-        setError('Impossible de rechercher les wilayas');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Debounce la recherche
-    const timeoutId = setTimeout(searchWilayas, 300);
-    return () => clearTimeout(timeoutId);
-  }, [query]);
-
-  return { results, loading, error };
 }
 
 // =====================================================

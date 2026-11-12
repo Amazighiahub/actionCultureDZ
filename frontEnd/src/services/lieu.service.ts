@@ -4,36 +4,28 @@ import { httpClient } from './httpClient';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
 import { Lieu } from '@/types/models/lieu.types';
 import { DetailLieu, Service } from '@/types/models/lieux-details.types';
-import { Wilaya, Daira } from '@/types/models/geography.types';
+import { Daira } from '@/types/models/geography.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-
-// Types pour les données multilingues
-interface MultiLangString {
-  fr?: string;
-  ar?: string;
-  en?: string;
-  'tz-ltn'?: string;
-  'tz-tfng'?: string;
-}
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 
 interface CreateLieuData {
   typeLieu: string;
   typePatrimoine?: string;
-  nom: string | MultiLangString;
-  adresse: string | MultiLangString;
+  nom: string | TranslatableValue;
+  adresse: string | TranslatableValue;
   latitude: number;
   longitude: number;
   wilayaId?: number;
   dairaId?: number;
   communeId?: number;
   localiteId?: number;
-  description?: string | MultiLangString;
-  histoire?: string | MultiLangString;
+  description?: string | TranslatableValue;
+  histoire?: string | TranslatableValue;
   details?: {
-    description?: string | MultiLangString;
-    horaires?: string | MultiLangString;
-    histoire?: string | MultiLangString;
-    referencesHistoriques?: string | MultiLangString;
+    description?: string | TranslatableValue;
+    horaires?: string | TranslatableValue;
+    histoire?: string | TranslatableValue;
+    referencesHistoriques?: string | TranslatableValue;
   };
 }
 
@@ -41,8 +33,8 @@ interface UpdateLieuData extends Partial<CreateLieuData> {}
 
 // Types pour les services d'un lieu
 interface CreateServiceData {
-  nom: string | MultiLangString;
-  description?: string | MultiLangString;
+  nom: string | TranslatableValue;
+  description?: string | TranslatableValue;
   disponible?: boolean;
 }
 
@@ -133,13 +125,6 @@ class LieuService {
   }
 
   /**
-   * Obtenir les wilayas
-   */
-  async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
-    return httpClient.get<Wilaya[]>('/metadata/wilayas');
-  }
-
-  /**
    * Obtenir les communes d'une wilaya
    */
   async getCommunesByWilaya(wilayaId: number): Promise<ApiResponse<Daira[]>> {
@@ -226,25 +211,17 @@ class LieuService {
   }
 
   /**
-   * Helper pour extraire une chaîne d'un champ multilingue
-   */
-  private getStringValue(value: string | MultiLangString | undefined): string {
-    if (!value) return '';
-    return getLocalizedText(value, 'fr');
-  }
-
-  /**
    * Valider un lieu avant création
    */
   validate(data: CreateLieuData): { valid: boolean; errors?: string[] } {
     const errors: string[] = [];
 
-    const nomValue = this.getStringValue(data.nom);
+    const nomValue = getLocalizedText(data.nom, 'fr');
     if (!nomValue || nomValue.trim().length < 3) {
       errors.push('Le nom du lieu doit contenir au moins 3 caractères');
     }
 
-    const adresseValue = this.getStringValue(data.adresse);
+    const adresseValue = getLocalizedText(data.adresse, 'fr');
     if (!adresseValue || adresseValue.trim().length < 10) {
       errors.push('L\'adresse doit contenir au moins 10 caractères');
     }
@@ -336,10 +313,10 @@ class LieuService {
    * Créer ou mettre à jour les détails d'un lieu
    */
   async updateDetails(lieuId: number, data: {
-    description?: string | MultiLangString;
-    horaires?: string | MultiLangString;
-    histoire?: string | MultiLangString;
-    referencesHistoriques?: string | MultiLangString;
+    description?: string | TranslatableValue;
+    horaires?: string | TranslatableValue;
+    histoire?: string | TranslatableValue;
+    referencesHistoriques?: string | TranslatableValue;
   }): Promise<ApiResponse<DetailLieu>> {
     return httpClient.put<DetailLieu>(`${this.endpoint}/${lieuId}/details`, data);
   }
@@ -368,10 +345,10 @@ class LieuService {
    * Obtenir toutes les traductions d'un lieu
    */
   async getTranslations(lieuId: number): Promise<ApiResponse<{
-    nom: MultiLangString;
-    adresse: MultiLangString;
-    description?: MultiLangString;
-    histoire?: MultiLangString;
+    nom: TranslatableValue;
+    adresse: TranslatableValue;
+    description?: TranslatableValue;
+    histoire?: TranslatableValue;
   }>> {
     return httpClient.get(`${this.endpoint}/${lieuId}/translations`);
   }
@@ -395,6 +372,5 @@ export type {
   UpdateLieuData,
   SearchLieuParams,
   GeocodingResult,
-  CreateServiceData,
-  MultiLangString
+  CreateServiceData
 };

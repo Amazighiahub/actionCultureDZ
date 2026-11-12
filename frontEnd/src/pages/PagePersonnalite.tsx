@@ -23,7 +23,7 @@ import {
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { idFromSlug, personnalitePath } from '@/utils/slug';
 
@@ -103,8 +103,8 @@ const PagePersonnalite: React.FC = () => {
   }
 
   const inv = page.intervenant;
-  const nom = `${texteLangue(inv.prenom, lang)} ${texteLangue(inv.nom, lang)}`.trim();
-  const biographie = texteLangue(inv.biographie, lang);
+  const nom = `${getLocalizedText(inv.prenom, lang)} ${getLocalizedText(inv.nom, lang)}`.trim();
+  const biographie = getLocalizedText(inv.biographie, lang);
   const annee = (d?: string | null) => (d ? String(new Date(d).getFullYear()) : '');
   const date = (d?: string | null) => (d ? formatDate(new Date(d), { day: 'numeric', month: 'long', year: 'numeric' }) : '');
   const periodeVie = inv.date_naissance || inv.date_deces ? [annee(inv.date_naissance) || '?', annee(inv.date_deces)].filter(Boolean).join(' – ') : '';
@@ -200,7 +200,7 @@ const PagePersonnalite: React.FC = () => {
                 <ul className="space-y-3">
                   {page.lieux.map(l => (
                     <li key={l.id_lieu}>
-                      <Link to={`/patrimoine/${l.id_lieu}`} className="font-medium text-primary hover:underline">{texteLangue(l.nom, lang)}</Link>
+                      <Link to={`/patrimoine/${l.id_lieu}`} className="font-medium text-primary hover:underline">{getLocalizedText(l.nom, lang)}</Link>
                       {(l.role_sur_site || l.periode) && <p className="text-xs text-muted-foreground">{[l.role_sur_site, l.periode].filter(Boolean).join(' · ')}</p>}
                       {l.contexte && <p className="text-sm text-muted-foreground mt-1">{l.contexte}</p>}
                     </li>

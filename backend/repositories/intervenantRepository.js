@@ -7,7 +7,8 @@ const { PUBLIC_USER_ATTRIBUTES, PUBLIC_INTERVENANT_ATTRIBUTES } = require('../co
 const { Op } = require('sequelize');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { triParNom } = require('../utils/triParNom');
-const { bornerPagination } = require('../utils/pagination');
+const { bornerPagination, decalage, construirePagination } = require('../utils/pagination');
+const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 const { sanitizeLike } = require('../utils/sanitize');
 
 class IntervenantRepository extends BaseRepository {
@@ -25,7 +26,7 @@ class IntervenantRepository extends BaseRepository {
     const borne = bornerPagination(page, limit);
     const safeLimit = borne.limit;
     page = borne.page;
-    const offset = (page - 1) * safeLimit;
+    const offset = decalage(page, safeLimit);
     const where = {};
 
     if (search) {
@@ -83,14 +84,7 @@ class IntervenantRepository extends BaseRepository {
 
     return {
       data: rows,
-      pagination: {
-        page,
-        limit: safeLimit,
-        total: count,
-        totalPages: Math.ceil(count / safeLimit),
-        hasNext: page * safeLimit < count,
-        hasPrev: page > 1
-      }
+      pagination: construirePagination(count, page, safeLimit)
     };
   }
 
@@ -120,7 +114,7 @@ class IntervenantRepository extends BaseRepository {
           as: 'Evenement',
           attributes: [],
           required: true,
-          where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }
+          where: { statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } }
         }] : []
       });
     }

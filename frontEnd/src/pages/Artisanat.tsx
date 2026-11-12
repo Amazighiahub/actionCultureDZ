@@ -35,13 +35,13 @@ import SEOHead from '@/components/SEOHead';
 // Hook personnalisé
 import { useArtisanat } from '@/hooks/useArtisanat';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { sansAccent } from '@/utils/slug';
 
 
 import ArtisanatCard from '@/components/artisanat/ArtisanatCard';
 
 // Liens du menu (?materiau=bois…) : slug du nom français ; « bijoux » n'est pas un matériau
 const MATERIAU_ALIASES: Record<string, string> = { bijoux: 'argent' };
-const slugify = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 // Composant principal
 const Artisanat: React.FC = () => {
@@ -78,12 +78,12 @@ const Artisanat: React.FC = () => {
   useEffect(() => {
     if (!materiauParam) return;
     let cancelled = false;
-    const wanted = MATERIAU_ALIASES[slugify(materiauParam)] || slugify(materiauParam);
+    const wanted = MATERIAU_ALIASES[sansAccent(materiauParam)] || sansAccent(materiauParam);
     httpClient.get<{ id_materiau: number; nom: string }[]>('/metadata/materiaux', { lang: 'fr' })
       .then((res) => {
         if (cancelled) return;
         const list = Array.isArray(res.data) ? res.data : [];
-        const found = list.find((m) => typeof m.nom === 'string' && slugify(m.nom) === wanted);
+        const found = list.find((m) => typeof m.nom === 'string' && sansAccent(m.nom) === wanted);
         setSelectedMateriau(found ? String(found.id_materiau) : 'tous');
       })
       .catch(() => { /* filtre ignoré : la liste complète reste affichée */ });

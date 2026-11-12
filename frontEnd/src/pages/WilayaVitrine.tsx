@@ -22,6 +22,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { evenementPath, professionnelPath } from '@/utils/slug';
 import { libelleRole } from '@/utils/rolesOeuvre';
+import { useWilayas } from '@/hooks/useGeographie';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
 import { wilayaVitrineService, lienOeuvre, type OeuvreCarte, type PersonneWilaya } from '@/services/wilayaVitrine.service';
 import { idFromSlug, wilayaPath } from '@/utils/slug';
@@ -68,15 +69,16 @@ const ErreurChargement: React.FC<{ onReessayer: () => void }> = ({ onReessayer }
 
 const ListeWilayas: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['wilayas-liste'], queryFn: wilayaVitrineService.wilayas, staleTime: 60 * 60 * 1000 });
+  // Même liste en cache que les autres pages (audit V11 COD-11)
+  const { wilayas, loading, error, recharger } = useWilayas();
   return (
     <>
       <SEOHead title={t('wilaya.toutes', 'Les wilayas')} description={t('wilaya.toutesAide', 'Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.')} />
       <h1 className="text-3xl font-bold mb-2">{t('wilaya.toutes', 'Les wilayas')}</h1>
       <p className="text-muted-foreground mb-6">{t('wilaya.toutesAide', 'Les écrivains, artisans, œuvres, événements et lieux de chaque wilaya d’Algérie.')}</p>
-      {isError ? <ErreurChargement onReessayer={() => refetch()} /> : isLoading ? <LoadingSkeleton /> : (
+      {error ? <ErreurChargement onReessayer={recharger} /> : loading ? <LoadingSkeleton /> : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {(data || []).map(w => (
+          {wilayas.map(w => (
             <li key={w.id_wilaya}>
               <Link to={`/wilayas/${w.id_wilaya}`} className="block rounded-lg border p-3 hover:bg-accent transition-colors">
                 {nomWilaya(w, i18n.language)}

@@ -14,7 +14,7 @@ import OeuvresPersonnalite from '@/components/patrimoine/OeuvresPersonnalite';
 import { httpClient } from '@/services/httpClient';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { LieuIntervenant } from '@/services/lieuIntervenant.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
 
@@ -47,11 +47,11 @@ const PersonnaliteDialog: React.FC<Props> = ({ lien, lang, onClose, onModifiee }
   }, [inv?.id_intervenant, isAdmin]);
 
   if (!lien || !inv) return null;
-  const nom = `${texteLangue(inv.prenom, lang)} ${texteLangue(inv.nom, lang)}`.trim();
+  const nom = `${getLocalizedText(inv.prenom, lang)} ${getLocalizedText(inv.nom, lang)}`.trim();
   const date = (d?: string | null) => (d ? formatDate(new Date(d), { day: 'numeric', month: 'long', year: 'numeric' }) : '');
   const naissance = [date(inv.date_naissance), inv.lieu_naissance].filter(Boolean).join(', ');
   const deces = [date(inv.date_deces), inv.lieu_deces].filter(Boolean).join(', ');
-  const biographie = texteLangue(inv.biographie, lang);
+  const biographie = getLocalizedText(inv.biographie, lang);
 
   return (
     <>

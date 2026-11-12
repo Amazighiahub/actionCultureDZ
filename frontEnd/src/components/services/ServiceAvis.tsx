@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from '@/components/shared/StarRating';
 import { useAuth } from '@/hooks/useAuth';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { commentaireService, type AvisService } from '@/services/commentaire.service';
@@ -83,7 +83,7 @@ const Saisie: React.FC<{
 const ServiceAvis: React.FC<{ serviceId: number; proprietaireId?: number | null }> = ({ serviceId, proprietaireId }) => {
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { formatNumber } = useLocalizedNumber();
   const queryClient = useQueryClient();
   const [reponseA, setReponseA] = useState<number | null>(null);

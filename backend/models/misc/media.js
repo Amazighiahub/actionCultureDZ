@@ -154,19 +154,6 @@ module.exports = (sequelize) => {
     Media.belongsTo(models.Evenement, { foreignKey: 'id_evenement', onDelete: 'CASCADE' });
   };
   
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Media.prototype.getTitre = function(lang = 'fr') {
-    return this.titre?.[lang] || this.titre?.fr || this.titre?.ar || '';
-  };
-
-  Media.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
-  Media.prototype.getAltText = function(lang = 'fr') {
-    return this.alt_text?.[lang] || this.alt_text?.fr || this.getTitre(lang) || '';
-  };
-
   // Méthodes existantes
   Media.prototype.addTag = function(tag) {
     const tags = this.tags || [];

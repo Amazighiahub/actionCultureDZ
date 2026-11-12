@@ -24,6 +24,7 @@ import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
 import BlocsArticle from '@/components/patrimoine/BlocsArticle';
 import PagesDetaillees from '@/components/patrimoine/PagesDetaillees';
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 import {
   PATRIMOINE_SECTIONS,
   type PatrimoineSection,
@@ -34,15 +35,13 @@ import {
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
-type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
-
 interface SectionEnrichissableProps {
   /** Icône ou emoji à afficher */
   icon: React.ReactNode;
   /** Titre de la section */
   title: string;
   /** Contenu multilingue actuel */
-  content?: string | MultilingualField | null;
+  content?: string | TranslatableValue | null;
   /** Langue courante */
   lang: string;
   /** ID du lieu pour l'API */
@@ -50,7 +49,7 @@ interface SectionEnrichissableProps {
   /** Nom du champ dans detail_lieux (ex: 'gastronomie', 'traditions') */
   fieldName: string;
   /** Callback après sauvegarde réussie */
-  onSaved?: (newContent: MultilingualField) => void;
+  onSaved?: (newContent: TranslatableValue) => void;
   /** Blocs « Écrire un article » de cette section, affichés sous le texte */
   blocs?: PatrimoineBlock[];
   /** Bouton « Écrire un article » : modération et professionnels validés (règle du serveur) */
@@ -62,11 +61,6 @@ interface SectionEnrichissableProps {
   /** Après le retrait d'une page détaillée */
   onPagesChange?: () => void;
 }
-
-const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
 
 const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   icon, title, content, lang, lieuId, fieldName, onSaved,
@@ -81,7 +75,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editValue, setEditValue] = useState<MultilingualField>({ fr: '', ar: '', en: '' });
+  const [editValue, setEditValue] = useState<TranslatableValue>({ fr: '', ar: '', en: '' });
   const [isArticleEditorOpen, setIsArticleEditorOpen] = useState(false);
   // Session expirée pendant la saisie : texte conservé, fenêtre rouverte au retour (audit V11 FRM-23).
   // Avant le « return » anticipé plus bas (règle des hooks) ; la clé contient la section (8 sur la page).
@@ -110,7 +104,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   // Anciens blocs (éditeur simple) : gérés par la modération seulement
   const sectionBlocs = isAdmin && blocs.length > 0 ? sectionValide : null;
 
-  const texte = translate(content, lang).trim();
+  const texte = getLocalizedText(content, lang).trim();
   const hasContent = texte.length > 0 || blocs.length > 0 || pages.length > 0;
 
   const openEditor = () => {

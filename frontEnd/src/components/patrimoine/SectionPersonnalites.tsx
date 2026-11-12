@@ -24,23 +24,21 @@ import { PATRIMOINE_SECTIONS, type PatrimoineSection, type PatrimoineBlock, type
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 import {
   lieuIntervenantService,
-  getIntervenantNom,
   type LieuIntervenant,
 } from '@/services/lieuIntervenant.service';
+import type { TexteMultilingue, TranslatableValue } from '@/types/common/multilingual.types';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
-
-type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
 interface SectionPersonnalitesProps {
   icon: React.ReactNode;
   title: string;
-  content?: string | MultilingualField | null;
+  content?: TexteMultilingue;
   lang: string;
   lieuId: number;
   /** Créateur du site : il peut retirer les personnalités du site */
   idCreateurSite?: number | null;
-  onSaved?: (newContent: MultilingualField) => void;
+  onSaved?: (newContent: TranslatableValue) => void;
   /** Blocs « Écrire un article » de la section, affichés sous le texte */
   blocs?: PatrimoineBlock[];
   /** Après ajout ou suppression d'un bloc d'article */
@@ -49,11 +47,6 @@ interface SectionPersonnalitesProps {
   pages?: PagePatrimoine[];
   onPagesChange?: () => void;
 }
-
-const translate = (v: string | MultilingualField | null | undefined, lang: string): string => {
-  if (!v) return '';
-  return getLocalizedText(v, lang);
-};
 
 const sectionArticles: PatrimoineSection | null = (PATRIMOINE_SECTIONS as readonly string[]).includes('personnalites')
   ? 'personnalites' as PatrimoineSection
@@ -82,7 +75,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
   // ── texte libre ──
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editValue, setEditValue] = useState<MultilingualField>({ fr: '', ar: '', en: '' });
+  const [editValue, setEditValue] = useState<TranslatableValue>({ fr: '', ar: '', en: '' });
   const [isArticleEditorOpen, setIsArticleEditorOpen] = useState(false);
 
   // ── intervenants liés ──
@@ -140,7 +133,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
     actif: isAddOpen && !!(selected || nouvelle || roleSurSite.trim() || periode.trim() || contexte.trim() || searchQuery.trim()),
   });
 
-  const texte = translate(content, lang).trim();
+  const texte = getLocalizedText(content, lang).trim();
   const hasContent = texte.length > 0 || blocs.length > 0 || pages.length > 0;
 
   // Charger les intervenants liés
@@ -237,7 +230,8 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             periode: periode || undefined,
             contexte: contexte || undefined
           }).then(res => {
-            if (!res.success || !res.data) throw new Error(res.error || 'Erreur');
+            // La réponse elle-même : messageErreurServeur y lit la raison du serveur (avant : « Erreur » seul, audit V11 COD-16)
+            if (!res.success || !res.data) throw res;
             return res.data;
           }))
         : await lieuIntervenantService.add(lieuId, {
@@ -264,7 +258,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
       setIntervenants(prev => [...prev, lien]);
       setIsAddOpen(false);
       resetAddForm();
-      toast({ title: t('personnalites.ajoutee', 'Personnalité ajoutée'), description: `${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)}` });
+      toast({ title: t('personnalites.ajoutee', 'Personnalité ajoutée'), description: `${getLocalizedText(selected.prenom, lang)} ${getLocalizedText(selected.nom, lang)}` });
     } catch (err: unknown) {
       // Raison du serveur (avant : « response.data.error », toujours vide : « Erreur » seul, audit V11 FRM-18)
       toast({ title: t('common.error'), description: messageErreurServeur(err, t('patrimoine.contribute.saveFailed', 'Erreur lors de la sauvegarde')), variant: 'destructive' });
@@ -375,7 +369,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                 {intervenants.map(lien => {
                   const inv = lien.Intervenant;
                   const nomComplet = inv
-                    ? `${getIntervenantNom(inv.prenom, lang)} ${getIntervenantNom(inv.nom, lang)}`.trim()
+                    ? `${getLocalizedText(inv.prenom, lang)} ${getLocalizedText(inv.nom, lang)}`.trim()
                     : `Intervenant #${lien.id_intervenant}`;
                   return (
                     <div key={lien.id_lieu_intervenant} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
@@ -489,7 +483,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                 {searchResults.length > 0 && (
                   <div className="border rounded-lg divide-y max-h-56 overflow-y-auto">
                     {searchResults.map(inv => {
-                      const nom = `${getIntervenantNom(inv.prenom, lang)} ${getIntervenantNom(inv.nom, lang)}`.trim();
+                      const nom = `${getLocalizedText(inv.prenom, lang)} ${getLocalizedText(inv.nom, lang)}`.trim();
                       const alreadyLinked = alreadyLinkedIds.has(inv.id_intervenant);
                       return (
                         <button
@@ -544,7 +538,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                     <p className="font-medium text-sm">
                       {nouvelle
                         ? `${nouvelle.prenom.fr} ${nouvelle.nom.fr}`.trim()
-                        : `${getIntervenantNom(selected.prenom, lang)} ${getIntervenantNom(selected.nom, lang)}`.trim()}
+                        : `${getLocalizedText(selected.prenom, lang)} ${getLocalizedText(selected.nom, lang)}`.trim()}
                     </p>
                     {(nouvelle?.titre_professionnel || selected?.titre_professionnel) && <p className="text-xs text-muted-foreground">{nouvelle?.titre_professionnel || selected?.titre_professionnel}</p>}
                     {nouvelle && <p className="text-xs text-primary">{t('personnalites.nouvelleFiche', 'Nouvelle fiche, enregistrée en l’associant')}</p>}

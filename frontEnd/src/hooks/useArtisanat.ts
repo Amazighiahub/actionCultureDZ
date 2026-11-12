@@ -7,6 +7,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 // Copie de secours par langue : les titres sont traduits par le serveur
 import i18n from 'i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 /** Extended Artisanat with optional `prix` field that may come from API responses */
 interface ArtisanatWithPrix extends Artisanat {
@@ -232,9 +233,8 @@ export function useArtisanat(): UseArtisanatReturn {
       filtered = filtered.filter(a => {
         if (a.nom?.toLowerCase().includes(query)) return true;
         if (a.description?.toLowerCase().includes(query)) return true;
-        const titre = a.Oeuvre?.titre;
-        const titreStr = typeof titre === 'string' ? titre : (titre as Record<string, string>)?.fr || '';
-        if (titreStr.toLowerCase().includes(query)) return true;
+        // Titre lu dans la langue affichée (avant : le français seul)
+        if (getLocalizedText(a.Oeuvre?.titre, i18n.language).toLowerCase().includes(query)) return true;
         if (a.Materiau?.nom?.toLowerCase().includes(query)) return true;
         if (a.Technique?.nom?.toLowerCase().includes(query)) return true;
         return false;

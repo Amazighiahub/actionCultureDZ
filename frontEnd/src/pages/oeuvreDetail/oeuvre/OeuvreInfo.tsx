@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
-import { getLocalizedText as texteLocalise } from '@/utils/getLocalizedText';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import i18n from 'i18next';
 import { Link } from 'react-router-dom';
 import { organisationPath } from '@/utils/slug';
@@ -23,9 +23,6 @@ import type { Editeur } from '@/types/models/references.types';
 /** Page publique de la maison d'édition, si elle est vérifiée */
 const pageEditeur = (editeur: Editeur): string | null =>
   editeur.Organisation?.statut === 'valide' ? organisationPath(editeur.Organisation.id_organisation, editeur.nom) : null;
-
-// Texte d'un champ multilingue, dans la langue du site d'abord
-const getLocalizedText = (value: unknown, fallback: string = ''): string => texteLocalise(value, i18n.language, fallback);
 
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;
@@ -39,8 +36,8 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
   const oeuvreAny = oeuvre as Oeuvre & Record<string, unknown>;
   // Textes comparés dans la langue affichée : les champs multilingues sont des objets, deux objets
   // de même contenu sont toujours « différents » si on les compare directement
-  const texteDescription = getLocalizedText(oeuvre.description).trim();
-  const texteResume = getLocalizedText(oeuvreAny.resume).trim();
+  const texteDescription = getLocalizedText(oeuvre.description, i18n.language).trim();
+  const texteResume = getLocalizedText(oeuvreAny.resume, i18n.language).trim();
   const resumeDistinct = texteResume !== '' && texteResume !== texteDescription;
   const afficherDescription = !descriptionDansEnTete || !texteDescription;
 
@@ -56,7 +53,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
           {oeuvre.TypeOeuvre && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.type', 'Type')}</span>
-              <Badge variant="secondary">{getLocalizedText(oeuvre.TypeOeuvre.nom_type)}</Badge>
+              <Badge variant="secondary">{getLocalizedText(oeuvre.TypeOeuvre.nom_type, i18n.language)}</Badge>
             </div>
           )}
 
@@ -72,7 +69,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
           {oeuvre.Langue && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.language', 'Langue')}</span>
-              <span className="font-medium">{getLocalizedText(oeuvre.Langue.nom)}</span>
+              <span className="font-medium">{getLocalizedText(oeuvre.Langue.nom, i18n.language)}</span>
             </div>
           )}
 
@@ -90,11 +87,11 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
               <span className="text-muted-foreground">{t('oeuvre.publisher', 'Éditeur')}</span>
               {pageEditeur(oeuvre.Editeurs[0]) ? (
                 <Link to={pageEditeur(oeuvre.Editeurs[0])!} className="font-medium truncate max-w-[150px] text-primary hover:underline underline-offset-4">
-                  {getLocalizedText(oeuvre.Editeurs[0].nom)}
+                  {getLocalizedText(oeuvre.Editeurs[0].nom, i18n.language)}
                 </Link>
               ) : (
                 <span className="font-medium truncate max-w-[150px]">
-                  {getLocalizedText(oeuvre.Editeurs[0].nom)}
+                  {getLocalizedText(oeuvre.Editeurs[0].nom, i18n.language)}
                 </span>
               )}
             </div>
@@ -111,7 +108,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 <div className="flex flex-wrap gap-1">
                   {oeuvre.Categories.slice(0, 5).map((cat) => (
                     <Badge key={cat.id_categorie} variant="outline" className="text-xs">
-                      {getLocalizedText(cat.nom)}
+                      {getLocalizedText(cat.nom, i18n.language)}
                     </Badge>
                   ))}
                 </div>
@@ -128,7 +125,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
               <div className="flex flex-wrap gap-1">
                 {oeuvre.Tags.slice(0, 5).map((tag) => (
                   <Badge key={tag.id_tag} variant="secondary" className="text-xs">
-                    #{getLocalizedText(tag.nom)}
+                    #{getLocalizedText(tag.nom, i18n.language)}
                   </Badge>
                 ))}
               </div>
@@ -194,7 +191,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.type', 'Type')}</p>
-                  <p className="font-medium">{getLocalizedText(oeuvre.TypeOeuvre.nom_type)}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvre.TypeOeuvre.nom_type, i18n.language)}</p>
                 </div>
               </div>
             )}
@@ -220,7 +217,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.language', 'Langue')}</p>
-                  <p className="font-medium">{getLocalizedText(oeuvre.Langue.nom)}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvre.Langue.nom, i18n.language)}</p>
                 </div>
               </div>
             )}
@@ -228,14 +225,14 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
             {/* ISBN et durée du film : donnés une seule fois, dans « Détails du livre » / « Détails du film » (audit V11 UX-18) */}
 
             {/* Lieu d'origine */}
-            {getLocalizedText(oeuvreAny.lieu_origine) && (
+            {getLocalizedText(oeuvreAny.lieu_origine, i18n.language) && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.origin', 'Origine')}</p>
-                  <p className="font-medium">{getLocalizedText(oeuvreAny.lieu_origine)}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvreAny.lieu_origine, i18n.language)}</p>
                 </div>
               </div>
             )}
@@ -573,11 +570,11 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                     const page = pageEditeur(editeur);
                     return page ? (
                       <Link key={editeur.id_editeur} to={page} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <Badge variant="outline" className="hover:bg-muted">{getLocalizedText(editeur.nom)}</Badge>
+                        <Badge variant="outline" className="hover:bg-muted">{getLocalizedText(editeur.nom, i18n.language)}</Badge>
                       </Link>
                     ) : (
                       <Badge key={editeur.id_editeur} variant="outline">
-                        {getLocalizedText(editeur.nom)}
+                        {getLocalizedText(editeur.nom, i18n.language)}
                       </Badge>
                     );
                   })}
@@ -598,7 +595,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 <div className="flex flex-wrap gap-2">
                   {(oeuvreAny.Genres as Array<{ id_genre?: number; nom?: unknown }>).map((genre, idx) => (
                     <Badge key={genre.id_genre ?? idx} variant="secondary">
-                      {getLocalizedText(genre.nom)}
+                      {getLocalizedText(genre.nom, i18n.language)}
                     </Badge>
                   ))}
                 </div>
@@ -618,7 +615,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Categories.map((cat) => (
                     <Badge key={cat.id_categorie} variant="outline">
-                      {getLocalizedText(cat.nom)}
+                      {getLocalizedText(cat.nom, i18n.language)}
                     </Badge>
                   ))}
                 </div>
@@ -638,7 +635,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Tags.map((tag) => (
                     <Badge key={tag.id_tag} variant="secondary">
-                      #{getLocalizedText(tag.nom)}
+                      #{getLocalizedText(tag.nom, i18n.language)}
                     </Badge>
                   ))}
                 </div>
@@ -659,7 +656,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false, descri
                   {(oeuvreAny.recompenses as unknown[]).map((recompense, index: number) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <Award className="h-4 w-4 text-yellow-500" />
-                      {getLocalizedText(recompense)}
+                      {getLocalizedText(recompense, i18n.language)}
                     </li>
                   ))}
                 </ul>

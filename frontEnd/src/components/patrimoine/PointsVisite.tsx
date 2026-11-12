@@ -14,27 +14,27 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { patrimoineService } from '@/services/patrimoine.service';
 import type { PointCarte } from './PointsVisiteCarte';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
 import { useProcheEcran } from '@/hooks/useProcheEcran';
 
 const PointsVisiteCarte = React.lazy(() => import('./PointsVisiteCarte'));
 
-type Multilingual = string | { fr?: string; ar?: string; en?: string; [k: string]: string | undefined } | null | undefined;
 
 export interface PointVisite {
   id_lieu: number;
-  nom: Multilingual;
+  nom: TexteMultilingue;
   typePatrimoine?: string;
   latitude: number | string;
   longitude: number | string;
   ordre_visite?: number | null;
-  repere?: Multilingual;
+  repere?: TexteMultilingue;
   LieuMedia?: Array<{ url: string; type: string }>;
   LieuMedias?: Array<{ url: string; type: string }>;
-  DetailLieu?: { description?: Multilingual } | null;
+  DetailLieu?: { description?: TexteMultilingue } | null;
 }
 
 interface PointsVisiteProps {
-  site: { id_lieu: number; nom: Multilingual; latitude: number | string; longitude: number | string };
+  site: { id_lieu: number; nom: TexteMultilingue; latitude: number | string; longitude: number | string };
   points: PointVisite[];
   lang: string;
   /** professionnel validé ou admin : peut ajouter un point */
@@ -43,11 +43,6 @@ interface PointsVisiteProps {
   canReorder: boolean;
   onReordered: (points: PointVisite[]) => void;
 }
-
-const texte = (value: Multilingual, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
 
 // Même position que le site (à ~1 m près) : point intérieur, pas de marqueur à part
 const memePosition = (a: { latitude: number | string; longitude: number | string }, b: { latitude: number | string; longitude: number | string }) =>
@@ -65,7 +60,7 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
   const pointsCarte: PointCarte[] = points
     .map((p, index) => ({ p, numero: index + 1 }))
     .filter(({ p }) => !memePosition(p, site))
-    .map(({ p, numero }) => ({ id_lieu: p.id_lieu, numero, nom: texte(p.nom, lang), latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+    .map(({ p, numero }) => ({ id_lieu: p.id_lieu, numero, nom: getLocalizedText(p.nom, lang), latitude: Number(p.latitude), longitude: Number(p.longitude) }));
 
   const deplacer = async (index: number, sens: -1 | 1) => {
     const cible = index + sens;
@@ -117,7 +112,7 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
           {carteProche ? (
             <React.Suspense fallback={<div className="h-[280px] bg-muted rounded-lg animate-pulse" />}>
               <PointsVisiteCarte
-                site={{ nom: texte(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
+                site={{ nom: getLocalizedText(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
                 points={pointsCarte}
               />
             </React.Suspense>
@@ -131,9 +126,9 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
         <ol className="space-y-2">
           {points.map((point, index) => {
             const image = (point.LieuMedia || point.LieuMedias || []).find(m => m.type === 'image');
-            const repere = texte(point.repere, lang);
-            const description = texte(point.DetailLieu?.description, lang);
-            const nom = texte(point.nom, lang);
+            const repere = getLocalizedText(point.repere, lang);
+            const description = getLocalizedText(point.DetailLieu?.description, lang);
+            const nom = getLocalizedText(point.nom, lang);
             return (
               <li key={point.id_lieu} className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/40 transition-colors">
                 <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold shrink-0" aria-hidden="true">

@@ -11,7 +11,7 @@ const LIMITE = 24;
 const LIMITE_PERSONNES = 100;
 const TYPES_ARTICLE = [4, 5];
 const TYPE_ARTISANAT = 7;
-const STATUTS_EVENEMENT = ['publie', 'planifie', 'en_cours'];
+const { EVENEMENT_OUVERT: STATUTS_EVENEMENT } = require('../constants/statuts');
 
 /** Professionnels publics de la wilaya : par la wilaya indiquée, ou par leur commune */
 async function wherePersonnes(models, idWilaya) {

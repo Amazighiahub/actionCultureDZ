@@ -6,19 +6,9 @@
 const AppError = require('../utils/appError');
 const { texteLisible } = require('../helpers/i18n');
 const { notifier } = require('../utils/notifierModeration');
+const { nomComplet, sansInvisibles, texte } = require('../utils/texte');
+const { escapeHtml } = require('../utils/sanitize');
 
-// Caractères invisibles (contrôle, sens d'écriture forcé) : ils peuvent maquiller un nom ou un texte
-// eslint-disable-next-line no-control-regex -- volontaire : ces caractères sont justement ceux à retirer
-const INVISIBLES = /[\u0000-\u0009\u000B-\u001F\u007F\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
-/** Mêmes invisibles, plus le « joiner » graphique U+034F (marque combinante : retirée par son code) */
-const sansInvisibles = (s) => Array.from(String(s).replace(INVISIBLES, '')).filter((ch) => ch.codePointAt(0) !== 0x034F).join('');
-const texte = (v, max, champ) => {
-  if (v === undefined || v === null || v === '') return null;
-  if (typeof v !== 'string') throw AppError.badRequest(`${champ} invalide`);
-  const t = sansInvisibles(v.replace(/\r\n?/g, '\n')).trim();
-  if (t.length > max) throw AppError.badRequest(`${champ} : ${max} caractères au plus`);
-  return t || null;
-};
 const chiffres = (v, champ, min, max) => {
   const t = texte(v, 40, champ);
   if (!t) return null;
@@ -161,10 +151,9 @@ async function enregistrerMoyens(models, idUser, entree, { motDePasse, ip, userA
       url_action: '/dashboard-pro', metadata: { champs: change },
     });
     if (emailService?.sendEmail && u.email) {
-      const nom = [texteLisible(u.prenom), texteLisible(u.nom)].filter(Boolean).join(' ');
-      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const nom = nomComplet(u);
       Promise.resolve(emailService.sendEmail(u.email, 'Vos coordonnées de paiement ont été modifiées',
-        `<p>Bonjour ${esc(nom || '')},</p><p>Les coordonnées de paiement de votre compte Tala DZ (RIP, CCP ou lien de paiement) viennent d’être modifiées.</p>`
+        `<p>Bonjour ${escapeHtml(nom)},</p><p>Les coordonnées de paiement de votre compte Tala DZ (RIP, CCP ou lien de paiement) viennent d’être modifiées.</p>`
         + '<p>Si c’est vous, il n’y a rien à faire.</p><p><b>Si ce n’est pas vous</b> : changez tout de suite votre mot de passe (« Mot de passe oublié » sur la page de connexion) et écrivez à contact@taladz.com.</p>'
         + '<p>Rappel : Tala DZ n’encaisse jamais d’argent et ne vous demandera jamais vos codes bancaires.</p>', null, null, { type: 'securite' })).catch(() => {});
     }
@@ -205,7 +194,7 @@ async function paiementDuParticipant(models, idEvenement, idUser) {
     // Ne pas payer : l'organisateur n'est plus en règle (le site le dit au participant)
     organisateur_indisponible: !!organisateur && !enRegle,
     organisateur: organisateur
-      ? { id: organisateur.id_user, nom: [texteLisible(organisateur.prenom), texteLisible(organisateur.nom)].filter(Boolean).join(' ') }
+      ? { id: organisateur.id_user, nom: nomComplet(organisateur) }
       : null,
   };
 }
@@ -238,4 +227,4 @@ async function confirmerPaiement(models, evenementService, notificationService, 
   return { paye: recu, date_paiement: inscription.date_paiement };
 }
 
-module.exports = { INVISIBLES, CLES_PAIEMENT, CLES_SENSIBLES, normaliserMoyens, aUnMoyen, lireMoyens, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };
+module.exports = { CLES_PAIEMENT, CLES_SENSIBLES, normaliserMoyens, aUnMoyen, lireMoyens, mesMoyens, enregistrerMoyens, paiementDuParticipant, confirmerPaiement };

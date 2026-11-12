@@ -3,6 +3,7 @@
  * « Éditions Santa-Cruz » désignent la même maison. On compare les noms sans accents,
  * sans ponctuation et sans les mots génériques (éditions, association, culturelle…).
  */
+const { sansAccent } = require('../../utils/texte');
 const MOTS_GENERIQUES = new Set([
   'edition', 'editions', 'editeur', 'editeurs', 'association', 'associations', 'culturelle', 'culturele',
   'culturel', 'culture', 'maison', 'dar', 'el', 'al', 'les', 'le', 'la', 'de', 'du', 'des', 'd', 'l', 'et',
@@ -11,9 +12,7 @@ const MOTS_GENERIQUES = new Set([
 ]);
 
 /** Mots significatifs d'un nom (sans accents, ponctuation ni mots génériques) */
-const motsDuNom = (texte) => String(texte || '')
-  .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .toLowerCase()
+const motsDuNom = (texte) => sansAccent(texte)
   .replace(/[^\p{L}\p{N}]+/gu, ' ')
   .split(' ')
   .filter(m => m && !MOTS_GENERIQUES.has(m));

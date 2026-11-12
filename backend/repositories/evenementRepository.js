@@ -14,8 +14,10 @@ const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
 const { attributsComptes, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
 const { pasTermine, termine, finSql } = require('../helpers/finEvenement');
 
-// Statuts des événements visibles sur le site (liste publique, statistiques publiques)
-const STATUTS_VISIBLES = ['publie', 'planifie', 'en_cours', 'termine'];
+// Statuts des événements visibles sur le site (liste publique, statistiques publiques) : constants/statuts.js
+const { EVENEMENT_PUBLIE, EVENEMENT_OUVERT, EVENEMENT_VISIBLE, EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
+const { decalage, construirePagination } = require('../utils/pagination');
+const { sansAccent } = require('../utils/texte');
 
 class EvenementRepository extends BaseRepository {
   constructor(models) {
@@ -150,19 +152,19 @@ class EvenementRepository extends BaseRepository {
 
     // Statuts tels qu'affichés sur le site (calculés aussi depuis les dates)
     if (statut === 'a_venir') {
-      and.push({ statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.gt]: now } });
+      and.push({ statut: { [Op.in]: EVENEMENT_PUBLIE }, date_debut: { [Op.gt]: now } });
     } else if (statut === 'en_cours') {
       and.push({
         [Op.or]: [
           { statut: 'en_cours' },
-          { statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.lte]: now }, [Op.and]: [pasTermine(now, this.model.name)] }
+          { statut: { [Op.in]: EVENEMENT_PUBLIE }, date_debut: { [Op.lte]: now }, [Op.and]: [pasTermine(now, this.model.name)] }
         ]
       });
     } else if (statut === 'termine') {
       and.push({
         [Op.or]: [
           { statut: 'termine' },
-          { statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] }, [Op.and]: [termine(now, this.model.name)] }
+          { statut: { [Op.in]: EVENEMENT_OUVERT }, [Op.and]: [termine(now, this.model.name)] }
         ]
       });
     }
@@ -172,8 +174,7 @@ class EvenementRepository extends BaseRepository {
       if (/^\d+$/.test(String(type))) {
         and.push({ id_type_evenement: Number(type) });
       } else {
-        const normalize = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-        const wanted = normalize(type);
+        const wanted = sansAccent(type);
         const types = await this.models.TypeEvenement.findAll({ attributes: ['id_type_evenement', 'nom_type'], raw: true });
         const ids = types
           .filter((tp) => {
@@ -183,7 +184,7 @@ class EvenementRepository extends BaseRepository {
             }
             const values = names && typeof names === 'object' ? Object.values(names) : [names];
             return values.some((n) => {
-              const name = normalize(n);
+              const name = sansAccent(n);
               return name && (name === wanted || name.startsWith(wanted) || wanted.startsWith(name));
             });
           })
@@ -207,7 +208,7 @@ class EvenementRepository extends BaseRepository {
     // Les événements terminés restent visibles (« Tous » et « Terminés ») : ils ne sont jamais archivés
     // automatiquement ; seule l'administration retire un événement (annulation ou suppression).
     // Avant, « Tous » les cachait : un salon passé disparaissait de la liste dès le lendemain.
-    const where = { ...options.where, statut: { [Op.in]: STATUTS_VISIBLES }, ...(extra.length ? { [Op.and]: extra } : {}) };
+    const where = { ...options.where, statut: { [Op.in]: EVENEMENT_VISIBLE }, ...(extra.length ? { [Op.and]: extra } : {}) };
     // À venir et en cours d'abord (date croissante), puis les terminés (le plus récent d'abord)
     if (await aColonne(this.model, 'fin_effective')) return this._pagePubliee(where, p, l);
     const alias = this.model.name;
@@ -225,19 +226,14 @@ class EvenementRepository extends BaseRepository {
         include: this._defaultIncludes(),
         order: ordre,
         limit: l,
-        offset: (p - 1) * l,
+        offset: decalage(p, l),
         subQuery: false
       })
     ]);
 
     return {
       data: rows,
-      pagination: {
-        page: p, limit: l, total,
-        totalPages: Math.ceil(total / l),
-        hasNext: p * l < total,
-        hasPrev: p > 1
-      }
+      pagination: construirePagination(total, p, l)
     };
   }
 
@@ -254,7 +250,7 @@ class EvenementRepository extends BaseRepository {
     const passes = { [Op.and]: [where, { [Op.or]: [{ statut: 'termine' }, { fin_effective: { [Op.lte]: maintenant } }] }] };
     const [total, nbAVenir] = await Promise.all([this.model.count({ where }), this.model.count({ where: aVenir })]);
     const commun = { attributes: { include: attributsComptes() }, include: this._defaultIncludes(), subQuery: false };
-    const debut = (p - 1) * l;
+    const debut = decalage(p, l);
     const rows = debut < nbAVenir
       ? await this.model.findAll({ ...commun, where: aVenir, order: [['date_debut', 'ASC'], ['id_evenement', 'ASC']], limit: l, offset: debut })
       : [];
@@ -269,12 +265,7 @@ class EvenementRepository extends BaseRepository {
     }
     return {
       data: rows,
-      pagination: {
-        page: p, limit: l, total,
-        totalPages: Math.ceil(total / l),
-        hasNext: p * l < total,
-        hasPrev: p > 1
-      }
+      pagination: construirePagination(total, p, l)
     };
   }
 
@@ -288,7 +279,7 @@ class EvenementRepository extends BaseRepository {
     const where = {
       ...options.where,
       date_debut: { [Op.gte]: new Date() },
-      statut: { [Op.in]: ['publie', 'planifie'] }
+      statut: { [Op.in]: EVENEMENT_PUBLIE }
     };
 
     const [total, rows] = await Promise.all([
@@ -299,19 +290,14 @@ class EvenementRepository extends BaseRepository {
         include: this._defaultIncludes(),
         order: [['date_debut', 'ASC']],
         limit: l,
-        offset: (p - 1) * l,
+        offset: decalage(p, l),
         subQuery: false
       })
     ]);
 
     return {
       data: rows,
-      pagination: {
-        page: p, limit: l, total,
-        totalPages: Math.ceil(total / l),
-        hasNext: p * l < total,
-        hasPrev: p > 1
-      }
+      pagination: construirePagination(total, p, l)
     };
   }
 
@@ -409,7 +395,7 @@ class EvenementRepository extends BaseRepository {
    */
   async findByOeuvre(oeuvreId) {
     return this.model.findAll({
-      where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+      where: { statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
       attributes: { include: attributsComptes() },
       include: [
         ...this._defaultIncludes(),
@@ -436,13 +422,13 @@ class EvenementRepository extends BaseRepository {
         ...options,
         page,
         limit,
-        where: { [Op.and]: [await this._conditionTexte(query), { ...options.additionalWhere, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }] },
+        where: { [Op.and]: [await this._conditionTexte(query), { ...options.additionalWhere, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } }] },
         include: this._defaultIncludes()
       });
     }
     return this.search(query, ['nom_evenement', 'description'], {
       ...options,
-      additionalWhere: { ...options.additionalWhere, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+      additionalWhere: { ...options.additionalWhere, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
       include: this._defaultIncludes()
     });
   }
@@ -476,7 +462,7 @@ class EvenementRepository extends BaseRepository {
 
     return this.findAll({
       ...options,
-      where: { ...options.where, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } },
+      where: { ...options.where, statut: { [Op.in]: EVENEMENT_OUVERT } },
       include
     });
   }
@@ -848,14 +834,15 @@ class EvenementRepository extends BaseRepository {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const sequelize = this.model.sequelize;
-    const where = publiques ? { statut: { [Op.in]: STATUTS_VISIBLES } } : {};
+    const where = publiques ? { statut: { [Op.in]: EVENEMENT_VISIBLE } } : {};
 
     // Un seul passage sur la table au lieu de 4 COUNT lancés en parallèle (4 connexions du pool), puis
     // la répartition par type : une connexion à la fois (audit V11 BDD-18)
     const ligne = await this.model.findOne({
       attributes: [
         [fn('COUNT', col('id_evenement')), 'total'],
-        [literal(`SUM(\`date_debut\` > ${sequelize.escape(now)} AND \`statut\` IN ('publie', 'planifie'))`), 'upcoming'],
+        // Statuts : constante du code (constants/statuts.js), jamais une saisie
+        [literal(`SUM(\`date_debut\` > ${sequelize.escape(now)} AND \`statut\` IN ('${EVENEMENT_PUBLIE.join("', '")}'))`), 'upcoming'],
         [literal('SUM(`statut` = \'en_cours\')'), 'ongoing'],
         [literal(`SUM(\`date_creation\` >= ${sequelize.escape(thisMonth)})`), 'thisMonth']
       ],

@@ -54,14 +54,5 @@ module.exports = (sequelize) => {
     TypeEvenement.hasMany(models.Evenement, { foreignKey: 'id_type_evenement', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  TypeEvenement.prototype.getNomType = function(lang = 'fr') {
-    return this.nom_type?.[lang] || this.nom_type?.fr || this.nom_type?.ar || '';
-  };
-
-  TypeEvenement.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return TypeEvenement;
 };

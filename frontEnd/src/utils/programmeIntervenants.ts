@@ -4,20 +4,14 @@
  * il est identifié par sa fiche (id_intervenant), son prénom et son nom.
  */
 import type { IntervenantData } from '@/services/programme.service';
-
-type Multilingue = string | Record<string, string | undefined> | null | undefined;
-
-export const texteLangue = (v: Multilingue, langue = 'fr'): string => {
-  if (!v) return '';
-  if (typeof v === 'string') return v;
-  return v[langue] || v.fr || Object.values(v).find((x): x is string => !!x) || '';
-};
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface IntervenantApi {
   id_intervenant?: number;
   id_user?: number | null;
-  prenom?: Multilingue;
-  nom?: Multilingue;
+  prenom?: TexteMultilingue;
+  nom?: TexteMultilingue;
   ProgrammeIntervenant?: {
     role_intervenant?: IntervenantData['role_intervenant'];
     sujet_intervention?: string | null;
@@ -33,8 +27,8 @@ export function intervenantsPourFormulaire(intervenants: unknown, langue = 'fr')
   return (intervenants as IntervenantApi[]).map((i, index) => ({
     id_intervenant: i.id_intervenant,
     id_user: i.id_user ?? undefined,
-    prenom: texteLangue(i.prenom, langue),
-    nom: texteLangue(i.nom, langue),
+    prenom: getLocalizedText(i.prenom, langue),
+    nom: getLocalizedText(i.nom, langue),
     role_intervenant: i.ProgrammeIntervenant?.role_intervenant || 'principal',
     sujet_intervention: i.ProgrammeIntervenant?.sujet_intervention || '',
     biographie_courte: i.ProgrammeIntervenant?.biographie_courte || '',

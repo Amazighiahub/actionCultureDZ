@@ -725,7 +725,10 @@
       "contactTelephone": "Contact phone",
       "startDatePast": "The start date cannot be in the past",
       "dateLimiteApresDebut": "The registration deadline must be on or before the start date",
-      "virtualUrlInvalide": "The link must start with https:// (e.g. https://meet.google.com/…)"
+      "virtualUrlInvalide": "The link must start with https:// (e.g. https://meet.google.com/…)",
+      "orgEnAttente": "awaiting approval",
+      "idOrganisateur": "Organiser (account number)",
+      "idOrganisateurAide": "Leave empty to be the organiser. Otherwise this account becomes the organiser and can edit the event."
     },
     "types": {
       "concert": "Concert",

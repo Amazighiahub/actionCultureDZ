@@ -31,9 +31,5 @@ module.exports = (sequelize) => {
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N
-  TypeOrganisation.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
   return TypeOrganisation;
 };

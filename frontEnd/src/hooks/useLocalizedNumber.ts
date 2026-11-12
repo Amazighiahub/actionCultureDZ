@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
+import { localeDeLangue } from '@/utils/localeLangue';
 
 /**
  * Hook pour la localisation des nombres (prix, distances, durées) et gestion des langues Tamazight.
@@ -23,16 +24,8 @@ interface LocalizedNumberOptions {
   signDisplay?: 'auto' | 'never' | 'always' | 'exceptZero';
 }
 
-// Mapping des codes de langue personnalisés vers les codes BCP 47 valides
-const LOCALE_MAPPING: Record<string, string> = {
-  // « -u-nu-latn » : chiffres 0-9 imposés, quel que soit le navigateur (« 28.000 د.ج. »)
-  'ar': 'ar-DZ-u-nu-latn',
-  'ar-DZ': 'ar-DZ-u-nu-latn',
-  'fr': 'fr-FR',
-  'en': 'en-US',
-  'tz-ltn': 'fr-FR', // Utilise le français comme fallback pour Tamazight Latin
-  'tz-tfng': 'fr-FR', // Utilise le français comme fallback pour Tifinagh
-};
+// Langue → locale Intl : table unique dans utils/localeLangue.ts (audit V11 COD-7) ;
+// l'arabe y est en « ar-DZ-u-nu-latn » : chiffres 0-9 imposés, quel que soit le navigateur (« 28.000 د.ج. »)
 
 // Convertisseur de chiffres latins vers arabes-indiens
 const ARABIC_NUMERALS: Record<string, string> = {
@@ -213,9 +206,7 @@ export const useLocalizedNumber = () => {
   const { i18n } = useTranslation();
   
   // Obtenir la locale valide pour Intl
-  const getValidLocale = (language: string): string => {
-    return LOCALE_MAPPING[language] || 'fr-FR';
-  };
+  const getValidLocale = (language: string): string => localeDeLangue(language);
   
   const formatters = useMemo(() => {
     const language = i18n.language;

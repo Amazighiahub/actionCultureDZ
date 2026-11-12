@@ -26,3 +26,11 @@ export function partiesEvenement(iso?: string | null): { date: string; heure: st
 export function heureEvenement(iso?: string | null): string {
   return partiesEvenement(iso).heure;
 }
+
+/**
+ * Jour d'aujourd'hui en Algérie, « AAAA-MM-JJ » (format des champs <input type="date">).
+ * Après 23 h UTC, c'est déjà le lendemain à Alger : on ne lit pas le jour UTC du navigateur.
+ */
+export function aujourdhuiAlger(maintenant: Date = new Date()): string {
+  return maintenant.toLocaleDateString('en-CA', { timeZone: FUSEAU });
+}

@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface Proposition {
   id: number; id_lieu: number; lieu_nom: unknown; action: 'detail' | 'personnalite' | 'element_ajout' | 'element_modif' | 'creation';
@@ -38,7 +38,7 @@ const PropositionsPatrimoine: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { toast } = useToast();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const queryClient = useQueryClient();
   const [refus, setRefus] = useState<Proposition | null>(null);
   const [motif, setMotif] = useState('');

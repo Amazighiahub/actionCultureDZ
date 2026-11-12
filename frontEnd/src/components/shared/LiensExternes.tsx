@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ExternalLink, Facebook, Instagram, Music2, Newspaper, Youtube, type LucideIcon } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { safeExternalUrl } from '@/utils/safeUrl';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { evenementPath } from '@/utils/slug';
 
 export type TypeLien = 'presse' | 'youtube' | 'instagram' | 'tiktok' | 'facebook';
@@ -64,7 +64,7 @@ export const nomDuSite = (url: string) => {
 
 export function ListeLiens({ liens, avecCible = false }: { liens: LienExterne[]; avecCible?: boolean }) {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   return (
     <ul className="space-y-3">
       {liens.map((l) => {

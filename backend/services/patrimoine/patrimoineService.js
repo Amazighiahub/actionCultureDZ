@@ -9,6 +9,7 @@ const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO, MAX_NIVEAUX_LIEU } = require('../../constants/patrimoineTypes');
 const { lireReleve, ImportReleve, resumerPlan } = require('./importReleve');
 const { mergeTranslations, texteLisible } = require('../../helpers/i18n');
+const { sansAccent } = require('../../utils/texte');
 const historique = require('./historiqueLieu');
 const { supprimerLieu } = require('./suppressionLieu');
 const { memeUtilisateur, peutGerer } = require('../../utils/droits');
@@ -685,10 +686,9 @@ class PatrimoineService extends BaseService {
       .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
 
     if (wilaya) plats = plats.filter(p => p.lieux.some(x => x.wilaya?.id_wilaya === Number(wilaya)));
-    const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const recherche = sansAccent(q).trim();
+    const recherche = sansAccent(q);
     if (recherche) {
-      const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');
+      const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(t => sansAccent(t)).join(' ');
       plats = plats.filter(p => textes(p.titre).includes(recherche) || textes(p.resume).includes(recherche)
         || p.lieux.some(x => textes(x.nom).includes(recherche)));
     }

@@ -13,7 +13,7 @@ import {
   Ticket, ExternalLink
 } from 'lucide-react';
 import { LazyImage, StatusBadge } from '@/components/shared';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
@@ -31,7 +31,7 @@ const EventHero: React.FC<EventHeroProps> = ({
   onToggleFavorite
 }) => {
   const { t } = useTranslation();
-  const { formatDate, formatDateRange } = useLocalizedDate();
+  const { formatDate, formatDateRange } = useFormatDate();
   const { formatPrice } = useLocalizedNumber();
   // Gratuit, prix, ou « Tarif selon votre profil » (le prix se découvre à l'inscription)
   const modeTarif = tarificationDe(event).mode;

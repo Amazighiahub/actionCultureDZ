@@ -17,7 +17,8 @@ const { Op } = require('sequelize');
 const AppError = require('../utils/appError');
 const { texteLisible } = require('../helpers/i18n');
 const { notifier } = require('../utils/notifierModeration');
-const { aUnMoyen, lireMoyens, CLES_PAIEMENT, INVISIBLES } = require('./paiementDirect');
+const { aUnMoyen, lireMoyens, CLES_PAIEMENT } = require('./paiementDirect');
+const { nomComplet, texte } = require('../utils/texte');
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 
 /** Livre, œuvre d'art, artisanat */
@@ -36,18 +37,8 @@ const URL_COMMANDES = '/mes-commandes';
 /** Compte « Utilisateur supprimé » (voir userRepository) */
 const COMPTE_SUPPRIME = 'deleted-user@invalid.local';
 
-const nomDe = (u) => (u ? [texteLisible(u.prenom), texteLisible(u.nom)].filter(Boolean).join(' ') : '');
 const nombre = (v) => (v === null || v === undefined ? null : Number(v));
 const arrondi = (n) => Math.round(n * 100) / 100;
-
-// Caractères invisibles (contrôle, sens d'écriture forcé, largeur nulle) : même liste que paiementDirect
-const texte = (v, max, champ) => {
-  if (v === undefined || v === null || v === '') return null;
-  if (typeof v !== 'string') throw AppError.badRequest(`${champ} invalide`);
-  const t = v.replace(/\r\n?/g, '\n').replace(INVISIBLES, '').trim();
-  if (t.length > max) throw AppError.badRequest(`${champ} : ${max} caractères au plus`);
-  return t || null;
-};
 
 /** Seulement de quoi payer (les frais d'envoi sont déjà dans la commande) */
 const paiementSeul = (moyens) => (moyens
@@ -109,7 +100,7 @@ async function offre(models, idOeuvre, { transaction = null } = {}) {
     prix, prix_max: prixMax && prix !== null && prixMax > prix ? prixMax : null,
     stock: unique ? 1 : stock,
     unique,
-    vendeur: vendeur ? { id: vendeur.id_user, nom: nomDe(vendeur) } : null,
+    vendeur: vendeur ? { id: vendeur.id_user, nom: nomComplet(vendeur) } : null,
   };
   if (!prix || prix <= 0) return { ...base, commandable: false, raison: 'sans_prix' };
   if (!vendeurEnRegle(vendeur) || !aUnMoyen(moyens)) return { ...base, commandable: false, raison: 'sans_moyen' };
@@ -208,7 +199,7 @@ async function commander(models, notificationService, idAcheteur, entree = {}) {
   const acheteur = await models.User.findByPk(idAcheteur, { attributes: ['nom', 'prenom'] });
   await notifier(notificationService, o.vendeur.id, {
     titre: 'Nouvelle commande',
-    message: `${nomDe(acheteur) || 'Un visiteur'} commande « ${o.titre} »${quantite > 1 ? ` (× ${quantite})` : ''}. Il va vous payer directement ; confirmez le paiement quand vous l’avez reçu.`,
+    message: `${nomComplet(acheteur) || 'Un visiteur'} commande « ${o.titre} »${quantite > 1 ? ` (× ${quantite})` : ''}. Il va vous payer directement ; confirmez le paiement quand vous l’avez reçu.`,
     url_action: URL_COMMANDES,
     metadata: { id_commande: commande.id_commande, id_oeuvre: idOeuvre },
   });
@@ -249,8 +240,8 @@ function vue(c, par) {
     date_annulation: c.date_annulation,
     annulee_par: c.annulee_par,
     role: estAcheteur ? 'acheteur' : 'vendeur',
-    vendeur: { id: c.id_vendeur, nom: nomDe(c.Vendeur) },
-    acheteur: { id: c.id_acheteur, nom: nomDe(c.Acheteur) },
+    vendeur: { id: c.id_vendeur, nom: nomComplet(c.Vendeur) },
+    acheteur: { id: c.id_acheteur, nom: nomComplet(c.Acheteur) },
   };
   if (estVendeur || moderation || estAcheteur) {
     r.adresse = c.adresse;
@@ -407,7 +398,7 @@ async function mettreAJour(models, notificationService, idCommande, par, entree 
         changements.date_annulation = maintenant;
         changements.annulee_par = estAcheteur ? 'acheteur' : 'vendeur';
         messages.push(estAcheteur
-          ? { a: c.id_vendeur, titre: 'Commande annulée', message: `${nomDe(c.Acheteur) || 'L’acheteur'} a annulé sa commande de « ${c.titre} ».` }
+          ? { a: c.id_vendeur, titre: 'Commande annulée', message: `${nomComplet(c.Acheteur) || 'L’acheteur'} a annulé sa commande de « ${c.titre} ».` }
           : { a: c.id_acheteur, titre: 'Commande annulée', message: `Le vendeur a annulé votre commande de « ${c.titre} ».` });
       }
       if (['envoyee', 'annulee'].includes(statut) && c.Acheteur?.email === COMPTE_SUPPRIME) {

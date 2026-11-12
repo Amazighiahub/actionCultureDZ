@@ -9,6 +9,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
+const { construirePagination } = require('../utils/pagination');
 
 class CommentaireController extends BaseController {
   get service() {
@@ -34,12 +35,7 @@ class CommentaireController extends BaseController {
         success: true,
         data: {
           commentaires: translateDeep(commentaires.rows, lang),
-          pagination: {
-            total: commentaires.count,
-            page,
-            pages: Math.ceil(commentaires.count / limit),
-            limit
-          }
+          pagination: construirePagination(commentaires.count, page, limit)
         },
         lang
       });
@@ -63,12 +59,7 @@ class CommentaireController extends BaseController {
         success: true,
         data: {
           commentaires: translateDeep(commentaires.rows, lang),
-          pagination: {
-            total: commentaires.count,
-            page,
-            pages: Math.ceil(commentaires.count / limit),
-            limit
-          }
+          pagination: construirePagination(commentaires.count, page, limit)
         },
         lang
       });
@@ -96,12 +87,7 @@ class CommentaireController extends BaseController {
         data: {
           commentaires: translateDeep(commentaires.rows, lang),
           note: notes.get(serviceId) || { moyenne: 0, nombre: 0 },
-          pagination: {
-            total: commentaires.count,
-            page,
-            pages: Math.ceil(commentaires.count / limit),
-            limit
-          }
+          pagination: construirePagination(commentaires.count, page, limit)
         },
         lang
       });

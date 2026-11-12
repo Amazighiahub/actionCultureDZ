@@ -22,7 +22,7 @@ import L from 'leaflet';
 // Fix pour les icônes Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import { getLocalizedText as texteLocalise } from '@/utils/getLocalizedText';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -32,12 +32,6 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
-
-/** Extrait une chaîne depuis un champ multilingue (string ou { fr, ar, en }) */
-function getLocalizedLieuText(value: string | { fr?: string; ar?: string; en?: string } | null | undefined, fallback = ''): string {
-  if (!value) return fallback;
-  return texteLocalise(value, 'fr', fallback);
-}
 
 interface LieuSelectorProps {
   value?: number;
@@ -55,13 +49,6 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
   const { toast } = useToast();
-  const lang = i18n.language?.split('-')[0] || 'fr';
-
-  /** Extrait une chaîne d'un champ multilingue (nom, adresse, etc.) */
-  const getLocalizedText = (value: string | Record<string, string> | null | undefined): string => {
-    if (value == null) return '';
-    return texteLocalise(value, lang);
-  };
 
   const [mode, setMode] = useState<'select' | 'create'>('select');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -411,8 +398,8 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
                 <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-primary">{getLocalizedText(selectedLieu.nom)}</p>
-                  <p className="text-sm text-muted-foreground">{getLocalizedText(selectedLieu.adresse)}</p>
+                  <p className="font-medium text-primary">{getLocalizedText(selectedLieu.nom, i18n.language)}</p>
+                  <p className="text-sm text-muted-foreground">{getLocalizedText(selectedLieu.adresse, i18n.language)}</p>
                 </div>
               </div>
               <Button
@@ -511,14 +498,14 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                       <MapPin className={`h-4 w-4 text-muted-foreground ${rtlClasses.marginEnd(2)} mt-0.5 flex-shrink-0`} />
                       <div className="flex-1">
                         <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
-                          <p className="font-medium">{getLocalizedText(lieu.nom)}</p>
+                          <p className="font-medium">{getLocalizedText(lieu.nom, i18n.language)}</p>
                           {lieu.typeLieuCulturel && (
                             <span className="text-xs bg-secondary px-2 py-0.5 rounded">
                               {typesLieuxCulturels.find(t => t.value === lieu.typeLieuCulturel)?.label || lieu.typeLieuCulturel}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{getLocalizedText(lieu.adresse)}</p>
+                        <p className="text-sm text-muted-foreground">{getLocalizedText(lieu.adresse, i18n.language)}</p>
                         {userLocation && (
                           <span className="text-xs text-primary">
                             {calculateDistance(userLocation.lat, userLocation.lng, lieu.latitude, lieu.longitude).toFixed(1)} km
@@ -537,7 +524,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             <Card className="mt-2">
               <CardContent className="p-4">
                 <div className={`flex justify-between items-center mb-2 ${rtlClasses.flexRow}`}>
-                  <h4 className="font-medium">{getLocalizedText(previewLieu.nom)}</h4>
+                  <h4 className="font-medium">{getLocalizedText(previewLieu.nom, i18n.language)}</h4>
                   <Button type="button" size="sm" variant="ghost" onClick={() => { setShowMapPreview(false); setPreviewLieu(null); }}>
                     <X className="h-4 w-4" />
                   </Button>

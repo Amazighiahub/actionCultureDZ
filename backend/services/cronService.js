@@ -5,8 +5,8 @@ const cron = require('node-cron');
 const { Op } = require('sequelize');
 
 // Événements publiés : « publie », ou « planifie » que le modèle pose à la publication d'un
-// événement à venir (hook beforeValidate de models/events/evenement.js)
-const STATUTS_PUBLIES = ['publie', 'planifie'];
+// événement à venir (hook beforeValidate de models/events/evenement.js). Source : constants/statuts.js
+const { EVENEMENT_PUBLIE: STATUTS_PUBLIES, EVENEMENT_OUVERT } = require('../constants/statuts');
 const CronLock = require('../utils/cronLock');
 const { pasTermine, termine } = require('../helpers/finEvenement');
 const { translate, lireMultiLang } = require('../helpers/i18n');
@@ -590,7 +590,7 @@ class CronService {
       {
         where: {
           [Op.and]: [termine(now)],
-          statut: [...STATUTS_PUBLIES, 'en_cours']
+          statut: EVENEMENT_OUVERT
         }
       }
     );

@@ -1,5 +1,6 @@
 // types/notification.types.ts - Types unifiés pour les notifications
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { localeDeLangue } from '@/utils/localeLangue';
 
 // ================================================
 // TYPES DE BASE
@@ -334,11 +335,6 @@ const NOTIF_RELATIVE_TIME: Record<string, {
   },
 };
 
-// Mapping des codes de langue vers des locales BCP 47 valides
-const NOTIFICATION_LOCALE_MAP: Record<string, string> = {
-  'ar': 'ar-DZ', 'fr': 'fr-FR', 'en': 'en-US',
-  'tz-ltn': 'fr-FR', 'tz-tfng': 'fr-FR',
-};
 
 // Vérifier si une notification est récente (moins de 24h)
 export function isRecentNotification(notification: Notification): boolean {
@@ -405,8 +401,8 @@ export function formatNotificationDate(dateStr: string, language = 'fr'): string
   if (diffHours < 24) return t.hoursAgo(diffHours);
   if (diffDays < 7) return t.daysAgo(diffDays);
 
-  const locale = NOTIFICATION_LOCALE_MAP[language] || 'fr-FR';
-  return date.toLocaleDateString(locale, {
+  // Locale : table unique (utils/localeLangue.ts), chiffres 0-9 en arabe
+  return date.toLocaleDateString(localeDeLangue(language), {
     day: 'numeric',
     month: 'short',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined

@@ -19,6 +19,7 @@ import type { TFunction } from 'i18next';
 import { lieuService } from '@/services/lieu.service';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 
 // Icône, couleurs et libellé traduit de chaque type de service
 const configType = (type: string | undefined, t: TFunction) => {
@@ -31,18 +32,18 @@ interface ServiceItem {
   /** Service d'un professionnel (a sa propre page une fois validé) ; null : équipement du site */
   id_user?: number | null;
   statut?: string;
-  nom: string | { fr?: string; ar?: string; en?: string };
-  description?: string | { fr?: string; ar?: string; en?: string };
+  nom: string | TranslatableValue;
+  description?: string | TranslatableValue;
   type_service?: string;
   disponible?: boolean;
   telephone?: string;
   email?: string;
   site_web?: string;
-  horaires?: string | { fr?: string; ar?: string; en?: string };
+  horaires?: string | TranslatableValue;
   tarif_min?: number;
   tarif_max?: number;
   photo_url?: string;
-  adresse?: string | { fr?: string; ar?: string; en?: string };
+  adresse?: string | TranslatableValue;
 }
 
 interface ServicesProximiteProps {
@@ -53,11 +54,6 @@ interface ServicesProximiteProps {
   showTitle?: boolean;
   maxItems?: number;
 }
-
-const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
 
 const ServicesProximite: React.FC<ServicesProximiteProps> = ({
   lieuId,
@@ -159,7 +155,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
             return (
               <div key={idx} className="flex items-center gap-2 text-sm">
                 <Icon className={`h-4 w-4 ${config.color} flex-shrink-0`} />
-                <span className="truncate">{translate(service.nom, lang)}</span>
+                <span className="truncate">{getLocalizedText(service.nom, lang)}</span>
                 {service.disponible === false && (
                   <Badge variant="outline" className="text-xs ms-auto">Fermé</Badge>
                 )}
@@ -202,8 +198,8 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {service.id_user && service.statut === 'valide'
-                        ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{translate(service.nom, lang)}</Link>
-                        : translate(service.nom, lang)}
+                        ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{getLocalizedText(service.nom, lang)}</Link>
+                        : getLocalizedText(service.nom, lang)}
                     </p>
                     <p className="text-xs text-muted-foreground">{config.label}</p>
                   </div>
@@ -278,8 +274,8 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                         <div>
                           <p className="font-medium">
                             {service.id_user && service.statut === 'valide'
-                              ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{translate(service.nom, lang)}</Link>
-                              : translate(service.nom, lang)}
+                              ? <Link to={`/services/${service.id}`} className="hover:text-primary hover:underline underline-offset-4">{getLocalizedText(service.nom, lang)}</Link>
+                              : getLocalizedText(service.nom, lang)}
                           </p>
                           {/* Teintes 700 : petit texte lisible sur fond clair (audit V11 UX-24) */}
                           {service.disponible !== undefined && (
@@ -300,7 +296,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
 
                     {service.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {translate(service.description, lang)}
+                        {getLocalizedText(service.description, lang)}
                       </p>
                     )}
 
@@ -328,7 +324,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                       {service.horaires && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {translate(service.horaires, lang)}
+                          {getLocalizedText(service.horaires, lang)}
                         </span>
                       )}
                     </div>

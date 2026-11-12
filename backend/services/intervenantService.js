@@ -5,8 +5,8 @@
  * Architecture: Controller → Service → Repository → Database
  */
 const BaseService = require('./core/baseService');
-const { Op, Sequelize } = require('sequelize');
-const { mergeTranslations, createMultiLang, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+const { Op } = require('sequelize');
+const { mergeTranslations, createMultiLang, texteLisible, buildMultiLangExactMatch } = require('../helpers/i18n');
 const { buildMultiLangSearch, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const { triParNom } = require('../utils/triParNom');
@@ -316,34 +316,16 @@ class IntervenantService extends BaseService {
    * dans toutes les langues du champ JSON multilingue.
    */
   async _findByNameMatch(nom, prenom, lang = 'fr') {
-    const nomStr = typeof nom === 'string' ? nom.trim() : (nom?.[lang] || nom?.fr || '');
-    const prenomStr = typeof prenom === 'string' ? prenom.trim() : (prenom?.[lang] || prenom?.fr || '');
+    // Texte simple tel quel, sinon lecture commune d'un champ multilingue (helpers/i18n.js)
+    const lire = (v) => (typeof v === 'string' ? v : texteLisible(v, lang)).trim();
+    const nomStr = lire(nom);
+    const prenomStr = lire(prenom);
 
     if (!nomStr || !prenomStr) return null;
 
-    const normalizedNom = nomStr.toLowerCase();
-    const normalizedPrenom = prenomStr.toLowerCase();
-
-    // Construire les conditions pour chaque langue
-    const nomConditions = SUPPORTED_LANGUAGES.map(l => {
-      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-      return Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
-          Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal(`'${jsonPath}'`))
-        )),
-        normalizedNom
-      );
-    });
-
-    const prenomConditions = SUPPORTED_LANGUAGES.map(l => {
-      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-      return Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
-          Sequelize.fn('JSON_EXTRACT', Sequelize.col('prenom'), Sequelize.literal(`'${jsonPath}'`))
-        )),
-        normalizedPrenom
-      );
-    });
+    // Même nom et même prénom (sans casse), chacun dans une des langues
+    const nomConditions = buildMultiLangExactMatch('nom', nomStr)[Op.or];
+    const prenomConditions = buildMultiLangExactMatch('prenom', prenomStr)[Op.or];
 
     return this.models.Intervenant.findOne({
       where: {

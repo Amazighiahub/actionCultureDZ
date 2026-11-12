@@ -1,11 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { slugify, idFromSlug, professionnelPath } from '../slug';
+import { slugify, sansAccent, idFromSlug, professionnelPath } from '../slug';
 
 describe('adresses lisibles', () => {
   it('slugify : accents, ligatures, ponctuation', () => {
     expect(slugify("Amina Bénali")).toBe('amina-benali');
     expect(slugify("L'Œuvre — d'Hélène")).toBe('l-oeuvre-d-helene');
     expect(slugify('مهرجان')).toBe('');
+  });
+
+  it('sansAccent : sans accents ni majuscules, jamais null', () => {
+    expect(sansAccent('  Béjaïa ')).toBe('bejaia');
+    expect(sansAccent('تلمسان')).toBe('تلمسان');
+    expect(sansAccent(null)).toBe('');
+    expect(sansAccent(undefined)).toBe('');
   });
 
   it('idFromSlug : seul le numéro compte', () => {

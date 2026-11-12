@@ -18,12 +18,12 @@
 const ExcelJS = require('exceljs');
 const { Op } = require('sequelize');
 const { texteLisible } = require('../../helpers/i18n');
+const { sansAccent } = require('../../utils/texte');
+const { TYPES_PATRIMOINE } = require('../../constants/patrimoineTypes');
 
-const TYPES = ['monument', 'musee', 'ville_village', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre'];
 // Précision du relevé (6 décimales ≈ 10 cm) : deux points à 1 m l'un de l'autre restent distincts
 const TOLERANCE = 0.0000005;
 
-const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 /** Valeur lisible d'une cellule exceljs (texte riche, lien, formule) */
 const texte = (cell) => {
@@ -60,7 +60,7 @@ const TYPES_LIBELLES = {
 };
 const typeTaladz = (t) => {
   const v = sansAccent(t);
-  if (TYPES.includes(v)) return v;
+  if (TYPES_PATRIMOINE.includes(v)) return v;
   return TYPES_LIBELLES[v] || null;
 };
 

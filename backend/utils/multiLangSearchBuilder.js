@@ -13,7 +13,7 @@
 const { Op } = require('sequelize');
 
 // Langues supportées pour la recherche
-const { SUPPORTED_LANGUAGES } = require('../constants/langues');
+const { SUPPORTED_LANGUAGES, cheminJson } = require('../constants/langues');
 
 /**
  * 🔒 Valide et retourne une langue sécurisée
@@ -76,8 +76,8 @@ function buildMultiLangSearch(sequelize, field, search, tableName = null, langua
   const safeLangs = languages.filter(l => SUPPORTED_LANGUAGES.includes(l));
 
   return safeLangs.map(lang => {
-    // Hyphenated lang codes (tz-ltn, tz-tfng) need double quotes in MySQL JSON paths
-    const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
+    // Clé citée pour les codes à tiret (tz-ltn, tz-tfng) : constants/langues.js cheminJson
+    const jsonPath = `$.${cheminJson(lang)}`;
     // Sans majuscules ni accents : la valeur extraite du JSON est comparée en binaire (« palais » ne
     // trouvait pas « Palais », ni « theatre » « Théâtre ») — la recherche des lieux ne trouvait presque rien
     return sequelize.literal(
@@ -139,7 +139,7 @@ function buildMultiLangOrder(sequelize, field, lang = 'fr', direction = 'ASC', t
   const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
   const validDirection = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
-  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
+  const jsonPath = `$.${cheminJson(safeLang)}`;
   return [
     sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}')) ${validDirection}`)
   ];
@@ -168,7 +168,7 @@ function buildTranslatedAttribute(sequelize, field, lang = 'fr', alias = null, t
   const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
   const resultAlias = alias ? sanitizeField(alias) || `${safeField}_${safeLang}` : `${safeField}_${safeLang}`;
 
-  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
+  const jsonPath = `$.${cheminJson(safeLang)}`;
   return [
     sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}'))`),
     resultAlias
@@ -191,7 +191,7 @@ function buildExactMatch(sequelize, field, value, lang = 'fr') {
 
   const safeLang = sanitizeLang(lang);
 
-  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
+  const jsonPath = `$.${cheminJson(safeLang)}`;
   return sequelize.where(
     sequelize.fn('JSON_UNQUOTE', sequelize.fn('JSON_EXTRACT', sequelize.col(safeField), sequelize.literal(`'${jsonPath}'`))),
     value

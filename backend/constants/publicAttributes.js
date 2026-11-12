@@ -5,6 +5,8 @@
  * le defaultScope ne retire que le mot de passe, les tokens et les IP.
  */
 
+const { TYPE_USER_IDS } = require('./typeUserIds');
+
 // Identité minimale d'un utilisateur (auteur, organisateur, saisisseur...)
 const PUBLIC_USER_ATTRIBUTES = ['id_user', 'nom', 'prenom', 'photo_url'];
 
@@ -42,7 +44,10 @@ function stripPrivateContact(user) {
 }
 
 // Types de compte professionnels (2..28) : ni visiteur (1) ni administrateur (29)
-const PROFESSIONAL_TYPE_IDS = Array.from({ length: 27 }, (_, i) => i + 2);
+const PROFESSIONAL_TYPE_IDS = Array.from(
+  { length: TYPE_USER_IDS.ADMINISTRATEUR - TYPE_USER_IDS.ECRIVAIN },
+  (_, i) => i + TYPE_USER_IDS.ECRIVAIN
+);
 
 module.exports = {
   PROFESSIONAL_TYPE_IDS,

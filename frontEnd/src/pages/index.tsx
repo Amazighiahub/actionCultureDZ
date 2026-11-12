@@ -21,11 +21,11 @@ import { Bell, Info, ArrowRight, BookOpen, Map } from 'lucide-react';
 
 // Hooks de localisation
 import { useRTL } from '@/hooks/useRTL';
+import { useWilayas } from '@/hooks/useGeographie';
 
 // Services
 import { notificationService } from '@/services/notification.service';
 import { authService } from '@/services/auth.service';
-import { metadataService } from '@/services/metadata.service';
 import SEOHead, { buildWebsiteJsonLd } from '@/components/SEOHead';
 
 
@@ -50,15 +50,8 @@ const Index: React.FC = () => {
   // Auth check (synchrone)
   const isAuthenticated = authService.isAuthenticated();
 
-  // Wilayas — données publiques, cache long
-  const { data: wilayasCache = null } = useQuery({
-    queryKey: ['metadata', 'wilayas'],
-    queryFn: async () => {
-      const res = await metadataService.getWilayas();
-      return res.success && res.data ? res.data : null;
-    },
-    staleTime: 30 * 60 * 1000,
-  });
+  // Wilayas — données publiques, même cache que les autres pages (audit V11 COD-11)
+  const { wilayas: wilayasCache } = useWilayas();
 
   // Notifications — seulement si authentifié
   const { data: notifications = [] } = useQuery<Array<Record<string, unknown>>>({
@@ -124,7 +117,7 @@ const Index: React.FC = () => {
               accroche={t('home.patrimoine.accroche', 'Villages, médinas, sites antiques et musées, avec leurs points à visiter et leurs histoires.')}
               lien={{ to: '/patrimoine', libelle: t('home.patrimoine.tous', 'Tous les lieux') }}
             />
-            <PatrimoineDynamique wilayasCache={wilayasCache || []} />
+            <PatrimoineDynamique wilayasCache={wilayasCache} />
             <p className="mt-8 text-center">
               <Button asChild variant="outline">
                 <Link to="/patrimoine"><Map className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} aria-hidden="true" />{t('home.patrimoine.carte', 'Explorer sur la carte')}</Link>

@@ -4,6 +4,7 @@
  */
 const BaseRepository = require('./baseRepository');
 const { Op, fn, literal } = require('sequelize');
+const { decalage, construirePagination } = require('../utils/pagination');
 
 class NotificationRepository extends BaseRepository {
   constructor(models) {
@@ -19,7 +20,7 @@ class NotificationRepository extends BaseRepository {
     if (unreadOnly) where.lu = false;
     if (type) where.type_notification = type;
 
-    const offset = (page - 1) * limit;
+    const offset = decalage(page, limit);
 
     const includes = [];
     if (this.models.Evenement) {
@@ -59,12 +60,7 @@ class NotificationRepository extends BaseRepository {
     return {
       data: rows,
       total: count,
-      pagination: {
-        total: count,
-        page,
-        pages: Math.ceil(count / limit),
-        limit
-      }
+      pagination: construirePagination(count, page, limit)
     };
   }
 

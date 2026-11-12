@@ -177,19 +177,6 @@ module.exports = (sequelize) => {
     }
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Lieu.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Lieu.prototype.getRepere = function(lang = 'fr') {
-    return this.repere?.[lang] || this.repere?.fr || this.repere?.ar || '';
-  };
-
-  Lieu.prototype.getAdresse = function(lang = 'fr') {
-    return this.adresse?.[lang] || this.adresse?.fr || this.adresse?.ar || '';
-  };
-
   Lieu.afterDestroy(async (lieu, options) => {
     const { Favori, Vue, Signalement } = sequelize.models;
     const id = lieu.id_lieu;

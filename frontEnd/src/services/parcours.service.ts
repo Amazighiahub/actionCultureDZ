@@ -1,19 +1,12 @@
 // services/parcours.service.ts
 import { API_ENDPOINTS, ApiResponse } from '@/config/api';
 import { httpClient } from './httpClient';
-
-interface MultiLangText {
-  fr?: string;
-  ar?: string;
-  en?: string;
-  'tz-ltn'?: string;
-  'tz-tfng'?: string;
-}
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 
 interface Etape {
   id_lieu: number;
-  nom: MultiLangText | string;
-  description?: MultiLangText | string;
+  nom: TranslatableValue | string;
+  description?: TranslatableValue | string;
   latitude: number;
   longitude: number;
   distance?: number;
@@ -27,8 +20,8 @@ interface Etape {
 
 interface ParcoursIntelligent {
   id_parcours?: number;
-  nom_parcours: MultiLangText;
-  description: MultiLangText;
+  nom_parcours: TranslatableValue;
+  description: TranslatableValue;
   duree_estimee: number; // en minutes
   distance_km: number;
   difficulte: 'facile' | 'moyen' | 'difficile';
@@ -49,8 +42,8 @@ interface ParcoursIntelligent {
 }
 
 interface CreateParcoursData {
-  nom_parcours: MultiLangText;
-  description: MultiLangText;
+  nom_parcours: TranslatableValue;
+  description: TranslatableValue;
   id_lieu_parent: number; // Le lieu (ville/village) parent
   theme?: string;
   difficulte?: 'facile' | 'moyen' | 'difficile';
@@ -58,7 +51,7 @@ interface CreateParcoursData {
     id_lieu: number;
     ordre: number;
     duree_visite?: number;
-    description?: MultiLangText;
+    description?: TranslatableValue;
   }>;
 }
 
@@ -162,7 +155,7 @@ class ParcoursIntelligentService {
     id_lieu: number;
     ordre: number;
     duree_visite?: number;
-    description?: MultiLangText;
+    description?: TranslatableValue;
   }): Promise<ApiResponse<ParcoursIntelligent>> {
     return httpClient.post<ParcoursIntelligent>(`/parcours/${parcoursId}/etapes`, etape);
   }
@@ -232,6 +225,5 @@ export type {
   CreateParcoursData,
   GenerateParcoursParams,
   ParcoursStats,
-  Etape,
-  MultiLangText
+  Etape
 };

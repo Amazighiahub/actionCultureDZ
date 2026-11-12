@@ -104,11 +104,6 @@ interface CarteInteractiveUnifieeProps {
   loading?: boolean;
 }
 
-const translate = (value: any, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
-
 const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
   lieux = [],
   services = [],
@@ -152,9 +147,9 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           id: `lieu-${lieu.id_lieu}`,
           category: 'patrimoine',
           position: [lieu.latitude, lieu.longitude],
-          title: translate(lieu.nom, lang),
-          subtitle: lieu.wilaya?.nom || lieu.commune?.nom || translate(lieu.adresse, lang),
-          description: translate(lieu.DetailLieu?.description || lieu.description, lang),
+          title: getLocalizedText(lieu.nom, lang),
+          subtitle: lieu.wilaya?.nom || lieu.commune?.nom || getLocalizedText(lieu.adresse, lang),
+          description: getLocalizedText(lieu.DetailLieu?.description || lieu.description, lang),
           badge: lieu.typePatrimoine || lieu.typeLieu,
           link: `/patrimoine/${lieu.id_lieu}`,
         });
@@ -173,9 +168,9 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           id: `service-${service.id}`,
           category,
           position: [lat, lng],
-          title: translate(service.nom, lang),
-          subtitle: translate(service.adresse, lang),
-          description: translate(service.description, lang),
+          title: getLocalizedText(service.nom, lang),
+          subtitle: getLocalizedText(service.adresse, lang),
+          description: getLocalizedText(service.description, lang),
           badge: String(t(`service.types.${service.type_service || 'autre'}`, service.type_service || 'autre')),
           extra: {
             ...(service.telephone ? { telephone: service.telephone } : {}),
@@ -194,13 +189,13 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           id: `evt-${evt.id_evenement}`,
           category: 'evenement',
           position: [lat, lng],
-          title: translate(evt.nom_evenement || evt.titre, lang),
+          title: getLocalizedText(evt.nom_evenement || evt.titre, lang),
           subtitle: evt.date_debut ? new Date(evt.date_debut).toLocaleDateString(getDateLocale(lang)) : '',
-          description: translate(evt.description, lang),
+          description: getLocalizedText(evt.description, lang),
           badge: evt.statut,
           link: evenementPath(evt.id_evenement, evt.nom_evenement),
           extra: {
-            ...(evt.Lieu ? { lieu: translate(evt.Lieu.nom, lang) } : {}),
+            ...(evt.Lieu ? { lieu: getLocalizedText(evt.Lieu.nom, lang) } : {}),
           },
         });
       }
@@ -230,7 +225,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
       .map(p => ({
         positions: p.etapes.map((e: any) => [e.latitude, e.longitude] as [number, number]),
         color: p.color || '#6B8E23',
-        name: translate(p.nom_parcours, lang),
+        name: getLocalizedText(p.nom_parcours, lang),
       }));
   }, [parcours, lang]);
 
@@ -405,7 +400,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
                     style={{ backgroundColor: p.color || '#6B8E23' }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{translate(p.nom_parcours, lang)}</p>
+                    <p className="text-sm font-medium truncate">{getLocalizedText(p.nom_parcours, lang)}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {p.distance_km && <span>{p.distance_km} km</span>}
                       {p.duree_estimee && (

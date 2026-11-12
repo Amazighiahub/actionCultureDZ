@@ -14,6 +14,7 @@
 
 require('dotenv').config();
 const db = require('../models');
+const { estLangueSupportee, cheminJson } = require('../constants/langues');
 const sequelize = db.sequelize;
 
 // ---------------------------------------------------------------------------
@@ -25,8 +26,13 @@ const LANG = (() => {
   return idx !== -1 && process.argv[idx + 1] ? process.argv[idx + 1] : 'fr';
 })();
 
+// Langue écrite telle quelle dans les requêtes : seulement une langue du site
+if (!estLangueSupportee(LANG)) {
+  console.error(`Langue inconnue : ${LANG}`);
+  process.exit(1);
+}
 // JSON path pour MySQL JSON_EXTRACT
-const jsonPath = LANG.includes('-') ? `$."${LANG}"` : `$.${LANG}`;
+const jsonPath = `$.${cheminJson(LANG)}`;
 
 // ---------------------------------------------------------------------------
 // Définition des entités à nettoyer

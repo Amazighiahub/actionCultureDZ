@@ -128,22 +128,5 @@ module.exports = (sequelize) => {
     DetailLieu.hasMany(models.Vestige, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  DetailLieu.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || this.description?.ar || '';
-  };
-
-  DetailLieu.prototype.getHoraires = function(lang = 'fr') {
-    return this.horaires?.[lang] || this.horaires?.fr || this.horaires?.ar || '';
-  };
-
-  DetailLieu.prototype.getHistoire = function(lang = 'fr') {
-    return this.histoire?.[lang] || this.histoire?.fr || this.histoire?.ar || '';
-  };
-
-  DetailLieu.prototype.getReferencesHistoriques = function(lang = 'fr') {
-    return this.referencesHistoriques?.[lang] || this.referencesHistoriques?.fr || '';
-  };
-
   return DetailLieu;
 };

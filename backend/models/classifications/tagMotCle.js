@@ -36,9 +36,5 @@ module.exports = (sequelize) => {
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N
-  TagMotCle.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
   return TagMotCle;
 };

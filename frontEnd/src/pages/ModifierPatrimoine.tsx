@@ -26,8 +26,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/hooks/use-toast';
 import { useRTL } from '@/hooks/useRTL';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
-import { texteLangue } from '@/utils/programmeIntervenants';
-import { aDuTexte } from '@/utils/getLocalizedText';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 import { mentionCredit, type CreditPhoto, type LicencePhoto } from '@/utils/creditPhoto';
@@ -39,8 +39,6 @@ import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConser
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
-type Multilingue = Record<string, string | undefined>;
-
 // Photos : crédit (photographe ou source) et droits en plus
 type Media = MediaAudio & CreditPhoto;
 
@@ -48,24 +46,24 @@ interface SiteEdition {
   id_lieu: number;
   id_createur?: number | null;
   id_lieu_parent?: number | null;
-  nom?: Multilingue | string | null;
-  adresse?: Multilingue | string | null;
-  repere?: Multilingue | string | null;
+  nom?: TranslatableValue | string | null;
+  adresse?: TranslatableValue | string | null;
+  repere?: TranslatableValue | string | null;
   typePatrimoine?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
   DetailLieu?: {
-    description?: Multilingue | null;
-    histoire?: Multilingue | null;
-    horaires?: Multilingue | null;
-    referencesHistoriques?: Multilingue | null;
+    description?: TranslatableValue | null;
+    histoire?: TranslatableValue | null;
+    horaires?: TranslatableValue | null;
+    referencesHistoriques?: TranslatableValue | null;
   } | null;
-  Ancetres?: Array<{ id_lieu: number; id_createur?: number | null; nom?: Multilingue | string | null }>;
+  Ancetres?: Array<{ id_lieu: number; id_createur?: number | null; nom?: TranslatableValue | string | null }>;
   medias?: Media[];
   LieuMedia?: Media[];
 }
 
-const enObjet = (v: Multilingue | string | null | undefined): Multilingue =>
+const enObjet = (v: TranslatableValue | string | null | undefined): TranslatableValue =>
   !v ? {} : typeof v === 'string' ? { fr: v } : v;
 
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -102,10 +100,10 @@ const ModifierPatrimoine: React.FC = () => {
   // Fiche telle que chargée (pour savoir si elle a été modifiée)
   const [formCharge, setFormCharge] = useState<string | null>(null);
   const [form, setForm] = useState({
-    nom: {} as Multilingue, adresse: {} as Multilingue, repere: {} as Multilingue,
+    nom: {} as TranslatableValue, adresse: {} as TranslatableValue, repere: {} as TranslatableValue,
     typePatrimoine: 'monument', latitude: 0, longitude: 0,
-    description: {} as Multilingue, histoire: {} as Multilingue,
-    horaires: {} as Multilingue, referencesHistoriques: {} as Multilingue
+    description: {} as TranslatableValue, histoire: {} as TranslatableValue,
+    horaires: {} as TranslatableValue, referencesHistoriques: {} as TranslatableValue
   });
 
   const charger = useCallback(async () => {
@@ -119,7 +117,7 @@ const ModifierPatrimoine: React.FC = () => {
       setSite(s);
       setMedias(s.medias || s.LieuMedia || []);
       const parentActuel = s.Ancetres?.length ? s.Ancetres[s.Ancetres.length - 1] : null;
-      setParentChoisi(parentActuel ? { id: parentActuel.id_lieu, nom: texteLangue(parentActuel.nom) } : null);
+      setParentChoisi(parentActuel ? { id: parentActuel.id_lieu, nom: getLocalizedText(parentActuel.nom) } : null);
       const d = s.DetailLieu || {};
       const charge = {
         nom: enObjet(s.nom), adresse: enObjet(s.adresse), repere: enObjet(s.repere),
@@ -202,9 +200,9 @@ const ModifierPatrimoine: React.FC = () => {
     let actif = true;
     const minuterie = setTimeout(async () => {
       try {
-        const res = await httpClient.get<Array<{ id_lieu: number; nom: Multilingue | string }>>('/patrimoine/search', { q, limit: 8 });
+        const res = await httpClient.get<Array<{ id_lieu: number; nom: TranslatableValue | string }>>('/patrimoine/search', { q, limit: 8 });
         if (actif && res.success && Array.isArray(res.data)) {
-          setSitesTrouves(res.data.filter(x => x.id_lieu !== siteId).map(x => ({ id_lieu: x.id_lieu, nom: texteLangue(x.nom) })));
+          setSitesTrouves(res.data.filter(x => x.id_lieu !== siteId).map(x => ({ id_lieu: x.id_lieu, nom: getLocalizedText(x.nom) })));
         }
       } catch { if (actif) setSitesTrouves([]); }
     }, 300);
@@ -276,7 +274,7 @@ const ModifierPatrimoine: React.FC = () => {
 
   const photos = medias.filter(m => m.type === 'image' || m.type === 'video');
   const audios = medias.filter(m => m.type === 'audio');
-  const champ = (cle: keyof typeof form) => (v: Multilingue) => setForm(f => ({ ...f, [cle]: v }));
+  const champ = (cle: keyof typeof form) => (v: TranslatableValue) => setForm(f => ({ ...f, [cle]: v }));
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
@@ -289,7 +287,7 @@ const ModifierPatrimoine: React.FC = () => {
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}
           title={site?.id_lieu_parent ? t('patrimoine.edit.titlePoint', 'Modifier le point de visite') : t('patrimoine.edit.title', 'Modifier le site')}
-          subtitle={typeof form.nom === 'object' ? (form.nom[i18n.language] || form.nom.fr || form.nom.ar || '') : ''}
+          subtitle={typeof form.nom === 'object' ? getLocalizedText(form.nom, i18n.language) : ''}
           aside={site && (
             <Button variant="outline" size="sm" asChild>
               <Link to={`/patrimoine/${siteId}`}><Eye className="h-4 w-4 me-2" />

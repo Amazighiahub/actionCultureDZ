@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Utensils } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { LazyImage } from '@/components/shared';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { oeuvrePath } from '@/utils/slug';
 
 type Texte = string | Record<string, string | undefined> | null;
@@ -31,8 +31,8 @@ const STRETCHED_LINK_CLASS =
 const PlatCard: React.FC<{ plat: Plat }> = ({ plat }) => {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  const titre = texteLangue(plat.titre, lang);
-  const resume = texteLangue(plat.resume, lang);
+  const titre = getLocalizedText(plat.titre, lang);
+  const resume = getLocalizedText(plat.resume, lang);
   const lieu = plat.lieux[0];
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-all group">
@@ -51,7 +51,7 @@ const PlatCard: React.FC<{ plat: Plat }> = ({ plat }) => {
           <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">
-              {[texteLangue(lieu.nom, lang), nomWilaya(lieu.wilaya, lang)].filter(Boolean).join(' · ')}
+              {[getLocalizedText(lieu.nom, lang), nomWilaya(lieu.wilaya, lang)].filter(Boolean).join(' · ')}
               {plat.lieux.length > 1 && ` +${plat.lieux.length - 1}`}
             </span>
           </p>

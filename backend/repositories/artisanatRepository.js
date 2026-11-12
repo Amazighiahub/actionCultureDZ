@@ -6,6 +6,8 @@
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
 const { conditionAuteurOeuvre, colonnesNom } = require('./rechercheNom');
+const { aColonne } = require('../utils/colonnesCalculees');
+const { SUPPORTED_LANGUAGES, cheminJson } = require('../constants/langues');
 
 class ArtisanatRepository extends BaseRepository {
   constructor(models) {
@@ -149,21 +151,21 @@ class ArtisanatRepository extends BaseRepository {
     const pattern = this.model.sequelize.escape(`%${this._sanitizeSearchQuery(query)}%`);
 
     // Titre et description dans les 5 langues, sans accents ni majuscules (le JSON brut se
-    // comparait à l'identique : « tapis » ne trouvait pas « Tapis »)
+    // comparait à l'identique : « tapis » ne trouvait pas « Tapis »). Colonne texte_recherche de l'œuvre
+    // (migration 20261120, mêmes champs) quand elle existe, comme la recherche des œuvres ; sinon une
+    // extraction JSON par champ et par langue.
     const includes = this._defaultIncludes();
     const oeuvreInc = includes.find(i => i.model === this.models.Oeuvre);
     if (oeuvreInc) {
-      const champs = ['titre', 'description'].flatMap(champ =>
-        ['fr', 'ar', 'en', '"tz-ltn"', '"tz-tfng"'].map(langue => [champ, langue]));
+      const texte = (await aColonne(this.models.Oeuvre, 'texte_recherche'))
+        ? [this.model.sequelize.literal(`\`Oeuvre\`.\`texte_recherche\` LIKE ${pattern}`)]
+        : ['titre', 'description'].flatMap(champ => SUPPORTED_LANGUAGES.map(langue => this.model.sequelize.literal(
+          `JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${cheminJson(langue)}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`)));
       // Ou le nom de l'artisan
       const auteur = conditionAuteurOeuvre(this.model.sequelize, query, 'Oeuvre', await colonnesNom(this.models));
       oeuvreInc.where = {
         statut: 'publie',
-        [Op.or]: [
-          ...champs.map(([champ, langue]) => this.model.sequelize.literal(
-            `JSON_UNQUOTE(JSON_EXTRACT(\`Oeuvre\`.\`${champ}\`, '$.${langue}')) COLLATE utf8mb4_0900_ai_ci LIKE ${pattern}`)),
-          ...(auteur ? [this.model.sequelize.literal(auteur)] : [])
-        ]
+        [Op.or]: [...texte, ...(auteur ? [this.model.sequelize.literal(auteur)] : [])]
       };
     }
 

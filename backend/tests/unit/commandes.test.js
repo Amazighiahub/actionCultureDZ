@@ -300,6 +300,13 @@ describe('après la deuxième relecture', () => {
     const c = await commandes.commander(b.models, b.notifications, 8, demande({ adresse: '1 rue\u200B Exemple\uFEFF' }));
     expect(c.adresse).toBe('1 rue Exemple');
   });
+
+  it('joiner graphique U+034F retiré aussi (comme pour les coordonnées de paiement)', async () => {
+    const b = base();
+    const c = await commandes.commander(b.models, b.notifications, 8, demande({ adresse: '1 rue\u034F Exemple', message: 'Mer\u034Fci' }));
+    expect(c.adresse).toBe('1 rue Exemple');
+    expect(c.message).toBe('Merci');
+  });
 });
 
 describe('après la troisième relecture', () => {

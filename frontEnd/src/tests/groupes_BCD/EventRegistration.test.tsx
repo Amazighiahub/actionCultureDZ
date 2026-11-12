@@ -52,8 +52,8 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
-vi.mock('@/hooks/useLocalizedDate', () => ({
-  useLocalizedDate: () => ({ formatDate: (d: string) => d }),
+vi.mock('@/hooks/useFormatDate', () => ({
+  useFormatDate: () => ({ formatDate: (d: string) => d }),
 }));
 
 vi.mock('@/hooks/useLocalizedNumber', () => ({

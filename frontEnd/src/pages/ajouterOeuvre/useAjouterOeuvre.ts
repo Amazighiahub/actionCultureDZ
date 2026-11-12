@@ -17,7 +17,7 @@ import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
 import { messageErreurServeur, detailsDesChamps } from '@/utils/erreurServeur';
 import { mapToBackendDTO, type CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
-import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
+import type { SupportedLanguage } from '@/types/common/multilingual.types';
 import type { TagMotCle, TypeOeuvre, Categorie } from '@/types/models/references.types';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { ArticleBlock, ArticleSaveResponse, ArticleFormData } from '@/types/models/articles.types';
@@ -43,16 +43,6 @@ import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-/** Extrait le nom lisible d'un tag (gère JSON multilingue et string) */
-export const getTagName = (nom: unknown, lang: SupportedLanguage = 'fr'): string => {
-  if (!nom) return '';
-  if (typeof nom === 'string') return nom;
-  if (typeof nom === 'object' && nom !== null) {
-    return getLocalizedText(nom, lang);
-  }
-  return String(nom);
-};
 
 /** Champs contrôlés, dans l'ordre où ils apparaissent sur la page (avant : la langue passait avant le résumé) */
 export const CHAMPS_OEUVRE_DANS_L_ORDRE = [
@@ -405,7 +395,7 @@ export function useAjouterOeuvre() {
     if (formData.tags.length >= 10) return;
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
       const existingTag = metadata.tags?.find((t: TagMotCle) =>
-        getTagName(t.nom, lang).toLowerCase() === normalizedTag
+        getLocalizedText(t.nom, lang).toLowerCase() === normalizedTag
       );
       if (!existingTag && metadata.tags) {
         try {
@@ -1033,7 +1023,7 @@ export function useAjouterOeuvre() {
     handleArticleEditorSave,
     handleSubmit,
     loadMetadata,
-    getTagName: (nom: unknown) => getTagName(nom, lang),
+    getTagName: (nom: unknown) => getLocalizedText(nom, lang),
     mediasEnregistres,
     retirerMediaEnregistre: (idMedia: number) => setMediasEnregistres(prev => prev.filter(m => m.id_media !== idMedia)),
     extraitsEnregistres, extraitsChoisis,

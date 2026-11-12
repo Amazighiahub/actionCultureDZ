@@ -3,6 +3,7 @@
  * et ChatGPT, vérifié sur ses vraies données, avec ce qu'il reste à faire.
  */
 const { texteLisible } = require('../helpers/i18n');
+const { EVENEMENT_VISIBLE } = require('../constants/statuts');
 
 const BIO_MIN = 300;
 const DESCRIPTION_MIN = 150;
@@ -18,7 +19,7 @@ async function visibiliteFiche(models, idUser) {
     include: models.Media ? [{ model: models.Media, attributes: ['type_media'], required: false }] : [],
     limit: 200,
   }) : [];
-  const nbEvenements = models.Evenement ? await models.Evenement.count({ where: { id_user: idUser, statut: ['publie', 'planifie', 'en_cours', 'termine'] } }) : 0;
+  const nbEvenements = models.Evenement ? await models.Evenement.count({ where: { id_user: idUser, statut: EVENEMENT_VISIBLE } }) : 0;
   const nbLiens = models.LienExterne ? await models.LienExterne.count({ where: { id_user: idUser } }) : 0;
 
   // Les articles n'ont pas forcément de photo : seules les autres œuvres sont comptées

@@ -90,14 +90,5 @@ module.exports = (sequelize) => {
     }
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Genre.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Genre.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Genre;
 };

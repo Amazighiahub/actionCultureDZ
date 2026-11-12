@@ -17,16 +17,15 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { Loader2, Upload, Info } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 import { messageErreurServeur } from '@/utils/erreurServeur';
-
-type Multilingue = Record<string, string | undefined>;
 
 interface Fiche {
   id_intervenant: number;
-  prenom?: Multilingue | string | null;
-  nom?: Multilingue | string | null;
-  biographie?: Multilingue | string | null;
+  prenom?: TranslatableValue | string | null;
+  nom?: TranslatableValue | string | null;
+  biographie?: TranslatableValue | string | null;
   titre_professionnel?: string | null;
   organisation?: string | null;
   site_web?: string | null;
@@ -44,7 +43,7 @@ interface Fiche {
 export interface DonneesFiche {
   prenom: { fr: string };
   nom: { fr: string };
-  biographie: Multilingue;
+  biographie: TranslatableValue;
   titre_professionnel: string | null;
   organisation: string | null;
   site_web: string | null;
@@ -70,7 +69,7 @@ interface Props {
   description?: string;
 }
 
-const enObjet = (v: Fiche['biographie']): Multilingue =>
+const enObjet = (v: Fiche['biographie']): TranslatableValue =>
   !v ? {} : typeof v === 'string' ? { fr: v } : v;
 
 const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCree, titre, onClose, onSaved, description }) => {
@@ -84,7 +83,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
   const [form, setForm] = useState({
     prenom: '', nom: '', titre_professionnel: '', organisation: '', site_web: '', photo_url: '',
     date_naissance: '', lieu_naissance: '', date_deces: '', lieu_deces: '', wikipedia_url: '',
-    biographie: {} as Multilingue
+    biographie: {} as TranslatableValue
   });
 
   // Nouvelle fiche : formulaire vide (nom déjà saisi repris), modifiable
@@ -109,7 +108,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
         const f = res.data;
         setFiche(f);
         setForm({
-          prenom: texteLangue(f.prenom), nom: texteLangue(f.nom),
+          prenom: getLocalizedText(f.prenom), nom: getLocalizedText(f.nom),
           titre_professionnel: f.titre_professionnel || '', organisation: f.organisation || '',
           site_web: f.site_web || '', photo_url: f.photo_url || '',
           date_naissance: f.date_naissance || '', lieu_naissance: f.lieu_naissance || '',
@@ -279,7 +278,7 @@ const FicheIntervenantDialog: React.FC<Props> = ({ idIntervenant, creation, onCr
               name="fiche-biographie"
               label={t('programme.speakerCard.biography', 'Biographie')}
               value={form.biographie}
-              onChange={(v) => setForm(f => ({ ...f, biographie: v as Multilingue }))}
+              onChange={(v) => setForm(f => ({ ...f, biographie: v as TranslatableValue }))}
               type="textarea"
               rows={5}
               disabled={lectureSeule}

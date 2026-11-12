@@ -1,12 +1,17 @@
 /**
+ * Texte comparé sans accents ni majuscules : « Béjaïa » -> « bejaia ».
+ * Seule version du site (avant : une copie dans Artisanat, une dans Recherche, audit V11 COD-27).
+ */
+export function sansAccent(v: unknown): string {
+  return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+/**
  * Adresses lisibles : « 17-amina-benali ». Seul le numéro identifie la page ;
  * le texte est décoratif (un nom modifié ne casse aucun lien).
  */
 export function slugify(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // accents
-    .toLowerCase()
+  return sansAccent(text)
     .replace(/œ/g, 'oe')
     .replace(/æ/g, 'ae')
     .replace(/[^a-z0-9]+/g, '-') // arabe, tifinagh, ponctuation -> séparateur

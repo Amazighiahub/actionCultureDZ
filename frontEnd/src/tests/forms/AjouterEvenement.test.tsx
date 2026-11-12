@@ -44,6 +44,7 @@ const {
 }));
 
 let mockParams: Record<string, string> = {};
+const mockPermissions = { isAdmin: false };
 
 // ---------------------------------------------------------------------------
 // Donnees de reference
@@ -139,8 +140,10 @@ vi.mock('@/services/httpClient', () => ({
 }));
 
 vi.mock('@/config/api', () => ({
-  API_ENDPOINTS: { organisations: { me: '/organisations/me' } },
+  API_ENDPOINTS: { organisations: { me: '/organisations/me', adminListe: '/organisations/admin/liste' } },
 }));
+
+vi.mock('@/hooks/usePermissions', () => ({ usePermissions: () => mockPermissions }));
 
 // -- Radix Select → native HTML select pour jsdom --
 vi.mock('@/components/ui/select', () => ({
@@ -325,6 +328,7 @@ describe('AjouterEvenement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockParams = {};
+    mockPermissions.isAdmin = false;
     user = userEvent.setup();
 
     mockIsAuthenticated.mockReturnValue(true);
@@ -770,6 +774,30 @@ describe('AjouterEvenement', () => {
       const tarification = JSON.parse(fd.get('tarification') as string);
       expect(tarification.mode).toBe('profil');
       expect(tarification.profils.map((p: { prix: number }) => p.prix)).toEqual([1000, 2000, 3000, 4000]);
+    });
+  });
+
+  describe('Organisation (administration)', () => {
+    test('un administrateur voit toutes les organisations non refusées, celles en attente signalées', async () => {
+      mockPermissions.isAdmin = true;
+      mockHttpGet.mockImplementation(async (adresse: string) => (adresse === '/organisations/admin/liste'
+        ? { success: true, data: [
+          { id_organisation: 5, nom: 'Seguia art et culture', statut: 'valide' },
+          { id_organisation: 6, nom: 'Direction de la culture', statut: 'en_attente' },
+          { id_organisation: 7, nom: 'Organisation refusée', statut: 'rejete' },
+        ] }
+        : { success: true, data: [] }));
+      render(<AjouterEvenement />);
+      await waitFor(() => expect(mockHttpGet).toHaveBeenCalledWith('/organisations/admin/liste'));
+      expect(await screen.findByText(/Seguia art et culture/)).toBeInTheDocument();
+      expect(screen.getByText(/Direction de la culture.*attente/)).toBeInTheDocument();
+      expect(screen.queryByText(/Organisation refusée/)).not.toBeInTheDocument();
+    });
+
+    test('un professionnel ne voit que ses propres organisations', async () => {
+      render(<AjouterEvenement />);
+      await waitFor(() => expect(mockHttpGet).toHaveBeenCalledWith('/organisations/me'));
+      expect(mockHttpGet).not.toHaveBeenCalledWith('/organisations/admin/liste');
     });
   });
 });

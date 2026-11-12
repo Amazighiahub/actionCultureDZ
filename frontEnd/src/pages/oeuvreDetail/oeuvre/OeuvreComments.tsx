@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { cn } from '@/lib/Utils';
@@ -53,7 +53,7 @@ const noteOf = (c: { note?: number | null; note_qualite?: number | null }): numb
   Number(c.note_qualite ?? c.note) || 0;
 
 const CommentItem: React.FC<{ comment: Comment; onChange?: () => void }> = ({ comment, onChange }) => {
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const user = comment.User;
 
   return (

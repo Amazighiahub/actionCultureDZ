@@ -9,6 +9,8 @@
 const express = require('express');
 const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
+const { nomComplet } = require('../utils/texte');
+const { escapeHtml } = require('../utils/sanitize');
 const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, servicePath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
@@ -18,9 +20,6 @@ const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 const DEFAULT_DESCRIPTION = "Explorez, préservez et partagez la richesse culturelle de l'Algérie : événements, patrimoine, œuvres, artisanat traditionnel.";
 const MAX_LISTE = 50;
 
-const escapeHtml = (str) => String(str)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 /** Texte d'un champ multilingue ({ fr, ar, ... }) : français, langue de référence du site */
 function text(value) {
@@ -128,7 +127,6 @@ const firstImage = (medias = []) => {
 };
 const dateFr = (d) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
 const iso = (d) => (d ? new Date(d).toISOString() : undefined);
-const nomComplet = (u) => [text(u?.prenom), text(u?.nom)].filter(Boolean).join(' ');
 const cheminOeuvre = (o) => oeuvrePath(o.id_oeuvre, o.titre, o.id_type_oeuvre);
 // Une liste annexe en échec (modèle absent, erreur) ne doit jamais faire tomber la page
 const sansEchec = async (fn, defaut = []) => { try { return (await fn()) ?? defaut; } catch { return defaut; } };

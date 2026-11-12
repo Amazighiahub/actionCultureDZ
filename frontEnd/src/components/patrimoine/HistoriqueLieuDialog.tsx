@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { directionLangue, nomLangue, type TexteMultilingue } from '@/types/common/multilingual.types';
 
@@ -65,7 +65,7 @@ interface Props {
 const HistoriqueLieuDialog: React.FC<Props> = ({ lieuId, onRestaure }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const [ouvert, setOuvert] = useState(false);
   const [lignes, setLignes] = useState<LigneHistorique[] | null>(null);
   const [aRestaurer, setARestaurer] = useState<LigneHistorique | null>(null);

@@ -1,6 +1,6 @@
 const BaseRepository = require('./baseRepository');
 const { Op, Sequelize } = require('sequelize');
-const { SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+const { buildMultiLangExactMatch } = require('../helpers/i18n');
 
 class OrganisationRepository extends BaseRepository {
   constructor(models) {
@@ -62,18 +62,10 @@ class OrganisationRepository extends BaseRepository {
   async findByName(searchStr) {
     if (!searchStr) return null;
 
-    const normalized = searchStr.trim().toLowerCase();
-    const conditions = SUPPORTED_LANGUAGES.map(l => {
-      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-      return Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
-          Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal(`'${jsonPath}'`))
-        )),
-        normalized
-      );
-    });
-
-    return this.model.findOne({ where: { [Op.or]: conditions } });
+    // Même nom (sans casse) dans une des langues ; un nom vide ne cherche rien
+    const where = buildMultiLangExactMatch('nom', searchStr);
+    if (!where[Op.or]) return null;
+    return this.model.findOne({ where });
   }
 
   /** @param {Object} [options] - { transaction } */

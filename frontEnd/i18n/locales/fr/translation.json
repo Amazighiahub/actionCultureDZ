@@ -774,7 +774,10 @@
       "contactTelephone": "Téléphone de contact",
       "startDatePast": "La date de début ne peut pas être passée",
       "dateLimiteApresDebut": "La date limite d’inscription doit être au plus tard le jour du début",
-      "virtualUrlInvalide": "Le lien doit commencer par https:// (ex. https://meet.google.com/…)"
+      "virtualUrlInvalide": "Le lien doit commencer par https:// (ex. https://meet.google.com/…)",
+      "orgEnAttente": "en attente de validation",
+      "idOrganisateur": "Organisateur (n° de compte)",
+      "idOrganisateurAide": "Laisser vide pour être l’organisateur. Sinon, ce compte devient l’organisateur et pourra modifier l’événement."
     },
     "types": {
       "concert": "Concert",

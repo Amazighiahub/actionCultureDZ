@@ -34,9 +34,5 @@ module.exports = (sequelize) => {
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N
-  Langue.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
   return Langue;
 };

@@ -76,14 +76,5 @@ module.exports = (sequelize) => {
     });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Editeur.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Editeur.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Editeur;
 };

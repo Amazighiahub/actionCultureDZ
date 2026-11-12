@@ -13,13 +13,12 @@
  */
 const { Op } = require('sequelize');
 const { texteLisible } = require('../../helpers/i18n');
+const { sansAccent } = require('../../utils/texte');
 const { TYPE_LIVRE } = require('./importCatalogue');
 
 const ID_TYPE_ECRIVAIN = 2;
-const cleNom = (prenom, nom) => `${texteLisible(prenom)} ${texteLisible(nom)}`
-  .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-const cleTitre = (t) => String(t || '')
-  .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const cleNom = (prenom, nom) => sansAccent(`${texteLisible(prenom)} ${texteLisible(nom)}`, { espaces: true });
+const cleTitre = (t) => sansAccent(t, { espaces: true });
 
 /** Fiche « éditeur » de la maison (créée si elle n'en a pas encore) */
 async function editeurDeLaMaison(models, org) {

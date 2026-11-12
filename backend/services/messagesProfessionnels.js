@@ -7,11 +7,12 @@
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
+const { nomComplet } = require('../utils/texte');
 const { getClient } = require('../utils/redisClient');
 
 const TAILLE_LOT = 500;
 const DELAI_SECONDES = 24 * 3600;
-const STATUTS_EVENEMENT_VISIBLE = ['publie', 'planifie', 'en_cours'];
+const { EVENEMENT_OUVERT: STATUTS_EVENEMENT_VISIBLE } = require('../constants/statuts');
 
 const erreur = (message, statusCode) => Object.assign(new Error(message), { statusCode });
 
@@ -54,7 +55,6 @@ function composer(modele, personne, qui, titreContenu = '') {
   return textes[modele](textes.bonjour(texteLisible(personne.prenom)), qui, titreContenu);
 }
 
-const nomComplet = (u) => [texteLisible(u?.prenom), texteLisible(u?.nom)].filter(Boolean).join(' ');
 const lienOeuvre = (o) => `${[4, 5].includes(o.id_type_oeuvre) ? '/articles' : '/oeuvres'}/${o.id_oeuvre}`;
 
 // Limite d'un envoi par jour : Redis, avec un repli en mémoire si Redis est absent

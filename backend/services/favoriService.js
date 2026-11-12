@@ -7,6 +7,8 @@
  */
 const { Op } = require('sequelize');
 const BaseService = require('./core/baseService');
+const { construirePagination } = require('../utils/pagination');
+const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 
 const TYPES_VALIDES = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
 
@@ -31,12 +33,7 @@ class FavoriService extends BaseService {
     return {
       rows: result.rows,
       count: result.count,
-      pagination: {
-        total: result.count,
-        page,
-        pages: Math.ceil(result.count / limit),
-        limit
-      }
+      pagination: construirePagination(result.count, page, limit)
     };
   }
 
@@ -202,7 +199,7 @@ class FavoriService extends BaseService {
           });
         case 'evenement':
           return await m.Evenement.findOne({
-            where: { id_evenement: id, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+            where: { id_evenement: id, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
             attributes: ['id_evenement', 'nom_evenement', 'description', 'date_debut', 'date_fin', 'image_url', 'statut', 'tarif'],
             include: [
               { model: m.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] },

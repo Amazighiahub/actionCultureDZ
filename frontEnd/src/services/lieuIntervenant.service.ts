@@ -1,4 +1,5 @@
 import { httpClient } from './httpClient';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 
 export interface LieuIntervenant {
   id_lieu_intervenant: number;
@@ -13,12 +14,12 @@ export interface LieuIntervenant {
   date_modification: string;
   Intervenant?: {
     id_intervenant: number;
-    nom: string | { fr?: string; ar?: string; [k: string]: string | undefined };
-    prenom: string | { fr?: string; ar?: string; [k: string]: string | undefined };
+    nom: string | TranslatableValue;
+    prenom: string | TranslatableValue;
     titre_professionnel?: string;
     photo_url?: string;
     specialites?: string[];
-    biographie?: string | { fr?: string; ar?: string; [k: string]: string | undefined };
+    biographie?: string | TranslatableValue;
     wikipedia_url?: string;
     date_naissance?: string | null;
     lieu_naissance?: string | null;
@@ -34,15 +35,6 @@ export interface AddIntervenantPayload {
   periode?: string;
   contexte?: string;
   ordre?: number;
-}
-
-export function getIntervenantNom(
-  val: string | { fr?: string; ar?: string; [k: string]: string | undefined } | undefined,
-  lang = 'fr'
-): string {
-  if (!val) return '';
-  if (typeof val === 'string') return val;
-  return val[lang] || val.fr || val.ar || '';
 }
 
 export const lieuIntervenantService = {

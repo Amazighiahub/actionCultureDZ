@@ -34,7 +34,7 @@ import { saisieEnAttente } from '@/hooks/useSaisieConservee';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import EditeurModal, { libelleTypeEditeur } from '@/components/modals/EditeurModal';
 import { useRTL } from '@/hooks/useRTL';
-import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
+import type { SupportedLanguage } from '@/types/common/multilingual.types';
 import type { 
   IntervenantExistant, 
   NouvelIntervenant, 
@@ -69,14 +69,6 @@ interface DisplayIntervenant {
   id_type_user: number;
   data: IntervenantExistant | NouvelIntervenant | ContributeurOeuvre;
 }
-
-/** Extrait le nom lisible d'un éditeur (gère JSON multilingue et string) */
-const getEditeurName = (nom: any, lang: SupportedLanguage = 'fr'): string => {
-  if (!nom) return '';
-  if (typeof nom === 'string') return nom;
-  if (typeof nom === 'object') return getLocalizedText(nom, lang);
-  return String(nom);
-};
 
 const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
   typeOeuvreId,
@@ -208,7 +200,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       const query = editeurSearchQuery.toLowerCase();
       setFilteredEditeurs(
         editeurs.filter(e =>
-          getEditeurName(e.nom, lang).toLowerCase().includes(query) ||
+          getLocalizedText(e.nom, lang).toLowerCase().includes(query) ||
           e.ville?.toLowerCase().includes(query) ||
           e.type_editeur?.toLowerCase().includes(query)
         )
@@ -532,7 +524,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           <div className={`flex items-center gap-3 ${rtlClasses.flexRow}`}>
                             <Building2 className="h-5 w-5 text-muted-foreground" />
                             <div>
-                              <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
+                              <p className="font-medium">{getLocalizedText(editeur.nom, lang)}</p>
                               <p className="text-sm text-muted-foreground">
                                 {editeur.ville && `${editeur.ville} • `}
                                 {libelleTypeEditeur(t, editeur.type_editeur)}
@@ -650,7 +642,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         onClick={() => handleAddEditeur(editeur)}
                       >
                         <div>
-                          <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
+                          <p className="font-medium">{getLocalizedText(editeur.nom, lang)}</p>
                           <p className="text-sm text-muted-foreground">
                             {editeur.ville && `${editeur.ville} • `}
                             {libelleTypeEditeur(t, editeur.type_editeur)}

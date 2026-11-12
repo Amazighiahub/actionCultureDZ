@@ -36,14 +36,5 @@ module.exports = (sequelize) => {
     timestamps: false
   });
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Specialite.prototype.getNomSpecialite = function(lang = 'fr') {
-    return this.nom_specialite?.[lang] || this.nom_specialite?.fr || this.nom_specialite?.ar || '';
-  };
-
-  Specialite.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Specialite;
 };

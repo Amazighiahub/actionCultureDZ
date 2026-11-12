@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { ApiResponse } from '@/config/api';
 import type { CarteArticle } from '@/services/patrimoineArticles.service';
 import { oeuvrePath } from '@/utils/slug';
@@ -56,8 +56,8 @@ const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChang
       </h4>
       <ul className="grid gap-3 sm:grid-cols-2">
         {pages.map(page => {
-          const titre = texteLangue(page.titre, i18n.language);
-          const resume = texteLangue(page.resume, i18n.language);
+          const titre = getLocalizedText(page.titre, i18n.language);
+          const resume = getLocalizedText(page.resume, i18n.language);
           return (
             <li key={page.id_lien} className="relative group rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
               <Link to={oeuvrePath(page.id_oeuvre, page.titre, 4)} className="flex gap-3 p-3 h-full">

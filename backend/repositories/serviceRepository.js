@@ -138,7 +138,10 @@ class ServiceRepository extends BaseRepository {
     return this.search(query, ['nom', 'description'], {
       ...options,
       additionalWhere: { ...options.additionalWhere, statut: 'valide' },
-      include: this._defaultIncludes()
+      include: this._defaultIncludes(),
+      // Les services ont createdAt (timestamps Sequelize), pas date_creation : le tri par défaut de
+      // findAll faisait échouer la recherche (« Unknown column 'Service.date_creation' », erreur 500)
+      order: options.order || [['createdAt', 'DESC']]
     });
   }
 

@@ -13,8 +13,11 @@ const CacheManager = require('../../utils/CacheManager');
 const { verifierReponses, reponsesFormulaireBase, listerChamps } = require('./formulaireInscription');
 const { lireTarification, tarificationDe, configAvecProfil, montantInscription } = require('./tarification');
 const { mergeTranslations, lireMultiLang, texteLisible } = require('../../helpers/i18n');
+const { nomComplet } = require('../../utils/texte');
+const { EVENEMENT_OUVERT, EVENEMENT_NON_PUBLIC } = require('../../constants/statuts');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { evenementPath } = require('../../utils/slug');
+const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
 
 /** Nom lisible d'un événement (nom multilingue) pour les notifications */
 const nomLisible = (nom) => texteLisible(nom) || 'Événement';
@@ -194,6 +197,8 @@ class EvenementService extends BaseService {
       throw this._validationError('Une organisation est requise pour les événements en présentiel');
     }
 
+    const auteurId = await this._auteurDesigne(data.id_organisateur, userId, options.isAdmin, urlVirtuel ? null : orgId);
+
     const entityData = {
       nom_evenement: data.nom_evenement || data.nom,
       description: data.description || {},
@@ -218,7 +223,7 @@ class EvenementService extends BaseService {
         data.date_limite_inscription ?? data.dateLimiteInscription,
         this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut)
       ),
-      id_user: userId
+      id_user: auteurId
     };
     Object.assign(entityData, this._tarification(data));
 
@@ -239,7 +244,7 @@ class EvenementService extends BaseService {
     const full = await this.repository.findWithFullDetails(evenement.id_evenement);
 
     this.cache.invalidate();
-    this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}`);
+    this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}${auteurId !== userId ? ` pour l'organisateur ${auteurId}` : ''}`);
     await this._viderCachesListes();
     if (full?.statut === 'en_attente') await this._prevenirModeration(full);
 
@@ -314,6 +319,35 @@ class EvenementService extends BaseService {
    * L'utilisateur doit être membre actif de l'organisation qu'il associe à un événement
    * (sinon il pourrait publier au nom de n'importe quelle organisation).
    */
+  /**
+   * Organisateur de l'événement : la personne connectée. L'administration peut ajouter un événement
+   * au nom d'un compte (son numéro, id_organisateur) : ce compte en devient l'organisateur et pourra le
+   * modifier. Il doit donc être un professionnel actif et, pour un événement en présentiel, membre
+   * actif de l'organisation choisie (la modification le vérifie aussi).
+   */
+  async _auteurDesigne(idOrganisateur, userId, isAdmin, orgId) {
+    if (idOrganisateur === undefined || idOrganisateur === null || idOrganisateur === '' || !isAdmin) return userId;
+    const id = Number(idOrganisateur);
+    if (!Number.isInteger(id) || id <= 0) throw this._validationError('Numéro de compte de l’organisateur invalide');
+    if (id === Number(userId) || !this.models?.User) return id;
+    const compte = await this.models.User.findByPk(id, { attributes: ['id_user', 'statut', 'id_type_user'] });
+    if (!compte || compte.statut !== 'actif') throw this._validationError('Ce compte n’existe pas ou n’est pas actif');
+    let professionnel = PROFESSIONAL_TYPE_IDS.includes(compte.id_type_user);
+    if (!professionnel && this.models.User.sequelize) {
+      const [roles] = await this.models.User.sequelize.query(
+        "SELECT 1 FROM userroles ur JOIN role r ON r.id_role = ur.id_role WHERE ur.id_user = ? AND r.nom_role = 'Professionnel' LIMIT 1",
+        { replacements: [id] }
+      );
+      professionnel = roles.length > 0;
+    }
+    if (!professionnel) throw this._validationError('Ce compte n’est pas un compte professionnel');
+    if (orgId && this.models.UserOrganisation) {
+      const membre = await this.models.UserOrganisation.findOne({ where: { id_user: id, id_organisation: parseInt(orgId, 10), actif: true } });
+      if (!membre) throw this._validationError('Ce compte n’est pas membre de l’organisation choisie');
+    }
+    return id;
+  }
+
   async _assertOrganisationMember(orgId, userId, isAdmin, transaction) {
     if (!orgId || isAdmin || !this.models?.UserOrganisation) return;
     const membership = await this.models.UserOrganisation.findOne({
@@ -401,7 +435,7 @@ class EvenementService extends BaseService {
       }
 
       // Date ou lieu changés sur un événement visible : les inscrits seront prévenus après l'enregistrement
-      if (['publie', 'planifie', 'en_cours'].includes(existing.statut)) {
+      if (EVENEMENT_OUVERT.includes(existing.statut)) {
         const dateChangee = updateData.date_debut
           && new Date(updateData.date_debut).getTime() !== new Date(existing.date_debut).getTime();
         // id_lieu à null compte aussi : un événement passé en ligne perd son lieu, les inscrits doivent le savoir
@@ -418,7 +452,7 @@ class EvenementService extends BaseService {
       const SENSIBLES = ['nom_evenement', 'description', 'image_url', 'url_virtuel', 'tarif'];
       const valeur = (c, v) => (c === 'tarif' ? (v === null || v === undefined || v === '' ? null : Number(v)) : JSON.stringify(v ?? null));
       const changes = SENSIBLES.filter((c) => updateData[c] !== undefined && valeur(c, updateData[c]) !== valeur(c, existing[c]));
-      if (['publie', 'planifie', 'en_cours'].includes(existing.statut) && !options.isAdmin && changes.length) {
+      if (EVENEMENT_OUVERT.includes(existing.statut) && !options.isAdmin && changes.length) {
         aVerifier = changes.map((c) => `${c}:${valeur(c, updateData[c])}`).join('|');
       }
 
@@ -506,12 +540,12 @@ class EvenementService extends BaseService {
     }
 
     // Contrôle d'état : seuls les brouillons peuvent être supprimés (admin bypass)
-    if (!options.isAdmin && !['brouillon', 'en_attente'].includes(existing.statut)) {
+    if (!options.isAdmin && !EVENEMENT_NON_PUBLIC.includes(existing.statut)) {
       throw this._validationError('Seuls les événements en brouillon peuvent être supprimés. Utilisez l\'annulation pour les événements publiés.');
     }
     // Administration : un événement visible avec des inscrits s'annule d'abord (ils sont alors prévenus).
     // Sinon leurs inscriptions disparaissaient sans qu'ils le sachent.
-    if (['publie', 'planifie', 'en_cours', 'reporte'].includes(existing.statut) && await this.repository.countParticipants(id) > 0) {
+    if ([...EVENEMENT_OUVERT, 'reporte'].includes(existing.statut) && await this.repository.countParticipants(id) > 0) {
       throw Object.assign(this._validationError('Cet événement a des inscrits : annulez-le d\'abord pour qu\'ils soient prévenus'), { statusCode: 409 });
     }
 
@@ -540,8 +574,7 @@ class EvenementService extends BaseService {
       });
       if (!evenement) throw this._notFoundError(evenementId);
 
-      const openStatuses = ['publie', 'planifie', 'en_cours'];
-      if (!openStatuses.includes(evenement.statut)) {
+      if (!EVENEMENT_OUVERT.includes(evenement.statut)) {
         throw this._validationError(evenement.statut === 'annule'
           ? 'Cet événement a été annulé'
           : 'Les inscriptions ne sont pas ouvertes pour cet événement');
@@ -672,7 +705,7 @@ class EvenementService extends BaseService {
   async getPublicParticipants(evenementId) {
     // Événement pas encore publié : personne n'y est encore « attendu » publiquement
     const evenement = await this.repository.findById(evenementId, { attributes: ['id_evenement', 'statut'] });
-    if (!evenement || ['brouillon', 'en_attente'].includes(evenement.statut)) {
+    if (!evenement || EVENEMENT_NON_PUBLIC.includes(evenement.statut)) {
       return { participants: [], total: 0 };
     }
     // total : toutes les personnes confirmées, y compris celles qui ne sont pas nommées
@@ -968,7 +1001,7 @@ class EvenementService extends BaseService {
     await this._viderCachesListes();
     this.logger.info(`Événement publié: ${id} par admin: ${adminId}`);
     require('../indexNow').signalerPlusTard(lien);
-    if (['brouillon', 'en_attente'].includes(evenement.statut)) {
+    if (EVENEMENT_NON_PUBLIC.includes(evenement.statut)) {
       await notifier(this.notificationService, evenement.id_user, {
         titre: 'Événement publié',
         message: `« ${nom} » est en ligne : tout le monde peut le voir et s'y inscrire.`,
@@ -1005,7 +1038,7 @@ class EvenementService extends BaseService {
     // Une notification ne bloque jamais une publication
     try {
       const organisateur = await this.models?.User?.findByPk(idOrganisateur, { attributes: ['nom', 'prenom'] });
-      const qui = [texteLisible(organisateur?.prenom), texteLisible(organisateur?.nom)].filter(Boolean).join(' ') || 'Un professionnel que vous suivez';
+      const qui = nomComplet(organisateur) || 'Un professionnel que vous suivez';
       await require('../suivisProfessionnels').prevenirAbonnes(this.models, idOrganisateur, {
         composer: (personne) => require('../messagesProfessionnels').composer('nouvelEvenement', personne, qui, nom),
         url_action: lien,

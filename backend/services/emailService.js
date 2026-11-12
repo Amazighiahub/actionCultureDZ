@@ -8,6 +8,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const handlebars = require('handlebars');
 const { texteLisible } = require('../helpers/i18n');
+const { escapeHtml } = require('../utils/sanitize');
 
 class EmailService {
   constructor() {
@@ -37,13 +38,7 @@ class EmailService {
    * @returns {string} La chaîne échappée.
    */
   _escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
+    return escapeHtml(str);
   }
 
   /**

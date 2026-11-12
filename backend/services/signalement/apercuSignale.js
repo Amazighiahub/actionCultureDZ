@@ -3,6 +3,7 @@
  * Sans cela, il sanctionnait sans voir le texte (« Non disponible » pour tous les signalements).
  */
 const { texteLisible } = require('../../helpers/i18n');
+const { nomComplet } = require('../../utils/texte');
 
 const LONGUEUR_MAX = 600;
 const extrait = (valeur) => {
@@ -10,12 +11,12 @@ const extrait = (valeur) => {
   if (!texte) return null;
   return texte.length > LONGUEUR_MAX ? `${texte.slice(0, LONGUEUR_MAX)}…` : texte;
 };
-const nomComplet = (u) => [texteLisible(u?.prenom), texteLisible(u?.nom)].filter(Boolean).join(' ') || null;
+const nomOuNull = (u) => nomComplet(u) || null;
 
 const auteur = async (models, idUser) => {
   if (!idUser || !models.User) return null;
   const u = await models.User.findByPk(idUser, { attributes: ['id_user', 'nom', 'prenom'] });
-  return u ? { id: u.id_user, nom: nomComplet(u) } : null;
+  return u ? { id: u.id_user, nom: nomOuNull(u) } : null;
 };
 
 /** Page du contenu auquel un commentaire est rattaché */
@@ -59,7 +60,7 @@ async function apercuSignale(models, type, id) {
     case 'user': {
       const u = await models.User?.findByPk(id, { attributes: ['id_user', 'nom', 'prenom', 'statut'] });
       if (!u) return null;
-      return { titre: nomComplet(u), contenu: null, lien: `/professionnels/${u.id_user}`, statut: u.statut, auteur: { id: u.id_user, nom: nomComplet(u) } };
+      return { titre: nomOuNull(u), contenu: null, lien: `/professionnels/${u.id_user}`, statut: u.statut, auteur: { id: u.id_user, nom: nomOuNull(u) } };
     }
     default:
       return null;

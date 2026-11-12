@@ -460,6 +460,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   organisations: {
     me: '/organisations/me',
+    adminListe: '/organisations/admin/liste',
     create: '/organisations',
     types: '/organisations/types',
     detail: (id: number) => `/organisations/${id}`,
@@ -558,6 +559,8 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     carteVisite: (id: number) => `/patrimoine/${id}/carte-visite`,
     qrcode: (id: number) => `/patrimoine/${id}/qrcode`,
     map: '/patrimoine/map',
+    // Sites de la commune au nom proche, vérifiés avant une création
+    checkDuplicate: '/patrimoine/check-duplicate',
     
     // Parcours
     parcours: '/parcours',

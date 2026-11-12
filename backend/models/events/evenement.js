@@ -1,6 +1,7 @@
 // models/Evenement.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes, Op, fn, col } = require('sequelize');
 const { finEffective } = require('../../helpers/finEvenement');
+const { texteLisible } = require('../../helpers/i18n');
 
 module.exports = (sequelize) => {
   const Evenement = sequelize.define('Evenement', {
@@ -304,19 +305,6 @@ module.exports = (sequelize) => {
     }
   };
   
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Evenement.prototype.getNomEvenement = function(lang = 'fr') {
-    return this.nom_evenement?.[lang] || this.nom_evenement?.fr || this.nom_evenement?.ar || '';
-  };
-
-  Evenement.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
-  Evenement.prototype.getAccessibilite = function(lang = 'fr') {
-    return this.accessibilite?.[lang] || this.accessibilite?.fr || '';
-  };
-
   // Méthodes d'instance existantes
   Evenement.prototype.isActive = function() {
     if (!this.date_fin) return false;
@@ -383,19 +371,13 @@ module.exports = (sequelize) => {
   // Méthodes de sérialisation JSON
   // ====================================================================
 
-  const resolveI18n = (value, lang = 'fr') => {
-    if (!value) return '';
-    if (typeof value === 'string') return value;
-    return value[lang] || value.fr || value.ar || value.en || '';
-  };
-
   Evenement.prototype.toCardJSON = function(lang = 'fr') {
     const plain = this.get({ plain: true });
     return {
       ...plain,
-      nom_evenement: resolveI18n(plain.nom_evenement, lang),
-      description: resolveI18n(plain.description, lang),
-      accessibilite: resolveI18n(plain.accessibilite, lang),
+      nom_evenement: texteLisible(plain.nom_evenement, lang),
+      description: texteLisible(plain.description, lang),
+      accessibilite: texteLisible(plain.accessibilite, lang),
     };
   };
 

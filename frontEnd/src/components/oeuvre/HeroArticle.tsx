@@ -56,9 +56,8 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
   const articleSci = oeuvre.ArticleScientifique;
   const article = oeuvre.Article;
 
-  const typeOeuvre = typeof oeuvre.TypeOeuvre?.nom_type === 'object'
-    ? (oeuvre.TypeOeuvre.nom_type as Record<string, string>).fr || Object.values(oeuvre.TypeOeuvre.nom_type as Record<string, string>)[0] || 'Œuvre'
-    : oeuvre.TypeOeuvre?.nom_type || 'Œuvre';
+  // Dans la langue du site, comme les autres champs (avant : toujours la version française)
+  const typeOeuvre = gt(oeuvre.TypeOeuvre?.nom_type) || 'Œuvre';
 
   return (
     <div className="relative bg-gradient-to-b from-slate-50 via-white to-background dark:from-slate-950 dark:via-background dark:to-background">

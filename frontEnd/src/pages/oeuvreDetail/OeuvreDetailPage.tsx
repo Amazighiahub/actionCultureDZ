@@ -27,7 +27,7 @@ import {
 import { LoadingSkeleton } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import SEOHead, { buildOeuvreJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
-import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // ✅ Import du HeroSection avec effet flip 3D
 import { HeroSection, enTeteAfficheDescription } from '@/components/oeuvre/HeroSection';
@@ -111,7 +111,7 @@ const OeuvreDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { formatDate: hookFormatDate } = useFormatDate();
-  const lang = (i18n.language || 'fr') as SupportedLanguage;
+  const lang = i18n.language || 'fr';
 
   // Page d'origine transmise par la navigation : chemin interne uniquement
   const fromPath = getSafeRedirectPath(location.state?.from);
@@ -180,9 +180,9 @@ const OeuvreDetailPage: React.FC = () => {
   const seoKeywords = useMemo(() => {
     if (!oeuvre) return [];
     return [
-      getTranslation(oeuvre.titre, lang),
-      getTranslation(oeuvre.TypeOeuvre?.nom_type, lang),
-      getTranslation((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
+      getLocalizedText(oeuvre.titre, lang),
+      getLocalizedText(oeuvre.TypeOeuvre?.nom_type, lang),
+      getLocalizedText((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
       'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
     ].filter(Boolean) as string[];
   }, [oeuvre, lang]);
@@ -194,7 +194,7 @@ const OeuvreDetailPage: React.FC = () => {
       buildBreadcrumbJsonLd([
         { name: t('nav.home', 'Accueil'), url: '/' },
         { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
-        { name: getTranslation(oeuvre.titre, lang) || '', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre) },
+        { name: getLocalizedText(oeuvre.titre, lang) || '', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre) },
       ]),
     ];
   }, [oeuvre, lang, t]);
@@ -411,8 +411,8 @@ const OeuvreDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <SEOHead
-        title={getTranslation(oeuvre.titre, lang)}
-        description={getTranslation(oeuvre.description, lang)?.substring(0, 160) || t('oeuvre.seoDescription', 'Découvrez {{title}} — œuvre culturelle algérienne', { title: getTranslation(oeuvre.titre, lang) })}
+        title={getLocalizedText(oeuvre.titre, lang)}
+        description={getLocalizedText(oeuvre.description, lang)?.substring(0, 160) || t('oeuvre.seoDescription', 'Découvrez {{title}} — œuvre culturelle algérienne', { title: getLocalizedText(oeuvre.titre, lang) })}
         image={(oeuvre as OeuvreWithExtras).image_url || (oeuvre as OeuvreWithExtras).couverture_url}
         type="article"
         keywords={seoKeywords}
@@ -453,10 +453,10 @@ const OeuvreDetailPage: React.FC = () => {
         {(() => {
           const createur = (oeuvre as { Saiseur?: { id_user: number; nom?: unknown; prenom?: unknown; id_type_user?: number } }).Saiseur;
           if (!createur || !createur.id_type_user || [1, 29].includes(createur.id_type_user)) return null;
-          const nomCreateur = `${getTranslation(createur.prenom as never, lang) || ''} ${getTranslation(createur.nom as never, lang) || ''}`.trim();
+          const nomCreateur = `${getLocalizedText(createur.prenom, lang) || ''} ${getLocalizedText(createur.nom, lang) || ''}`.trim();
           return (
             <div className="container max-w-6xl pt-6">
-              <Link to={professionnelPath(createur.id_user, getTranslation(createur.prenom as never, 'fr'), getTranslation(createur.nom as never, 'fr'))}
+              <Link to={professionnelPath(createur.id_user, getLocalizedText(createur.prenom, 'fr'), getLocalizedText(createur.nom, 'fr'))}
                 className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm hover:border-primary">
                 {t('oeuvre.parCreateur', 'Une œuvre de {{nom}}', { nom: nomCreateur })}
                 <span className="font-medium text-primary">· {t('oeuvre.voirPortfolio', 'Voir son portfolio')}</span>
@@ -472,7 +472,7 @@ const OeuvreDetailPage: React.FC = () => {
           const artData = (oeuvre as OeuvreWithExtras).OeuvreArt;
           const artisanatData = (oeuvre as OeuvreWithExtras).Artisanat;
           const auteurNom = allContributeurs.length > 0
-            ? allContributeurs.map(c => `${getTranslation(c.prenom, lang) || ''} ${getTranslation(c.nom, lang) || ''}`.trim()).filter(Boolean).join(', ')
+            ? allContributeurs.map(c => `${getLocalizedText(c.prenom, lang) || ''} ${getLocalizedText(c.nom, lang) || ''}`.trim()).filter(Boolean).join(', ')
             : undefined;
 
           return (
@@ -485,7 +485,7 @@ const OeuvreDetailPage: React.FC = () => {
                     {mainImg ? (
                       <img fetchPriority="high"
                         src={getAssetUrl(mainImg)}
-                        alt={getTranslation(oeuvre.titre, lang)}
+                        alt={getLocalizedText(oeuvre.titre, lang)}
                         className="w-full h-full object-contain"
                       />
                     ) : (
@@ -522,7 +522,7 @@ const OeuvreDetailPage: React.FC = () => {
                   {/* Titre et artiste */}
                   <div>
                     <h2 className="text-2xl font-bold mb-1">
-                      {getTranslation(oeuvre.titre, lang)}
+                      {getLocalizedText(oeuvre.titre, lang)}
                       {oeuvre.annee_creation && <span className="text-muted-foreground font-normal">, {oeuvre.annee_creation}</span>}
                     </h2>
                     {auteurNom && (
@@ -545,7 +545,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <PenTool className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm text-muted-foreground">{t('oeuvre.technique', 'Technique')}</p>
-                            <p className="font-medium">{artData?.technique || getTranslation(artisanatData?.Technique?.nom, lang)}</p>
+                            <p className="font-medium">{artData?.technique || getLocalizedText(artisanatData?.Technique?.nom, lang)}</p>
                           </div>
                         </div>
                       )}
@@ -567,7 +567,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <Sparkles className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm text-muted-foreground">{t('oeuvre.material', 'Matériau')}</p>
-                            <p className="font-medium">{getTranslation(artisanatData.Materiau.nom, lang)}</p>
+                            <p className="font-medium">{getLocalizedText(artisanatData.Materiau.nom, lang)}</p>
                           </div>
                         </div>
                       )}
@@ -746,7 +746,7 @@ const OeuvreDetailPage: React.FC = () => {
                               {oeuvreAuteur.Media && oeuvreAuteur.Media.length > 0 ? (
                                 <img loading="lazy" decoding="async"
                                   src={oeuvreAuteur.Media[0]?.url || ''}
-                                  alt={getTranslation(oeuvreAuteur.titre, lang)}
+                                  alt={getLocalizedText(oeuvreAuteur.titre, lang)}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               ) : (
@@ -757,11 +757,11 @@ const OeuvreDetailPage: React.FC = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-                                {getTranslation(oeuvreAuteur.titre, lang)}
+                                {getLocalizedText(oeuvreAuteur.titre, lang)}
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="secondary" className="text-xs">
-                                  {getTranslation(oeuvreAuteur.TypeOeuvre?.nom_type, lang)}
+                                  {getLocalizedText(oeuvreAuteur.TypeOeuvre?.nom_type, lang)}
                                 </Badge>
                                 {oeuvreAuteur.annee_creation && (
                                   <span className="text-xs text-muted-foreground">
@@ -771,7 +771,7 @@ const OeuvreDetailPage: React.FC = () => {
                               </div>
                               {oeuvreAuteur.description && (
                                 <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                  {getTranslation(oeuvreAuteur.description, lang)}
+                                  {getLocalizedText(oeuvreAuteur.description, lang)}
                                 </p>
                               )}
                             </div>
@@ -854,7 +854,7 @@ const OeuvreDetailPage: React.FC = () => {
                       to={evenementPath(event.id_evenement, event.nom_evenement)}
                       className="block p-4 rounded-lg border hover:bg-muted transition-colors"
                     >
-                      <h4 className="font-medium">{getTranslation(event.nom_evenement, lang)}</h4>
+                      <h4 className="font-medium">{getLocalizedText(event.nom_evenement, lang)}</h4>
                       <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         <span>{formatDate(event.date_debut)}</span>
@@ -862,7 +862,7 @@ const OeuvreDetailPage: React.FC = () => {
                       {event.Lieu && (
                         <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                           <MapPin className="h-3 w-3" />
-                          <span className="line-clamp-1">{getTranslation(event.Lieu.nom, lang)}</span>
+                          <span className="line-clamp-1">{getLocalizedText(event.Lieu.nom, lang)}</span>
                         </div>
                       )}
                     </Link>
@@ -965,12 +965,12 @@ const OeuvreDetailPage: React.FC = () => {
               </a>
             </Button>
             <Button variant="outline" className="w-full" asChild>
-              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(getTranslation(oeuvre?.titre, lang) + ' - ')}${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(getLocalizedText(oeuvre?.titre, lang) + ' - ')}${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer">
                 Twitter / X
               </a>
             </Button>
             <Button variant="outline" className="w-full" asChild>
-              <a href={`https://wa.me/?text=${encodeURIComponent(getTranslation(oeuvre?.titre, lang) + ' ' + window.location.href)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/?text=${encodeURIComponent(getLocalizedText(oeuvre?.titre, lang) + ' ' + window.location.href)}`} target="_blank" rel="noopener noreferrer">
                 WhatsApp
               </a>
             </Button>

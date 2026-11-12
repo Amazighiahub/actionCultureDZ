@@ -131,14 +131,5 @@ module.exports = (sequelize) => {
     Service.belongsTo(models.User, { foreignKey: 'id_user', as: 'Professionnel', onDelete: 'SET NULL' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Service.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Service.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Service;
 };

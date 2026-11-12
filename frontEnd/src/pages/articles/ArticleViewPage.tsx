@@ -62,7 +62,6 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { getContexteArticle, cleSectionPatrimoine, type ContexteArticle } from '@/services/patrimoineArticles.service';
 import { getAllowedEmbedUrl } from '@/utils/safeUrl';
-import { texteLangue } from '@/utils/programmeIntervenants';
 import { blocDansLaLangue, langueOrigine, languesTraduites, LANGUES_ARTICLE } from '@/utils/traductionBlocs';
 import '@/styles/article-magazine.css';
 import PropositionsArticle from '@/components/article/PropositionsArticle';
@@ -810,12 +809,12 @@ const ArticleViewPage: React.FC = () => {
           <>
               {contexte.lieux.map((l) =>
             <Link key={`l${l.id_lieu}-${l.section_patrimoine}`} to={`/patrimoine/${l.id_lieu}`}>
-                  {texteLangue(l.nom, i18n.language)} › {t(`patrimoine.sections.${cleSectionPatrimoine(l.section_patrimoine)}`)}
+                  {getLocalizedText(l.nom, i18n.language)} › {t(`patrimoine.sections.${cleSectionPatrimoine(l.section_patrimoine)}`)}
                 </Link>
             )}
               {contexte.personnalites.map((p) =>
             <Link key={`p${p.id_intervenant}`} to={`/personnalites/${p.id_intervenant}`}>
-                  {`${texteLangue(p.prenom, i18n.language)} ${texteLangue(p.nom, i18n.language)}`.trim()}
+                  {`${getLocalizedText(p.prenom, i18n.language)} ${getLocalizedText(p.nom, i18n.language)}`.trim()}
                 </Link>
             )}
             </> :
@@ -912,12 +911,12 @@ const ArticleViewPage: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             {contexte.lieux.map((l) =>
           <Button key={`fl${l.id_lieu}-${l.section_patrimoine}`} asChild variant="outline" size="sm">
-                <Link to={`/patrimoine/${l.id_lieu}`}>{texteLangue(l.nom, i18n.language)}</Link>
+                <Link to={`/patrimoine/${l.id_lieu}`}>{getLocalizedText(l.nom, i18n.language)}</Link>
               </Button>
           )}
             {contexte.personnalites.map((p) =>
           <Button key={`fp${p.id_intervenant}`} asChild variant="outline" size="sm">
-                <Link to={`/personnalites/${p.id_intervenant}`}>{`${texteLangue(p.prenom, i18n.language)} ${texteLangue(p.nom, i18n.language)}`.trim()}</Link>
+                <Link to={`/personnalites/${p.id_intervenant}`}>{`${getLocalizedText(p.prenom, i18n.language)} ${getLocalizedText(p.nom, i18n.language)}`.trim()}</Link>
               </Button>
           )}
           </div>

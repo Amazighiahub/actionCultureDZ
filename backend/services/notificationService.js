@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const { budgetEnvoiGroupe, premiereFoisPendant } = require('./quotaEmail');
 const { lienPourEmail, STATUTS_AVEC_LIEN } = require('../utils/lienEnLigne');
 const { maskEmail } = require('../utils/maskPII');
+const { escapeHtml } = require('../utils/sanitize');
 const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
@@ -779,7 +780,7 @@ class NotificationService {
     const horsQuota = tousLesDestinataires.length - destinataires.length;
     const erreurQuota = horsQuota ? `Quota journalier d'e-mails atteint : ${horsQuota} destinataire(s) non servi(s)` : null;
     if (horsQuota) logger.warn(`Annonce « ${title} » : ${erreurQuota}`);
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const esc = escapeHtml;
     const avecLiens = (texte) => esc(texte).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (url) => `<a href="${url}" style="color:#6b6b2e">${url}</a>`);
     const html = `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">

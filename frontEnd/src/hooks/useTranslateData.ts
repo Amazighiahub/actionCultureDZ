@@ -3,28 +3,20 @@
 
 import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
-
-// Types pour les champs traduisibles
-interface TranslatableField {
-  fr?: string;
-  ar?: string;
-  en?: string;
-  'tz-ltn'?: string;
-  'tz-tfng'?: string;
-  [key: string]: string | undefined;
-}
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TexteMultilingue, TranslatableValue } from '@/types/common/multilingual.types';
 
 interface TranslateDataResult {
   /** Traduit un champ JSON de la BDD */
-  td: (field: TranslatableField | string | null | undefined, fallback?: string) => string;
+  td: (field: TexteMultilingue, fallback?: string) => string;
   /** Rend une valeur safe pour JSX (convertit les objets en string) */
   safe: (value: unknown, fallback?: string) => string | number;
   /** Langue actuelle */
   lang: string;
   /** Vérifie si une traduction existe pour la langue actuelle */
-  hasTranslation: (field: TranslatableField | null | undefined) => boolean;
+  hasTranslation: (field: TranslatableValue | null | undefined) => boolean;
   /** Obtient toutes les traductions disponibles */
-  getAllTranslations: (field: TranslatableField | null | undefined) => TranslatableField;
+  getAllTranslations: (field: TranslatableValue | null | undefined) => TranslatableValue;
   /** Traduit un objet entier (tous ses champs traduisibles) */
   translateObject: <T extends Record<string, unknown>>(obj: T, fields?: string[]) => T;
   /** Traduit un tableau d'objets */
@@ -75,44 +67,13 @@ export const useTranslateData = (): TranslateDataResult => {
   const dir = isRTL ? 'rtl' : 'ltr';
 
   /**
-   * Traduit un champ JSON de la base de données
-   * Ordre de priorité : langue actuelle → fr → ar → en → première valeur
-   * Retourne TOUJOURS une string (jamais un objet)
+   * Traduit un champ JSON de la base de données, dans l'ordre de getLocalizedText (langue
+   * actuelle, autre écriture du tamazight, fr, ar, en, tamazight, première valeur remplie).
+   * Retourne TOUJOURS une string (jamais un objet) ; un tableau donne le texte de secours.
    */
-  const td = useCallback((
-    field: TranslatableField | string | null | undefined,
-    fallback = ''
-  ): string => {
-    // Cas null/undefined
-    if (field === null || field === undefined) return fallback;
-
-    // Si c'est une string, la retourner directement
-    if (typeof field === 'string') return field;
-
-    // Si ce n'est pas un objet, convertir en string
-    if (typeof field !== 'object') return String(field) || fallback;
-
-    // Si c'est un tableau, retourner le fallback
-    if (Array.isArray(field)) return fallback;
-
-    // Si l'objet est vide, retourner le fallback
-    const keys = Object.keys(field);
-    if (keys.length === 0) return fallback;
-
-    // Chercher une traduction valide
-    const result = field[lang]
-        || field.fr
-        || field.ar
-        || field.en
-        || field['tz-ltn']
-        || field['tz-tfng']
-        || Object.values(field).find(v => v && typeof v === 'string');
-
-    // S'assurer qu'on retourne toujours une string
-    if (result && typeof result === 'string') return result;
-
-    return fallback;
-  }, [lang]);
+  const td = useCallback((field: TexteMultilingue, fallback = ''): string => (
+    Array.isArray(field) ? fallback : getLocalizedText(field, lang, fallback)
+  ), [lang]);
 
   /**
    * Rend une valeur safe pour JSX (ne retourne jamais un objet)
@@ -128,21 +89,8 @@ export const useTranslateData = (): TranslateDataResult => {
     if (typeof value === 'boolean') return value ? 'true' : 'false';
     // Array - pas safe
     if (Array.isArray(value)) return fallback;
-    // Object - essayer de traduire
-    if (typeof value === 'object') {
-      // Objet vide
-      const keys = Object.keys(value);
-      if (keys.length === 0) return fallback;
-      // Essayer comme objet multilingue
-      const obj = value as Record<string, unknown>;
-      const translated = obj[lang] || obj.fr || obj.ar || obj.en || obj['tz-ltn'] || obj['tz-tfng'];
-      if (typeof translated === 'string') return translated;
-      if (typeof translated === 'number') return translated;
-      // Chercher n'importe quelle valeur string
-      const anyString = Object.values(obj).find(v => typeof v === 'string');
-      if (typeof anyString === 'string') return anyString;
-      return fallback;
-    }
+    // Object - lu comme un texte multilingue
+    if (typeof value === 'object') return getLocalizedText(value, lang, fallback);
     // Fallback pour autres types
     return String(value) || fallback;
   }, [lang]);
@@ -151,7 +99,7 @@ export const useTranslateData = (): TranslateDataResult => {
    * Vérifie si une traduction existe pour la langue actuelle
    */
   const hasTranslation = useCallback((
-    field: TranslatableField | null | undefined
+    field: TranslatableValue | null | undefined
   ): boolean => {
     if (!field || typeof field === 'string') return true;
     return !!field[lang];
@@ -161,8 +109,8 @@ export const useTranslateData = (): TranslateDataResult => {
    * Obtient toutes les traductions disponibles pour un champ
    */
   const getAllTranslations = useCallback((
-    field: TranslatableField | null | undefined
-  ): TranslatableField => {
+    field: TranslatableValue | null | undefined
+  ): TranslatableValue => {
     if (!field) return {};
     if (typeof field === 'string') return { fr: field };
     return field;
@@ -181,7 +129,7 @@ export const useTranslateData = (): TranslateDataResult => {
     
     fields.forEach(field => {
       if (result[field] && typeof result[field] === 'object' && !Array.isArray(result[field])) {
-        (result as Record<string, unknown>)[field] = td(result[field]);
+        (result as Record<string, unknown>)[field] = td(result[field] as TranslatableValue);
       }
     });
     

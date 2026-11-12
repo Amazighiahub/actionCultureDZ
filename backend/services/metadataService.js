@@ -4,7 +4,8 @@
  *         Materiau, Technique, Wilaya, Daira, Commune, TypeEvenement, TypeOrganisation
  */
 const { Op } = require('sequelize');
-const { mergeTranslations, prepareMultiLangField, buildMultiLangExactMatch, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+const { mergeTranslations, prepareMultiLangField, buildMultiLangExactMatch, texteLisible } = require('../helpers/i18n');
+const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 const CacheManager = require('../utils/CacheManager');
 
@@ -295,17 +296,10 @@ class MetadataService {
       );
     }
 
-    // Recherche multilingue sur le nom
+    // Recherche multilingue sur le nom, sans accents ni majuscules (règle commune de
+    // utils/multiLangSearchBuilder.js ; « casbah » ne trouvait pas « Casbah »)
     const where = { actif: true };
-    where[Op.and] = [{
-      [Op.or]: SUPPORTED_LANGUAGES.map(l => {
-        const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-        return this.sequelize.where(
-          this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
-          { [Op.like]: `%${sanitizeLike(search)}%` }
-        );
-      })
-    }];
+    where[Op.and] = [{ [Op.or]: buildMultiLangSearch(this.sequelize, 'nom', sanitizeLike(search)) }];
 
     return this.models.Editeur.findAll({
       where,
@@ -581,9 +575,7 @@ class MetadataService {
     if (!Model || !value) return null;
 
     // Extraire la string à comparer
-    const searchStr = typeof value === 'string'
-      ? value.trim()
-      : (value[lang] || value.fr || Object.values(value).find(v => typeof v === 'string' && v.trim()) || '');
+    const searchStr = typeof value === 'string' ? value.trim() : texteLisible(value, lang);
 
     if (!searchStr) return null;
 

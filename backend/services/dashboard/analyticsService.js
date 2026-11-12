@@ -3,6 +3,7 @@
  */
 const { Op, fn, col, literal } = require('sequelize');
 const { subDays } = require('date-fns');
+const { bornerPagination, decalage, construirePagination } = require('../../utils/pagination');
 
 class DashboardAnalyticsService {
   constructor(models) {
@@ -88,8 +89,9 @@ class DashboardAnalyticsService {
   /**
    * Logs d'audit paginés
    */
-  async getAuditLogs({ page = 1, limit = 50, userId, action, startDate, endDate } = {}) {
-    const offset = (page - 1) * limit;
+  async getAuditLogs({ page: pageDemandee, limit: limiteDemandee, userId, action, startDate, endDate } = {}) {
+    // 50 par défaut ; la route refuse déjà plus de 100 (validatePagination)
+    const { page, limit } = bornerPagination(pageDemandee, limiteDemandee, 50);
     const where = {};
     if (userId) where.id_admin = userId;
     if (action) where.action = action;
@@ -106,14 +108,14 @@ class DashboardAnalyticsService {
     const logs = await this.models.AuditLog.findAndCountAll({
       where,
       include: [{ model: this.models.User, as: 'Admin', attributes: ['nom', 'prenom', 'email'] }],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
+      limit,
+      offset: decalage(page, limit),
       order: [['date_action', 'DESC']]
     });
 
     return {
       logs: logs.rows,
-      pagination: { total: logs.count, page: parseInt(page), pages: Math.ceil(logs.count / limit), limit: parseInt(limit) }
+      pagination: construirePagination(logs.count, page, limit)
     };
   }
 

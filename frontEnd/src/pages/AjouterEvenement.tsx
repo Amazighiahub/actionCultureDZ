@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, Save, Calendar, Building2, Globe, AlertCircle, Plus, Loader2, Tag } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 
@@ -39,7 +40,7 @@ import { API_ENDPOINTS } from '@/config/api';
 
 // Import des types
 import { Wilaya } from '@/types';
-import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { partiesEvenement, aujourdhuiAlger } from '@/utils/dateHeureEvenement';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import MotsClesInput from '@/components/shared/MotsClesInput';
 import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
@@ -66,6 +67,8 @@ const AjouterEvenement = () => {
   const { t, i18n } = useTranslation();
   const { rtlClasses, direction } = useRTL();
   const { toast } = useToast();
+  // Administration : peut rattacher un événement à n'importe quelle organisation (le serveur l'autorise déjà)
+  const { isAdmin } = usePermissions();
   const queryClient = useQueryClient();
 
   const [isDirty, setIsDirty] = useState(false);
@@ -79,6 +82,8 @@ const AjouterEvenement = () => {
   // État pour l'organisation
   const [organisations, setOrganisations] = useState<Array<Record<string, unknown>>>([]);
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<number | undefined>();
+  // Administration : événement ajouté au nom d'un compte (son numéro), qui en devient l'organisateur
+  const [idOrganisateur, setIdOrganisateur] = useState('');
   const [hasOrganisation, setHasOrganisation] = useState(false);
   const [loadingOrganisations, setLoadingOrganisations] = useState(true);
 
@@ -264,15 +269,20 @@ const AjouterEvenement = () => {
       toast({ title: t('toasts.error'), description: t('events.create.loadTypesFailed', 'Erreur lors du chargement des types d\'événements'), variant: 'destructive' });
     }
 
-    // Charger les organisations de l'utilisateur
+    // Charger les organisations de l'utilisateur ; pour l'administration, toutes celles qui ne sont pas
+    // refusées (y compris en attente) : avant, la liste ne montrait que les siennes et l'administratrice
+    // ne pouvait pas rattacher l'événement d'une association
     try {
       setLoadingOrganisations(true);
-      const response = await httpClient.get<Array<Record<string, unknown>>>(API_ENDPOINTS.organisations.me);
+      const response = await httpClient.get<Array<Record<string, unknown>>>(
+        isAdmin ? API_ENDPOINTS.organisations.adminListe : API_ENDPOINTS.organisations.me
+      );
       if (response.success && response.data) {
-        setOrganisations(response.data);
-        setHasOrganisation(response.data.length > 0);
-        if (response.data.length === 1) {
-          setSelectedOrganisationId(response.data[0].id_organisation);
+        const liste = isAdmin ? response.data.filter((o) => o.statut !== 'rejete') : response.data;
+        setOrganisations(liste);
+        setHasOrganisation(liste.length > 0);
+        if (!isAdmin && liste.length === 1) {
+          setSelectedOrganisationId(liste[0].id_organisation as number);
         }
       }
     } catch {
@@ -414,7 +424,7 @@ const AjouterEvenement = () => {
       case 'dateDebut':
         if (!formData.dateDebut) {
           error = t('events.create.startDateRequired', 'La date de début est requise');
-        } else if (!isEditMode && formData.dateDebut < new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })) {
+        } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger()) {
           error = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
         }
         break;
@@ -517,6 +527,7 @@ const AjouterEvenement = () => {
     fd.append('tags', JSON.stringify(formData.tags));
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
+    if (isAdmin && !isEditMode && idOrganisateur.trim()) fd.append('id_organisateur', idOrganisateur.trim());
     if (isEditMode) {
       if (!isVirtual || formData.urlVirtuel) fd.append('url_virtuel', isVirtual ? formData.urlVirtuel : '');
     }
@@ -607,7 +618,7 @@ const AjouterEvenement = () => {
     // à la sortie du champ et par la bulle du navigateur, retirée par noValidate)
     if (!formData.dateDebut) {
       newErrors.dateDebut = t('events.create.startDateRequired', 'La date de début est requise');
-    } else if (!isEditMode && formData.dateDebut < new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })) {
+    } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger()) {
       newErrors.dateDebut = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
     }
 
@@ -798,6 +809,8 @@ const AjouterEvenement = () => {
                             {organisations.map((org) => (
                               <SelectItem key={org.id_organisation as number} value={(org.id_organisation as number).toString()}>
                                 {getLocalizedText(org.nom, i18n.language)}
+                                {isAdmin ? ` · n° ${org.id_organisation as number}` : ''}
+                                {org.statut === 'en_attente' ? ` (${t('events.create.orgEnAttente', 'en attente de validation')})` : ''}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -827,6 +840,23 @@ const AjouterEvenement = () => {
                         <Plus className="h-4 w-4 me-2" />
                         {t('events.create.createOrganisation', 'Créer une organisation')}
                       </Button>
+                    </div>
+                  )}
+                  {isAdmin && !isEditMode && (
+                    <div className="space-y-2">
+                      <Label htmlFor="id-organisateur">{t('events.create.idOrganisateur', 'Organisateur (n° de compte)')}</Label>
+                      <Input
+                        id="id-organisateur"
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        value={idOrganisateur}
+                        onChange={(e) => setIdOrganisateur(e.target.value)}
+                        aria-describedby="id-organisateur-aide"
+                      />
+                      <p id="id-organisateur-aide" className="text-sm text-muted-foreground">
+                        {t('events.create.idOrganisateurAide', 'Laisser vide pour être l’organisateur. Sinon, ce compte devient l’organisateur et pourra modifier l’événement.')}
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -993,7 +1023,7 @@ const AjouterEvenement = () => {
                     <Input
                       id="date-debut"
                       type="date"
-                      min={isEditMode ? undefined : new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Algiers' })}
+                      min={isEditMode ? undefined : aujourdhuiAlger()}
                       value={formData.dateDebut}
                       onChange={(e) => { clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateDebut: e.target.value })); }}
                       onBlur={() => validateFieldOnBlur('dateDebut')}

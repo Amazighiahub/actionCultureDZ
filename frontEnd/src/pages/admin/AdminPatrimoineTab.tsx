@@ -41,12 +41,10 @@ import { adminService } from '@/services/admin.service';
 import { useToast } from '@/components/ui/use-toast';
 import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
 import PropositionsPatrimoine from './PropositionsPatrimoine';
+import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 
-// Helper pour extraire le texte multilingue
-
-// Types de filtres
-// Valeurs de typePatrimoine (« vestige » n'en est pas une : c'est « site_archeologique »)
-const TYPE_OPTIONS = ['tous', 'monument', 'site_archeologique', 'musee', 'edifice_religieux', 'palais_forteresse', 'site_naturel', 'ville_village', 'autre'];
+// Filtre par type : « tous » puis les types de patrimoine, dans l'ordre des formulaires (liste commune, audit V11 COD-9)
+const TYPE_OPTIONS = ['tous', ...TYPES_PATRIMOINE];
 
 const AdminPatrimoineTab: React.FC = () => {
   const { t, i18n } = useTranslation();

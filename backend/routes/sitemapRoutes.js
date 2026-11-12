@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, wilayaPath, servicePath } = require('../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
+const { EVENEMENT_VISIBLE } = require('../constants/statuts');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
 const QUERY_TIMEOUT_MS = 8000;
@@ -129,7 +130,7 @@ const initSitemapRoutes = (models) => {
 
         models.Evenement ? safeQuery('evenements', () => models.Evenement.findAll({
           // Statuts visibles publiquement (memes regles que la liste et la fiche)
-          where: { statut: ['publie', 'planifie', 'en_cours', 'termine'] },
+          where: { statut: EVENEMENT_VISIBLE },
           attributes: ['id_evenement', 'nom_evenement', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true

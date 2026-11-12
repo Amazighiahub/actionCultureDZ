@@ -4,13 +4,14 @@
  */
 const { Op } = require('sequelize');
 const { pasTermine } = require('../../helpers/finEvenement');
+const { EVENEMENT_OUVERT } = require('../../constants/statuts');
 
 /** Événements publiés et pas encore terminés organisés par ce compte */
 async function evenementsAVenir(models, userId) {
   const { Evenement } = models || {};
   if (!Evenement) return [];
   return Evenement.findAll({
-    where: { id_user: userId, statut: ['publie', 'planifie', 'en_cours'], [Op.and]: [pasTermine(new Date())] },
+    where: { id_user: userId, statut: EVENEMENT_OUVERT, [Op.and]: [pasTermine(new Date())] },
     attributes: ['id_evenement', 'nom_evenement']
   });
 }

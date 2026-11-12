@@ -6,8 +6,7 @@ import {
   IntervenantExistant,
   ContributeurOeuvre
 } from './oeuvre-creation.types';
-
-type MultiLangText = string | { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 
 /**
  * Type DTO pour la création d'œuvre qui correspond exactement
@@ -15,8 +14,8 @@ type MultiLangText = string | { fr?: string; ar?: string; en?: string; [key: str
  */
 export interface CreateOeuvreBackendDTO {
   // Informations de base de l'œuvre
-  titre: MultiLangText;
-  description: MultiLangText;
+  titre: string | TranslatableValue;
+  description: string | TranslatableValue;
   id_type_oeuvre: number;
   id_langue: number;
   annee_creation?: number;

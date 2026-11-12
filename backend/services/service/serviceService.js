@@ -6,6 +6,7 @@
 const BaseService = require('../core/baseService');
 const ServiceDTO = require('../../dto/service/serviceDTO');
 const { mergeTranslations, texteLisible } = require('../../helpers/i18n');
+const { sansAccent } = require('../../utils/texte');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 
 /** Nom lisible d'un service (nom multilingue) pour les notifications */
@@ -65,7 +66,6 @@ class ServiceService extends BaseService {
 
     if (type) services = services.filter(s => s.type_service === type);
     if (wilaya) services = services.filter(s => s.wilaya?.id_wilaya === Number(wilaya));
-    const sansAccent = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const recherche = sansAccent(q).trim();
     if (recherche) {
       const textes = (v) => (v && typeof v === 'object' ? Object.values(v) : [v]).map(sansAccent).join(' ');

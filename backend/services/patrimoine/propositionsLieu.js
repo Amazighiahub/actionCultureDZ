@@ -11,6 +11,7 @@ const { Op } = require('sequelize');
 const { estModeration } = require('../../utils/droits');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { texteLisible } = require('../../helpers/i18n');
+const { nomComplet } = require('../../utils/texte');
 const logger = require('../../utils/logger');
 const elements = require('./elementsLieu');
 
@@ -76,7 +77,7 @@ async function proposer(models, notificationService, { idLieu, user, action, don
   );
   try {
     const lieu = await models.Lieu.findByPk(idLieu, { attributes: ['nom'] });
-    const qui = [texteLisible(user.prenom), texteLisible(user.nom)].filter(Boolean).join(' ') || 'Un membre';
+    const qui = nomComplet(user) || 'Un membre';
     for (const idAdmin of await idsAdministrateurs(models)) {
       await notifier(notificationService, idAdmin, {
         titre: 'Proposition à relire',
@@ -104,7 +105,7 @@ async function enAttente(models) {
   const personnes = ids.length && models.Intervenant
     ? await models.Intervenant.findAll({ where: { id_intervenant: ids }, attributes: ['id_intervenant', 'nom', 'prenom'] })
     : [];
-  const noms = new Map(personnes.map(p => [p.id_intervenant, [texteLisible(p.prenom), texteLisible(p.nom)].filter(Boolean).join(' ')]));
+  const noms = new Map(personnes.map(p => [p.id_intervenant, nomComplet(p)]));
   for (const ligne of lignes) {
     const idPersonne = idIntervenant(ligne);
     if (idPersonne && models.Intervenant) ligne.donnees.intervenant = noms.get(idPersonne) || null;

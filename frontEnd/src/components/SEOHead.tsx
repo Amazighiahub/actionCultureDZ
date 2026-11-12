@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { evenementPath } from '@/utils/slug';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 const SITE_NAME = 'Tala DZ';
 // Domaine de production fixe : un canonical ou une URL JSON-LD ne doit jamais pointer
@@ -13,15 +14,8 @@ const DEFAULT_TITLE = 'Tala DZ - La source de la culture algérienne';
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 const DEFAULT_DESCRIPTION = 'Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel.';
 
-/** Texte d'un champ multilingue ({ fr, ar, ... }) dans la langue courante, ou le texte tel quel */
-function text(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (value && typeof value === 'object') {
-    const v = value as Record<string, string | undefined>;
-    return v[i18n.language] || v.fr || v.ar || v.en || Object.values(v).find(Boolean) || '';
-  }
-  return '';
-}
+/** Texte d'un champ multilingue dans la langue courante (lecture commune getLocalizedText, audit V11 COD-1) */
+const text = (value: unknown): string => getLocalizedText(value, i18n.language);
 
 /** URL absolue d'image, exploitable par les réseaux sociaux (pas de SVG ni de chemin relatif) */
 function absoluteImage(src?: string): string {

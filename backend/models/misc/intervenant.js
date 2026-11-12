@@ -182,26 +182,6 @@ module.exports = (sequelize) => {
     }
   };
   
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Intervenant.prototype.getNom = function(lang = 'fr') {
-    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
-  };
-
-  Intervenant.prototype.getPrenom = function(lang = 'fr') {
-    return this.prenom?.[lang] || this.prenom?.fr || this.prenom?.ar || '';
-  };
-
-  Intervenant.prototype.getNomComplet = function(lang = 'fr') {
-    let nom = '';
-    if (this.titre_professionnel) nom += this.titre_professionnel + ' ';
-    nom += this.getPrenom(lang) + ' ' + this.getNom(lang);
-    return nom.trim();
-  };
-
-  Intervenant.prototype.getBiographie = function(lang = 'fr') {
-    return this.biographie?.[lang] || this.biographie?.fr || '';
-  };
-  
   Intervenant.prototype.ajouterSpecialite = function(specialite) {
     const specialites = this.specialites || [];
     if (!specialites.includes(specialite)) {

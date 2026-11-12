@@ -9,6 +9,7 @@
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const logger = require('../../utils/logger');
 const { texteLisible } = require('../../helpers/i18n');
+const { nomComplet } = require('../../utils/texte');
 
 /** Textes suivis, avec leur nom dans les messages */
 const LIBELLES = {
@@ -34,7 +35,7 @@ const lireJson = (v) => {
 };
 const identiques = (a, b) => JSON.stringify(lireJson(a)) === JSON.stringify(lireJson(b));
 const texteDe = (v) => texteLisible(v);
-const nomPersonne = (user) => [texteDe(user?.prenom), texteDe(user?.nom)].filter(Boolean).join(' ').trim() || 'Une personne';
+const nomPersonne = (user) => nomComplet(user).trim() || 'Une personne';
 
 /** « l'histoire », « l'histoire et les références historiques », « a, b et c » */
 function listeLibelles(champs) {

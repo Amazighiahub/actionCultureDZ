@@ -255,7 +255,7 @@ class ProgrammeService extends BaseService {
       await programme.destroy({ transaction });
 
       if (this.models.AuditLog) {
-        const fr = (v) => (v && typeof v === 'object' ? v.fr || Object.values(v).find(Boolean) || '' : v || '');
+        const fr = (v) => texteLisible(v, 'fr');
         await this.models.AuditLog.create({
           id_admin: userId,
           action: 'delete_programme',

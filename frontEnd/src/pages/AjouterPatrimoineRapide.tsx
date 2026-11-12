@@ -38,6 +38,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import CreditPhotoChamps, { CREDIT_VIDE, type ValeurCreditPhoto } from '@/components/patrimoine/CreditPhotoChamps';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
@@ -103,7 +104,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [duplicates, setDuplicates] = useState<Array<{ id_lieu: number; nom: any; typePatrimoine: string }>>([]);
+  const [duplicates, setDuplicates] = useState<Array<{ id_lieu: number; nom: TexteMultilingue; typePatrimoine: string }>>([]);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   // Saisie remise après une session expirée : les photos choisies (fichiers) sont à rajouter
   const [photosARajouter, setPhotosARajouter] = useState(false);
@@ -133,7 +134,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
         const d = res.data as unknown as { id_lieu: number; nom: unknown; latitude: number | string; longitude: number | string } | undefined;
         if (!actif) return;
         if (!res.success || !d) { setParentError(true); return; }
-        const nom = typeof d.nom === 'string' ? d.nom : ((d.nom as Record<string, string>)?.fr || (d.nom as Record<string, string>)?.ar || '');
+        const nom = getLocalizedText(d.nom, 'fr');
         const site = { id_lieu: d.id_lieu, nom, latitude: Number(d.latitude), longitude: Number(d.longitude) };
         setParent(site);
         // La carte s'ouvre sur le site : il reste à déplacer le repère sur le point
@@ -185,10 +186,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
       if (nom) {
         setCheckingDuplicate(true);
         try {
-          const res = await fetch(`/api/patrimoine/check-duplicate?nom=${encodeURIComponent(nom)}&communeId=${formData.communeId}`);
-          const data = await res.json();
+          const data = await patrimoineService.checkDuplicate(nom, formData.communeId);
           if (data.success && data.data?.exists) {
-            setDuplicates(data.data.sites);
+            setDuplicates(data.data.sites ?? []);
             setCheckingDuplicate(false);
             return; // Ne pas avancer, montrer les doublons
           }
@@ -323,20 +323,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
     }
   };
 
-  // Labels des types
-  const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      monument: t('patrimoine.types.monument', 'Monument'),
-      musee: t('patrimoine.types.musee', 'Musée'),
-      ville_village: t('patrimoine.types.ville_village', 'Ville / Village'),
-      site_archeologique: t('patrimoine.types.site_archeologique', 'Site archéologique'),
-      site_naturel: t('patrimoine.types.site_naturel', 'Site naturel'),
-      edifice_religieux: t('patrimoine.types.edifice_religieux', 'Édifice religieux'),
-      palais_forteresse: t('patrimoine.types.palais_forteresse', 'Palais / Forteresse'),
-      autre: t('patrimoine.types.autre', 'Autre'),
-    };
-    return labels[type] || type;
-  };
+  // Libellé d'un type de patrimoine (clés patrimoine.types.*, le code lui-même à défaut)
+  const getTypeLabel = (type: string): string => t(`patrimoine.types.${type}`, type);
 
   const stepIndicator = (
     <div className="flex items-center justify-center gap-2 mb-8">

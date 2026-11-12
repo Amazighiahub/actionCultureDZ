@@ -8,6 +8,9 @@
  * - Immutability (freeze optionnel)
  */
 
+const { SUPPORTED_LANGUAGES } = require('../constants/langues');
+const { texteLisible } = require('../helpers/i18n');
+
 class BaseDTO {
   constructor(data = {}) {
     // Données brutes conservées pour debug
@@ -94,9 +97,7 @@ class BaseDTO {
    */
   _isMultilang(obj) {
     if (!obj || typeof obj !== 'object') return false;
-    const keys = Object.keys(obj);
-    const langKeys = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-    return keys.some(k => langKeys.includes(k));
+    return Object.keys(obj).some(k => SUPPORTED_LANGUAGES.includes(k));
   }
 
   /**
@@ -166,8 +167,7 @@ class BaseDTO {
     if (keys.length === 0) return null;
 
     // Vérifier si cet objet est lui-même un champ multilingue
-    const langKeys = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-    if (keys.every(k => langKeys.includes(k)) && keys.some(k => ['fr', 'ar', 'en'].includes(k))) {
+    if (keys.every(k => SUPPORTED_LANGUAGES.includes(k)) && keys.some(k => ['fr', 'ar', 'en'].includes(k))) {
       return this.extractMultilang(data, lang);
     }
 
@@ -184,21 +184,15 @@ class BaseDTO {
   // ============================================================================
 
   /**
-   * Extrait une valeur d'un champ multilingue
+   * Extrait une valeur d'un champ multilingue : texteLisible (helpers/i18n.js, même ordre de langues
+   * partout), mais null au lieu d'un texte vide.
    * @param {Object|string} field - Champ multilingue ou string
    * @param {string} lang - Langue désirée
    * @returns {string|null}
    */
   static extractMultilang(field, lang = 'fr') {
-    if (!field) return null;
-    if (typeof field === 'string') return field;
-    if (typeof field === 'object') {
-      // Ordre de priorité : langue demandée > fr > ar > en > première valeur
-      return field[lang] || field.fr || field.ar || field.en ||
-             field['tz-ltn'] || field['tz-tfng'] ||
-             Object.values(field).find(v => v && typeof v === 'string') || null;
-    }
-    return null;
+    if (!field || (typeof field !== 'string' && typeof field !== 'object')) return null;
+    return texteLisible(field, lang) || null;
   }
 
   /**
@@ -208,7 +202,7 @@ class BaseDTO {
    * @returns {Object}
    */
   static createMultilang(value, lang = 'fr') {
-    const base = { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+    const base = Object.fromEntries(SUPPORTED_LANGUAGES.map(l => [l, '']));
 
     if (!value) return base;
 

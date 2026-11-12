@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { BookOpen, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { httpClient } from '@/services/httpClient';
-import { texteLangue } from '@/utils/programmeIntervenants';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { oeuvrePath } from '@/utils/slug';
 
 type Texte = string | Record<string, string | undefined> | null | undefined;
@@ -50,7 +50,7 @@ const OeuvresPersonnalite: React.FC<Props> = ({ idIntervenant, peutAjouter }) =>
           {oeuvres.map(o => (
             <li key={o.id_oeuvre}>
               <Link to={oeuvrePath(o.id_oeuvre, o.titre)} className="block px-3 py-2 text-sm hover:bg-muted">
-                {texteLangue(o.titre, i18n.language)}
+                {getLocalizedText(o.titre, i18n.language)}
                 {o.annee_creation ? <span className="text-muted-foreground"> · {o.annee_creation}</span> : null}
               </Link>
             </li>

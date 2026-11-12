@@ -84,14 +84,5 @@ module.exports = (sequelize) => {
     });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Parcours.prototype.getNomParcours = function(lang = 'fr') {
-    return this.nom_parcours?.[lang] || this.nom_parcours?.fr || this.nom_parcours?.ar || '';
-  };
-
-  Parcours.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return Parcours;
 };

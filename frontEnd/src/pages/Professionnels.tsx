@@ -20,8 +20,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSkeleton } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
-import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
+import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { httpClient } from '@/services/httpClient';
@@ -83,7 +84,8 @@ const Professionnels: React.FC = () => {
   const [panneauOuvert, setPanneauOuvert] = useState(false);
   const [types, setTypes] = useState<TypeUser[]>([]);
   const [typesOrganisation, setTypesOrganisation] = useState<TypeOrganisation[]>([]);
-  const [wilayas, setWilayas] = useState<Wilaya[]>([]);
+  // Liste des wilayas en cache, partagée avec les autres pages (audit V11 COD-11)
+  const { wilayas } = useWilayas();
   const [liste, setListe] = useState<Professionnel[]>([]);
   const [page, setPage] = useState(1);
   const [encore, setEncore] = useState(false);
@@ -96,9 +98,6 @@ const Professionnels: React.FC = () => {
     }).catch(() => undefined);
     metadataService.getTypesOrganisations().then((r) => {
       if (r.success && Array.isArray(r.data)) setTypesOrganisation(r.data as TypeOrganisation[]);
-    }).catch(() => undefined);
-    metadataService.getWilayas().then((r) => {
-      if (r.success && Array.isArray(r.data)) setWilayas(r.data as unknown as Wilaya[]);
     }).catch(() => undefined);
   }, [lang]);
 

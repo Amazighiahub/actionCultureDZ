@@ -18,7 +18,7 @@ import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
@@ -76,7 +76,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   onChange
 }) => {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { isAuthenticated } = useAuth();
   const { td } = useTranslateData();
 

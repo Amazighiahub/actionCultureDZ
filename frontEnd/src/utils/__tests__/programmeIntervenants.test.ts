@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { intervenantsPourFormulaire, intervenantValide, texteLangue } from '../programmeIntervenants';
+import { intervenantsPourFormulaire, intervenantValide } from '../programmeIntervenants';
 
 describe('programmeIntervenants', () => {
   it('relit les intervenants d’une activité, avec ou sans compte', () => {
@@ -18,9 +18,9 @@ describe('programmeIntervenants', () => {
     expect(intervenantValide({ prenom: ' ', nom: '' })).toBe(false);
   });
 
-  it('texte dans la langue demandée, sinon français', () => {
-    expect(texteLangue({ fr: 'Poterie', ar: 'فخار' }, 'ar')).toBe('فخار');
-    expect(texteLangue({ fr: 'Poterie' }, 'en')).toBe('Poterie');
-    expect(texteLangue(null)).toBe('');
+  it('noms dans la langue demandée, sinon français', () => {
+    const [ligne] = intervenantsPourFormulaire([{ prenom: { fr: 'Yamina', ar: 'يمينة' }, nom: { fr: 'Khaled' } }], 'ar');
+    expect(ligne).toMatchObject({ prenom: 'يمينة', nom: 'Khaled' });
+    expect(intervenantsPourFormulaire([{ prenom: null, nom: 'Hammouche' }])[0]).toMatchObject({ prenom: '', nom: 'Hammouche' });
   });
 });

@@ -17,11 +17,13 @@
  */
 const ExcelJS = require('exceljs');
 const { texte } = require('../patrimoine/importReleve');
+const { sansAccent: sansAccentBase } = require('../../utils/texte');
 
 const MAX_LIGNES = 300;
 const TYPE_LIVRE = 1;
 
-const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").toLowerCase().trim();
+/** Sans accents, apostrophe typographique ’ ramenée à ' */
+const sansAccent = (t) => sansAccentBase(t).replace(/’/g, "'");
 const chiffres = (t) => String(t || '').replace(/[^0-9]/g, '');
 /** ISBN tel que saisi, sans tirets ni espaces (le X final d'un ISBN-10 est gardé) */
 const isbnBrut = (t) => String(t || '').toUpperCase().replace(/[^0-9X]/g, '');

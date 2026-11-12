@@ -16,14 +16,13 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import MultiLangInput from '@/components/MultiLangInput';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
-
-type MultilingualField = Record<string, string | undefined>;
 
 export interface PatrimoineElement {
   id: number;
-  nom: MultilingualField | string;
-  description?: MultilingualField | string;
+  nom: TranslatableValue | string;
+  description?: TranslatableValue | string;
   type: string;
 }
 
@@ -77,15 +76,13 @@ const libelles = (t: TFunction, kind: 'monument' | 'vestige') => (kind === 'monu
 /** Nom d'un type (la valeur enregistrée reste la même dans toutes les langues) */
 const nomType = (t: TFunction, type: string) => t(`patrimoine.elements.types.${type}`, type);
 
-const texte = (field: MultilingualField | string | undefined, lang: string) => getLocalizedText(field, lang, '');
-
-const enObjet = (v: MultilingualField | string | undefined): MultilingualField =>
+const enObjet = (v: TranslatableValue | string | undefined): TranslatableValue =>
   !v ? {} : typeof v === 'string' ? { fr: v } : { ...v };
 
 function useElementForm() {
-  const [nom, setNom] = useState<MultilingualField>({});
+  const [nom, setNom] = useState<TranslatableValue>({});
   const [type, setType] = useState('');
-  const [description, setDescription] = useState<MultilingualField>({});
+  const [description, setDescription] = useState<TranslatableValue>({});
 
   function reset() { setNom({}); setType(''); setDescription({}); }
   function load(item: PatrimoineElement) {
@@ -122,7 +119,7 @@ function ElementForm({
         name="element-nom"
         label={t('patrimoine.elements.nom', 'Nom')}
         value={form.nom}
-        onChange={(v) => form.setNom(v as MultilingualField)}
+        onChange={(v) => form.setNom(v as TranslatableValue)}
         required
         requiredLanguages={[]}
         maxLength={200}
@@ -144,7 +141,7 @@ function ElementForm({
         name="element-description"
         label={t('patrimoine.elements.description', 'Description')}
         value={form.description}
-        onChange={(v) => form.setDescription(v as MultilingualField)}
+        onChange={(v) => form.setDescription(v as TranslatableValue)}
         type="textarea"
         rows={3}
         placeholder={t('patrimoine.elements.descriptionPlaceholder', 'Décrivez ce lieu en quelques phrases…')}
@@ -308,7 +305,7 @@ export default function SectionElements({
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base leading-tight">{texte(item.nom, langue)}</CardTitle>
+                    <CardTitle className="text-base leading-tight">{getLocalizedText(item.nom, langue)}</CardTitle>
                     <Badge variant="secondary" className="mt-1 text-xs">{nomType(t, item.type)}</Badge>
                   </div>
                   {isAuthenticated && (
@@ -319,7 +316,7 @@ export default function SectionElements({
                         className="h-7 w-7 text-muted-foreground hover:text-primary"
                         onClick={() => openEdit(item)}
                         title={t('common.edit', 'Modifier')}
-                        aria-label={`${t('common.edit', 'Modifier')} ${texte(item.nom, langue)}`}
+                        aria-label={`${t('common.edit', 'Modifier')} ${getLocalizedText(item.nom, langue)}`}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -331,7 +328,7 @@ export default function SectionElements({
                           disabled={deletingId === item.id}
                           onClick={() => handleDelete(item.id)}
                           title={t('common.delete', 'Supprimer')}
-                          aria-label={`${t('common.delete', 'Supprimer')} ${texte(item.nom, langue)}`}
+                          aria-label={`${t('common.delete', 'Supprimer')} ${getLocalizedText(item.nom, langue)}`}
                         >
                           {deletingId === item.id
                             ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -342,10 +339,10 @@ export default function SectionElements({
                   )}
                 </div>
               </CardHeader>
-              {texte(item.description, langue) && (
+              {getLocalizedText(item.description, langue) && (
                 <CardContent className="pt-0">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {texte(item.description, langue)}
+                    {getLocalizedText(item.description, langue)}
                   </p>
                 </CardContent>
               )}

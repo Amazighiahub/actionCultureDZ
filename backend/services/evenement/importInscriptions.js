@@ -21,6 +21,7 @@ const { Op } = require('sequelize');
 const { listerChamps, verifierReponses } = require('./formulaireInscription');
 const { configAvecProfil, tarificationDe, montantInscription } = require('./tarification');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { sansAccent: sansAccentBase } = require('../../utils/texte');
 const { budgetEnvoiGroupe } = require('../quotaEmail');
 
 const LIGNES_MAX = 500;
@@ -31,8 +32,8 @@ const INVITATION_HEURES = 8 * 24;
 const RELANCE_MAX_PAR_ENVOI = 40;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
-const sansAccent = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-  .replace(/[’']/g, ' ').replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim();
+/** Clé de comparaison : sans accents ni ponctuation (lettres latines, chiffres et lettres arabes) */
+const sansAccent = (t) => sansAccentBase(t).replace(/[’']/g, ' ').replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim();
 
 /** Valeur lisible d'une cellule exceljs (texte riche, lien, formule, date) */
 const texte = (cell) => {

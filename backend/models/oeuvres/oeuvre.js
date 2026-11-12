@@ -172,15 +172,6 @@ module.exports = (sequelize) => {
     Oeuvre.hasMany(models.CritiqueEvaluation, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
   };
 
-  // ⚡ NOUVELLES MÉTHODES I18N
-  Oeuvre.prototype.getTitre = function(lang = 'fr') {
-    return this.titre?.[lang] || this.titre?.fr || this.titre?.ar || '';
-  };
-
-  Oeuvre.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   Oeuvre.prototype.estUneTraduction = function() {
     return this.id_oeuvre_originale !== null;
   };

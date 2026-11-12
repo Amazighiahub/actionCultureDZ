@@ -40,21 +40,14 @@ import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { evenementPath, idFromSlug, lieuPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { TranslatableValue } from '@/types/common/multilingual.types';
+import type { TypePatrimoine } from '@/utils/typesPatrimoine';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
 import { mentionCredit } from '@/utils/creditPhoto';
 import { OeuvresLieesLieu, DeLaRegion } from '@/components/patrimoine/OeuvresEtRegion';
 import { saisieEnAttente } from '@/hooks/useSaisieConservee';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
-
-// Type multilingue réutilisé dans l'interface du site
-type MultilingualField = { fr?: string; ar?: string; en?: string };
-
-// Helper pour traduire les champs multilingues
-const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
-  if (!value) return '';
-  return getLocalizedText(value, lang);
-};
 
 // Formulaires de chaque volet repliable (mêmes clés que les sections) : un texte conservé après une
 // session expirée ouvre son volet au retour ; fermé, la section n'est pas affichée (audit V11 FRM-23)
@@ -65,9 +58,6 @@ const SAISIES_PAR_VOLET: Record<string, (idLieu: number) => string[]> = {
   vestiges: (idLieu) => saisiesElements(idLieu, 'vestige'),
   histoire: (idLieu) => ['histoire', 'referencesHistoriques'].flatMap((s) => [`lieu:${idLieu}:${s}`, `lieu:${idLieu}:blocs:${s}`]),
 };
-
-// ⚡ Types de patrimoine disponibles
-type TypePatrimoine = 'ville_village' | 'monument' | 'musee' | 'site_archeologique' | 'site_naturel' | 'edifice_religieux' | 'palais_forteresse' | 'autre';
 
 // ⚡ Configuration des onglets selon le type de patrimoine (l'histoire et ses références : tous les types)
 const TABS_CONFIG: Record<TypePatrimoine, string[]> = {
@@ -81,22 +71,10 @@ const TABS_CONFIG: Record<TypePatrimoine, string[]> = {
   autre: ['monuments', 'vestiges', 'histoire', 'services', 'programmes', 'parcours']
 };
 
-// ⚡ Labels des types de patrimoine
-const TYPE_LABELS: Record<TypePatrimoine, { fr: string; ar: string; en: string }> = {
-  ville_village: { fr: 'Ville / Village', ar: 'مدينة / قرية', en: 'City / Village' },
-  monument: { fr: 'Monument', ar: 'نصب تذكاري', en: 'Monument' },
-  musee: { fr: 'Musée', ar: 'متحف', en: 'Museum' },
-  site_archeologique: { fr: 'Site archéologique', ar: 'موقع أثري', en: 'Archaeological Site' },
-  site_naturel: { fr: 'Site naturel', ar: 'موقع طبيعي', en: 'Natural Site' },
-  edifice_religieux: { fr: 'Édifice religieux', ar: 'مبنى ديني', en: 'Religious Building' },
-  palais_forteresse: { fr: 'Palais / Forteresse', ar: 'قصر / حصن', en: 'Palace / Fortress' },
-  autre: { fr: 'Patrimoine', ar: 'تراث', en: 'Heritage' }
-};
-
 interface SitePatrimoineDetail {
   id_lieu: number;
-  nom: string | MultilingualField;
-  adresse: string | MultilingualField;
+  nom: string | TranslatableValue;
+  adresse: string | TranslatableValue;
   latitude: number;
   longitude: number;
   typeLieu: string;
@@ -104,41 +82,41 @@ interface SitePatrimoineDetail {
   id_createur?: number | null;
   // Points de visite : site parent, chemin jusqu'au site principal, points du même site
   id_lieu_parent?: number | null;
-  repere?: string | MultilingualField | null;
+  repere?: string | TranslatableValue | null;
   SousLieux?: PointVisite[];
-  Ancetres?: Array<{ id_lieu: number; nom: string | MultilingualField; id_createur?: number | null }>;
-  Voisins?: Array<{ id_lieu: number; nom: string | MultilingualField; ordre_visite?: number | null }>;
+  Ancetres?: Array<{ id_lieu: number; nom: string | TranslatableValue; id_createur?: number | null }>;
+  Voisins?: Array<{ id_lieu: number; nom: string | TranslatableValue; ordre_visite?: number | null }>;
   Commune?: { id_commune: number; nom: string; Daira?: { id_daira: number; nom: string; Wilaya?: { id_wilaya: number; nom: string } } };
   DetailLieu?: {
     id_detailLieu: number;
-    description?: string | MultilingualField;
-    horaires?: string | MultilingualField;
-    histoire?: string | MultilingualField;
-    referencesHistoriques?: string | MultilingualField;
-    gastronomie?: string | MultilingualField;
-    traditions?: string | MultilingualField;
-    artisanat_local?: string | MultilingualField;
-    personnalites?: string | MultilingualField;
-    architecture?: string | MultilingualField;
-    infos_pratiques?: string | MultilingualField;
+    description?: string | TranslatableValue;
+    horaires?: string | TranslatableValue;
+    histoire?: string | TranslatableValue;
+    referencesHistoriques?: string | TranslatableValue;
+    gastronomie?: string | TranslatableValue;
+    traditions?: string | TranslatableValue;
+    artisanat_local?: string | TranslatableValue;
+    personnalites?: string | TranslatableValue;
+    architecture?: string | TranslatableValue;
+    infos_pratiques?: string | TranslatableValue;
     noteMoyenne?: number;
     nb_contributions?: number;
   };
-  medias?: Array<{ id: number; url: string; type: string; langue?: string | null; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField; credit?: string | null; licence?: string | null }>;
-  services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
-  monuments?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
-  vestiges?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
+  medias?: Array<{ id: number; url: string; type: string; langue?: string | null; titre?: string | TranslatableValue; legende?: string | TranslatableValue; description?: string | TranslatableValue; credit?: string | null; licence?: string | null }>;
+  services?: Array<{ id: number; nom: string | TranslatableValue; description?: string | TranslatableValue; disponible: boolean }>;
+  monuments?: Array<{ id: number; nom: string | TranslatableValue; description?: string | TranslatableValue; type: string }>;
+  vestiges?: Array<{ id: number; nom: string | TranslatableValue; description?: string | TranslatableValue; type: string }>;
   programmes?: Array<{
     id_programme: number;
-    titre: string | MultilingualField;
-    description?: string | MultilingualField;
+    titre: string | TranslatableValue;
+    description?: string | TranslatableValue;
     /** Jour de l'activité (« 2026-10-29 ») et heures seules (« 13:00:00 ») */
     date_programme?: string | null;
     heure_debut?: string | null;
     heure_fin?: string | null;
     Evenement?: {
       id_evenement: number;
-      nom_evenement: string | MultilingualField;
+      nom_evenement: string | TranslatableValue;
       date_debut: string;
       date_fin?: string;
       statut: string;
@@ -146,8 +124,8 @@ interface SitePatrimoineDetail {
   }>;
   parcours?: Array<{
     id_parcours: number;
-    nom_parcours: string | MultilingualField;
-    description?: string | MultilingualField;
+    nom_parcours: string | TranslatableValue;
+    description?: string | TranslatableValue;
     duree_estimee?: number;
     difficulte?: string;
     theme?: string;
@@ -229,7 +207,7 @@ const PatrimoineDetail = () => {
 
   // Partager le site
   const share = useShare();
-  const handleShareSite = () => share({ title: translate(site?.nom, lang) });
+  const handleShareSite = () => share({ title: getLocalizedText(site?.nom, lang) });
 
   // Charger les détails du site (de nouveau quand la langue change : noms et textes sont
   // traduits par le serveur ; avant, la fiche restait dans l'ancienne langue)
@@ -350,11 +328,11 @@ const PatrimoineDetail = () => {
   const indexVoisin = voisins.findIndex(v => v.id_lieu === site.id_lieu);
   const pointPrecedent = indexVoisin > 0 ? voisins[indexVoisin - 1] : null;
   const pointSuivant = indexVoisin >= 0 && indexVoisin < voisins.length - 1 ? voisins[indexVoisin + 1] : null;
-  const repere = translate(site.repere, lang);
+  const repere = getLocalizedText(site.repere, lang);
   const nomGeo = (o?: { nom?: string; commune_name_ascii?: string; daira_name_ascii?: string; wilaya_name_ascii?: string }) =>
     (lang === 'ar' && o?.nom) || o?.commune_name_ascii || o?.daira_name_ascii || o?.wilaya_name_ascii || o?.nom || '';
   const lieuLisible = [...new Set([nomGeo(site.commune), nomGeo(site.daira), nomGeo(site.wilaya)].filter(Boolean))].join(', ')
-    || translate(site.adresse, lang);
+    || getLocalizedText(site.adresse, lang);
   const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
 
   // Contenu du QR code, partagé par la carte (ordinateur) et le dialogue (téléphone)
@@ -391,7 +369,7 @@ const PatrimoineDetail = () => {
   const blocsDe = (section: string) => blocsArticles.filter(b => b.section_patrimoine === section);
   const pagesDe = (section: string) => pagesDetaillees.filter(pg => pg.section_patrimoine === section);
   const cultureRemplie = (['architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques'] as const)
-    .some(k => translate(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0 || pagesDe(k).length > 0);
+    .some(k => getLocalizedText(site.DetailLieu?.[k], lang).trim() !== '' || blocsDe(k).length > 0 || pagesDe(k).length > 0);
   const canAddContent = isAdmin || isValidatedProfessional();
   // Même règle que usePeutEnrichirLieu, sans nouveau hook (on est après un retour anticipé)
   const peutEnrichir = canAddContent || hasRole('Moderateur') || hasRole('Modérateur');
@@ -404,9 +382,9 @@ const PatrimoineDetail = () => {
   const canEditSite = canReorderPoints || (!!parentDirect?.id_createur && isOwner(parentDirect.id_createur));
 
   // Libellé accessible d'un média (titre/légende sinon « Site – photo N »)
-  const siteDisplayName = translate(site.nom, lang);
+  const siteDisplayName = getLocalizedText(site.nom, lang);
   const getMediaLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
-    translate(media.titre, lang) || translate(media.legende, lang)
+    getLocalizedText(media.titre, lang) || getLocalizedText(media.legende, lang)
     || `${siteDisplayName} – ${t('common.photo', 'photo')} ${idx + 1}`;
   const getVideoLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
     t('patrimoine.playVideo', 'Lire la vidéo : {{title}}', { title: getMediaLabel(media, idx) });
@@ -416,7 +394,7 @@ const PatrimoineDetail = () => {
     : siteDisplayName;
 
   const seoKeywords = [
-    translate(site?.nom, lang), site?.typePatrimoine,
+    getLocalizedText(site?.nom, lang), site?.typePatrimoine,
     site?.Commune?.Daira?.Wilaya?.nom, 'patrimoine algérien', 'site historique', 'Algérie',
     'tourisme culturel', 'histoire algérienne'
   ].filter(Boolean) as string[];
@@ -424,8 +402,8 @@ const PatrimoineDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={translate(site?.nom, lang)}
-        description={translate(site?.DetailLieu?.description, lang)?.substring(0, 160) || `Découvrez ${translate(site?.nom, lang)} — patrimoine culturel algérien`}
+        title={getLocalizedText(site?.nom, lang)}
+        description={getLocalizedText(site?.DetailLieu?.description, lang)?.substring(0, 160) || `Découvrez ${getLocalizedText(site?.nom, lang)} — patrimoine culturel algérien`}
         image={getMainImage()}
         type="place"
         keywords={seoKeywords}
@@ -434,13 +412,12 @@ const PatrimoineDetail = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Patrimoine', url: '/patrimoine' },
-            ...ancetres.map(a => ({ name: translate(a.nom, lang), url: `/patrimoine/${a.id_lieu}` })),
-            { name: translate(site?.nom, lang) || '', url: `/patrimoine/${site?.id_lieu}` },
+            ...ancetres.map(a => ({ name: getLocalizedText(a.nom, lang), url: `/patrimoine/${a.id_lieu}` })),
+            { name: getLocalizedText(site?.nom, lang) || '', url: `/patrimoine/${site?.id_lieu}` },
           ]),
         ]}
       />
       <Header />
-
 
       <main className="container py-8">
         {/* Breadcrumb */}
@@ -473,12 +450,12 @@ const PatrimoineDetail = () => {
               <React.Fragment key={a.id_lieu}>
                 <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" aria-hidden="true" />
                 <Link to={`/patrimoine/${a.id_lieu}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline">
-                  {translate(a.nom, lang)}
+                  {getLocalizedText(a.nom, lang)}
                 </Link>
               </React.Fragment>
             ))}
             <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" aria-hidden="true" />
-            <span className="text-sm text-foreground" aria-current="page">{translate(site.nom, lang)}</span>
+            <span className="text-sm text-foreground" aria-current="page">{getLocalizedText(site.nom, lang)}</span>
           </nav>
         </div>
 
@@ -491,7 +468,7 @@ const PatrimoineDetail = () => {
                 src={getAssetUrl(mainImage, { width: 1280 })}
                 srcSet={[640, 960, 1280].map(w => `${getAssetUrl(mainImage, { width: w })} ${w}w`).join(', ')}
                 sizes="(min-width: 1280px) 1200px, 100vw"
-                alt={translate(site.nom, lang)}
+                alt={getLocalizedText(site.nom, lang)}
                 className="w-full h-[280px] sm:h-[360px] md:h-[420px] object-cover"
               />
               {/* Dégradé assez sombre pour que le titre reste lisible sur toute photo */}
@@ -513,8 +490,8 @@ const PatrimoineDetail = () => {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div className="min-w-0">
                 {/* text-white explicite : la règle globale des h1 (index.css) impose la couleur du texte */}
-                <h1 lang={lang} className={`${translate(site.nom, lang).length > 30 ? 'text-2xl sm:text-3xl' : 'text-3xl'} md:text-4xl font-bold font-serif mb-2 text-white drop-shadow-sm break-words hyphens-auto`}>
-                  {translate(site.nom, lang)}
+                <h1 lang={lang} className={`${getLocalizedText(site.nom, lang).length > 30 ? 'text-2xl sm:text-3xl' : 'text-3xl'} md:text-4xl font-bold font-serif mb-2 text-white drop-shadow-sm break-words hyphens-auto`}>
+                  {getLocalizedText(site.nom, lang)}
                 </h1>
                 <div className="flex items-center gap-2 text-white/90 mb-1">
                   <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -539,7 +516,7 @@ const PatrimoineDetail = () => {
                   {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 me-1" aria-hidden="true" />}
                   {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 me-1" aria-hidden="true" />}
                   {(site.typePatrimoine === 'monument' || site.typePatrimoine === 'site_archeologique') && <Landmark className="h-3 w-3 me-1" aria-hidden="true" />}
-                  {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, TYPE_LABELS[(site.typePatrimoine || 'autre') as TypePatrimoine]?.fr || 'Site')}
+                  {t(`patrimoine.types.${site.typePatrimoine || 'autre'}`, 'Site')}
                 </Badge>
               </div>
             </div>
@@ -630,7 +607,7 @@ const PatrimoineDetail = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  {translate(site.DetailLieu?.description, lang) ||
+                  {getLocalizedText(site.DetailLieu?.description, lang) ||
                     t('patrimoine.noDescription', 'Aucune description disponible.')}
                 </p>
               </CardContent>
@@ -665,7 +642,7 @@ const PatrimoineDetail = () => {
               <div className="rounded-lg border border-dashed p-4 text-sm flex flex-wrap items-center justify-between gap-3">
                 <span className="text-muted-foreground">{t('patrimoine.proposerInfo.texte', 'Vous connaissez l’histoire de ce lieu, une tradition, une photo ? Envoyez-la à l’équipe Tala DZ.')}</span>
                 <Button asChild variant="outline" size="sm">
-                  <Link to={lienPropositionLieu(translate(site.nom, lang))}>{t('patrimoine.proposerInfo.bouton', 'Proposer une information')}</Link>
+                  <Link to={lienPropositionLieu(getLocalizedText(site.nom, lang))}>{t('patrimoine.proposerInfo.bouton', 'Proposer une information')}</Link>
                 </Button>
               </div>
             )}
@@ -696,7 +673,7 @@ const PatrimoineDetail = () => {
                 <CardContent className="p-4 space-y-3">
                   <p className="text-sm">
                     {t('patrimoine.points.partOf', 'Fait partie de :')}{' '}
-                    <Link to={`/patrimoine/${siteParent.id_lieu}`} className="font-medium hover:underline">{translate(siteParent.nom, lang)}</Link>
+                    <Link to={`/patrimoine/${siteParent.id_lieu}`} className="font-medium hover:underline">{getLocalizedText(siteParent.nom, lang)}</Link>
                     {indexVoisin >= 0 && (
                       <span className="text-muted-foreground"> · {t('patrimoine.points.position', 'point {{n}} sur {{total}}', { n: indexVoisin + 1, total: voisins.length })}</span>
                     )}
@@ -707,14 +684,14 @@ const PatrimoineDetail = () => {
                         <Button variant="outline" size="sm" asChild>
                           <Link to={`/patrimoine/${pointPrecedent.id_lieu}`}>
                             <ChevronLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
-                            {translate(pointPrecedent.nom, lang)}
+                            {getLocalizedText(pointPrecedent.nom, lang)}
                           </Link>
                         </Button>
                       ) : <span />}
                       {pointSuivant && (
                         <Button size="sm" asChild>
                           <Link to={`/patrimoine/${pointSuivant.id_lieu}`}>
-                            {t('patrimoine.points.next', 'Point suivant :')} {translate(pointSuivant.nom, lang)}
+                            {t('patrimoine.points.next', 'Point suivant :')} {getLocalizedText(pointSuivant.nom, lang)}
                             <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" />
                           </Link>
                         </Button>
@@ -740,7 +717,7 @@ const PatrimoineDetail = () => {
                 programmes:  site.programmes?.length || 0,
                 parcours:    site.parcours?.length || 0,
                 galerie:     visuels.length,
-                histoire:    translate(site.DetailLieu?.histoire, lang) || translate(site.DetailLieu?.referencesHistoriques, lang)
+                histoire:    getLocalizedText(site.DetailLieu?.histoire, lang) || getLocalizedText(site.DetailLieu?.referencesHistoriques, lang)
                   || blocsDe('histoire').length || blocsDe('referencesHistoriques').length
                   || pagesDe('histoire').length || pagesDe('referencesHistoriques').length ? 1 : 0,
                 musees:      0,
@@ -857,7 +834,7 @@ const PatrimoineDetail = () => {
                           {sectionKey === 'services' && (
                             <ServicesProximite
                               lieuId={site.id_lieu}
-                              lieuName={translate(site.nom, lang)}
+                              lieuName={getLocalizedText(site.nom, lang)}
                               services={site.services}
                               variant="full"
                               showTitle={false}
@@ -872,10 +849,10 @@ const PatrimoineDetail = () => {
                                   <Card key={idx}>
                                     <CardHeader className="pb-2">
                                       <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base">{translate(programme.titre, lang)}</CardTitle>
+                                        <CardTitle className="text-base">{getLocalizedText(programme.titre, lang)}</CardTitle>
                                       </div>
                                       {programme.Evenement && (
-                                        <p className="text-sm font-medium text-primary">{translate(programme.Evenement.nom_evenement, lang)}</p>
+                                        <p className="text-sm font-medium text-primary">{getLocalizedText(programme.Evenement.nom_evenement, lang)}</p>
                                       )}
                                       <CardDescription className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4" aria-hidden="true" />
@@ -892,7 +869,7 @@ const PatrimoineDetail = () => {
                                       </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                      <p className="text-sm text-muted-foreground">{translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}</p>
+                                      <p className="text-sm text-muted-foreground">{getLocalizedText(programme.description, lang) || t('common.noDescription', 'Aucune description')}</p>
                                       {programme.Evenement && (
                                         <Button variant="link" className="p-0 mt-2" asChild><Link to={evenementPath(programme.Evenement.id_evenement, programme.Evenement.nom_evenement)}>
                                             {t('patrimoine.viewEvent', "Voir l'événement")}
@@ -916,7 +893,7 @@ const PatrimoineDetail = () => {
                                   <Card key={idx} className="hover:shadow-md transition-shadow">
                                     <CardHeader className="pb-2">
                                       <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base">{translate(parcours.nom_parcours, lang)}</CardTitle>
+                                        <CardTitle className="text-base">{getLocalizedText(parcours.nom_parcours, lang)}</CardTitle>
                                         {parcours.difficulte && (
                                           <Badge variant={parcours.difficulte === 'facile' ? 'secondary' : parcours.difficulte === 'moyen' ? 'default' : 'destructive'}>
                                             {parcours.difficulte}
@@ -925,7 +902,7 @@ const PatrimoineDetail = () => {
                                       </div>
                                     </CardHeader>
                                     <CardContent>
-                                      <p className="text-sm text-muted-foreground mb-3">{translate(parcours.description, lang) || t('common.noDescription', 'Aucune description')}</p>
+                                      <p className="text-sm text-muted-foreground mb-3">{getLocalizedText(parcours.description, lang) || t('common.noDescription', 'Aucune description')}</p>
                                       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                                         {parcours.duree_estimee && <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{parcours.duree_estimee} min</span>}
                                         {parcours.distance_km && <span className="flex items-center gap-1"><Route className="h-4 w-4" />{parcours.distance_km} km</span>}
@@ -1029,7 +1006,7 @@ const PatrimoineDetail = () => {
                     <div>
                       <p className="font-medium">{t('patrimoine.hours', 'Horaires')}</p>
                       <p className="text-sm text-muted-foreground">
-                        {translate(site.DetailLieu.horaires, lang)}
+                        {getLocalizedText(site.DetailLieu.horaires, lang)}
                       </p>
                     </div>
                   </div>
@@ -1041,7 +1018,7 @@ const PatrimoineDetail = () => {
                   <div>
                     <p className="font-medium">{t('patrimoine.location', 'Localisation')}</p>
                     <p className="text-sm text-muted-foreground">
-                      {translate(site.adresse, lang)}
+                      {getLocalizedText(site.adresse, lang)}
                     </p>
                     {repere && (
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -1194,7 +1171,7 @@ const PatrimoineDetail = () => {
             isOpen={showVisitePlanner}
             onClose={() => setShowVisitePlanner(false)}
             siteId={site.id_lieu}
-            siteName={translate(site.nom, lang)}
+            siteName={getLocalizedText(site.nom, lang)}
             siteLatitude={site.latitude}
             siteLongitude={site.longitude}
             siteType={site.typePatrimoine}

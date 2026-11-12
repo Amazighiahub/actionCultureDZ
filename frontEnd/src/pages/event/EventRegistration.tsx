@@ -38,7 +38,7 @@ import { httpClient } from '@/services/httpClient';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
@@ -108,7 +108,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated, isProfessional, user } = useAuth();
-  const { formatDate } = useLocalizedDate();
+  const { formatDate } = useFormatDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
   const { toast } = useToast();

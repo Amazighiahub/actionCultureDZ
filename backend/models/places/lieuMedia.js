@@ -58,9 +58,5 @@ module.exports = (sequelize) => {
   };
 
   // ⚡ NOUVELLE MÉTHODE I18N
-  LieuMedia.prototype.getDescription = function(lang = 'fr') {
-    return this.description?.[lang] || this.description?.fr || '';
-  };
-
   return LieuMedia;
 };
