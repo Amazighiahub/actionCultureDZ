@@ -2,8 +2,6 @@
 import { rattacherAppareil, retirerAppareilALaDeconnexion } from '@/utils/applicationMobile';
 import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, AUTH_CONFIG } from '@/config/api';
 import { httpClient, doRefreshToken } from './httpClient';
-import { uploadService as UploadService } from "./upload.service";
-import { mediaService as MediaService } from "./media.service";
 
 // Types d'inscription : définis une seule fois, dans types/models/auth.types
 import type { RegisterVisitorData, RegisterProfessionalData } from '@/types/models/auth.types';
@@ -327,65 +325,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
   }
 }
 
-async updateProfilePhoto(photoFile: File): Promise<ApiResponse<{ url: string; filename: string }>> {
-  try {
-    // Option 1 : Utiliser mediaService.uploadProfilePhoto qui existe déjà
-    const { mediaService } = MediaService;
-    const uploadResult = await mediaService.uploadProfilePhoto(photoFile);
-    
-    if (uploadResult.success && uploadResult.data) {
-      // La méthode uploadProfilePhoto met déjà à jour le profil via l'API
-      // Elle retourne aussi l'URL de la photo
-      
-      // Mettre à jour le cache in-memory
-      if (this.userCache) {
-        this.userCache = { ...this.userCache, photo_url: uploadResult.data.url || uploadResult.data.filename };
-      }
-    }
-    
-    return uploadResult;
-  } catch (error) {
-    return {
-      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
-    };
-  }
-}
-
-// Alternative si vous voulez utiliser directement uploadService
-async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url: string; filename: string }>> {
-  try {
-    // Importer uploadService directement
-    const { uploadService } = UploadService;
-    
-    // Upload de l'image
-    const uploadResult = await uploadService.uploadImage(photoFile, {
-      isPublic: false,
-      generateThumbnail: true,
-      maxWidth: 500,
-      maxHeight: 500,
-      quality: 0.9
-    });
-    
-    if (uploadResult.success && uploadResult.data) {
-      // Mettre à jour le profil avec l'URL de la photo
-      const updateResult = await this.updateProfile({
-        photo_url: uploadResult.data.url
-      });
-      
-      if (updateResult.success) {
-        return uploadResult;
-      } else {
-        return updateResult;
-      }
-    }
-    
-    return uploadResult;
-  } catch (error) {
-    return {
-      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
-    };
-  }
-}
+// Photo de profil : userService.updateProfilePhoto (seul chemin, route /upload/profile-photo)
 
 /**
    * Récupère l'ID de l'utilisateur actuel depuis le localStorage

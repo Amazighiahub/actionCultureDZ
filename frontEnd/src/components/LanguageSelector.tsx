@@ -18,7 +18,6 @@ import {
   LANGUAGE_LABELS,
   LANGUAGE_FLAGS,
   LANGUAGE_DIRECTIONS,
-  LANGUAGE_FONT_CLASSES,
   toHtmlLang,
   type SupportedLanguage
 } from '@/types/common/multilingual.types';
@@ -42,28 +41,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   const currentLang = (i18n.language || 'fr') as SupportedLanguage;
   const isRTL = LANGUAGE_DIRECTIONS[currentLang] === 'rtl';
 
+  // i18n/config.ts enregistre la langue et pose <html lang dir> ; RtlManager pose les classes de police
+  // (audit V11 COD-3 : ces réglages étaient recopiés ici)
   const handleLanguageChange = async (lang: SupportedLanguage) => {
     try {
       await i18n.changeLanguage(lang);
-
-      // Mettre a jour la direction et la langue du document
-      document.documentElement.dir = LANGUAGE_DIRECTIONS[lang] || 'ltr';
-      document.documentElement.lang = toHtmlLang(lang);
-
-      // Gerer les classes de police (arabe, tifinagh)
-      const allFontClasses = Object.values(LANGUAGE_FONT_CLASSES).filter(Boolean) as string[];
-      document.documentElement.classList.remove(...allFontClasses);
-      const fontClass = LANGUAGE_FONT_CLASSES[lang];
-      if (fontClass) {
-        document.documentElement.classList.add(fontClass);
-      }
-
-      // Notifier les autres composants
-      window.dispatchEvent(new CustomEvent('languageChanged', {
-        detail: { language: lang, direction: LANGUAGE_DIRECTIONS[lang] }
-      }));
-
-      localStorage.setItem('i18nextLng', lang);
     } catch (error) {
       console.error('Error changing language:', error);
     }

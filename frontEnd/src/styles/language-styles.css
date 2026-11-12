@@ -42,29 +42,29 @@ html[lang="ar"] h6, html[lang="ar-DZ"] h6 {
 }
 
 /* === TIFINAGH === */
-html[lang="tz-tfng"],
+html[lang="ber-Tfng"],
 .tifinagh-font {
     font-family: var(--font-tifinagh);
     line-height: 1.8;
     letter-spacing: 0.05em;
 }
 
-html[lang="tz-tfng"] p,
-html[lang="tz-tfng"] span,
-html[lang="tz-tfng"] li,
-html[lang="tz-tfng"] a,
-html[lang="tz-tfng"] label,
-html[lang="tz-tfng"] button {
+html[lang="ber-Tfng"] p,
+html[lang="ber-Tfng"] span,
+html[lang="ber-Tfng"] li,
+html[lang="ber-Tfng"] a,
+html[lang="ber-Tfng"] label,
+html[lang="ber-Tfng"] button {
     font-family: var(--font-tifinagh);
     letter-spacing: 0.04em;
 }
 
-html[lang="tz-tfng"] h1,
-html[lang="tz-tfng"] h2,
-html[lang="tz-tfng"] h3,
-html[lang="tz-tfng"] h4,
-html[lang="tz-tfng"] h5,
-html[lang="tz-tfng"] h6 {
+html[lang="ber-Tfng"] h1,
+html[lang="ber-Tfng"] h2,
+html[lang="ber-Tfng"] h3,
+html[lang="ber-Tfng"] h4,
+html[lang="ber-Tfng"] h5,
+html[lang="ber-Tfng"] h6 {
     font-family: var(--font-tifinagh-titres);
     letter-spacing: 0.04em;
 }
@@ -77,28 +77,28 @@ html[lang="tz-tfng"] h6 {
 /* Contenus marqués dans une autre langue (lang="fr", lang="ar"…, audit V11 UX-3) : pas d'espacement des
    lettres, qui gêne la lecture du latin et coupe les liaisons arabes (audit V11 UX-23). La police suit la
    pile --font-tifinagh, qui contient une police latine, ou la règle [lang="ar"] d'index.css. */
-html[lang="tz-tfng"] :is([lang="fr"], [lang="en"], [lang="tz-ltn"], [lang="ar"], [lang="fr"] *, [lang="en"] *, [lang="tz-ltn"] *, [lang="ar"] *) {
+html[lang="ber-Tfng"] :is([lang="fr"], [lang="en"], [lang="tz-ltn"], [lang="ber-Latn"], [lang="ar"], [lang="fr"] *, [lang="en"] *, [lang="tz-ltn"] *, [lang="ber-Latn"] *, [lang="ar"] *) {
     letter-spacing: normal;
 }
 
-html[lang="tz-tfng"] nav a,
-html[lang="tz-tfng"] nav span,
-html[lang="tz-tfng"] [role="menuitem"] {
+html[lang="ber-Tfng"] nav a,
+html[lang="ber-Tfng"] nav span,
+html[lang="ber-Tfng"] [role="menuitem"] {
     font-family: var(--font-tifinagh);
     letter-spacing: 0.04em;
 }
 
-html[lang="tz-tfng"] input,
-html[lang="tz-tfng"] textarea,
-html[lang="tz-tfng"] select,
-html[lang="tz-tfng"] input::placeholder,
-html[lang="tz-tfng"] textarea::placeholder {
+html[lang="ber-Tfng"] input,
+html[lang="ber-Tfng"] textarea,
+html[lang="ber-Tfng"] select,
+html[lang="ber-Tfng"] input::placeholder,
+html[lang="ber-Tfng"] textarea::placeholder {
     font-family: var(--font-tifinagh);
     letter-spacing: 0.03em;
 }
 
 /* === TAMAZIGHT LATIN === */
-html[lang="tz-ltn"] {
+html[lang="ber-Latn"] {
     font-family: var(--font-latin);
     line-height: 1.7;
 }
@@ -260,7 +260,7 @@ html[lang="ar-DZ"] .number {
         font-family: 'Amiri', 'Traditional Arabic', serif;
     }
 
-    html[lang="tz-tfng"] {
+    html[lang="ber-Tfng"] {
         font-family: var(--font-tifinagh);
         font-size: 120%;
     }

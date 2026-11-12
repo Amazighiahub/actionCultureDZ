@@ -1,5 +1,4 @@
 // services/upload.service.ts - Version corrigée
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
   API_ENDPOINTS, 
   ApiResponse, 
@@ -8,7 +7,7 @@ import {
   UploadOptions as ApiUploadOptions
 } from '@/config/api';
 import { httpClient } from './httpClient';
-import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
+import { FORMATS_IMAGE_ACCEPTES, prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { reponseEchec } from '@/utils/erreurServeur';
 import i18next from 'i18next';
 
@@ -128,7 +127,7 @@ class UploadService {
     }
   }
 
-  // Upload simple d'image
+  // Envoi d'une image (seul chemin : réduite avant l'envoi par prepareImageForUpload)
   async uploadImage(file: File, options?: ServiceUploadOptions): Promise<ApiResponse<UploadResponse>> {
     const endpoint = options?.isPublic 
       ? API_ENDPOINTS.upload.imagePublic 
@@ -374,7 +373,8 @@ class UploadService {
     };
 
     const allowedMimeTypes: Record<string, string[]> = {
-      image: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'],
+      // Liste commune (le BMP, refusé par le serveur, était accepté ici)
+      image: FORMATS_IMAGE_ACCEPTES,
       document: [
         'application/pdf',
         'application/msword',
@@ -438,7 +438,7 @@ class UploadService {
     
     // Vérifier par extension si le type MIME n'est pas reconnu
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'].includes(extension)) return 'image';
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(extension)) return 'image';
     if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'].includes(extension)) return 'video';
     if (['.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac'].includes(extension)) return 'audio';
     if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.odt'].includes(extension)) return 'document';
@@ -451,50 +451,7 @@ class UploadService {
     return this.buildFullUrl(url);
   }
 
-  // Méthode spécialisée pour upload de photo de profil
-  async uploadProfilePhoto(
-    file: File,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<ApiResponse<UploadResponse>> {
-    const validation = this.validateProfilePhoto(file);
-    if (!validation.valid) {
-      return {
-        success: false,
-        error: validation.error
-      };
-    }
-
-    return this.uploadImage(file, {
-      isPublic: true,
-      maxWidth: 500,
-      maxHeight: 500,
-      quality: 0.9,
-      generateThumbnail: true,
-      onProgress
-    });
-  }
-
-  // Validation spécifique pour photo de profil
-  private validateProfilePhoto(file: File): { valid: boolean; error?: string } {
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    
-    if (file.size > maxSize) {
-      return { 
-        valid: false, 
-        error: 'La photo ne doit pas dépasser 5MB' 
-      };
-    }
-    
-    if (!allowedTypes.includes(file.type)) {
-      return { 
-        valid: false, 
-        error: 'Format de photo non supporté. Utilisez JPG, PNG, GIF ou WebP.' 
-      };
-    }
-    
-    return { valid: true };
-  }
+  // Photo de profil : userService.updateProfilePhoto (route /upload/profile-photo, qui met le profil à jour)
 
   // Méthode pour obtenir une preview d'image
   async getImagePreview(file: File): Promise<string> {

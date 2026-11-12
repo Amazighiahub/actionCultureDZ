@@ -8,6 +8,9 @@ import { useLocation, useNavigate, useSearchParams, useParams } from 'react-rout
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
+import { uploadService } from '@/services/upload.service';
+import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
+import type { RequiredTranslatableValue } from '@/types/common/multilingual.types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -33,7 +36,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
-import { aDuTexte } from '@/utils/getLocalizedText';
+import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
@@ -57,13 +60,8 @@ const AIDE_TARIF: Record<string, string> = {
   location: 'Prix de la location pour une journée. Il sera affiché « par jour ».',
 };
 
-interface MultiLangText {
-  fr: string;
-  ar: string;
-  en: string;
-  'tz-ltn': string;
-  'tz-tfng': string;
-}
+// Texte multilingue du formulaire : type commun (types/common/multilingual.types)
+type MultiLangText = RequiredTranslatableValue;
 
 interface ServiceFormData {
   nom: MultiLangText;
@@ -110,7 +108,6 @@ const AjouterServicePro: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const currentLang = i18n.language as 'fr' | 'ar' | 'en';
   const { direction } = useRTL();
 
   // Form state
@@ -208,6 +205,15 @@ const AjouterServicePro: React.FC = () => {
         toast({
           title: t('common.error', 'Erreur'),
           description: t('service.photoTooLarge', 'La photo ne doit pas dépasser 5 MB'),
+          variant: 'destructive',
+        });
+        return;
+      }
+      // Formats refusés par le serveur (HEIC, BMP…) : message clair avant l'envoi
+      if (!FORMATS_IMAGE_ACCEPTES.includes(file.type)) {
+        toast({
+          title: t('common.error', 'Erreur'),
+          description: t('auth.errors.invalidFileType.description', 'Seuls les fichiers JPG, PNG, GIF et WEBP sont acceptés'),
           variant: 'destructive',
         });
         return;
@@ -362,11 +368,10 @@ const AjouterServicePro: React.FC = () => {
       if (data.success) {
         const serviceId = data.data?.id || editId;
         if (photoFile && serviceId) {
-          const formDataPhoto = new FormData();
-          formDataPhoto.append('image', photoFile);
           // Le service est déjà enregistré : un échec ici ne doit pas inviter à recliquer et créer un doublon
           try {
-            const uploadRes = await httpClient.upload<{ url?: string }>(`/upload/image`, formDataPhoto);
+            // Réduite avant l'envoi (une photo de téléphone était envoyée entière)
+            const uploadRes = await uploadService.uploadImage(photoFile);
             if (!uploadRes.success || !uploadRes.data?.url) throw new Error(uploadRes.error);
             await httpClient.put<unknown>(`/services/${serviceId}`, { photo_url: uploadRes.data.url });
           } catch {
@@ -483,7 +488,7 @@ const AjouterServicePro: React.FC = () => {
                       >
                         <Icon className={`h-6 w-6 ${isSelected ? 'text-emerald-600' : 'text-muted-foreground'}`} />
                         <span className="text-sm font-medium text-center">
-                          {type.label[currentLang] || type.label.fr}
+                          {getLocalizedText(type.label, i18n.language)}
                         </span>
                       </button>
                     );
@@ -533,7 +538,7 @@ const AjouterServicePro: React.FC = () => {
                       <div className="relative">
                         <img
                           src={photoPreview}
-                          alt="Preview"
+                          alt={t('auth.register.photoPreview', 'Aperçu de la photo')}
                           className="w-24 h-24 object-cover rounded-lg"
                         />
                         <button
@@ -551,7 +556,7 @@ const AjouterServicePro: React.FC = () => {
                         <span className="text-xs text-muted-foreground mt-1">{t('common.upload', 'Upload')}</span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept={FORMATS_IMAGE_ACCEPTES.join(',')}
                           className="hidden"
                           onChange={handlePhotoChange}
                         />

@@ -7,8 +7,10 @@
  * À l'affichage, un bloc sans traduction dans la langue demandée garde son texte d'origine.
  */
 import type { ArticleBlock } from '@/types/models/articles.types';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/types/common/multilingual.types';
 
-export const LANGUES_ARTICLE = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'] as const;
+/** Langues d'un article : celles du site (liste commune, audit V11 COD-6) */
+export const LANGUES_ARTICLE: readonly SupportedLanguage[] = SUPPORTED_LANGUAGES;
 
 /** Traduction d'un bloc dans une langue (mêmes champs que le bloc) */
 export interface TraductionBloc {

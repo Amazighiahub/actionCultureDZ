@@ -1,10 +1,9 @@
 /**
  * HeroAlbum - Hero section spécifique au type Album Musical
- * Effet flip 3D pochette avant / vinyle au dos
+ * Effet flip 3D pochette avant / vinyle au dos (carte partagée : HeroCarteRetournable)
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -16,15 +15,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Music, FileText, Sparkles, Heart, Star,
-  MessageCircle, Calendar, Clock, Headphones, RotateCcw,
-  Quote, Globe, ZoomIn, X
+  Music, FileText, Heart, Star,
+  MessageCircle, Clock, Headphones, X
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import HeroCarteRetournable from './HeroCarteRetournable';
 
 interface HeroAlbumProps {
   oeuvre: Oeuvre;
@@ -53,10 +52,8 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
 }) => {
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
-  const { rtlClasses, direction } = useRTL();
+  const { rtlClasses } = useRTL();
 
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [showZoom, setShowZoom] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
 
 
@@ -70,218 +67,51 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
           {/* POCHETTE ALBUM AVEC EFFET FLIP (VIYLE AU DOS) */}
           {/* ════════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-2">
-            <div
-              className="relative mx-auto w-[260px] sm:w-[300px] md:w-[340px] lg:w-[360px]"
-              style={{ perspective: '1200px' }}
-            >
-              <div
-                className={cn(
-                  "relative w-full aspect-square cursor-pointer transition-all duration-700 ease-in-out",
-                )}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  transform: isFlipped
-                    ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
-                    : 'rotateY(0deg)',
-                }}
-                onClick={() => setIsFlipped(!isFlipped)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsFlipped(!isFlipped); } }}
-              >
-                {/* FACE AVANT - POCHETTE */}
-                <div
-                  className="absolute inset-0 w-full h-full"
-                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                >
-                  <div className="relative w-full h-full group">
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg blur-2xl opacity-15 group-hover:opacity-25 transition-opacity duration-300 -z-10" />
-
-                    {/* Ombre portée 3D */}
-                    <div
-                      className="absolute inset-0 bg-black/20 rounded-lg transform translate-x-4 translate-y-4 -z-10 transition-transform duration-300 group-hover:translate-x-6 group-hover:translate-y-6"
-                      style={{ filter: 'blur(8px)' }}
-                    />
-
-                    {/* Pochette principale */}
-                    <div className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl">
-                      {mainImage ? (
-                        <img
-                          src={optimizeImageUrl(mainImage, 900)}
-                          alt={titre}
-                          fetchPriority="high"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex flex-col items-center justify-center p-8">
-                          {/* Titre : affiché par le bandeau du bas (avant : deux fois, superposé) */}
-                          <Music className="h-24 w-24 text-emerald-400/50 mb-4" aria-hidden="true" />
-                        </div>
-                      )}
-
-                      {/* Overlay gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                      {/* Note */}
-                      {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
-                        <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
-                          <Badge className="bg-yellow-500 text-black shadow-lg">
-                            <Star className="h-3 w-3 me-1 fill-current" />
-                            {(oeuvre as any).note_moyenne.toFixed(1)}
-                          </Badge>
-                        </div>
-                      )}
-
-                      {/* Badge gratuit */}
-                      {oeuvre.prix === 0 && (
-                        <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
-                          <Badge className="bg-green-500 text-white border-0 shadow-lg">
-                            {t('works.pricing.free', 'Gratuit')}
-                          </Badge>
-                        </div>
-                      )}
-
-                      {/* Infos en bas de pochette */}
-                      <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
-                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg text-white">
-                          {titre}
-                        </h2>
-                        {mainContributors.length > 0 && (
-                          <p className="text-white/90 font-medium drop-shadow">
-                            {gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Boutons hover */}
-                      <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowZoom(true);
-                          }}
-                          className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors"
-                          title={t('works.zoom', 'Agrandir')}
-                          aria-label={t('works.zoom', 'Agrandir')}
-                        >
-                          <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
-                        </button>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
-                          <RotateCcw className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-
-                      {/* Effet brillance */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                    </div>
+            <HeroCarteRetournable
+              theme="album"
+              oeuvre={oeuvre}
+              mainImage={mainImage}
+              titre={titre}
+              mainContributors={mainContributors}
+              gt={gt}
+              icone={Music}
+              badgeRecto={oeuvre.prix === 0 && (
+                <Badge className="bg-green-500 text-white border-0 shadow-lg">
+                  {t('works.pricing.free', 'Gratuit')}
+                </Badge>
+              )}
+              motifVerso={
+                /* Vinyle en fond */
+                <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                  <div className="w-[80%] aspect-square rounded-full border-[20px] border-white/20 relative">
+                    <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+                    <div className="absolute inset-[30%] rounded-full bg-white/10" />
+                    <div className="absolute inset-[45%] rounded-full bg-white/20" />
                   </div>
                 </div>
-
-                {/* FACE ARRIÈRE - VINYLE / INFOS ALBUM */}
-                <div
-                  className="absolute inset-0 w-full h-full"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
-                  }}
-                >
-                  <div className="relative w-full h-full group">
-                    <div
-                      className="absolute inset-0 bg-black/20 rounded-lg transform -translate-x-4 translate-y-4 -z-10"
-                      style={{ filter: 'blur(8px)' }}
-                    />
-
-                    <div className={cn(
-                      "relative w-full h-full overflow-hidden shadow-2xl rounded-lg",
-                      "bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950",
-                      "dark:from-emerald-950 dark:via-teal-950 dark:to-black",
-                    )}>
-                      {/* Vinyle en fond */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                        <div className="w-[80%] aspect-square rounded-full border-[20px] border-white/20 relative">
-                          <div className="absolute inset-0 rounded-full border-4 border-white/10" />
-                          <div className="absolute inset-[30%] rounded-full bg-white/10" />
-                          <div className="absolute inset-[45%] rounded-full bg-white/20" />
-                        </div>
-                      </div>
-
-                      <div className="relative h-full flex flex-col p-6 text-emerald-50">
-                        <div className="flex items-center justify-between mb-4">
-                          <Music className="h-8 w-8 text-emerald-400" />
-                          <Badge variant="outline" className="border-emerald-400/50 text-emerald-200 bg-emerald-950/50">
-                            {oeuvre.TypeOeuvre?.nom_type || 'Album'}
-                          </Badge>
-                        </div>
-
-                        <h3 className="text-xl font-bold mb-3 text-emerald-100">
-                          {titre}
-                        </h3>
-
-                        {/* Description */}
-                        <div className="flex-1 overflow-hidden">
-                          <Quote className="h-5 w-5 text-emerald-500/50 mb-2" />
-                          <p className="text-sm leading-relaxed text-emerald-100/90 line-clamp-[8]">
-                            {gt(oeuvre.description) || t('works.noDescription', 'Aucune description disponible pour cet album.')}
-                          </p>
-                        </div>
-
-                        {/* Séparateur */}
-                        <div className="my-4 flex items-center gap-2">
-                          <div className="flex-1 h-px bg-emerald-600/30" />
-                          <Sparkles className="h-4 w-4 text-emerald-500/50" />
-                          <div className="flex-1 h-px bg-emerald-600/30" />
-                        </div>
-
-                        {/* Métadonnées */}
-                        <div className="space-y-2 text-sm">
-                          {oeuvre.AlbumMusical?.label && (
-                            <div className="flex items-center justify-between text-emerald-200/80">
-                              <span>{t('oeuvre.label', 'Label')}</span>
-                              <span className="font-medium">{oeuvre.AlbumMusical.label === 'Indépendant' ? t('musique.independant', 'Indépendant') : oeuvre.AlbumMusical.label}</span>
-                            </div>
-                          )}
-                          {oeuvre.AlbumMusical?.duree && (
-                            <div className="flex items-center justify-between text-emerald-200/80">
-                              <span>{t('works.duration.label', 'Durée')}</span>
-                              <span>{t('musique.minutes', '{{count}} min', { count: Number(oeuvre.AlbumMusical.duree) })}</span>
-                            </div>
-                          )}
-                          {oeuvre.Langue && (
-                            <div className="flex items-center gap-2 text-emerald-200/80">
-                              <Globe className="h-4 w-4" />
-                              <span>{gt(oeuvre.Langue.nom)}</span>
-                            </div>
-                          )}
-                          {oeuvre.annee_creation && (
-                            <div className="flex items-center gap-2 text-emerald-200/80">
-                              <Calendar className="h-4 w-4" />
-                              <span>{oeuvre.annee_creation}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 text-center">
-                          <span className="text-xs text-emerald-400/60 flex items-center justify-center gap-1">
-                            <RotateCcw className="h-3 w-3" />
-                            {t('works.flipToFront', 'Cliquez pour voir la pochette')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-center text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
-                <RotateCcw className="h-4 w-4" />
-                {isFlipped
-                  ? t('works.viewCover', 'Voir la pochette')
-                  : t('works.viewDetails', 'Voir les détails au dos')
-                }
-              </p>
-            </div>
+              }
+              typeLibelle={oeuvre.TypeOeuvre?.nom_type || 'Album'}
+              descriptionVerso={gt(oeuvre.description) || t('works.noDescription', 'Aucune description disponible pour cet album.')}
+              lignesVerso={[
+                ...(oeuvre.AlbumMusical?.label ? [{
+                  cle: 'label',
+                  libelle: t('oeuvre.label', 'Label'),
+                  valeur: oeuvre.AlbumMusical.label === 'Indépendant' ? t('musique.independant', 'Indépendant') : oeuvre.AlbumMusical.label,
+                  classeValeur: 'font-medium',
+                }] : []),
+                ...(oeuvre.AlbumMusical?.duree ? [{
+                  cle: 'duree',
+                  libelle: t('works.duration.label', 'Durée'),
+                  valeur: t('musique.minutes', '{{count}} min', { count: Number(oeuvre.AlbumMusical.duree) }),
+                }] : []),
+              ]}
+              textes={{
+                retourRecto: t('works.flipToFront', 'Cliquez pour voir la pochette'),
+                voirRecto: t('works.viewCover', 'Voir la pochette'),
+                voirVerso: t('works.viewDetails', 'Voir les détails au dos'),
+                sansImage: t('works.noCover', 'Aucune pochette disponible'),
+              }}
+            />
 
             {/* Actions sous la pochette */}
             <div className="flex flex-wrap gap-2 mt-6 justify-center lg:justify-start">
@@ -315,7 +145,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                 {oeuvre.AlbumMusical?.Genre && (
                   <Badge variant="secondary">{gt(oeuvre.AlbumMusical.Genre.nom)}</Badge>
                 )}
-                {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
+                {Number((oeuvre as any).note_moyenne) > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                     <Star className="h-3 w-3 me-1 fill-current" />
                     {(oeuvre as any).note_moyenne.toFixed(1)}
@@ -359,34 +189,6 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                 </span>
               )}
             </div>
-
-            {/* Modal Zoom Pochette */}
-            <Dialog open={showZoom} onOpenChange={setShowZoom}>
-              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
-                <DialogTitle className="sr-only">{titre}</DialogTitle>
-                <button
-                  onClick={() => setShowZoom(false)}
-                  className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                  aria-label={t('common.close', 'Fermer')}
-                >
-                  <X className="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-                <div className="flex items-center justify-center min-h-[60vh] p-4">
-                  {mainImage ? (
-                    <img
-                      src={mainImage}
-                      alt={titre}
-                      className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-white/60">
-                      <Music className="h-24 w-24 mb-4" />
-                      <p>{t('works.noCover', 'Aucune pochette disponible')}</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
 
             {/* Modal Player Audio (Album) */}
             <Dialog open={showPlayer} onOpenChange={setShowPlayer}>

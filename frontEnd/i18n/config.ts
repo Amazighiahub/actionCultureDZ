@@ -2,10 +2,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { toHtmlLang } from '../src/types/common/multilingual.types';
-
-// Liste des langues supportées
-const supportedLanguages = ['ar', 'fr', 'en', 'tz-ltn', 'tz-tfng'];
+import { SUPPORTED_LANGUAGES, appliquerLangueDocument } from '../src/types/common/multilingual.types';
 
 // Chargeurs dynamiques de TOUTES les langues, français compris (code splitting) :
 // le fichier principal ne contient plus ~155 Ko de traductions françaises, et un
@@ -24,11 +21,8 @@ const normalizeLanguage = (lang: string | null | undefined): string => {
 
   const cleaned = lang.trim().toLowerCase();
 
-  // Liste exacte des langues supportées
-  const validLanguages = ['ar', 'fr', 'en', 'tz-ltn', 'tz-tfng'];
-
   // Si c'est une langue valide, la retourner directement
-  if (validLanguages.includes(cleaned)) {
+  if ((SUPPORTED_LANGUAGES as readonly string[]).includes(cleaned)) {
     return cleaned;
   }
 
@@ -76,7 +70,7 @@ i18n
       escapeValue: false
     },
 
-    supportedLngs: supportedLanguages,
+    supportedLngs: [...SUPPORTED_LANGUAGES],
     load: 'currentOnly',
     cleanCode: true,
     lowerCaseLng: true, // Forcer en minuscules pour éviter tz-Tfng vs tz-tfng
@@ -109,21 +103,20 @@ i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
   // Sauvegarder la version normalisée
   localStorage.setItem('i18nextLng', normalized);
 
-  // Mettre à jour le DOM (code de langue valide : ber-Latn / ber-Tfng pour le tamazight)
-  document.documentElement.lang = toHtmlLang(normalized);
-  document.documentElement.dir = normalized === 'ar' ? 'rtl' : 'ltr';
+  // Langue et sens de la page : posés par l'écouteur « languageChanged » ci-dessous
 
-  // ⚡ AJOUT : Sync avec backend (optionnel - stocke en cookie)
+  // Cookie de langue côté serveur, en tâche de fond : l'interface n'attend plus la réponse (audit V11
+  // COD-28). Échec sans conséquence : la langue est déjà enregistrée ici et envoyée à chaque requête.
   try {
     const apiUrl = import.meta.env.VITE_API_URL || '/api';
-    await fetch(`${apiUrl}/set-language`, {
+    void fetch(`${apiUrl}/set-language`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: normalized }),
       credentials: 'include'
-    });
-  } catch (e) {
-    // Silencieux - pas critique
+    }).catch(() => undefined);
+  } catch {
+    // fetch indisponible : sans importance
   }
 
   return originalChangeLanguage(normalized, callback);
@@ -139,20 +132,13 @@ export const getCurrentLanguage = (): string => {
   return i18n.language;
 };
 
-// Fonction pour obtenir toutes les langues disponibles
-export const getAvailableLanguages = () => [
-  { code: 'ar', label: 'العربية', dir: 'rtl' },
-  { code: 'fr', label: 'Français', dir: 'ltr' },
-  { code: 'en', label: 'English', dir: 'ltr' },
-  { code: 'tz-ltn', label: 'Tamaziɣt', dir: 'ltr' },
-  { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr' }
-];
+// <html lang dir> suit chaque changement de langue : un seul endroit (audit V11 COD-3)
+i18n.on('languageChanged', (lng: string) => appliquerLangueDocument(lng));
 
 // Initialisation au démarrage
 const initialize = async () => {
   const currentLang = getCurrentLanguage();
-  document.documentElement.lang = toHtmlLang(currentLang);
-  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  appliquerLangueDocument(currentLang);
 
   // Charger la langue du visiteur avant le premier affichage (pas de bascule visible)
   await loadLanguage(currentLang);

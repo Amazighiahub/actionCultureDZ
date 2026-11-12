@@ -26,6 +26,7 @@ import { programmeService, CreateProgrammeData, IntervenantData } from '@/servic
 import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
 import { intervenantValide } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
+import { SUPPORTED_LANGUAGES } from '@/types/common/multilingual.types';
 import { nombreHorsLimites } from '@/utils/validationChamps';
 import { useParams } from 'react-router-dom';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
@@ -159,9 +160,6 @@ const generateDateRange = (startDate: string, endDate: string): string[] => {
 
 // Niveaux requis - labels traduits via t()
 const niveauxKeys = ['debutant', 'intermediaire', 'avance', 'tous_niveaux'] as const;
-
-// Langues disponibles - labels traduits via t()
-const languesCodes = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'] as const;
 
 // Rôles d'intervenant - labels traduits via t()
 const rolesIntervenantKeys = ['principal', 'co_intervenant', 'moderateur', 'animateur', 'invite'] as const;
@@ -783,7 +781,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     <SelectValue placeholder={t('programme.form.options.selectLanguage')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {languesCodes.map((langCode) => (
+                    {/* Langues du site, libellés traduits via t() */}
+                    {SUPPORTED_LANGUAGES.map((langCode) => (
                       <SelectItem key={langCode} value={langCode}>
                         {t(`programme.form.languages.${langCode}`)}
                       </SelectItem>

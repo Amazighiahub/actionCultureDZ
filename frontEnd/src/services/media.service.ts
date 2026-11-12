@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import type { ApiResponse } from '@/config/api';
 import type { Media } from '@/types/models/media.types';
 import { reponseEchec } from '@/utils/erreurServeur';
+import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
 import i18next from 'i18next';
 
 interface MediaUploadResponse extends UploadResponse {
@@ -19,56 +20,7 @@ interface MediaUploadOptions {
 }
 
 export class MediaService {
-  /**
-   * Upload d'un fichier image pour un profil utilisateur
-   */
-  async uploadProfilePhoto(file: File): Promise<ApiResponse<MediaUploadResponse>> {
-    // Utiliser directement uploadService pour l'upload
-    const result = await uploadService.uploadProfilePhoto(file);
-
-    if (result.success && result.data) {
-      // Mise à jour du profil avec la nouvelle photo
-      try {
-        const updateResult = await httpClient.put<{ media_id: number }>(
-          API_ENDPOINTS.auth.updatePhoto,
-          { photo_url: result.data.url }
-        );
-
-        return {
-          ...result,
-          data: {
-            ...result.data,
-            media_id: updateResult.data?.media_id
-          } as MediaUploadResponse
-        };
-      } catch (error) {
-        // L'upload a réussi mais la mise à jour du profil a échoué
-        // On retourne quand même le résultat de l'upload
-        return {
-          ...result,
-          data: result.data as MediaUploadResponse
-        };
-      }
-    }
-
-    return result as ApiResponse<MediaUploadResponse>;
-  }
-
-  /**
-   * Upload d'une photo de profil lors de l'inscription (sans authentification)
-   */
-  async uploadProfilePhotoForRegistration(file: File): Promise<ApiResponse<UploadResponse>> {
-    // Utiliser directement uploadService avec l'endpoint public
-    const result = await uploadService.uploadImage(file, {
-      isPublic: true,
-      generateThumbnail: true,
-      maxWidth: 500,
-      maxHeight: 500,
-      quality: 0.9
-    });
-
-    return result;
-  }
+  // Photo de profil : userService.updateProfilePhoto (route /upload/profile-photo, qui met le profil à jour)
 
   /**
    * Upload d'un fichier pour une œuvre
@@ -488,7 +440,7 @@ export class MediaService {
   }): { valid: boolean; error?: string } {
     const { 
       maxSize = 10 * 1024 * 1024, // 10MB par défaut
-      allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] 
+      allowedTypes = FORMATS_IMAGE_ACCEPTES
     } = options || {};
     
     if (file.size > maxSize) {

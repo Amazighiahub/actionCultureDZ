@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
+import { permissionsService } from '@/services/permissions.service';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { 
   LoginCredentials, 
@@ -60,15 +61,11 @@ export function useAuth(): UseAuthReturn {
       const response = await authService.login(credentials);
       
       if (response.success && response.data) {
-        // Le token est stocké par authService.login via setAuthData
-        await refreshPermissions();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Récupérer l'utilisateur fraîchement chargé
-        const userResponse = await authService.getCurrentUser();
-        if (userResponse.success && userResponse.data) {
-          const currentUser = userResponse.data;
-
+        // Le token est stocké par authService.login via setAuthData. Une seule lecture de /users/me :
+        // celle du fournisseur, qui renvoie la personne chargée (avant : une 2e lecture et 100 ms
+        // d'attente, audit V11 COD-23). null = session non confirmée par le serveur : pas de redirection.
+        const currentUser = await refreshPermissions();
+        if (currentUser) {
           const depuis = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
           const stateFrom = depuis?.pathname ? `${depuis.pathname}${depuis.search || ''}` : undefined;
           const redirectFromQuery = new URLSearchParams(location.search).get('redirect');
@@ -78,8 +75,9 @@ export function useAuth(): UseAuthReturn {
           if (redirectTarget) {
             navigate(redirectTarget, { replace: true });
           } else {
-            // Redirection selon le rôle de l'utilisateur
-            if (currentUser.Roles?.some(r => r.nom_role === 'Administrateur')) {
+            // Redirection selon le rôle : même règle que le reste de l'application (rôle Administrateur
+            // ou Super Admin, lu par le service que refreshPermissions vient de mettre à jour)
+            if (permissionsService.isAdmin()) {
               navigate('/admin/dashboard');
             } else if (currentUser.id_type_user !== 1) {
               // Professionnel
@@ -137,8 +135,7 @@ export function useAuth(): UseAuthReturn {
       
       if (response.success && response.data) {
         await refreshPermissions();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Vérifier si vérification email nécessaire
         const authData = response.data as { needsEmailVerification?: boolean };
         const needsEmailVerification = authData.needsEmailVerification;
@@ -176,8 +173,7 @@ export function useAuth(): UseAuthReturn {
       
       if (response.success && response.data) {
         await refreshPermissions();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Vérifier si vérification email nécessaire
         const authData = response.data as { needsEmailVerification?: boolean; needsAdminValidation?: boolean };
         const needsEmailVerification = authData.needsEmailVerification;
@@ -212,6 +208,9 @@ export function useAuth(): UseAuthReturn {
     }
   }, [navigate, refreshPermissions]);
 
+  // Le type public reste Promise<void> : la personne relue est déjà dans « user »
+  const refreshUser = useCallback(async (): Promise<void> => { await refreshPermissions(); }, [refreshPermissions]);
+
   return {
     // État utilisateur
     user,
@@ -228,7 +227,7 @@ export function useAuth(): UseAuthReturn {
     logout,
     registerVisitor,
     registerProfessional,
-    refreshUser: refreshPermissions,
+    refreshUser,
     
     // État des actions
     loginLoading,

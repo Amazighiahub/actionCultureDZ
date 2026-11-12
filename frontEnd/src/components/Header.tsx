@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useRTL } from '@/utils/rtl';
+import { useRTL } from '@/hooks/useRTL';
 import LanguageSelector from '@/components/LanguageSelector';
 import { InstallerTalaDz } from '@/components/shared/PiedDePageApplication';
 import NotificationBell from '@/components/NotificationBell';

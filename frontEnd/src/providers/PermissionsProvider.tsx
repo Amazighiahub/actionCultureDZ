@@ -1,5 +1,5 @@
 // providers/PermissionsProvider.tsx
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { authService } from '@/services/auth.service';
 import { permissionsService } from '@/services/permissions.service';
 import type { CurrentUser } from '@/services/auth.service';
@@ -25,7 +25,8 @@ interface PermissionsContextType {
   statusMessage: string | null;
   
   // Actions
-  refreshPermissions: () => Promise<void>;
+  /** Relit la personne connectée auprès du serveur ; renvoie celle retenue (null : personne ou échec) */
+  refreshPermissions: () => Promise<CurrentUser | null>;
   
   // Helpers
   isOwner: (resourceOwnerId: number) => boolean;
@@ -44,7 +45,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const utilisateurActuel = useRef<CurrentUser | null>(null);
   useEffect(() => { utilisateurActuel.current = user; }, [user]);
 
-  const loadUser = async () => {
+  // Stable (useCallback) : ne change pas la valeur du contexte à chaque rendu (audit V11 COD-24)
+  const loadUser = useCallback(async (): Promise<CurrentUser | null> => {
     try {
       if (!dejaCharge.current) setLoading(true);
       setError(null);
@@ -58,6 +60,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
           setSessionIncertaine(false);
           // Initialiser le service de permissions avec l'utilisateur
           permissionsService.setCurrentUser(response.data);
+          return response.data;
         } else {
           // Session invalide côté serveur — nettoyer le cache local et le repère de session
           authService.clearSession();
@@ -70,6 +73,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         setSessionIncertaine(false);
         permissionsService.setCurrentUser(null);
       }
+      return null;
     } catch (err) {
       setError(err as Error);
       console.error('Failed to load user:', err);
@@ -86,16 +90,18 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         setSessionIncertaine(authService.hasSessionHint());
         permissionsService.setCurrentUser(null);
       }
+      // Échec : personne de confirmé par ce chargement (la connexion ne redirige pas sur un utilisateur ancien)
+      return null;
     } finally {
       dejaCharge.current = true;
       setLoading(false);
     }
-  };
+  }, []);
 
   // Initialiser au montage
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
 
   // Le réseau revient : retrouver la session si l'ouverture a échoué faute de connexion
   useEffect(() => {
@@ -104,14 +110,14 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     };
     window.addEventListener('online', auRetour);
     return () => window.removeEventListener('online', auRetour);
-  }, []);
+  }, [loadUser]);
 
   // « online » ne se déclenche pas pour un réseau faible ou un serveur indisponible : nouvel essai régulier
   useEffect(() => {
     if (!sessionIncertaine) return undefined;
     const minuteur = window.setInterval(() => { loadUser(); }, 20000);
     return () => window.clearInterval(minuteur);
-  }, [sessionIncertaine]);
+  }, [sessionIncertaine, loadUser]);
 
   // Observer les changements de token
   useEffect(() => {
@@ -123,47 +129,54 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [loadUser]);
 
-  // Calculer les propriétés dérivées
-  const isAuthenticated = !!user;
-  const isAdmin = permissionsService.isAdmin();
-  const isProfessional = permissionsService.isProfessional();
-  const isVisitor = permissionsService.isVisitor();
-  
-  // Validation pour les professionnels
-  const needsValidation = permissionsService.needsValidation();
-  const canAccess = user ? 
-    (isAdmin || isVisitor || (isProfessional && !needsValidation)) : false;
-  
-  // Message de statut
-  const statusMessage = permissionsService.getUserStatusMessage();
+  // Helpers. Le service de permissions est mis à jour en même temps que « user » (loadUser) :
+  // « user » en dépendance suffit à ne jamais garder une réponse périmée.
+  const isOwner = useCallback(
+    (resourceOwnerId: number): boolean => !!user && permissionsService.isOwner(resourceOwnerId),
+    [user]
+  );
 
-  // Helpers
-  const isOwner = (resourceOwnerId: number): boolean => {
-    return permissionsService.isOwner(resourceOwnerId);
-  };
+  // Même lecture des rôles que isAdmin (permissionsService.hasRole), plus de copie ici
+  const hasRole = useCallback(
+    (roleName: string): boolean => !!user && permissionsService.hasRole(roleName),
+    [user]
+  );
 
-  const hasRole = (roleName: string): boolean => {
-    return user?.Roles?.some(r => r.nom_role === roleName) || false;
-  };
+  // Valeur du contexte recalculée seulement quand l'état change (avant : nouvel objet à chaque rendu,
+  // donc nouveau rendu de tous les consommateurs, audit V11 COD-24). Les valeurs dérivées sont lues
+  // dans le service, recalculées ici à chaque changement de « user ».
+  const contextValue = useMemo<PermissionsContextType>(() => {
+    const isAuthenticated = !!user;
+    // Sans personne connectée, aucun rôle : rien ne peut faire paraître administrateur
+    const isAdmin = !!user && permissionsService.isAdmin();
+    const isProfessional = !!user && permissionsService.isProfessional();
+    const isVisitor = !!user && permissionsService.isVisitor();
+    // Validation pour les professionnels
+    const needsValidation = !!user && permissionsService.needsValidation();
+    const canAccess = user ?
+      (isAdmin || isVisitor || (isProfessional && !needsValidation)) : false;
+    // Message de statut
+    const statusMessage = user ? permissionsService.getUserStatusMessage() : null;
 
-  const contextValue: PermissionsContextType = {
-    user,
-    loading,
-    error,
-    isAuthenticated,
-    sessionIncertaine,
-    isAdmin,
-    isProfessional,
-    isVisitor,
-    needsValidation,
-    canAccess,
-    statusMessage,
-    refreshPermissions: loadUser,
-    isOwner,
-    hasRole,
-  };
+    return {
+      user,
+      loading,
+      error,
+      isAuthenticated,
+      sessionIncertaine,
+      isAdmin,
+      isProfessional,
+      isVisitor,
+      needsValidation,
+      canAccess,
+      statusMessage,
+      refreshPermissions: loadUser,
+      isOwner,
+      hasRole,
+    };
+  }, [user, loading, error, sessionIncertaine, loadUser, isOwner, hasRole]);
 
   return (
     <PermissionsContext.Provider value={contextValue}>

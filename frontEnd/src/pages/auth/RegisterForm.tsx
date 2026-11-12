@@ -19,7 +19,8 @@ import { User, Palette, Mail, Lock, UserPlus, Upload, Calendar, Phone, MapPin, A
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
-import { httpClient } from '@/services/httpClient';
+import { uploadService } from '@/services/upload.service';
+import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS } from '@/types/models/auth.types';
 import { useWilayas } from '@/hooks/useGeographie';
 import GeoSelector from '@/components/shared/GeoSelector';
@@ -150,8 +151,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       }
       
       // Validation du type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!FORMATS_IMAGE_ACCEPTES.includes(file.type)) {
         toast({
           title: t('auth.errors.invalidFileType.title'),
           description: t('auth.errors.invalidFileType.description'),
@@ -398,10 +398,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         setUploadingPhoto(true);
         
         try {
-          // Upload public de la photo
-          const formData = new FormData();
-          formData.append('image', photoFile);
-          const uploadResult = await httpClient.upload<Record<string, unknown>>('/upload/image/public', formData);
+          // Envoi public de la photo (pas encore de compte), réduite avant l'envoi
+          const uploadResult = await uploadService.uploadImage(photoFile, { isPublic: true });
 
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || t('auth.errors.uploadError'));
@@ -944,7 +942,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                               <Input 
                                 id="photo" 
                                 type="file"
-                                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                                accept={FORMATS_IMAGE_ACCEPTES.join(',')}
                                 onChange={handlePhotoChange}
                                 disabled={uploadingPhoto}
                                 className="cursor-pointer file:me-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"

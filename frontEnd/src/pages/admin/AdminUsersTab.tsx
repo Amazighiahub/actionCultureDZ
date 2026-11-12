@@ -119,20 +119,21 @@ const AdminUsersTabContent: React.FC = () => {
     setNotifying(true);
     try {
       const result = await adminService.broadcastNotification({
-        title: 'Ajoutez vos œuvres sur Taladz !',
-        message: 'Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Taladz.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL\'équipe Taladz',
+        // Texte envoyé dans la langue de l'administrateur qui l'envoie
+        title: t('admin.users.notifPros.titre', 'Ajoutez vos œuvres sur Tala DZ !'),
+        message: t('admin.users.notifPros.message', 'Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Tala DZ.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL’équipe Tala DZ'),
         target: 'professionals',
         type: 'info',
         sendEmail: true
       });
       toast({
         title: t('toasts.success'),
-        description: `Notification envoyée à ${result.data?.notified ?? 0} professionnel(s)`
+        description: t('admin.users.notifPros.envoyee', { count: result.data?.notified ?? 0, defaultValue: 'Notification envoyée à {{count}} professionnel(s)' })
       });
     } catch {
       toast({
         title: t('toasts.error'),
-        description: 'Erreur lors de l\'envoi de la notification',
+        description: t('admin.users.notifPros.echec', 'Erreur lors de l’envoi de la notification'),
         variant: 'destructive'
       });
     } finally {
@@ -233,7 +234,7 @@ const AdminUsersTabContent: React.FC = () => {
             ) : (
               <Bell className="h-4 w-4 me-2" />
             )}
-            {notifying ? 'Envoi...' : t('admin.users.notifyProfessionals', 'Notifier les professionnels')}
+            {notifying ? t('admin.users.notifPros.envoi', 'Envoi…') : t('admin.users.notifyProfessionals', 'Notifier les professionnels')}
           </Button>
           <Button variant="outline" onClick={refreshAll}>
             <RefreshCw className="h-4 w-4 me-2" />
@@ -554,7 +555,7 @@ const AdminUsersTabContent: React.FC = () => {
         variant="warning"
         confirmLabel={t('admin.users.suspend', 'Suspendre')}
         onConfirm={() => {
-          if (confirmSuspend.userId) suspendUser({ userId: confirmSuspend.userId, duration: 7, reason: 'Suspension temporaire' });
+          if (confirmSuspend.userId) suspendUser({ userId: confirmSuspend.userId, duration: 7, reason: t('admin.users.raisonSuspensionTemporaire', 'Suspension temporaire') });
           setConfirmSuspend({ open: false });
         }}
       />

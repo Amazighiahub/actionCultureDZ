@@ -4,11 +4,12 @@
  */
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ConfirmDialog } from '@/components/shared';
+import StatusBadge, { libelleStatut } from '@/components/shared/StatusBadge';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -40,7 +41,6 @@ import {
   Globe,
   Calendar,
   CheckCircle,
-  Clock,
   XCircle,
   User,
   ExternalLink,
@@ -71,6 +71,9 @@ import ReponsesInscription from '@/components/event/ReponsesInscription';
 import { professionnelService } from '@/services/professionnel.service';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { ConfigInscription, Reponses } from '@/utils/formulaireInscription';
+
+// Statuts de participation (EvenementUser.statut_participation), dans l'ordre du filtre
+const STATUTS_PARTICIPATION = ['invitation', 'inscrit', 'confirme', 'present', 'absent', 'annule'] as const;
 
 interface ParticipantsManagerProps {
   evenementId: number;
@@ -404,25 +407,13 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     }
   };
 
-  const getStatusBadge = (statut: string) => {
-    const config: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-      // Ajouté par l'import d'une liste : la personne n'a pas encore confirmé
-      invitation: { color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', icon: Mail, label: t('status.invitation', 'Invitation envoyée') },
-      inscrit: { color: 'bg-accent/15 text-accent', icon: Clock, label: t('status.pending', 'Inscrit') },
-      confirme: { color: 'bg-primary/15 text-primary', icon: CheckCircle, label: t('status.validated', 'Confirmé') },
-      present: { color: 'bg-primary/20 text-primary', icon: CheckCircle, label: t('status.present', 'Présent') },
-      absent: { color: 'bg-muted text-muted-foreground', icon: XCircle, label: t('status.absent', 'Absent') },
-      annule: { color: 'bg-destructive/15 text-destructive', icon: XCircle, label: t('status.cancelled', 'Annulé') }
-    };
-    const status = config[statut] || config.inscrit;
-    const Icon = status.icon;
-    return (
-      <Badge className={cn("flex items-center gap-1", status.color)}>
-        <Icon className="h-3 w-3" />
-        {status.label}
-      </Badge>
-    );
-  };
+  // Statut inconnu : affiché comme « Inscrit » (comme avant)
+  const getStatusBadge = (statut: string) => (
+    <StatusBadge
+      status={(STATUTS_PARTICIPATION as readonly string[]).includes(statut) ? statut : 'inscrit'}
+      size="sm"
+    />
+  );
 
   const getRoleBadge = (role: string) => {
     const config: Record<string, { color: string; label: string }> = {
@@ -486,21 +477,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
           </div>
           <Select value={filterStatut} onValueChange={setFilterStatut}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Statut" />
+              <SelectValue placeholder={t('pro.participants.filtreStatut', 'Statut')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('common.allStatuses', 'Tous les statuts')}</SelectItem>
-              <SelectItem value="invitation">{t('status.invitation', 'Invitation envoyée')}</SelectItem>
-              <SelectItem value="inscrit">{t('status.pending', 'Inscrit')}</SelectItem>
-              <SelectItem value="confirme">{t('status.validated', 'Confirmé')}</SelectItem>
-              <SelectItem value="present">{t('status.present', 'Présent')}</SelectItem>
-              <SelectItem value="absent">{t('status.absent', 'Absent')}</SelectItem>
-              <SelectItem value="annule">{t('status.cancelled', 'Annulé')}</SelectItem>
+              {STATUTS_PARTICIPATION.map((statut) => (
+                <SelectItem key={statut} value={statut}>{libelleStatut(statut, t)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Rôle" />
+              <SelectValue placeholder={t('pro.participants.filtreRole', 'Rôle')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('common.allRoles', 'Tous les rôles')}</SelectItem>
@@ -732,28 +720,29 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {participant.oeuvres_soumises.slice(0, 3).map((oeuvre) => (
-                              <Badge
+                              // Vrai bouton à l'allure d'un badge : atteignable au clavier (audit V11 COD-17)
+                              <button
+                                type="button"
                                 key={oeuvre.id_oeuvre}
-                                variant="outline"
-                                className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                className={cn(badgeVariants({ variant: 'outline' }), 'text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors')}
                                 onClick={() => {
                                   setSelectedOeuvre(oeuvre);
                                   setOeuvreAuteur({ nom: participant.User.nom, prenom: participant.User.prenom });
                                   setOeuvreDialogOpen(true);
                                 }}
                               >
-                                <Eye className="h-3 w-3 me-1" />
+                                <Eye className="h-3 w-3 me-1" aria-hidden="true" />
                                 {td(oeuvre.titre)}
-                              </Badge>
+                              </button>
                             ))}
                             {participant.oeuvres_soumises.length > 3 && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs cursor-pointer hover:bg-muted"
+                              <button
+                                type="button"
+                                className={cn(badgeVariants({ variant: 'outline' }), 'text-xs cursor-pointer hover:bg-muted')}
                                 onClick={() => loadParticipantProfil(participant.id_user)}
                               >
                                 +{participant.oeuvres_soumises.length - 3} {t('common.more', 'autres')}
-                              </Badge>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -1197,14 +1186,21 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 <div>
                   <h4 className="font-semibold mb-2">{t('oeuvre.gallery', 'Galerie')}</h4>
                   <div className="grid grid-cols-3 gap-2">
-                    {selectedOeuvre.Medias.map((media) => (
-                      <img loading="lazy" decoding="async"
+                    {/* Lien vers l'image en grand : atteignable au clavier, nommé par son texte de remplacement */}
+                    {selectedOeuvre.Medias.map((media, i) => (
+                      <a
                         key={media.id_media}
-                        src={getAssetUrl(media.url)}
-                        alt=""
-                        className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80"
-                        onClick={() => window.open(getAssetUrl(media.url), '_blank', 'noopener,noreferrer')}
-                      />
+                        href={getAssetUrl(media.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <img loading="lazy" decoding="async"
+                          src={getAssetUrl(media.url)}
+                          alt={t('pro.participants.imageOeuvre', 'Image {{n}} de l’œuvre, en grand', { n: i + 1 })}
+                          className="w-full h-24 object-cover rounded hover:opacity-80"
+                        />
+                      </a>
                     ))}
                   </div>
                 </div>

@@ -29,14 +29,10 @@ import { useArticleEditor } from './useArticleEditor';
 import { useUnsavedChanges, confirmerSortie } from '@/hooks/useUnsavedChanges';
 import { avancement, blocDansLaLangue } from '@/utils/traductionBlocs';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { SUPPORTED_LANGUAGES, infoLangue, nomLangue } from '@/types/common/multilingual.types';
 
-const LANG_OPTIONS = [
-  { code: 'fr', label: 'Français' },
-  { code: 'ar', label: 'العربية' },
-  { code: 'en', label: 'English' },
-  { code: 'tz-ltn', label: 'Tamazight (Latin)' },
-  { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
-];
+// Langues de l'article : liste et noms communs (audit V11 COD-6 ; avant « Tamazight (Latin) » ici seulement)
+const LANG_OPTIONS = SUPPORTED_LANGUAGES.map(infoLangue);
 
 const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave, titrePage, libelleEnregistrer }) => {
   const { t } = useTranslation();
@@ -95,7 +91,6 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
   const retour = () => { if (onBack && (!editor.modifie || confirmerSortie())) onBack(); };
   // Autre langue que celle du texte d'origine : on traduit les blocs existants
   const enTraduction = editor.editLang !== editor.langueTexte;
-  const nomLangue = (code: string) => LANG_OPTIONS.find(l => l.code === code)?.label || code;
 
   // Rien d'écrit dans la langue d'origine : choisir une langue, c'est choisir la langue de l'article
   // (avant : site en français, un clic sur « العربية » passait en mode traduction d'un article vide)

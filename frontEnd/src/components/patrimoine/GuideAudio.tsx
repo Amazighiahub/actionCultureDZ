@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { patrimoineService } from '@/services/patrimoine.service';
+import { infoLangue, type InfoLangue } from '@/types/common/multilingual.types';
 
 export interface MediaAudio {
   id: number;
@@ -29,14 +30,9 @@ interface GuideAudioProps {
   onDelete?: (media: MediaAudio) => void;
 }
 
-// Noms des langues dans leur propre écriture : chacun reconnaît la sienne
-const LANGUES: Array<{ code: string; label: string; dir: 'ltr' | 'rtl'; htmlLang: string }> = [
-  { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr', htmlLang: 'ber' },
-  { code: 'tz-ltn', label: 'Tamaziɣt', dir: 'ltr', htmlLang: 'ber-Latn' },
-  { code: 'ar', label: 'العربية', dir: 'rtl', htmlLang: 'ar' },
-  { code: 'fr', label: 'Français', dir: 'ltr', htmlLang: 'fr' },
-  { code: 'en', label: 'English', dir: 'ltr', htmlLang: 'en' }
-];
+// Noms des langues dans leur propre écriture : chacun reconnaît la sienne. Ordre propre au guide audio
+// (tamazight d'abord) ; noms, sens et codes HTML de la liste commune (audit V11 COD-6)
+const LANGUES: InfoLangue[] = (['tz-tfng', 'tz-ltn', 'ar', 'fr', 'en'] as const).map(code => infoLangue(code));
 const SANS_LANGUE = 'autre';
 
 // Formats acceptés par le serveur (mp3, wav, ogg, aac, m4a des téléphones)

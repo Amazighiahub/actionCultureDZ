@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import StatusBadge from '@/components/shared/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -351,37 +352,17 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       : registrationStatus && ['confirme', 'present', 'absent'].includes(registrationStatus) ? 'confirmed'
         : 'pending';
 
-  // Badge de statut d'inscription
+  // Badge de statut d'inscription : couleurs et icônes de la table commune (StatusBadge),
+  // libellés du point de vue du participant (« En attente », « Non retenue »)
   const getStatusBadge = () => {
     if (!isRegistered || registrationStatus === 'invitation') return null;
-
-    const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-      pending: {
-        color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-        icon: Clock,
-        label: t('event.registration.pending', 'En attente')
-      },
-      confirmed: {
-        color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-        icon: CheckCircle,
-        label: t('event.registration.confirmed', 'Confirmée')
-      },
-      refused: {
-        color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-        icon: XCircle,
-        label: t('event.registration.refused', 'Non retenue')
-      }
+    const badges = {
+      pending: { status: 'inscrit', label: t('event.registration.pending', 'En attente') },
+      confirmed: { status: 'confirme', label: t('event.registration.confirmed', 'Confirmée') },
+      refused: { status: 'annule', label: t('event.registration.refused', 'Non retenue') }
     };
-
-    const status = statusConfig[statutAffiche];
-    const Icon = status.icon;
-
-    return (
-      <Badge className={cn("flex items-center gap-1", status.color)}>
-        <Icon className="h-3 w-3" />
-        {status.label}
-      </Badge>
-    );
+    const badge = badges[statutAffiche];
+    return <StatusBadge status={badge.status} label={badge.label} size="sm" />;
   };
 
   return (

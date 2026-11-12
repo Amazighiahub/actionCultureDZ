@@ -3,7 +3,7 @@
  * 1. fichier + lieu (choisi, ou celui de la feuille « Site ») → 2. aperçu → 3. bilan
  * Rien n'est écrit avant « Importer » ; un fichier réimporté met à jour sans dupliquer.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +41,6 @@ const ACTION_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
 const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenChange, onImported }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [etape, setEtape] = useState<Etape>('fichier');
   const [fichier, setFichier] = useState<File | null>(null);
@@ -167,9 +166,11 @@ const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenCha
 
             <div className="space-y-2">
               <Label htmlFor="releve-fichier">{t('admin.patrimoine.import.file', 'Relevé rempli (.xlsx)')}</Label>
-              <div
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center cursor-pointer hover:bg-muted/40 transition-colors"
-                onClick={() => inputRef.current?.click()}
+              {/* Zone de dépôt = étiquette du champ : un clic ouvre le choix du fichier sans script,
+                  et le champ (masqué visuellement) reste atteignable au clavier, contour visible (audit V11 COD-17) */}
+              <label
+                htmlFor="releve-fichier"
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center cursor-pointer hover:bg-muted/40 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); choisirFichier(e.dataTransfer.files?.[0]); }}
               >
@@ -182,14 +183,13 @@ const ImportReleveDialog: React.FC<ImportReleveDialogProps> = ({ open, onOpenCha
                   </span>
                 )}
                 <input
-                  ref={inputRef}
                   id="releve-fichier"
                   type="file"
                   accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   className="sr-only"
                   onChange={(e) => { choisirFichier(e.target.files?.[0]); e.target.value = ''; }}
                 />
-              </div>
+              </label>
             </div>
 
             <div className="space-y-3">

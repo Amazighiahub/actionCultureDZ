@@ -7,26 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/Utils';
+import { SUPPORTED_LANGUAGES, infoLangue, type InfoLangue, type TranslatableValue } from '@/types/common/multilingual.types';
 
 // Import dynamique pour éviter les erreurs de chargement
 import { KeyboardHelper } from '@/utils/keyboardHelper';
-
-// Types
-interface TranslatableValue {
-  fr?: string;
-  ar?: string;
-  en?: string;
-  'tz-ltn'?: string;
-  'tz-tfng'?: string;
-  [key: string]: string | undefined;
-}
-
-interface Language {
-  code: string;
-  label: string;
-  dir: 'ltr' | 'rtl';
-  flag?: string;
-}
 
 interface MultiLangInputProps {
   /** Nom du champ (pour le formulaire) */
@@ -65,14 +49,8 @@ interface MultiLangInputProps {
   showCharCount?: boolean;
 }
 
-// Langues disponibles
-const AVAILABLE_LANGUAGES: Language[] = [
-  { code: 'fr', label: 'Français', dir: 'ltr', flag: 'FR' },
-  { code: 'ar', label: 'العربية', dir: 'rtl', flag: 'ع' },
-  { code: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
-  { code: 'tz-ltn', label: 'Tamaziɣt', dir: 'ltr', flag: 'ⵣ' },
-  { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr', flag: 'ⵣ' },
-];
+// Langues disponibles : nom, sens, code court et code HTML de la liste commune (audit V11 COD-6)
+const AVAILABLE_LANGUAGES: InfoLangue[] = SUPPORTED_LANGUAGES.map(infoLangue);
 
 /**
  * Composant de saisie multilingue
@@ -291,7 +269,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             rows={rows}
             disabled={disabled}
             maxLength={maxLength}
-            lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
+            lang={activeLanguage.htmlLang}
             spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
             aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
             aria-invalid={!!erreurAffichee || undefined}
@@ -310,7 +288,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             onChange={(e) => handleChange(activeLang, e.target.value)}
             placeholder={placeholder || t('common.enterText', { lang: activeLanguage.label })}
             disabled={disabled}
-            lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
+            lang={activeLanguage.htmlLang}
             autoCapitalize={activeLang === 'ar' ? 'none' : 'sentences'}
             autoComplete={activeLang === 'ar' ? 'off' : 'on'}
             spellCheck={activeLang === 'fr' || activeLang === 'en' || activeLang === 'ar'}
@@ -350,60 +328,5 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
     </div>
   );
 };
-
-// ============================================================================
-// EXEMPLE D'UTILISATION DANS UN FORMULAIRE
-// ============================================================================
-
-/*
-import { MultiLangInput } from '@/components/MultiLangInput';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-
-const CategorieForm = () => {
-  const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    nom: { fr: '', ar: '', en: '' },
-    description: { fr: '', ar: '', en: '' },
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Envoyer au backend
-    await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <MultiLangInput
-        name="nom"
-        label={t('category.form.name')}
-        value={formData.nom}
-        onChange={(value) => setFormData({ ...formData, nom: value })}
-        required
-        requiredLanguages={['fr']}
-      />
-
-      <MultiLangInput
-        name="description"
-        label={t('common.description')}
-        value={formData.description}
-        onChange={(value) => setFormData({ ...formData, description: value })}
-        type="textarea"
-        rows={4}
-      />
-
-      <button type="submit">
-        {t('common.save')}
-      </button>
-    </form>
-  );
-};
-*/
 
 export default MultiLangInput;

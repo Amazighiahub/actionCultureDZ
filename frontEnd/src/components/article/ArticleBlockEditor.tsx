@@ -200,22 +200,24 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 </Button>
               </div>
             ) : (
-              <div
-                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-                onClick={() => document.getElementById(`image-upload-${index}`)?.click()}>
+              // Zone d'envoi = étiquette du champ : un clic ouvre le choix du fichier sans script,
+              // et le champ (masqué visuellement) reste atteignable au clavier, contour visible (audit V11 COD-17)
+              <label
+                htmlFor={`image-upload-${index}`}
+                className="block border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground mb-2">{t("article_articleeditor.cliquez_pour_uploader")}</p>
-                <p className="text-xs text-muted-foreground">{t("article_articleeditor.jpg_png_gif")}</p>
+                <span className="block text-sm text-muted-foreground mb-2">{t("article_articleeditor.cliquez_pour_uploader")}</span>
+                <span className="block text-xs text-muted-foreground">{t("article_articleeditor.jpg_png_gif")}</span>
                 <input
                   id={`image-upload-${index}`}
                   type="file"
                   accept={FORMATS_IMAGE.join(",")}
-                  className="hidden"
+                  className="sr-only"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleImageUpload(file);
                   }} />
-              </div>
+              </label>
             )}
             <div className="space-y-2">
               <Label>{t("article_articleeditor.lgende_limage_optionnel")}</Label>

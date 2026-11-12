@@ -1,10 +1,9 @@
 /**
  * HeroFilm - Hero section spécifique au type Film
- * Effet flip 3D affiche avant/arrière
+ * Effet flip 3D affiche avant/arrière (carte partagée : HeroCarteRetournable)
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -17,14 +16,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Film, Star, Heart, Eye, MessageCircle,
-  Play, Clock, Globe, Calendar, FileText, ZoomIn,
-  RotateCcw, Quote, Sparkles, X
+  Play, Clock, FileText, X
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import HeroCarteRetournable from './HeroCarteRetournable';
 
 interface HeroFilmProps {
   oeuvre: Oeuvre;
@@ -67,12 +66,8 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
 }) => {
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
-  const { rtlClasses, direction } = useRTL();
+  const { rtlClasses } = useRTL();
 
-  // État pour l'effet flip de l'affiche
-  const [isFlipped, setIsFlipped] = useState(false);
-  // État pour le zoom de l'affiche
-  const [showZoom, setShowZoom] = useState(false);
   // État pour la modal de lecture vidéo/audio
   const [showPlayer, setShowPlayer] = useState(false);
 
@@ -86,221 +81,57 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
           {/* AFFICHE DU FILM AVEC EFFET FLIP */}
           {/* ════════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-2">
-            <div
-              className="relative mx-auto w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
-              style={{ perspective: '900px' }}
-            >
-              <div
-                className={cn(
-                  "relative w-full aspect-[2/3] cursor-pointer transition-all duration-700 ease-in-out",
-                )}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  transform: isFlipped
-                    ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
-                    : 'rotateY(0deg)',
-                }}
-                onClick={() => setIsFlipped(!isFlipped)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsFlipped(!isFlipped); } }}
-              >
-                {/* FACE AVANT - AFFICHE */}
-                <div
-                  className="absolute inset-0 w-full h-full"
-                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                >
-                  <div className="relative w-full h-full group">
-                    {/* Ombre portée 3D */}
-                    <div
-                      className="absolute inset-0 bg-black/20 rounded-lg transform translate-x-4 translate-y-4 -z-10 transition-transform duration-300 group-hover:translate-x-6 group-hover:translate-y-6"
-                      style={{ filter: 'blur(8px)' }}
-                    />
-
-                    {/* Affiche principale */}
-                    <div className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl border-2 border-purple-500/20">
-                      {mainImage ? (
-                        <img
-                          src={optimizeImageUrl(mainImage, 900)}
-                          alt={titre}
-                          fetchPriority="high"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-900 to-slate-900 flex flex-col items-center justify-center p-8">
-                          {/* Titre : affiché par le bandeau du bas (avant : deux fois, superposé) */}
-                          <Film className="h-24 w-24 text-purple-400/50 mb-4" aria-hidden="true" />
-                        </div>
-                      )}
-
-                      {/* Overlay gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-
-                      {/* Note */}
-                      {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
-                        <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
-                          <Badge className="bg-yellow-500 text-black shadow-lg">
-                            <Star className="h-3 w-3 me-1 fill-current" />
-                            {(oeuvre as any).note_moyenne.toFixed(1)}
-                          </Badge>
-                        </div>
-                      )}
-
-                      {/* Durée */}
-                      {oeuvre.Film?.duree_minutes && (
-                        <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
-                          <Badge className="bg-purple-600 text-white border-0 shadow-lg">
-                            <Clock className="h-3 w-3 me-1" />
-                            {oeuvre.Film.duree_minutes} min
-                          </Badge>
-                        </div>
-                      )}
-
-                      {/* Infos en bas d'affiche */}
-                      <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
-                        <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg text-white">
-                          {titre}
-                        </h2>
-                        {mainContributors.length > 0 && (
-                          <p className="text-white/90 font-medium drop-shadow">
-                            {gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Boutons hover */}
-                      <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowZoom(true);
-                          }}
-                          className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors"
-                          title={t('works.zoom', 'Agrandir')}
-                          aria-label={t('works.zoom', 'Agrandir')}
-                        >
-                          <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
-                        </button>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
-                          <RotateCcw className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-
-                      {/* Effet brillance */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                    </div>
+            <HeroCarteRetournable
+              theme="film"
+              oeuvre={oeuvre}
+              mainImage={mainImage}
+              titre={titre}
+              mainContributors={mainContributors}
+              gt={gt}
+              icone={Film}
+              badgeRecto={(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
+                <Badge className="bg-purple-600 text-white border-0 shadow-lg">
+                  <Clock className="h-3 w-3 me-1" />
+                  {oeuvre.Film.duree_minutes} min
+                </Badge>
+              )}
+              motifVerso={
+                /* Motif pellicule en fond */
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute start-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
+                    {[...Array(15)].map((_, i) => (
+                      <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
+                    ))}
+                  </div>
+                  <div className="absolute end-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
+                    {[...Array(15)].map((_, i) => (
+                      <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
+                    ))}
                   </div>
                 </div>
-
-                {/* FACE ARRIÈRE - INFOS FILM */}
-                <div
-                  className="absolute inset-0 w-full h-full"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
-                  }}
-                >
-                  <div className="relative w-full h-full group">
-                    <div
-                      className="absolute inset-0 bg-black/20 rounded-lg transform -translate-x-4 translate-y-4 -z-10"
-                      style={{ filter: 'blur(8px)' }}
-                    />
-
-                    <div className={cn(
-                      "relative w-full h-full overflow-hidden shadow-2xl rounded-lg",
-                      "bg-gradient-to-br from-purple-900 via-slate-900 to-purple-950",
-                      "dark:from-purple-950 dark:via-slate-950 dark:to-black",
-                    )}>
-                      {/* Motif pellicule en fond */}
-                      <div className="absolute inset-0 opacity-5">
-                        <div className="absolute start-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
-                          {[...Array(15)].map((_, i) => (
-                            <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
-                          ))}
-                        </div>
-                        <div className="absolute end-0 top-0 bottom-0 w-8 flex flex-col justify-between py-2">
-                          {[...Array(15)].map((_, i) => (
-                            <div key={i} className="w-5 h-3 mx-auto rounded-sm bg-white/50" />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="relative h-full flex flex-col p-6 text-purple-50">
-                        <div className="flex items-center justify-between mb-4">
-                          <Film className="h-8 w-8 text-purple-400" />
-                          <Badge variant="outline" className="border-purple-400/50 text-purple-200 bg-purple-950/50">
-                            {gt(oeuvre.TypeOeuvre?.nom_type) || 'Film'}
-                          </Badge>
-                        </div>
-
-                        <h3 className="text-xl font-bold mb-3 text-purple-100">
-                          {titre}
-                        </h3>
-
-                        {/* Synopsis */}
-                        <div className="flex-1 overflow-hidden">
-                          <Quote className="h-5 w-5 text-purple-500/50 mb-2" />
-                          <p className="text-sm leading-relaxed text-purple-100/90 line-clamp-[8]">
-                            {gt(oeuvre.description) || t('works.noSynopsisFilm', 'Aucun synopsis disponible pour ce film.')}
-                          </p>
-                        </div>
-
-                        {/* Séparateur */}
-                        <div className="my-4 flex items-center gap-2">
-                          <div className="flex-1 h-px bg-purple-600/30" />
-                          <Sparkles className="h-4 w-4 text-purple-500/50" />
-                          <div className="flex-1 h-px bg-purple-600/30" />
-                        </div>
-
-                        {/* Métadonnées */}
-                        <div className="space-y-2 text-sm">
-                          {oeuvre.Film?.realisateur && (
-                            <div className="flex items-center justify-between text-purple-200/80">
-                              <span>{t('works.directedBy', 'Réalisateur')}</span>
-                              <span className="font-medium">{oeuvre.Film.realisateur}</span>
-                            </div>
-                          )}
-                          {oeuvre.Film?.duree_minutes && (
-                            <div className="flex items-center justify-between text-purple-200/80">
-                              <span>{t('works.duration.label', 'Durée')}</span>
-                              <span>{oeuvre.Film.duree_minutes} min</span>
-                            </div>
-                          )}
-                          {oeuvre.Langue && (
-                            <div className="flex items-center gap-2 text-purple-200/80">
-                              <Globe className="h-4 w-4" />
-                              <span>{gt(oeuvre.Langue.nom)}</span>
-                            </div>
-                          )}
-                          {oeuvre.annee_creation && (
-                            <div className="flex items-center gap-2 text-purple-200/80">
-                              <Calendar className="h-4 w-4" />
-                              <span>{oeuvre.annee_creation}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 text-center">
-                          <span className="text-xs text-purple-400/60 flex items-center justify-center gap-1">
-                            <RotateCcw className="h-3 w-3" />
-                            {t('works.flipToFrontFilm', 'Cliquez pour voir l\'affiche')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-center text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
-                <RotateCcw className="h-4 w-4" />
-                {isFlipped
-                  ? t('works.viewPoster', 'Voir l\'affiche')
-                  : t('works.viewSynopsis', 'Voir le synopsis au dos')
-                }
-              </p>
-            </div>
+              }
+              typeLibelle={gt(oeuvre.TypeOeuvre?.nom_type) || 'Film'}
+              descriptionVerso={gt(oeuvre.description) || t('works.noSynopsisFilm', 'Aucun synopsis disponible pour ce film.')}
+              lignesVerso={[
+                ...(oeuvre.Film?.realisateur ? [{
+                  cle: 'realisateur',
+                  libelle: t('works.directedBy', 'Réalisateur'),
+                  valeur: oeuvre.Film.realisateur,
+                  classeValeur: 'font-medium',
+                }] : []),
+                ...(oeuvre.Film?.duree_minutes ? [{
+                  cle: 'duree',
+                  libelle: t('works.duration.label', 'Durée'),
+                  valeur: `${oeuvre.Film.duree_minutes} min`,
+                }] : []),
+              ]}
+              textes={{
+                retourRecto: t('works.flipToFrontFilm', "Cliquez pour voir l'affiche"),
+                voirRecto: t('works.viewPoster', "Voir l'affiche"),
+                voirVerso: t('works.viewSynopsis', 'Voir le synopsis au dos'),
+                sansImage: t('works.noPoster', 'Aucune affiche disponible'),
+              }}
+            />
 
             {/* Actions sous l'affiche */}
             <div className="flex flex-wrap gap-2 mt-6 justify-center lg:justify-start">
@@ -334,13 +165,13 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 {oeuvre.Film?.Genre && (
                   <Badge variant="secondary">{gt(oeuvre.Film.Genre.nom)}</Badge>
                 )}
-                {oeuvre.Film?.duree_minutes && (
+                {(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
                   <Badge variant="outline">
                     <Clock className="h-3 w-3 me-1" />
                     {oeuvre.Film.duree_minutes} min
                   </Badge>
                 )}
-                {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
+                {Number((oeuvre as any).note_moyenne) > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                     <Star className="h-3 w-3 me-1 fill-current" />
                     {(oeuvre as any).note_moyenne.toFixed(1)}
@@ -384,34 +215,6 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 </span>
               )}
             </div>
-
-            {/* Modal Zoom Affiche */}
-            <Dialog open={showZoom} onOpenChange={setShowZoom}>
-              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
-                <DialogTitle className="sr-only">{titre}</DialogTitle>
-                <button
-                  onClick={() => setShowZoom(false)}
-                  className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                  aria-label={t('common.close', 'Fermer')}
-                >
-                  <X className="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-                <div className="flex items-center justify-center min-h-[60vh] p-4">
-                  {mainImage ? (
-                    <img
-                      src={mainImage}
-                      alt={titre}
-                      className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-white/60">
-                      <Film className="h-24 w-24 mb-4" />
-                      <p>{t('works.noPoster', 'Aucune affiche disponible')}</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
 
             {/* Modal Player Vidéo (Film) */}
             <Dialog open={showPlayer} onOpenChange={setShowPlayer}>
@@ -478,7 +281,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 <span className="text-sm">{t('works.stats.reviews', 'avis')}</span>
               </div>
               )}
-              {oeuvre.Film?.duree_minutes && (
+              {(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   <span className="font-medium">{oeuvre.Film.duree_minutes}</span>

@@ -23,6 +23,8 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { httpClient } from '@/services/httpClient';
+import { uploadService } from '@/services/upload.service';
+import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { metadataService } from '@/services/metadata.service';
 import { API_ENDPOINTS } from '@/config/api';
@@ -171,7 +173,12 @@ const AjouterOrganisation = () => {
 
   const choisirLogo = (fichier?: File | null) => {
     if (!fichier) return;
-    if (!fichier.type.startsWith('image/') || fichier.size > LOGO_MAX) {
+    // Formats refusés par le serveur (HEIC, BMP…) : message clair avant l'envoi
+    if (!FORMATS_IMAGE_ACCEPTES.includes(fichier.type)) {
+      setFieldErrors(prev => ({ ...prev, logo: t('auth.errors.invalidFileType.description', 'Seuls les fichiers JPG, PNG, GIF et WEBP sont acceptés') }));
+      return;
+    }
+    if (fichier.size > LOGO_MAX) {
       setFieldErrors(prev => ({ ...prev, logo: t('organisations.form.logoInvalide', 'Choisissez une image de moins de 5 Mo') }));
       return;
     }
@@ -253,9 +260,8 @@ const AjouterOrganisation = () => {
       // Le logo est envoyé d'abord : la page enregistre son adresse
       let logo_url = formData.logo_url || null;
       if (logoFichier) {
-        const fd = new FormData();
-        fd.append('image', logoFichier);
-        const envoi = await httpClient.upload<{ url?: string }>('/upload/image', fd);
+        // Réduit avant l'envoi (une photo de téléphone était envoyée entière)
+        const envoi = await uploadService.uploadImage(logoFichier);
         if (!envoi.success || !envoi.data?.url) throw new Error(t('organisations.form.logoEchec', 'Le logo n’a pas pu être envoyé'));
         logo_url = envoi.data.url;
       }
@@ -455,7 +461,7 @@ const AjouterOrganisation = () => {
                         <Button type="button" variant="ghost" size="sm" onClick={retirerLogo}><X className="h-4 w-4 me-1" aria-hidden="true" />{t('common.remove', 'Retirer')}</Button>
                       )}
                     </div>
-                    <input id="logo" type="file" accept="image/*" className="sr-only" onChange={(e) => choisirLogo(e.target.files?.[0])}
+                    <input id="logo" type="file" accept={FORMATS_IMAGE_ACCEPTES.join(',')} className="sr-only" onChange={(e) => choisirLogo(e.target.files?.[0])}
                       aria-invalid={!!fieldErrors.logo} aria-describedby={fieldErrors.logo ? 'logo-error' : undefined} />
                   </div>
                   {erreurChamp('logo')}

@@ -166,7 +166,7 @@ class OeuvreService {
             success: true,
             data: {
               oeuvre: checkResult.data,
-              message: 'Œuvre créée (récupérée après timeout)'
+              message: i18next.t('oeuvreService.creeeApresDelai', 'Œuvre créée (retrouvée après un délai dépassé)')
             }
           };
         }
@@ -278,10 +278,7 @@ class OeuvreService {
       // Map MediaUploadResponse[] to Media[] in the response
       return result as ApiResponse<Media[]>;
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de l\'upload')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.envoiMedias', 'Erreur lors de l’envoi des fichiers'));
     }
   }
 
@@ -310,10 +307,7 @@ class OeuvreService {
       // Utiliser la bonne route de tracking
       return await httpClient.post(`/tracking/oeuvre/${idOeuvre}/view`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors du tracking de la vue')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.vue', 'Erreur lors de l’enregistrement de la vue'));
     }
   }
 
@@ -324,10 +318,7 @@ class OeuvreService {
     try {
       return await httpClient.get(`/evenements/oeuvre/${oeuvreId}`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération des événements')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.evenements', 'Erreur lors de la récupération des événements'));
     }
   }
 
@@ -343,10 +334,7 @@ class OeuvreService {
     try {
       return await httpClient.get(`/tracking/stats/oeuvre/${oeuvreId}`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération des statistiques')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.statistiques', 'Erreur lors de la récupération des statistiques'));
     }
   }
 
@@ -357,10 +345,7 @@ class OeuvreService {
     try {
       return await httpClient.get(`/oeuvres/${oeuvreId}/similar`, { limit });
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération des œuvres similaires')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.similaires', 'Erreur lors de la récupération des œuvres similaires'));
     }
   }
 
@@ -388,10 +373,7 @@ class OeuvreService {
 
         return searchResponse;
       } catch (searchError: unknown) {
-        return {
-          success: false,
-          error: getErrorMessage(searchError, getErrorMessage(error, 'Erreur lors de la récupération des œuvres de l\'intervenant'))
-        };
+        return reponseEchec(searchError, i18next.t('oeuvreService.erreurs.oeuvresIntervenant', 'Erreur lors de la récupération des œuvres de l’intervenant'));
       }
     }
   }
@@ -441,13 +423,10 @@ class OeuvreService {
 
       return {
         success: false,
-        error: 'Aucune œuvre récente trouvée'
+        error: i18next.t('oeuvreService.erreurs.aucuneRecente', 'Aucune œuvre récente trouvée')
       };
     } catch (error) {
-      return {
-        success: false,
-        error: 'Erreur lors de la vérification'
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.verification', 'Erreur lors de la vérification'));
     }
   }
 
@@ -459,7 +438,7 @@ class OeuvreService {
     try {
       return await httpClient.get<Oeuvre>(`/oeuvres/${id}`, { i18n: 'all' });
     } catch (error: unknown) {
-      return { success: false, error: getErrorMessage(error, 'Erreur lors de la récupération') };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
     }
   }
 
@@ -508,10 +487,7 @@ class OeuvreService {
     try {
       return await httpClient.get('/oeuvres', params);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
     }
   }
 
@@ -532,10 +508,7 @@ class OeuvreService {
 
       return response;
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
     }
   }
 
@@ -583,10 +556,7 @@ class OeuvreService {
     try {
       return await httpClient.get('/oeuvres/search', params);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la recherche')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recherche', 'Erreur lors de la recherche'));
     }
   }
 
@@ -597,10 +567,7 @@ class OeuvreService {
     try {
       return await httpClient.get('/oeuvres/statistics');
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération des statistiques')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.statistiques', 'Erreur lors de la récupération des statistiques'));
     }
   }
 
@@ -611,10 +578,7 @@ class OeuvreService {
     try {
       return await httpClient.get('/oeuvres/recent', { limit });
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
     }
   }
 
@@ -625,10 +589,7 @@ class OeuvreService {
     try {
       return await httpClient.get(`/oeuvres/${oeuvreId}/medias`);
     } catch (error: unknown) {
-      return {
-        success: false,
-        error: getErrorMessage(error, 'Erreur lors de la récupération des médias')
-      };
+      return reponseEchec(error, i18next.t('oeuvreService.erreurs.medias', 'Erreur lors de la récupération des médias'));
     }
   }
 
@@ -661,13 +622,10 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
 
     return {
       success: false,
-      error: 'Erreur lors de la récupération des œuvres'
+      error: i18next.t('oeuvreService.erreurs.oeuvres', 'Erreur lors de la récupération des œuvres')
     };
   } catch (error: unknown) {
-    return {
-      success: false,
-      error: getErrorMessage(error, 'Erreur lors de la récupération')
-    };
+    return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
   }
 }
 

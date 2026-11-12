@@ -2,6 +2,7 @@
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 
 interface User {
   id: number;
@@ -79,12 +80,15 @@ class UserService extends BaseService<User> {
     return httpClient.put<User>(API_ENDPOINTS.auth.updateProfile, data);
   }
 
-  async updateProfilePhoto(file: File): Promise<ApiResponse<{ photo_url: string }>> {
-    return httpClient.uploadFile<{ photo_url: string }>(
-      API_ENDPOINTS.auth.updatePhoto,
-      file,
-      { fieldName: 'photo' }
-    );
+  /**
+   * Photo de profil : seul chemin d'envoi. Réduite avant l'envoi ; la route enregistre la photo
+   * et met le profil à jour. (Avant : un envoi en POST vers /users/profile/photo, route en PATCH.)
+   */
+  async updateProfilePhoto(file: File): Promise<ApiResponse<{ url: string; filename?: string }>> {
+    const formData = new FormData();
+    formData.append('image', await prepareImageForUpload(file));
+    // httpClient : jeton anti-CSRF, renouvellement de session et adresse de l'API
+    return httpClient.upload<{ url: string; filename?: string }>('/upload/profile-photo', formData);
   }
 
   async deleteProfilePhoto(): Promise<ApiResponse<void>> {

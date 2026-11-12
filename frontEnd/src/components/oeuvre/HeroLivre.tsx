@@ -1,6 +1,6 @@
 /**
  * HeroLivre - Hero section spécifique au type Livre
- * Effet flip 3D couverture avant/arrière
+ * Effet flip 3D couverture avant/arrière (coque, boutons et agrandissement partagés : HeroCarteRetournable)
  */
 import React, { useEffect, useState } from 'react';
 import { optimizeImageUrl } from '@/helpers/assetUrl';
@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   BookOpen, BookMarked, Star, Heart, Eye, MessageCircle,
-  Globe, Calendar, FileText, ZoomIn, RotateCcw, Quote,
-  Sparkles, X, Headphones
+  Globe, Calendar, FileText, RotateCcw, Quote,
+  Sparkles, Headphones
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
@@ -20,6 +20,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
 import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
+import { BoutonsSurvolCarte, CarteRetournable, FenetreZoom } from './HeroCarteRetournable';
 
 interface HeroLivreProps {
   oeuvre: Oeuvre;
@@ -82,26 +83,11 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
           {/* LIVRE 3D AVEC EFFET FLIP */}
           <div className="lg:col-span-2">
-            <div
-              className="relative mx-auto w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
-              style={{ perspective: '900px' }}
-            >
-              <div
-                className={cn("relative w-full aspect-[2/3] cursor-pointer transition-all duration-700 ease-in-out")}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  transform: isFlipped
-                    ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
-                    : 'rotateY(0deg)',
-                }}
-                onClick={() => setIsFlipped(!isFlipped)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsFlipped(!isFlipped); } }}
-              >
-                {/* COUVERTURE AVANT */}
-                <div className="absolute inset-0 w-full h-full" style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-                  <div className="relative w-full h-full group">
+            <CarteRetournable
+              format="affiche"
+              retournee={isFlipped}
+              onRetourner={() => setIsFlipped(!isFlipped)}
+              recto={<>
                     <div className={cn("absolute top-0 bottom-0 w-6 bg-gradient-to-r z-10", "from-amber-200 via-amber-100 to-amber-50", "dark:from-amber-900 dark:via-amber-800 dark:to-amber-700")}
                       style={{
                         [direction === 'rtl' ? 'right' : 'left']: 0,
@@ -136,7 +122,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                         </div>
                       )}
 
-                      {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
+                      {Number((oeuvre as any).note_moyenne) > 0 && (
                         <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                           <Badge className="bg-yellow-500 text-black shadow-lg">
                             <Star className="h-3 w-3 me-1 fill-current" />
@@ -145,23 +131,12 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                         </div>
                       )}
 
-                      <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button onClick={(e) => { e.stopPropagation(); setShowZoom(true); }} className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors" title={t('works.zoom', 'Agrandir')} aria-label={t('works.zoom', 'Agrandir')}>
-                          <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
-                        </button>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
-                          <RotateCcw className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
+                      <BoutonsSurvolCarte onAgrandir={() => setShowZoom(true)} />
 
                       <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     </div>
-                  </div>
-                </div>
-
-                {/* COUVERTURE ARRIÈRE */}
-                <div className="absolute inset-0 w-full h-full" style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})` }}>
-                  <div className="relative w-full h-full group">
+              </>}
+              verso={<>
                     <div className={cn("absolute top-0 bottom-0 w-6 bg-gradient-to-l z-10", "from-amber-200 via-amber-100 to-amber-50", "dark:from-amber-900 dark:via-amber-800 dark:to-amber-700")}
                       style={{
                         [direction === 'rtl' ? 'left' : 'right']: 0,
@@ -212,10 +187,8 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </>}
+            />
 
             <p className="text-center text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
               <RotateCcw className="h-4 w-4" />
@@ -243,7 +216,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                 </Badge>
                 {oeuvre.annee_creation && <Badge variant="outline">{oeuvre.annee_creation}</Badge>}
                 {oeuvre.Livre?.Genre && <Badge variant="secondary">{gt(oeuvre.Livre.Genre.nom)}</Badge>}
-                {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
+                {Number((oeuvre as any).note_moyenne) > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                     <Star className="h-3 w-3 me-1 fill-current" />{(oeuvre as any).note_moyenne.toFixed(1)}
                   </Badge>
@@ -315,25 +288,13 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
             </Dialog>
 
             {/* Modal Zoom */}
-            <Dialog open={showZoom} onOpenChange={setShowZoom}>
-              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
-                <DialogTitle className="sr-only">{titre}</DialogTitle>
-                <button onClick={() => setShowZoom(false)} className="absolute top-4 end-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors" aria-label={t('common.close', 'Fermer')}>
-                  <X className="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-                <div className="flex items-center justify-center min-h-[60vh] p-4">
-                  {mainImage ? (
-                    <img src={mainImage} alt={titre} className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-white/60"><BookOpen className="h-24 w-24 mb-4" /><p>{t('works.noCoverBook', 'Aucune couverture disponible')}</p></div>
-                  )}
-                </div>
-                <div className="absolute bottom-4 start-0 end-0 text-center">
-                  <p className="text-white/80 font-medium text-lg">{titre}</p>
-                  {mainContributors.length > 0 && <p className="text-white/60 text-sm">{gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}</p>}
-                </div>
-              </DialogContent>
-            </Dialog>
+            <FenetreZoom open={showZoom} onOpenChange={setShowZoom} image={mainImage} titre={titre} icone={BookOpen}
+              texteSansImage={t('works.noCoverBook', 'Aucune couverture disponible')}>
+              <div className="absolute bottom-4 start-0 end-0 text-center">
+                <p className="text-white/80 font-medium text-lg">{titre}</p>
+                {mainContributors.length > 0 && <p className="text-white/60 text-sm">{gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}</p>}
+              </div>
+            </FenetreZoom>
 
             {/* Description */}
             {oeuvre.description && (

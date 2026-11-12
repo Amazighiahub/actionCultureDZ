@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { directionLangue } from '@/types/common/multilingual.types';
 
 // Fonction pour normaliser les codes de langue
 const normalizeLanguageCode = (lang: string | undefined): string => {
@@ -31,8 +32,9 @@ export const useRTL = (languageParam?: string) => {
   // Normaliser le code de langue
   const normalizedLang = normalizeLanguageCode(language);
   
-  const isRtl = ['ar', 'ar-DZ', 'he', 'fa', 'ur'].includes(normalizedLang);
-  const direction: 'rtl' | 'ltr' = isRtl ? 'rtl' : 'ltr';
+  // Sens d'écriture : la liste commune des langues du site (multilingual.types.ts), plus de copie ici
+  const direction = directionLangue(normalizedLang);
+  const isRtl = direction === 'rtl';
   
   // Classes pré-calculées basées sur isRtl
   const rtlClasses = useMemo(() => ({

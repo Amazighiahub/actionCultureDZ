@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { httpClient } from '@/services/httpClient';
-import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
+import { FORMATS_IMAGE_ACCEPTES, prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { organisationPath } from '@/utils/slug';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
@@ -161,7 +161,7 @@ const ImportCatalogue: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label htmlFor="couvertures-catalogue" className="text-sm font-medium flex items-center gap-2"><Images className="h-4 w-4" />{t('catalogue.couvertures', 'Vos couvertures (facultatif) : sélectionnez toutes les images d’un coup')}</label>
-                    <input id="couvertures-catalogue" type="file" accept="image/jpeg,image/png,image/webp" multiple
+                    <input id="couvertures-catalogue" type="file" accept={FORMATS_IMAGE_ACCEPTES.join(',')} multiple
                       className="block w-full text-sm file:me-3 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2"
                       onChange={(e) => { setImages(Array.from(e.target.files || [])); setApercu(null); }} />
                     <p className="text-xs text-muted-foreground">

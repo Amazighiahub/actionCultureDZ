@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { enDeuxColonnes, formeDuBloc } from '@/utils/poeme';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getAllowedEmbedUrl } from '@/utils/safeUrl';
@@ -22,7 +23,7 @@ interface ArticlePreviewProps {
   nouveauxIntervenants: NouvelIntervenant[];
 }
 
-const renderPreviewBlock = (block: ArticleBlock, index: number) => {
+const renderPreviewBlock = (block: ArticleBlock, index: number, t: TFunction) => {
   switch (block.type_block) {
     case 'text': {
       // Même rendu que la page publiée (styles de texte et colonnes)
@@ -45,7 +46,7 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
         <figure key={index} className="my-6">
           <img
             src={getAssetUrl(block.media.url)}
-            alt={block.metadata?.caption || 'Image'}
+            alt={block.metadata?.caption || t('articlePreview.image', 'Image')}
             className="rounded-lg max-w-full max-h-[600px] object-contain mx-auto" />
           {block.metadata?.caption && (
             <figcaption dir="auto" className="image-caption">{block.metadata.caption}</figcaption>
@@ -64,7 +65,7 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
             frameBorder="0"
             allowFullScreen
             loading="lazy"
-            title="Embedded content"
+            title={t('articlePreview.contenuIntegre', 'Contenu intégré')}
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
             referrerPolicy="strict-origin-when-cross-origin"
           />
@@ -119,6 +120,7 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
 const ArticlePreview: React.FC<ArticlePreviewProps> = ({
   formData, blocks, contributeurs, intervenantsExistants, nouveauxIntervenants
 }) => {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardContent className="p-8">
@@ -139,15 +141,15 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({
 
               <div className={formData.journal ? 'paper' : ''}>
                 <div className="scientific-header">
-                  <h1>{formData.titre || 'Sans titre'}</h1>
+                  <h1>{formData.titre || t('common.untitled', 'Sans titre')}</h1>
                 </div>
 
                 {(contributeurs.length > 0 || intervenantsExistants.length > 0 || nouveauxIntervenants.length > 0) && (
                   <div className="scientific-authors">
                     {[
                       ...nouveauxIntervenants.map((ni) => `${ni.prenom || ''} ${ni.nom || ''}`.trim()),
-                      ...contributeurs.map((_c, i) => `Contributeur ${i + 1}`),
-                      ...intervenantsExistants.map((_ie, i) => `Intervenant ${i + 1}`)
+                      ...contributeurs.map((_c, i) => t('articlePreview.contributeur', 'Contributeur {{n}}', { n: i + 1 })),
+                      ...intervenantsExistants.map((_ie, i) => t('articlePreview.intervenant', 'Intervenant {{n}}', { n: i + 1 }))
                     ].filter(Boolean).join(', ')}
                   </div>
                 )}
@@ -163,7 +165,7 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({
                         <a href={`https://doi.org/${formData.doi}`} target="_blank" rel="noopener noreferrer">DOI: {formData.doi}</a>
                       </span>
                     )}
-                    {formData.peer_reviewed && <span className="sci-badge peer">Peer-reviewed</span>}
+                    {formData.peer_reviewed && <span className="sci-badge peer">{t('articlePreview.evalueParLesPairs', 'Évalué par les pairs')}</span>}
                     {formData.issn && <span className="sci-badge issn">ISSN: {formData.issn}</span>}
                     {formData.impact_factor && <span className="sci-badge if-badge">IF: {formData.impact_factor}</span>}
                   </div>
@@ -171,24 +173,24 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({
 
                 {formData.description && (
                   <div className="scientific-abstract">
-                    <h3>Abstract / Résumé</h3>
+                    <h3>{t('articlePreview.resume', 'Abstract / Résumé')}</h3>
                     <p>{formData.description}</p>
                   </div>
                 )}
 
                 <div className="scientific-body">
-                  {blocks.map((block, index) => renderPreviewBlock(block, index))}
+                  {blocks.map((block, index) => renderPreviewBlock(block, index, t))}
                 </div>
               </div>
             </>
           ) : (
             <>
-              <h1>{formData.titre || 'Sans titre'}</h1>
+              <h1>{formData.titre || t('common.untitled', 'Sans titre')}</h1>
               {formData.sous_titre && (
                 <p className="lead text-xl text-muted-foreground mb-4">{formData.sous_titre}</p>
               )}
               <p className="lead text-lg text-muted-foreground mb-6">{formData.description}</p>
-              {blocks.map((block, index) => renderPreviewBlock(block, index))}
+              {blocks.map((block, index) => renderPreviewBlock(block, index, t))}
             </>
           )}
         </article>

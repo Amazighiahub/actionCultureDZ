@@ -1,7 +1,7 @@
 import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
+import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -46,6 +46,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useFavoris } from '@/hooks/useFavoris';
 import { notificationService } from '@/services/notification.service';
 import { httpClient } from '@/services/httpClient';
+import { userService } from '@/services/user.service';
 import type { Notification } from '@/services/notification.service';
 import type { GroupedFavoris } from '@/services/favori.service';
 import SEOHead from '@/components/SEOHead';
@@ -719,12 +720,16 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       toast({ title: t('common.error'), description: t('upload.fileTooLarge10', 'Fichier trop volumineux (max 10 Mo)'), variant: 'destructive' });
       return;
     }
+    // Formats refusés par le serveur (HEIC, BMP…) : message clair avant l'envoi
+    if (!FORMATS_IMAGE_ACCEPTES.includes(file.type)) {
+      toast({ title: t('common.error'), description: t('auth.errors.invalidFileType.description', 'Seuls les fichiers JPG, PNG, GIF et WEBP sont acceptés'), variant: 'destructive' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     setUploadingPhoto(true);
     try {
-      const formData = new FormData();
-      formData.append('image', await prepareImageForUpload(file));
-      // httpClient : jeton anti-CSRF, renouvellement de session et adresse de l'API (un fetch direct était refusé)
-      const data = await httpClient.upload('/upload/profile-photo', formData);
+      // Seul chemin d'envoi de la photo de profil (réduite avant l'envoi, profil mis à jour par le serveur)
+      const data = await userService.updateProfilePhoto(file);
       if (data.success) {
         toast({ title: t('dashboarduser.photoUpdated', 'Photo mise à jour') });
         await refreshUser();
@@ -771,7 +776,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
             {uploadingPhoto ? t('common.loading', 'Chargement...') : t('dashboarduser.changePhoto', 'Changer la photo')}
           </Button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+          <input ref={fileInputRef} type="file" accept={FORMATS_IMAGE_ACCEPTES.join(',')} className="hidden" onChange={handlePhotoUpload} />
           <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.photoHelper', 'JPG, PNG ou WebP. Max 5 MB.')}</p>
         </div>
       </div>

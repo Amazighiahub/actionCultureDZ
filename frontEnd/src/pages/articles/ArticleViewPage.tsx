@@ -87,9 +87,8 @@ import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { rafraichirFavoris } from '@/lib/queryClient';
 import { idFromSlug, oeuvrePath } from '@/utils/slug';
 import { messageErreurServeur } from '@/utils/erreurServeur';
-
-// Nom de chaque langue écrit dans cette langue
-const NOMS_LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
+// Nom de chaque langue écrit dans cette langue (liste commune, audit V11 COD-6)
+import { nomLangue } from '@/types/common/multilingual.types';
 
 function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
@@ -832,7 +831,7 @@ const ArticleViewPage: React.FC = () => {
             {languesLecture.map(l =>
           <Button key={l} type="button" size="sm" variant={l === i18n.language ? 'default' : 'outline'} className="h-7 px-2 text-xs"
           aria-pressed={l === i18n.language} onClick={() => i18n.changeLanguage(l)}>
-                {NOMS_LANGUES[l]}
+                {nomLangue(l)}
               </Button>
           )}
           </nav>

@@ -35,10 +35,10 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, color = 'primary', onClick }) => (
-  <Card 
-    className={`hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
-    onClick={onClick}
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, color = 'primary', onClick }) => {
+  const carte = (
+  <Card
+    className={`hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer h-full' : ''}`}
   >
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
@@ -52,12 +52,24 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, co
           )}
         </div>
         <div className={`p-3 rounded-full bg-${color}/10`}>
-          <Icon className={`h-6 w-6 text-${color}`} />
+          <Icon className={`h-6 w-6 text-${color}`} aria-hidden="true" />
         </div>
       </div>
     </CardContent>
   </Card>
-);
+  );
+  if (!onClick) return carte;
+  // Carte cliquable : un vrai bouton, atteignable au clavier (audit V11 COD-17)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="block w-full h-full text-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {carte}
+    </button>
+  );
+};
 
 // Composant pour les éléments en attente
 interface PendingItemProps {

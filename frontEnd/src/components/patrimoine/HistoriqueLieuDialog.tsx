@@ -19,8 +19,9 @@ import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { directionLangue, nomLangue, type TexteMultilingue } from '@/types/common/multilingual.types';
 
-type Valeur = string | Record<string, string | undefined> | null;
+type Valeur = TexteMultilingue;
 
 interface LigneHistorique {
   id_historique: number;
@@ -32,8 +33,6 @@ interface LigneHistorique {
   auteur: string | null;
   id_historique_restaure: number | null;
 }
-
-const LANGUES: Record<string, string> = { fr: 'Français', ar: 'العربية', en: 'English', 'tz-ltn': 'Tamaziɣt', 'tz-tfng': 'ⵜⴰⵎⴰⵣⵉⵖⵜ' };
 
 /** Une valeur multilingue → [langue, texte] non vides */
 const textes = (v: Valeur): [string, string][] => {
@@ -49,8 +48,8 @@ const Texte: React.FC<{ titre: string; valeur: Valeur; vide: string }> = ({ titr
       <p className="text-xs font-medium text-muted-foreground mb-1">{titre}</p>
       {lignes.length === 0 ? <p className="text-sm italic text-muted-foreground">{vide}</p> : lignes.map(([langue, texte]) => (
         <div key={langue} className="mb-2">
-          {lignes.length > 1 || langue !== 'fr' ? <Badge variant="outline" className="text-[10px] mb-1">{LANGUES[langue] || langue}</Badge> : null}
-          <p dir={langue === 'ar' ? 'rtl' : 'ltr'} className="text-sm whitespace-pre-line line-clamp-6 break-words">{texte}</p>
+          {lignes.length > 1 || langue !== 'fr' ? <Badge variant="outline" className="text-[10px] mb-1">{nomLangue(langue)}</Badge> : null}
+          <p dir={directionLangue(langue)} className="text-sm whitespace-pre-line line-clamp-6 break-words">{texte}</p>
         </div>
       ))}
     </div>

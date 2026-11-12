@@ -1,71 +1,37 @@
-// RTLManager.tsx amélioré
+// RTLManager.tsx : classes de langue et de police sur <html>, métadonnées de langue.
+// <html lang dir> est posé par i18n/config.ts (appliquerLangueDocument), seul endroit (audit V11 COD-3).
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { initializeAlgerianSite } from '@/utils/rtl';
-import { toHtmlLang } from '@/types/common/multilingual.types';
+import { LANGUAGE_FONT_CLASSES, SUPPORTED_LANGUAGES, estLangueSupportee } from '@/types/common/multilingual.types';
+
+// Classes posées par ce composant, retirées à chaque changement de langue
+const CLASSES_LANGUE = [
+  ...SUPPORTED_LANGUAGES.map(l => `lang-${l}`),
+  ...Object.values(LANGUAGE_FONT_CLASSES).filter((c): c is string => !!c),
+];
 
 const RTLManager = () => {
   const { i18n, ready } = useTranslation();
-  
+
   useEffect(() => {
     // Si i18n n'est pas prêt, ne rien faire
     if (!ready || !i18n.language) {
       return;
     }
-    
-    // Utiliser la langue directement depuis i18n sans normalisation supplémentaire
+
     const currentLang = i18n.language;
-    
-    // Langues RTL
-    const rtlLanguages = ['ar', 'ar-DZ', 'he', 'fa', 'ur'];
-    const isRTL = rtlLanguages.includes(currentLang);
-    
-    // Définir la direction
-    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = toHtmlLang(currentLang);
-    
-    // Réinitialiser toutes les classes de langue
-    const allLangClasses = [
-      'lang-ar',
-      'lang-fr', 
-      'lang-en',
-      'lang-tz-ltn',
-      'lang-tz-tfng',
-      'tifinagh-font',
-      'font-arabic',
-      // posées par initializeAlgerianSite() en arabe : à retirer en quittant l'arabe
-      'dir-rtl',
-      'locale-ar-dz'
-    ];
-    
-    document.documentElement.classList.remove(...allLangClasses);
-    
-    // Ajouter la classe de langue actuelle
-    document.documentElement.classList.add(`lang-${currentLang}`);
-    
-    // Gestion spécifique par langue
-    switch (currentLang) {
-      case 'ar':
-      case 'ar-DZ':
-        document.documentElement.classList.add('font-arabic');
-        initializeAlgerianSite();
-        break;
-        
-      case 'tz-tfng':
-        document.documentElement.classList.add('tifinagh-font');
-        break;
-        
-      // Autres langues: pas de configuration spéciale
-      default:
-        break;
-    }
-    
+    const html = document.documentElement;
+
+    // Réinitialiser puis ajouter la classe de langue et la police (arabe, tifinagh)
+    html.classList.remove(...CLASSES_LANGUE);
+    html.classList.add(`lang-${currentLang}`);
+    const police = estLangueSupportee(currentLang) ? LANGUAGE_FONT_CLASSES[currentLang] : undefined;
+    if (police) html.classList.add(police);
+
     // Mettre à jour les métadonnées
     updateMetaTags(currentLang);
-    
-    
   }, [i18n.language, ready]);
-  
+
   return null;
 };
 

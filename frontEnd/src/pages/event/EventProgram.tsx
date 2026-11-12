@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, User, MapPin, Users, ChevronDown, ChevronUp,
-  Play, Pause, CheckCircle, XCircle,
+  Play, Pause,
   Mic, Video, FileText
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
+import StatusBadge from '@/components/shared/StatusBadge';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/Utils';
@@ -30,15 +31,6 @@ const activityIcons: Record<string, React.ElementType> = {
   presentation: FileText,
   pause: Pause,
   default: Play
-};
-
-// Couleurs par statut
-const statusColors: Record<string, string> = {
-  planifie: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  en_cours: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  termine: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
-  annule: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  reporte: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
 };
 
 // Composant pour un élément du programme
@@ -78,15 +70,6 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
     }
 
     return '--:--';
-  };
-
-  const getStatusIcon = (statut: string) => {
-    switch (statut) {
-      case 'termine': return <CheckCircle className="h-4 w-4" />;
-      case 'annule': return <XCircle className="h-4 w-4" />;
-      case 'en_cours': return <Play className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
   };
 
   return (
@@ -138,12 +121,13 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
 
             {/* Badge statut : seulement s'il apprend quelque chose (« planifié » est le cas normal) */}
             {statut !== 'planifie' && (
-              <Badge className={cn("flex-shrink-0", statusColors[statut])}>
-                {getStatusIcon(statut)}
-                <span className="ms-1">
-                  {t(`programme.status.${statut}`, statut)}
-                </span>
-              </Badge>
+              // Couleurs et icônes de la table commune ; libellés propres au programme (« Prévu »…)
+              <StatusBadge
+                status={statut}
+                label={t(`programme.status.${statut}`, statut)}
+                size="sm"
+                className="flex-shrink-0"
+              />
             )}
           </div>
 

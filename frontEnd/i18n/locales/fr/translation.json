@@ -2899,7 +2899,16 @@
       "typeAValider": "Le compte attend maintenant votre validation : validez-le pour lui ouvrir le tableau de bord professionnel.",
       "typeEchec": "Le type n’a pas pu être changé",
       "typeAideVisiteur": "Le compte devient visiteur : il perd l’accès au tableau de bord professionnel.",
-      "typeAidePro": "Le compte devient professionnel et passe « en attente » : validez-le ensuite (bouton Valider) pour lui ouvrir le tableau de bord professionnel."
+      "typeAidePro": "Le compte devient professionnel et passe « en attente » : validez-le ensuite (bouton Valider) pour lui ouvrir le tableau de bord professionnel.",
+      "notifPros": {
+        "titre": "Ajoutez vos œuvres sur Tala DZ !",
+        "message": "Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Tala DZ.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL’équipe Tala DZ",
+        "echec": "Erreur lors de l’envoi de la notification",
+        "envoi": "Envoi…",
+        "envoyee_one": "Notification envoyée à {{count}} professionnel",
+        "envoyee_other": "Notification envoyée à {{count}} professionnels"
+      },
+      "raisonSuspensionTemporaire": "Suspension temporaire"
     },
     "oeuvres": {
       "pendingCount": "{{count}} œuvre(s) à valider",
@@ -3976,7 +3985,10 @@
         "copiees": "{{count}} adresse(s) copiée(s)",
         "collez": "Ouvrez votre messagerie et collez-les dans « Cci » (copie cachée), jamais dans « À » : chacun verrait les adresses des autres.",
         "copieImpossible": "Copie impossible : sélectionnez les adresses à la main."
-      }
+      },
+      "filtreStatut": "Statut",
+      "filtreRole": "Rôle",
+      "imageOeuvre": "Image {{n}} de l’œuvre, en grand"
     }
   },
   "programmePages": {
@@ -4095,7 +4107,9 @@
     "absent": "Absent",
     "pendingValidation": "En attente de validation",
     "banned": "Banni",
-    "invitation": "Invitation envoyée"
+    "invitation": "Invitation envoyée",
+    "inscrit": "Inscrit",
+    "confirme": "Confirmé"
   },
   "patrimoine": {
     "historique": {
@@ -6213,5 +6227,30 @@
     "oeuvres": "Œuvres et artisanat",
     "professionnels": "Professionnels",
     "organisations": "Organisations"
+  },
+  "articlePreview": {
+    "image": "Image",
+    "contenuIntegre": "Contenu intégré",
+    "contributeur": "Contributeur {{n}}",
+    "intervenant": "Intervenant {{n}}",
+    "evalueParLesPairs": "Évalué par les pairs",
+    "resume": "Abstract / Résumé"
+  },
+  "oeuvreService": {
+    "creeeApresDelai": "Œuvre créée (retrouvée après un délai dépassé)",
+    "erreurs": {
+      "envoiMedias": "Erreur lors de l’envoi des fichiers",
+      "vue": "Erreur lors de l’enregistrement de la vue",
+      "evenements": "Erreur lors de la récupération des événements",
+      "statistiques": "Erreur lors de la récupération des statistiques",
+      "similaires": "Erreur lors de la récupération des œuvres similaires",
+      "medias": "Erreur lors de la récupération des médias",
+      "recherche": "Erreur lors de la recherche",
+      "recuperation": "Erreur lors de la récupération",
+      "oeuvresIntervenant": "Erreur lors de la récupération des œuvres de l’intervenant",
+      "aucuneRecente": "Aucune œuvre récente trouvée",
+      "verification": "Erreur lors de la vérification",
+      "oeuvres": "Erreur lors de la récupération des œuvres"
+    }
   }
 }

@@ -3119,7 +3119,16 @@
       "typeAValider": "The account now awaits your validation: validate it to open the professional dashboard.",
       "typeEchec": "The type could not be changed",
       "typeAideVisiteur": "The account becomes a visitor: it loses access to the professional dashboard.",
-      "typeAidePro": "The account becomes professional and goes \"pending\": then validate it (Validate button) to open the professional dashboard."
+      "typeAidePro": "The account becomes professional and goes \"pending\": then validate it (Validate button) to open the professional dashboard.",
+      "notifPros": {
+        "titre": "Add your works on Tala DZ!",
+        "message": "Hello,\n\nWe are pleased to let you know that you can now add your works on our Tala DZ platform.\n\nSign in to your professional space and start sharing your work with our community.\n\nThe Tala DZ team",
+        "echec": "The notification could not be sent",
+        "envoi": "Sending…",
+        "envoyee_one": "Notification sent to {{count}} professional",
+        "envoyee_other": "Notification sent to {{count}} professionals"
+      },
+      "raisonSuspensionTemporaire": "Temporary suspension"
     },
     "oeuvres": {
       "pendingCount": "{{count}} work(s) to validate",
@@ -3971,7 +3980,10 @@
         "copiees": "{{count}} address(es) copied",
         "collez": "Open your mailbox and paste them in “Bcc”, never in “To”: everyone would see the others’ addresses.",
         "copieImpossible": "Copy failed: select the addresses by hand."
-      }
+      },
+      "filtreStatut": "Status",
+      "filtreRole": "Role",
+      "imageOeuvre": "Image {{n}} of the work, full size"
     }
   },
   "programmePages": {
@@ -4090,7 +4102,9 @@
     "absent": "Absent",
     "pendingValidation": "Awaiting validation",
     "banned": "Banned",
-    "invitation": "Invitation sent"
+    "invitation": "Invitation sent",
+    "inscrit": "Registered",
+    "confirme": "Confirmed"
   },
   "patrimoine": {
     "historique": {
@@ -6213,5 +6227,30 @@
     "oeuvres": "Works and crafts",
     "professionnels": "Professionals",
     "organisations": "Organisations"
+  },
+  "articlePreview": {
+    "image": "Image",
+    "contenuIntegre": "Embedded content",
+    "contributeur": "Contributor {{n}}",
+    "intervenant": "Contributor {{n}}",
+    "evalueParLesPairs": "Peer-reviewed",
+    "resume": "Abstract"
+  },
+  "oeuvreService": {
+    "creeeApresDelai": "Work created (found after a timeout)",
+    "erreurs": {
+      "envoiMedias": "Error while uploading the files",
+      "vue": "Error while recording the view",
+      "evenements": "Error while loading the events",
+      "statistiques": "Error while loading the statistics",
+      "similaires": "Error while loading similar works",
+      "medias": "Error while loading the media",
+      "recherche": "Error while searching",
+      "recuperation": "Error while loading",
+      "oeuvresIntervenant": "Error while loading the contributor’s works",
+      "aucuneRecente": "No recent work found",
+      "verification": "Error while checking",
+      "oeuvres": "Error while loading the works"
+    }
   }
 }

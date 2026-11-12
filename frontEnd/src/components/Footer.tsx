@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { MapPin, Mail, ExternalLink, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useRTL } from '@/utils/rtl';
+import { useRTL } from '@/hooks/useRTL';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { lienSommaireGuides } from '@/utils/lienGuide';
 import { InscriptionNewsletter, InstallerTalaDz } from '@/components/shared/PiedDePageApplication';
 
 const Footer = () => {
   const { t, i18n } = useTranslation();
-  const { isRtl, rtlClasses } = useRTL(i18n.language);
+  const { isRtl } = useRTL(i18n.language);
   const { formatNumber } = useLocalizedNumber();
 
   const footerSections: Array<{ title: string; links: Array<{ label: string; href: string; statique?: boolean }> }> = [

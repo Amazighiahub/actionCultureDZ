@@ -94,12 +94,8 @@ class PermissionsService {
       return; // Important : on arrête ici pour les visiteurs
     }
     
-    // 2. VÉRIFIER SI C'EST UN ADMIN
-    const isAdmin = this.currentUser.Roles?.some(role => 
-      role.nom_role === 'Administrateur' || role.nom_role === 'Super Admin'
-    );
-    
-    if (isAdmin) {
+    // 2. VÉRIFIER SI C'EST UN ADMIN (même règle que isAdmin)
+    if (this.isAdmin()) {
       // Admin a TOUTES les permissions
       Object.values(PERMISSIONS).forEach(perm => this.permissions.add(perm));
       return; // On arrête ici pour les admins
@@ -167,13 +163,19 @@ class PermissionsService {
   }
 
   /**
-   * Vérifie si l'utilisateur est admin
+   * Vérifie si l'utilisateur porte un rôle (lecture des rôles en un seul endroit)
+   */
+  hasRole(roleName: string): boolean {
+    if (!this.currentUser) return false;
+    return this.currentUser.Roles?.some(r => r.nom_role === roleName) ?? false;
+  }
+
+  /**
+   * Vérifie si l'utilisateur est admin : par le rôle seulement, jamais par le type de compte.
+   * Seule règle de l'application (connexion, menus, routes protégées, permissions).
    */
   isAdmin(): boolean {
-    if (!this.currentUser) return false;
-    return this.currentUser.Roles?.some(r => 
-      r.nom_role === 'Administrateur' || r.nom_role === 'Super Admin'
-    ) || false;
+    return this.hasRole('Administrateur') || this.hasRole('Super Admin');
   }
 
   /**

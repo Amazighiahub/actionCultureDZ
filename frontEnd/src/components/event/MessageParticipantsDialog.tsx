@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { badgeVariants } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -196,7 +196,8 @@ const MessageParticipantsDialog: React.FC<Props> = ({ evenementId, ouvert, onFer
             <Input id="msg-titre" dir="auto" maxLength={150} value={champs.titre} onChange={changer('titre')} />
             <div className="flex flex-wrap gap-1">
               {suggestions.map(s => (
-                <Badge key={s} variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setChamps(c => ({ ...c, titre: s }))}>{s}</Badge>
+                // Suggestion d'objet : vrai bouton, atteignable au clavier (audit V11 COD-17)
+                <button key={s} type="button" className={`${badgeVariants({ variant: 'outline' })} cursor-pointer hover:bg-muted`} onClick={() => setChamps(c => ({ ...c, titre: s }))}>{s}</button>
               ))}
             </div>
           </div>
