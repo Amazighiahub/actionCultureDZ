@@ -1,8 +1,9 @@
 const AppError = require('../utils/appError');
 const logger = require('../utils/logger');
 const { repondreSiConflit } = require('../utils/conflitSimultane');
+const { reponseErreurSequelize } = require('../utils/erreurSequelize');
 
-const { messageValidationBase, MESSAGE_REFERENCE, MESSAGE_SESSION } = AppError;
+const { MESSAGE_SESSION } = AppError;
 
 const errorMiddleware = {
   // Gestionnaire d'erreurs 404
@@ -72,40 +73,12 @@ const errorMiddleware = {
 
     let statusCode = error.status || error.statusCode || 500;
     let message = error.message || 'Erreur serveur';
-    let code;
+    // Code de l'application (COMMANDE_DOUBLON…) gardé pour une erreur 4xx ; jamais un code système sur une 500
+    let code = statusCode < 500 && typeof error.code === 'string' ? error.code : undefined;
 
-    // Erreurs Sequelize
-    if (error.name === 'SequelizeValidationError') {
-      statusCode = 400;
-      message = 'Données invalides';
-      code = 'DB_VALIDATION_ERROR';
-      // Texte de Sequelize en anglais avec noms de modèle et de colonne (« notNull Violation: Evenement.nom… ») :
-      // une phrase courte à la place ; le champ reste dans « field » pour placer l'erreur sous le bon champ
-      const details = (error.errors || []).map(err => ({
-        field: err.path,
-        message: messageValidationBase(err),
-        ...(isProduction ? {} : { value: err.value })
-      }));
-      return res.status(statusCode).json({ success: false, error: message, code, details });
-    }
-
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      statusCode = 409;
-      message = 'Cette ressource existe déjà';
-      code = 'UNIQUE_CONSTRAINT';
-      const details = error.errors.map(err => ({
-        field: err.path,
-        message: 'Cette valeur est déjà utilisée',
-        ...(isProduction ? {} : { value: err.value })
-      }));
-      return res.status(statusCode).json({ success: false, error: message, code, details });
-    }
-
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      statusCode = 400;
-      message = MESSAGE_REFERENCE;
-      code = 'FK_CONSTRAINT';
-    }
+    // Erreurs Sequelize : donnée refusée, valeur déjà utilisée, élément lié introuvable
+    const sequelize = reponseErreurSequelize(error, isProduction);
+    if (sequelize) return res.status(sequelize.statusCode).json(sequelize.corps);
 
     // Deux enregistrements simultanés sur les mêmes données : opération annulée, message clair (409)
     if (repondreSiConflit(error, req, res, logger)) return;

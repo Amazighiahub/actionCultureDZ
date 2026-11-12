@@ -10,10 +10,6 @@ const paiement = require('../services/paiementDirect');
 const { moyensPaiementLimiter } = require('../middlewares/rateLimitMiddleware');
 const { msg } = require('../utils/messageValidation');
 
-const repondreErreur = (res, err) => {
-  if (!err.statusCode || err.statusCode >= 500) throw err;
-  res.status(err.statusCode).json({ success: false, error: err.message, code: err.code });
-};
 
 module.exports = (models, authMiddleware) => {
   const router = express.Router();
@@ -27,37 +23,31 @@ module.exports = (models, authMiddleware) => {
   }));
   // Limite stricte : le mot de passe y est vérifié (pas d'essais en masse)
   router.put('/mes-moyens', authenticate, requireValidatedProfessional, requireVerifiedEmail, moyensPaiementLimiter, asyncHandler(async (req, res) => {
-    try {
-      const c = container();
-      res.json({ success: true, data: await paiement.enregistrerMoyens(models, req.user.id_user, req.body?.moyens ?? null, {
-        motDePasse: req.body?.mot_de_passe, ip: req.ip, userAgent: req.get('user-agent'),
-        emailService: require('../services/emailService'), notificationService: c.notificationService,
-      }) });
-    } catch (err) { repondreErreur(res, err); }
+    const c = container();
+    res.json({ success: true, data: await paiement.enregistrerMoyens(models, req.user.id_user, req.body?.moyens ?? null, {
+      motDePasse: req.body?.mot_de_passe, ip: req.ip, userAgent: req.get('user-agent'),
+      emailService: require('../services/emailService'), notificationService: c.notificationService,
+    }) });
   }));
 
   // Le participant : combien, à qui, comment, et si l'organisateur a reçu le paiement
   router.get('/evenements/:id', authenticate, validateId(), asyncHandler(async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
-    try {
-      res.json({ success: true, data: await paiement.paiementDuParticipant(models, Number(req.params.id), req.user.id_user) });
-    } catch (err) { repondreErreur(res, err); }
+    res.json({ success: true, data: await paiement.paiementDuParticipant(models, Number(req.params.id), req.user.id_user) });
   }));
 
   // L'organisateur : « Paiement reçu » (ou correction)
   router.put('/evenements/:id/participants/:userId', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
     [body('recu').isBoolean().withMessage(msg('validation.valeurInvalide'))], handleValidationErrors,
     asyncHandler(async (req, res) => {
-      try {
-        const c = container();
-        const data = await paiement.confirmerPaiement(models, c.evenementService, c.notificationService, {
-          idEvenement: Number(req.params.id),
-          idParticipant: Number(req.params.userId),
-          recu: req.body.recu === true || req.body.recu === 'true',
-          par: { id: req.user.id_user, isAdmin: !!req.user.isAdmin },
-        });
-        res.json({ success: true, data });
-      } catch (err) { repondreErreur(res, err); }
+      const c = container();
+      const data = await paiement.confirmerPaiement(models, c.evenementService, c.notificationService, {
+        idEvenement: Number(req.params.id),
+        idParticipant: Number(req.params.userId),
+        recu: req.body.recu === true || req.body.recu === 'true',
+        par: { id: req.user.id_user, isAdmin: !!req.user.isAdmin },
+      });
+      res.json({ success: true, data });
     }));
 
   // Le professionnel : ce qui l'aide à être trouvé sur les moteurs de recherche

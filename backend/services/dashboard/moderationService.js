@@ -11,7 +11,9 @@ const TYPES_SIGNALEMENT = ['commentaire', 'oeuvre', 'evenement', 'user', 'artisa
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
-const erreurHttp = (message, statusCode) => Object.assign(new Error(message), { statusCode });
+const AppError = require('../../utils/appError');
+// Erreur avec son statut HTTP, comme le reste du serveur (avant : Error + statusCode, sans code)
+const erreurHttp = (message, statusCode) => new AppError(message, statusCode, statusCode === 404 ? 'NOT_FOUND' : 'VALIDATION_ERROR');
 
 class DashboardModerationService {
   constructor(models) {

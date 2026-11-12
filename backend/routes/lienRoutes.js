@@ -7,11 +7,6 @@ const { validateId } = require('../middlewares/validationMiddleware');
 const { translateDeep } = require('../helpers/i18n');
 const liens = require('../services/liensExternes');
 
-const repondreErreur = (res, err) => {
-  if (!err.statusCode) throw err;
-  res.status(err.statusCode).json({ success: false, error: err.message });
-};
-
 module.exports = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireValidatedProfessional } = authMiddleware;
@@ -34,28 +29,16 @@ module.exports = (models, authMiddleware) => {
   }));
 
   router.post('/', ...pro, asyncHandler(async (req, res) => {
-    try {
-      const lien = await liens.creer(models, req.user.id_user, req.body || {});
-      res.status(201).json({ success: true, data: { id_lien: lien.id_lien, type_lien: lien.type_lien } });
-    } catch (err) {
-      repondreErreur(res, err);
-    }
+    const lien = await liens.creer(models, req.user.id_user, req.body || {});
+    res.status(201).json({ success: true, data: { id_lien: lien.id_lien, type_lien: lien.type_lien } });
   }));
   router.put('/:id', ...pro, validateId(), asyncHandler(async (req, res) => {
-    try {
-      const lien = await liens.modifier(models, Number(req.params.id), req.user.id_user, req.body || {});
-      res.json({ success: true, data: { id_lien: lien.id_lien, type_lien: lien.type_lien } });
-    } catch (err) {
-      repondreErreur(res, err);
-    }
+    const lien = await liens.modifier(models, Number(req.params.id), req.user.id_user, req.body || {});
+    res.json({ success: true, data: { id_lien: lien.id_lien, type_lien: lien.type_lien } });
   }));
   router.delete('/:id', authenticate, validateId(), asyncHandler(async (req, res) => {
-    try {
-      await liens.supprimer(models, Number(req.params.id), req.user.id_user, req.user.isAdmin === true);
-      res.json({ success: true });
-    } catch (err) {
-      repondreErreur(res, err);
-    }
+    await liens.supprimer(models, Number(req.params.id), req.user.id_user, req.user.isAdmin === true);
+    res.json({ success: true });
   }));
 
   return router;

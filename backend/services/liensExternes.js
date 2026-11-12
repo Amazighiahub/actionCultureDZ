@@ -15,7 +15,9 @@ const RESEAUX = {
   facebook: ['facebook.com', 'fb.com', 'fb.watch'],
 };
 
-const erreur = (message, statusCode) => Object.assign(new Error(message), { statusCode });
+const AppError = require('../utils/appError');
+const CODES = { 400: 'VALIDATION_ERROR', 403: 'FORBIDDEN', 404: 'NOT_FOUND', 409: 'CONFLICT' };
+const erreur = (message, statusCode) => new AppError(message, statusCode, CODES[statusCode] || 'ERREUR');
 const texte = (valeur, max) => (typeof valeur === 'string' ? valeur.trim().slice(0, max) : '') || null;
 
 /** Le site du lien donne son type ; tout autre site est traité comme un article de presse */

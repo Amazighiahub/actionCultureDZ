@@ -20,6 +20,7 @@
 const { peutGerer, estModeration } = require('../utils/droits');
 const logger = require('../utils/logger');
 const { repondreSiConflit } = require('../utils/conflitSimultane');
+const { reponseErreurSequelize } = require('../utils/erreurSequelize');
 const { bornerPagination } = require('../utils/pagination');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
@@ -148,6 +149,10 @@ class BaseController {
     // Deux enregistrements simultanés sur les mêmes données : opération annulée, message clair (409)
     // au lieu de « Internal server error » (même réponse que errorMiddleware)
     if (repondreSiConflit(error, res.req, res, logger)) return;
+    // Donnée refusée par la base (400), valeur déjà utilisée (409) : même réponse que errorMiddleware
+    // (avant : 500 « Erreur serveur »)
+    const sequelize = reponseErreurSequelize(error, IS_PRODUCTION);
+    if (sequelize) return res.status(sequelize.statusCode).json(sequelize.corps);
     const statusCode = error.statusCode || 500;
     const code = error.code || 'INTERNAL_ERROR';
 
