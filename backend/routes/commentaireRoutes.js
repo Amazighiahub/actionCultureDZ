@@ -5,6 +5,7 @@ const router = express.Router();
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 const { commentLimiter } = require('../middlewares/rateLimitMiddleware');
 const { msg } = require('../utils/messageValidation');
+const { memeUtilisateur } = require('../utils/droits');
 
 module.exports = (models, middlewares = {}) => {
   const controller = require('../controllers/commentaireController');
@@ -166,7 +167,7 @@ module.exports = (models, middlewares = {}) => {
         });
       }
       
-      if (commentaire.id_user !== req.user.id_user) {
+      if (!memeUtilisateur(commentaire.id_user, req.user.id_user)) {
         return res.status(403).json({
           success: false,
           error: req.t ? req.t('auth.forbidden') : 'Forbidden'
@@ -199,7 +200,7 @@ module.exports = (models, middlewares = {}) => {
         });
       }
       
-      if (commentaire.id_user !== req.user.id_user && !req.user.isAdmin && !req.user.isModerateur) {
+      if (!memeUtilisateur(commentaire.id_user, req.user.id_user) && !req.user.isAdmin && !req.user.isModerateur) {
         return res.status(403).json({
           success: false,
           error: req.t ? req.t('auth.forbidden') : 'Forbidden'

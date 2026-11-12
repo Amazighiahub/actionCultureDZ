@@ -2,6 +2,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { memeUtilisateur } = require('../utils/droits');
 
 class UploadController extends BaseController {
   get service() {
@@ -60,7 +61,7 @@ class UploadController extends BaseController {
             error: req.t('auth.required')
           });
         }
-        if (result.uploadedBy !== req.user.id_user && !req.user.isAdmin) {
+        if (!memeUtilisateur(result.uploadedBy, req.user.id_user) && !req.user.isAdmin) {
           return res.status(403).json({
             success: false,
             error: req.t('auth.forbidden')

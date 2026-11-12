@@ -4,6 +4,11 @@ const logger = require('../utils/logger');
 const { getClient: getRedisClient } = require('../utils/redisClient');
 const { USER_SESSION_PREFIX, invalidateUserSession } = require('../utils/sessionCache');
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
+const { ROLES, normaliserRole, roleDemande, aUnDesRoles, estRole } = require('../constants/roles');
+
+// Refus (401, 403…) : le texte dans « error », comme partout ailleurs sur le serveur, et dans « message »
+// le temps que les anciennes versions du site (en cache chez les visiteurs) le lisent encore (audit V11 COD-B23)
+const texteRefus = (texte) => ({ error: texte, message: texte });
 const {
   verifyAccessToken,
   buildBlacklistKey,
@@ -137,10 +142,12 @@ module.exports = (modelsOrUser) => {
 
     const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
 
-    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR;
-    user.isModerateur = user.roleNames.includes('Modérateur') || user.roleNames.includes('Moderateur');
-    user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
-    user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
+    // Noms de rôles comparés sans accent ni majuscule (« Moderateur » = « Modérateur »)
+    const role = (nom) => user.roleNames.some((r) => estRole(r, nom));
+    user.isAdmin = role(ROLES.ADMIN) || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR;
+    user.isModerateur = role(ROLES.MODERATEUR);
+    user.isProfessionnel = role(ROLES.PROFESSIONNEL) || isProfessionalByType;
+    user.isUser = role(ROLES.UTILISATEUR) || user.id_type_user === 1 || user.roleNames.length === 0;
     user.hasOrganisation = Array.isArray(user.Organisations) && user.Organisations.length > 0;
     user.isProfessionnelValide = user.isProfessionnel && user.statut === 'actif';
 
@@ -275,7 +282,7 @@ module.exports = (modelsOrUser) => {
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.tokenMissing')
+          ...texteRefus(req.t('auth.tokenMissing'))
         });
       }
 
@@ -284,7 +291,7 @@ module.exports = (modelsOrUser) => {
       if (!decoded) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.tokenInvalid')
+          ...texteRefus(req.t('auth.tokenInvalid'))
         });
       }
 
@@ -293,7 +300,7 @@ module.exports = (modelsOrUser) => {
       if (blacklistCheck.blacklisted) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.tokenRevoked')
+          ...texteRefus(req.t('auth.tokenRevoked'))
         });
       }
       if (blacklistCheck.failure && JWT_BLACKLIST_FAIL_CLOSED) {
@@ -303,7 +310,7 @@ module.exports = (modelsOrUser) => {
         logger.error('JWT blacklist check unavailable, failing closed');
         return res.status(503).json({
           success: false,
-          message: req.t('common.serverError')
+          ...texteRefus(req.t('common.serverError'))
         });
       }
 
@@ -313,7 +320,7 @@ module.exports = (modelsOrUser) => {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.userNotFound')
+          ...texteRefus(req.t('auth.userNotFound'))
         });
       }
 
@@ -321,7 +328,7 @@ module.exports = (modelsOrUser) => {
       if (issuedBeforePasswordChange(decoded, user.password_changed_at)) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.tokenInvalid')
+          ...texteRefus(req.t('auth.tokenInvalid'))
         });
       }
 
@@ -333,7 +340,7 @@ module.exports = (modelsOrUser) => {
       if (blockedStatuses.includes(user.statut)) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.accountBlocked', { status: user.statut }),
+          ...texteRefus(req.t('auth.accountBlocked', { status: user.statut })),
           statut: user.statut
         });
       }
@@ -346,7 +353,7 @@ module.exports = (modelsOrUser) => {
       if (!allowedStatuses.includes(user.statut)) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.unknownAccountStatus'),
+          ...texteRefus(req.t('auth.unknownAccountStatus')),
           statut: user.statut
         });
       }
@@ -359,7 +366,7 @@ module.exports = (modelsOrUser) => {
           && !ECRITURES_SANS_VERIFICATION.includes((req.originalUrl || '').split('?')[0])) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.emailNotVerified'),
+          ...texteRefus(req.t('auth.emailNotVerified')),
           needsEmailVerification: true
         });
       }
@@ -374,7 +381,7 @@ module.exports = (modelsOrUser) => {
       logger.error('Erreur authentification:', error.message);
       return res.status(500).json({
         success: false,
-        message: req.t('common.serverError'),
+        ...texteRefus(req.t('common.serverError')),
         details: IS_DEV_MODE ? error.message : undefined
       });
     }
@@ -440,14 +447,14 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.required')
+          ...texteRefus(req.t('auth.required'))
         });
       }
 
       if (!req.user.email_verifie) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.emailNotVerified'),
+          ...texteRefus(req.t('auth.emailNotVerified')),
           needsEmailVerification: true
         });
       }
@@ -457,7 +464,7 @@ module.exports = (modelsOrUser) => {
       logger.error('Erreur vérification email:', error.message);
       return res.status(500).json({
         success: false,
-        message: req.t('common.serverError')
+        ...texteRefus(req.t('common.serverError'))
       });
     }
   };
@@ -470,14 +477,14 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.required')
+          ...texteRefus(req.t('auth.required'))
         });
       }
 
       if (req.user.statut !== 'actif') {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.accountNotActive'),
+          ...texteRefus(req.t('auth.accountNotActive')),
           statut: req.user.statut
         });
       }
@@ -487,7 +494,7 @@ module.exports = (modelsOrUser) => {
       logger.error('Erreur vérification compte actif:', error.message);
       return res.status(500).json({
         success: false,
-        message: req.t('common.serverError')
+        ...texteRefus(req.t('common.serverError'))
       });
     }
   };
@@ -500,41 +507,29 @@ module.exports = (modelsOrUser) => {
    * Vérifie si l'utilisateur a un rôle spécifique
    */
   const requireRole = (...roles) => {
-    // Aliases pour compatibilité entre noms courts et noms DB
-    const roleAliases = {
-      'Admin': 'Administrateur',
-      'Moderateur': 'Modérateur',
-      'Pro': 'Professionnel'
-    };
-
     return (req, res, next) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.required')
+          ...texteRefus(req.t('auth.required'))
         });
       }
 
       const userRoles = req.userRoles || [];
       const requiredRoles = roles.flat();
 
-      // Admins passent toujours si 'Admin' ou 'Administrateur' est dans les rôles requis
-      if (req.user.isAdmin && requiredRoles.some(r => r === 'Admin' || r === 'Administrateur')) {
+      // Un administrateur (type ou rôle) passe toujours si la route accepte les administrateurs
+      if (req.user.isAdmin && requiredRoles.some(r => roleDemande(r) === normaliserRole(ROLES.ADMIN))) {
         return next();
       }
 
-      // Vérifier les rôles avec aliases
-      const hasRole = requiredRoles.some(role => {
-        if (userRoles.includes(role)) return true;
-        const alias = roleAliases[role];
-        if (alias && userRoles.includes(alias)) return true;
-        return false;
-      });
+      // Noms comparés sans accent ni majuscule ; noms courts de route (Admin, Pro) acceptés
+      const hasRole = aUnDesRoles(userRoles, requiredRoles);
 
       if (!hasRole) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.roleRequired', { roles: requiredRoles.join(' / ') })
+          ...texteRefus(req.t('auth.roleRequired', { roles: requiredRoles.join(' / ') }))
         });
       }
 
@@ -549,14 +544,14 @@ module.exports = (modelsOrUser) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: req.t('auth.required')
+        ...texteRefus(req.t('auth.required'))
       });
     }
 
     if (!req.user.isAdmin) {
       return res.status(403).json({
         success: false,
-        message: req.t('auth.adminOnly')
+        ...texteRefus(req.t('auth.adminOnly'))
       });
     }
 
@@ -576,7 +571,7 @@ module.exports = (modelsOrUser) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: req.t('auth.required')
+        ...texteRefus(req.t('auth.required'))
       });
     }
 
@@ -589,7 +584,7 @@ module.exports = (modelsOrUser) => {
     if (!req.user.isProfessionnel) {
       return res.status(403).json({
         success: false,
-        message: req.t('auth.professionalOnly')
+        ...texteRefus(req.t('auth.professionalOnly'))
       });
     }
 
@@ -597,7 +592,7 @@ module.exports = (modelsOrUser) => {
     if (req.user.statut !== 'actif') {
       return res.status(403).json({
         success: false,
-        message: req.t('auth.pendingValidation'),
+        ...texteRefus(req.t('auth.pendingValidation')),
         needsAdminValidation: true,
         statut: req.user.statut
       });
@@ -614,7 +609,7 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: req.t('auth.required')
+          ...texteRefus(req.t('auth.required'))
         });
       }
 
@@ -625,7 +620,7 @@ module.exports = (modelsOrUser) => {
       if (!isOwner && !isAdminUser) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.forbidden')
+          ...texteRefus(req.t('auth.forbidden'))
         });
       }
 
@@ -645,7 +640,7 @@ module.exports = (modelsOrUser) => {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            message: req.t('auth.required')
+            ...texteRefus(req.t('auth.required'))
           });
         }
 
@@ -658,7 +653,7 @@ module.exports = (modelsOrUser) => {
         if (!resourceId) {
           return res.status(400).json({
             success: false,
-            message: req.t('common.badRequest')
+            ...texteRefus(req.t('common.badRequest'))
           });
         }
 
@@ -668,7 +663,7 @@ module.exports = (modelsOrUser) => {
           logger.error(`Modèle ${modelName} non trouvé`);
           return res.status(500).json({
             success: false,
-            message: req.t('common.serverError')
+            ...texteRefus(req.t('common.serverError'))
           });
         }
 
@@ -677,7 +672,7 @@ module.exports = (modelsOrUser) => {
         if (!resource) {
           return res.status(404).json({
             success: false,
-            message: req.t('common.notFound')
+            ...texteRefus(req.t('common.notFound'))
           });
         }
 
@@ -686,7 +681,7 @@ module.exports = (modelsOrUser) => {
         if (ownerId !== req.user.id_user) {
           return res.status(403).json({
             success: false,
-            message: req.t('auth.forbidden')
+            ...texteRefus(req.t('auth.forbidden'))
           });
         }
 
@@ -697,7 +692,7 @@ module.exports = (modelsOrUser) => {
         logger.error('Erreur requireOwnership:', error.message);
         return res.status(500).json({
           success: false,
-          message: req.t('common.serverError')
+          ...texteRefus(req.t('common.serverError'))
         });
       }
     };
@@ -721,7 +716,7 @@ module.exports = (modelsOrUser) => {
 
     return (req, res, next) => {
       if (!req.user) {
-        return res.status(401).json({ success: false, message: req.t('auth.required') });
+        return res.status(401).json({ success: false, ...texteRefus(req.t('auth.required')) });
       }
 
       const userRoles = req.userRoles || [];
@@ -731,7 +726,7 @@ module.exports = (modelsOrUser) => {
       });
 
       if (!hasPermission) {
-        return res.status(403).json({ success: false, message: req.t('auth.forbidden') });
+        return res.status(403).json({ success: false, ...texteRefus(req.t('auth.forbidden')) });
       }
 
       next();

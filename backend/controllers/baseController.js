@@ -21,6 +21,7 @@ const { peutGerer, estModeration } = require('../utils/droits');
 const logger = require('../utils/logger');
 const { repondreSiConflit } = require('../utils/conflitSimultane');
 const { reponseErreurSequelize } = require('../utils/erreurSequelize');
+const AppError = require('../utils/appError');
 const { bornerPagination } = require('../utils/pagination');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
@@ -171,13 +172,15 @@ class BaseController {
       } catch (_e) { /* Sentry absent */ }
     }
 
+    // En production, une 500 ne montre jamais son texte ni son code système (ECONNREFUSED, requête SQL…) :
+    // les services emballent une erreur imprévue en AppError 500 (AppError.fromError) avec le texte brut.
+    // Une 502/503 imprévue est masquée aussi ; seule une AppError 502/503 garde son message prévu
+    // (« recherche d'adresse indisponible »). Avant : seule la 500 était masquée (audit V11, sécurité).
+    const masquer = IS_PRODUCTION && statusCode >= 500 && (statusCode === 500 || !(error instanceof AppError));
     const response = {
       success: false,
-      error: (IS_PRODUCTION && statusCode === 500)
-        ? 'Erreur serveur'
-        : (error.message || 'Erreur serveur'),
-      // En production, pas de code système (ECONNREFUSED, ETIMEDOUT…) sur une erreur 500
-      code: (IS_PRODUCTION && statusCode === 500) ? 'INTERNAL_ERROR' : code
+      error: masquer ? 'Erreur serveur' : (error.message || 'Erreur serveur'),
+      code: masquer ? 'INTERNAL_ERROR' : code
     };
 
     // Détail des champs refusés : utile à la personne (avant : masqué en production, elle ne voyait

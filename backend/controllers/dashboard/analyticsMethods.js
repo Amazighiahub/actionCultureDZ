@@ -19,8 +19,8 @@ const analyticsMethods = {
       );
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('Erreur getOverview:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError'), message: error.message });
+      // Texte technique (requête, table…) journalisé, jamais renvoyé (audit V11, sécurité)
+      this._handleError(res, error);
     }
   },
 

@@ -6,6 +6,7 @@
  */
 const BaseService = require('./core/baseService');
 const AppError = require('../utils/appError');
+const { memeUtilisateur } = require('../utils/droits');
 
 class CommentaireService extends BaseService {
   constructor(repository, options = {}) {
@@ -192,7 +193,7 @@ class CommentaireService extends BaseService {
    * @param {number} [userId] - ID de l'utilisateur demandant la suppression (optionnel, vérifie ownership)
    */
   async deleteCommentaire(commentaireInstance, userId) {
-    if (userId !== undefined && commentaireInstance.id_user !== userId) {
+    if (userId !== undefined && !memeUtilisateur(commentaireInstance.id_user, userId)) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres commentaires');
     }
     return this.repository.softDelete(commentaireInstance);

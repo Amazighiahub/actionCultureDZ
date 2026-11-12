@@ -18,6 +18,7 @@ const ExcelJS = require('exceljs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
+const AppError = require('../../utils/appError');
 const { listerChamps, verifierReponses } = require('./formulaireInscription');
 const { configAvecProfil, tarificationDe, montantInscription } = require('./tarification');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
@@ -444,14 +445,14 @@ class ImportInscriptions {
       // Compte actif dont l'invitation attend sa réponse : nouvelle demande de confirmation
       if (inscription.statut_participation === 'invitation') {
         if (!this.emailService || !(await this._demanderConfirmation(user, evenement))) {
-          throw Object.assign(new Error("L'email n'a pas pu être envoyé, réessayez plus tard"), { statusCode: 502 });
+          throw new AppError("L'email n'a pas pu être envoyé, réessayez plus tard", 502, 'EMAIL_NON_ENVOYE');
         }
         return { email: user.email };
       }
       throw Object.assign(new Error('Cette personne a déjà choisi son mot de passe'), { statusCode: 400 });
     }
     if (!this.emailService || !(await this._inviter(user, evenement))) {
-      throw Object.assign(new Error('L\'email n\'a pas pu être envoyé, réessayez plus tard'), { statusCode: 502 });
+      throw new AppError('L\'email n\'a pas pu être envoyé, réessayez plus tard', 502, 'EMAIL_NON_ENVOYE');
     }
     return { email: user.email };
   }

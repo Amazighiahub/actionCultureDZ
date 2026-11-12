@@ -9,7 +9,7 @@ const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op, Transaction } = require('sequelize');
 const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { csvCell } = require('../utils/csv');
-const { peutGerer, estModeration } = require('../utils/droits');
+const { peutGerer, estModeration, memeUtilisateur } = require('../utils/droits');
 
 const CHAMPS_INTERVENANT_CONSERVES = ['heure_debut_intervention', 'heure_fin_intervention', 'honoraires', 'frais_deplacement', 'logement_requis', 'materiel_technique', 'date_confirmation', 'notes_organisateur'];
 
@@ -114,7 +114,7 @@ class ProgrammeService extends BaseService {
    * @returns {string|null} code d'erreur, ou null si la modification est permise
    */
   _refusEvenement(evenement, userId) {
-    if (evenement.id_user !== userId) return 'forbidden';
+    if (!memeUtilisateur(evenement.id_user, userId)) return 'forbidden';
     if (['annule', 'termine'].includes(evenement.statut)) return 'forbidden';
     return null;
   }
@@ -244,7 +244,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId) {
+      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -293,7 +293,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId) {
+      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -342,7 +342,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId) {
+      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -376,7 +376,7 @@ class ProgrammeService extends BaseService {
     try {
       // Même connexion que les mises à jour, événement verrouillé (comme l'ajout d'une activité)
       const evenement = await this.models.Evenement.findByPk(evenementId, { transaction, lock: Transaction.LOCK.UPDATE });
-      if (!evenement || evenement.id_user !== userId) {
+      if (!evenement || !memeUtilisateur(evenement.id_user, userId)) {
         await transaction.rollback();
         return { error: evenement ? 'forbidden' : 'evenementNotFound' };
       }

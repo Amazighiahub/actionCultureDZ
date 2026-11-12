@@ -11,6 +11,7 @@ const fs = require('fs').promises;
 const logger = require('../../utils/logger');
 const cloudinarySvc = require('../cloudinaryService');
 const { isReferencedElsewhere } = require('../user/userFileCleanup');
+const { memeUtilisateur } = require('../../utils/droits');
 
 class UploadService {
   constructor(models) {
@@ -307,7 +308,7 @@ class UploadService {
 
     // Verifier les permissions
     const uploadedBy = this._getUploadedBy(media);
-    if (uploadedBy !== userId && !isAdmin) {
+    if (!memeUtilisateur(uploadedBy, userId) && !isAdmin) {
       return { media, forbidden: true };
     }
 
@@ -356,7 +357,7 @@ class UploadService {
     const isPublic = this._getMediaVisibility(media) && !parentCache;
     const uploadedBy = this._getUploadedBy(media) ?? oeuvre?.saisi_par ?? evenement?.id_user ?? null;
 
-    if (!isPublic && uploadedBy !== userId && !isAdmin) {
+    if (!isPublic && !memeUtilisateur(uploadedBy, userId) && !isAdmin) {
       return { media, forbidden: true };
     }
 

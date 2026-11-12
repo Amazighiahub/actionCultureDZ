@@ -7,6 +7,7 @@ const BaseService = require('../core/baseService');
 const ParcoursDTO = require('../../dto/parcours/parcoursDTO');
 const { translate, lireMultiLang } = require('../../helpers/i18n');
 const { haversineKm, boundingBox, rayonParTransport, vitesseParTransport } = require('../utils/geoUtils');
+const { memeUtilisateur } = require('../../utils/droits');
 
 class ParcoursService extends BaseService {
   constructor(parcoursRepository, options = {}) {
@@ -153,7 +154,7 @@ class ParcoursService extends BaseService {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_createur !== userId && !isAdmin) {
+    if (!memeUtilisateur(existing.id_createur, userId) && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres parcours');
     }
 
@@ -185,7 +186,7 @@ class ParcoursService extends BaseService {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_createur !== userId && !isAdmin) {
+    if (!memeUtilisateur(existing.id_createur, userId) && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres parcours');
     }
 
@@ -205,7 +206,7 @@ class ParcoursService extends BaseService {
     const parcours = await this.repository.findById(parcoursId);
     if (!parcours) throw this._notFoundError(parcoursId);
 
-    if (parcours.id_createur !== userId) {
+    if (!memeUtilisateur(parcours.id_createur, userId)) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres parcours');
     }
 
@@ -233,7 +234,7 @@ class ParcoursService extends BaseService {
     const parcours = await this.repository.findById(parcoursId);
     if (!parcours) throw this._notFoundError(parcoursId);
 
-    if (parcours.id_createur !== userId) {
+    if (!memeUtilisateur(parcours.id_createur, userId)) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres parcours');
     }
 
@@ -254,7 +255,7 @@ class ParcoursService extends BaseService {
     const parcours = await this.repository.findById(parcoursId);
     if (!parcours) throw this._notFoundError(parcoursId);
 
-    if (parcours.id_createur !== userId) {
+    if (!memeUtilisateur(parcours.id_createur, userId)) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres parcours');
     }
 

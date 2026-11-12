@@ -474,7 +474,7 @@ class HttpClient {
           
           if (error.response.data && typeof error.response.data === 'object') {
             const data = error.response.data as Record<string, unknown>;
-            errorMessage = typeof data.message === 'string' ? data.message : errorMessage;
+            errorMessage = typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : errorMessage;
           }
 
           this.showToast({
@@ -491,7 +491,7 @@ class HttpClient {
 
           if (error.response.data && typeof error.response.data === 'object') {
             const data = error.response.data as Record<string, unknown>;
-            errorMessage = typeof data.message === 'string' ? data.message : errorMessage;
+            errorMessage = typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : errorMessage;
           }
 
           this.showToast({
@@ -560,7 +560,7 @@ class HttpClient {
     if (error.response?.status === 429) {
       // Message du serveur (ex. « Compte temporairement bloqué… Réessayez dans 15 minute(s). »)
       const data = (error.response.data || {}) as Record<string, unknown>;
-      const duServeur = [data.error, data.message].filter(v => typeof v === 'string' && v).join(' ');
+      const duServeur = [...new Set([data.error, data.message].filter(v => typeof v === 'string' && v))].join(' ');
       const retryAfter = error.response.headers['retry-after'];
       const message = duServeur || (retryAfter
         ? `Limite d'actions atteinte. Réessayez dans ${retryAfter} secondes.`

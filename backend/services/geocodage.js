@@ -9,6 +9,7 @@
  * OpenStreetMap, gratuit, sans clé) prend alors le relais, et seul pendant 10 minutes.
  */
 const logger = require('../utils/logger');
+const AppError = require('../utils/appError');
 
 const BASE = 'https://nominatim.openstreetmap.org';
 const PHOTON = 'https://photon.komoot.io';
@@ -44,11 +45,8 @@ const attendreSonTour = async () => {
   if (creneau > maintenant) await new Promise((r) => setTimeout(r, creneau - maintenant));
 };
 
-const erreurService = () => {
-  const err = new Error('La recherche d’adresse est momentanément indisponible. Réessayez dans un instant ou placez le point sur la carte.');
-  err.statusCode = 503;
-  return err;
-};
+// AppError : son texte reste visible en production (une 5xx ordinaire y devient « Erreur serveur »)
+const erreurService = () => new AppError('La recherche d’adresse est momentanément indisponible. Réessayez dans un instant ou placez le point sur la carte.', 503, 'GEOCODAGE_INDISPONIBLE');
 
 async function lireJson(url, envoyer, attendre) {
   const enCache = lireCache(url);

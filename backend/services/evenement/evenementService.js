@@ -18,6 +18,7 @@ const { EVENEMENT_OUVERT, EVENEMENT_NON_PUBLIC } = require('../../constants/stat
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
 const { evenementPath } = require('../../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
+const { memeUtilisateur } = require('../../utils/droits');
 
 /** Rôles possibles d'une organisation partenaire (la principale est choisie à part) */
 const ROLES_PARTENAIRES = ['co_organisateur', 'partenaire', 'sponsor', 'media_partner', 'soutien'];
@@ -794,7 +795,7 @@ class EvenementService extends BaseService {
   async _assertEventOwnerOrAdmin(evenementId, userId, isAdmin) {
     const evenement = await this.repository.findById(evenementId);
     if (!evenement) throw this._notFoundError(evenementId);
-    if (evenement.id_user !== userId && !isAdmin) {
+    if (!memeUtilisateur(evenement.id_user, userId) && !isAdmin) {
       throw this._forbiddenError('Accès non autorisé');
     }
     return evenement;

@@ -7,6 +7,7 @@ const { handleValidationErrors, validateStringLengths } = require('../middleware
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const { msg } = require('../utils/messageValidation');
+const { memeUtilisateur } = require('../utils/droits');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {
@@ -39,7 +40,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
       }
 
       // Vérifier si l'utilisateur est le créateur
-      if (signalement.id_user_signalant !== req.user.id_user) {
+      if (!memeUtilisateur(signalement.id_user_signalant, req.user.id_user)) {
         return res.status(403).json({
           success: false,
           message: req.t ? req.t('auth.forbidden') : 'Forbidden'

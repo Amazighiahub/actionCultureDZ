@@ -5,7 +5,7 @@
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
 const { sanitizeBlockContent, sanitizeBlockJson } = require('../utils/sanitizeArticle');
-const { peutGerer, estModeration } = require('../utils/droits');
+const { peutGerer, estModeration, memeUtilisateur } = require('../utils/droits');
 
 // Types d'articles gérés par ce service (les blocs patrimoine ont leurs propres routes)
 const EDITABLE_ARTICLE_TYPES = ['article', 'article_scientifique'];
@@ -365,7 +365,7 @@ class ArticleBlockService extends BaseService {
       include: [{ model: this.models.Oeuvre, attributes: ['saisi_par', 'id_oeuvre', 'statut', 'titre'] }]
     });
     if (!parent) return { error: 'notFound' };
-    if (!user?.id_user || parent.Oeuvre?.saisi_par !== user.id_user) return { error: 'forbidden' };
+    if (!user?.id_user || !memeUtilisateur(parent.Oeuvre?.saisi_par, user.id_user)) return { error: 'forbidden' };
     return { oeuvre: parent.Oeuvre };
   }
 

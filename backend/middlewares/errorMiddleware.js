@@ -53,13 +53,16 @@ const errorMiddleware = {
 
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // AppError — format plat avec code
+    // AppError — format plat avec code. Une AppError 500 est le plus souvent une erreur imprévue emballée
+    // par un service (AppError.fromError, texte brut) : masquée en production comme toute 500
     if (error instanceof AppError) {
-      logger.warn('AppError: %o', { code: error.code, message: error.message, statusCode: error.statusCode });
+      const masquee = isProduction && error.statusCode === 500;
+      if (masquee) logger.error('Erreur serveur: %s | %s %s', error.message, req.method, req.originalUrl);
+      else logger.warn('AppError: %o', { code: error.code, message: error.message, statusCode: error.statusCode });
       return res.status(error.statusCode).json({
         success: false,
-        error: error.message,
-        code: error.code,
+        error: masquee ? 'Erreur serveur' : error.message,
+        code: masquee ? 'INTERNAL_ERROR' : error.code,
         // Champs refusés (champ + message seulement), aussi en production pour une erreur 4xx
         ...(error.details && (!isProduction || error.statusCode < 500) && {
           details: Array.isArray(error.details)

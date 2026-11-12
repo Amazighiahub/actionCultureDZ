@@ -101,8 +101,8 @@ const moderationMethods = {
       }, req);
       res.json({ success: true, message: result.message, data: result.data });
     } catch (error) {
-      console.error('Erreur validateUser:', error.message);
-      res.status(400).json({ success: false, error: error.message });
+      // Refus prévu (4xx) : son message ; erreur imprévue : 500 masquée en production, journalisée
+      this._handleError(res, error);
     }
   },
 
@@ -145,7 +145,8 @@ const moderationMethods = {
         );
         results.push({ id: signalementId, success: true, result });
       } catch (error) {
-        results.push({ id: signalementId, success: false, error: error.message });
+        // Message d'un refus prévu seulement, pas un texte technique
+        results.push({ id: signalementId, success: false, error: error.statusCode && error.statusCode < 500 ? error.message : 'Erreur serveur' });
       }
     }
     return { message: `${results.filter(r => r.success).length} signalements traités`, data: results };
