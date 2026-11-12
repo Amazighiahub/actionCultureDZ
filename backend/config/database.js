@@ -168,6 +168,21 @@ const config = {
 const createDatabaseConnection = (env = 'development') => {
   const dbConfig = config[env];
 
+  // Durée maximale des requêtes de l'application (audit V11 BDD-4), posée sur chaque connexion du pool :
+  // une lecture (SELECT) bloquée s'arrête au bout de DB_MAX_EXECUTION_MS (10 s par défaut) au lieu
+  // d'occuper une connexion et de ralentir tout le site ; l'attente d'un verrou est ramenée de 50 à 15 s.
+  // Seulement pour l'application : ni les migrations (sequelize-cli) ni la sauvegarde (mysqldump).
+  // DB_MAX_EXECUTION_MS=0 retire la limite.
+  const dureeMax = Math.max(parseInt(process.env.DB_MAX_EXECUTION_MS || '10000', 10) || 0, 0);
+  const limiterDureeRequetes = (connexion) => new Promise((resolve) => {
+    if (process.env.NODE_ENV === 'test' || typeof connexion?.query !== 'function') return resolve();
+    connexion.query(`SET SESSION max_execution_time = ${dureeMax}, innodb_lock_wait_timeout = 15`, (err) => {
+      // Réglage refusé (ancienne version de MySQL…) : la connexion reste utilisable sans limite
+      if (err) console.warn('Durée maximale des requêtes non appliquée :', err.message);
+      resolve();
+    });
+  });
+
   const sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,
@@ -181,6 +196,7 @@ const createDatabaseConnection = (env = 'development') => {
       define: dbConfig.define || {},
       pool: dbConfig.pool || {},
       dialectOptions: dbConfig.dialectOptions || {},
+      hooks: { afterConnect: limiterDureeRequetes },
       // Relance UNIQUEMENT sur une connexion perdue ou indisponible. Sans `match`, Sequelize
       // relançait toute erreur (colonne inconnue, syntaxe...) jusqu'à 10 fois avec un délai
       // croissant : la requête dépassait 30 s et la page tombait en 408 au lieu d'une erreur claire.

@@ -25,6 +25,11 @@ function reponseErreurSequelize(error, isProduction = process.env.NODE_ENV === '
     }));
     return { statusCode: 409, corps: { success: false, error: 'Cette ressource existe déjà', code: 'UNIQUE_CONSTRAINT', details } };
   }
+  // Requête trop longue (max_execution_time) ou verrou trop long à obtenir : réessayer suffit le plus souvent
+  const code = error?.parent?.code || error?.original?.code;
+  if (code === 'ER_QUERY_TIMEOUT' || code === 'ER_LOCK_WAIT_TIMEOUT') {
+    return { statusCode: 503, corps: { success: false, error: 'Le serveur est très occupé : réessayez dans un instant.', code: 'DELAI_DEPASSE' } };
+  }
   if (error?.name === 'SequelizeForeignKeyConstraintError') {
     return { statusCode: 400, corps: { success: false, error: MESSAGE_REFERENCE, code: 'FK_CONSTRAINT' } };
   }

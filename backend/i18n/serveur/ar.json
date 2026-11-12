@@ -467,5 +467,6 @@
   "Liste des organisations partenaires invalide": "قائمة المنظمات الشريكة غير صالحة",
   "Dix organisations partenaires au plus": "عشر منظمات شريكة على الأكثر",
   "Une organisation partenaire n’existe pas ou a été refusée": "إحدى المنظمات الشريكة غير موجودة أو تم رفضها",
-  "Une organisation partenaire n’est pas encore vérifiée": "إحدى المنظمات الشريكة لم يتم التحقق منها بعد"
+  "Une organisation partenaire n’est pas encore vérifiée": "إحدى المنظمات الشريكة لم يتم التحقق منها بعد",
+  "Le serveur est très occupé : réessayez dans un instant.": "الخادم مشغول جدًا: أعد المحاولة بعد لحظة."
 }

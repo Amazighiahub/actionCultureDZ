@@ -467,5 +467,6 @@
   "Liste des organisations partenaires invalide": "Invalid list of partner organisations",
   "Dix organisations partenaires au plus": "Ten partner organisations at most",
   "Une organisation partenaire n’existe pas ou a été refusée": "A partner organisation does not exist or was rejected",
-  "Une organisation partenaire n’est pas encore vérifiée": "A partner organisation has not been verified yet"
+  "Une organisation partenaire n’est pas encore vérifiée": "A partner organisation has not been verified yet",
+  "Le serveur est très occupé : réessayez dans un instant.": "The server is very busy: please try again in a moment."
 }

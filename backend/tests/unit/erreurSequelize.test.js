@@ -53,3 +53,16 @@ describe('erreurs de la base, contrôleur et middleware', () => {
     expect(res.json.mock.calls[0][0].code).toBeUndefined();
   });
 });
+
+describe('requête trop longue ou verrou trop long', () => {
+  it.each(['ER_QUERY_TIMEOUT', 'ER_LOCK_WAIT_TIMEOUT'])('%s → 503 « réessayez », par le contrôleur et le middleware', (code) => {
+    const err = () => Object.assign(new Error('Query execution was interrupted'), { name: 'SequelizeDatabaseError', parent: { code } });
+    let res = reponse();
+    new BaseController()._handleError(res, err());
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ code: 'DELAI_DEPASSE', error: 'Le serveur est très occupé : réessayez dans un instant.' });
+    res = reponse();
+    errorMiddleware.errorHandler(err(), res.req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(503);
+  });
+});
