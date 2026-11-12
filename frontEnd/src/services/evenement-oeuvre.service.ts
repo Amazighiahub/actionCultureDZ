@@ -67,20 +67,6 @@ class EvenementOeuvreService {
   }
 
   /**
-   * Mettre à jour une association œuvre-événement
-   */
-  async updateOeuvre(
-    evenementId: number,
-    oeuvreId: number,
-    data: UpdateOeuvreData
-  ): Promise<ApiResponse<EvenementOeuvre>> {
-    return httpClient.put<EvenementOeuvre>(
-      `${API_ENDPOINTS.evenements.addOeuvre(evenementId)}/${oeuvreId}`,
-      data
-    );
-  }
-
-  /**
    * Retirer une œuvre d'un événement
    */
   async removeOeuvre(evenementId: number, oeuvreId: number): Promise<ApiResponse<void>> {

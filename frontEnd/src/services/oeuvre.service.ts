@@ -1,22 +1,11 @@
 // services/oeuvre.service.ts - Version complètement corrigée
 import i18next from 'i18next';
 import { reponseEchec } from '@/utils/erreurServeur';
-import {
-  CreateOeuvreCompleteDTO,
-  CreateOeuvreResponse,
-  IntervenantSearchResult,
-  CheckUserByEmailResponse,
-  IntervenantExistant,
-  NouvelIntervenant,
-  EditeurOeuvre
-} from '@/types/api/oeuvre-creation.types';
+import { CreateOeuvreCompleteDTO, CreateOeuvreResponse, IntervenantSearchResult, CheckUserByEmailResponse } from '@/types/api/oeuvre-creation.types';
 import { Oeuvre } from '@/types/models/oeuvre.types';
 import { Media } from '@/types/models/media.types';
-import { Evenement } from '@/types/models/evenement.types';
 import { httpClient } from './httpClient';
-import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
 import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
-import { mediaService } from './media.service';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 
 // ========================================
@@ -99,43 +88,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 class OeuvreService {
-  /**
-   * Créer une nouvelle œuvre AVEC médias
-   */
-  async createOeuvreWithMedias(
-    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
-    mediaFiles?: File[]
-  ): Promise<ApiResponse<CreateOeuvreResponse>> {
-    try {
-      // ÉTAPE 1 : Créer l'œuvre d'abord
-      const oeuvreResult = await this.createOeuvre(data);
-
-      if (!oeuvreResult.success || !oeuvreResult.data) {
-        return oeuvreResult;
-      }
-
-      const oeuvreId = oeuvreResult.data.oeuvre.id_oeuvre;
-
-      // ÉTAPE 2 : Upload des médias si présents
-      if (mediaFiles && mediaFiles.length > 0) {
-        const uploadResult = await mediaService.uploadMultiple(
-        mediaFiles,
-        'oeuvre',
-        oeuvreId,
-        () => {}
-        );
-
-        if (!uploadResult.success) {
-          return oeuvreResult;
-        }
-      }
-
-      return oeuvreResult;
-
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('ajouteroeuvre.createError', "Erreur lors de la création de l'oeuvre"));
-    }
-  }
 
   /**
    * Créer une nouvelle œuvre (sans médias)
@@ -179,110 +131,6 @@ class OeuvreService {
   }
 
   /**
-   * Alternative : Créer une œuvre avec FormData (pour upload direct)
-   */
-  async createOeuvreFormData(
-    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
-    mediaFiles?: File[],
-    mediaMetadata?: Array<{ is_principal: boolean }>
-  ): Promise<ApiResponse<CreateOeuvreResponse>> {
-    try {
-      const formData = new FormData();
-
-      // Ajouter les champs simples directement
-      formData.append('titre', typeof data.titre === 'string' ? data.titre : JSON.stringify(data.titre));
-      formData.append('description', typeof data.description === 'string' ? data.description : JSON.stringify(data.description || {}));
-      formData.append('id_type_oeuvre', data.id_type_oeuvre.toString());
-      formData.append('id_langue', data.id_langue.toString());
-
-      if (data.annee_creation) {
-        formData.append('annee_creation', data.annee_creation.toString());
-      }
-      if (data.prix) {
-        formData.append('prix', data.prix.toString());
-      }
-
-      // Pour les tableaux et objets, les stringifier
-      if (data.categories && data.categories.length > 0) {
-        formData.append('categories', JSON.stringify(data.categories));
-      }
-
-      if (data.tags && data.tags.length > 0) {
-        formData.append('tags', JSON.stringify(data.tags));
-      }
-
-      // Contributeurs
-      if ('utilisateurs_inscrits' in data && data.utilisateurs_inscrits?.length) {
-        formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
-      }
-
-      if ('intervenants_existants' in data) {
-        const completeData = data as CreateOeuvreCompleteDTO;
-        if (completeData.intervenants_existants?.length) {
-          formData.append('intervenants_existants', JSON.stringify(completeData.intervenants_existants));
-        }
-      }
-
-      if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
-        formData.append('intervenants_non_inscrits', JSON.stringify(data.intervenants_non_inscrits));
-      }
-
-      if ('nouveaux_intervenants' in data && data.nouveaux_intervenants?.length) {
-        formData.append('nouveaux_intervenants', JSON.stringify(data.nouveaux_intervenants));
-      }
-
-      if ('editeurs' in data && data.editeurs?.length) {
-        formData.append('editeurs', JSON.stringify(data.editeurs));
-      }
-
-      // Détails spécifiques
-      if (data.details_specifiques && Object.keys(data.details_specifiques).length > 0) {
-        formData.append('details_specifiques', JSON.stringify(data.details_specifiques));
-      }
-
-      // Ajouter les fichiers médias
-      if (mediaFiles && mediaFiles.length > 0) {
-        (await prepareFilesForUpload(mediaFiles)).forEach((file) => {
-          formData.append('medias', file);
-        });
-        if (mediaMetadata && mediaMetadata.length > 0) {
-          formData.append('media_metadata', JSON.stringify(mediaMetadata));
-        }
-      }
-
-      const response = await httpClient.postFormData<CreateOeuvreResponse>(
-        '/oeuvres',
-        formData
-      );
-
-      return response;
-
-    } catch (error: unknown) {
-      // Détail des champs, code et statut gardés : le formulaire place chaque refus sous son champ
-      // (avant : getApiErrorMessage cherchait « error.response », absent d'une HttpError, et perdait tout)
-      return reponseEchec(error, i18next.t('ajouteroeuvre.createError', "Erreur lors de la création de l'oeuvre"));
-    }
-  }
-
-  /**
-   * Upload de médias pour une œuvre existante
-   */
-  async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<Media[]>> {
-    try {
-      const result = await mediaService.uploadMultiple(
-        files,
-        'oeuvre',
-        oeuvreId,
-        () => {}
-      );
-      // Map MediaUploadResponse[] to Media[] in the response
-      return result as ApiResponse<Media[]>;
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('oeuvreService.erreurs.envoiMedias', 'Erreur lors de l’envoi des fichiers'));
-    }
-  }
-
-  /**
    * Rechercher des intervenants
    */
   async searchIntervenants(params: { q: string }): Promise<IntervenantSearchResult[]> {
@@ -312,33 +160,6 @@ class OeuvreService {
   }
 
   /**
-   * Récupérer les événements où l'œuvre est présentée
-   */
-  async getEventsByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
-    try {
-      return await httpClient.get(`/evenements/oeuvre/${oeuvreId}`);
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('oeuvreService.erreurs.evenements', 'Erreur lors de la récupération des événements'));
-    }
-  }
-
-  /**
-   * Récupérer les statistiques de vues d'une œuvre
-   */
-  async getViewStats(oeuvreId: number): Promise<ApiResponse<{
-    total_vues: number;
-    vues_uniques: number;
-    vues_30_jours: number;
-    evolution: Array<{ date: string; vues: number }>;
-  }>> {
-    try {
-      return await httpClient.get(`/tracking/stats/oeuvre/${oeuvreId}`);
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('oeuvreService.erreurs.statistiques', 'Erreur lors de la récupération des statistiques'));
-    }
-  }
-
-  /**
    * Récupérer les œuvres similaires (recommandations)
    */
   async getSimilarOeuvres(oeuvreId: number, limit = 6): Promise<ApiResponse<Oeuvre[]>> {
@@ -346,35 +167,6 @@ class OeuvreService {
       return await httpClient.get(`/oeuvres/${oeuvreId}/similar`, { limit });
     } catch (error: unknown) {
       return reponseEchec(error, i18next.t('oeuvreService.erreurs.similaires', 'Erreur lors de la récupération des œuvres similaires'));
-    }
-  }
-
-  /**
-   * Récupérer les œuvres d'un intervenant
-   */
-  async getOeuvresByIntervenant(intervenantId: number, params?: {
-    page?: number;
-    limit?: number;
-    role_principal?: boolean;
-  }): Promise<ApiResponse<OeuvreListResponse>> {
-    try {
-      const response = await httpClient.get<OeuvreListResponse>(
-        `/intervenants/${intervenantId}/oeuvres`, params
-      );
-
-      return response;
-    } catch (error: unknown) {
-      // Alternative : utiliser l'endpoint de recherche d'œuvres avec filtre intervenant
-      try {
-        const searchResponse = await httpClient.get<OeuvreListResponse>('/oeuvres', {
-          ...params,
-          intervenant_id: intervenantId
-        });
-
-        return searchResponse;
-      } catch (searchError: unknown) {
-        return reponseEchec(searchError, i18next.t('oeuvreService.erreurs.oeuvresIntervenant', 'Erreur lors de la récupération des œuvres de l’intervenant'));
-      }
     }
   }
 
@@ -461,13 +253,6 @@ class OeuvreService {
     } catch (error: unknown) {
       return reponseEchec(error, i18next.t('service.errors.submitFailed', 'Erreur lors de la soumission'));
     }
-  }
-
-  /**
-   * Alias rétrocompatible pour les consommateurs historiques
-   */
-  async getById(id: number): Promise<ApiResponse<Oeuvre>> {
-    return this.getOeuvreById(id);
   }
 
   /**
@@ -561,28 +346,6 @@ class OeuvreService {
   }
 
   /**
-   * Récupérer les statistiques
-   */
-  async getStatistics(): Promise<ApiResponse<OeuvreStatistics>> {
-    try {
-      return await httpClient.get('/oeuvres/statistics');
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('oeuvreService.erreurs.statistiques', 'Erreur lors de la récupération des statistiques'));
-    }
-  }
-
-  /**
-   * Récupérer les œuvres récentes
-   */
-  async getRecentOeuvres(limit = 6): Promise<ApiResponse<OeuvreListResponse>> {
-    try {
-      return await httpClient.get('/oeuvres/recent', { limit });
-    } catch (error: unknown) {
-      return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
-    }
-  }
-
-  /**
    * Récupérer les médias d'une œuvre
    */
   async getMedias(oeuvreId: number): Promise<ApiResponse<Media[]>> {
@@ -603,31 +366,6 @@ class OeuvreService {
       return reponseEchec(error, i18next.t('common.deleteError', 'Impossible de supprimer'));
     }
   }
-  /**
- * Récupérer les œuvres par types (plusieurs types)
- */
-async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
-  try {
-    const response = await httpClient.get<OeuvreListResponse>('/oeuvres', {
-      types: types.join(','),
-      limit: 100
-    });
-
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data.oeuvres
-      };
-    }
-
-    return {
-      success: false,
-      error: i18next.t('oeuvreService.erreurs.oeuvres', 'Erreur lors de la récupération des œuvres')
-    };
-  } catch (error: unknown) {
-    return reponseEchec(error, i18next.t('oeuvreService.erreurs.recuperation', 'Erreur lors de la récupération'));
-  }
-}
 
 }
 

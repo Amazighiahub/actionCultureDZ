@@ -1,25 +1,8 @@
 // services/notificationService.unified.ts - Service unifié pour les notifications
-import { API_ENDPOINTS, ApiResponse, PaginationParams, getApiUrl, getAuthHeaders } from '@/config/api';
+import { API_ENDPOINTS } from '@/config/api';
 import { httpClient } from './httpClient';
-// ✅ Correction 1 : Import nommé au lieu de default
-import { socketService } from './socketService';
-import {
-  Notification,
-  NotificationAPI,
-  NotificationSummary,
-  NotificationSummaryAPI,
-  NotificationPreferences,
-  NotificationListResponse,
-  LoadNotificationsOptions,
-  UpdatePreferencesData,
-  BroadcastNotificationData,
-  WebSocketStatus,
-  TestEmailType,
-  mapAPIToNotification,
-  mapAPISummaryToSummary,
-  formatNotificationDate
-} from '../types/models/notification.types';
-import { messageErreurServeur, reponseEchec } from '@/utils/erreurServeur';
+import { Notification, NotificationAPI, NotificationSummary, NotificationSummaryAPI, NotificationPreferences, NotificationListResponse, LoadNotificationsOptions, UpdatePreferencesData, mapAPIToNotification, mapAPISummaryToSummary } from '../types/models/notification.types';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import i18next from 'i18next';
 // Copiez-collez ceci à la FIN de notification.service.ts
 // Remplacez la section export type { ... } existante
@@ -175,28 +158,6 @@ async getNotifications(
   }
 
   /**
-   * Marquer plusieurs notifications comme lues
-   */
-  async markMultipleAsRead(notificationIds: number[]): Promise<{ updated: number }> {
-    try {
-      const response = await httpClient.put<{ updated_count?: number; updated?: number }>(
-        API_ENDPOINTS.notifications.markMultipleAsRead,
-        { notificationIds }
-      );
-
-      if (!response.success) {
-        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
-      }
-
-      return {
-        updated: response.data?.updated || response.data?.updated_count || 0
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
    * Supprimer une notification
    */
   async deleteNotification(notificationId: number): Promise<void> {
@@ -290,100 +251,6 @@ async getNotifications(
   }
 
   /**
-   * Envoyer un email de test
-   */
-  async sendTestEmail(type?: TestEmailType): Promise<{ sent: boolean; result: Record<string, unknown> }> {
-    try {
-      const response = await httpClient.post<{ sent: boolean; result: Record<string, unknown> }>(
-        API_ENDPOINTS.notifications.testEmail,
-        { type }
-      );
-
-      if (!response.success || !response.data) {
-        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
-      }
-
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Vérifier le statut WebSocket
-   */
-  async getWebSocketStatus(): Promise<WebSocketStatus> {
-    try {
-      const response = await httpClient.get<{ success: boolean; websocket: WebSocketStatus }>(
-        API_ENDPOINTS.notifications.wsStatus
-      );
-
-      if (!response.success || !response.data) {
-        return {
-          connected: false,
-          error: 'Service WebSocket non disponible'
-        };
-      }
-
-      return response.data.websocket;
-    } catch (error) {
-      return {
-        connected: false,
-        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  /**
-   * Envoyer une notification broadcast (admin)
-   */
-  async broadcastNotification(
-    data: BroadcastNotificationData
-  ): Promise<{ sent_count: number }> {
-    try {
-      const response = await httpClient.post<{ sent_count: number }>(
-        API_ENDPOINTS.dashboard.broadcastNotification,
-        data
-      );
-
-      if (!response.success || !response.data) {
-        throw new Error(messageErreurServeur(response, i18next.t('common.errorOccurred', 'Une erreur est survenue')));
-      }
-
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // ================================================
-  // MÉTHODES UTILITAIRES
-  // ================================================
-
-  /**
-   * Obtenir uniquement les notifications non lues
-   */
-  async getUnreadNotifications(limit: number = 20): Promise<NotificationListResponse> {
-    return this.getNotifications({
-      nonLues: true,
-      limit,
-      page: 1
-    });
-  }
-
-  /**
-   * Obtenir le nombre de notifications non lues
-   */
-  async getUnreadCount(): Promise<number> {
-    try {
-      const summary = await this.getSummary();
-      return summary.nonLues || 0;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  /**
    * Afficher une notification navigateur
    */
   showBrowserNotification(notification: Notification): void {
@@ -394,81 +261,6 @@ async getNotifications(
         tag: `notification-${notification.id_notification}`,
         requireInteraction: notification.priorite === 'urgente'
       });
-    }
-  }
-
-  /**
-   * Formater la date d'une notification
-   */
-  formatDate(dateStr: string, language = 'fr'): string {
-    return formatNotificationDate(dateStr, language);
-  }
-
-  /**
-   * Envoyer une notification à un utilisateur spécifique
-   */
-  async sendNotification(notificationData: {
-    titre: string;
-    message: string;
-    type_notification: string;
-    destinataire_id: number;
-    url_action?: string;
-    priorite?: string;
-    canaux?: string[];
-    metadata?: Record<string, unknown>;
-  }): Promise<{ success: boolean; notification?: Notification }> {
-    try {
-      const result = await httpClient.post<{ notification: Notification }>('/notifications/send', notificationData);
-      return {
-        success: result.success,
-        notification: result.data?.notification
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Envoyer une notification globale à tous les utilisateurs
-   */
-  async sendGlobalNotification(notificationData: {
-    titre: string;
-    message: string;
-    type_notification: string;
-    priorite?: string;
-    canaux?: string[];
-    global: boolean;
-    metadata?: Record<string, unknown>;
-  }): Promise<{ success: boolean; sent_count?: number }> {
-    try {
-      const result = await httpClient.post<{ sent_count: number }>('/notifications/broadcast', notificationData);
-      return {
-        success: result.success,
-        sent_count: result.data?.sent_count || 0
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Envoyer un email via le service de notification
-   * Note: Cette méthode n'est disponible que si le backend supporte l'envoi d'emails
-   */
-  async sendEmail?(emailData: {
-    to: number | string;
-    subject: string;
-    body: string;
-    template?: string;
-  }): Promise<{ success: boolean; messageId?: string }> {
-    try {
-      const result = await httpClient.post<{ messageId: string }>('/notifications/test-email', emailData);
-      return {
-        success: result.success,
-        messageId: result.data?.messageId
-      };
-    } catch (error) {
-      return { success: false };
     }
   }
 }

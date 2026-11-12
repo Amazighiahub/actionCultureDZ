@@ -20,15 +20,6 @@ interface ApiUploadOptions<T = unknown> {
   };
 }
 
-// Types pour la réponse d'erreur
-interface ErrorResponse {
-  success: false;
-  error?: string;
-  message?: string;
-  details?: Record<string, unknown>;
-  [key: string]: unknown;
-}
-
 // ============================================================================
 // Refresh token: helper partage (deduplication concurrente)
 // ============================================================================

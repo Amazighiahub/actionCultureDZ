@@ -127,20 +127,6 @@ class PermissionsService {
   }
 
   /**
-   * Vérifie si l'utilisateur est authentifié
-   */
-  isAuthenticated(): boolean {
-    return authService.isAuthenticated();
-  }
-
-  /**
-   * Récupère l'utilisateur actuel
-   */
-  getCurrentUser(): CurrentUser | null {
-    return this.currentUser;
-  }
-
-  /**
    * Vérifie si l'utilisateur a une permission
    */
   hasPermission(permission: PermissionCheck): boolean {
@@ -233,22 +219,6 @@ class PermissionsService {
     }
     
     return null;
-  }
-
-  /**
-   * Vérifie si l'utilisateur peut créer une œuvre
-   */
-  canCreateOeuvre(): boolean {
-    // Seulement les professionnels validés ou les admins
-    return this.hasPermission(PERMISSIONS.OEUVRE_CREATE);
-  }
-
-  /**
-   * Vérifie si l'utilisateur peut créer un événement
-   */
-  canCreateEvent(): boolean {
-    // Seulement les professionnels validés ou les admins
-    return this.hasPermission(PERMISSIONS.EVENT_CREATE);
   }
 
   /**

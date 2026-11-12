@@ -1,5 +1,5 @@
 // services/parcours.service.ts
-import { API_ENDPOINTS, ApiResponse } from '@/config/api';
+import { ApiResponse } from '@/config/api';
 import { httpClient } from './httpClient';
 import type { TranslatableValue } from '@/types/common/multilingual.types';
 
@@ -81,141 +81,9 @@ interface ParcoursStats {
 class ParcoursIntelligentService {
   private baseUrl = '/parcours';
 
-  // Générer un parcours autour d'un événement
-  async generateForEvenement(evenementId: number, params?: Partial<GenerateParcoursParams>): Promise<ApiResponse<{
-    evenement: Record<string, unknown>;
-    parcours: ParcoursIntelligent;
-    statistiques: ParcoursStats;
-  }>> {
-    const queryParams = new URLSearchParams();
-    if (params?.rayon) queryParams.append('rayon', params.rayon.toString());
-    if (params?.maxSites) queryParams.append('maxSites', params.maxSites.toString());
-    if (params?.dureeMaxParcours) queryParams.append('dureeMaxParcours', params.dureeMaxParcours.toString());
-    if (params?.includeRestaurants !== undefined) queryParams.append('includeRestaurants', params.includeRestaurants.toString());
-    if (params?.includeHotels !== undefined) queryParams.append('includeHotels', params.includeHotels.toString());
-    if (params?.types?.length) queryParams.append('types', params.types.join(','));
-
-    return httpClient.post<{
-      evenement: Record<string, unknown>;
-      parcours: ParcoursIntelligent;
-      statistiques: ParcoursStats;
-    }>(`${this.baseUrl}/personnalise`, {
-      evenementId,
-      ...Object.fromEntries(queryParams.entries())
-    });
-  }
-
   // Générer un parcours personnalisé
   async generatePersonnalise(params: GenerateParcoursParams): Promise<ApiResponse<ParcoursIntelligent>> {
     return httpClient.post<ParcoursIntelligent>(`${this.baseUrl}/personnalise`, params);
-  }
-
-  // Récupérer les parcours populaires d'une wilaya
-  async getPopulaires(wilayaId: number, limit: number = 5): Promise<ApiResponse<ParcoursIntelligent[]>> {
-    return httpClient.get<ParcoursIntelligent[]>(`${this.baseUrl}/search`, { wilaya_id: wilayaId, limit, sort: 'popular' });
-  }
-
-  // Récupérer un parcours par ID
-  async getById(id: number): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.get<ParcoursIntelligent>(`/parcours/${id}`);
-  }
-
-  // Créer un parcours manuel pour un lieu
-  async createParcours(data: CreateParcoursData): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>('/parcours', data);
-  }
-
-  // Mettre à jour un parcours
-  async updateParcours(id: number, data: Partial<CreateParcoursData>): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.put<ParcoursIntelligent>(`/parcours/${id}`, data);
-  }
-
-  // Supprimer un parcours
-  async deleteParcours(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/parcours/${id}`);
-  }
-
-  // Récupérer les parcours d'un lieu
-  async getParcoursByLieu(lieuId: number): Promise<ApiResponse<ParcoursIntelligent[]>> {
-    return httpClient.get<ParcoursIntelligent[]>(`/lieux/${lieuId}/parcours`);
-  }
-
-  // Générer automatiquement un parcours optimal pour un lieu
-  async generateOptimalParcours(lieuId: number, options?: {
-    maxEtapes?: number;
-    dureeMax?: number;
-    theme?: string;
-    difficulte?: 'facile' | 'moyen' | 'difficile';
-  }): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>(`/lieux/${lieuId}/parcours/generate`, options || {});
-  }
-
-  // Ajouter une étape à un parcours existant
-  async addEtape(parcoursId: number, etape: {
-    id_lieu: number;
-    ordre: number;
-    duree_visite?: number;
-    description?: TranslatableValue;
-  }): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>(`/parcours/${parcoursId}/etapes`, etape);
-  }
-
-  // Supprimer une étape d'un parcours
-  async removeEtape(parcoursId: number, etapeId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/parcours/${parcoursId}/etapes/${etapeId}`);
-  }
-
-  // Réordonner les étapes d'un parcours
-  async reorderEtapes(parcoursId: number, etapesOrder: Array<{ id: number; ordre: number }>): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.put<ParcoursIntelligent>(`/parcours/${parcoursId}/etapes/reorder`, { etapes: etapesOrder });
-  }
-
-  // Calculer la distance et durée estimée d'un parcours
-  async calculateStats(etapes: Array<{ latitude: number; longitude: number; tempsVisite?: number }>): Promise<{
-    distanceKm: number;
-    dureeMinutes: number;
-  }> {
-    let totalDistance = 0;
-    let totalDuree = 0;
-
-    for (let i = 0; i < etapes.length - 1; i++) {
-      const distance = this.calculateDistance(
-        etapes[i].latitude,
-        etapes[i].longitude,
-        etapes[i + 1].latitude,
-        etapes[i + 1].longitude
-      );
-      totalDistance += distance;
-      // Temps de trajet (50 km/h en moyenne) + temps de visite
-      totalDuree += (distance / 50) * 60 + (etapes[i].tempsVisite || 30);
-    }
-
-    // Ajouter le temps de visite de la dernière étape
-    if (etapes.length > 0) {
-      totalDuree += etapes[etapes.length - 1].tempsVisite || 30;
-    }
-
-    return {
-      distanceKm: Math.round(totalDistance * 100) / 100,
-      dureeMinutes: Math.round(totalDuree)
-    };
-  }
-
-  // Calculer la distance entre deux points (formule de Haversine)
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Rayon de la Terre en km
-    const dLat = this.degToRad(lat2 - lat1);
-    const dLon = this.degToRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.degToRad(lat1)) * Math.cos(this.degToRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  private degToRad(deg: number): number {
-    return deg * (Math.PI / 180);
   }
 }
 

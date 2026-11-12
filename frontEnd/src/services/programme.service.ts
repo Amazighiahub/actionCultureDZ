@@ -1,6 +1,6 @@
 // services/programme.service.ts - Version adaptée pour User comme intervenant
 import { dureeMinutes } from '@/utils/programmeHoraire';
-import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
+import { API_ENDPOINTS, ApiResponse } from '@/config/api';
 import { httpClient } from './httpClient';
 
 // Interface pour un intervenant (qui est un User avec des infos supplémentaires)
@@ -164,14 +164,6 @@ class ProgrammeService {
     return httpClient.delete<void>(API_ENDPOINTS.programmes.delete(id));
   }
 
-  // Réorganiser l'ordre des programmes
-  async reorder(evenementId: number, data: ReorderData): Promise<ApiResponse<Programme[]>> {
-    return httpClient.put<Programme[]>(
-      API_ENDPOINTS.programmes.reorder(evenementId), 
-      data
-    );
-  }
-
   // Dupliquer un programme
   async duplicate(
     id: number, 
@@ -183,95 +175,9 @@ class ProgrammeService {
     );
   }
 
-  // Mettre à jour le statut
-  async updateStatus(
-    id: number, 
-    statut: 'planifie' | 'en_cours' | 'termine' | 'annule' | 'reporte'
-  ): Promise<ApiResponse<Programme>> {
-    return httpClient.patch<Programme>(
-      API_ENDPOINTS.programmes.updateStatus(id), 
-      { statut }
-    );
-  }
-
-  // Confirmer/décliner un intervenant
-  async updateIntervenantStatus(
-    programmeId: number,
-    userId: number,
-    statut: 'confirme' | 'decline',
-    raison?: string
-  ): Promise<ApiResponse<void>> {
-    return httpClient.patch<void>(
-      `/programmes/${programmeId}/intervenant/${userId}/statut`,
-      { statut, raison }
-    );
-  }
-
-  // Export
-  async export(evenementId: number, options: ExportOptions): Promise<ApiResponse<Blob>> {
-    const params = new URLSearchParams({
-      format: options.format,
-      include_descriptions: String(options.include_descriptions || false),
-      include_intervenants: String(options.include_intervenants || false)
-    });
-
-    return httpClient.download(
-      `${API_ENDPOINTS.programmes.export(evenementId)}?${params}`,
-      `programme_${evenementId}.${options.format}`
-    );
-  }
-
-  // Helpers
-  formatProgrammeTime(programme: Programme, locale = 'fr-FR'): string {
-    const debut = new Date(programme.heure_debut).toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    const fin = new Date(programme.heure_fin).toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    return `${debut} - ${fin}`;
-  }
-
   /** Durée en minutes (heures « 10:00:00 » renvoyées par le serveur, ou ISO) */
   getDuration(programme: Programme): number {
     return dureeMinutes(programme.heure_debut, programme.heure_fin);
-  }
-
-  isProgrammeActive(programme: Programme): boolean {
-    const now = new Date();
-    const debut = new Date(programme.heure_debut);
-    const fin = new Date(programme.heure_fin);
-    return now >= debut && now <= fin;
-  }
-
-  isProgrammeUpcoming(programme: Programme): boolean {
-    const now = new Date();
-    const debut = new Date(programme.heure_debut);
-    return debut > now;
-  }
-
-  isProgrammePast(programme: Programme): boolean {
-    const now = new Date();
-    const fin = new Date(programme.heure_fin);
-    return fin < now;
-  }
-
-  getIntervenantsNames(programme: Programme): string {
-    if (!programme.Intervenants || programme.Intervenants.length === 0) {
-      return 'Aucun intervenant';
-    }
-    return programme.Intervenants
-      .map(i => `${i.prenom} ${i.nom}`)
-      .join(', ');
-  }
-
-  getConfirmedIntervenants(programme: Programme): IntervenantUser[] {
-    if (!programme.Intervenants) return [];
-    return programme.Intervenants.filter(
-      i => i.ProgrammeIntervenant?.statut_confirmation === 'confirme'
-    );
   }
 }
 

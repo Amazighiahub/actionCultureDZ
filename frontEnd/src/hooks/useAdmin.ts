@@ -9,7 +9,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
-import { API_ENDPOINTS } from '@/config/api';
 
 
 // ============================================================================

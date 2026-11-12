@@ -145,76 +145,6 @@ export class MetadataService {
     }
   }
 
-  /**
-   * Récupérer les genres associés à une liste de catégories
-   */
-  async getGenresFromCategories(categoryIds: number[]): Promise<ApiResponse<{ genres: GenreFromCategories[] }>> {
-    try {
-      const response = await httpClient.post<{ genres: GenreFromCategories[] }>(
-        '/metadata/genres-from-categories',
-        { categories: categoryIds }
-      );
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  /**
-   * Valider la hiérarchie type/catégories
-   */
-  async validateHierarchy(
-    typeOeuvreId: number, 
-    categoryIds: number[]
-  ): Promise<ApiResponse<HierarchyValidationResult>> {
-    try {
-      const response = await httpClient.post<HierarchyValidationResult>(
-        '/metadata/validate-hierarchy',
-        {
-          id_type_oeuvre: typeOeuvreId,
-          categories: categoryIds
-        }
-      );
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  // ================================================
-  // TYPES D'ŒUVRES
-  // ================================================
-
-  async getTypesOeuvres(): Promise<ApiResponse<TypeOeuvre[]>> {
-    try {
-      const response = await httpClient.get<TypeOeuvre[]>('/metadata/types-oeuvres');
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  // ================================================
-  // LANGUES
-  // ================================================
-
-  async getLangues(): Promise<ApiResponse<Langue[]>> {
-    try {
-      const response = await httpClient.get<Langue[]>('/metadata/langues');
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
   // ================================================
   // TYPES D'ÉVÉNEMENTS
   // ================================================
@@ -254,25 +184,6 @@ export class MetadataService {
     }
   }
 
-  // ================================================
-  // ÉDITEURS
-  // ================================================
-
-  async getEditeurs(search?: string, limit = 50): Promise<ApiResponse<Editeur[]>> {
-    try {
-      const params: Record<string, string | number> = { limit };
-      if (search) {
-        params.search = search;
-      }
-      const response = await httpClient.get<Editeur[]>('/metadata/editeurs', params);
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
   async createEditeur(data: { 
     nom: string; 
     type_editeur?: string;
@@ -284,26 +195,6 @@ export class MetadataService {
     try {
       const response = await httpClient.post<Editeur>('/metadata/editeurs', data);
       this.clearCache();
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  // ================================================
-  // TAGS
-  // ================================================
-
-  async getTags(search?: string, limit = 50): Promise<ApiResponse<TagMotCle[]>> {
-    try {
-      const params: Record<string, string | number> = { limit };
-      if (search) {
-        params.search = search;
-      }
-      
-      const response = await httpClient.get<TagMotCle[]>('/metadata/tags', params);
       return response;
     } catch (error: unknown) {
       return {
@@ -351,21 +242,6 @@ export class MetadataService {
   }
 
   // ================================================
-  // CATÉGORIES ET GENRES
-  // ================================================
-
-  async getGenres(): Promise<ApiResponse<Genre[]>> {
-    try {
-      const response = await httpClient.get<Genre[]>('/metadata/genres');
-      return response;
-    } catch (error: unknown) {
-      return {
-        ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  // ================================================
   // WILAYAS
   // ================================================
 
@@ -379,90 +255,6 @@ export class MetadataService {
         ...reponseEchec(error, i18n.t('common.errorOccurred', 'Une erreur est survenue'))
       };
     }
-  }
-
-  // ================================================
-  // HELPERS
-  // ================================================
-
-  /**
-   * Helper: Construire un arbre de sélection pour les catégories
-   */
-  buildCategoryTree(categoriesGrouped: CategoryGroupedByGenre[]): Array<{
-    label: string;
-    value: string;
-    children: Array<{
-      label: string;
-      value: number;
-    }>;
-  }> {
-    return categoriesGrouped.map(genre => ({
-      label: genre.nom,
-      value: `genre-${genre.id_genre}`,
-      children: genre.categories.map(cat => ({
-        label: cat.nom,
-        value: cat.id_categorie
-      }))
-    }));
-  }
-
-  /**
-   * Helper: Obtenir les IDs de genres depuis une liste de catégories
-   */
-  async getGenreIdsFromCategories(categoryIds: number[]): Promise<number[]> {
-    const response = await this.getGenresFromCategories(categoryIds);
-    if (response.success && response.data) {
-      return response.data.genres.map(g => g.id_genre);
-    }
-    return [];
-  }
-
-  /**
-   * Helper: Vérifier si au moins une catégorie est sélectionnée pour un genre
-   */
-  hasGenreRepresentation(
-    selectedCategories: number[], 
-    genreId: number,
-    categoriesGrouped: CategoryGroupedByGenre[]
-  ): boolean {
-    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
-    if (!genre) return false;
-    
-    return genre.categories.some(cat => 
-      selectedCategories.includes(cat.id_categorie)
-    );
-  }
-
-  /**
-   * Helper: Récupérer les catégories d'un genre spécifique
-   */
-  getCategoriesOfGenre(
-    genreId: number,
-    categoriesGrouped: CategoryGroupedByGenre[]
-  ): Categorie[] {
-    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
-    return genre ? genre.categories : [];
-  }
-
-  /**
-   * Helper: Compter les catégories sélectionnées par genre
-   */
-  countCategoriesByGenre(
-    selectedCategories: number[],
-    categoriesGrouped: CategoryGroupedByGenre[]
-  ): Map<number, number> {
-    const countMap = new Map<number, number>();
-    
-    categoriesGrouped.forEach(genre => {
-      const count = genre.categories.filter(cat => 
-        selectedCategories.includes(cat.id_categorie)
-      ).length;
-      if (count > 0) {
-        countMap.set(genre.id_genre, count);
-      }
-    });
-    
-    return countMap;
   }
 }
 

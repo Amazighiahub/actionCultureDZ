@@ -3,8 +3,7 @@
 import { httpClient } from './httpClient';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
 import { Lieu } from '@/types/models/lieu.types';
-import { DetailLieu, Service } from '@/types/models/lieux-details.types';
-import { Daira } from '@/types/models/geography.types';
+import { Service } from '@/types/models/lieux-details.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { TranslatableValue } from '@/types/common/multilingual.types';
 
@@ -107,59 +106,6 @@ class LieuService {
   }
 
   /**
-   * Mettre à jour un lieu
-   */
-  async update(id: number, data: UpdateLieuData): Promise<ApiResponse<Lieu>> {
-    return httpClient.put<Lieu>(`${this.endpoint}/${id}`, data);
-  }
-
-  /**
-   * Supprimer un lieu
-   */
-  async delete(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.endpoint}/${id}`);
-  }
-
-  /**
-   * Obtenir les lieux par wilaya
-   */
-  async getByWilaya(wilayaId: number): Promise<ApiResponse<Lieu[]>> {
-    return httpClient.get<Lieu[]>(`${this.endpoint}/wilaya/${wilayaId}`);
-  }
-
-  /**
-   * Obtenir les communes d'une wilaya
-   */
-  async getCommunesByWilaya(wilayaId: number): Promise<ApiResponse<Daira[]>> {
-    return httpClient.get<Daira[]>(`/metadata/wilayas/${wilayaId}/dairas`);
-  }
-
-  /**
-   * Obtenir les lieux proches d'une position
-   */
-  async getNearby(latitude: number, longitude: number, rayon: number = 10): Promise<ApiResponse<Lieu[]>> {
-    return httpClient.get<Lieu[]>(`${this.endpoint}/proximite`, {
-      latitude,
-      longitude,
-      rayon
-    });
-  }
-
-  /**
-   * Obtenir les détails d'un lieu
-   */
-  async getDetails(id: number): Promise<ApiResponse<DetailLieu>> {
-    return httpClient.get<DetailLieu>(`${this.endpoint}/${id}/details`);
-  }
-
-  /**
-   * Ajouter des services à un lieu (array de noms)
-   */
-  async addServices(lieuId: number, services: string[]): Promise<ApiResponse<Service[]>> {
-    return httpClient.post<Service[]>(`${this.endpoint}/${lieuId}/services`, { services });
-  }
-
-  /**
    * Recherche d'adresse (OpenStreetMap), par le serveur du site : appelé directement par le
    * navigateur, OpenStreetMap refuse maintenant les recherches. Liste vide si rien n'est trouvé ;
    * erreur (avec le message du serveur) si la recherche est indisponible.
@@ -254,87 +200,6 @@ class LieuService {
    */
   async getServices(lieuId: number): Promise<ApiResponse<Service[]>> {
     return httpClient.get<Service[]>(`${this.endpoint}/${lieuId}/services`);
-  }
-
-  /**
-   * Ajouter un service à un lieu
-   */
-  async addService(lieuId: number, data: CreateServiceData): Promise<ApiResponse<Service>> {
-    return httpClient.post<Service>(`${this.endpoint}/${lieuId}/services`, data);
-  }
-
-  /**
-   * Mettre à jour un service
-   */
-  async updateService(lieuId: number, serviceId: number, data: Partial<CreateServiceData>): Promise<ApiResponse<Service>> {
-    return httpClient.put<Service>(`${this.endpoint}/${lieuId}/services/${serviceId}`, data);
-  }
-
-  /**
-   * Supprimer un service
-   */
-  async deleteService(lieuId: number, serviceId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.endpoint}/${lieuId}/services/${serviceId}`);
-  }
-
-  // ========================================
-  // DETAIL LIEU
-  // ========================================
-
-  /**
-   * Créer ou mettre à jour les détails d'un lieu
-   */
-  async updateDetails(lieuId: number, data: {
-    description?: string | TranslatableValue;
-    horaires?: string | TranslatableValue;
-    histoire?: string | TranslatableValue;
-    referencesHistoriques?: string | TranslatableValue;
-  }): Promise<ApiResponse<DetailLieu>> {
-    return httpClient.put<DetailLieu>(`${this.endpoint}/${lieuId}/details`, data);
-  }
-
-  // ========================================
-  // STATISTIQUES
-  // ========================================
-
-  /**
-   * Obtenir les statistiques des lieux
-   */
-  async getStatistiques(): Promise<ApiResponse<{
-    totalLieux: number;
-    lieuxParType: Array<{ typeLieu: string; count: number }>;
-    lieuxAvecDetails: number;
-    lieuxAvecServices: number;
-  }>> {
-    return httpClient.get(`${this.endpoint}/statistiques`);
-  }
-
-  // ========================================
-  // TRADUCTIONS (Admin)
-  // ========================================
-
-  /**
-   * Obtenir toutes les traductions d'un lieu
-   */
-  async getTranslations(lieuId: number): Promise<ApiResponse<{
-    nom: TranslatableValue;
-    adresse: TranslatableValue;
-    description?: TranslatableValue;
-    histoire?: TranslatableValue;
-  }>> {
-    return httpClient.get(`${this.endpoint}/${lieuId}/translations`);
-  }
-
-  /**
-   * Mettre à jour une traduction spécifique
-   */
-  async updateTranslation(lieuId: number, lang: string, data: {
-    nom?: string;
-    adresse?: string;
-    description?: string;
-    histoire?: string;
-  }): Promise<ApiResponse<Lieu>> {
-    return httpClient.patch<Lieu>(`${this.endpoint}/${lieuId}/translation/${lang}`, data);
   }
 }
 

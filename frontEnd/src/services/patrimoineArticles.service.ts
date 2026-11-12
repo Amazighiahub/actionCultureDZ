@@ -169,34 +169,6 @@ class PatrimoineArticlesService {
       };
     }
   }
-
-  /**
-   * Helper : cree plusieurs blocs en sequence (le backend n'a pas de batch
-   * pour le patrimoine, contrairement aux oeuvres).
-   *
-   * Renvoie la liste des resultats individuels. Si un bloc echoue, les
-   * suivants ne sont pas crees (fail-fast pour eviter les ordres incoherents).
-   */
-  async createBlocksSequential(
-    lieuId: number,
-    blocks: CreatePatrimoineBlockPayload[]
-  ): Promise<ApiResponse<PatrimoineBlock[]>> {
-    const created: PatrimoineBlock[] = [];
-
-    for (const block of blocks) {
-      const result = await this.createBlock(lieuId, block);
-      if (!result.success || !result.data) {
-        return {
-          success: false,
-          error: result.error || 'Erreur lors de la creation d\'un bloc',
-          data: created.length > 0 ? created : undefined,
-        };
-      }
-      created.push(result.data);
-    }
-
-    return { success: true, data: created };
-  }
 }
 
 export const patrimoineArticlesService = new PatrimoineArticlesService();

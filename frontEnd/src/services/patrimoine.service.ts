@@ -209,86 +209,6 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.get<Array<{ value: string; label: string; count: number }>>(API_ENDPOINTS.patrimoine.types);
   }
 
-  async recherche(params: SearchPatrimoineParams): Promise<ApiResponse<PaginatedResponse<SitePatrimoine>>> {
-    return httpClient.getPaginated<SitePatrimoine>(API_ENDPOINTS.patrimoine.recherche, params);
-  }
-
-  async getMonuments(type: string): Promise<ApiResponse<SitePatrimoine[]>> {
-    return httpClient.get<SitePatrimoine[]>(API_ENDPOINTS.patrimoine.monuments(type));
-  }
-
-  async getVestiges(type: string): Promise<ApiResponse<SitePatrimoine[]>> {
-    return httpClient.get<SitePatrimoine[]>(API_ENDPOINTS.patrimoine.vestiges(type));
-  }
-
-  async getGalerie(id: number): Promise<ApiResponse<MediaSite[]>> {
-    return httpClient.get<MediaSite[]>(API_ENDPOINTS.patrimoine.galerie(id));
-  }
-
-  async getStatistiques(): Promise<ApiResponse<{
-    total_sites: number;
-    sites_par_type: Record<string, number>;
-    sites_par_wilaya: Array<{ wilaya: string; count: number }>;
-    sites_classes: number;
-    visites_mois: number;
-  }>> {
-    return httpClient.get<{ total_sites: number; sites_par_type: Record<string, number>; sites_par_wilaya: Array<{ wilaya: string; count: number }>; sites_classes: number; visites_mois: number }>(API_ENDPOINTS.patrimoine.statistiques);
-  }
-
-  async getCarteVisite(id: number): Promise<ApiResponse<CarteVisite>> {
-    return httpClient.get<CarteVisite>(API_ENDPOINTS.patrimoine.carteVisite(id));
-  }
-
-  async getQRCode(id: number): Promise<ApiResponse<Blob>> {
-    // format=png pour recevoir un vrai buffer PNG (pas du JSON dataurl)
-    return httpClient.download(`${API_ENDPOINTS.patrimoine.qrcode(id)}?format=png`, `qrcode_site_${id}.png`);
-  }
-
-  // Parcours
-  async getParcours(wilayaId?: number): Promise<ApiResponse<Parcours[]>> {
-    return httpClient.get<Parcours[]>(API_ENDPOINTS.patrimoine.parcours, 
-      wilayaId ? { wilaya_id: wilayaId } : undefined
-    );
-  }
-
-  async getParcoursEvenement(evenementId: number): Promise<ApiResponse<Parcours[]>> {
-    return httpClient.get<Parcours[]>(API_ENDPOINTS.patrimoine.parcoursEvenement(evenementId));
-  }
-
-  async createParcoursPersonnalise(data: CreateParcoursData): Promise<ApiResponse<Parcours>> {
-    return httpClient.post<Parcours>(API_ENDPOINTS.patrimoine.parcoursPersonnalise, data);
-  }
-
-  async getParcoursPopulaires(wilayaId: number): Promise<ApiResponse<Parcours[]>> {
-    return httpClient.get<Parcours[]>(API_ENDPOINTS.patrimoine.parcoursPopulaires(wilayaId));
-  }
-
-  // Lieux
-  async getLieuxProximite(latitude: number, longitude: number, rayon: number = 10): Promise<ApiResponse<SitePatrimoine[]>> {
-    return httpClient.get<SitePatrimoine[]>(API_ENDPOINTS.patrimoine.lieuxProximite, {
-      latitude, 
-      longitude, 
-      rayon_km: rayon
-    });
-  }
-
-  async getLieuxStatistiques(): Promise<ApiResponse<{ total: number; par_wilaya: Array<{ wilaya: string; count: number }>; par_type: Record<string, number> }>> {
-    return httpClient.get<{ total: number; par_wilaya: Array<{ wilaya: string; count: number }>; par_type: Record<string, number> }>(API_ENDPOINTS.patrimoine.lieuxStatistiques);
-  }
-
-  // Gestion (auth)
-  async noterSite(id: number, note: number, commentaire?: string): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.patrimoine.noterSite(id), { note, commentaire });
-  }
-
-  async ajouterFavoris(id: number): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.patrimoine.ajouterFavoris(id));
-  }
-
-  async retirerFavoris(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.patrimoine.retirerFavoris(id));
-  }
-
   /**
    * langue : celle des enregistrements audio envoyés (fr, ar, en, tz-ltn, tz-tfng) ;
    * credit : photographe ou source, et droits, communs aux photos envoyées
@@ -319,29 +239,6 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.deleteMedia(siteId, mediaId));
   }
 
-  async updateHoraires(siteId: number, horaires: HoraireSite[]): Promise<ApiResponse<void>> {
-    return httpClient.put<void>(API_ENDPOINTS.patrimoine.updateHoraires(siteId), { horaires });
-  }
-
-  // Mobile
-  async getNearbyMobile(latitude: number, longitude: number): Promise<ApiResponse<{
-    sites: SitePatrimoine[];
-    parcours_suggeres: Parcours[];
-  }>> {
-    return httpClient.get<{ sites: SitePatrimoine[]; parcours_suggeres: Parcours[] }>(API_ENDPOINTS.patrimoine.nearbyMobile, {
-      latitude, 
-      longitude
-    });
-  }
-
-  async scanQR(code: string): Promise<ApiResponse<SitePatrimoine>> {
-    return httpClient.post<SitePatrimoine>(API_ENDPOINTS.patrimoine.qrScan, { code });
-  }
-
-  async getOfflineData(wilayaId: number): Promise<ApiResponse<OfflineData>> {
-    return httpClient.get<OfflineData>(API_ENDPOINTS.patrimoine.offlineData(wilayaId));
-  }
-
   // Administration
   /**
    * Relevé Excel de points de visite (modèle Taladz) — aperçu sans écriture.
@@ -353,13 +250,6 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
 
   async importerReleve(fichier: File, parentId?: number | null): Promise<ApiResponse<BilanReleve>> {
     return httpClient.upload<BilanReleve>(API_ENDPOINTS.patrimoine.importReleve, formulaireReleve(fichier, parentId));
-  }
-
-  async exportSites(format: 'excel' | 'csv' | 'json' = 'excel'): Promise<ApiResponse<Blob>> {
-    return httpClient.download(
-      `/patrimoine/export?format=${format}`,
-      `sites_patrimoine.${format}`
-    );
   }
   /** Sites et points de visite créés par le compte connecté, tous statuts (tableau de bord pro) */
   async getMySites(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<SitePatrimoine>>> {

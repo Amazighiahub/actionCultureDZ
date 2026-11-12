@@ -66,21 +66,4 @@ export const lieuIntervenantService = {
     );
     return (res as any).data ?? [];
   },
-
-  getTypes: async (): Promise<string[]> => {
-    const res = await httpClient.get<{ success: boolean; data: any[] }>('/intervenants/types');
-    const data = (res as any).data ?? [];
-    return data.map((t: any) => t.type_intervenant || t.nom || t).filter(Boolean);
-  },
-
-  createIntervenant: async (payload: {
-    nom: { fr: string; ar?: string };
-    prenom: { fr: string; ar?: string };
-    type_intervenant: string;
-    titre_professionnel?: string;
-    biographie?: { fr?: string };
-  }): Promise<any> => {
-    const res = await httpClient.post<{ success: boolean; data: any }>('/intervenants', payload);
-    return (res as any).data;
-  },
 };

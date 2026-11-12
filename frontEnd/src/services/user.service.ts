@@ -1,5 +1,5 @@
 // services/user.service.ts
-import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
+import { API_ENDPOINTS, ApiResponse } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -71,15 +71,6 @@ class UserService extends BaseService<User> {
     super(API_ENDPOINTS.auth.me);
   }
 
-  // Profil
-  async getProfile(): Promise<ApiResponse<User>> {
-    return httpClient.get<User>(API_ENDPOINTS.auth.me);
-  }
-
-  async updateProfile(data: UpdateProfileData): Promise<ApiResponse<User>> {
-    return httpClient.put<User>(API_ENDPOINTS.auth.updateProfile, data);
-  }
-
   /**
    * Photo de profil : seul chemin d'envoi. Réduite avant l'envoi ; la route enregistre la photo
    * et met le profil à jour. (Avant : un envoi en POST vers /users/profile/photo, route en PATCH.)
@@ -89,10 +80,6 @@ class UserService extends BaseService<User> {
     formData.append('image', await prepareImageForUpload(file));
     // httpClient : jeton anti-CSRF, renouvellement de session et adresse de l'API
     return httpClient.upload<{ url: string; filename?: string }>('/upload/profile-photo', formData);
-  }
-
-  async deleteProfilePhoto(): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.auth.deletePhoto);
   }
 
   // Mot de passe et vérification
@@ -130,92 +117,13 @@ class UserService extends BaseService<User> {
     });
   }
 
-  async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return httpClient.get<void>(API_ENDPOINTS.auth.verifyEmail(token));
-  }
-
   async sendVerificationEmail(): Promise<ApiResponse<void>> {
     return httpClient.post<void>(API_ENDPOINTS.auth.sendVerificationEmail);
-  }
-
-  // Professionnel
-  async submitProfessionalRequest(data: ProfessionalSubmissionData): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.auth.submitProfessional, data);
-  }
-
-  async getProfessionalStatus(): Promise<ApiResponse<{
-    statut: string;
-    date_demande: string;
-    commentaire?: string;
-  }>> {
-    return httpClient.get<{ statut: string; date_demande: string; commentaire?: string }>(API_ENDPOINTS.auth.professionalStatus);
   }
 
   // Préférences et confidentialité
   async updatePreferences(preferences: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> {
     return httpClient.put<UserPreferences>(API_ENDPOINTS.auth.updatePreferences, preferences);
-  }
-
-  async updatePrivacy(settings: Partial<PrivacySettings>): Promise<ApiResponse<PrivacySettings>> {
-    return httpClient.put<PrivacySettings>(API_ENDPOINTS.auth.updatePrivacy, settings);
-  }
-
-  // Statistiques et types
-  async getStatistics(): Promise<ApiResponse<UserStatistics>> {
-    return httpClient.get<UserStatistics>(API_ENDPOINTS.auth.statistics);
-  }
-
-  async getTypesUtilisateurs(): Promise<ApiResponse<Array<{
-    id: string;
-    label: string;
-    description: string;
-    requires_validation: boolean;
-  }>>> {
-    return httpClient.get<Array<{ id: string; label: string; description: string; requires_validation: boolean }>>(API_ENDPOINTS.auth.typesUtilisateurs);
-  }
-
-  // Administration
-  async getAllUsers(params?: Record<string, string | number | boolean>): Promise<ApiResponse<PaginatedResponse<User>>> {
-    return httpClient.getPaginated<User>(API_ENDPOINTS.auth.admin.getAllUsers, params);
-  }
-
-  async getUserById(id: number): Promise<ApiResponse<User>> {
-    return httpClient.get<User>(API_ENDPOINTS.auth.admin.getUserById(id));
-  }
-
-  async getPendingProfessionals(): Promise<ApiResponse<User[]>> {
-    return httpClient.get<User[]>(API_ENDPOINTS.auth.admin.getPendingProfessionals);
-  }
-
-  async validateProfessional(id: number, validated: boolean, comment?: string): Promise<ApiResponse<User>> {
-    return httpClient.post<User>(API_ENDPOINTS.auth.admin.validateProfessional(id), {
-      validated,
-      comment
-    });
-  }
-
-  async updateUserStatus(id: number, status: string, reason?: string): Promise<ApiResponse<User>> {
-    return httpClient.put<User>(API_ENDPOINTS.auth.admin.updateUserStatus(id), {
-      status,
-      reason
-    });
-  }
-
-  async assignRole(userId: number, roleId: number): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.auth.admin.assignRole(userId), { role_id: roleId });
-  }
-
-  async removeRole(userId: number, roleId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${API_ENDPOINTS.auth.admin.removeRole(userId)}/${roleId}`);
-  }
-
-  async getGlobalStatistics(): Promise<ApiResponse<{
-    total_users: number;
-    users_by_type: Record<string, number>;
-    users_by_status: Record<string, number>;
-    registrations_by_month: Array<{ month: string; count: number }>;
-  }>> {
-    return httpClient.get<{ total_users: number; users_by_type: Record<string, number>; users_by_status: Record<string, number>; registrations_by_month: Array<{ month: string; count: number }> }>(API_ENDPOINTS.auth.admin.globalStatistics);
   }
 }
 

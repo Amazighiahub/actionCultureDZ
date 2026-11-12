@@ -1,11 +1,5 @@
 // services/upload.service.ts - Version corrigée
-import { 
-  API_ENDPOINTS, 
-  ApiResponse, 
-  UploadProgress, 
-  API_BASE_URL,
-  UploadOptions as ApiUploadOptions
-} from '@/config/api';
+import { API_ENDPOINTS, ApiResponse, UploadProgress, API_BASE_URL } from '@/config/api';
 import { httpClient } from './httpClient';
 import { FORMATS_IMAGE_ACCEPTES, prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { reponseEchec } from '@/utils/erreurServeur';
@@ -59,7 +53,6 @@ export interface ServiceUploadOptions {
 }
 
 class UploadService {
-  private uploadInfo?: UploadInfo;
   private baseUrlCache?: string;
 
   /**
@@ -109,22 +102,6 @@ class UploadService {
       thumbnail_url: response.thumbnail_url ? this.buildFullUrl(response.thumbnail_url) : undefined
     };
     return transformed;
-  }
-
-  // Récupération des informations d'upload
-  async getUploadInfo(): Promise<ApiResponse<UploadInfo>> {
-    try {
-      const response = await httpClient.get<UploadInfo>(API_ENDPOINTS.upload.info);
-      if (response.success && response.data) {
-        this.uploadInfo = response.data;
-      }
-      return response;
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Impossible de récupérer les informations d\'upload'
-      };
-    }
   }
 
   // Envoi d'une image (seul chemin : réduite avant l'envoi par prepareImageForUpload)
@@ -259,110 +236,6 @@ class UploadService {
     }
   }
 
-  // Upload par chunks pour les gros fichiers
-  async uploadChunk(
-    file: Blob, 
-    uploadId: string, 
-    chunkIndex: number, 
-    totalChunks: number,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<ApiResponse<ChunkUploadResponse>> {
-    const formData = new FormData();
-    formData.append('chunk', file);
-    formData.append('uploadId', uploadId);
-    formData.append('chunkIndex', String(chunkIndex));
-    formData.append('totalChunks', String(totalChunks));
-    
-    return httpClient.upload<ChunkUploadResponse>(
-      API_ENDPOINTS.upload.chunk,
-      formData,
-      onProgress ? (progress) => onProgress({
-        loaded: progress,
-        total: 100,
-        percentage: progress
-      }) : undefined
-    );
-  }
-
-  // Finaliser l'upload chunked
-  async completeChunkUpload(data: CompleteChunkUploadData): Promise<ApiResponse<UploadResponse>> {
-    const result = await httpClient.post<UploadResponse>(API_ENDPOINTS.upload.complete, data);
-    
-    // Transformer la réponse
-    if (result.success && result.data) {
-      result.data = this.transformUploadResponse(result.data);
-    }
-    
-    return result;
-  }
-
-  // Upload de fichier volumineux avec chunks
-  async uploadLargeFile(
-    file: File, 
-    options?: ServiceUploadOptions & { chunkSize?: number }
-  ): Promise<ApiResponse<UploadResponse>> {
-    const chunkSize = Math.min(options?.chunkSize || 5 * 1024 * 1024, 10 * 1024 * 1024); // 5MB défaut, 10MB max
-    const totalChunks = Math.ceil(file.size / chunkSize);
-    const uploadId = this.generateUploadId();
-
-    try {
-      // Upload de chaque chunk
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end);
-
-        const chunkResponse = await this.uploadChunk(
-          chunk,
-          uploadId,
-          i,
-          totalChunks,
-          options?.onProgress ? (progress) => {
-            const globalProgress = ((i * chunkSize + (progress.loaded / 100 * chunkSize)) / file.size) * 100;
-            options.onProgress!({
-              loaded: i * chunkSize + (progress.loaded / 100 * chunkSize),
-              total: file.size,
-              percentage: Math.round(globalProgress)
-            });
-          } : undefined
-        );
-
-        if (!chunkResponse.success) {
-          throw new Error(`Échec de l'upload du chunk ${i + 1}: ${chunkResponse.error}`);
-        }
-      }
-
-      // Finaliser l'upload
-      const result = await this.completeChunkUpload({
-        uploadId,
-        filename: file.name,
-        fileType: this.getFileType(file)
-      });
-
-      return result;
-    } catch (error) {
-      // Essayer d'annuler l'upload
-      try {
-        await this.cancelChunkUpload(uploadId);
-      } catch (_cancelError) {
-      }
-      
-      return {
-        ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
-      };
-    }
-  }
-
-  // Annuler un upload chunked
-  async cancelChunkUpload(uploadId: string): Promise<ApiResponse<void>> {
-    return httpClient.delete(API_ENDPOINTS.upload.cancelChunk(uploadId));
-  }
-
-  // Obtenir le statut d'un upload chunked
-  async getChunkUploadStatus(uploadId: string): Promise<ApiResponse<{ uploadId: string; chunksReceived: number; totalChunks: number; complete: boolean }>> {
-    return httpClient.get(API_ENDPOINTS.upload.chunkStatus(uploadId));
-  }
-
   // Validation côté client
   validateFile(file: File, type: 'image' | 'document' | 'video' | 'audio'): { valid: boolean; error?: string } {
     const maxSizes: Record<string, number> = {
@@ -412,11 +285,6 @@ class UploadService {
     return { valid: true };
   }
 
-  // Helper pour générer un ID unique
-  private generateUploadId(): string {
-    return `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
   // Helper pour déterminer le type de fichier
   getFileType(file: File): 'image' | 'document' | 'video' | 'audio' | 'unknown' {
     const mimeType = file.type.toLowerCase();
@@ -444,29 +312,6 @@ class UploadService {
     if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.odt'].includes(extension)) return 'document';
     
     return 'unknown';
-  }
-
-  // Helper pour obtenir l'URL complète
-  getFullUrl(url: string): string {
-    return this.buildFullUrl(url);
-  }
-
-  // Photo de profil : userService.updateProfilePhoto (route /upload/profile-photo, qui met le profil à jour)
-
-  // Méthode pour obtenir une preview d'image
-  async getImagePreview(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  // Reset du cache d'URL (utile pour les tests)
-  resetCache(): void {
-    this.baseUrlCache = undefined;
-    this.uploadInfo = undefined;
   }
 }
 

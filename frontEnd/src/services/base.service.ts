@@ -1,12 +1,5 @@
 // services/base.service.ts - VERSION CORRIGÉE
-import {
-  ApiResponse,
-  PaginatedResponse,
-  PaginationParams,
-  QueryParamValue,
-  buildUrl,
-  getApiUrl,
-} from '@/config/api';
+import { ApiResponse, PaginatedResponse, PaginationParams, QueryParamValue } from '@/config/api';
 import { httpClient } from './httpClient';
 
 export abstract class BaseService<T, CreateDTO = unknown, UpdateDTO = unknown> {
@@ -50,14 +43,5 @@ export abstract class BaseService<T, CreateDTO = unknown, UpdateDTO = unknown> {
 
   async delete(id: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`${this.baseEndpoint}/${id}`);
-  }
-
-  // Méthodes utilitaires
-  protected buildUrl(endpoint: string, params?: Record<string, QueryParamValue>): string {
-    return buildUrl(endpoint, params);
-  }
-
-  protected getApiUrl(endpoint: string, ...ids: number[]): string {
-    return getApiUrl(endpoint, ...ids);
   }
 }

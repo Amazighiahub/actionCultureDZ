@@ -1,7 +1,6 @@
 // services/admin.service.ts - VERSION CORRIGÉE
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
-import type { CurrentUser } from './auth.service';
 import { Oeuvre, Evenement, Lieu } from '@/types';
 import { Service } from '@/types/models/lieux-details.types';
 import type { OverviewApiRawResponse, OverviewApiResponse, BulkUserActionResponse } from '@/types/api/dashboard.types';
@@ -208,14 +207,6 @@ class AdminService {
     return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.dashboard.oeuvres.list, params);
   }
 
-  async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<Oeuvre>> {
-    return httpClient.get<Oeuvre>(`/oeuvres/${oeuvreId}`);
-  }
-
-  async updateOeuvre(oeuvreId: number, data: Partial<Oeuvre>): Promise<ApiResponse<Oeuvre>> {
-    return httpClient.put<Oeuvre>(`/oeuvres/${oeuvreId}`, data);
-  }
-
   async deleteOeuvre(oeuvreId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/oeuvres/${oeuvreId}`);
   }
@@ -223,14 +214,6 @@ class AdminService {
   // Événements
   async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<Evenement>>> {
     return httpClient.getPaginated<Evenement>(API_ENDPOINTS.dashboard.evenements.list, params);
-  }
-
-  async getEvenementDetails(evenementId: number): Promise<ApiResponse<Evenement>> {
-    return httpClient.get<Evenement>(`/evenements/${evenementId}`);
-  }
-
-  async updateEvenement(evenementId: number, data: Partial<Evenement>): Promise<ApiResponse<Evenement>> {
-    return httpClient.put<Evenement>(`/evenements/${evenementId}`, data);
   }
 
   async deleteEvenement(evenementId: number): Promise<ApiResponse<void>> {
@@ -243,10 +226,6 @@ class AdminService {
     return httpClient.getPaginated<Lieu>(params?.q ? '/patrimoine/search' : '/patrimoine', params);
   }
 
-  async updatePatrimoine(patrimoineId: number, data: Partial<Lieu>): Promise<ApiResponse<Lieu>> {
-    return httpClient.put<Lieu>(`/patrimoine/${patrimoineId}`, data);
-  }
-
   async deletePatrimoine(patrimoineId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/patrimoine/${patrimoineId}`);
   }
@@ -255,14 +234,6 @@ class AdminService {
   /** Services des professionnels, tous statuts (GET /services ne renvoie que les services validés) */
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<Service>>> {
     return httpClient.getPaginated<Service>('/services/admin/list', params);
-  }
-
-  async getServiceDetails(serviceId: number): Promise<ApiResponse<Service>> {
-    return httpClient.get<Service>(`/services/${serviceId}`);
-  }
-
-  async updateService(serviceId: number, data: Partial<Service>): Promise<ApiResponse<Service>> {
-    return httpClient.put<Service>(`/services/${serviceId}`, data);
   }
 
   async deleteService(serviceId: number): Promise<ApiResponse<void>> {

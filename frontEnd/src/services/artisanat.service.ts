@@ -3,7 +3,6 @@ import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/c
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
-import { Oeuvre } from '@/types/models/oeuvre.types';
 
 interface Artisanat {
   id: number;
@@ -142,10 +141,6 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     return httpClient.getPaginated<Artisanat>(API_ENDPOINTS.artisanat.search, params);
   }
 
-  async getArtisansByRegion(wilayaId: number): Promise<ApiResponse<Artisan[]>> {
-    return httpClient.get<Artisan[]>(API_ENDPOINTS.artisanat.artisansByRegion(wilayaId));
-  }
-
   // Détails
   async getDetail(id: number): Promise<ApiResponse<Artisanat>> {
     return httpClient.get<Artisanat>(API_ENDPOINTS.artisanat.detail(id));
@@ -160,12 +155,6 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     const formData = new FormData();
     (await prepareFilesForUpload(files)).forEach((file) => formData.append('medias', file));
     return httpClient.postFormData<MediaArtisanat[]>(`/artisanat/${artisanatId}/medias`, formData);
-  }
-
-  // Œuvres d'un artisan
-  async getArtisanWorks(artisanId: number): Promise<ApiResponse<Oeuvre[]>> {
-    // TODO: Implémenter la récupération des œuvres de l'artisan
-    return { success: true, data: [] };
   }
 
   // Statistiques

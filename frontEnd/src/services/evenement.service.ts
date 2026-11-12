@@ -3,9 +3,7 @@ import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/c
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { Programme } from '@/types';
-import { mediaService } from './media.service';
 import { Evenement } from '@/types/models/evenement.types';
-import { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Reponses } from '@/utils/formulaireInscription';
 import { reponseEchec } from '@/utils/erreurServeur';
 import i18next from 'i18next';
@@ -165,10 +163,6 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     return httpClient.get<{ programmes: Programme[] }>(API_ENDPOINTS.programmes.byEvent(eventId));
   }
 
-  async getShareData(id: number): Promise<ApiResponse<ShareData>> {
-    return httpClient.get<ShareData>(API_ENDPOINTS.evenements.shareData(id));
-  }
-
   // Gestion de l'événement
   async cancel(id: number, reason: string): Promise<ApiResponse<Evenement>> {
     return httpClient.post<Evenement>(API_ENDPOINTS.evenements.cancel(id), { motif: reason });
@@ -206,23 +200,8 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     }
   }
 
-  async getParticipants(eventId: number, params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Participant>>> {
-    return httpClient.getPaginated<Participant>(API_ENDPOINTS.evenements.participants(eventId), params);
-  }
-
   async getPublicParticipants(eventId: number): Promise<ApiResponse<PublicParticipantsResponse>> {
     return httpClient.get<PublicParticipantsResponse>(API_ENDPOINTS.evenements.publicParticipants(eventId));
-  }
-
-  async validateParticipation(eventId: number, userId: number, validated: boolean): Promise<ApiResponse<void>> {
-    return httpClient.put<void>(
-      API_ENDPOINTS.evenements.validateParticipation(eventId, userId),
-      { validated }
-    );
-  }
-
-  async getProfessionnelsEnAttente(eventId: number): Promise<ApiResponse<Participant[]>> {
-    return httpClient.get<Participant[]>(API_ENDPOINTS.evenements.professionnelsEnAttente(eventId));
   }
 
   // Documents PDF de l'événement (programme complet, présentation…)
@@ -241,69 +220,6 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   // Médias
   async getMedias(id: number): Promise<ApiResponse<EventMedia[]>> {
     return httpClient.get<EventMedia[]>(API_ENDPOINTS.evenements.medias(id));
-  }
-
-  async addMedias(eventId: number, files: File[]): Promise<ApiResponse<EventMedia[]>> {
-    // Utiliser mediaService pour upload multiple
-    const uploadResult = await mediaService.uploadMultiple(files, 'evenement', eventId);
-
-    if (uploadResult.success && uploadResult.data) {
-      // Transformer la réponse pour correspondre au type EventMedia[]
-      const eventMedias: EventMedia[] = uploadResult.data.map((media, index) => ({
-        id: media.media_id || 0,
-        url: media.url,
-        type: media.type || 'image',
-        titre: media.filename,
-        description: '',
-        ordre: index
-      }));
-
-      return {
-        success: true,
-        data: eventMedias
-      };
-    }
-
-    return {
-      success: false,
-      error: uploadResult.error || 'Erreur lors de l\'upload des médias'
-    };
-  }
-
-  async deleteMedia(eventId: number, mediaId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.evenements.deleteMedia(eventId, mediaId));
-  }
-
-  // Espace professionnel
-  async getMesOeuvres(eventId: number): Promise<ApiResponse<Oeuvre[]>> {
-    return httpClient.get<Oeuvre[]>(API_ENDPOINTS.evenements.mesOeuvres(eventId));
-  }
-
-  async addOeuvre(eventId: number, oeuvreId: number): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.evenements.addOeuvre(eventId), { id_oeuvre: oeuvreId });
-  }
-
-  async removeOeuvre(eventId: number, oeuvreId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.evenements.removeOeuvre(eventId, oeuvreId));
-  }
-
-  // Export
-  async exportParticipants(eventId: number, format: 'excel' | 'pdf' | 'csv' = 'excel'): Promise<ApiResponse<Blob>> {
-    return httpClient.download(
-      `${API_ENDPOINTS.evenements.export(eventId)}?format=${format}`,
-      `participants_${eventId}.${format}`
-    );
-  }
-
-  // Statistiques
-  async getStatistics(): Promise<ApiResponse<{
-    total_evenements: number;
-    evenements_by_status: Record<string, number>;
-    participants_total: number;
-    upcoming_count: number;
-    top_locations: Array<{ wilaya: string; count: number }>;
-  }>> {
-    return httpClient.get<{ total_evenements: number; evenements_by_status: Record<string, number>; participants_total: number; upcoming_count: number; top_locations: Array<{ wilaya: string; count: number }> }>(API_ENDPOINTS.evenements.statistics);
   }
 
   

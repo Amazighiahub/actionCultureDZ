@@ -5,8 +5,6 @@ import { httpClient, doRefreshToken } from './httpClient';
 
 // Types d'inscription : définis une seule fois, dans types/models/auth.types
 import type { RegisterVisitorData, RegisterProfessionalData } from '@/types/models/auth.types';
-import { reponseEchec } from '@/utils/erreurServeur';
-import i18next from 'i18next';
 export type { RegisterVisitorData, RegisterProfessionalData };
 
 // Interface mise à jour pour correspondre au backend
@@ -27,8 +25,6 @@ export interface CurrentUser {
     nom_role: string;
   }>;
 }
-
-interface ValidationError { field?: string; message?: string; [key: string]: unknown }
 
 class AuthService {
   // ✅ SÉCURITÉ: Les tokens sont gérés UNIQUEMENT via cookies httpOnly
@@ -164,25 +160,6 @@ class AuthService {
     this.clearLocalAuthData();
   }
 
-  async verifyToken(): Promise<ApiResponse<{ valid: boolean }>> {
-    // Vérification basée sur le cache user et l'expiration
-    const cachedUser = this.getCurrentUserFromCache();
-    const expiresAt = localStorage.getItem(AUTH_CONFIG.tokenExpiryKey);
-
-    if (!cachedUser) {
-      return { success: true, data: { valid: false } };
-    }
-
-    if (expiresAt) {
-      const expiry = new Date(expiresAt);
-      const isValid = expiry > new Date();
-      return { success: true, data: { valid: isValid } };
-    }
-
-    // Si pas de date d'expiration mais user en cache, considérer comme valide
-    return { success: true, data: { valid: true } };
-  }
-
   // Inscription
   async registerVisitor(data: RegisterVisitorData): Promise<ApiResponse<AuthTokenData>> {
     // Transformer les noms de champs français vers les noms attendus par l'API
@@ -287,94 +264,11 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
   }
 
   /**
-   * Transforme les erreurs de validation de l'API
-   * pour correspondre aux noms de champs français
-   */
-  transformValidationErrors(errors: ValidationError[]): ValidationError[] {
-    if (!Array.isArray(errors)) return errors;
-    
-    const fieldMapping: Record<string, string> = {
-      'password': 'mot_de_passe',
-      'password_confirmation': 'confirmation_mot_de_passe'
-    };
-    
-    return errors.map(error => {
-      if (error.field && fieldMapping[error.field]) {
-        return {
-          ...error,
-          field: fieldMapping[error.field]
-        };
-      }
-      return error;
-    });
-  }
-
-  async updateProfile(data: Partial<CurrentUser>): Promise<ApiResponse<CurrentUser>> {
-  try {
-    const response = await httpClient.put<CurrentUser>(API_ENDPOINTS.auth.updateProfile, data);
-    
-    if (response.success && response.data) {
-      this.userCache = response.data;
-    }
-    
-    return response;
-  } catch (error) {
-    return {
-      ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue'))
-    };
-  }
-}
-
-// Photo de profil : userService.updateProfilePhoto (seul chemin, route /upload/profile-photo)
-
-/**
-   * Récupère l'ID de l'utilisateur actuel depuis le localStorage
-   * @returns L'ID de l'utilisateur ou null
-   */
-  getCurrentUserId(): number | null {
-    return this.userCache?.id_user ?? null;
-  }
-
-  /**
    * Récupère l'utilisateur actuel depuis le cache in-memory (sans appel API)
    * @returns L'utilisateur ou null
    */
   getCurrentUserFromCache(): CurrentUser | null {
     return this.userCache;
-  }
-
-  /**
-   * Récupère et met en cache l'utilisateur actuel
-   * @param forceRefresh Force le rechargement depuis l'API
-   * @returns L'utilisateur actuel
-   */
-  async getCurrentUserAndCache(forceRefresh = false): Promise<CurrentUser | null> {
-    // Si on a déjà l'utilisateur en cache et qu'on ne force pas le refresh
-    if (!forceRefresh) {
-      const cachedUser = this.getCurrentUserFromCache();
-      if (cachedUser) {
-        return cachedUser;
-      }
-    }
-
-    // Sinon, on récupère depuis l'API
-    const response = await this.getCurrentUser();
-    if (response.success && response.data) {
-      this.userCache = response.data;
-      return response.data;
-    }
-
-    return null;
-  }
-
-  /**
-   * Met à jour l'utilisateur en cache
-   * @param user Les données utilisateur à mettre en cache
-   */
-  updateUserCache(user: Partial<CurrentUser>): void {
-    if (this.userCache) {
-      this.userCache = { ...this.userCache, ...user };
-    }
   }
 
   /**

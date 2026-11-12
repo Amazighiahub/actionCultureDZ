@@ -215,19 +215,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
       };
     }
   }
-
-  // Méthode helper pour nettoyer tous les caches de favoris
-  clearAllFavorisCache(): void {
-    const keys = Object.keys(localStorage);
-    let count = 0;
-    
-    keys.forEach(key => {
-      if (key.includes('cache_') && key.includes('/favoris')) {
-        localStorage.removeItem(key);
-        count++;
-      }
-    });
-  }
 }
 
 export const favoriService = new FavoriService();
