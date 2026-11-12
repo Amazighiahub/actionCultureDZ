@@ -355,6 +355,35 @@ class EmailService {
   }
 
   /**
+   * Inscription reçue : la personne sait que c'est enregistré et que l'organisateur va confirmer
+   * (le message « confirmée » n'arrive qu'à la confirmation, par notifierValidationProfessionnel)
+   */
+  async sendInscriptionRecue(user, evenement, { montant = null } = {}) {
+    try {
+      const pageEvenement = `${process.env.FRONTEND_URL}/evenements/${evenement?.id_evenement}`;
+      const nomEvenement = this._texte(evenement?.nom_evenement);
+      const esc = (v) => this._escapeHtml(v);
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2b2a26;">
+          <h2 style="color: #3A4224;">Inscription reçue</h2>
+          <p>Bonjour ${esc(this._prenom(user))},</p>
+          <p>Votre inscription à <b>${esc(nomEvenement || "l'événement")}</b> est bien enregistrée.</p>
+          <p>L'organisateur va maintenant la confirmer. Vous recevrez un message à ce moment-là.</p>
+          ${montant ? `<p style="background-color: #f6f4ec; padding: 12px 16px; border-radius: 8px;">Montant de votre participation : <b>${esc(montant)}</b>, à régler directement auprès de l'organisateur. Tala DZ ne perçoit aucune somme.</p>` : ''}
+          <p style="text-align: center; margin: 28px 0;">
+            <a href="${encodeURI(pageEvenement)}" style="background-color: #3A4224; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Voir l'événement</a>
+          </p>
+          <p style="font-size: 14px; color: #6b6a63;">Vous pouvez annuler votre inscription à tout moment sur la page de l'événement.</p>
+          <p>L'équipe Tala DZ</p>
+        </div>`;
+      return await this.sendEmail(user.email, `Inscription reçue : ${this._sanitizeSubject(nomEvenement) || 'Tala DZ'}`, html, null, null, { type: 'groupe' });
+    } catch (error) {
+      logger.error('Erreur dans sendInscriptionRecue:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Message de l'organisateur à un participant : texte (liens cliquables), point de rencontre,
    * boutons programme PDF / groupe WhatsApp / dossier Drive, lien vers la page de l'événement.
    */

@@ -145,7 +145,7 @@
     "deleted": "Événement supprimé",
     "published": "Événement publié",
     "cancelled": "Événement annulé",
-    "registered": "Inscription confirmée",
+    "registered": "Inscription enregistrée : l’organisateur va la confirmer",
     "unregistered": "Désinscription effectuée"
   },
   "patrimoine": {

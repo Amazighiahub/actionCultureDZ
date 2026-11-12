@@ -145,7 +145,7 @@
     "deleted": "تم حذف الحدث",
     "published": "تم نشر الحدث",
     "cancelled": "تم إلغاء الحدث",
-    "registered": "تم تأكيد التسجيل",
+    "registered": "تم تسجيل طلبك: سيؤكده المنظم",
     "unregistered": "تم إلغاء التسجيل"
   },
   "patrimoine": {

@@ -669,6 +669,8 @@ class EvenementService extends BaseService {
    * Inscrire un participant
    */
   async registerParticipant(evenementId, userId, data = {}) {
+    // Nouvelle inscription (ou reprise après annulation, ou invitation confirmée) : à annoncer
+    let nouvelle = false;
     const registration = await this.withTransaction(async (transaction) => {
       const evenement = await this.repository.findById(evenementId, {
         transaction,
@@ -701,8 +703,10 @@ class EvenementService extends BaseService {
         transaction
       });
       if (existante && existante.statut_participation !== 'invitation') {
+        nouvelle = existante.statut_participation === 'annule';
         return this.repository.registerParticipant(evenementId, userId, { transaction });
       }
+      nouvelle = true;
 
       // Invitation (import d'une liste) confirmée par la personne : ses réponses du classeur sont gardées
       // si elle n'en envoie pas de nouvelles (bouton « Confirmer » de la page de l'événement)
@@ -728,6 +732,13 @@ class EvenementService extends BaseService {
     });
 
     this.logger.info(`Participant inscrit: user ${userId} → événement ${evenementId}`);
+    // La personne et l'organisateur sont prévenus, en arrière-plan : un e-mail en échec n'annule rien
+    // (avant : aucun message, la personne ne savait pas si son inscription était passée)
+    if (nouvelle) {
+      const notifService = this.notificationService || new (require('../notificationService'))(this.models);
+      notifService.notifierInscription(evenementId, userId)
+        .catch(err => this.logger?.error?.('Avertissement d’inscription :', err.message));
+    }
     return registration;
   }
 

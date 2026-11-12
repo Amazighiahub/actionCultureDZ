@@ -175,6 +175,50 @@ class NotificationService {
   }
 
   /**
+   * Nouvelle inscription à un événement : la personne reçoit « inscription reçue, en attente de
+   * confirmation » (notification sur le site et e-mail), l'organisateur « nouvelle inscription »
+   * (notification sur le site et sur le téléphone). E-mail une fois par heure au plus par personne
+   * et par événement (s'inscrire, annuler, se réinscrire n'envoie pas trois e-mails).
+   */
+  async notifierInscription(evenementId, userId) {
+    const [participant, evenement, inscription] = await Promise.all([
+      this.models.User.findByPk(userId, { attributes: ['id_user', 'nom', 'prenom', 'email'] }),
+      this.models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'id_user'] }),
+      this.models.EvenementUser?.findOne({ where: { id_evenement: evenementId, id_user: userId }, attributes: ['montant_du'] })
+    ]);
+    if (!participant || !evenement) return;
+    const nom = this._str(evenement.nom_evenement) || 'l’événement';
+    const montant = Number(inscription?.montant_du) || 0;
+    const montantTexte = montant > 0 ? `${String(Math.round(montant)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} DA` : null;
+
+    await this.enregistrerNotification({
+      id_user: userId,
+      type_notification: 'validation_participation',
+      titre: 'Inscription reçue',
+      message: `Votre inscription à « ${nom} » est bien enregistrée. L’organisateur va la confirmer : vous recevrez un message à ce moment-là.`
+        + (montantTexte ? ` Montant : ${montantTexte}, à régler directement auprès de l’organisateur.` : ''),
+      id_evenement: evenementId,
+      url_action: `/evenements/${evenementId}`
+    });
+
+    if (evenement.id_user && Number(evenement.id_user) !== Number(userId)) {
+      const qui = [this._str(participant.prenom), this._str(participant.nom)].filter(Boolean).join(' ') || 'Une personne';
+      await this.enregistrerNotification({
+        id_user: evenement.id_user,
+        type_notification: 'autre',
+        titre: 'Nouvelle inscription',
+        message: `${qui} s’est inscrit(e) à « ${nom} ». Confirmez ou refusez son inscription dans la liste des participants.`,
+        id_evenement: evenementId,
+        url_action: '/dashboard-pro'
+      });
+    }
+
+    if (participant.email && await premiereFoisPendant(`inscription:${evenementId}:${userId}`, 3600)) {
+      await this.emailService.sendInscriptionRecue(participant, evenement, { montant: montantTexte });
+    }
+  }
+
+  /**
    * Rappel « c'est demain » aux participants inscrits ou confirmés (email, SMS / WhatsApp, notification).
    * Appelé par la tâche du matin pour les événements du lendemain ; une erreur remonte, pour
    * que l'événement ne soit pas marqué « rappel envoyé ».
