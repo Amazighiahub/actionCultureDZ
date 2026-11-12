@@ -64,6 +64,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: true
     },
+    // Image de l'aperçu d'un lien partagé (Facebook, WhatsApp…), carrée de préférence ; vide = l'affiche
+    image_partage_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
     id_lieu: {
       type: DataTypes.INTEGER,
       allowNull: true,

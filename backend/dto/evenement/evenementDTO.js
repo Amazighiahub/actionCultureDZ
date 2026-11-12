@@ -14,6 +14,7 @@ class EvenementDTO extends BaseDTO {
     this.dateFin = data.dateFin;
     this.statut = data.statut;
     this.imageUrl = data.imageUrl;
+    this.imagePartageUrl = data.imagePartageUrl;
     this.capaciteMax = data.capaciteMax;
     this.tarif = data.tarif;
     this.inscriptionRequise = data.inscriptionRequise;
@@ -49,6 +50,7 @@ class EvenementDTO extends BaseDTO {
       dateFin: BaseDTO.toISODate(raw.date_fin),
       statut: raw.statut,
       imageUrl: raw.image_url,
+      imagePartageUrl: raw.image_partage_url,
       capaciteMax: raw.capacite_max,
       tarif: raw.tarif ? parseFloat(raw.tarif) : 0,
       inscriptionRequise: raw.inscription_requise || false,

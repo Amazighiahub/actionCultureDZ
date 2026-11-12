@@ -68,7 +68,8 @@ const initEvenementRoutes = (models, authMiddleware) => {
     requireVerifiedEmail,
     requireValidatedProfessional,
     createContentLimiter,
-    uploadService.uploadImage().single('affiche'),
+    // Affiche et, facultative, image de partage (aperçu Facebook, WhatsApp… ; carrée de préférence)
+    uploadService.uploadImage().fields([{ name: 'affiche', maxCount: 1 }, { name: 'image_partage', maxCount: 1 }]),
     validateStringLengths,
     [
       body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage(msg('validation.nomEvenementInvalide')),
@@ -85,7 +86,8 @@ const initEvenementRoutes = (models, authMiddleware) => {
     requireVerifiedEmail,
     requireValidatedProfessional,
     validateId(),
-    uploadService.uploadImage().single('affiche'),
+    // Affiche et, facultative, image de partage (aperçu Facebook, WhatsApp… ; carrée de préférence)
+    uploadService.uploadImage().fields([{ name: 'affiche', maxCount: 1 }, { name: 'image_partage', maxCount: 1 }]),
     validateStringLengths,
     validateEventCreation,
     asyncHandler((req, res) => evenementController.update(req, res)));

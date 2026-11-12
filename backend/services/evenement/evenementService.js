@@ -216,6 +216,7 @@ class EvenementService extends BaseService {
       contact_telephone: this._contactTelephone(data.contact_telephone ?? data.contactTelephone) ?? undefined,
       url_virtuel: data.url_virtuel || data.urlVirtuel,
       image_url: data.image_url || data.imageUrl,
+      image_partage_url: data.image_partage_url || undefined,
       age_minimum: data.age_minimum || data.ageMinimum,
       accessibilite: data.accessibilite || {},
       certificat_delivre: data.certificat_delivre || data.certificatDelivre || false,
@@ -405,6 +406,8 @@ class EvenementService extends BaseService {
       if (data.tarif !== undefined) updateData.tarif = data.tarif;
       Object.assign(updateData, this._tarification(data));
       if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
+      // Image de partage : nouvelle image, ou null quand elle est retirée (le contrôleur ne la prend que d'un fichier)
+      if (data.image_partage_url !== undefined) updateData.image_partage_url = data.image_partage_url;
       // Contacts et date limite : un champ vidé efface la valeur
       const email = this._contactEmail(data.contact_email ?? data.contactEmail);
       if (email !== undefined) updateData.contact_email = email;
@@ -449,7 +452,7 @@ class EvenementService extends BaseService {
       // Événement déjà publié dont le nom, le texte, l'image, le lien ou le tarif changent : la modération
       // vérifie (sinon un événement validé pouvait être réécrit en arnaque sur une page de confiance)
       // Publié = publie, planifie ou en_cours (le modèle range un événement publié selon ses dates)
-      const SENSIBLES = ['nom_evenement', 'description', 'image_url', 'url_virtuel', 'tarif'];
+      const SENSIBLES = ['nom_evenement', 'description', 'image_url', 'image_partage_url', 'url_virtuel', 'tarif'];
       const valeur = (c, v) => (c === 'tarif' ? (v === null || v === undefined || v === '' ? null : Number(v)) : JSON.stringify(v ?? null));
       const changes = SENSIBLES.filter((c) => updateData[c] !== undefined && valeur(c, updateData[c]) !== valeur(c, existing[c]));
       if (EVENEMENT_OUVERT.includes(existing.statut) && !options.isAdmin && changes.length) {

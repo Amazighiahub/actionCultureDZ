@@ -777,7 +777,12 @@
       "virtualUrlInvalide": "Le lien doit commencer par https:// (ex. https://meet.google.com/…)",
       "orgEnAttente": "en attente de validation",
       "idOrganisateur": "Organisateur (n° de compte)",
-      "idOrganisateurAide": "Laisser vide pour être l’organisateur. Sinon, ce compte devient l’organisateur et pourra modifier l’événement."
+      "idOrganisateurAide": "Laisser vide pour être l’organisateur. Sinon, ce compte devient l’organisateur et pourra modifier l’événement.",
+      "imagePartage": "Image pour les réseaux sociaux",
+      "imagePartageAide": "Carrée, 1200 × 1200 conseillé. Elle s’affiche quand le lien est partagé sur Facebook, WhatsApp ou Messenger. Sans elle, l’affiche est utilisée.",
+      "apercuImagePartage": "Aperçu de l’image pour les réseaux sociaux",
+      "retirerImagePartage": "Retirer l’image pour les réseaux sociaux",
+      "apercuAffiche": "Aperçu de l’affiche"
     },
     "types": {
       "concert": "Concert",

@@ -144,6 +144,10 @@ const AjouterEvenement = () => {
   // PDF choisis à la création : envoyés juste après l'enregistrement de l'événement
   const [documentsChoisis, setDocumentsChoisis] = useState<DocumentChoisi[]>([]);
   const [affichePreview, setAffichePreview] = useState<string | null>(null);
+  // Image de partage (aperçu Facebook, WhatsApp…), facultative : carrée de préférence
+  const [imagePartage, setImagePartage] = useState<File | null>(null);
+  const [imagePartagePreview, setImagePartagePreview] = useState<string | null>(null);
+  const [imagePartageRetiree, setImagePartageRetiree] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // Brouillon de l'événement : gardé quand la session expire pendant la saisie (httpClient émet
@@ -208,6 +212,7 @@ const AjouterEvenement = () => {
         });
         if (evt.image_url) {
           setAffichePreview(evt.image_url);
+          if (typeof evt.image_partage_url === 'string' && evt.image_partage_url) setImagePartagePreview(evt.image_partage_url);
         }
         if (evt.id_lieu) setSelectedLieuId(evt.id_lieu);
         // Organisation : la fiche envoie la liste Organisations (avec le rôle), pas id_organisation
@@ -542,6 +547,17 @@ const AjouterEvenement = () => {
         return;
       }
       fd.append('affiche', image);
+    }
+    if (imagePartage) {
+      const image = await prepareImageForUpload(imagePartage);
+      if (image.size > 10 * 1024 * 1024) {
+        toast({ title: t('common.error', 'Erreur'), description: t('validation.imageNonReduite', 'Cette image dépasse 10 Mo et ne peut pas être réduite. Choisissez-en une plus légère.'), variant: 'destructive' });
+        setIsSubmitting(false);
+        return;
+      }
+      fd.append('image_partage', image);
+    } else if (isEditMode && imagePartageRetiree) {
+      fd.append('supprimer_image_partage', 'true');
     }
 
     try {
@@ -1152,7 +1168,7 @@ const AjouterEvenement = () => {
                       <div className="relative">
                         <img
                           src={affichePreview}
-                          alt="Aperçu affiche"
+                          alt={t('events.create.apercuAffiche', 'Aperçu de l’affiche')}
                           className="max-h-48 mx-auto rounded-lg object-cover"
                         />
                         <Button
@@ -1201,6 +1217,72 @@ const AjouterEvenement = () => {
                     </Button>
                   </div>
                   {fieldErrors.affiche && <p id="affiche-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.affiche}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image-partage-upload">
+                    {t('events.create.imagePartage', 'Image pour les réseaux sociaux')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
+                  </Label>
+                  <p id="image-partage-aide" className="text-sm text-muted-foreground">
+                    {t('events.create.imagePartageAide', 'Carrée, 1200 × 1200 conseillé. Elle s’affiche quand le lien est partagé sur Facebook, WhatsApp ou Messenger. Sans elle, l’affiche est utilisée.')}
+                  </p>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {imagePartagePreview && (
+                      <div className="relative">
+                        <img
+                          src={imagePartagePreview}
+                          alt={t('events.create.apercuImagePartage', 'Aperçu de l’image pour les réseaux sociaux')}
+                          className="h-32 w-32 rounded-lg object-cover border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 end-1"
+                          aria-label={t('events.create.retirerImagePartage', 'Retirer l’image pour les réseaux sociaux')}
+                          onClick={() => {
+                            setImagePartage(null);
+                            setImagePartagePreview(null);
+                            setImagePartageRetiree(true);
+                            setIsDirty(true);
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      id="image-partage-upload"
+                      accept="image/*"
+                      className="hidden"
+                      aria-describedby="image-partage-aide"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        if (!file) return;
+                        if (!file.type.startsWith('image/')) {
+                          toast({ title: t('common.error', 'Erreur'), description: t('validation.invalidFileType', 'Le fichier doit être une image'), variant: 'destructive' });
+                          return;
+                        }
+                        if (file.size > 20 * 1024 * 1024) {
+                          toast({ title: t('common.error', 'Erreur'), description: t('validation.imageTropLourde', 'Image trop lourde (20 Mo au plus)'), variant: 'destructive' });
+                          return;
+                        }
+                        setImagePartage(file);
+                        setImagePartagePreview(URL.createObjectURL(file));
+                        setImagePartageRetiree(false);
+                        setIsDirty(true);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('image-partage-upload')?.click()}
+                    >
+                      {imagePartagePreview ? t('common.changeImage', 'Changer l’image') : t('common.chooseFile')}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -728,7 +728,12 @@
       "virtualUrlInvalide": "The link must start with https:// (e.g. https://meet.google.com/…)",
       "orgEnAttente": "awaiting approval",
       "idOrganisateur": "Organiser (account number)",
-      "idOrganisateurAide": "Leave empty to be the organiser. Otherwise this account becomes the organiser and can edit the event."
+      "idOrganisateurAide": "Leave empty to be the organiser. Otherwise this account becomes the organiser and can edit the event.",
+      "imagePartage": "Image for social media",
+      "imagePartageAide": "Square, 1200 × 1200 recommended. It is shown when the link is shared on Facebook, WhatsApp or Messenger. Without it, the poster is used.",
+      "apercuImagePartage": "Preview of the social media image",
+      "retirerImagePartage": "Remove the social media image",
+      "apercuAffiche": "Poster preview"
     },
     "types": {
       "concert": "Concert",

@@ -544,6 +544,41 @@ describe('AjouterEvenement', () => {
       expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
     });
 
+    test('image pour les reseaux sociaux : choisie, apercu, retiree', async () => {
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+
+      const input = document.getElementById('image-partage-upload') as HTMLInputElement;
+      expect(input.getAttribute('accept')).toBe('image/*');
+      await user.upload(input, createMockFile('carre.jpg', 500, 'image/jpeg'));
+      const apercu = await screen.findByAltText(/apercuImagePartage|réseaux sociaux/i);
+      expect(apercu).toHaveAttribute('src', 'blob:preview-url');
+
+      await user.click(screen.getByRole('button', { name: /retirerImagePartage|Retirer/i }));
+      expect(screen.queryByAltText(/apercuImagePartage|réseaux sociaux/i)).not.toBeInTheDocument();
+    });
+
+    test('en mode edition, l image pour les reseaux sociaux existante est affichee', async () => {
+      mockParams = { id: '7' };
+      mockGetById.mockResolvedValue({
+        success: true,
+        data: {
+          id_evenement: 7,
+          nom_evenement: { fr: 'Existant', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          description: { fr: 'Desc', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          id_type_evenement: 1,
+          date_debut: '2026-07-01',
+          image_url: 'https://cdn.example.com/event7.jpg',
+          image_partage_url: 'https://cdn.example.com/event7-carre.jpg',
+          tarif: 0,
+          id_lieu: 1,
+          id_organisation: 10,
+        },
+      });
+      render(<AjouterEvenement />);
+      expect(await screen.findByAltText(/apercuImagePartage|réseaux sociaux/i)).toHaveAttribute('src', 'https://cdn.example.com/event7-carre.jpg');
+    });
+
     test('en mode edition, l image existante est affichee sans re-upload obligatoire', async () => {
       mockParams = { id: '7' };
       mockGetById.mockResolvedValue({

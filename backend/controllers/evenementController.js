@@ -149,11 +149,21 @@ class EvenementController extends BaseController {
     }
   }
 
+  /**
+   * Images envoyées avec le formulaire (Cloudinary) : affiche et image de partage. Une adresse d'image
+   * de partage ne vient que d'un fichier envoyé ; « supprimer_image_partage » la retire.
+   */
+  _imagesRecues(req) {
+    const fichier = (nom) => req.files?.[nom]?.[0] || (nom === 'affiche' ? req.file : undefined);
+    delete req.body.image_partage_url;
+    if (fichier('affiche')) req.body.image_url = fichier('affiche').path;
+    if (fichier('image_partage')) req.body.image_partage_url = fichier('image_partage').path;
+    else if (req.body.supprimer_image_partage === 'true' || req.body.supprimer_image_partage === true) req.body.image_partage_url = null;
+  }
+
   async create(req, res) {
     try {
-      if (req.file) {
-        req.body.image_url = req.file.path;
-      }
+      this._imagesRecues(req);
       const evenement = await this.evenementService.create(req.body, req.user.id_user, { isAdmin: req.user.isAdmin });
       res.status(201).json({
         success: true,
@@ -167,9 +177,7 @@ class EvenementController extends BaseController {
 
   async update(req, res) {
     try {
-      if (req.file) {
-        req.body.image_url = req.file.path;
-      }
+      this._imagesRecues(req);
       const evenement = await this.evenementService.update(
         parseInt(req.params.id),
         req.body,

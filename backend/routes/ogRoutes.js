@@ -169,7 +169,8 @@ const initOgRoutes = (models) => {
       const lieu = ev.id_lieu && models.Lieu?.findByPk
         ? await sansEchec(() => models.Lieu.findByPk(ev.id_lieu, { attributes: ['nom', 'adresse', 'latitude', 'longitude'] }), null) : null;
       const orga = await auteurPublic(ev.id_user);
-      const image = ev.image_url || firstImage(ev.Medias);
+      // Image choisie pour le partage, sinon l'affiche
+      const image = ev.image_partage_url || ev.image_url || firstImage(ev.Medias);
       const corps = [
         sectionFaits([['Date', [date, ev.date_fin && dateFr(ev.date_fin) !== date ? `au ${dateFr(ev.date_fin)}` : ''].filter(Boolean).join(' ')], ['Lieu', [text(lieu?.nom), text(lieu?.adresse)].filter(Boolean).join(', ')]]),
         paragraphes(ev.description),
