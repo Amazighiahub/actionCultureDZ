@@ -72,8 +72,8 @@ class DocumentsEvenement {
     if (!estPdfDuSite(url)) return;
     try {
       if (await this.models.Media.count({ where: { url } })) return;
-      const idPublic = decodeURIComponent(new URL(url).pathname.split('/raw/upload/')[1].replace(/^v\d+\//, ''));
-      await require('../cloudinaryService').deleteAsset(idPublic, 'raw');
+      // Helper commun (raw : le public_id garde son extension éventuelle)
+      await require('../cloudinaryService').supprimerParUrl(url);
     } catch (e) {
       require('../../utils/logger').warn(`PDF non effacé de Cloudinary : ${e.message}`);
     }

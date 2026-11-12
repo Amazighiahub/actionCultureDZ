@@ -4,9 +4,7 @@
  */
 jest.mock('../../utils/redisClient', () => ({ getClient: () => null, isReady: () => false }));
 jest.mock('../../services/cloudinaryService', () => ({
-  deleteAsset: jest.fn().mockResolvedValue({ result: 'ok' }),
-  extractPublicId: jest.fn(() => 'eventculture/images/pochette'),
-  isCloudinaryUrl: jest.fn(() => true),
+  supprimerParUrl: jest.fn().mockResolvedValue(true),
   getResourceType: jest.fn(() => 'image')
 }));
 const cloudinary = require('../../services/cloudinaryService');
@@ -35,7 +33,9 @@ describe('retirer un média', () => {
     const s = creer();
     await s.deleteMedia(2, 5, 7);
     expect(s.models.Media.findOne).toHaveBeenCalledWith({ where: { id_media: 5, id_oeuvre: 2 } });
-    expect(cloudinary.deleteAsset).toHaveBeenCalledWith('eventculture/images/pochette', 'image');
+    expect(cloudinary.supprimerParUrl).toHaveBeenCalledWith(
+      'https://res.cloudinary.com/x/image/upload/p.jpg', { publicId: undefined, resourceType: 'image' }
+    );
   });
   test("un autre compte : 403 ; l'administration : permis", async () => {
     await expect(creer().deleteMedia(2, 5, 9)).rejects.toMatchObject({ statusCode: 403 });

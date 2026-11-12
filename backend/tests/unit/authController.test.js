@@ -1,6 +1,7 @@
 /**
- * Tests unitaires — UserController (auth: register, login, logout)
+ * Tests unitaires — AuthController (register, login, logout)
  * Priorité #1 : L'authentification est le flux le plus critique
+ * (ex-userController.test.js : la façade userController, morte, a été retirée — audit V11 COD-B14)
  */
 
 // Mock du container AVANT le require du controller
@@ -24,10 +25,10 @@ jest.mock('../../middlewares/rateLimitMiddleware', () => ({
 }));
 
 // Le controller est un singleton exporté
-const controller = require('../../controllers/userController');
+const controller = require('../../controllers/authController');
 const { accountRateLimiter } = require('../../middlewares/rateLimitMiddleware');
 
-describe('UserController — Authentification', () => {
+describe('AuthController — Authentification', () => {
   let req, res;
 
   beforeEach(() => {

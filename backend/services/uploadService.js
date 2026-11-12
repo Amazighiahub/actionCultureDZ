@@ -3,45 +3,23 @@
 // Images  : resize auto, quality:auto:good, format:auto (WebP/AVIF)
 // Vidéos  : 1280x720, 2Mbit/s, MP4
 // Audios  : Cloudinary resource_type 'video'
-// Docs    : Cloudinary resource_type 'raw'
+// Docs    : mémoire puis cloudinaryUploader (uploadDocumentSafe), resource_type 'raw'
 
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
-const crypto = require('crypto');
 const {
   cloudinary,
   FOLDERS,
   IMAGE_TRANSFORMS
 } = require('./cloudinaryService');
+// Un seul générateur de public_id (avant : copie ici, justifiée par une dépendance circulaire
+// qui n'existe pas — cloudinaryUploader n'importe pas uploadService ; audit V11 COD-B15)
+const { buildPublicId } = require('./upload/cloudinaryUploader');
 
 class UploadService {
   constructor() {
     // Aucun dossier local à créer - tout va sur Cloudinary
-  }
-
-  // ============================================================
-  // Génération d'un public_id unique pour Cloudinary
-  // ============================================================
-  generatePublicId(originalname, prefix = '') {
-    const ext = path.extname(originalname).toLowerCase();
-    const name = path.basename(originalname, ext);
-    const timestamp = Date.now();
-    const random = crypto.randomBytes(6).toString('hex');
-
-    const cleanName = name
-      .toLowerCase()
-      .replace(/[àáäâèéëêìíïîòóöôùúüûñç]/g, (c) => (
-        { à:'a',á:'a',ä:'a',â:'a',è:'e',é:'e',ë:'e',ê:'e',
-          ì:'i',í:'i',ï:'i',î:'i',ò:'o',ó:'o',ö:'o',ô:'o',
-          ù:'u',ú:'u',ü:'u',û:'u',ñ:'n',ç:'c' }[c] || c
-      ))
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 40);
-
-    return `${prefix ? prefix + '-' : ''}${cleanName}-${timestamp}-${random}`;
   }
 
   // ============================================================
@@ -58,7 +36,7 @@ class UploadService {
       cloudinary,
       params: (req, file) => ({
         folder,
-        public_id:     this.generatePublicId(file.originalname, 'img'),
+        public_id:     buildPublicId(file.originalname, 'img'),
         resource_type: 'image',
         transformation,
         allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
@@ -75,40 +53,6 @@ class UploadService {
     };
 
     return multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
-  }
-
-  // ============================================================
-  // Documents — resource_type 'raw' sur Cloudinary
-  // ============================================================
-  uploadDocument() {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: (req, file) => ({
-        folder:        FOLDERS.document,
-        public_id:     this.generatePublicId(file.originalname, 'doc'),
-        resource_type: 'raw',
-        allowed_formats: ['pdf', 'doc', 'docx', 'txt', 'odt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx']
-      })
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedMimes = [
-        'application/pdf', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain', 'application/vnd.oasis.opendocument.text', 'application/rtf',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-      ];
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Format de document non supporté'));
-      }
-    };
-
-    return multer({ storage, limits: { fileSize: 50 * 1024 * 1024 }, fileFilter });
   }
 
   // ============================================================
@@ -171,25 +115,6 @@ class UploadService {
       limits: { fileSize: maxSize },
       fileFilter
     });
-  }
-
-  // Upload générique (réutilise uploadMedia)
-  uploadAny() {
-    return this.uploadMedia();
-  }
-
-  // ============================================================
-  // Suppression d'un fichier Cloudinary via son URL
-  // ============================================================
-  async deleteFile(url) {
-    const { deleteAsset, extractPublicId, isCloudinaryUrl } = require('./cloudinaryService');
-    if (!isCloudinaryUrl(url)) return false;
-    const publicId = extractPublicId(url);
-    if (!publicId) return false;
-    const resourceType = url.includes('/video/') ? 'video' :
-                         url.includes('/raw/')   ? 'raw'   : 'image';
-    await deleteAsset(publicId, resourceType);
-    return true;
   }
 
   // Helper taille fichier (conservé pour compatibilité)

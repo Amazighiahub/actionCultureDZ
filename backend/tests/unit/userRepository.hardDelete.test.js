@@ -124,17 +124,17 @@ describe('deleteUserFiles', () => {
   const count = (n) => ({ count: jest.fn().mockResolvedValue(n) });
 
   it('ne supprime pas un fichier encore utilisé par un autre compte ou un média', async () => {
-    const uploadService = { deleteFile: jest.fn().mockResolvedValue(true) };
+    const supprimerParUrl = jest.fn().mockResolvedValue(true);
     const models = { User: { unscoped: () => count(1) }, Media: count(0) };
-    const res = await deleteUserFiles(models, ['https://res.cloudinary.com/x/autre.jpg'], { uploadService });
-    expect(uploadService.deleteFile).not.toHaveBeenCalled();
+    const res = await deleteUserFiles(models, ['https://res.cloudinary.com/x/autre.jpg'], { supprimerParUrl });
+    expect(supprimerParUrl).not.toHaveBeenCalled();
     expect(res.skipped).toBe(1);
   });
 
   it('supprime un fichier orphelin ; une erreur Cloudinary ne bloque pas', async () => {
-    const uploadService = { deleteFile: jest.fn().mockResolvedValueOnce(true).mockRejectedValueOnce(new Error('cloudinary down')) };
+    const supprimerParUrl = jest.fn().mockResolvedValueOnce(true).mockRejectedValueOnce(new Error('cloudinary down'));
     const models = { User: { unscoped: () => count(0) }, Media: count(0) };
-    const res = await deleteUserFiles(models, ['u1', 'u2'], { uploadService });
+    const res = await deleteUserFiles(models, ['u1', 'u2'], { supprimerParUrl });
     expect(res).toEqual({ deleted: 1, skipped: 0, failed: 1 });
   });
 });

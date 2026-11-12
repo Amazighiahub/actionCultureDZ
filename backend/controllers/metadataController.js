@@ -283,7 +283,7 @@ class MetadataController extends BaseController {
 
   async updateCategorieTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateCategorieTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
@@ -304,7 +304,7 @@ class MetadataController extends BaseController {
 
   async updateGenreTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateGenreTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
@@ -325,7 +325,7 @@ class MetadataController extends BaseController {
 
   async updateTypeOeuvreTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateTypeOeuvreTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
@@ -346,7 +346,7 @@ class MetadataController extends BaseController {
 
   async updateTagTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateTagTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
@@ -367,7 +367,7 @@ class MetadataController extends BaseController {
 
   async updateMateriauTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateMateriauTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
@@ -388,7 +388,7 @@ class MetadataController extends BaseController {
 
   async updateTechniqueTranslation(req, res) {
     try {
-      const targetLang = req.targetLanguage || req.params.lang;
+      const targetLang = req.targetLanguage;
       const result = await this.metadataService.updateTechniqueTranslation(req.params.id, targetLang, req.body);
       if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
       this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));

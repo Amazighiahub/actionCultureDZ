@@ -210,23 +210,8 @@ class UploadController extends BaseController {
   }
 
   // ============================================================================
-  // UPLOAD VIDÉO / AUDIO / DOCUMENT / OEUVRE MEDIA
+  // UPLOAD VIDÉO / AUDIO / OEUVRE MEDIA
   // ============================================================================
-
-  /**
-   * Upload document (authentifié)
-   */
-  async uploadDocument(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ success: false, error: req.t('upload.noDocument') });
-      }
-      const data = await this.service.createAuthenticatedMedia(req.file, req.user.id_user);
-      res.json({ success: true, message: req.t('upload.documentSuccess'), data });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
 
   /**
    * Upload vidéo (authentifié)

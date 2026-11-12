@@ -8,7 +8,7 @@ const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
-const { MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
+const { TYPES_PATRIMOINE, MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
 const { body } = require('express-validator');
 const { aUnTexte } = require('../helpers/i18n');
 const patrimoineController = require('../controllers/patrimoineController');
@@ -238,7 +238,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     validateGPS,
     [
       body('nom').notEmpty().withMessage(msg('validation.nomRequis')),
-      body('typePatrimoine').optional().isIn(['ville_village', 'monument', 'musee', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre']).withMessage(msg('validation.typePatrimoineInvalide')),
+      body('typePatrimoine').optional().isIn(TYPES_PATRIMOINE).withMessage(msg('validation.typePatrimoineInvalide')),
       body('communeId').optional().isInt({ min: 1 }).withMessage(msg('validation.communeInvalide')),
       body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage(msg('validation.invalidLatitude')),
       body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage(msg('validation.invalidLongitude')),
@@ -251,6 +251,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.put('/:id', authenticate, requireModerationOuPro, validateId(),
     validateStringLengths,
     validateGPS,
+    // Type faux : 400 ici au lieu d'une erreur MySQL (500). Vide = inchangé, comme le service.
+    [body('typePatrimoine').optional({ values: 'falsy' }).isIn(TYPES_PATRIMOINE).withMessage(msg('validation.typePatrimoineInvalide'))],
+    handleValidationErrors,
     patrimoineController.wrap('update'));
   router.delete('/:id', authenticate, requireRole(['Admin']), validateId(), patrimoineController.wrap('delete'));
 

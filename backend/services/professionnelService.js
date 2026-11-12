@@ -4,11 +4,7 @@
  */
 const { Op, literal } = require('sequelize');
 const { attributsComptes, verifierPlacePourRetablir, STATUTS_PLACE_PRISE, personnesSql } = require('../utils/comptesEvenement');
-const { mergeTranslations } = require('../helpers/i18n');
 const { pasTermine, termine } = require('../helpers/finEvenement');
-const { buildMultiLangSearch, rechercheNomPersonne } = require('../utils/multiLangSearchBuilder');
-const { sanitizeLike } = require('../utils/sanitize');
-const { triParNom } = require('../utils/triParNom');
 const { bornerPagination } = require('../utils/pagination');
 const logger = require('../utils/logger');
 const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireInscription');
@@ -22,173 +18,8 @@ class ProfessionnelService {
   }
 
   // ========================================================================
-  // CONSULTATION
-  // ========================================================================
-
-  async getAllProfessionnels({ page = 1, limit = 20, search, specialite, wilaya, verifie, lang = 'fr' }) {
-    // Plafonds communs des listes : 100 par page, page 500 au plus (audit V11 BDD-12)
-    ({ page, limit } = bornerPagination(page, limit));
-    const offset = (page - 1) * limit;
-
-    const where = {
-      id_type_user: { [Op.in]: [2, 3, 4] }
-    };
-
-    if (search) {
-      const safeSearch = `%${sanitizeLike(search)}%`;
-      where[Op.or] = [
-        ...(await rechercheNomPersonne(this.sequelize, this.models.User, search, 'User')),
-        ...buildMultiLangSearch(this.sequelize, 'biographie', search),
-        { entreprise: { [Op.like]: safeSearch } }
-      ];
-    }
-
-    if (verifie !== undefined) {
-      where.verifie = verifie === 'true';
-    }
-
-    const include = [
-      { model: this.models.TypeUser, attributes: ['nom_type'] }
-    ];
-
-    if (wilaya) {
-      include.push({
-        model: this.models.Wilaya,
-        where: { id_wilaya: wilaya }
-      });
-    }
-
-    // Nom dans la langue, sans accents ni majuscules (avant : JSON brut, ordre binaire faux) ; la colonne
-    // user.nom_tri sera prise d'elle-même quand sa migration existera (audit V11 BDD-15)
-    const { rows, count } = await this.models.User.findAndCountAll({
-      where,
-      include,
-      attributes: { exclude: ['password', 'reset_token'] },
-      limit,
-      offset,
-      order: (await triParNom(this.models.User, { lang })).order
-    });
-
-    return {
-      data: rows,
-      total: count,
-      pagination: { total: count, page: parseInt(page), pages: Math.ceil(count / limit) }
-    };
-  }
-
-  async getProfessionnelById(id) {
-    return this.models.User.findByPk(id, {
-      include: [
-        { model: this.models.TypeUser },
-        { model: this.models.Wilaya },
-        {
-          model: this.models.Oeuvre,
-          as: 'OeuvresSaisies',
-          where: { statut: 'publie' },
-          required: false,
-          limit: 10
-        },
-        {
-          model: this.models.Evenement,
-          as: 'EvenementsOrganises',
-          required: false,
-          limit: 5
-        }
-      ],
-      attributes: { exclude: ['password', 'reset_token'] }
-    });
-  }
-
-  async getMyProfile(userId) {
-    return this.models.User.findByPk(userId, {
-      include: [
-        { model: this.models.TypeUser },
-        { model: this.models.Wilaya }
-      ],
-      attributes: { exclude: ['password', 'reset_token'] }
-    });
-  }
-
-  async updateMyProfile(userId, lang, { nom, prenom, biographie, ...otherFields }) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) return null;
-
-    // Seuls le nom, le prénom et la biographie (avant : tout le reste du corps de la requête, y compris
-    // des champs sensibles comme les moyens de paiement). Les autres passent par userService.
-    void otherFields;
-    const updates = {};
-
-    // Gérer les champs multilingues
-    if (nom !== undefined) {
-      updates.nom = typeof nom === 'object'
-        ? mergeTranslations(user.nom, nom)
-        : mergeTranslations(user.nom, { [lang]: nom });
-    }
-    if (prenom !== undefined) {
-      updates.prenom = typeof prenom === 'object'
-        ? mergeTranslations(user.prenom, prenom)
-        : mergeTranslations(user.prenom, { [lang]: prenom });
-    }
-    if (biographie !== undefined) {
-      updates.biographie = typeof biographie === 'object'
-        ? mergeTranslations(user.biographie, biographie)
-        : mergeTranslations(user.biographie, { [lang]: biographie });
-    }
-
-    await user.update(updates);
-
-    return this.models.User.findByPk(userId, {
-      include: [{ model: this.models.TypeUser }],
-      attributes: { exclude: ['password', 'reset_token'] }
-    });
-  }
-
-  async searchProfessionnels(q, limit = 10) {
-    const safeLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
-    const where = {
-      id_type_user: { [Op.in]: [2, 3, 4] },
-      [Op.or]: [
-        ...buildMultiLangSearch(this.sequelize, 'nom', q),
-        ...buildMultiLangSearch(this.sequelize, 'prenom', q),
-        { entreprise: { [Op.like]: `%${sanitizeLike(q)}%` } }
-      ]
-    };
-
-    return this.models.User.findAll({
-      where,
-      attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'entreprise'],
-      include: [{ model: this.models.TypeUser, attributes: ['nom_type'] }],
-      limit: safeLimit
-    });
-  }
-
-  // ========================================================================
   // ŒUVRES
   // ========================================================================
-
-  async getMesOeuvres(userId, { page = 1, limit = 20, statut }) {
-    ({ page, limit } = bornerPagination(page, limit));
-    const offset = (page - 1) * limit;
-    const where = { saisi_par: userId };
-    if (statut) where.statut = statut;
-
-    const { rows, count } = await this.models.Oeuvre.findAndCountAll({
-      where,
-      include: [
-        { model: this.models.TypeOeuvre },
-        { model: this.models.Media, limit: 1 }
-      ],
-      limit: parseInt(limit),
-      offset,
-      order: [['date_creation', 'DESC']]
-    });
-
-    return {
-      data: rows,
-      total: count,
-      pagination: { total: count, page: parseInt(page), pages: Math.ceil(count / parseInt(limit)) }
-    };
-  }
 
   async getMyOeuvres(userId, { page = 1, limit = 20, statut, type }) {
     ({ page, limit } = bornerPagination(page, limit));
@@ -261,30 +92,6 @@ class ProfessionnelService {
   // ÉVÉNEMENTS
   // ========================================================================
 
-  async getMesEvenements(userId, { page = 1, limit = 20, statut }) {
-    ({ page, limit } = bornerPagination(page, limit));
-    const offset = (page - 1) * limit;
-    const where = { id_user: userId };
-    if (statut) where.statut = statut;
-
-    const { rows, count } = await this.models.Evenement.findAndCountAll({
-      where,
-      include: [
-        { model: this.models.TypeEvenement, as: 'TypeEvenement', required: false },
-        { model: this.models.Lieu, as: 'Lieu', required: false }
-      ],
-      limit: parseInt(limit),
-      offset,
-      order: [['date_debut', 'DESC']]
-    });
-
-    return {
-      data: rows,
-      total: count,
-      pagination: { total: count, page: parseInt(page), pages: Math.ceil(count / parseInt(limit)) }
-    };
-  }
-
   async getMyEvenements(userId, { page = 1, limit = 20, statut }) {
     ({ page, limit } = bornerPagination(page, limit));
     const offset = (page - 1) * limit;
@@ -343,25 +150,6 @@ class ProfessionnelService {
   // ========================================================================
   // STATISTIQUES
   // ========================================================================
-
-  async getMesStatistiques(userId) {
-    const [totalOeuvres, totalEvenements, oeuvresPubliees, evenementsActifs] = await Promise.all([
-      this.models.Oeuvre.count({ where: { saisi_par: userId } }),
-      this.models.Evenement.count({ where: { id_user: userId } }),
-      this.models.Oeuvre.count({ where: { saisi_par: userId, statut: 'publie' } }),
-      this.models.Evenement.count({
-        where: { id_user: userId, [Op.and]: [pasTermine(new Date(), 'Evenement')] }
-      })
-    ]);
-
-    return {
-      totalOeuvres,
-      totalEvenements,
-      oeuvresPubliees,
-      evenementsActifs,
-      tauxPublication: totalOeuvres > 0 ? Math.round((oeuvresPubliees / totalOeuvres) * 100) : 0
-    };
-  }
 
   async getOeuvreStats(oeuvreId, userId) {
     const oeuvre = await this.models.Oeuvre.findOne({

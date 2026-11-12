@@ -489,18 +489,16 @@ class OeuvreController extends BaseController {
    */
   async updateTranslation(req, res) {
     try {
-      const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tmz'];
-      if (!ALLOWED_LANGS.includes(req.params.lang)) {
-        return res.status(400).json({ success: false, error: 'Code langue invalide' });
-      }
+      // Code langue vérifié et normalisé par validateLanguage (route)
+      const lang = req.targetLanguage;
       const oeuvre = await this.oeuvreService.updateTranslation(
         parseInt(req.params.id),
-        req.params.lang,
+        lang,
         req.body
       );
       res.json({
         success: true,
-        message: req.t('translation.updated', { lang: req.params.lang }),
+        message: req.t('translation.updated', { lang }),
         data: this._translateOeuvre(oeuvre, req.lang, 'detail')
       });
     } catch (error) {

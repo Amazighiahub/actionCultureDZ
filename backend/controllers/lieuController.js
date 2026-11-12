@@ -10,7 +10,7 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translate, translateDeep, mergeTranslations } = require('../helpers/i18n');
 
-const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+const { SUPPORTED_LANGUAGES: ALLOWED_LANGS } = require('../constants/langues');
 
 class LieuController extends BaseController {
   get service() {

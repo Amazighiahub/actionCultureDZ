@@ -1,15 +1,15 @@
-// middleware/language.js
+// middlewares/language.js
 // Middleware de détection et validation de la langue pour i18n
 
-const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-const DEFAULT_LANGUAGE = 'fr';
+const { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } = require('../constants/langues');
 
 /**
- * Normalise un code de langue
+ * Reconnaît un code de langue : code exact du site ou alias connu (fr-FR, ar-DZ, kab, tmh…).
+ * @returns {string|null} code du site, ou null si le code n'est pas reconnu
  */
-const normalizeLanguage = (lang) => {
-  if (!lang || typeof lang !== 'string') return DEFAULT_LANGUAGE;
-  
+const resoudreLangue = (lang) => {
+  if (!lang || typeof lang !== 'string') return null;
+
   const cleaned = lang.trim().toLowerCase();
   
   // Vérifier si c'est une langue supportée exacte
@@ -32,9 +32,15 @@ const normalizeLanguage = (lang) => {
   if (cleaned === 'tmh' || cleaned.includes('tfng')) {
     return 'tz-tfng';
   }
-  
-  return DEFAULT_LANGUAGE;
+
+  return null;
 };
+
+/**
+ * Normalise un code de langue ; un code inconnu donne la langue par défaut.
+ * Pour la détection seulement : une route qui écrit dans une langue utilise validateLanguage.
+ */
+const normalizeLanguage = (lang) => resoudreLangue(lang) || DEFAULT_LANGUAGE;
 
 /**
  * Middleware de détection automatique de la langue
@@ -94,17 +100,20 @@ const validateLanguage = (req, res, next) => {
     });
   }
   
-  const normalized = normalizeLanguage(lang);
-  
-  if (!SUPPORTED_LANGUAGES.includes(normalized)) {
+  // Code inconnu refusé : avant, il retombait sur « fr » et la traduction écrasait le français
+  const normalized = resoudreLangue(lang);
+
+  if (!normalized) {
     return res.status(400).json({
       success: false,
       error: req.t ? req.t('validation.invalidData') : `Unsupported language: ${lang}`,
       supportedLanguages: SUPPORTED_LANGUAGES
     });
   }
-  
+
   req.targetLanguage = normalized;
+  // Les contrôleurs qui lisent encore req.params.lang reçoivent le code du site (kab → tz-ltn)
+  req.params.lang = normalized;
   next();
 };
 
@@ -121,9 +130,9 @@ const setLanguageCookie = (req, res, next) => {
     });
   }
   
-  const normalized = normalizeLanguage(lang);
-  
-  if (!SUPPORTED_LANGUAGES.includes(normalized)) {
+  const normalized = resoudreLangue(lang);
+
+  if (!normalized) {
     return res.status(400).json({
       success: false,
       error: req.t ? req.t('validation.invalidData') : `Unsupported language: ${lang}`,
@@ -165,6 +174,7 @@ const isRTL = (lang) => {
 module.exports = {
   SUPPORTED_LANGUAGES,
   DEFAULT_LANGUAGE,
+  resoudreLangue,
   normalizeLanguage,
   languageMiddleware,
   validateLanguage,

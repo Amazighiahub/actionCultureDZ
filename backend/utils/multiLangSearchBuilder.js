@@ -13,7 +13,7 @@
 const { Op } = require('sequelize');
 
 // Langues supportées pour la recherche
-const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+const { SUPPORTED_LANGUAGES } = require('../constants/langues');
 
 /**
  * 🔒 Valide et retourne une langue sécurisée

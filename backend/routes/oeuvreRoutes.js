@@ -14,6 +14,7 @@ const { handleValidationErrors, validateId, validatePagination, validateWorkSubm
 const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
 const limiteEnvois = [mediasLimiter];
 const asyncHandler = require('../utils/asyncHandler');
+const { validateLanguage } = require('../middlewares/language');
 const { msg } = require('../utils/messageValidation');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
@@ -154,7 +155,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   // Traductions (admin i18n)
   router.get('/:id/translations', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.getTranslations(req, res)));
-  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.updateTranslation(req, res)));
+  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), validateId(), validateLanguage, asyncHandler((req, res) => oeuvreController.updateTranslation(req, res)));
 
   return router;
 };

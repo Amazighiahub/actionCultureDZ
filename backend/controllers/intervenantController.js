@@ -311,7 +311,7 @@ class IntervenantController extends BaseController {
 
   async updateIntervenantTranslation(req, res) {
     try {
-      const targetLang = req.params.lang;
+      const targetLang = req.targetLanguage; // vérifié par validateLanguage (route)
       const result = await this.intervenantService.updateIntervenantTranslation(req.params.id, targetLang, req.body);
 
       if (!result) {

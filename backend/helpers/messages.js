@@ -2,8 +2,7 @@
 // Système de traduction des messages API (error/success) pour le backend
 // Utilise req.lang (fourni par le middleware language.js) pour traduire les réponses
 
-const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-const DEFAULT_LANGUAGE = 'fr';
+const { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } = require('../constants/langues');
 
 // Charger les fichiers de traduction
 const translations = {};

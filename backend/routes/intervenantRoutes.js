@@ -5,7 +5,7 @@ const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, query, param } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue
-const { validateLanguage } = require('../middlewares/language');
+const { validateLanguage, SUPPORTED_LANGUAGES } = require('../middlewares/language');
 const { msg } = require('../utils/messageValidation');
 
 const initIntervenantRoutes = (models, authMiddleware) => {
@@ -78,7 +78,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
           updateTranslation: 'PATCH /api/intervenants/:id/translation/:lang (Admin)'
         }
       },
-      languages: ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng']
+      languages: SUPPORTED_LANGUAGES
     });
   });
 

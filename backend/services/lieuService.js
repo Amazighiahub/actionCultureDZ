@@ -16,7 +16,6 @@ const { sanitizeLike } = require('../utils/sanitize');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const { supprimerLieu } = require('./patrimoine/suppressionLieu');
 
-const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
 class LieuService extends BaseService {
   constructor(repository, options = {}) {

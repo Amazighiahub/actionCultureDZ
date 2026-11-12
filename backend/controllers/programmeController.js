@@ -334,7 +334,7 @@ class ProgrammeController extends BaseController {
 
   async updateProgrammeTranslation(req, res) {
     try {
-      const targetLang = req.params.lang;
+      const targetLang = req.targetLanguage; // vérifié par validateLanguage (route)
       const result = await this.programmeService.updateProgrammeTranslation(req.params.id, targetLang, req.body);
 
       if (!result) {

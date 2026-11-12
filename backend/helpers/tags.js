@@ -3,7 +3,7 @@
  */
 const { Op, Sequelize } = require('sequelize');
 
-const LANGUES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+const { SUPPORTED_LANGUAGES: LANGUES } = require('../constants/langues');
 
 /**
  * Liste de mots-clés envoyée par un formulaire : tableau, ou texte JSON (FormData).

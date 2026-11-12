@@ -1,5 +1,6 @@
 // models/Lieu.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
+const { TYPES_PATRIMOINE } = require('../../constants/patrimoineTypes');
 
 module.exports = (sequelize) => {
   const Lieu = sequelize.define('Lieu', {
@@ -15,16 +16,7 @@ module.exports = (sequelize) => {
     },
     // ⚡ NOUVEAU - Type de patrimoine pour adapter l'affichage
     typePatrimoine: {
-      type: DataTypes.ENUM(
-        'ville_village',       // Contient monuments, vestiges, musées → parcours intelligent
-        'monument',            // Mosquée, Palais, Fort, etc. → programmes, services
-        'musee',               // Collections, expositions → programmes, billetterie
-        'site_archeologique',  // Ruines, vestiges → programmes, visites guidées
-        'site_naturel',        // Parcs, réserves → randonnées, parcours
-        'edifice_religieux',   // Mosquées, zaouïas, églises
-        'palais_forteresse',   // Palais, forts, citadelles
-        'autre'
-      ),
+      type: DataTypes.ENUM(...TYPES_PATRIMOINE), // liste et sens : constants/patrimoineTypes.js
       allowNull: false,
       defaultValue: 'monument',
       index: true,

@@ -20,6 +20,7 @@ const userProfileController = require('../controllers/userProfileController');
 const userAdminController = require('../controllers/userAdminController');
 const gdprController = require('../controllers/gdprController');
 const asyncHandler = require('../utils/asyncHandler');
+const { validateLanguage } = require('../middlewares/language');
 const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 const { verifierTurnstile } = require('../middlewares/turnstile');
@@ -173,7 +174,7 @@ const initUserRoutes = (models, authMiddleware) => {
 
   // Traductions (admin i18n)
   router.get('/:id/translations', authenticate, requireRole(['Admin']), validateId(), asyncHandler((req, res) => userAdminController.getUserTranslations(req, res)));
-  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), validateId(), asyncHandler((req, res) => userAdminController.updateUserTranslation(req, res)));
+  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), validateId(), validateLanguage, asyncHandler((req, res) => userAdminController.updateUserTranslation(req, res)));
 
   return router;
 };

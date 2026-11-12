@@ -681,13 +681,14 @@ class OeuvreService extends BaseService {
   /** Fichiers Cloudinary de médias supprimés (sans effet sur les fichiers hébergés ailleurs) ; un échec est journalisé */
   async _supprimerFichiersCloudinary(medias) {
     if (!medias?.length) return;
-    const cloudinary = require('../cloudinaryService');
+    const { supprimerParUrl, getResourceType } = require('../cloudinaryService');
     for (const media of medias) {
       const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
-      const publicId = meta.cloudinaryPublicId || cloudinary.extractPublicId(media.url);
-      if (publicId && cloudinary.isCloudinaryUrl(media.url)) {
-        await cloudinary.deleteAsset(publicId, cloudinary.getResourceType(media.mime_type));
-      }
+      // Type lu dans l'URL ; le type MIME ne sert que si l'URL ne le dit pas (helper commun, audit V11 COD-B15)
+      await supprimerParUrl(media.url, {
+        publicId: meta.cloudinaryPublicId,
+        resourceType: getResourceType(media.mime_type)
+      });
     }
   }
 

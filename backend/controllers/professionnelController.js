@@ -16,95 +16,8 @@ class ProfessionnelController extends BaseController {
   }
 
   // ========================================================================
-  // CONSULTATION PUBLIQUE
-  // ========================================================================
-
-  async getAllProfessionnels(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { page, limit } = this._paginate(req);
-      const { specialite, wilaya, search, verifie } = req.query;
-
-      const result = await this.professionnelService.getAllProfessionnels({
-        page, limit, search, specialite, wilaya, verifie, lang
-      });
-
-      res.json({
-        success: true,
-        data: {
-          professionnels: translateDeep(result.data, lang),
-          pagination: result.pagination
-        },
-        lang
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  async getProfessionnelById(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const professionnel = await this.professionnelService.getProfessionnelById(req.params.id);
-
-      if (!professionnel) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({ success: true, data: translateDeep(professionnel, lang), lang });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  async searchProfessionnels(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { q, limit = 10 } = req.query;
-
-      if (!q || q.length < 2) {
-        return res.json({ success: true, data: [] });
-      }
-
-      const professionnels = await this.professionnelService.searchProfessionnels(q, limit);
-      res.json({ success: true, data: translateDeep(professionnels, lang), lang });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  // ========================================================================
   // PROFIL
   // ========================================================================
-
-  async getMyProfile(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const professionnel = await this.professionnelService.getMyProfile(req.user.id_user);
-      res.json({ success: true, data: translateDeep(professionnel, lang), lang });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  async updateMyProfile(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const userUpdated = await this.professionnelService.updateMyProfile(req.user.id_user, lang, req.body);
-
-      if (!userUpdated) {
-        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
-      }
-
-      res.json({
-        success: true,
-        message: req.t('user.profileUpdated'),
-        data: translateDeep(userUpdated, lang)
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
 
   async updateProfessionalProfile(req, res) {
     try {
@@ -126,24 +39,6 @@ class ProfessionnelController extends BaseController {
   // ========================================================================
   // ŒUVRES
   // ========================================================================
-
-  async getMesOeuvres(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { page, limit } = this._paginate(req);
-      const { statut } = req.query;
-
-      const result = await this.professionnelService.getMesOeuvres(req.user.id_user, { page, limit, statut });
-
-      res.json({
-        success: true,
-        data: { oeuvres: translateDeep(result.data, lang), pagination: result.pagination },
-        lang
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
 
   async getMyOeuvres(req, res) {
     try {
@@ -189,24 +84,6 @@ class ProfessionnelController extends BaseController {
   // ÉVÉNEMENTS
   // ========================================================================
 
-  async getMesEvenements(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { page, limit } = this._paginate(req);
-      const { statut } = req.query;
-
-      const result = await this.professionnelService.getMesEvenements(req.user.id_user, { page, limit, statut });
-
-      res.json({
-        success: true,
-        data: { evenements: translateDeep(result.data, lang), pagination: result.pagination },
-        lang
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
   async getMyEvenements(req, res) {
     try {
       const lang = req.lang || 'fr';
@@ -242,16 +119,6 @@ class ProfessionnelController extends BaseController {
   // ========================================================================
   // STATISTIQUES
   // ========================================================================
-
-  async getMesStatistiques(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const data = await this.professionnelService.getMesStatistiques(req.user.id_user);
-      res.json({ success: true, data, lang });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
 
   async getOeuvreStats(req, res) {
     try {

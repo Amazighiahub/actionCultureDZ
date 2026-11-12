@@ -26,16 +26,16 @@ async function isReferencedElsewhere(models, url, { sansMedias = false } = {}) {
 /**
  * @param {object} models - modèles Sequelize
  * @param {string[]} urls - fichiers renvoyés par userRepository.hardDeleteUser
- * @param {object} [deps] - injection pour les tests ({ uploadService })
+ * @param {object} [deps] - injection pour les tests ({ supprimerParUrl })
  * @returns {Promise<{deleted: number, skipped: number, failed: number}>}
  */
 async function deleteUserFiles(models, urls, deps = {}) {
-  const uploadService = deps.uploadService || require('../uploadService');
+  const supprimerParUrl = deps.supprimerParUrl || require('../cloudinaryService').supprimerParUrl;
   const result = { deleted: 0, skipped: 0, failed: 0 };
   for (const url of [...new Set(urls || [])]) {
     try {
       if (await isReferencedElsewhere(models, url)) { result.skipped++; continue; }
-      const done = await uploadService.deleteFile(url);
+      const done = await supprimerParUrl(url);
       if (done) result.deleted++; else result.skipped++;
     } catch (err) {
       result.failed++;

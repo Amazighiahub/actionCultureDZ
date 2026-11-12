@@ -4,6 +4,7 @@ const router = express.Router();
 const NotificationController = require('../controllers/notificationController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const { body, param, query } = require('express-validator');
+const { SUPPORTED_LANGUAGES } = require('../constants/langues');
 
 const initNotificationRoutes = (models) => {
 
@@ -37,7 +38,7 @@ const initNotificationRoutes = (models) => {
       i18n: {
         note: 'Les relations (Evenement, Programme, Oeuvre) sont automatiquement traduites selon la langue active',
         detection: 'Via ?lang=, Cookie language, Header X-Language, Accept-Language',
-        languages: ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng']
+        languages: SUPPORTED_LANGUAGES
       },
       endpoints: {
         list: 'GET /api/notifications/list',
