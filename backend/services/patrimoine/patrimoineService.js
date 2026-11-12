@@ -1058,8 +1058,8 @@ class PatrimoineService extends BaseService {
     if (!Favori) throw this._validationError('Modèle Favori non disponible');
 
     const [favori, created] = await Favori.findOrCreate({
-      where: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId },
-      defaults: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId }
+      where: { id_user: userId, type_entite: 'lieu', id_entite: siteId },
+      defaults: { id_user: userId, type_entite: 'lieu', id_entite: siteId }
     });
     return { favori, created };
   }
@@ -1072,7 +1072,7 @@ class PatrimoineService extends BaseService {
     if (!Favori) throw this._validationError('Modèle Favori non disponible');
 
     const deleted = await Favori.destroy({
-      where: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId }
+      where: { id_user: userId, type_entite: 'lieu', id_entite: siteId }
     });
     return { deleted: deleted > 0 };
   }

@@ -11,6 +11,7 @@ const OeuvreDTO = require('../../dto/oeuvre/oeuvreDTO');
 const CreateOeuvreDTO = require('../../dto/oeuvre/createOeuvreDTO');
 const UpdateOeuvreDTO = require('../../dto/oeuvre/updateOeuvreDTO');
 const CacheManager = require('../../utils/CacheManager');
+const { memeUtilisateur } = require('../../utils/droits');
 const { subtypeRegistry, initSubtypeServices } = require('./subtypes');
 
 class OeuvreService extends BaseService {
@@ -322,7 +323,7 @@ class OeuvreService extends BaseService {
 
     // 2. Vérifier les permissions (owner ou admin via rôle "Administrateur" / id_type_user 29)
     const ownerId = existingOeuvre.saisi_par ?? existingOeuvre.id_createur;
-    if (ownerId !== userId && !isAdmin) {
+    if (!memeUtilisateur(ownerId, userId) && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez pas modifier cette œuvre');
     }
 
@@ -414,7 +415,7 @@ class OeuvreService extends BaseService {
 
     // 2. Vérifier les permissions : propriétaire ou admin (rôle Administrateur)
     const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
-    if (ownerId !== userId && !isAdmin) {
+    if (!memeUtilisateur(ownerId, userId) && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
     }
 
@@ -483,7 +484,7 @@ class OeuvreService extends BaseService {
     }
 
     const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
-    if (ownerId !== userId) {
+    if (!memeUtilisateur(ownerId, userId)) {
       throw this._forbiddenError('Vous ne pouvez pas soumettre cette œuvre');
     }
 

@@ -82,5 +82,16 @@ module.exports = (sequelize) => {
     Artisanat.belongsTo(models.Technique, { foreignKey: 'id_technique' });
   };
 
+  // Comme Oeuvre, Evenement et Lieu : favoris, vues et signalements de la fiche partent avec elle
+  // (avant : ils restaient en base, orphelins ; audit V11 BDD-22)
+  Artisanat.afterDestroy(async (artisanat, options) => {
+    const { Favori, Vue, Signalement } = sequelize.models;
+    const id = artisanat.id_artisanat;
+    const tx = options?.transaction ? { transaction: options.transaction } : {};
+    if (Favori) await Favori.destroy({ where: { type_entite: 'artisanat', id_entite: id }, ...tx });
+    if (Vue) await Vue.destroy({ where: { type_entite: 'artisanat', id_entite: id }, ...tx });
+    if (Signalement) await Signalement.destroy({ where: { type_entite: 'artisanat', id_entite: id }, ...tx });
+  });
+
   return Artisanat;
 };

@@ -115,3 +115,26 @@ describe('AppError 500 emballée par un service (relecture du lot)', () => {
     expect(res.json.mock.calls[0][0]).toMatchObject({ error: 'Date invalide' });
   });
 });
+
+describe('œuvres : propriétaire comparé en nombre ; favoris de patrimoine en type « lieu »', () => {
+  it('modifier son œuvre avec un identifiant en texte : pas de refus « propriétaire »', async () => {
+    jest.resetModules();
+    const OeuvreService = require('../../services/oeuvre/oeuvreService');
+    const s = Object.create(OeuvreService.prototype);
+    s.repository = { findById: jest.fn().mockResolvedValue({ id_oeuvre: 1, saisi_par: 12, statut: 'brouillon' }) };
+    await expect(s.submitForValidation(1, 13)).rejects.toMatchObject({ statusCode: 403 });
+    // L'auteur (« 12 » en texte) passe le contrôle de propriétaire : l'erreur éventuelle vient d'ailleurs
+    const resultat = await s.submitForValidation(1, '12').then(() => 'ok', (e) => e.statusCode);
+    expect(resultat).not.toBe(403);
+  });
+
+  it('ajouter un site patrimonial en favori enregistre le type « lieu » (seul accepté par la base)', async () => {
+    jest.resetModules();
+    const PatrimoineService = require('../../services/patrimoine/patrimoineService');
+    const s = Object.create(PatrimoineService.prototype);
+    const findOrCreate = jest.fn().mockResolvedValue([{}, true]);
+    s.models = { Favori: { findOrCreate, destroy: jest.fn().mockResolvedValue(1) } };
+    await s.ajouterFavoris(5, 9);
+    expect(findOrCreate.mock.calls[0][0].where).toMatchObject({ type_entite: 'lieu', id_entite: 5 });
+  });
+});
