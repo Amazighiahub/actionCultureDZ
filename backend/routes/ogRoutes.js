@@ -36,14 +36,25 @@ function summary(value, max = 200) {
   return `${plain.slice(0, max).replace(/\s+\S*$/, '')}…`;
 }
 
-/** Image absolue au format attendu par les réseaux sociaux (1200x630, JPEG) */
-function socialImage(url) {
+/**
+ * Image absolue au format attendu par les réseaux sociaux (1200x630, JPEG).
+ * Photo : recadrée sur le sujet. Affiche (événement, souvent en hauteur) : entière, centrée, les côtés
+ * remplis par l'affiche floutée ; recadrée, Facebook n'en montrait qu'une bande (titre, dates coupés).
+ */
+function socialImage(url, { affiche = false } = {}) {
   if (!url) return DEFAULT_IMAGE;
   const m = /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.*)$/.exec(url);
   if (m) {
     if (/\.(pdf|svg)(\?|$)/i.test(m[2])) return DEFAULT_IMAGE;
     // Pas de transformation existante : recadrage 1200x630 centré sur le sujet
-    return /^[a-z]{1,3}_[^/]*\//.test(m[2]) ? url : `${m[1]}c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/${m[2]}`;
+    if (/^[a-z]{1,3}_[^/]*\//.test(m[2])) return url;
+    // Affiche : fond = l'affiche agrandie, floutée et assombrie ; dessus, l'affiche entière (calque de la
+    // même image). L'option « b_blurred » de Cloudinary n'est pas disponible sur ce compte (erreur 400).
+    const idPublic = m[2].replace(/^v\d+\//, '').replace(/\.[a-z0-9]+$/i, '');
+    if (affiche && /^[\w\-/.]+$/.test(idPublic)) {
+      return `${m[1]}c_fill,w_1200,h_630/e_blur:2000/e_brightness:-25/l_${idPublic.replace(/\//g, ':')},c_fit,w_1200,h_630/fl_layer_apply/f_jpg,q_auto/${m[2]}`;
+    }
+    return `${m[1]}c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/${m[2]}`;
   }
   if (/^https?:\/\//.test(url)) return url;
   if (/\.svg(\?|$)/i.test(url)) return DEFAULT_IMAGE;
@@ -76,11 +87,11 @@ const sectionFaits = (faits) => {
 };
 
 /** Page HTML lue par les robots qui n'exécutent pas le JavaScript */
-function buildOgHtml({ title, description, image, path, type = 'article', notFound = false, corps = '', jsonLd = null }) {
+function buildOgHtml({ title, description, image, affiche = false, path, type = 'article', notFound = false, corps = '', jsonLd = null }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const desc = description || DEFAULT_DESCRIPTION;
   const url = `${SITE_URL}${path}`;
-  const img = socialImage(image);
+  const img = socialImage(image, { affiche });
   const e = escapeHtml;
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -168,6 +179,7 @@ const initOgRoutes = (models) => {
         title: text(ev.nom_evenement),
         description: [date, desc].filter(Boolean).join(' — ') || undefined,
         image,
+        affiche: true,
         type: 'article',
         // Adresse canonique avec le nom (1-salon-de-la-poterie…)
         path,
