@@ -88,17 +88,5 @@ export const useRTL = (languageParam?: string) => {
   };
 };
 
-// Hook utilitaire pour obtenir uniquement la direction
-export const useDirection = () => {
-  const { direction } = useRTL();
-  return direction;
-};
-
-// Hook utilitaire pour obtenir uniquement le statut RTL
-export const useIsRTL = () => {
-  const { isRtl } = useRTL();
-  return isRtl;
-};
-
 // Export par défaut
 export default useRTL;

@@ -2,8 +2,7 @@
  * Service pour les services culturels (restaurant, hébergement, guide, etc.)
  * Entité distincte de l'artisanat.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
+import { ApiResponse, PaginatedResponse } from '@/config/api';
 import { httpClient } from './httpClient';
 
 export interface Service {
@@ -47,7 +46,7 @@ class ServiceService {
   }
 
   async delete(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.services?.delete?.(id) ?? `/services/${id}`);
+    return httpClient.delete<void>(`/services/${id}`);
   }
 }
 

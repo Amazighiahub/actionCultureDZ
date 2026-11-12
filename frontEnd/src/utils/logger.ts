@@ -82,14 +82,6 @@ export const logger = new Logger();
 
 export const apiLogger = new Logger({ prefix: '[API]', emoji: '🌐' });
 export const authLogger = new Logger({ prefix: '[Auth]', emoji: '🔐' });
-export const uploadLogger = new Logger({ prefix: '[Upload]', emoji: '📤' });
-export const cacheLogger = new Logger({ prefix: '[Cache]', emoji: '📦' });
-export const wsLogger = new Logger({ prefix: '[WebSocket]', emoji: '🔌' });
-export const i18nLogger = new Logger({ prefix: '[i18n]', emoji: '🌍' });
-export const uiLogger = new Logger({ prefix: '[UI]', emoji: '🎨' });
-
-// Factory pour créer des loggers personnalisés
-export const createLogger = (options: LoggerOptions): Logger => new Logger(options);
 
 // Export par défaut
 export default logger;

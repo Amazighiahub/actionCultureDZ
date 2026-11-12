@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Type, Heading1, Image, Film, Quote, List,
   Grid3X3, Code, Minus, Link2

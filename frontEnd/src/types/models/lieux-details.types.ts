@@ -166,9 +166,3 @@ export type CreateVestigeDTO = Omit<Vestige,
 export type CreateQrCodeDTO = Omit<QrCode, 
   'id_qr_code' | 'date_creation' | 'Lieu' | 'QrScans'
 >;
-
-// Helpers pour la validation
-export function validateNoteMoyenne(note?: number): boolean {
-  if (note === undefined || note === null) return true;
-  return note >= 0 && note <= 5;
-}

@@ -4,7 +4,6 @@ import {
   RoleParticipation, 
   StatutParticipation, 
   RoleOrganisation, 
-  RoleDansOeuvre, 
   RoleUserOrganisation 
 } from '../enums/liaison.enums';
 import { User, TypeUser } from './user.types';
@@ -13,7 +12,7 @@ import { Evenement } from './evenement.types';
 import { Organisation } from './organisation.types';
 import { Programme } from './programme.types';
 import { Intervenant } from './intervenant.types';
-import { Role, Specialite, Categorie, TagMotCle, Editeur, Genre, TypeOeuvre } from './references.types';
+import { Role, Categorie, TagMotCle, Editeur, Genre, TypeOeuvre } from './references.types';
 import { Lieu } from './lieu.types';
 import { Parcours } from './lieux-details.types';
 import { MaterielRequis } from './specific-types';
@@ -306,36 +305,6 @@ export type CreateTypeOeuvreGenreDTO = Omit<TypeOeuvreGenre, 'TypeOeuvre' | 'Gen
  * Type pour créer une association Genre-Categorie
  */
 export type CreateGenreCategorieDTO = Omit<GenreCategorie, 'Genre' | 'Categorie'>;
-
-/**
- * Helper pour vérifier si un genre est disponible pour un type d'œuvre
- */
-export function isGenreAvailableForType(
-  typeOeuvreGenres: TypeOeuvreGenre[], 
-  idTypeOeuvre: number, 
-  idGenre: number
-): boolean {
-  return typeOeuvreGenres.some(
-    tog => tog.id_type_oeuvre === idTypeOeuvre && 
-           tog.id_genre === idGenre && 
-           tog.actif
-  );
-}
-
-/**
- * Helper pour vérifier si une catégorie est disponible pour un genre
- */
-export function isCategoryAvailableForGenre(
-  genreCategories: GenreCategorie[], 
-  idGenre: number, 
-  idCategorie: number
-): boolean {
-  return genreCategories.some(
-    gc => gc.id_genre === idGenre && 
-          gc.id_categorie === idCategorie && 
-          gc.actif
-  );
-}
 export type CreateOeuvreIntervenantDTO = Omit<OeuvreIntervenant, 'id' | 'date_creation' | 'date_modification' | 'Oeuvre' | 'Intervenant' | 'TypeUser'>;
 export type CreateOeuvreUserDTO = Omit<OeuvreUser, 'id' | 'Oeuvre' | 'User' | 'TypeUser'>;
 

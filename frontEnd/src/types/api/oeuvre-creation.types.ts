@@ -1,6 +1,5 @@
 // types/api/oeuvre-creation.types.ts - VERSION CORRIGÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StatutOeuvre } from '../models/oeuvre.types';
 
 /**
  * Type pour un intervenant existant à ajouter à l'œuvre
@@ -311,26 +310,6 @@ export enum StatutEdition {
   PUBLIE = 'publie',
   EPUISE = 'epuise',
   ANNULE = 'annule'
-}
-
-/**
- * Fonction pour convertir un résultat de recherche en format d'affichage
- */
-export function convertSearchResultToDisplay(result: IntervenantSearchResult): IntervenantDisplay {
-  // Parser le label pour extraire nom et prénom
-  const labelParts = result.label.split(' ');
-  const prenom = labelParts[0] || '';
-  const nom = labelParts.slice(1).join(' ') || '';
-  
-  return {
-    id_intervenant: result.id,
-    nom,
-    prenom,
-    titre_professionnel: result.titre,
-    organisation: result.organisation,
-    specialites: result.specialites,
-    photo_url: result.photo_url
-  };
 }
 
 /**

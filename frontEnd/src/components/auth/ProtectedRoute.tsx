@@ -187,11 +187,3 @@ export function ProfessionalRoute({ children }: { children: React.ReactNode }) {
     </ProtectedRoute>
   );
 }
-
-export function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
-  return (
-    <ProtectedRoute requireAuth>
-      {children}
-    </ProtectedRoute>
-  );
-}

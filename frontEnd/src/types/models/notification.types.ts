@@ -106,36 +106,6 @@ export function mapAPIToNotification(apiNotif: NotificationAPI | Notification): 
   };
 }
 
-// Convertir du format unifié vers l'API
-export function mapNotificationToAPI(notif: Notification): Partial<NotificationAPI> {
-  return {
-    id: notif.id_notification,
-    user_id: notif.id_user,
-    type: notif.type_notification,
-    titre: notif.titre,
-    message: notif.message,
-    is_read: !notif.lu,
-    created_at: notif.date_creation,
-    read_at: notif.date_lecture,
-    action_url: notif.url_action,
-    data: notif.data,
-    
-    // Déterminer le type d'entité
-    ...(notif.id_evenement && {
-      entity_type: 'evenement',
-      entity_id: notif.id_evenement
-    }),
-    ...(notif.id_oeuvre && {
-      entity_type: 'oeuvre',
-      entity_id: notif.id_oeuvre
-    }),
-    ...(notif.id_programme && {
-      entity_type: 'programme',
-      entity_id: notif.id_programme
-    })
-  };
-}
-
 // ================================================
 // TYPES POUR LE RÉSUMÉ
 // ================================================
@@ -334,15 +304,6 @@ const NOTIF_RELATIVE_TIME: Record<string, {
     daysAgo: (n) => `${n} ⵏ ⵡⵓⵙⵙⴰⵏ ⴰⵢⴰ`,
   },
 };
-
-
-// Vérifier si une notification est récente (moins de 24h)
-export function isRecentNotification(notification: Notification): boolean {
-  const created = new Date(notification.date_creation);
-  const now = new Date();
-  const diffHours = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
-  return diffHours < 24;
-}
 
 // Grouper les notifications par date
 export function groupNotificationsByDate(notifications: Notification[], language = 'fr'): Record<string, Notification[]> {

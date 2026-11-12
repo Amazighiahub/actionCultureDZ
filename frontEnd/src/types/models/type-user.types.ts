@@ -58,26 +58,6 @@ export enum TypeUserIntervenant {
   COORDINATEUR = 'coordinateur'
 }
 
-// Helper pour obtenir les types pertinents selon le type d'œuvre
-export function getRelevantTypeUsers(typeOeuvreId: number, allTypes: TypeUser[]): TypeUser[] {
-  const typeMapping: Record<number, string[]> = {
-    1: ['auteur', 'traducteur', 'illustrateur', 'prefacier'], // Livre
-    2: ['realisateur', 'acteur', 'producteur', 'scenariste', 'directeur_photo', 'monteur'], // Film
-    3: ['compositeur', 'interprete', 'arrangeur', 'parolier', 'producteur'], // Album Musical
-    4: ['auteur', 'journaliste', 'redacteur'], // Article
-    5: ['chercheur', 'auteur'], // Article Scientifique
-    6: ['artisan', 'designer'], // Artisanat
-    7: ['artiste', 'designer'] // Œuvre d'Art
-  };
-  
-  const allowedTypes = typeMapping[typeOeuvreId] || [];
-  if (allowedTypes.length === 0) return allTypes;
-  
-  return allTypes.filter(type => 
-    allowedTypes.some(allowed => type.nom_type.toLowerCase().includes(allowed))
-  );
-}
-
 // Helper pour vérifier les permissions d'un type
 export function hasPermission(typeUser: TypeUser, permission: string): boolean {
   // Logique à implémenter selon vos besoins

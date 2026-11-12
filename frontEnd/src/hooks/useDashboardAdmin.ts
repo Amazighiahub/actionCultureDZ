@@ -35,34 +35,6 @@ const paginationDe = (response: any, raw: any, nbLignes: number, limit = TAILLE_
 // Types pour les filtres
 export type { OeuvreFilters, EvenementFilters, PatrimoineFilters, ServiceFilters };
 
-// Hook pour gérer les filtres
-export const useAdminFilters = () => {
-  const [oeuvreFilters, setOeuvreFilters] = useState<OeuvreFilters>({});
-  const [evenementFilters, setEvenementFilters] = useState<EvenementFilters>({});
-  const [patrimoineFilters, setPatrimoineFilters] = useState<PatrimoineFilters>({});
-  const [serviceFilters, setServiceFilters] = useState<ServiceFilters>({});
-
-  const resetOeuvreFilters = () => setOeuvreFilters({});
-  const resetEvenementFilters = () => setEvenementFilters({});
-  const resetPatrimoineFilters = () => setPatrimoineFilters({});
-  const resetServiceFilters = () => setServiceFilters({});
-
-  return {
-    oeuvreFilters,
-    setOeuvreFilters,
-    resetOeuvreFilters,
-    evenementFilters,
-    setEvenementFilters,
-    resetEvenementFilters,
-    patrimoineFilters,
-    setPatrimoineFilters,
-    resetPatrimoineFilters,
-    serviceFilters,
-    setServiceFilters,
-    resetServiceFilters
-  };
-};
-
 export type AdminTab = 'overview' | 'users' | 'oeuvres' | 'evenements' | 'patrimoine' | 'services' | 'moderation';
 
 export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {

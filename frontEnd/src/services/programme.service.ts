@@ -1,6 +1,5 @@
 // services/programme.service.ts - Version adaptée pour User comme intervenant
 import { dureeMinutes } from '@/utils/programmeHoraire';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
 import { httpClient } from './httpClient';
 

@@ -75,24 +75,6 @@ export type CreateIntervenantDTO = Omit<Intervenant,
 // Type pour la mise à jour d'un intervenant
 export type UpdateIntervenantDTO = Partial<CreateIntervenantDTO>;
 
-// Helpers
-export function getIntervenantNomComplet(intervenant: Intervenant): string {
-  let nom = '';
-  if (intervenant.titre_professionnel) {
-    nom += intervenant.titre_professionnel + ' ';
-  }
-  nom += intervenant.prenom + ' ' + intervenant.nom;
-  return nom;
-}
-
-export function ajouterSpecialite(intervenant: Intervenant, specialite: string): string[] {
-  const specialites = intervenant.specialites || [];
-  if (!specialites.includes(specialite)) {
-    specialites.push(specialite);
-  }
-  return specialites;
-}
-
 // Types pour les statistiques
 export interface IntervenantStatistiques {
   nombreProgrammes: number;

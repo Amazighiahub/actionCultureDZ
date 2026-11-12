@@ -197,18 +197,3 @@ export type UpdateCategorieDTO = Partial<CreateCategorieDTO>;
 
 export type CreateEditeurDTO = Omit<Editeur, 'id_editeur' | 'date_creation' | 'date_modification'>;
 export type UpdateEditeurDTO = Partial<CreateEditeurDTO>;
-
-// Helpers
-export function getCategorieFullPath(categorie: Categorie, allCategories: Categorie[]): string {
-  const path: string[] = [categorie.nom];
-  let current = categorie;
-  
-  while (current.id_categorie_parent) {
-    const parent = allCategories.find(c => c.id_categorie === current.id_categorie_parent);
-    if (!parent) break;
-    path.unshift(parent.nom);
-    current = parent;
-  }
-  
-  return path.join(' > ');
-}

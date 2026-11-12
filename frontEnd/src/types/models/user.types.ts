@@ -1,5 +1,4 @@
 // types/models/user.types.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
   Sexe, 
   StatutUser, 

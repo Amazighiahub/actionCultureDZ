@@ -5,7 +5,7 @@ import { TypeOeuvre, Langue, Editeur, Categorie, TagMotCle } from './references.
 import { Media } from './media.types';
 import { CritiqueEvaluation } from './tracking.types';
 import { Evenement } from './evenement.types';
-import { OeuvreIntervenant, OeuvreUser, OeuvreEditeur, OeuvreCategorie, OeuvreTag, EvenementOeuvre } from './associations.types';
+import { OeuvreIntervenant, EvenementOeuvre } from './associations.types';
 import { Livre, Film, AlbumMusical, Article, ArticleScientifique, Artisanat, OeuvreArt } from './oeuvres-specialisees.types';
 
 
@@ -89,23 +89,3 @@ export type UpdateOeuvreDTO = Partial<CreateOeuvreDTO> & {
 export type ValidationOeuvreDTO =
   | { statut: 'publie'; validateur_id: number }
   | { statut: 'rejete'; validateur_id: number; raison_rejet: string };
-
-// Helpers
-export function isOeuvrePubliee(oeuvre: Oeuvre): boolean {
-  return oeuvre.statut === 'publie';
-}
-
-export function isOeuvreEditable(oeuvre: Oeuvre): boolean {
-  return ['brouillon', 'rejete'].includes(oeuvre.statut);
-}
-
-export function getOeuvreTypeSpecialise(oeuvre: Oeuvre): string | null {
-  if (oeuvre.Livre) return 'Livre';
-  if (oeuvre.Film) return 'Film';
-  if (oeuvre.AlbumMusical) return 'AlbumMusical';
-  if (oeuvre.Article) return 'Article';
-  if (oeuvre.ArticleScientifique) return 'ArticleScientifique';
-  if (oeuvre.Artisanat) return 'Artisanat';
-  if (oeuvre.OeuvreArt) return 'OeuvreArt';
-  return null;
-}

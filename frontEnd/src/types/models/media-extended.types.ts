@@ -44,17 +44,3 @@ export function getMainImage(medias: MediaExtended[]): string | undefined {
   // Priorité 3: Première image
   return images[0]?.url;
 }
-
-/**
- * Helper pour trier les médias
- */
-export function sortMedias(medias: MediaExtended[]): MediaExtended[] {
-  return medias.sort((a, b) => {
-    // Principal d'abord
-    if (a.is_Principale && !b.is_Principale) return -1;
-    if (!a.is_Principale && b.is_Principale) return 1;
-    
-    // Puis par ordre
-    return (a.ordre || 999) - (b.ordre || 999);
-  });
-}

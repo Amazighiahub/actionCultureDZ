@@ -22,7 +22,6 @@ import 'leaflet/dist/leaflet.css';
 // Icônes des marqueurs servies localement (voir src/lib/leafletIcons.ts)
 import '@/lib/leafletIcons';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface GPSPickerProps {
   latitude: number;

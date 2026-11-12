@@ -1,5 +1,6 @@
 /** Page d'une wilaya, et liens entre une œuvre et un lieu */
 import { httpClient } from '@/services/httpClient';
+import { API_ENDPOINTS } from '@/config/api';
 import { oeuvrePath, artisanatPath } from '@/utils/slug';
 import { reponseEchec } from '@/utils/erreurServeur';
 import i18next from 'i18next';
@@ -55,7 +56,7 @@ export const lienOeuvre = (o: Pick<OeuvreCarte, 'id_oeuvre' | 'id_type_oeuvre' |
 
 export const wilayaVitrineService = {
   vitrine: async (id: number) => (await httpClient.get<VitrineWilaya>(`/wilayas/${id}/vitrine`)).data ?? null,
-  wilayas: async () => (await httpClient.get<WilayaResume[]>('/metadata/wilayas')).data ?? [],
+  wilayas: async () => (await httpClient.get<WilayaResume[]>(API_ENDPOINTS.metadata.geographie.wilayas)).data ?? [],
   oeuvresLiees: async (idLieu: number) => (await httpClient.get<OeuvreCarte[]>(`/patrimoine/${idLieu}/oeuvres-liees`)).data ?? [],
   lieuxDeOeuvre: async (idOeuvre: number) =>
     (await httpClient.get<{ peut_relier: boolean; lieux: LieuDeOeuvre[] }>(`/patrimoine/oeuvre-lieux/${idOeuvre}`)).data

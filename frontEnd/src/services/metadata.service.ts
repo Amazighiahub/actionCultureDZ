@@ -372,7 +372,7 @@ export class MetadataService {
   /** @deprecated Dans un composant, utiliser useWilayas (hooks/useGeographie) : liste en cache partagée (audit V11 COD-11) */
   async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
     try {
-      const response = await httpClient.get<Wilaya[]>('/metadata/wilayas');
+      const response = await httpClient.get<Wilaya[]>(API_ENDPOINTS.metadata.geographie.wilayas);
       return response;
     } catch (error: unknown) {
       return {

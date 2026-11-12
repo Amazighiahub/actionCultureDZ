@@ -330,26 +330,3 @@ export function formatWilayaName(wilaya: Wilaya, lang?: string): string {
   const name = lang === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii;
   return `${code} - ${name}`;
 }
-
-/**
- * Formater une adresse complète
- */
-export function formatFullAddress(
-  localite?: Localite | null,
-  commune?: Commune | null,
-  daira?: Daira | null,
-  wilaya?: Wilaya | null,
-  adresse?: string,
-  lang?: string
-): string {
-  const parts: string[] = [];
-  const useAr = lang === 'ar';
-
-  if (adresse) parts.push(adresse);
-  if (localite) parts.push(useAr ? (localite.nom || localite.localite_name_ascii) : (localite.localite_name_ascii || localite.nom));
-  if (commune) parts.push(useAr ? (commune.nom || commune.commune_name_ascii) : (commune.commune_name_ascii || commune.nom));
-  if (daira) parts.push(useAr ? (daira.nom || daira.daira_name_ascii) : (daira.daira_name_ascii || daira.nom));
-  if (wilaya) parts.push(formatWilayaName(wilaya, lang));
-
-  return parts.join(', ');
-}

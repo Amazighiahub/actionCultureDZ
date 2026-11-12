@@ -11,7 +11,6 @@
  */
 export function getSafeRedirectPath(target: unknown): string | null {
   if (typeof target !== 'string' || !target.startsWith('/')) return null;
-  // eslint-disable-next-line no-control-regex
   if (target.startsWith('//') || /[\\\u0000-\u001F\u007F]/.test(target)) return null;
   try {
     const url = new URL(target, window.location.origin);

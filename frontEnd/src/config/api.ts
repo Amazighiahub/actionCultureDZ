@@ -1,5 +1,4 @@
 // config/api.ts - Configuration de l'API avec tous les types intégrés
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_BASE_URL as ENV_API_URL } from './env';
 
 // ================================================

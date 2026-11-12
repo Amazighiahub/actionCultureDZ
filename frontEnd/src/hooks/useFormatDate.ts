@@ -124,38 +124,6 @@ function dateRelative(d: Date, langue: string, maintenant: Date = new Date()): s
 }
 
 /**
- * Standalone date formatting (for non-component contexts like services/utils).
- * Pass the i18n language code directly.
- */
-export function formatDateWithLocale(
-  date: string | Date,
-  language: string,
-  options?: Intl.DateTimeFormatOptions
-): string {
-  try {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return String(date);
-    return d.toLocaleDateString(getDateLocale(language), options);
-  } catch {
-    return String(date);
-  }
-}
-
-export function formatTimeWithLocale(
-  date: string | Date,
-  language: string,
-  options?: Intl.DateTimeFormatOptions
-): string {
-  try {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return String(date);
-    return d.toLocaleTimeString(getDateLocale(language), options);
-  } catch {
-    return String(date);
-  }
-}
-
-/**
  * Formatage des dates et heures selon la langue de l'interface.
  * Date absente : '' (et non « undefined » ni le 1er janvier 1970) ; date illisible : le texte reçu.
  */

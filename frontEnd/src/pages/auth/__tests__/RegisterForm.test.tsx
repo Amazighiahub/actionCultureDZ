@@ -193,7 +193,6 @@ vi.mock('@/components/ui/select', () => ({
       )}
     </div>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- props internes du mock retirées du DOM
   SelectTrigger: React.forwardRef(({ children, _onValueChange: _ignore, _value: _ignoreValue, ...props }: any, ref: any) => (
     <button ref={ref} type="button" role="combobox" data-testid="select-trigger" {...props}>
       {children}

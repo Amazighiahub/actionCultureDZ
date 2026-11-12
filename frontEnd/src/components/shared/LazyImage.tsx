@@ -222,16 +222,6 @@ export const SimpleImage: React.FC<{
   />
 );
 
-/**
- * Utilitaire : génère un src WebP à partir d'un chemin image classique
- * Ex: "/uploads/images/photo.jpg" → "/uploads/images/photo.webp"
- * Ne fonctionne que si le serveur dispose du fichier WebP correspondant
- */
-export const toWebpSrc = (src: string): string | undefined => {
-  if (!src || src.includes('.webp') || src.startsWith('http')) return undefined;
-  return src.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
-};
-
 // Hook pour précharger des images
 export const useImagePreload = (srcs: string[]) => {
   useEffect(() => {

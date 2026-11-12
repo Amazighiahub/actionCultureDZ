@@ -56,16 +56,6 @@ export interface GPSCoordinates {
   longitude: number;
 }
 
-// Fonction de validation GPS
-export function validateGPSCoordinates(coords: GPSCoordinates): boolean {
-  return (
-    coords.latitude >= -90 && 
-    coords.latitude <= 90 && 
-    coords.longitude >= -180 && 
-    coords.longitude <= 180
-  );
-}
-
 // Type pour la réponse avec hiérarchie géographique aplatie
 export interface LieuWithHierarchy extends Lieu {
   wilaya?: {

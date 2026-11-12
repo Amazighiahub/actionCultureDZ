@@ -1,5 +1,4 @@
 // pages/notifications/Preferences.tsx - Page de gestion des préférences de notifications
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import MesSuivisCard from '@/components/user/MesSuivisCard';
