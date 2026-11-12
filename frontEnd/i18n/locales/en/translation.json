@@ -3719,7 +3719,9 @@
     },
     "filterByType": "Filter by type",
     "geocoding": {
-      "error": "Geocoding error"
+      "error": "Geocoding error",
+      "noResult": "No address found",
+      "noResultDesc": "Try the name of the town or municipality, or place the point directly on the map."
     },
     "mapInstructions": "Click on the map to select a location",
     "mapLocation": "Map location",

@@ -79,6 +79,7 @@
   "L'URL source doit commencer par http:// ou https://": "يجب أن يبدأ رابط المصدر بـ http://‎ أو https://",
   "L'URL source est trop longue (max 500 caractères)": "رابط المصدر طويل جدًا (500 حرف على الأكثر)",
   "L'email est requis": "البريد الإلكتروني مطلوب",
+  "La recherche d’adresse est momentanément indisponible. Réessayez dans un instant ou placez le point sur la carte.": "البحث عن العنوان غير متاح مؤقتًا. أعد المحاولة بعد لحظة أو ضع النقطة على الخريطة.",
   "La commande vient de changer : rechargez la page.": "تغيّر الطلب للتوّ: أعد تحميل الصفحة.",
   "La commune est obligatoire pour un compte professionnel": "البلدية إلزامية لحساب مهني",
   "La commune est requise": "البلدية مطلوبة",

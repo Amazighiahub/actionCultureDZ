@@ -19,6 +19,9 @@ interface CreateLieuData {
   dairaId?: number;
   communeId?: number;
   localiteId?: number;
+  /** Commune et wilaya du point sur la carte (OpenStreetMap), pour trouver la commune du lieu */
+  communeNom?: string;
+  wilayaNom?: string;
   description?: string | TranslatableValue;
   histoire?: string | TranslatableValue;
   details?: {
@@ -52,10 +55,6 @@ interface SearchLieuParams extends PaginationParams {
 }
 
 interface GeocodingResult {
-  place_id: number;
-  licence: string;
-  osm_type: string;
-  osm_id: number;
   lat: string;
   lon: string;
   display_name: string;
@@ -65,11 +64,15 @@ interface GeocodingResult {
     neighbourhood?: string;
     suburb?: string;
     city?: string;
+    town?: string;
+    village?: string;
+    municipality?: string;
+    county?: string;
     state?: string;
     postcode?: string;
     country?: string;
   };
-  boundingbox: string[];
+  boundingbox?: string[];
 }
 
 class LieuService {
@@ -157,55 +160,24 @@ class LieuService {
   }
 
   /**
-   * Geocoding avec Nominatim (OpenStreetMap)
+   * Recherche d'adresse (OpenStreetMap), par le serveur du site : appelé directement par le
+   * navigateur, OpenStreetMap refuse maintenant les recherches. Liste vide si rien n'est trouvé ;
+   * erreur (avec le message du serveur) si la recherche est indisponible.
    */
-  async geocodeAddress(address: string, countryCode: string = 'DZ'): Promise<GeocodingResult[]> {
-    try {
-      const params = new URLSearchParams({
-        q: address,
-        format: 'json',
-        addressdetails: '1',
-        limit: '5',
-        countrycodes: countryCode
-      });
-
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-        headers: {
-          'Accept-Language': 'fr'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du geocoding');
-      }
-
-      return await response.json();
-    } catch (error) {
-      return [];
-    }
+  async geocodeAddress(address: string): Promise<GeocodingResult[]> {
+    const reponse = await httpClient.get<GeocodingResult[]>(`${this.endpoint}/geocodage/recherche`, { q: address });
+    if (!reponse.success) throw reponse;
+    return Array.isArray(reponse.data) ? reponse.data : [];
   }
 
   /**
-   * Reverse geocoding avec Nominatim
+   * Adresse d'un point de la carte (null si indisponible : le point reste placé)
    */
   async reverseGeocode(latitude: number, longitude: number): Promise<GeocodingResult | null> {
     try {
-      const params = new URLSearchParams({
-        lat: latitude.toString(),
-        lon: longitude.toString(),
-        format: 'json',
-        addressdetails: '1',
-        'accept-language': 'fr'
-      });
-
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du reverse geocoding');
-      }
-
-      return await response.json();
-    } catch (error) {
+      const reponse = await httpClient.get<GeocodingResult | null>(`${this.endpoint}/geocodage/inverse`, { lat: latitude, lon: longitude });
+      return reponse.success ? reponse.data ?? null : null;
+    } catch {
       return null;
     }
   }

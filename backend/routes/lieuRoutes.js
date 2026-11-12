@@ -120,6 +120,22 @@ const initLieuRoutes = (models) => {
     lieuController.getLieuxProximite.bind(lieuController)
   );
 
+  // Recherche d'adresse sur la carte (formulaires de lieu et de site) : passe par le serveur, qui
+  // s'identifie auprès d'OpenStreetMap ; le navigateur appelé directement était refusé
+  const { actionsLimiter } = require('../middlewares/rateLimitMiddleware');
+  const geocodage = require('../services/geocodage');
+  const repondreGeocodage = (fn) => async (req, res) => {
+    try {
+      res.json({ success: true, data: await fn(req) });
+    } catch (e) {
+      res.status(e.statusCode || 503).json({ success: false, error: e.message });
+    }
+  };
+  router.get('/geocodage/recherche', authMiddleware.authenticate, actionsLimiter,
+    repondreGeocodage((req) => geocodage.rechercher(req.query.q, { langue: req.lang, limite: req.query.limit })));
+  router.get('/geocodage/inverse', authMiddleware.authenticate, actionsLimiter,
+    repondreGeocodage((req) => geocodage.inverser(req.query.lat, req.query.lon, { langue: req.lang })));
+
   // Recherche de lieux (accepts both ?q= and ?search= for frontend compatibility)
   router.get('/search',
     [

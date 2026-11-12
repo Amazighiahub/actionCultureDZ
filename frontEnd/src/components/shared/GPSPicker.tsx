@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin, Navigation, Loader2, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { lieuService } from '@/services/lieu.service';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -72,15 +74,14 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
     setSearching(true);
     setSearchResults([]);
     try {
-      const query = `${searchQuery.trim()}, Algeria`;
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=dz`);
-      const data: SearchResult[] = await res.json();
+      // Par le serveur du site : appelé directement par le navigateur, OpenStreetMap refuse les recherches
+      const data: SearchResult[] = await lieuService.geocodeAddress(searchQuery.trim());
       setSearchResults(data);
       if (data.length === 0) {
         toast({ title: t('patrimoine.gps.noResults', 'Aucun résultat'), description: t('patrimoine.gps.noResultsDesc', 'Essayez un autre terme ou cliquez sur la carte.') });
       }
-    } catch {
-      toast({ title: t('patrimoine.gps.error'), description: t('patrimoine.gps.searchFailed', 'Erreur de recherche'), variant: 'destructive' });
+    } catch (erreur) {
+      toast({ title: t('patrimoine.gps.error'), description: messageErreurServeur(erreur, t('patrimoine.gps.searchFailed', 'Erreur de recherche')), variant: 'destructive' });
     } finally {
       setSearching(false);
     }

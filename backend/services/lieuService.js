@@ -263,8 +263,8 @@ class LieuService extends BaseService {
   /**
    * Trouver une commune appartenant a une wilaya (pour createLieu fallback)
    */
-  async findCommuneByWilaya(wilayaId) {
-    return this.repository.findCommuneByWilaya(wilayaId);
+  async findCommuneByWilaya(wilayaId, noms) {
+    return this.repository.findCommuneByWilaya(wilayaId, noms);
   }
 
   /**

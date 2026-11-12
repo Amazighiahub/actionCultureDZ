@@ -3724,7 +3724,9 @@
     },
     "filterByType": "Filtrer par type",
     "geocoding": {
-      "error": "Erreur de géocodage"
+      "error": "Erreur de géocodage",
+      "noResult": "Aucune adresse trouvée",
+      "noResultDesc": "Essayez avec le nom de la ville ou de la commune, ou placez le point directement sur la carte."
     },
     "mapInstructions": "Cliquez sur la carte pour sélectionner un lieu",
     "mapLocation": "Localisation sur la carte",

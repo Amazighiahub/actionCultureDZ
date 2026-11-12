@@ -79,6 +79,7 @@
   "L'URL source doit commencer par http:// ou https://": "The source link must start with http:// or https://",
   "L'URL source est trop longue (max 500 caractères)": "The source link is too long (500 characters at most)",
   "L'email est requis": "The email is required",
+  "La recherche d’adresse est momentanément indisponible. Réessayez dans un instant ou placez le point sur la carte.": "Address search is temporarily unavailable. Try again in a moment or place the point on the map.",
   "La commande vient de changer : rechargez la page.": "The order has just changed: reload the page.",
   "La commune est obligatoire pour un compte professionnel": "The municipality is required for a professional account",
   "La commune est requise": "The municipality is required",

@@ -23,6 +23,14 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { messageErreurServeur } from '@/utils/erreurServeur';
+import type { GeocodingResult } from '@/services/lieu.service';
+
+/** Commune et wilaya d'un point de la carte, pour rattacher le lieu à sa commune */
+const nomsDuPoint = (r: GeocodingResult | null) => ({
+  communeNom: r?.address?.town || r?.address?.city || r?.address?.village || r?.address?.municipality || r?.address?.county || '',
+  wilayaNom: r?.address?.state || '',
+});
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -68,7 +76,9 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     adresse: '',
     latitude: 36.7525, // Centre de l'Algérie par défaut
     longitude: 3.04197,
-    description: ''
+    description: '',
+    communeNom: '',
+    wilayaNom: ''
   });
   
   const [addressSearch, setAddressSearch] = useState('');
@@ -218,7 +228,8 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     if (result) {
       setNewLieu(prev => ({
         ...prev,
-        adresse: result.display_name
+        adresse: result.display_name,
+        ...nomsDuPoint(result)
       }));
     }
   };
@@ -230,10 +241,16 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     try {
       const results = await lieuService.geocodeAddress(addressSearch);
       setSearchResults(results);
+      if (results.length === 0) {
+        toast({
+          title: t('places.geocoding.noResult', 'Aucune adresse trouvée'),
+          description: t('places.geocoding.noResultDesc', 'Essayez avec le nom de la ville ou de la commune, ou placez le point directement sur la carte.')
+        });
+      }
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('places.geocoding.error'),
+        description: messageErreurServeur(error, t('places.geocoding.error')),
         variant: "destructive"
       });
     } finally {
@@ -359,11 +376,19 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
         setShowCreateDialog(false);
         setMode('select');
         loadLieux();
+      } else {
+        // Refus du serveur (wilaya manquante, champ invalide…) : la raison est montrée. Avant, rien ne
+        // s'affichait et le bouton semblait ne rien faire.
+        toast({
+          title: t('common.error'),
+          description: messageErreurServeur(response, t('places.create.error')),
+          variant: "destructive"
+        });
       }
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('places.create.error'),
+        description: messageErreurServeur(error, t('places.create.error')),
         variant: "destructive"
       });
     } finally {

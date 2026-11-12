@@ -232,6 +232,7 @@
     "invalidLatitude": "Latitude invalide. Doit être entre -90 et 90.",
     "invalidLongitude": "Longitude invalide. Doit être entre -180 et 180.",
     "invalidLocality": "Localité invalide ou non trouvée",
+    "wilayaRequise": "Choisissez la wilaya du lieu (en haut du formulaire), puis réessayez.",
     "communeNotFound": "Commune non trouvée",
     "coordsOutOfRange": "Coordonnées hors de la plage valide",
     "detailsNotFound": "Détails du lieu non trouvés",

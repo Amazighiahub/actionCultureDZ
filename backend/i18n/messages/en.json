@@ -232,6 +232,7 @@
     "invalidLatitude": "Invalid latitude. Must be between -90 and 90.",
     "invalidLongitude": "Invalid longitude. Must be between -180 and 180.",
     "invalidLocality": "Invalid or not found locality",
+    "wilayaRequise": "Choose the wilaya of the place (at the top of the form), then try again.",
     "communeNotFound": "Municipality not found",
     "coordsOutOfRange": "Coordinates out of valid range",
     "detailsNotFound": "Location details not found",

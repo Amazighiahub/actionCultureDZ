@@ -134,13 +134,21 @@ class LieuController extends BaseController {
         details, detail
       } = req.body;
 
-      // Resolve communeId from wilayaId if needed
+      // Commune du lieu : celle envoyée, sinon trouvée par la wilaya choisie et les noms de commune et de
+      // wilaya du point sur la carte (OpenStreetMap). Une commune est obligatoire : sans elle, la base
+      // refusait l'enregistrement (erreur 500, « Erreur lors de la création du lieu »).
       let finalCommuneId = communeId;
-      if (!communeId && wilayaId) {
-        const commune = await this.service.findCommuneByWilaya(wilayaId);
+      if (!communeId && (wilayaId || req.body.communeNom || req.body.wilayaNom)) {
+        const commune = await this.service.findCommuneByWilaya(wilayaId, {
+          communeNom: typeof req.body.communeNom === 'string' ? req.body.communeNom.slice(0, 120) : undefined,
+          wilayaNom: typeof req.body.wilayaNom === 'string' ? req.body.wilayaNom.slice(0, 120) : undefined
+        });
         if (commune) {
           finalCommuneId = commune.id_commune;
         }
+      }
+      if (!finalCommuneId) {
+        return res.status(400).json({ success: false, error: req.t('lieu.wilayaRequise') });
       }
 
       // Validation

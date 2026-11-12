@@ -6,6 +6,7 @@ const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { decalage, construirePagination } = require('../utils/pagination');
+const { sansAccent } = require('../utils/texte');
 
 class LieuRepository extends BaseRepository {
   constructor(models) {
@@ -112,17 +113,47 @@ class LieuRepository extends BaseRepository {
   }
 
   /**
-   * Trouve la première commune d'une wilaya
+   * Commune d'un nouveau lieu. Le formulaire envoie la wilaya choisie et, depuis la carte
+   * (OpenStreetMap), le nom de la commune et de la wilaya du point. Ordre : la commune de ce nom dans
+   * la wilaya, sinon la première commune de la wilaya ; sans wilaya, la seule commune de ce nom.
+   * Avant : colonne Daira.id_wilaya inexistante (c'est wilayaId), chaque création de lieu échouait.
    */
-  async findCommuneByWilaya(wilayaId) {
-    if (!this.models.Commune || !this.models.Daira) return null;
-    return this.models.Commune.findOne({
-      include: [{
-        model: this.models.Daira,
-        where: { id_wilaya: wilayaId },
-        attributes: []
-      }]
+  async findCommuneByWilaya(wilayaId, { communeNom, wilayaNom } = {}) {
+    const { Commune, Daira, Wilaya } = this.models;
+    if (!Commune || !Daira) return null;
+    const cle = (v) => sansAccent(String(v || ''))
+      .replace(/^(commune|wilaya|daira|province)( de| d'| du)?\s+/, '')
+      .replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim();
+    const nomCherche = cle(communeNom);
+
+    let idWilaya = Number(wilayaId) || null;
+    if (!idWilaya && wilayaNom && Wilaya) {
+      const cleWilaya = cle(wilayaNom);
+      const wilayas = await Wilaya.findAll({ attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'], raw: true });
+      const trouvee = cleWilaya && wilayas.find((w) => [w.wilaya_name_ascii, w.nom].some((n) => cle(n) === cleWilaya));
+      if (trouvee) idWilaya = trouvee.id_wilaya;
+    }
+
+    const attributs = ['id_commune', 'nom', 'commune_name_ascii'];
+    if (idWilaya) {
+      const communes = await Commune.findAll({
+        attributes: attributs,
+        include: [{ model: Daira, where: { wilayaId: idWilaya }, attributes: [] }],
+        order: [['id_commune', 'ASC']]
+      });
+      if (!communes.length) return null;
+      const memeNom = nomCherche && communes.find((c) => [c.commune_name_ascii, c.nom].some((n) => cle(n) === nomCherche));
+      return memeNom || communes[0];
+    }
+    if (!nomCherche) return null;
+    const candidates = await Commune.findAll({
+      attributes: attributs,
+      // nomCherche ne garde que lettres, chiffres et espaces : ni % ni _ à échapper
+      where: { commune_name_ascii: { [Op.like]: `%${nomCherche.split(' ')[0]}%` } },
+      limit: 50
     });
+    const memeNom = candidates.filter((c) => [c.commune_name_ascii, c.nom].some((n) => cle(n) === nomCherche));
+    return memeNom.length === 1 ? memeNom[0] : null;
   }
 
   /**
