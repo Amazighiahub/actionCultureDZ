@@ -5,7 +5,14 @@ const CHAMP_EVENEMENT_DU_SERVEUR: Record<string, string> = {
   nom_evenement: 'nom', id_type_evenement: 'type', date_debut: 'dateDebut', date_fin: 'dateFin',
   id_lieu: 'lieu', id_organisation: 'organisation', url_virtuel: 'urlVirtuel', affiche: 'affiche',
   contact_email: 'contactEmail', date_limite_inscription: 'dateLimite', tarif: 'tarif', tarification: 'tarif',
+  partenaires: 'partenaires',
 };
+
+/** Rôles d'une organisation partenaire (l'organisation principale est choisie à part) */
+const ROLES_PARTENAIRES = ['co_organisateur', 'partenaire', 'sponsor', 'media_partner', 'soutien'] as const;
+type RolePartenaire = typeof ROLES_PARTENAIRES[number];
+type Partenaire = { id_organisation: number; role: RolePartenaire; nom?: unknown };
+const PARTENAIRES_MAX = 10;
 import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -82,6 +89,9 @@ const AjouterEvenement = () => {
   // État pour l'organisation
   const [organisations, setOrganisations] = useState<Array<Record<string, unknown>>>([]);
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<number | undefined>();
+  // Organisations partenaires (co-organisateur, partenaire, sponsor…), en plus de l'organisation principale
+  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
+  const [orgsPartenaires, setOrgsPartenaires] = useState<Array<Record<string, unknown>>>([]);
   // Administration : événement ajouté au nom d'un compte (son numéro), qui en devient l'organisateur
   const [idOrganisateur, setIdOrganisateur] = useState('');
   const [hasOrganisation, setHasOrganisation] = useState(false);
@@ -155,7 +165,7 @@ const AjouterEvenement = () => {
   // commun, la personne est dans la clé (avant : clé fixe recopiée dans useAjouterOeuvre ; audit V11 FRM-23)
   const { garder: garderBrouillon, oublier: oublierBrouillon } = useSaisieConservee({
     cle: isEditMode ? null : 'evenement:nouveau',
-    valeur: { formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual },
+    valeur: { formData, selectedLieuId, selectedWilayaId, selectedOrganisationId, tarifForm, isVirtual, partenaires },
     restaurer: (draft) => {
       if (draft.formData) setFormData(draft.formData);
       if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
@@ -163,6 +173,7 @@ const AjouterEvenement = () => {
       if (draft.selectedOrganisationId) setSelectedOrganisationId(draft.selectedOrganisationId);
       if (draft.tarifForm) setTarifForm(draft.tarifForm);
       if (draft.isVirtual !== undefined) setIsVirtual(draft.isVirtual);
+      if (Array.isArray(draft.partenaires)) setPartenaires(draft.partenaires);
       setIsDirty(true);
       toast({ title: t('events.create.draftRestored', 'Brouillon restauré'), description: t('events.create.draftRestoredDesc', 'Vos données précédentes ont été restaurées.') });
     },
@@ -210,16 +221,21 @@ const AjouterEvenement = () => {
             .map(tg => (typeof tg.nom === 'string' ? tg.nom : (tg.nom?.[i18n.language] || tg.nom?.fr || Object.values(tg.nom || {}).find(Boolean) || '')))
             .filter(Boolean),
         });
-        if (evt.image_url) {
-          setAffichePreview(evt.image_url);
-          if (typeof evt.image_partage_url === 'string' && evt.image_partage_url) setImagePartagePreview(evt.image_partage_url);
-        }
+        if (evt.image_url) setAffichePreview(evt.image_url);
+        // Image de partage : montrée même sans affiche
+        if (typeof evt.image_partage_url === 'string' && evt.image_partage_url) setImagePartagePreview(evt.image_partage_url);
         if (evt.id_lieu) setSelectedLieuId(evt.id_lieu);
         // Organisation : la fiche envoie la liste Organisations (avec le rôle), pas id_organisation
-        const orgs = (Array.isArray(evt.Organisations) ? evt.Organisations : []) as Array<{ id_organisation: number; EvenementOrganisation?: { role?: string } }>;
+        const orgs = (Array.isArray(evt.Organisations) ? evt.Organisations : []) as Array<{ id_organisation: number; nom?: unknown; EvenementOrganisation?: { role?: string } }>;
         const orgPrincipale = orgs.find(o => o.EvenementOrganisation?.role === 'organisateur_principal') || orgs[0];
         const idOrg = (evt.id_organisation as number | undefined) ?? orgPrincipale?.id_organisation;
         if (idOrg) setSelectedOrganisationId(idOrg);
+        setPartenaires(orgs
+          .filter(o => o.id_organisation !== idOrg)
+          .map(o => {
+            const role = o.EvenementOrganisation?.role;
+            return { id_organisation: o.id_organisation, nom: o.nom, role: (ROLES_PARTENAIRES as readonly string[]).includes(role || '') ? role as RolePartenaire : 'partenaire' };
+          }));
         if (typeof evt.statut === 'string') setStatutActuel(evt.statut);
         const tarification = tarificationDe(evt as { tarif?: number; tarification?: unknown });
         setTarifForm({
@@ -296,6 +312,22 @@ const AjouterEvenement = () => {
       setLoadingOrganisations(false);
     }
   };
+
+  // Partenaires possibles : organisations vérifiées (annuaire) et les siennes ; pour l'administration,
+  // toutes celles qui ne sont pas refusées (déjà chargées)
+  useEffect(() => {
+    if (isAdmin) { setOrgsPartenaires(organisations); return; }
+    let actif = true;
+    httpClient.get<{ organisations?: Array<Record<string, unknown>> }>(API_ENDPOINTS.organisations.annuaire)
+      .then((r) => {
+        if (!actif) return;
+        const verifiees = (r.success && r.data?.organisations) || [];
+        const ids = new Set(verifiees.map(o => o.id_organisation));
+        setOrgsPartenaires([...verifiees, ...organisations.filter(o => !ids.has(o.id_organisation))]);
+      })
+      .catch(() => { if (actif) setOrgsPartenaires(organisations); });
+    return () => { actif = false; };
+  }, [isAdmin, organisations]);
 
   // Charger les types d'organisation pour le dialog de création
   const loadOrgTypes = async () => {
@@ -533,6 +565,10 @@ const AjouterEvenement = () => {
     if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
     if (isAdmin && !isEditMode && idOrganisateur.trim()) fd.append('id_organisateur', idOrganisateur.trim());
+    // En modification, la liste est toujours envoyée : un partenaire retiré doit disparaître
+    if (partenaires.length || isEditMode) {
+      fd.append('partenaires', JSON.stringify(partenaires.map(({ id_organisation, role }) => ({ id_organisation, role }))));
+    }
     if (isEditMode) {
       if (!isVirtual || formData.urlVirtuel) fd.append('url_virtuel', isVirtual ? formData.urlVirtuel : '');
     }
@@ -878,6 +914,99 @@ const AjouterEvenement = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Organisations partenaires (facultatif) */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  {t('events.create.partenaires', 'Organisations partenaires')} <span className="text-muted-foreground font-normal text-base">({t('common.optional')})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p id="partenaires-aide" className="text-sm text-muted-foreground">
+                  {t('events.create.partenairesAide', 'Les organisations qui coorganisent, soutiennent ou parrainent l’événement. Elles apparaissent sur sa page.')}
+                </p>
+                {partenaires.length > 0 && (
+                  <ul className="space-y-2">
+                    {partenaires.map((p) => {
+                      const nom = getLocalizedText(p.nom ?? orgsPartenaires.find(o => o.id_organisation === p.id_organisation)?.nom, i18n.language) || `n° ${p.id_organisation}`;
+                      return (
+                        <li key={p.id_organisation} className="flex flex-wrap items-center gap-2 rounded-lg border p-2">
+                          <span className="flex-1 min-w-[10rem] font-medium">{nom}</span>
+                          <Select
+                            value={p.role}
+                            onValueChange={(role) => {
+                              if (!role) return;
+                              setPartenaires(prev => prev.map(x => (x.id_organisation === p.id_organisation ? { ...x, role: role as RolePartenaire } : x)));
+                              setIsDirty(true);
+                            }}
+                          >
+                            <SelectTrigger className="w-48" aria-label={t('events.create.rolePartenaire', 'Rôle de {{nom}}', { nom })}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ROLES_PARTENAIRES.map(r => (
+                                <SelectItem key={r} value={r}>{t(`event.roles.${r}`, r)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            aria-label={t('events.create.retirerPartenaire', 'Retirer {{nom}}', { nom })}
+                            onClick={() => {
+                              setPartenaires(prev => prev.filter(x => x.id_organisation !== p.id_organisation));
+                              setIsDirty(true);
+                            }}
+                          >
+                            ×
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {partenaires.length < PARTENAIRES_MAX && (
+                  <div className="space-y-2">
+                    <Label htmlFor="ajout-partenaire">{t('events.create.ajouterPartenaire', 'Ajouter une organisation partenaire')}</Label>
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        const id = Number(value);
+                        if (!id) return;
+                        const org = orgsPartenaires.find(o => o.id_organisation === id);
+                        setPartenaires(prev => (prev.some(x => x.id_organisation === id) ? prev : [...prev, { id_organisation: id, role: 'partenaire', nom: org?.nom }]));
+                        clearFieldError('partenaires');
+                        setIsDirty(true);
+                      }}
+                    >
+                      <SelectTrigger id="ajout-partenaire" aria-describedby={fieldErrors.partenaires ? 'partenaires-aide partenaires-error' : 'partenaires-aide'}>
+                        <SelectValue placeholder={t('events.create.choisirPartenaire', 'Choisir une organisation')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orgsPartenaires
+                          .filter(o => o.id_organisation !== selectedOrganisationId && !partenaires.some(x => x.id_organisation === o.id_organisation))
+                          .map(o => ({ id: o.id_organisation as number, nom: getLocalizedText(o.nom, i18n.language) || `n° ${o.id_organisation as number}`, statut: o.statut }))
+                          .sort((a, b) => a.nom.localeCompare(b.nom, i18n.language))
+                          .map(o => (
+                            <SelectItem key={o.id} value={o.id.toString()}>
+                              {o.nom}
+                              {isAdmin ? ` · n° ${o.id}` : ''}
+                              {o.statut === 'en_attente' ? ` (${t('events.create.orgEnAttente', 'en attente de validation')})` : ''}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      {t('events.create.partenaireAbsent', 'Organisation absente de la liste ? Elle doit d’abord avoir sa page sur Tala DZ.')}
+                    </p>
+                  </div>
+                )}
+                {fieldErrors.partenaires && <p id="partenaires-error" role="alert" className="text-sm text-destructive">{fieldErrors.partenaires}</p>}
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>

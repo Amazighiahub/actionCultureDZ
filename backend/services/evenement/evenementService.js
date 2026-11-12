@@ -19,6 +19,10 @@ const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration
 const { evenementPath } = require('../../utils/slug');
 const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
 
+/** Rôles possibles d'une organisation partenaire (la principale est choisie à part) */
+const ROLES_PARTENAIRES = ['co_organisateur', 'partenaire', 'sponsor', 'media_partner', 'soutien'];
+const ROLES_PARTENAIRES_MAX = 10;
+
 /** Nom lisible d'un événement (nom multilingue) pour les notifications */
 const nomLisible = (nom) => texteLisible(nom) || 'Événement';
 
@@ -198,6 +202,7 @@ class EvenementService extends BaseService {
     }
 
     const auteurId = await this._auteurDesigne(data.id_organisateur, userId, options.isAdmin, urlVirtuel ? null : orgId);
+    const partenaires = await this._lirePartenaires(data.partenaires, userId, options.isAdmin);
 
     const entityData = {
       nom_evenement: data.nom_evenement || data.nom,
@@ -238,6 +243,7 @@ class EvenementService extends BaseService {
           role: 'organisateur_principal'
         }, { transaction });
       }
+      await this._syncPartenaires(created.id_evenement, partenaires, orgId, transaction);
       await this._syncTags(created.id_evenement, data.tags, transaction);
       return created;
     });
@@ -248,8 +254,81 @@ class EvenementService extends BaseService {
     this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}${auteurId !== userId ? ` pour l'organisateur ${auteurId}` : ''}`);
     await this._viderCachesListes();
     if (full?.statut === 'en_attente') await this._prevenirModeration(full);
+    if (full && auteurId !== userId) await this._prevenirOrganisateurDesigne(full);
 
     return EvenementDTO.fromEntity(full);
+  }
+
+  /**
+   * Organisations partenaires (co-organisateur, partenaire, sponsor, média, soutien) envoyées par le
+   * formulaire : null quand le champ est absent (rien ne change), sinon la liste vérifiée.
+   * Une organisation partenaire doit être vérifiée, sauf celles dont l'auteur est membre, celles déjà
+   * liées à l'événement (ajoutées par l'administration) et, pour l'administration, celles en attente.
+   */
+  async _lirePartenaires(valeur, userId, isAdmin, dejaLiees = []) {
+    if (valeur === undefined || valeur === null) return null;
+    let liste = valeur;
+    if (typeof liste === 'string') {
+      try { liste = liste.trim() ? JSON.parse(liste) : []; } catch { throw this._validationError('Liste des organisations partenaires invalide'); }
+    }
+    if (!Array.isArray(liste)) throw this._validationError('Liste des organisations partenaires invalide');
+    if (liste.length > ROLES_PARTENAIRES_MAX) throw this._validationError('Dix organisations partenaires au plus');
+    const parId = new Map();
+    for (const p of liste) {
+      const id = Number(p?.id_organisation);
+      if (!Number.isInteger(id) || id <= 0 || !ROLES_PARTENAIRES.includes(p?.role)) {
+        throw this._validationError('Liste des organisations partenaires invalide');
+      }
+      parId.set(id, p.role);
+    }
+    if (!parId.size || !this.models?.Organisation) return [...parId].map(([id_organisation, role]) => ({ id_organisation, role }));
+    const ids = [...parId.keys()];
+    const trouvees = await this.models.Organisation.findAll({ where: { id_organisation: ids }, attributes: ['id_organisation', 'statut'], raw: true });
+    const membreDe = new Set();
+    if (!isAdmin && this.models.UserOrganisation) {
+      const lignes = await this.models.UserOrganisation.findAll({ where: { id_user: userId, id_organisation: ids, actif: true }, attributes: ['id_organisation'], raw: true });
+      lignes.forEach((l) => membreDe.add(Number(l.id_organisation)));
+    }
+    const liees = new Set(dejaLiees.map(Number));
+    for (const id of ids) {
+      const org = trouvees.find((o) => Number(o.id_organisation) === id);
+      if (!org || org.statut === 'rejete') throw this._validationError('Une organisation partenaire n’existe pas ou a été refusée');
+      if (org.statut !== 'valide' && !isAdmin && !membreDe.has(id) && !liees.has(id)) {
+        throw this._validationError('Une organisation partenaire n’est pas encore vérifiée');
+      }
+    }
+    return ids.map((id) => ({ id_organisation: id, role: parId.get(id) }));
+  }
+
+  /** Remplace les partenaires de l'événement ; l'organisation principale reste à part */
+  async _syncPartenaires(idEvenement, partenaires, orgPrincipale, transaction) {
+    const { EvenementOrganisation } = this.models || {};
+    if (partenaires === null || !EvenementOrganisation) return;
+    const { Op } = require('sequelize');
+    await EvenementOrganisation.destroy({ where: { id_evenement: idEvenement, role: { [Op.ne]: 'organisateur_principal' } }, transaction });
+    const principale = Number(orgPrincipale) || null;
+    const lignes = partenaires
+      .filter((p) => p.id_organisation !== principale)
+      .map((p) => ({ id_evenement: idEvenement, id_organisation: p.id_organisation, role: p.role }));
+    if (lignes.length) await EvenementOrganisation.bulkCreate(lignes, { transaction, ignoreDuplicates: true });
+  }
+
+  /** Événement ajouté par l'administration au nom d'un professionnel : il en est prévenu */
+  async _prevenirOrganisateurDesigne(evenement) {
+    try {
+      const nom = nomLisible(evenement.nom_evenement);
+      const publie = !EVENEMENT_NON_PUBLIC.includes(evenement.statut);
+      await notifier(this.notificationService, evenement.id_user, {
+        titre: 'Événement ajouté à votre nom',
+        message: publie
+          ? `L'administration de Tala DZ a publié « ${nom} » à votre nom. Vous pouvez le compléter ou le modifier depuis votre espace.`
+          : `L'administration de Tala DZ a préparé « ${nom} » à votre nom. Vous pouvez le compléter ou le modifier depuis votre espace.`,
+        url_action: `/modifier-evenement/${evenement.id_evenement}`, metadata: { id_evenement: evenement.id_evenement }
+      });
+      if (publie) await this._prevenirAbonnes(evenement.id_user, nom, evenementPath(evenement.id_evenement, evenement.nom_evenement), evenement.id_evenement);
+    } catch (err) {
+      this.logger?.error?.('Avertissement de l’organisateur désigné :', err.message);
+    }
   }
 
   /**
@@ -424,6 +503,12 @@ class EvenementService extends BaseService {
       }
 
       const newOrgId = data.id_organisation || data.organisationId;
+      // Liens actuels lus seulement quand le formulaire envoie la liste des partenaires
+      const liensActuels = data.partenaires !== undefined && data.partenaires !== null && this.models?.EvenementOrganisation
+        ? await this.models.EvenementOrganisation.findAll({ where: { id_evenement: id }, attributes: ['id_organisation', 'role'], raw: true, transaction })
+        : [];
+      const partenairesActuels = liensActuels.filter((l) => l.role !== 'organisateur_principal');
+      const partenaires = await this._lirePartenaires(data.partenaires, userId, options.isAdmin, partenairesActuels.map((l) => l.id_organisation));
 
       // Validation présentiel → organisation requise (état final après merge)
       const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
@@ -455,8 +540,11 @@ class EvenementService extends BaseService {
       const SENSIBLES = ['nom_evenement', 'description', 'image_url', 'image_partage_url', 'url_virtuel', 'tarif'];
       const valeur = (c, v) => (c === 'tarif' ? (v === null || v === undefined || v === '' ? null : Number(v)) : JSON.stringify(v ?? null));
       const changes = SENSIBLES.filter((c) => updateData[c] !== undefined && valeur(c, updateData[c]) !== valeur(c, existing[c]));
+      // Partenaires changés : une page publiée ne doit pas se réclamer d'une institution sans contrôle
+      const empreinte = (l) => l.map((p) => `${p.id_organisation}=${p.role}`).sort().join(',');
+      if (partenaires !== null && empreinte(partenaires) !== empreinte(partenairesActuels)) changes.push(`partenaires:${empreinte(partenaires)}`);
       if (EVENEMENT_OUVERT.includes(existing.statut) && !options.isAdmin && changes.length) {
-        aVerifier = changes.map((c) => `${c}:${valeur(c, updateData[c])}`).join('|');
+        aVerifier = changes.map((c) => (c.startsWith('partenaires:') ? c : `${c}:${valeur(c, updateData[c])}`)).join('|');
       }
 
       await this.repository.update(id, updateData, { transaction });
@@ -464,6 +552,12 @@ class EvenementService extends BaseService {
 
       if (newOrgId && this.models?.EvenementOrganisation) {
         await this._assertOrganisationMember(newOrgId, userId, options.isAdmin, transaction);
+        // Une organisation n'a qu'une ligne par événement : partenaire devenue principale, l'ancienne ligne part
+        if (partenaires !== null) await this._syncPartenaires(id, [], null, transaction);
+        else {
+          const { Op } = require('sequelize');
+          await this.models.EvenementOrganisation.destroy({ where: { id_evenement: id, id_organisation: parseInt(newOrgId), role: { [Op.ne]: 'organisateur_principal' } }, transaction });
+        }
         const existingOrg = await this.models.EvenementOrganisation.findOne({
           where: { id_evenement: id, role: 'organisateur_principal' },
           transaction
@@ -477,6 +571,10 @@ class EvenementService extends BaseService {
             role: 'organisateur_principal'
           }, { transaction });
         }
+      }
+      if (partenaires !== null) {
+        const principale = newOrgId || liensActuels.find((l) => l.role === 'organisateur_principal')?.id_organisation;
+        await this._syncPartenaires(id, partenaires, principale, transaction);
       }
     });
 
@@ -1065,7 +1163,7 @@ class EvenementService extends BaseService {
         if (idAdmin === evenement.id_user) continue;
         await notifier(this.notificationService, idAdmin, {
           titre: 'Événement publié modifié',
-          message: `« ${nom} », déjà publié, a été modifié par son organisateur (nom, texte, image, lien ou tarif) : à vérifier.`,
+          message: `« ${nom} », déjà publié, a été modifié par son organisateur (nom, texte, image, lien, tarif ou partenaires) : à vérifier.`,
           url_action: `/evenements/${evenement.id_evenement}`, metadata: { id_evenement: evenement.id_evenement }
         });
       }

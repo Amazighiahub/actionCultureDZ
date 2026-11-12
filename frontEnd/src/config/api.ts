@@ -460,6 +460,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   organisations: {
     me: '/organisations/me',
+    annuaire: '/organisations',
     adminListe: '/organisations/admin/liste',
     create: '/organisations',
     types: '/organisations/types',

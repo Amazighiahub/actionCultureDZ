@@ -782,7 +782,14 @@
       "imagePartageAide": "Carrée, 1200 × 1200 conseillé. Elle s’affiche quand le lien est partagé sur Facebook, WhatsApp ou Messenger. Sans elle, l’affiche est utilisée.",
       "apercuImagePartage": "Aperçu de l’image pour les réseaux sociaux",
       "retirerImagePartage": "Retirer l’image pour les réseaux sociaux",
-      "apercuAffiche": "Aperçu de l’affiche"
+      "apercuAffiche": "Aperçu de l’affiche",
+      "partenaires": "Organisations partenaires",
+      "partenairesAide": "Les organisations qui coorganisent, soutiennent ou parrainent l’événement. Elles apparaissent sur sa page.",
+      "rolePartenaire": "Rôle de {{nom}}",
+      "retirerPartenaire": "Retirer {{nom}}",
+      "ajouterPartenaire": "Ajouter une organisation partenaire",
+      "choisirPartenaire": "Choisir une organisation",
+      "partenaireAbsent": "Organisation absente de la liste ? Elle doit d’abord avoir sa page sur Tala DZ."
     },
     "types": {
       "concert": "Concert",

@@ -463,5 +463,9 @@
     "votre propre œuvre": "عملك الخاص",
     "votre propre demande": "طلبك الخاص",
     "votre propre service": "خدمتك الخاصة"
-  }
+  },
+  "Liste des organisations partenaires invalide": "قائمة المنظمات الشريكة غير صالحة",
+  "Dix organisations partenaires au plus": "عشر منظمات شريكة على الأكثر",
+  "Une organisation partenaire n’existe pas ou a été refusée": "إحدى المنظمات الشريكة غير موجودة أو تم رفضها",
+  "Une organisation partenaire n’est pas encore vérifiée": "إحدى المنظمات الشريكة لم يتم التحقق منها بعد"
 }

@@ -140,7 +140,7 @@ vi.mock('@/services/httpClient', () => ({
 }));
 
 vi.mock('@/config/api', () => ({
-  API_ENDPOINTS: { organisations: { me: '/organisations/me', adminListe: '/organisations/admin/liste' } },
+  API_ENDPOINTS: { organisations: { me: '/organisations/me', adminListe: '/organisations/admin/liste', annuaire: '/organisations' } },
 }));
 
 vi.mock('@/hooks/usePermissions', () => ({ usePermissions: () => mockPermissions }));
@@ -609,6 +609,67 @@ describe('AjouterEvenement', () => {
   });
 
   // =========================================================================
+  // PARTENAIRES
+  // =========================================================================
+
+  describe('Organisations partenaires', () => {
+    test('une organisation vérifiée de l annuaire est ajoutée comme partenaire et envoyée', async () => {
+      const avant = mockHttpGet.getMockImplementation();
+      mockHttpGet.mockImplementation(async (adresse: string, ...reste: any[]) => (adresse === '/organisations'
+        ? { success: true, data: { organisations: [{ id_organisation: 30, nom: 'Direction de la culture de Laghouat', statut: 'valide' }] } }
+        : avant ? avant(adresse, ...reste) : { success: true, data: [] }));
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+      await user.type(screen.getByTestId('input-nom-fr'), 'Avec partenaire');
+      await selectEventType(user);
+
+      await user.click(await screen.findByRole('option', { name: /Direction de la culture de Laghouat/ }));
+      expect(screen.getByRole('button', { name: /retirerPartenaire|Retirer/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /saveAsDraft/i }));
+      await waitFor(() => expect(mockCreate).toHaveBeenCalled());
+      const fd = mockCreate.mock.calls[0][0] as FormData;
+      expect(JSON.parse(fd.get('partenaires') as string)).toEqual([{ id_organisation: 30, role: 'partenaire' }]);
+    });
+
+    test('sans partenaire, la création n envoie pas de liste', async () => {
+      render(<AjouterEvenement />);
+      await waitForDataLoad();
+      await user.type(screen.getByTestId('input-nom-fr'), 'Sans partenaire');
+      await selectEventType(user);
+      await user.click(screen.getByRole('button', { name: /saveAsDraft/i }));
+      await waitFor(() => expect(mockCreate).toHaveBeenCalled());
+      expect((mockCreate.mock.calls[0][0] as FormData).get('partenaires')).toBeNull();
+    });
+
+    test('en modification, les partenaires existants sont affichés avec leur rôle', async () => {
+      mockParams = { id: '7' };
+      mockGetById.mockResolvedValue({
+        success: true,
+        data: {
+          id_evenement: 7,
+          nom_evenement: { fr: 'Existant', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          description: { fr: 'Desc', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          id_type_evenement: 1,
+          date_debut: '2026-07-01',
+          tarif: 0,
+          id_lieu: 1,
+          Organisations: [
+            { id_organisation: 10, nom: 'Seguia', EvenementOrganisation: { role: 'organisateur_principal' } },
+            { id_organisation: 30, nom: 'Direction de la culture', EvenementOrganisation: { role: 'sponsor' } },
+          ],
+        },
+      });
+      render(<AjouterEvenement />);
+      const retirer = await screen.findByRole('button', { name: /retirerPartenaire|Retirer/i });
+      const ligne = retirer.closest('li') as HTMLElement;
+      expect(ligne).toHaveTextContent('Direction de la culture');
+      expect(ligne.querySelector('[data-testid="select-root"]')).toHaveAttribute('data-value', 'sponsor');
+      expect(screen.getAllByRole('button', { name: /retirerPartenaire|Retirer/i })).toHaveLength(1);
+    });
+  });
+
+  // =========================================================================
   // BROUILLON
   // =========================================================================
 
@@ -824,9 +885,10 @@ describe('AjouterEvenement', () => {
         : { success: true, data: [] }));
       render(<AjouterEvenement />);
       await waitFor(() => expect(mockHttpGet).toHaveBeenCalledWith('/organisations/admin/liste'));
-      expect(await screen.findByText(/Seguia art et culture/)).toBeInTheDocument();
-      expect(screen.getByText(/Direction de la culture.*attente/)).toBeInTheDocument();
-      expect(screen.queryByText(/Organisation refusée/)).not.toBeInTheDocument();
+      expect((await screen.findAllByText(/Seguia art et culture/)).length).toBeGreaterThan(0);
+      // (proposées aussi comme partenaires : chaque nom paraît dans les deux listes)
+      expect(screen.getAllByText(/Direction de la culture.*attente/).length).toBeGreaterThan(0);
+      expect(screen.queryAllByText(/Organisation refusée/)).toHaveLength(0);
     });
 
     test('un professionnel ne voit que ses propres organisations', async () => {

@@ -733,7 +733,14 @@
       "imagePartageAide": "Square, 1200 × 1200 recommended. It is shown when the link is shared on Facebook, WhatsApp or Messenger. Without it, the poster is used.",
       "apercuImagePartage": "Preview of the social media image",
       "retirerImagePartage": "Remove the social media image",
-      "apercuAffiche": "Poster preview"
+      "apercuAffiche": "Poster preview",
+      "partenaires": "Partner organisations",
+      "partenairesAide": "Organisations that co-organise, support or sponsor the event. They are shown on its page.",
+      "rolePartenaire": "Role of {{nom}}",
+      "retirerPartenaire": "Remove {{nom}}",
+      "ajouterPartenaire": "Add a partner organisation",
+      "choisirPartenaire": "Choose an organisation",
+      "partenaireAbsent": "Organisation not in the list? It first needs its own page on Tala DZ."
     },
     "types": {
       "concert": "Concert",
