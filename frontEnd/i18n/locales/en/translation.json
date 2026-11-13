@@ -4989,7 +4989,12 @@
     "languagesGroup": "{{label}}: input language",
     "requiredEmpty": "(required, not filled in)",
     "filled": "(filled in)",
-    "hasError": "(error)"
+    "hasError": "(error)",
+    "lettresLatin": "Tamazight letters",
+    "lettresTifinagh": "Tifinagh letters",
+    "lettresAria": "Insert a letter",
+    "insererLettre": "Insert {{lettre}}",
+    "majuscules": "Caps"
   },
   "programme": {
     "chargementImpossible": "This activity could not be loaded. Please try again.",

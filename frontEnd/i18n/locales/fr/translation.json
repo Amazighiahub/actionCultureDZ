@@ -4737,7 +4737,12 @@
     "languagesGroup": "{{label}} : langue de saisie",
     "requiredEmpty": "(obligatoire, non rempli)",
     "filled": "(rempli)",
-    "hasError": "(erreur)"
+    "hasError": "(erreur)",
+    "lettresLatin": "Lettres tamazight",
+    "lettresTifinagh": "Lettres tifinagh",
+    "lettresAria": "Insérer une lettre",
+    "insererLettre": "Insérer {{lettre}}",
+    "majuscules": "Maj."
   },
   "programme": {
     "chargementImpossible": "Cette activité n’a pas pu être chargée. Réessayez.",

@@ -11,6 +11,7 @@ import { SUPPORTED_LANGUAGES, infoLangue, type InfoLangue, type TranslatableValu
 
 // Import dynamique pour éviter les erreurs de chargement
 import { KeyboardHelper } from '@/utils/keyboardHelper';
+import TouchesTamazight from '@/components/shared/TouchesTamazight';
 
 interface MultiLangInputProps {
   /** Nom du champ (pour le formulaire) */
@@ -83,6 +84,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
     return AVAILABLE_LANGUAGES.some(l => l.code === langue) ? langue : 'fr';
   });
   const keyboardHelpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Champ affiché : la barre de lettres tamazight y insère au curseur (audit V11 OUT-5)
+  const champRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Gérer le changement de valeur pour une langue
   const handleChange = useCallback((langCode: string, newValue: string) => {
@@ -261,6 +264,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
       <div dir={activeLanguage.dir}>
         {type === 'textarea' ? (
           <Textarea
+            ref={champRef as React.RefObject<HTMLTextAreaElement>}
             id={`${name}-${activeLang}`}
             name={`${name}.${activeLang}`}
             value={value[activeLang] || ''}
@@ -281,6 +285,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
           />
         ) : (
           <Input
+            ref={champRef as React.RefObject<HTMLInputElement>}
             type="text"
             id={`${name}-${activeLang}`}
             name={`${name}.${activeLang}`}
@@ -303,6 +308,18 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
           />
         )}
       </div>
+
+      {/* Lettres tamazight (beaucoup de téléphones n'ont pas de clavier tamazight) */}
+      {(activeLang === 'tz-ltn' || activeLang === 'tz-tfng') && (
+        <TouchesTamazight
+          ecriture={activeLang}
+          cible={champRef}
+          valeur={value[activeLang] || ''}
+          onChange={(v) => handleChange(activeLang, v)}
+          maxLength={maxLength}
+          disabled={disabled}
+        />
+      )}
 
       {/* Compteur de caractères */}
       {maxLength && showCharCount && (

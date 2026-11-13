@@ -5195,7 +5195,12 @@
     "languagesGroup": "{{label}}: لغة الإدخال",
     "requiredEmpty": "(إلزامي، غير معبأ)",
     "filled": "(معبأ)",
-    "hasError": "(خطأ)"
+    "hasError": "(خطأ)",
+    "lettresLatin": "حروف أمازيغية",
+    "lettresTifinagh": "حروف تيفيناغ",
+    "lettresAria": "إدراج حرف",
+    "insererLettre": "إدراج {{lettre}}",
+    "majuscules": "أحرف كبيرة"
   },
   "programme": {
     "chargementImpossible": "تعذّر تحميل هذا النشاط. أعد المحاولة.",

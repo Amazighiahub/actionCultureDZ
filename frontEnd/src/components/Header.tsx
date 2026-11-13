@@ -214,7 +214,8 @@ const Header = () => {
                 alt=""
                 width={96}
                 height={96}
-                className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-stone-200 dark:ring-stone-700"
+                // Très petit écran (moins de 380 px) : le mot « TALADZ » suffit, la place va aux boutons
+                className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-stone-200 dark:ring-stone-700 max-[379px]:hidden"
               />
               <div className="flex flex-col">
                 {/* Logo TALADZ (pas de h1 : le seul h1 de chaque page est celui de son contenu) ;
@@ -253,13 +254,15 @@ const Header = () => {
             </nav>
 
             {/* Actions droite */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 max-[359px]:gap-0 sm:gap-2 shrink-0">
 
               {/* Installer l'application : rond vert, visible de tous tant qu'elle n'est pas installée */}
               <InstallerTalaDz rond />
 
-              {/* Recherche générale : tout le site en une fois (audit V11 UX-13) */}
-              <Button variant="ghost" asChild className="min-w-[44px] min-h-[44px] p-0">
+              {/* Recherche générale : tout le site en une fois (audit V11 UX-13). Sous 440 px, elle est en tête
+                  du menu : la loupe ici poussait le bouton du menu hors de l'écran (360 px, connecté, bouton
+                  Installer affiché) */}
+              <Button variant="ghost" asChild className="min-w-[44px] min-h-[44px] p-0 hidden min-[440px]:inline-flex">
                 <Link to="/recherche" aria-label={t('recherche.ouvrir', 'Rechercher sur le site')} title={t('recherche.ouvrir', 'Rechercher sur le site')}>
                   <Search className="h-5 w-5" aria-hidden="true" />
                 </Link>
