@@ -49,7 +49,8 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/Utils';
-import { MapContainer, ZoomControl, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, ZoomControl, Marker, Popup, Polyline } from 'react-leaflet';
+import FondDeCarte from '@/components/shared/FondDeCarte';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -501,10 +502,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                     zoomControl={false}
                   >
                     <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
-                    <TileLayer
-                      attribution='&copy; <a href="https://osm.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
+                    <FondDeCarte />
                     {/* Point de départ */}
                     <Marker
                       position={[siteLatitude, siteLongitude]}

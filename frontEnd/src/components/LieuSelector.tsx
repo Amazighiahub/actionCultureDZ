@@ -24,6 +24,7 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { FOND_DE_CARTE } from '@/components/shared/FondDeCarte';
 import type { GeocodingResult } from '@/services/lieu.service';
 
 /** Commune et wilaya d'un point de la carte, pour rattacher le lieu à sa commune */
@@ -97,9 +98,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
       const map = L.map(previewMapContainerRef.current).setView(
         [previewLieu.latitude, previewLieu.longitude], 14
       );
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(map);
+      L.tileLayer(FOND_DE_CARTE.url, { attribution: FOND_DE_CARTE.attribution, maxZoom: FOND_DE_CARTE.maxZoom }).addTo(map);
       L.marker([previewLieu.latitude, previewLieu.longitude]).addTo(map);
       previewMapRef.current = map;
     }
@@ -148,9 +147,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
           13
         );
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(mapRef.current);
+        L.tileLayer(FOND_DE_CARTE.url, { attribution: FOND_DE_CARTE.attribution, maxZoom: FOND_DE_CARTE.maxZoom }).addTo(mapRef.current);
 
         markerRef.current = L.marker([newLieu.latitude, newLieu.longitude])
           .addTo(mapRef.current);

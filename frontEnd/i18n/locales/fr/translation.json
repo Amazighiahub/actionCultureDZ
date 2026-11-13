@@ -1067,6 +1067,12 @@
       "guide": "Guide du contributeur",
       "article": "Écrire un article",
       "agenda": "L’agenda culturel"
+    },
+    "pro": {
+      "titre": "Vous êtes artiste ou association ?",
+      "texte": "Présentez vos œuvres et vos événements sur Tala DZ.",
+      "lienInscription": "Créer mon compte professionnel",
+      "lienEspace": "Ouvrir mon espace professionnel"
     }
   },
   "notifications": {

@@ -8,7 +8,8 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import FondDeCarte from '@/components/shared/FondDeCarte';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -176,7 +177,7 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
       {/* Carte */}
       <div className="rounded-lg overflow-hidden border" style={{ height: 250 }}>
         <MapContainer center={center} zoom={hasPosition ? zoom : 6} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
-          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <FondDeCarte />
           <MapClickHandler onPositionChange={onPositionChange} />
           <RecenterMap lat={latitude} lng={longitude} zoom={zoom} />
           {hasPosition && <Marker position={[latitude, longitude]} />}

@@ -1018,6 +1018,12 @@
       "guide": "Contributor guide",
       "article": "Writing an article",
       "agenda": "Cultural calendar"
+    },
+    "pro": {
+      "titre": "Are you an artist or an association?",
+      "texte": "Showcase your works and events on Tala DZ.",
+      "lienInscription": "Create my professional account",
+      "lienEspace": "Open my professional space"
     }
   },
   "notifications": {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, ZoomControl, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, ZoomControl, Marker, Popup, useMap } from 'react-leaflet';
+import FondDeCarte from '@/components/shared/FondDeCarte';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,10 +58,7 @@ const CarteSites: React.FC<{ monuments: Monument[]; height: string }> = ({ monum
       >
         <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
         <CadrerSurSites positions={positions} />
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-        />
+        <FondDeCarte />
         {monuments.map((monument) => (
           <Marker
             key={monument.id}

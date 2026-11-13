@@ -3,7 +3,8 @@
  * Chargée à la demande (leaflet) par PointsVisite.
  */
 import React, { useEffect, useMemo } from 'react';
-import { MapContainer, ZoomControl, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, ZoomControl, Marker, Popup, useMap } from 'react-leaflet';
+import FondDeCarte from '@/components/shared/FondDeCarte';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
@@ -51,7 +52,7 @@ const PointsVisiteCarte: React.FC<PointsVisiteCarteProps> = ({ site, points }) =
     <div className="h-[280px] rounded-lg overflow-hidden border relative z-0">
       <MapContainer center={[site.latitude, site.longitude]} zoom={16} scrollWheelZoom={false} zoomControl={false} className="h-full w-full">
         <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
-        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <FondDeCarte />
         <Marker position={[site.latitude, site.longitude]}>
           <Popup>{site.nom}</Popup>
         </Marker>

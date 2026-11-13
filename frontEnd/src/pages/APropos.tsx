@@ -22,6 +22,9 @@ const APropos = () => {
   const { t } = useTranslation();
   const [sending, setSending] = useState(false);
   const antiRobot = useAntiRobot();
+  // Vérification anti-robot chargée seulement quand la personne commence à écrire : la page s'affiche
+  // sans le script de Cloudflare pour celles et ceux qui viennent lire (audit V11 UX-27, UX-36)
+  const [formulaireTouche, setFormulaireTouche] = useState(false);
   // Sujet prérempli depuis un lien (ex. « Proposition pour le lieu : … »)
   const [formData, setFormData] = useState(() => {
     let sujet = '';
@@ -223,7 +226,7 @@ const APropos = () => {
                 </div>
               ) : (
               /* noValidate : les messages du site, traduits, remplacent la bulle du navigateur */
-              <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit} noValidate>
+              <form id="contact" className="space-y-4 scroll-mt-24" onSubmit={handleSubmit} onFocusCapture={() => setFormulaireTouche(true)} noValidate>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="prenom">{t("apropos.prnom")}</Label>
@@ -264,7 +267,9 @@ const APropos = () => {
                   <p id="message-compteur" className="text-xs text-muted-foreground text-end">{formData.message.length} / 2000</p>
                 </div>
 
-                <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
+                {(formulaireTouche || antiRobot.attente) && (
+                  <AntiRobot ref={antiRobot.ref} action="contact" onJeton={antiRobot.setJeton} attente={antiRobot.attente} />
+                )}
 
                 <SaisieConserveeAvis visible={restauree} />
                 {erreurServeur && (
