@@ -263,6 +263,8 @@ const limiteParPersonne = (nom, windowMs, max, message) => rateLimit(withStore(n
 // Suivre / ne plus suivre un professionnel : 30 par heure (avant : sans limite, chaque nouvel
 // abonnement envoyait une notification au professionnel)
 const suiviLimiter = limiteParPersonne('suivi', 60 * 60 * 1000, 30, 'Trop d’actions en peu de temps : réessayez plus tard.');
+// Messages d'un visiteur à des professionnels (relais par e-mail) : 5 par heure et par personne
+const contactProLimiter = limiteParPersonne('contact-pro', 60 * 60 * 1000, 5, 'Trop de messages envoyés. Réessayez dans 1 heure.');
 // Médias des fiches (œuvres, artisanat, patrimoine, extraits) : le site les envoie un par un
 // 400 par heure : un catalogue importé envoie une couverture par livre (300 lignes au plus)
 const mediasLimiter = limiteParPersonne('medias', 60 * 60 * 1000, 400, 'Trop d’envois de fichiers en une heure : réessayez plus tard.');
@@ -669,7 +671,7 @@ module.exports = {
   uploadLimiter,
   moyensPaiementLimiter,
   mediasLimiter,
-  suiviLimiter,
+  suiviLimiter, contactProLimiter,
   commandeLimiter,
   commandeEtapeLimiter,
   viewLimiter,

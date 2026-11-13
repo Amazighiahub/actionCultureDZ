@@ -351,6 +351,7 @@ const APropos = () => {
                   <li>{t("apropos.privacy.finaliteStats", "Statistiques anonymisées de fréquentation — base légale : intérêt légitime")}</li>
                   <li>{t("apropos.privacy.finaliteNewsletter", "Envoi de la newsletter (uniquement si vous l'avez acceptée) — base légale : consentement, retirable à tout moment via le lien présent dans chaque email ou la section « Mes données »")}</li>
                   <li>{t("apropos.privacy.finaliteSecurite", "Sécurité de la Plateforme (prévention des abus) — base légale : intérêt légitime")}</li>
+                  <li>{t("apropos.privacy.finaliteContactPro", "Transmission de vos messages aux professionnels que vous contactez depuis leur page : le message et votre adresse email leur sont envoyés par email pour qu'ils puissent vous répondre ; Tala DZ ne garde pas le message — base légale : votre demande")}</li>
                 </ul>
               </div>
 

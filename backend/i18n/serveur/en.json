@@ -468,5 +468,11 @@
   "Dix organisations partenaires au plus": "Ten partner organisations at most",
   "Une organisation partenaire n’existe pas ou a été refusée": "A partner organisation does not exist or was rejected",
   "Une organisation partenaire n’est pas encore vérifiée": "A partner organisation has not been verified yet",
-  "Le serveur est très occupé : réessayez dans un instant.": "The server is very busy: please try again in a moment."
+  "Le serveur est très occupé : réessayez dans un instant.": "The server is very busy: please try again in a moment.",
+  "Vous ne pouvez pas vous écrire à vous-même": "You cannot write to yourself",
+  "Le message doit faire entre 10 et 2000 caractères": "The message must be between 10 and 2000 characters",
+  "Votre compte ne peut pas envoyer de message": "Your account cannot send messages",
+  "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "You have already written to this professional several times today. Try again tomorrow.",
+  "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "The message could not be sent. Try again in a moment.",
+  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "Too many messages have been sent today. Try again tomorrow."
 }

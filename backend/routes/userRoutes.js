@@ -21,7 +21,7 @@ const userAdminController = require('../controllers/userAdminController');
 const gdprController = require('../controllers/gdprController');
 const asyncHandler = require('../utils/asyncHandler');
 const { validateLanguage } = require('../middlewares/language');
-const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter } = require('../middlewares/rateLimitMiddleware');
+const { strictLimiter, endpointLimiters, accountRateLimiter, suiviLimiter, contactProLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 const { verifierTurnstile } = require('../middlewares/turnstile');
 const { msg } = require('../utils/messageValidation');
@@ -105,6 +105,24 @@ const initUserRoutes = (models, authMiddleware) => {
     await suivis.nePlusSuivre(models, req.user.id_user, Number(req.params.id));
     res.json({ success: true });
   }));
+
+  // Écrire à un professionnel depuis sa page : relais par e-mail, son adresse n'est pas montrée (audit V11 UX-26)
+  router.post('/professionals/:id/contact', authenticate, validateId(),
+    [
+      body('message').isString().trim().isLength({ min: 10, max: 2000 }).withMessage(msg('validation.messageContact')),
+      body('sujet').optional({ values: 'falsy' }).isString().isLength({ max: 200 })
+    ],
+    handleValidationErrors,
+    // Après la validation : un message trop court ne consomme pas une des 5 places de l'heure
+    contactProLimiter,
+    verifierTurnstile('contact'),
+    asyncHandler(async (req, res) => {
+      const { contacterProfessionnel } = require('../services/contacterProfessionnel');
+      await contacterProfessionnel(models, require('../services/emailService'), {
+        idExpediteur: req.user.id_user, idPro: Number(req.params.id), sujet: req.body.sujet, message: req.body.message
+      });
+      res.json({ success: true });
+    }));
 
   router.get('/professionals/:id/qrcode', validateId(), asyncHandler((req, res) => userProfileController.getPortfolioQRCode(req, res)));
   router.get('/professionals/:id/portfolio', optionalAuth, validateId(), asyncHandler((req, res) => userProfileController.getPortfolio(req, res)));

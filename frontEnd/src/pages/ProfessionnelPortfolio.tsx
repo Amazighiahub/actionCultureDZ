@@ -17,6 +17,7 @@ import SEOHead, { SITE_URL } from '@/components/SEOHead';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 import ShareButtons from '@/components/shared/ShareButtons';
 import BoutonSuivre from '@/components/shared/BoutonSuivre';
+import BoutonContacterPro from '@/components/shared/BoutonContacterPro';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -220,6 +221,7 @@ const ProfessionnelPortfolio: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               {!isOwner && <BoutonSuivre idProfessionnel={profil.id_user} />}
+              {!isOwner && <BoutonContacterPro idProfessionnel={profil.id_user} nom={fullName} />}
               <ShareButtons url={pageUrl} title={fullName} full={isOwner} />
               {isOwner && (
                 <Dialog>

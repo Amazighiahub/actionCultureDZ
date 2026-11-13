@@ -2051,6 +2051,7 @@
       "finaliteStats": "Anonymised visitor statistics — legal basis: legitimate interest",
       "finaliteNewsletter": "Sending the newsletter (only if you have opted in) — legal basis: consent, which can be withdrawn at any time via the link in every email or the \"My data\" section",
       "finaliteSecurite": "Platform security (abuse prevention) — legal basis: legitimate interest",
+      "finaliteContactPro": "Forwarding your messages to the professionals you contact from their page: the message and your email address are sent to them by email so they can reply; Tala DZ does not keep the message — legal basis: your request",
       "conservation": "4. Retention period",
       "conservationCompte": "Account data: kept as long as your account is active",
       "conservationNotifs": "Notifications: automatically deleted after 90 days",
@@ -5605,7 +5606,19 @@
     "bio": "Biography",
     "works": "Work",
     "empty": "No published content yet.",
-    "presse": "In the press"
+    "presse": "In the press",
+    "contacter": "Contact",
+    "contact": {
+      "titre": "Write to {{nom}}",
+      "aide": "Tala DZ sends your message to them by e-mail, with your address so they can reply. Their address is not shown to you.",
+      "sujet": "Subject",
+      "message": "Your message",
+      "envoyer": "Send",
+      "envoye": "Message sent",
+      "envoyeDesc": "{{nom}} receives it by e-mail and can reply to your address.",
+      "echec": "The message was not sent. Try again.",
+      "tropCourt": "Write at least 10 characters."
+    }
   },
   "publicPage": {
     "showEmail": "Show my email",

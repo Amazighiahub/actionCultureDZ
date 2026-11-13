@@ -468,5 +468,11 @@
   "Dix organisations partenaires au plus": "عشر منظمات شريكة على الأكثر",
   "Une organisation partenaire n’existe pas ou a été refusée": "إحدى المنظمات الشريكة غير موجودة أو تم رفضها",
   "Une organisation partenaire n’est pas encore vérifiée": "إحدى المنظمات الشريكة لم يتم التحقق منها بعد",
-  "Le serveur est très occupé : réessayez dans un instant.": "الخادم مشغول جدًا: أعد المحاولة بعد لحظة."
+  "Le serveur est très occupé : réessayez dans un instant.": "الخادم مشغول جدًا: أعد المحاولة بعد لحظة.",
+  "Vous ne pouvez pas vous écrire à vous-même": "لا يمكنك مراسلة نفسك",
+  "Le message doit faire entre 10 et 2000 caractères": "يجب أن تتراوح الرسالة بين 10 و2000 حرف",
+  "Votre compte ne peut pas envoyer de message": "لا يمكن لحسابك إرسال رسائل",
+  "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "لقد راسلت هذا المحترف عدة مرات اليوم. أعد المحاولة غدًا.",
+  "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "تعذّر إرسال الرسالة. أعد المحاولة بعد لحظة.",
+  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "أُرسلت رسائل كثيرة اليوم. أعد المحاولة غدًا."
 }

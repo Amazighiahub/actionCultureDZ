@@ -2100,6 +2100,7 @@
       "finaliteStats": "Statistiques anonymisées de fréquentation — base légale : intérêt légitime",
       "finaliteNewsletter": "Envoi de la newsletter (uniquement si vous l'avez acceptée) — base légale : consentement, retirable à tout moment via le lien présent dans chaque email ou la section « Mes données »",
       "finaliteSecurite": "Sécurité de la Plateforme (prévention des abus) — base légale : intérêt légitime",
+      "finaliteContactPro": "Transmission de vos messages aux professionnels que vous contactez depuis leur page : le message et votre adresse email leur sont envoyés par email pour qu'ils puissent vous répondre ; Tala DZ ne garde pas le message — base légale : votre demande",
       "conservation": "4. Durée de conservation",
       "conservationCompte": "Données de compte : conservées tant que votre compte est actif",
       "conservationNotifs": "Notifications : supprimées automatiquement après 90 jours",
@@ -5605,7 +5606,19 @@
     "bio": "Biographie",
     "works": "Réalisations",
     "empty": "Aucun contenu publié pour le moment.",
-    "presse": "Dans la presse"
+    "presse": "Dans la presse",
+    "contacter": "Contacter",
+    "contact": {
+      "titre": "Écrire à {{nom}}",
+      "aide": "Votre message lui est transmis par e-mail par Tala DZ, avec votre adresse pour qu’il puisse vous répondre. Son adresse ne vous est pas montrée.",
+      "sujet": "Sujet",
+      "message": "Votre message",
+      "envoyer": "Envoyer",
+      "envoye": "Message envoyé",
+      "envoyeDesc": "{{nom}} le reçoit par e-mail et pourra vous répondre à votre adresse.",
+      "echec": "Le message n’est pas parti. Réessayez.",
+      "tropCourt": "Écrivez au moins 10 caractères."
+    }
   },
   "publicPage": {
     "showEmail": "Afficher mon e-mail",

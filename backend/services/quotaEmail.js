@@ -38,6 +38,7 @@ const PARTS_PAR_DEFAUT = {
   transactionnel: 50,     // envois à une personne : inscription acceptée, commande, validation…
   annulation: 25,         // événement annulé : chaque inscrit doit le savoir
   contact: 15,            // formulaire de contact (vers l'adresse de l'équipe)
+  contact_pro: 20,        // messages de visiteurs aux professionnels (relais) : ne prive jamais les autres types
   newsletter: 15,         // confirmation d'abonnement à la newsletter
   groupe: 90,             // envois à plusieurs personnes (avis, rappels, invitations, annonces)
 };
@@ -52,6 +53,10 @@ const DERNIERS_POUR_REINITIALISATION = 20;
 const PAR_DESTINATAIRE_IMPORTANTS = 5;
 /** « Mot de passe oublié » : plus large, pour qu'un inconnu ne prive pas la personne de son propre lien */
 const PAR_DESTINATAIRE_REINITIALISATION = 10;
+/** Messages de visiteurs à un même professionnel : compteur à part (ses autres e-mails continuent d'arriver) */
+const PAR_DESTINATAIRE_CONTACT_PRO = 5;
+/** Types qui comptent par destinataire sur leur propre compteur */
+const DESTINATAIRE_A_PART = [...IMPORTANTS, 'contact_pro'];
 const TYPES = Object.keys(PARTS_PAR_DEFAUT);
 const part = (type) => entier(process.env[`EMAIL_PART_${type.toUpperCase()}`], PARTS_PAR_DEFAUT[type]);
 /** E-mails par jour vers une même adresse, tous types confondus (harcèlement, bombardement) */
@@ -127,10 +132,11 @@ async function reserverEnvoi(destinataire, type = 'transactionnel', { sansLimite
   const typePris = await prendre(cleType, part(t));
   if (!typePris && !IMPORTANTS.includes(t)) { await rendre(cleTotal); return { ok: false, raison: 'type' }; }
   // Importants : leur propre compteur par destinataire (un tiers ne peut pas épuiser celui de la personne)
-  const cleDest = IMPORTANTS.includes(t)
+  const cleDest = DESTINATAIRE_A_PART.includes(t)
     ? `email:dest:${t}:${empreinte(destinataire)}:${jour()}`
     : `email:dest:${empreinte(destinataire)}:${jour()}`;
   const plafondDest = t === 'reinitialisation' ? PAR_DESTINATAIRE_REINITIALISATION
+    : t === 'contact_pro' ? PAR_DESTINATAIRE_CONTACT_PRO
     : IMPORTANTS.includes(t) ? PAR_DESTINATAIRE_IMPORTANTS : parDestinataire();
   if (!sansLimiteDestinataire && !(await prendre(cleDest, plafondDest))) {
     if (typePris) await rendre(cleType);
@@ -169,4 +175,13 @@ async function premiereFoisPendant(cle, secondes) {
   return true;
 }
 
-module.exports = { compterEnvoi, envoyesAujourdhui, budgetEnvoiGroupe, reserverEnvoi, rendreEnvoi, premiereFoisPendant, TYPES, PARTS_PAR_DEFAUT, IMPORTANTS };
+/** Rend une place prise par premiereFoisPendant (l'action n'a finalement pas eu lieu) */
+async function oublierUneFois(cle) {
+  try {
+    const redis = getClient();
+    if (redis) { await redis.del(`email:une-fois:${cle}`); return; }
+  } catch { /* mémoire */ }
+  compteursMemoire.delete(`une-fois:${cle}`);
+}
+
+module.exports = { compterEnvoi, envoyesAujourdhui, budgetEnvoiGroupe, reserverEnvoi, rendreEnvoi, premiereFoisPendant, oublierUneFois, TYPES, PARTS_PAR_DEFAUT, IMPORTANTS };
