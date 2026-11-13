@@ -943,7 +943,7 @@
       "title": "Explore"
     },
     "mission": {
-      "description": "Tala DZ is an independent initiative dedicated to preserving and promoting Algeria's rich cultural heritage, literature, cinema and arts.",
+      "description": "A platform dedicated to preserving and promoting Algeria's cultural heritage in all its diversity.",
       "learnMore": "Learn more",
       "title": "Our Mission"
     },
@@ -4307,6 +4307,7 @@
     "noCollections": "No collections available",
     "noWildlife": "Information on fauna and flora coming soon",
     "practicalInfo": "Practical information",
+    "accesHoraires": "Access and opening hours",
     "hours": "Opening hours",
     "location": "Location",
     "qrCode": "QR Code",

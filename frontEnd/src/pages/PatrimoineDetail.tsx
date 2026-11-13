@@ -996,7 +996,7 @@ const PatrimoineDetail = () => {
             {/* Informations pratiques */}
             <Card>
               <CardHeader>
-                <CardTitle as="h2">{t('patrimoine.practicalInfo', 'Informations pratiques')}</CardTitle>
+                <CardTitle as="h2">{t('patrimoine.accesHoraires', 'Accès et horaires')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Horaires */}

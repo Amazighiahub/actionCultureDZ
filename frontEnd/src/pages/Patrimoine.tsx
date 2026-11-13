@@ -193,7 +193,7 @@ const Patrimoine = () => {
         <MissionModule module="patrimoine" />
         {/* En-tête plus court sur téléphone : le premier résultat remonte (audit V11 UX-15) */}
         <div className="text-center space-y-2 sm:space-y-4 mb-6 sm:mb-12">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl font-serif">
             {t('sections.heritage.title', 'Patrimoine Culturel')}
           </h1>
           <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto">

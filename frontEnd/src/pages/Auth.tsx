@@ -46,7 +46,7 @@ const Auth = () => {
       <main className="container py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center space-y-4 mb-12">
-            <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">
+            <h1 className="text-4xl font-bold tracking-tight font-serif">
               {t('auth.title')}
             </h1>
             <p className="text-lg text-muted-foreground">

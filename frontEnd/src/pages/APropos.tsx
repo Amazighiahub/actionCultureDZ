@@ -143,7 +143,7 @@ const APropos = () => {
       <main className="container py-12">
         {/* En-tête */}
         <div className="text-center space-y-4 mb-6">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">{t("apropos.propos_culture_algrie")}
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif">{t("apropos.propos_culture_algrie")}
 
           </h1>
         </div>

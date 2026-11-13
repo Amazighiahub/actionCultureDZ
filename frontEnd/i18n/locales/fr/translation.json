@@ -992,7 +992,7 @@
       "title": "Explorer"
     },
     "mission": {
-      "description": "Une plateforme dédiée à la préservation et à la valorisation du patrimoine culturel amazigh",
+      "description": "Une plateforme dédiée à la préservation et à la valorisation du patrimoine culturel algérien, dans toute sa diversité.",
       "learnMore": "En savoir plus",
       "title": "Notre mission"
     },
@@ -4312,6 +4312,7 @@
     "noCollections": "Aucune collection disponible",
     "noWildlife": "Informations sur la faune et flore à venir",
     "practicalInfo": "Informations pratiques",
+    "accesHoraires": "Accès et horaires",
     "hours": "Horaires",
     "location": "Localisation",
     "qrCode": "QR Code",
