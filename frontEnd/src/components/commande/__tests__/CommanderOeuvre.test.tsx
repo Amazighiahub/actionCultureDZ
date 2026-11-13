@@ -38,6 +38,19 @@ describe('bouton « Commander »', () => {
     expect(container.textContent).toBe('');
   });
 
+  it('prix sans paiement en ligne : où se procurer l’œuvre (éditeur, sinon l’auteur)', async () => {
+    offre.mockResolvedValue({ success: true, data: { commandable: false, raison: 'sans_moyen', prix: 1200, vendeur: { id: 20, nom: 'Radia Gouga' } } });
+    const { container, unmount } = afficher();
+    await waitFor(() => expect(container.textContent).toMatch(/Radia Gouga|prixIndicatifAuteur/));
+    expect(container.querySelector('a[href^="/professionnels/20"]')).not.toBeNull();
+    unmount();
+
+    const avecEditeur = render(
+      <MemoryRouter><CommanderOeuvre idOeuvre={5} editeur={{ nom: 'Éditions Chihab', page: '/organisations/3-editions-chihab' }} /></MemoryRouter>
+    );
+    await waitFor(() => expect(avecEditeur.container.querySelector('a[href="/organisations/3-editions-chihab"]')).not.toBeNull());
+  });
+
   it('sa propre œuvre : pas de bouton', async () => {
     auth.user = { id_user: 7 };
     offre.mockResolvedValue({ success: true, data: OFFRE });

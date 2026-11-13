@@ -17,13 +17,9 @@ import { safeExternalUrl } from '@/utils/safeUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import i18n from 'i18next';
 import { Link } from 'react-router-dom';
-import { organisationPath } from '@/utils/slug';
-import type { Editeur } from '@/types/models/references.types';
+import { pageEditeur } from '@/utils/slug';
 
 /** Page publique de la maison d'édition, si elle est vérifiée */
-const pageEditeur = (editeur: Editeur): string | null =>
-  editeur.Organisation?.statut === 'valide' ? organisationPath(editeur.Organisation.id_organisation, editeur.nom) : null;
-
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;
   compact?: boolean;

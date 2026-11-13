@@ -3638,7 +3638,7 @@
       "program": "Programme",
       "participants": "Participants",
       "services": "Services",
-      "metadata": "Métadonnées",
+      "metadata": "Plus d’infos",
       "label": "Rubriques de l’événement"
     },
     "roles": {
@@ -6015,6 +6015,11 @@
     "choisirLivraison": "Choisissez la livraison.",
     "adresseRequise": "Indiquez l’adresse de livraison.",
     "epuise": "Plus en stock pour le moment",
+    "prixIndicatifEditeur": "Prix indicatif. Disponible chez {{editeur}} ou en librairie.",
+    "voirEditeur": "Voir la maison d’édition",
+    "prixIndicatifAuteur": "Prix indicatif. Pour vous la procurer, contactez {{nom}}.",
+    "voirPortfolio": "Voir sa page",
+    "prixIndicatif": "Prix indicatif.",
     "mesCommandes": "Mes commandes",
     "mesVentes": "Mes ventes",
     "mesAchats": "Mes achats",

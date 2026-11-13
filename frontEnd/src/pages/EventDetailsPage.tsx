@@ -142,7 +142,7 @@ const EventDetailsPage: React.FC = () => {
     { key: 'participants', icon: Users, label: `${t('event.tabs.participants', 'Participants')} (${publicParticipants.total})` },
     { key: 'comments', icon: MessageCircle, label: `${t('event.tabs.comments', 'Avis')} (${comments?.length || 0})` },
     ...(event.Lieu?.id_lieu ? [{ key: 'services', icon: MapPin, label: t('event.tabs.services', 'Services') }] : []),
-    { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Métadonnées') },
+    { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Plus d’infos') },
   ];
 
   const seoKeywords = [

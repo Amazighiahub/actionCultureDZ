@@ -68,8 +68,9 @@ describe('Fiche événement : onglets', () => {
     expect(onglets).toHaveLength(6);
     expect(screen.getByRole('tab', { name: /Informations/ })).toHaveAttribute('aria-selected', 'true');
     expect(onglets.filter(o => o.getAttribute('aria-selected') === 'true')).toHaveLength(1);
-    // « Métadonnées » reste proposé au public (décision de la propriétaire)
-    expect(screen.getByRole('tab', { name: /Métadonnées/ })).toBeInTheDocument();
+    // Onglet des informations complémentaires, proposé au public sous le nom « Plus d’infos »
+    // (avant : « Métadonnées », du jargon ; audit V11)
+    expect(screen.getByRole('tab', { name: /Plus d’infos|event\.tabs\.metadata/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Avis (2)' })).toBeInTheDocument();
     expect(await screen.findByText('contenu-infos')).toBeInTheDocument();
   });

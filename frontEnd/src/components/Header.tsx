@@ -195,6 +195,9 @@ const Header = () => {
   SOUS_NAV['/artisanat/gastronomie'] = SOUS_NAV['/artisanat'];
   // La sous-page Services aux visiteurs garde le menu du Patrimoine
   SOUS_NAV['/patrimoine/services'] = SOUS_NAV['/patrimoine'];
+  // Page Patrimoine : ses pastilles (avec le nombre de sites) filtrent déjà par type et mènent aux
+  // services aux visiteurs ; la bande faisait doublon (choix de la responsable, audit V11 UX-14)
+  delete SOUS_NAV['/patrimoine'];
   const sousNav = SOUS_NAV[location.pathname];
 
   return (

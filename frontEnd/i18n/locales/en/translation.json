@@ -3633,7 +3633,7 @@
       "program": "Program",
       "participants": "Participants",
       "services": "Services",
-      "metadata": "Metadata",
+      "metadata": "More info",
       "label": "Event sections"
     },
     "roles": {
@@ -6015,6 +6015,11 @@
     "choisirLivraison": "Choose a delivery option.",
     "adresseRequise": "Enter the delivery address.",
     "epuise": "Out of stock for now",
+    "prixIndicatifEditeur": "Indicative price. Available from {{editeur}} or in bookshops.",
+    "voirEditeur": "See the publisher",
+    "prixIndicatifAuteur": "Indicative price. To get it, contact {{nom}}.",
+    "voirPortfolio": "See their page",
+    "prixIndicatif": "Indicative price.",
     "mesCommandes": "My orders",
     "mesVentes": "My sales",
     "mesAchats": "My purchases",

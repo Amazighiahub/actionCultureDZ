@@ -54,7 +54,7 @@ import { getSafeRedirectPath } from '@/utils/safeUrl';
 import { evenementPath, professionnelPath } from '@/utils/slug';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
-import { idFromSlug, oeuvrePath, artisanatPath } from '@/utils/slug';
+import { idFromSlug, oeuvrePath, artisanatPath, pageEditeur } from '@/utils/slug';
 import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
@@ -605,7 +605,7 @@ const OeuvreDetailPage: React.FC = () => {
                         </div>
                       )}
                       {/* Commande : paiement direct à l'artiste */}
-                      <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="w-full sm:w-auto" />
+                      <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="w-full sm:w-auto" editeur={oeuvre.Editeurs?.[0] ? { nom: getLocalizedText(oeuvre.Editeurs[0].nom, i18n.language), page: pageEditeur(oeuvre.Editeurs[0]) } : null} />
 
                       {/* Plus de mention « Œuvre vérifiée et publiée » : toute œuvre visible du public l'est (audit V11 UX-17) */}
                     </div>

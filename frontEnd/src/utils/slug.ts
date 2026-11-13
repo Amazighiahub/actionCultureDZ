@@ -74,6 +74,11 @@ export function professionnelPath(id: number, prenom?: string | null, nom?: stri
 }
 
 /** Adresse publique d'une organisation : « /organisations/6-editions-barzakh » */
+/** Page publique de l'éditeur d'une œuvre : sa maison d'édition si elle est vérifiée, sinon aucune */
+export function pageEditeur(editeur?: { nom?: unknown; Organisation?: { id_organisation: number; statut?: string } | null } | null): string | null {
+  return editeur?.Organisation?.statut === 'valide' ? organisationPath(editeur.Organisation.id_organisation, editeur.nom) : null;
+}
+
 export function organisationPath(id: number, nom?: unknown): string {
   const texte = typeof nom === 'string' ? nom
     : nom && typeof nom === 'object' ? ((nom as Record<string, string | undefined>).fr || Object.values(nom as Record<string, string | undefined>).find(Boolean) || '')

@@ -20,6 +20,8 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
 import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import { pageEditeur } from '@/utils/slug';
 import { BoutonsSurvolCarte, CarteRetournable, FenetreZoom } from './HeroCarteRetournable';
 
 interface HeroLivreProps {
@@ -56,7 +58,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
   mainContributors, gt, viewCount, commentsCount,
   isFavorite, favoriteLoading, onToggleFavorite, shareButton
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses, direction } = useRTL();
 
@@ -244,7 +246,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
             {/* « Commander » n'apparaît que si le livre a un prix et l'auteur un moyen de paiement */}
             <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
-              <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="shadow-lg" />
+              <CommanderOeuvre idOeuvre={oeuvre.id_oeuvre} className="shadow-lg" editeur={oeuvre.Editeurs?.[0] ? { nom: getLocalizedText(oeuvre.Editeurs[0].nom, i18n.language), page: pageEditeur(oeuvre.Editeurs[0]) } : null} />
               {aUnExtrait && (
               <Button size="lg" variant="outline" className="shadow-lg" onClick={() => setShowExcerpt(true)}>
                 <Eye className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />{t('works.actions.readExcerpt', 'Lire un extrait')}

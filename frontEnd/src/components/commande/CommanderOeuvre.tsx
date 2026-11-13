@@ -6,6 +6,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { professionnelPath } from '@/utils/slug';
 import { AlertCircle, CheckCircle, Loader2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -28,9 +29,11 @@ interface Props {
   /** Classe du bouton (taille, largeur) selon la page */
   className?: string;
   size?: 'default' | 'sm' | 'lg';
+  /** Éditeur de l'œuvre (nom et page), proposé quand on ne peut pas commander sur Tala DZ */
+  editeur?: { nom: string; page: string | null } | null;
 }
 
-const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) => {
+const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg', editeur = null }) => {
   const { t } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const { isAuthenticated, user } = useAuth();
@@ -77,9 +80,32 @@ const CommanderOeuvre: React.FC<Props> = ({ idOeuvre, className, size = 'lg' }) 
   useEffect(() => { if (modes.length === 1) setLivraison(modes[0]); }, [modes]);
 
   if (!offre?.commandable || !offre.prix) {
-    return offre?.raison === 'epuise'
-      ? <p className="text-sm font-medium text-muted-foreground">{t('commande.epuise', 'Plus en stock pour le moment')}</p>
-      : null;
+    if (offre?.raison === 'epuise') {
+      return <p className="text-sm font-medium text-muted-foreground">{t('commande.epuise', 'Plus en stock pour le moment')}</p>;
+    }
+    // Prix affiché mais pas de commande en ligne (le vendeur n'a pas indiqué comment être payé) :
+    // dire où se procurer l'œuvre plutôt qu'un prix seul (choix de la responsable, audit V11 UX-18)
+    if (offre?.raison === 'sans_moyen' && offre.prix && !(user?.id_user && offre.vendeur?.id === user.id_user)) {
+      const lien = 'font-medium text-primary underline underline-offset-4';
+      return (
+        <p className="text-sm text-muted-foreground max-w-prose">
+          {editeur?.nom ? (
+            <>
+              {t('commande.prixIndicatifEditeur', 'Prix indicatif. Disponible chez {{editeur}} ou en librairie.', { editeur: editeur.nom })}
+              {editeur.page && (
+                <> <Link to={editeur.page} className={lien}>{t('commande.voirEditeur', 'Voir la maison d’édition')}</Link></>
+              )}
+            </>
+          ) : offre.vendeur ? (
+            <>
+              {t('commande.prixIndicatifAuteur', 'Prix indicatif. Pour vous la procurer, contactez {{nom}}.', { nom: offre.vendeur.nom })}
+              {' '}<Link to={professionnelPath(offre.vendeur.id, offre.vendeur.nom)} className={lien}>{t('commande.voirPortfolio', 'Voir sa page')}</Link>
+            </>
+          ) : t('commande.prixIndicatif', 'Prix indicatif.')}
+        </p>
+      );
+    }
+    return null;
   }
   // Son propre livre : pas de bouton
   if (user?.id_user && offre.vendeur?.id === user.id_user) return null;
