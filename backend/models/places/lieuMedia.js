@@ -46,6 +46,16 @@ module.exports = (sequelize) => {
     licence: {
       type: DataTypes.STRING(30),
       allowNull: true
+    },
+    // Voix : variante parlée (« chaoui de Ghoufi »), texte libre (migration 20261223)
+    parler: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    // Voix : date où le contributeur a confirmé avoir l'accord de la personne enregistrée
+    accord_voix_le: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'lieu_medias',

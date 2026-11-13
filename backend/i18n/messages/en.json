@@ -574,7 +574,10 @@
     "ancienMotDePasseRequis": "The current password is required",
     "nouveauMotDePasse12": "The new password must have at least 12 characters",
     "texteTropLong": "This text is too long (${max} characters at most)",
-    "lienInvalide": "This link is incomplete or wrong"
+    "lienInvalide": "This link is incomplete or wrong",
+    "parlerTropLong": "The spoken variety is too long (100 characters at most)",
+    "nomVoixTropLong": "The name is too long (150 characters at most)",
+    "accordVoix": "Confirm that the recorded person agrees to their voice being published"
   },
   "article": {
     "blockCreated": "Block created successfully",

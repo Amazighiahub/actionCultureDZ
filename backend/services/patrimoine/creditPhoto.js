@@ -5,12 +5,15 @@
  */
 const LICENCES = ['tous_droits_reserves', 'cc_by', 'cc_by_sa', 'domaine_public'];
 
-/** Texte simple : sans balise ni retour à la ligne, 150 caractères au plus ; vide → null */
-function lireCredit(valeur) {
+/** Texte simple : sans balise ni retour à la ligne, `max` caractères au plus ; vide → null */
+function texteSimple(valeur, max) {
   if (valeur === undefined) return undefined;
-  const texte = String(valeur ?? '').replace(/<[^>]*>/g, '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 150);
+  const texte = String(valeur ?? '').replace(/<[^>]*>/g, '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, max);
   return texte || null;
 }
+
+/** Photographe ou source (ou nom de la personne enregistrée) : 150 caractères au plus */
+const lireCredit = (valeur) => texteSimple(valeur, 150);
 
 /** Licence connue, sinon null (non précisée) */
 function lireLicence(valeur) {
@@ -28,4 +31,4 @@ function champsCredit(source = {}) {
   return champs;
 }
 
-module.exports = { LICENCES, lireCredit, lireLicence, champsCredit };
+module.exports = { LICENCES, texteSimple, lireCredit, lireLicence, champsCredit };

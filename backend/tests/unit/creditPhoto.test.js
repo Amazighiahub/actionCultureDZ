@@ -34,6 +34,19 @@ describe('PatrimoineService : photos', () => {
     expect(create.mock.calls[1][0].credit).toBeUndefined();
   });
 
+  test('voix enregistrée : variante parlée, nom et date de l\'accord ; rien sans accord', async () => {
+    const create = jest.fn(async (d) => d);
+    const s = service({ Lieu: { findByPk: jest.fn(async () => ({ id_lieu: 3 })) }, LieuMedia: { create } });
+    const voix = { path: 'https://res.cloudinary.com/demo/video/upload/v.mp3', mimetype: 'audio/webm', originalname: 'voix.webm' };
+    await s.uploadMedias(3, [voix], { langue: 'tz-ltn', parler: ' chaoui <b>de</b> Ghoufi ', credit: 'Exemple Nom', accordVoix: true });
+    expect(create.mock.calls[0][0]).toMatchObject({ type: 'audio', langue: 'tz-ltn', parler: 'chaoui de Ghoufi', credit: 'Exemple Nom' });
+    expect(create.mock.calls[0][0].accord_voix_le).toBeInstanceOf(Date);
+    // Envoi de fichier ordinaire : ni variante ni date d'accord
+    await s.uploadMedias(3, [voix], { parler: 'x' });
+    expect(create.mock.calls[1][0].parler).toBeUndefined();
+    expect(create.mock.calls[1][0].accord_voix_le).toBeUndefined();
+  });
+
   test('modification du crédit d\'une photo du lieu ; photo d\'un autre lieu : 404', async () => {
     const media = { id: 7, credit: null, licence: null, update: jest.fn(async function (d) { Object.assign(this, d); }) };
     const findOne = jest.fn(async ({ where }) => (where.id_lieu === 3 ? media : null));

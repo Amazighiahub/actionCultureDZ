@@ -12,12 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { infoLangue, type InfoLangue } from '@/types/common/multilingual.types';
+import EnregistreurVoix from './EnregistreurVoix';
 
 export interface MediaAudio {
   id: number;
   url: string;
   type: string;
   langue?: string | null;
+  /** Voix enregistrée : variante parlée (« chaoui de Ghoufi ») et nom de la personne */
+  parler?: string | null;
+  credit?: string | null;
 }
 
 interface GuideAudioProps {
@@ -108,15 +112,20 @@ const GuideAudio: React.FC<GuideAudioProps> = ({ lieuId, medias, lang, canUpload
           </div>
           <ul className="space-y-2">
             {(parLangue.get(langueActive) || []).map((m, i) => (
-              <li key={m.id} className="flex items-center gap-2">
+              <li key={m.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 {/* preload none : rien n'est téléchargé avant que le visiteur appuie sur lecture */}
-                <audio controls preload="none" src={getAssetUrl(m.url)} className="w-full min-w-0"
+                <audio controls preload="none" src={getAssetUrl(m.url)} className="flex-1 min-w-0"
                   aria-label={t('patrimoine.audio.recording', 'Enregistrement {{n}} ({{langue}})', { n: i + 1, langue: infoActive?.label || '' })} />
                 {onDelete && (
                   <Button type="button" variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => onDelete(m)}
                     aria-label={t('patrimoine.audio.delete', 'Supprimer l’enregistrement {{n}}', { n: i + 1 })}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                )}
+                {(m.parler || m.credit) && (
+                  <p className="w-full text-xs text-muted-foreground">
+                    {[m.parler, m.credit ? t('patrimoine.voix.de', 'Voix : {{nom}}', { nom: m.credit }) : null].filter(Boolean).join(' · ')}
+                  </p>
                 )}
               </li>
             ))}
@@ -139,6 +148,9 @@ const GuideAudio: React.FC<GuideAudioProps> = ({ lieuId, medias, lang, canUpload
               </SelectContent>
             </Select>
           </div>
+          {/* Enregistrer avec le micro du téléphone ; l'envoi d'un fichier reste possible juste après */}
+          <EnregistreurVoix lieuId={lieuId} langue={langueEnvoi}
+            onEnvoye={(ajoutes) => { onUploaded(ajoutes); setChoix(langueEnvoi); }} />
           <input ref={inputRef} type="file" accept={ACCEPT_AUDIO} className="hidden" onChange={envoyer} />
           <Button type="button" variant="outline" size="sm" className="h-9" disabled={uploading} onClick={() => inputRef.current?.click()}>
             {uploading ? <Loader2 className="h-4 w-4 me-1 animate-spin" /> : <Upload className="h-4 w-4 me-1" />}

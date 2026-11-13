@@ -7,7 +7,8 @@ const express = require('express');
 const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
-const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
+const { MEDIA_MIMES, MAX_MEDIA_SIZE, VOIX_MIMES, MAX_VOIX_SIZE } = require('../constants/uploadMimes');
+const { typeVoixFichier } = require('../utils/pisteAudio');
 const { TYPES_PATRIMOINE, MONUMENT_TYPES, VESTIGE_TYPES, LANGUES_AUDIO } = require('../constants/patrimoineTypes');
 const { body } = require('express-validator');
 const { aUnTexte } = require('../helpers/i18n');
@@ -102,12 +103,35 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, proOuAuteurDuLieuEnAttente, validateId(), ...limiteEnvois,
-    // Site inexistant : refusé avant de recevoir le fichier (avant, le fichier partait sur Cloudinary)
-    avantEnvoi(async (req) => {
-      const site = models.Lieu ? await models.Lieu.findByPk(parseInt(req.params.id, 10), { attributes: ['id_lieu'] }) : null;
-      if (!site) { const e = new Error('Site introuvable'); e.statusCode = 404; e.code = 'NOT_FOUND'; throw e; }
+  // Site inexistant : refusé avant de recevoir le fichier (avant, le fichier partait sur Cloudinary)
+  const siteExiste = avantEnvoi(async (req) => {
+    const site = models.Lieu ? await models.Lieu.findByPk(parseInt(req.params.id, 10), { attributes: ['id_lieu'] }) : null;
+    if (!site) { const e = new Error('Site introuvable'); e.statusCode = 404; e.code = 'NOT_FOUND'; throw e; }
+  });
+  // Voix enregistrée depuis le téléphone : un seul fichier, une seule piste audio, accord de la personne
+  router.post('/:id/medias/voix', authenticate, proOuAuteurDuLieuEnAttente, validateId(), ...limiteEnvois, siteExiste,
+    ...secureDiskUpload({
+      field: 'medias', mimes: VOIX_MIMES, maxFileSize: MAX_VOIX_SIZE, maxFiles: 1,
+      controle: async (file, req) => {
+        // Accord vérifié avant l'envoi vers Cloudinary (champ placé avant le fichier dans le formulaire)
+        const accord = req.body?.accord;
+        if (accord !== 'true' && accord !== '1') return req.t ? req.t('validation.accordVoix') : 'Accord de la personne enregistrée requis';
+        const type = await typeVoixFichier(file.path, file.mimetype);
+        if (!type) return 'Seul un enregistrement audio est accepté ici.';
+        file.mimetype = type; // rangé et enregistré comme audio
+        return null;
+      }
     }),
+    [
+      body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage(msg('validation.langueInvalide')),
+      body('parler').optional().isString().isLength({ max: 100 }).withMessage(msg('validation.parlerTropLong')),
+      body('credit').optional().isString().isLength({ max: 150 }).withMessage(msg('validation.nomVoixTropLong')),
+      body('accord').custom(v => v === 'true' || v === '1' || v === true).withMessage(msg('validation.accordVoix'))
+    ],
+    handleValidationErrors,
+    (req, res, next) => { req.voixEnregistree = true; next(); },
+    patrimoineController.wrap('uploadMedias'));
+  router.post('/:id/medias', authenticate, proOuAuteurDuLieuEnAttente, validateId(), ...limiteEnvois, siteExiste,
     ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     [body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage(msg('validation.langueInvalide'))],
     handleValidationErrors,

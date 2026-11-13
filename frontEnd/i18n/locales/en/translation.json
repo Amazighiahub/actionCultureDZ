@@ -4551,6 +4551,23 @@
       "aucun": "This QR code has not been scanned yet.",
       "total_one": "Scanned once (last 30 days: {{mois}})",
       "total_other": "Scanned {{count}} times (last 30 days: {{mois}})"
+    },
+    "voix": {
+      "titre": "Record a voice with the microphone",
+      "enregistrer": "Record",
+      "arreter": "Stop",
+      "enCours": "Recording… {{temps}} / {{max}}",
+      "reecouter": "Listen to the recording",
+      "recommencer": "Start again",
+      "refuse": "The microphone is not allowed. Allow it for taladz.com in your browser settings, or send a file you have already recorded.",
+      "erreur": "Recording did not work on this phone. You can send a file you have already recorded.",
+      "parler": "Spoken variety (optional)",
+      "parlerExemple": "E.g. Chaoui of Ghoufi",
+      "nom": "Name of the recorded person (optional)",
+      "accord": "The recorded person agrees to their voice being published on Tala DZ.",
+      "envoyer": "Send the voice",
+      "envoyee": "Voice added to the audio guide. Thank you!",
+      "de": "Voice: {{nom}}"
     }
   },
   "toasts": {

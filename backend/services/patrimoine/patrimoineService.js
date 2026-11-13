@@ -14,7 +14,7 @@ const historique = require('./historiqueLieu');
 const { supprimerLieu } = require('./suppressionLieu');
 const { memeUtilisateur, peutGerer } = require('../../utils/droits');
 const { includeOeuvreCarte, estVisible, versCarte, ajouterCouvertures, refusLien } = require('../../utils/carteArticle');
-const { champsCredit } = require('./creditPhoto');
+const { champsCredit, lireCredit, texteSimple } = require('./creditPhoto');
 
 /**
  * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
@@ -1084,7 +1084,13 @@ class PatrimoineService extends BaseService {
    * @param {Object} [options]
    * @param {string} [options.langue] - langue des enregistrements audio envoyés
    */
-  async uploadMedias(siteId, files, { langue, credit, licence } = {}) {
+  /**
+   * @param {object} [options]
+   * @param {string} [options.parler] - voix : variante parlée (« chaoui de Ghoufi »)
+   * @param {boolean} [options.accordVoix] - voix : le contributeur a l'accord de la personne enregistrée
+   * (credit, pour une voix : nom de la personne enregistrée, facultatif)
+   */
+  async uploadMedias(siteId, files, { langue, credit, licence, parler, accordVoix } = {}) {
     const { Lieu, LieuMedia } = this.models || {};
     if (!Lieu || !LieuMedia) throw this._validationError('Modèles non disponibles');
 
@@ -1117,7 +1123,13 @@ class PatrimoineService extends BaseService {
         langue: type === 'audio' ? (langue || null) : null,
         description: {},
         // Photographe ou source, et droits : communs aux photos envoyées ensemble
-        ...(type === 'image' || type === 'video' ? champsCredit({ credit, licence }) : {})
+        ...(type === 'image' || type === 'video' ? champsCredit({ credit, licence }) : {}),
+        // Voix : variante parlée, nom de la personne (facultatif) et date de son accord
+        ...(type === 'audio' && accordVoix ? {
+          parler: texteSimple(parler, 100) ?? null,
+          credit: lireCredit(credit) ?? null,
+          accord_voix_le: new Date()
+        } : {})
       });
     }));
     return medias;

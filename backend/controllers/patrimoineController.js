@@ -690,11 +690,15 @@ class PatrimoineController extends BaseController {
   async uploadMedias(req, res) {
     const siteId = parseInt(req.params.id);
     // langue : celle des enregistrements audio envoyés (champ texte du formulaire)
-    const medias = await this.patrimoineService.uploadMedias(siteId, req.files, {
+    // Route des voix : un seul fichier (req.file) ; route des médias : plusieurs (req.files)
+    const fichiers = req.files || (req.file ? [req.file] : []);
+    const medias = await this.patrimoineService.uploadMedias(siteId, fichiers, {
       langue: req.body?.langue || undefined,
       // Photographe ou source, et droits des photos envoyées
       credit: req.body?.credit,
-      licence: req.body?.licence
+      licence: req.body?.licence,
+      // Route des voix seulement (case d'accord obligatoire, vérifiée par la route)
+      ...(req.voixEnregistree ? { parler: req.body?.parler, accordVoix: true } : {})
     });
     if (medias?.length) await this._signalerContribution(req, 'a ajouté des photos ou des enregistrements à');
     res.json({ success: true, data: medias });

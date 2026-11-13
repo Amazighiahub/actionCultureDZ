@@ -474,5 +474,6 @@
   "Votre compte ne peut pas envoyer de message": "Your account cannot send messages",
   "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "You have already written to this professional several times today. Try again tomorrow.",
   "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "The message could not be sent. Try again in a moment.",
-  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "Too many messages have been sent today. Try again tomorrow."
+  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "Too many messages have been sent today. Try again tomorrow.",
+  "Seul un enregistrement audio est accepté ici.": "Only an audio recording is accepted here."
 }

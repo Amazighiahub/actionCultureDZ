@@ -24,9 +24,13 @@ const VIDEO_MIMES = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvi
 // m4a : format des enregistrements de téléphone (déclaré audio/mp4 ou audio/x-m4a, détecté audio/m4a)
 const AUDIO_MIMES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/mp4', 'audio/x-m4a', 'audio/m4a'];
 const MEDIA_MIMES = [...IMAGE_MIMES, ...VIDEO_MIMES, ...AUDIO_MIMES, ...DOCUMENT_MIMES];
+// Voix enregistrée dans le navigateur : WebM (Chrome, Android) ou MP4 (Safari), dont la signature est
+// celle d'une vidéo ; acceptés seulement par la route des voix, qui vérifie qu'il n'y a qu'une piste audio
+const VOIX_MIMES = [...AUDIO_MIMES, 'audio/webm', 'video/webm', 'video/mp4'];
+const MAX_VOIX_SIZE = 10 * 1024 * 1024; // 10 MB : 5 minutes enregistrées en pèsent 1 à 5
 
 module.exports = {
   MAX_IMAGE_SIZE, MAX_DOCUMENT_SIZE, MAX_VIDEO_SIZE, MAX_AUDIO_SIZE, MAX_MEDIA_SIZE,
   MAX_EXTRAIT_PDF_SIZE, MAX_EXTRAIT_PDF_ENVOI, MAX_EXTRAIT_AUDIO_SIZE, MAX_EXTRAIT_PDF_PAGES,
-  IMAGE_MIMES, DOCUMENT_MIMES, VIDEO_MIMES, AUDIO_MIMES, MEDIA_MIMES
+  IMAGE_MIMES, DOCUMENT_MIMES, VIDEO_MIMES, AUDIO_MIMES, MEDIA_MIMES, VOIX_MIMES, MAX_VOIX_SIZE
 };

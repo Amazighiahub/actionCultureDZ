@@ -4556,6 +4556,23 @@
       "aucun": "Ce QR code n’a pas encore été scanné.",
       "total_one": "Scanné {{count}} fois (30 derniers jours : {{mois}})",
       "total_other": "Scanné {{count}} fois (30 derniers jours : {{mois}})"
+    },
+    "voix": {
+      "titre": "Enregistrer une voix avec le micro",
+      "enregistrer": "Enregistrer",
+      "arreter": "Arrêter",
+      "enCours": "Enregistrement… {{temps}} / {{max}}",
+      "reecouter": "Réécouter l’enregistrement",
+      "recommencer": "Recommencer",
+      "refuse": "Le micro n’est pas autorisé. Autorisez-le pour taladz.com dans les réglages du navigateur, ou envoyez un fichier déjà enregistré.",
+      "erreur": "L’enregistrement n’a pas fonctionné sur ce téléphone. Vous pouvez envoyer un fichier déjà enregistré.",
+      "parler": "Variante parlée (facultatif)",
+      "parlerExemple": "Ex. : chaoui de Ghoufi",
+      "nom": "Nom de la personne enregistrée (facultatif)",
+      "accord": "La personne enregistrée est d’accord pour que sa voix soit publiée sur Tala DZ.",
+      "envoyer": "Envoyer la voix",
+      "envoyee": "Voix ajoutée au guide audio. Merci !",
+      "de": "Voix : {{nom}}"
     }
   },
   "toasts": {

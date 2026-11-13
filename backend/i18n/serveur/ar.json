@@ -474,5 +474,6 @@
   "Votre compte ne peut pas envoyer de message": "لا يمكن لحسابك إرسال رسائل",
   "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "لقد راسلت هذا المحترف عدة مرات اليوم. أعد المحاولة غدًا.",
   "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "تعذّر إرسال الرسالة. أعد المحاولة بعد لحظة.",
-  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "أُرسلت رسائل كثيرة اليوم. أعد المحاولة غدًا."
+  "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "أُرسلت رسائل كثيرة اليوم. أعد المحاولة غدًا.",
+  "Seul un enregistrement audio est accepté ici.": "لا يُقبل هنا إلا تسجيل صوتي."
 }

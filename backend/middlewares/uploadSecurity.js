@@ -283,7 +283,7 @@ const TEMP_DIR = path.join(os.tmpdir(), 'eventculture-uploads');
  * @param {number} [opts.maxFiles] - > 1 : plusieurs fichiers (req.files)
  * @returns {Function[]} middlewares Express
  */
-// controle (facultatif) : (file) => message de refus ou null ; lit (ou réécrit) le fichier temporaire avant l'envoi
+// controle (facultatif) : (file, req) => message de refus ou null ; lit (ou réécrit) le fichier temporaire avant l'envoi
 // maxTotalSize (facultatif) : volume total d'une requête à plusieurs fichiers (par défaut 2 × maxFileSize)
 function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1, controle = null, maxTotalSize = null }) {
   const plafondTotal = maxTotalSize || (maxFiles > 1 ? maxFileSize * 2 : Infinity);
@@ -322,7 +322,7 @@ function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1, controle = 
           return sendRejection(res, 400, 'UPLOAD_INVALID_TYPE', req.t ? req.t('upload.invalidFileType') : 'Type de fichier non autorise');
         }
         file.mimetype = result.mimeType; // type réel détecté, pas celui déclaré
-        const refus = controle ? await controle(file) : null;
+        const refus = controle ? await controle(file, req) : null;
         if (refus) {
           await removeTempFiles(files);
           return sendRejection(res, 400, 'UPLOAD_REFUSED', refus);

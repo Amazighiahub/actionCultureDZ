@@ -155,7 +155,10 @@ async function uploadLocalFile(filePath, { originalname = 'file', mimetype = '' 
     // Cloudinary classe l'audio dans resource_type 'video'
     resource_type: isImage ? 'image' : (isVideo || isAudio) ? 'video' : 'raw',
     ...(isImage ? { transformation: IMAGE_TRANSFORMS.default } : {}),
-    ...(isVideo ? { transformation: VIDEO_TRANSFORMS.default } : {})
+    ...(isVideo ? { transformation: VIDEO_TRANSFORMS.default } : {}),
+    // Voix enregistrée dans le navigateur (WebM/Opus ou MP4/AAC, types posés par la route des voix) :
+    // convertie en MP3 à l'envoi, car un iPhone ancien ne lit pas le WebM
+    ...(mimetype === 'audio/webm' || mimetype === 'audio/mp4' ? { format: 'mp3' } : {})
   };
 
   return breakers.cloudinary.execute(() => new Promise((resolve, reject) => {

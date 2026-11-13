@@ -416,6 +416,7 @@ export const API_ENDPOINTS = { // Documentation complète de l'API
     // Sites de la commune au nom proche, vérifiés avant une création
     checkDuplicate: '/patrimoine/check-duplicate',
     uploadMedias: (id: number) => `/patrimoine/${id}/medias`,
+    uploadVoix: (id: number) => `/patrimoine/${id}/medias/voix`,
     deleteMedia: (id: number, mediaId: number) => `/patrimoine/${id}/medias/${mediaId}`,
     reordonnerPoints: (id: number) => `/patrimoine/${id}/points/ordre`,
 
