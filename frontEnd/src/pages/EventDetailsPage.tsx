@@ -34,6 +34,7 @@ const EventProgram = React.lazy(() => import('./event/EventProgram'));
 const EventGallery = React.lazy(() => import('./event/EventGallery'));
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
+import SignalerContenu from '@/components/shared/SignalerContenu';
 const EventComments = React.lazy(() => import('./event/EventComments'));
 const EventOrganizers = React.lazy(() => import('./event/EventOrganizers'));
 const EventRegistration = React.lazy(() => import('./event/EventRegistration'));
@@ -306,6 +307,10 @@ const EventDetailsPage: React.FC = () => {
                   </TabsContent>
                 </div>
               </Tabs>
+              {/* Signaler une erreur (date, lieu, faux contenu) à l'équipe de modération (audit V11 OUT-2) */}
+              <div className="mt-4 flex justify-end">
+                <SignalerContenu type="evenement" id={event.id_evenement} idAuteur={event.id_user} />
+              </div>
             </div>
 
             {/* Inscription */}

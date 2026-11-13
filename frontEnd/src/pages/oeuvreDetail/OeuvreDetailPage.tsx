@@ -58,6 +58,7 @@ import { idFromSlug, oeuvrePath, artisanatPath, pageEditeur } from '@/utils/slug
 import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
+import SignalerContenu from '@/components/shared/SignalerContenu';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -876,6 +877,11 @@ const OeuvreDetailPage: React.FC = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Signaler une erreur sur la fiche à l'équipe de modération (audit V11 OUT-2) */}
+          <div className="mt-6 flex justify-end">
+            <SignalerContenu type="oeuvre" id={oeuvre.id_oeuvre} idAuteur={oeuvre.saisi_par} />
+          </div>
 
           {/* Œuvres similaires */}
           <div className="mt-12">

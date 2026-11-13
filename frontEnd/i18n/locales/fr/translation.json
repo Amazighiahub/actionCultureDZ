@@ -6311,5 +6311,9 @@
       "verification": "Erreur lors de la vérification",
       "oeuvres": "Erreur lors de la récupération des œuvres"
     }
+  },
+  "signalement": {
+    "ficheBouton": "Signaler une erreur",
+    "ficheTitre": "Signaler une erreur sur cette fiche"
   }
 }

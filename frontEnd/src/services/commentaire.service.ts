@@ -3,6 +3,7 @@ import { httpClient } from './httpClient';
 import type { ApiResponse, PaginatedResponse } from '@/config/api';
 import { reponseEchec } from '@/utils/erreurServeur';
 import i18next from 'i18next';
+import { signalerContenu } from './signalement.service';
 
 interface Commentaire {
   id_commentaire: number;
@@ -245,13 +246,8 @@ class CommentaireService {
    * Signaler un commentaire à l'équipe (message du serveur en cas de refus : déjà signalé, e-mail non vérifié…)
    */
   async signalerCommentaire(id: number, motif: string, description?: string): Promise<ApiResponse<void>> {
-    try {
-      return await httpClient.post<void>('/signalements', {
-        type_entite: 'commentaire', id_entite: id, motif, ...(description ? { description } : {})
-      });
-    } catch (error: unknown) {
-      return { ...reponseEchec(error, i18next.t('common.errorOccurred', 'Une erreur est survenue')) };
-    }
+    // Même envoi que les fiches (services/signalement.service)
+    return signalerContenu('commentaire', id, motif, description);
   }
 
   /**

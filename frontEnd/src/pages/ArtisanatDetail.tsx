@@ -38,6 +38,7 @@ import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import CommentairesOeuvre from '@/components/shared/CommentairesOeuvre';
 import { idFromSlug, artisanatPath } from '@/utils/slug';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
+import SignalerContenu from '@/components/shared/SignalerContenu';
 
 interface ArtisanatData {
   id_artisanat: number;
@@ -62,6 +63,8 @@ interface ArtisanatData {
   // Données étendues pour la page détail
   Oeuvre?: {
     id_oeuvre: number;
+    /** Auteur de la fiche (bouton « Signaler » masqué pour lui) */
+    saisi_par?: number;
     titre: string | { fr: string; ar: string; en: string };
     description?: string | { fr: string; ar: string; en: string };
     annee_creation?: number;
@@ -692,6 +695,10 @@ const ArtisanatDetail: React.FC = () => {
             </section>
           )}
 
+          {/* Signaler une erreur sur la fiche à l'équipe de modération (audit V11 OUT-2) */}
+          <div className="mt-6 flex justify-end">
+            <SignalerContenu type="artisanat" id={artisanat.id_artisanat} idAuteur={artisanat.Oeuvre?.saisi_par} />
+          </div>
         </div>
       </main>
 

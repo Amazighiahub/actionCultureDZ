@@ -6311,5 +6311,9 @@
       "verification": "Error while checking",
       "oeuvres": "Error while loading the works"
     }
+  },
+  "signalement": {
+    "ficheBouton": "Report an error",
+    "ficheTitre": "Report an error on this page"
   }
 }

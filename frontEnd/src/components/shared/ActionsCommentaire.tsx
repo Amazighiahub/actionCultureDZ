@@ -7,7 +7,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, EyeOff, Flag, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
@@ -15,14 +14,11 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from '@/components/ui/select';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { commentaireService } from '@/services/commentaire.service';
-import { MOTIFS_SIGNALEMENT } from '@/utils/motifsSignalement';
+import DialogueSignalement from '@/components/shared/DialogueSignalement';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 interface Props {
@@ -39,8 +35,6 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const [fenetre, setFenetre] = useState<Fenetre>(null);
   const [texte, setTexte] = useState('');
-  const [motif, setMotif] = useState('');
-  const [precision, setPrecision] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -56,14 +50,9 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
     // Seulement un texte changé (la fenêtre s'ouvre avec le commentaire actuel)
     actif: fenetre === 'modifier' && !!texte.trim() && texte.trim() !== (commentaire.contenu || '').trim(),
   });
-  const { restauree: signalementRestaure, oublier: oublierSignalement } = useSaisieConservee({
-    cle: id ? `commentaire:${id}:signaler` : null,
-    valeur: { motif, precision },
-    restaurer: (v) => { setMotif(v.motif || ''); setPrecision(v.precision || ''); setErreur(null); setFenetre('signaler'); },
-    actif: fenetre === 'signaler' && !!(motif || precision.trim()),
-  });
-  /** Fermer une fenêtre (« Annuler », croix ou action réussie) : plus rien à conserver */
-  const fermer = () => { setFenetre(null); oublierModification(); oublierSignalement(); };
+  /** Fermer une fenêtre (« Annuler », croix ou action réussie) : plus rien à conserver
+      (le signalement garde son texte dans DialogueSignalement, commun avec les fiches) */
+  const fermer = () => { setFenetre(null); oublierModification(); };
 
   if (!isAuthenticated || !user || !id) return null;
   const estAuteur = Number(idAuteur) === Number(user.id_user);
@@ -71,7 +60,6 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
   const ouvrir = (quoi: Fenetre) => {
     setErreur(null);
     if (quoi === 'modifier') setTexte(commentaire.contenu || '');
-    if (quoi === 'signaler') { setMotif(''); setPrecision(''); }
     setFenetre(quoi);
   };
 
@@ -102,16 +90,6 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
     void executer(() => commentaireService.updateCommentaire(id, { contenu: texte.trim() }), t('comments.actions.modifie', 'Commentaire modifié'));
   };
 
-  const signaler = () => {
-    if (!motif) {
-      setErreur(t('comments.actions.motifRequis', 'Choisissez un motif'));
-      return;
-    }
-    void executer(
-      () => commentaireService.signalerCommentaire(id, motif, precision.trim() || undefined),
-      t('comments.reportSuccess', 'Signalement envoyé. Merci.')
-    );
-  };
 
   return (
     <>
@@ -162,39 +140,19 @@ const ActionsCommentaire: React.FC<Props> = ({ commentaire, onChange }) => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={fenetre === 'signaler'} onOpenChange={(o) => { if (!o) fermer(); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('comments.actions.signalerTitre', 'Signaler ce commentaire')}</DialogTitle>
-            <DialogDescription>{t('comments.actions.signalerAide', 'L’équipe Tala DZ lira votre signalement. La personne ne saura pas que c’est vous.')}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>{t('comments.actions.motif', 'Motif')}</Label>
-              <Select value={motif} onValueChange={setMotif}>
-                <SelectTrigger aria-label={t('comments.actions.motif', 'Motif')}>
-                  <SelectValue placeholder={t('comments.actions.motifChoisir', 'Choisir un motif')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOTIFS_SIGNALEMENT.map(({ valeur, cle }) => (
-                    <SelectItem key={valeur} value={valeur}>{t(cle, valeur)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`precision-${id}`}>{t('comments.actions.precision', 'Précision (facultatif)')}</Label>
-              <Textarea id={`precision-${id}`} dir="auto" value={precision} onChange={(e) => setPrecision(e.target.value)} maxLength={1000} />
-            </div>
-            <SaisieConserveeAvis visible={signalementRestaure} />
-          </div>
-          {erreur && <p role="alert" className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" aria-hidden="true" />{erreur}</p>}
-          <DialogFooter>
-            <Button variant="outline" onClick={fermer}>{t('common.cancel', 'Annuler')}</Button>
-            <Button onClick={signaler} disabled={envoi}>{t('comments.actions.envoyer', 'Envoyer le signalement')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DialogueSignalement
+        open={fenetre === 'signaler'}
+        onClose={() => setFenetre(null)}
+        onRouvrir={() => setFenetre('signaler')}
+        cle={`commentaire:${id}:signaler`}
+        titre={t('comments.actions.signalerTitre', 'Signaler ce commentaire')}
+        envoyer={(motif, precision) => commentaireService.signalerCommentaire(id, motif, precision)}
+        onEnvoye={() => {
+          toast({ title: t('comments.reportSuccess', 'Signalement envoyé. Merci.') });
+          setFenetre(null);
+          onChange?.();
+        }}
+      />
 
       <ConfirmDialog
         open={fenetre === 'supprimer'}

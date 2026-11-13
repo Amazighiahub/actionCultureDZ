@@ -15,6 +15,7 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('@/components/Header', () => ({ default: () => <header /> }));
 vi.mock('@/components/Footer', () => ({ default: () => <footer /> }));
+vi.mock('@/components/shared/SignalerContenu', () => ({ default: () => null }));
 vi.mock('@/components/SEOHead', () => ({
   default: () => null, buildEvenementJsonLd: () => ({}), buildBreadcrumbJsonLd: () => ({}),
 }));
