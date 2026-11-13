@@ -25,6 +25,7 @@ import { lienGuide } from '@/utils/lienGuide';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { TranslatableValue } from '@/types/common/multilingual.types';
 import type { TypePatrimoine } from '@/utils/typesPatrimoine';
+import CarteALaDemande from '@/components/shared/CarteALaDemande';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
@@ -293,9 +294,12 @@ const Patrimoine = () => {
               {t('sections.heritage.map.explore', 'Explorer la carte')}
             </h2>
           </div>
-          <Suspense fallback={<MapSkeleton />}>
-            <CartePatrimoine />
-          </Suspense>
+          {/* Économie de données (2G, mode « économiser les données ») : carte au toucher (audit V11 OUT-11) */}
+          <CarteALaDemande hauteur="h-80">
+            <Suspense fallback={<MapSkeleton />}>
+              <CartePatrimoine />
+            </Suspense>
+          </CarteALaDemande>
         </div>
 
         {/* Grille des sites (cible du bouton « Choisir un lieu » de l'encadré du bas) */}

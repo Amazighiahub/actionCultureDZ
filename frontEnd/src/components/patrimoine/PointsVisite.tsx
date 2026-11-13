@@ -16,6 +16,7 @@ import type { PointCarte } from './PointsVisiteCarte';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { TexteMultilingue } from '@/types/common/multilingual.types';
 import { useProcheEcran } from '@/hooks/useProcheEcran';
+import CarteALaDemande from '@/components/shared/CarteALaDemande';
 
 const PointsVisiteCarte = React.lazy(() => import('./PointsVisiteCarte'));
 
@@ -110,12 +111,14 @@ const PointsVisite: React.FC<PointsVisiteProps> = ({ site, points, lang, canAdd,
       {showMap && pointsCarte.length > 0 && (
         <div ref={zoneCarte}>
           {carteProche ? (
-            <React.Suspense fallback={<div className="h-[280px] bg-muted rounded-lg animate-pulse" />}>
-              <PointsVisiteCarte
-                site={{ nom: getLocalizedText(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
-                points={pointsCarte}
-              />
-            </React.Suspense>
+            <CarteALaDemande hauteur="h-[280px]">
+              <React.Suspense fallback={<div className="h-[280px] bg-muted rounded-lg animate-pulse" />}>
+                <PointsVisiteCarte
+                  site={{ nom: getLocalizedText(site.nom, lang), latitude: Number(site.latitude), longitude: Number(site.longitude) }}
+                  points={pointsCarte}
+                />
+              </React.Suspense>
+            </CarteALaDemande>
           ) : (
             <div className="h-[280px] bg-muted rounded-lg" />
           )}

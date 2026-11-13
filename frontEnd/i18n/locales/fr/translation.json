@@ -6012,7 +6012,9 @@
   },
   "carte": {
     "zoomAvant": "Zoomer",
-    "zoomArriere": "Dézoomer"
+    "zoomArriere": "Dézoomer",
+    "economie": "Votre téléphone économise ses données : la carte se charge seulement si vous la demandez.",
+    "afficher": "Afficher la carte"
   },
   "wilaya": {
     "erreurChargement": "Cette page n’a pas pu être chargée. Vérifiez votre connexion.",
