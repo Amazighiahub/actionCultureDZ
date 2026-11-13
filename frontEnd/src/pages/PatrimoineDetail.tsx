@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
 import { texteAvecLieu } from '@/utils/textePartage';
 import SignalerContenu from '@/components/shared/SignalerContenu';
+import AffichetteQR from '@/components/patrimoine/AffichetteQR';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -369,6 +370,8 @@ const PatrimoineDetail = () => {
           {t('common.share', 'Partager')}
         </Button>
       </div>
+      {/* Affichette à poser sur place : nom en 4 écritures, QR, « écoutez l'histoire » (audit V11 OUT-12) */}
+      <AffichetteQR idLieu={site.id_lieu} nom={getLocalizedText(site.nom, lang) || ''} qrDataUrl={qrDataUrl} lieu={lieuLisible} avecAudio={audios.length > 0} />
     </CardContent>
   );
 

@@ -4547,6 +4547,9 @@
       "vestiges_other": "{{count}} vestiges",
       "services_one": "{{count}} service",
       "services_other": "{{count}} services"
+    },
+    "affichette": {
+      "imprimer": "Imprimer l’affichette"
     }
   },
   "toasts": {

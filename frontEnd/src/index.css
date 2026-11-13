@@ -1005,3 +1005,27 @@ input:-webkit-autofill:active {
 
   .container { max-width: 100%; padding: 0; }
 }
+
+/* Affichette QR d'un site (components/patrimoine/AffichetteQR) : invisible à l'écran ; à l'impression,
+   seule elle est montrée, et seulement quand elle est dans la page (:has), pour ne pas gêner les autres
+   impressions (audit V11 OUT-12) */
+.affichette-qr { display: none; }
+@media print {
+  body:has(> .affichette-qr) > *:not(.affichette-qr) { display: none !important; }
+  body:has(> .affichette-qr) { background: #fff !important; }
+  .affichette-qr {
+    display: flex !important; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5mm; min-height: 180mm; padding: 10mm; text-align: center; color: #1f1f1a;
+    border: 1.5mm solid #3A4224; border-radius: 6mm; break-inside: avoid;
+  }
+  .affichette-logo { height: 14mm; width: auto; }
+  .affichette-noms { display: flex; flex-direction: column; gap: 2mm; }
+  /* Centré dans toutes les écritures (le site aligne l'arabe au début de la ligne) */
+  .affichette-qr p, .affichette-qr [dir="rtl"] { text-align: center !important; }
+  .affichette-nom-principal { font-size: 22pt; font-weight: 700; line-height: 1.2; margin: 0; }
+  .affichette-nom { font-size: 15pt; margin: 0; }
+  .affichette-qr-image { width: 70mm; height: 70mm; image-rendering: pixelated; }
+  .affichette-consigne { font-size: 13pt; margin: 0; }
+  .affichette-lieu { font-size: 11pt; color: #555; margin: 0; }
+  .affichette-site { font-size: 12pt; font-weight: 700; color: #3A4224; margin: 0; }
+}

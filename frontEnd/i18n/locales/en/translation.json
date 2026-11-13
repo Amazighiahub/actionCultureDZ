@@ -4542,6 +4542,9 @@
       "vestiges_other": "{{count}} remains",
       "services_one": "{{count}} service",
       "services_other": "{{count}} services"
+    },
+    "affichette": {
+      "imprimer": "Print the poster"
     }
   },
   "toasts": {
