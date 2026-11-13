@@ -30,8 +30,10 @@ module.exports = {
     logging: false
   },
   production: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    // Migrations : compte qui peut créer et modifier les tables ; le site tourne avec DB_USER, qui peut
+    // n'avoir que les droits sur les lignes (audit V11 BDD-20). Sans DB_MIGRATE_*, DB_USER comme avant.
+    username: process.env.DB_MIGRATE_USER || process.env.DB_USER,
+    password: process.env.DB_MIGRATE_PASSWORD || process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT || '3306'),

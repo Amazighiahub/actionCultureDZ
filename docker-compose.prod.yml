@@ -84,8 +84,13 @@ services:
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      # Compte MySQL du site : droits réduits (lire, ajouter, modifier, supprimer des lignes) s'il est
+      # défini dans le .env (DB_APP_USER / DB_APP_PASSWORD), sinon le compte habituel (audit V11 BDD-20)
+      - DB_USER=${DB_APP_USER:-${DB_USER}}
+      - DB_PASSWORD=${DB_APP_PASSWORD:-${DB_PASSWORD}}
+      # Compte des migrations (créer ou modifier les tables) : lu seulement par sequelize-cli (config/config.js)
+      - DB_MIGRATE_USER=${DB_USER}
+      - DB_MIGRATE_PASSWORD=${DB_PASSWORD}
       - DB_DIALECT=mysql
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=1h
