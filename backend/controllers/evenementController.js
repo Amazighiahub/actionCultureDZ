@@ -451,11 +451,8 @@ class EvenementController extends BaseController {
           description: data.description,
           url: eventUrl,
           image: data.image_url || null,
-          calendar_links: {
-            google: `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(data.titre || '')}&dates=${data.date_debut || ''}/${data.date_fin || ''}`,
-            outlook: eventUrl,
-            ical: eventUrl
-          },
+          // (plus de calendar_links : dates au mauvais format, liens sans agenda ; la fiche fabrique
+          //  elle-même le .ics et le lien Google Agenda, utils/agendaEvenement.ts, audit V11 OUT-4)
           social_links: {
             facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventUrl)}`,
             twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(data.titre || '')}`,

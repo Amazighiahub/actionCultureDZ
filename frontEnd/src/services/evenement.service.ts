@@ -87,24 +87,6 @@ interface PublicParticipantsResponse {
   total: number;
 }
 
-interface ShareData {
-  title: string;
-  description: string;
-  url: string;
-  image?: string;
-  calendar_links: {
-    google: string;
-    outlook: string;
-    ical: string;
-  };
-  social_links: {
-    facebook: string;
-    twitter: string;
-    linkedin: string;
-    whatsapp: string;
-  };
-}
-
 interface NotificationData {
   titre: string;
   message: string;
@@ -257,5 +239,5 @@ async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
 export const evenementService = new EvenementService();
 export type {
   Evenement, CreateEvenementData, UpdateEvenementData, EventMedia,
-  Participant, ShareData, NotificationData, SearchEvenementsParams
+  Participant, NotificationData, SearchEvenementsParams
 };

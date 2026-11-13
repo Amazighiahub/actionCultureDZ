@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
+import { texteAvecLieu } from '@/utils/textePartage';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -207,7 +208,6 @@ const PatrimoineDetail = () => {
 
   // Partager le site
   const share = useShare();
-  const handleShareSite = () => share({ title: getLocalizedText(site?.nom, lang) });
 
   // Charger les détails du site (de nouveau quand la langue change : noms et textes sont
   // traduits par le serveur ; avant, la fiche restait dans l'ancienne langue)
@@ -333,6 +333,11 @@ const PatrimoineDetail = () => {
     (lang === 'ar' && o?.nom) || o?.commune_name_ascii || o?.daira_name_ascii || o?.wilaya_name_ascii || o?.nom || '';
   const lieuLisible = [...new Set([nomGeo(site.commune), nomGeo(site.daira), nomGeo(site.wilaya)].filter(Boolean))].join(', ')
     || getLocalizedText(site.adresse, lang);
+  // Partager le site : nom et localisation, prêts pour WhatsApp (audit V11 OUT-3)
+  const handleShareSite = () => {
+    const nom = getLocalizedText(site?.nom, lang) || '';
+    share({ title: nom, text: texteAvecLieu(nom, lieuLisible) });
+  };
   const itineraireUrl = `https://www.google.com/maps/dir/?api=1&destination=${Number(site.latitude)},${Number(site.longitude)}`;
 
   // Contenu du QR code, partagé par la carte (ordinateur) et le dialogue (téléphone)

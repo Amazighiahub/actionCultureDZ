@@ -1,10 +1,13 @@
 /**
  * Partage d'une page : feuille de partage du système (mobile) si disponible,
- * sinon copie du lien avec confirmation. Annuler la feuille de partage ne fait rien.
+ * sinon copie du lien avec confirmation, et un bouton « WhatsApp » qui ouvre le message prêt
+ * (texte + lien ; audit V11 OUT-3). Annuler la feuille de partage ne fait rien.
  */
-import { useCallback } from 'react';
+import { createElement, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction, type ToastActionElement } from '@/components/ui/toast';
+import { lienWhatsApp } from '@/utils/textePartage';
 
 interface ShareOptions {
   title: string;
@@ -46,8 +49,13 @@ export function useShare() {
       }
     }
     const copied = await copyText(url);
+    // Ordinateur : WhatsApp (application ou WhatsApp Web) avec le texte et le lien déjà écrits
+    const whatsapp = createElement(ToastAction, {
+      altText: t('share.whatsapp', 'Envoyer sur WhatsApp'),
+      onClick: () => window.open(lienWhatsApp(text || title, url), '_blank', 'noopener,noreferrer')
+    }, t('share.whatsappCourt', 'WhatsApp')) as unknown as ToastActionElement;
     toast(copied
-      ? { title: t('share.copied', 'Lien copié') }
-      : { title: t('common.error', 'Erreur'), description: url, variant: 'destructive' });
+      ? { title: t('share.copied', 'Lien copié'), action: whatsapp }
+      : { title: t('common.error', 'Erreur'), description: url, variant: 'destructive', action: whatsapp });
   }, [t, toast]);
 }

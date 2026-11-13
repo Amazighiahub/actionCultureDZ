@@ -848,7 +848,12 @@
     "resultsFound_two": "فعاليتان",
     "resultsFound_few": "{{count}} فعاليات",
     "resultsFound_many": "{{count}} فعالية",
-    "resultsFound_other": "{{count}} فعالية"
+    "resultsFound_other": "{{count}} فعالية",
+    "agenda": {
+      "ajouter": "إضافة إلى مفكرتي",
+      "telephone": "مفكرة الهاتف أو الحاسوب",
+      "google": "تقويم Google"
+    }
   },
   "footer": {
     "legal": "قانوني",
@@ -5801,7 +5806,9 @@
       "copierTexte": "نسخ النص",
       "texteCopie": "تم نسخ النص: ألصقه في وصف المنشور",
       "lienBio": "على إنستغرام، الرابط في النص غير قابل للنقر: ضع أيضًا رابط صفحتك على ثالا في سيرتك."
-    }
+    },
+    "whatsapp": "إرسال عبر واتساب",
+    "whatsappCourt": "واتساب"
   },
   "portfolio": {
     "notFound": "الملف الشخصي غير موجود",

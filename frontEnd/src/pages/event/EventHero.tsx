@@ -17,7 +17,10 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
-import { statutAffiche } from '@/utils/statutEvenement';
+import { statutAffiche, finEffective } from '@/utils/statutEvenement';
+import BoutonAgenda from '@/components/event/BoutonAgenda';
+import { texteEvenement } from '@/utils/textePartage';
+import { evenementPath } from '@/utils/slug';
 
 interface EventHeroProps {
   event: Evenement;
@@ -30,15 +33,27 @@ const EventHero: React.FC<EventHeroProps> = ({
   isFavorite,
   onToggleFavorite
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatDate, formatDateRange } = useFormatDate();
   const { formatPrice } = useLocalizedNumber();
   // Gratuit, prix, ou « Tarif selon votre profil » (le prix se découvre à l'inscription)
   const modeTarif = tarificationDe(event).mode;
   const { td, safe } = useTranslateData();
-  // Événement passé : pas de bouton « S'inscrire »
-  const finEvenement = event.date_fin || event.date_debut;
-  const termine = finEvenement ? new Date(finEvenement) <= new Date() : false;
+  // Événement passé : pas de bouton « S'inscrire » ni « Ajouter à mon agenda ». Même règle que le serveur :
+  // un jour sans heure vaut toute la journée (avant : « terminé » dès 1 h du matin le jour même)
+  const finEvenement = finEffective(event.date_debut, event.date_fin);
+  const termine = finEvenement ? finEvenement <= new Date() : false;
+  // Agenda : titre, dates, lieu et adresse de la page (jamais le lien de réunion en ligne)
+  const lieuAgenda = [td(event.Lieu?.nom), td(event.Lieu?.adresse)].filter(Boolean).join(', ') || null;
+  const evenementAgenda = {
+    id: event.id_evenement,
+    titre: td(event.nom_evenement) || '',
+    debut: event.date_debut,
+    fin: event.date_fin,
+    lieu: lieuAgenda,
+    description: td(event.description) || null,
+    url: `${window.location.origin}${evenementPath(event.id_evenement, event.nom_evenement)}`
+  };
 
   // Calculer le pourcentage de remplissage
   const capacityPercentage = event.capacite_max
@@ -48,9 +63,12 @@ const EventHero: React.FC<EventHeroProps> = ({
   // Partager l'événement (copie du lien confirmée si pas de partage natif)
   const share = useShare();
   const handleShare = async () => {
-    const eventTitle = td(event.nom_evenement);
-    const eventDesc = td(event.description);
-    await share({ title: eventTitle, text: eventDesc?.substring(0, 100) || '' });
+    // Texte prêt pour WhatsApp : titre, date et lieu (avant : 100 caractères de description)
+    const eventTitle = td(event.nom_evenement) || '';
+    await share({
+      title: eventTitle,
+      text: texteEvenement({ titre: eventTitle, debut: event.date_debut, fin: event.date_fin, lieu: lieuAgenda, langue: i18n.language })
+    });
   };
 
   const hasImage = !!(event.image_url || event.couverture_url);
@@ -155,6 +173,7 @@ const EventHero: React.FC<EventHeroProps> = ({
                 <Share2 className="h-5 w-5 me-2" />
                 {t('common.share', 'Partager')}
               </Button>
+              {!termine && <BoutonAgenda evenement={evenementAgenda} />}
               {event.contact_email && (
                 <Button variant="outline" size="lg" asChild>
                   <a href={`mailto:${event.contact_email}`}>
@@ -298,6 +317,13 @@ const EventHero: React.FC<EventHeroProps> = ({
                   <Share2 className="h-5 w-5 me-2" />
                   {t('common.share', 'Partager')}
                 </Button>
+
+                {!termine && (
+                  <BoutonAgenda
+                    evenement={evenementAgenda}
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  />
+                )}
 
                 {event.contact_email && (
                   <Button

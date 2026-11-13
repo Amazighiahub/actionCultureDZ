@@ -226,7 +226,7 @@ describe('Evenement Routes Integration', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveProperty('social_links');
-      expect(res.body.data).toHaveProperty('calendar_links');
+      expect(res.body.data).not.toHaveProperty('calendar_links');
     });
   });
 

@@ -884,7 +884,12 @@
       "allWilayas": "Toutes les wilayas"
     },
     "resultsFound_one": "{{count}} événement trouvé",
-    "resultsFound_other": "{{count}} événements trouvés"
+    "resultsFound_other": "{{count}} événements trouvés",
+    "agenda": {
+      "ajouter": "Ajouter à mon agenda",
+      "telephone": "Agenda du téléphone ou de l’ordinateur",
+      "google": "Google Agenda"
+    }
   },
   "footer": {
     "legal": "Légal",
@@ -5595,7 +5600,9 @@
       "copierTexte": "Copier le texte",
       "texteCopie": "Texte copié : collez-le dans la légende",
       "lienBio": "Sur Instagram, un lien dans le texte ne se clique pas : mettez aussi le lien de votre page Tala DZ dans votre bio (« lien en bio »)."
-    }
+    },
+    "whatsapp": "Envoyer sur WhatsApp",
+    "whatsappCourt": "WhatsApp"
   },
   "portfolio": {
     "notFound": "Profil introuvable",
