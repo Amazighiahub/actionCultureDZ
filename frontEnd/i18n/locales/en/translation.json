@@ -3287,7 +3287,18 @@
     "refus": {
       "titre": "Decline",
       "aide": "Explain what needs to be fixed: the reason is sent to the author.",
-      "oeuvre": "Decline the work"
+      "oeuvre": "Decline the work",
+      "motifsPrets": "Common reasons (click to add)",
+      "motifs": {
+        "infosManquantes": "Essential information is missing (date, time, place or exact address).",
+        "descriptionCourte": "The description is too short: explain what visitors will discover.",
+        "photo": "The photo is blurry, too small or does not show the content.",
+        "droits": "The photo or text seems taken from another website: state the source or your permission.",
+        "doublon": "This content already exists on Tala DZ.",
+        "horsSujet": "This content is not about Algerian culture or heritage.",
+        "relecture": "The title or description has major mistakes: please proofread them.",
+        "contact": "The contact details are incomplete or incorrect."
+      }
     }
   },
   "wilayas": {

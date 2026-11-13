@@ -3336,7 +3336,18 @@
     "refus": {
       "titre": "Refuser",
       "aide": "Expliquez ce qu’il faut corriger : le motif est envoyé à l’auteur.",
-      "oeuvre": "Refuser l’œuvre"
+      "oeuvre": "Refuser l’œuvre",
+      "motifsPrets": "Motifs fréquents (cliquez pour les ajouter)",
+      "motifs": {
+        "infosManquantes": "Il manque des informations essentielles (date, heure, lieu ou adresse exacte).",
+        "descriptionCourte": "La description est trop courte : expliquez ce que les visiteurs vont découvrir.",
+        "photo": "La photo est floue, trop petite ou ne montre pas le contenu.",
+        "droits": "La photo ou le texte semble repris d’un autre site : indiquez la source ou votre autorisation.",
+        "doublon": "Ce contenu existe déjà sur Tala DZ.",
+        "horsSujet": "Ce contenu ne concerne pas la culture ou le patrimoine algériens.",
+        "relecture": "Le titre ou la description contient des fautes importantes : relisez-les.",
+        "contact": "Les coordonnées de contact sont incomplètes ou incorrectes."
+      }
     }
   },
   "wilayas": {

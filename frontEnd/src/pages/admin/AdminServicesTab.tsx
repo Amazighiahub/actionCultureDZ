@@ -11,8 +11,6 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -27,9 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
-} from '@/components/ui/dialog';
 import {
   Search, MoreVertical, Trash2, Eye, RefreshCw, CheckCircle, XCircle,
   Package, MapPin, X, AlertCircle
@@ -47,6 +42,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { Pagination } from '@/components/shared/Pagination';
 import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
+import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
 
 // Valeurs du champ type_service (modèle Service)
 const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'];
@@ -64,7 +60,6 @@ const AdminServicesTab: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   // Refus : le motif est envoyé au professionnel
   const [refus, setRefus] = useState<{ id: number; nom: string } | null>(null);
-  const [motifRefus, setMotifRefus] = useState('');
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -260,7 +255,7 @@ const AdminServicesTab: React.FC = () => {
                           </DropdownMenuItem>
                         )}
                         {service.statut === 'en_attente' && (
-                          <DropdownMenuItem className="text-amber-700" onClick={() => { setMotifRefus(''); setRefus({ id, nom }); }}>
+                          <DropdownMenuItem className="text-amber-700" onClick={() => { setRefus({ id, nom }); }}>
                             <XCircle className="h-4 w-4 me-2" />
                             {t('admin.events.reject', 'Refuser')}
                           </DropdownMenuItem>
@@ -289,39 +284,20 @@ const AdminServicesTab: React.FC = () => {
 
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 
-      <Dialog open={!!refus} onOpenChange={(open) => { if (!open) setRefus(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('admin.services.rejectTitle', 'Refuser ce service ?')}</DialogTitle>
-            <DialogDescription>
-              {t('admin.services.rejectDesc', 'Le professionnel reçoit votre motif. Quand il corrige « {{nom}} », le service revient en validation.', { nom: refus?.nom })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="motif-refus-service">{t('admin.events.rejectReason', 'Motif du refus')}</Label>
-            <Textarea
-              id="motif-refus-service"
-              value={motifRefus}
-              onChange={(e) => setMotifRefus(e.target.value)}
-              placeholder={t('admin.services.rejectPlaceholder', 'Ex. : ajoutez une photo et le numéro de téléphone.')}
-              rows={3}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRefus(null)}>{t('common.cancel', 'Annuler')}</Button>
-            <Button
-              disabled={!motifRefus.trim()}
-              onClick={async () => {
-                if (!refus) return;
-                await validateService(refus.id, false, motifRefus.trim());
-                setRefus(null);
-              }}
-            >
-              {t('admin.events.reject', 'Refuser')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Fenêtre commune de refus, avec motifs prêts (audit V11 OUT-15) */}
+      <MotifRefusDialog
+        open={!!refus}
+        onClose={() => setRefus(null)}
+        titre={t('admin.services.rejectTitle', 'Refuser ce service ?')}
+        description={t('admin.services.rejectDesc', 'Le professionnel reçoit votre motif. Quand il corrige « {{nom}} », le service revient en validation.', { nom: refus?.nom })}
+        placeholder={t('admin.services.rejectPlaceholder', 'Ex. : ajoutez une photo et le numéro de téléphone.')}
+        libelleBouton={t('admin.events.reject', 'Refuser')}
+        onConfirm={async (motif) => {
+          if (!refus) return;
+          await validateService(refus.id, false, motif);
+          setRefus(null);
+        }}
+      />
 
       <ConfirmDialog
         open={confirmDeleteId !== null}
