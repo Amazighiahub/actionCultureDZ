@@ -6,6 +6,8 @@ import LireAVoixHaute, { type LangueLue } from '@/components/shared/LireAVoixHau
 import i18nAide from 'i18next';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShare } from '@/hooks/useShare';
+import { lienItineraire, texteParcours } from '@/utils/itineraireParcours';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { tarifAvecUnite } from '@/components/services/typesService';
 import { parcoursIntelligentService } from '@/services/parcours.service';
@@ -44,6 +46,7 @@ import {
   Navigation,
   Download,
   Share2,
+  Printer,
   CheckCircle2,
   Star,
   Info,
@@ -232,14 +235,34 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
     onClose();
   };
 
-  // Ouvrir dans Google Maps
+  // Itinéraire Google Maps par coordonnées (avant : noms non encodés, lien cassé ; audit V11 OUT-21)
+  const depart = { nom: siteName, latitude: siteLatitude, longitude: siteLongitude };
+  const lienMaps = parcours ? lienItineraire(depart, parcours.etapes, transport) : null;
+  const titreParcours = t('visit.titreEnvoi', 'Parcours de visite : {{site}}', { site: siteName });
   const openInMaps = () => {
+    if (lienMaps) window.open(lienMaps, '_blank', 'noopener,noreferrer');
+  };
+  // Envoyer le parcours (WhatsApp…) : étapes numérotées et lien de l'itinéraire
+  const share = useShare();
+  const envoyerParcours = () => {
     if (!parcours) return;
-    const waypoints = parcours.etapes
-      .map(e => `${e.nom}`)
-      .join('/');
-    const url = `https://www.google.com/maps/dir/${siteName}/${waypoints}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    share({ title: titreParcours, text: texteParcours(titreParcours, siteName, parcours.etapes, null), url: lienMaps || window.location.href });
+  };
+  // Imprimer : page simple (titre, étapes, durées, lien), sans la carte ni la fenêtre du site
+  const imprimerParcours = () => {
+    if (!parcours) return;
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const fenetre = window.open('', '_blank');
+    if (!fenetre) return;
+    const sens = document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr';
+    fenetre.document.write(`<!doctype html><html lang="${esc(document.documentElement.lang)}" dir="${sens}"><head><meta charset="utf-8"><title>${esc(titreParcours)}</title>`
+      + '<style>body{font-family:Arial,sans-serif;max-width:700px;margin:24px auto;color:#222}li{margin:10px 0}small{color:#555}</style></head><body>'
+      + `<h1>${esc(titreParcours)}</h1><ol start="0"><li><strong>${esc(siteName)}</strong></li>`
+      + parcours.etapes.map((e) => `<li><strong>${esc(e.nom)}</strong>${e.duree ? ` <small>(${esc(e.duree)} min)</small>` : ''}${e.horaires ? `<br><small>${esc(e.horaires)}</small>` : ''}</li>`).join('')
+      + `</ol>${lienMaps ? `<p><small>${esc(lienMaps)}</small></p>` : ''}<p><small>taladz.com</small></p></body></html>`);
+    fenetre.document.close();
+    fenetre.focus();
+    fenetre.print();
   };
 
   return (
@@ -674,7 +697,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
           )}
         </ScrollArea>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:flex-wrap sm:gap-y-2">
           {step === 'config' && (
             <>
               <Button variant="outline" onClick={handleClose}>
@@ -692,9 +715,17 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
               <Button variant="outline" onClick={() => setStep('config')}>
                 {t('visit.modify', 'Modifier')}
               </Button>
-              <Button variant="outline" onClick={openInMaps}>
+              <Button variant="outline" onClick={openInMaps} disabled={!lienMaps}>
                 <Navigation className="h-4 w-4 me-2" />
                 {t('visit.openMaps', 'Ouvrir dans Maps')}
+              </Button>
+              <Button variant="outline" onClick={envoyerParcours}>
+                <Share2 className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('visit.envoyer', 'Envoyer')}
+              </Button>
+              <Button variant="outline" onClick={imprimerParcours}>
+                <Printer className="h-4 w-4 me-2" aria-hidden="true" />
+                {t('visit.imprimer', 'Imprimer')}
               </Button>
               <Button onClick={handleClose}>
                 <CheckCircle2 className="h-4 w-4 me-2" />

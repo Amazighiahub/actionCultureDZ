@@ -63,4 +63,23 @@ document.addEventListener('DOMContentLoaded', function () {
     svg.innerHTML = '<path d="' + d + '" pathLength="400" style="--long:400"></path>';
   }
   tracerArbre();
+
+  // « Imprimer ou enregistrer en PDF » dans la couverture de chaque page (audit V11 OUT-8) : ateliers,
+  // écoles et chantiers distribuent du papier. Bouton ajouté ici (pas d'onclick dans la page : la
+  // politique de sécurité l'interdit). Les styles d'impression sont dans guide.css (@media print).
+  var actions = document.querySelector('.couverture .actions');
+  if (actions && typeof window.print === 'function') {
+    var arabe = (document.documentElement.lang || '').indexOf('ar') === 0;
+    var bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = 'bouton contour imprimer';
+    bouton.textContent = arabe ? 'طباعة أو حفظ PDF' : 'Imprimer ou enregistrer en PDF';
+    bouton.addEventListener('click', function () {
+      // Tout montrer avant d'imprimer (blocs pas encore apparus au défilement, arbre dessiné)
+      document.querySelectorAll('.apparait, .telephone, .tableau').forEach(function (c) { c.classList.add('vu'); });
+      tracerArbre();
+      window.print();
+    });
+    actions.appendChild(bouton);
+  }
 });

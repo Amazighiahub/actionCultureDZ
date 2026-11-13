@@ -615,7 +615,9 @@
     "quitterSansEnregistrer": "Vous avez des modifications non enregistrées. Quitter quand même ?",
     "backToTop": "Retour en haut",
     "fichierTropLourd": "Fichier trop volumineux : choisissez un fichier plus léger.",
-    "ok": "OK"
+    "ok": "OK",
+    "aide": "Aide",
+    "nouvelOnglet": "(nouvel onglet)"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -4717,7 +4719,10 @@
       "nature": "Nature",
       "religion": "Religion",
       "gastronomy": "Gastronomie"
-    }
+    },
+    "titreEnvoi": "Parcours de visite : {{site}}",
+    "envoyer": "Envoyer",
+    "imprimer": "Imprimer"
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",

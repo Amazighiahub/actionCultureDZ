@@ -59,6 +59,7 @@ import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient'
 import DocumentsEvenementChoix, { envoyerDocumentsEvenement, type DocumentChoisi } from '@/components/event/DocumentsEvenementChoix';
 import DocumentsEvenementGestion from '@/components/event/DocumentsEvenementGestion';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -739,6 +740,7 @@ const AjouterEvenement = () => {
       <main className="container py-12">
         <div className="max-w-4xl mx-auto">
           <FormPageHeader
+            aide={lienGuidePour('evenement', i18n.language)}
             backTo="/dashboard-pro"
             backLabel={t('common.backToDashboard')}
             title={isEditMode ? t('events.edit.title', 'Modifier l’événement') : t('events.create.title')}

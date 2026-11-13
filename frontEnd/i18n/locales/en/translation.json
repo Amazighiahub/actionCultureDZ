@@ -610,7 +610,9 @@
     "quitterSansEnregistrer": "You have unsaved changes. Leave anyway?",
     "backToTop": "Back to top",
     "fichierTropLourd": "File too large: choose a smaller file.",
-    "ok": "OK"
+    "ok": "OK",
+    "aide": "Help",
+    "nouvelOnglet": "(new tab)"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -4969,7 +4971,10 @@
       "nature": "Nature",
       "religion": "Religion",
       "gastronomy": "Gastronomy"
-    }
+    },
+    "titreEnvoi": "Visit route: {{site}}",
+    "envoyer": "Send",
+    "imprimer": "Print"
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "Tifinagh keyboard not detected",

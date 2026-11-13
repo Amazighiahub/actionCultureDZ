@@ -615,7 +615,9 @@
     "quitterSansEnregistrer": "لديك تعديلات غير محفوظة. هل تريد المغادرة رغم ذلك؟",
     "backToTop": "العودة إلى الأعلى",
     "fichierTropLourd": "الملف كبير جدًا: اختر ملفًا أخف.",
-    "ok": "حسنًا"
+    "ok": "حسنًا",
+    "aide": "مساعدة",
+    "nouvelOnglet": "(علامة تبويب جديدة)"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -5175,7 +5177,10 @@
       "nature": "الطبيعة",
       "religion": "الدين",
       "gastronomy": "فن الطبخ"
-    }
+    },
+    "titreEnvoi": "مسار الزيارة: {{site}}",
+    "envoyer": "إرسال",
+    "imprimer": "طباعة"
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "لوحة مفاتيح التيفيناغ غير مكتشفة",

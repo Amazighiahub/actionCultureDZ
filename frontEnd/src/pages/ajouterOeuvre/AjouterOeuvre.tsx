@@ -29,6 +29,7 @@ import FormPageHeader from '@/components/shared/FormPageHeader';
 import { cleSectionPatrimoine } from '@/services/patrimoineArticles.service';
 import i18n from 'i18next';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -173,6 +174,7 @@ const AjouterOeuvre: React.FC = () => {
 
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }} noValidate>
               <FormPageHeader
+            aide={lienGuidePour('oeuvre', i18n.language)}
                 onBack={() => window.history.back()}
                 backLabel={t("ajouteroeuvre.retour")}
                 title={isEditMode ? t('ajouteroeuvre.editTitle', 'Modifier l’œuvre') : t("ajouteroeuvre.ajouter_une_uvre")}

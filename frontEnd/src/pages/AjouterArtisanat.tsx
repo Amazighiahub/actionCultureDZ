@@ -32,6 +32,7 @@ import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 interface FormData {
   nom: RequiredTranslatableValue;
@@ -363,6 +364,7 @@ const AjouterArtisanat: React.FC = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <FormPageHeader
+            aide={lienGuidePour('artisanat', i18n.language)}
           backTo="/dashboard-pro"
           backLabel={t('common.back', 'Retour')}
           title={isEditMode ? t('ajouterArtisanat.editTitle', 'Modifier l’artisanat') : t('ajouterArtisanat.title', 'Ajouter un artisanat')}

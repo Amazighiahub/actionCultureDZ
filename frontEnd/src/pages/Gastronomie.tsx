@@ -18,6 +18,7 @@ import PlatCard, { nomWilaya, type Plat, type Wilaya } from '@/components/gastro
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 
 const Gastronomie: React.FC = () => {
@@ -114,7 +115,7 @@ const Gastronomie: React.FC = () => {
                 {t('gastronomie.commentAjouter', 'Les plats s’ajoutent depuis la page d’un lieu : bloc « Gastronomie locale », bouton « Écrire un article ».')}
               </p>
               {/* Page statique (public/guide) : lien classique, pas <Link> (le routeur afficherait « page introuvable ») */}
-              <Button asChild variant="outline"><a href={arabe ? '/guide/ar/article' : '/guide/article'}><BookOpen className="h-4 w-4 me-2" aria-hidden="true" />{t('gastronomie.guide', 'Guide : écrire un article')}</a></Button>
+              <Button asChild variant="outline"><a href={lienGuidePour('article', arabe ? 'ar' : 'fr')}><BookOpen className="h-4 w-4 me-2" aria-hidden="true" />{t('gastronomie.guide', 'Guide : écrire un article')}</a></Button>
             </Card>
           ) : (
             <>

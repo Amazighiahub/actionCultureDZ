@@ -20,6 +20,7 @@ import { TYPES_SERVICE, styleTypeService } from '@/components/services/typesServ
 import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 const ServicesVisiteurs: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -134,7 +135,7 @@ const ServicesVisiteurs: React.FC = () => {
               </p>
               {/* Page statique (public/guide) : lien classique, pas <Link> */}
               <Button asChild variant="outline">
-                <a href={lang.startsWith('ar') ? '/guide/ar/service' : '/guide/service'}>{t('servicesVisiteurs.guide', 'Guide : proposer un service')}</a>
+                <a href={lienGuidePour('service', lang)}>{t('servicesVisiteurs.guide', 'Guide : proposer un service')}</a>
               </Button>
             </Card>
           ) : (

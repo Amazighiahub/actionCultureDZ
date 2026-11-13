@@ -36,6 +36,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -284,6 +285,7 @@ const ModifierPatrimoine: React.FC = () => {
         if ((e.target as HTMLInputElement).type !== 'file') setIsDirty(true);
       }}>
         <FormPageHeader
+            aide={lienGuidePour('lieu', i18n.language, 'enrichir')}
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}
           title={site?.id_lieu_parent ? t('patrimoine.edit.titlePoint', 'Modifier le point de visite') : t('patrimoine.edit.title', 'Modifier le site')}

@@ -21,6 +21,7 @@ import { FORMATS_IMAGE_ACCEPTES, prepareImageForUpload } from '@/utils/prepareIm
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { organisationPath } from '@/utils/slug';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 interface LigneApercu { ligne: number; titre: string; auteur: string; isbn: string | null; couverture: string | null; etat: 'nouveau' | 'existe' | 'erreur'; erreurs: string[] }
 interface Apercu { resume: { total: number; nouveaux: number; existants: number; erreurs: number; sansCouverture: number }; imagesSansLivre: string[]; lignes: LigneApercu[] }
@@ -112,6 +113,7 @@ const ImportCatalogue: React.FC = () => {
       <main className="container py-10">
         <div className="max-w-4xl mx-auto space-y-6">
           <FormPageHeader
+            aide={lienGuidePour('oeuvre', i18n.language)}
             backTo={pageMaison}
             backLabel={nom || t('common.back', 'Retour')}
             title={t('catalogue.titre', 'Importer votre catalogue')}

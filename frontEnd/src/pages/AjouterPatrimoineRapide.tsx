@@ -45,6 +45,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -349,6 +350,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
       <main className="container py-8 max-w-2xl mx-auto" onInput={() => setIsDirty(true)}>
         <FormPageHeader
+            aide={lienGuidePour('lieu', i18n.language)}
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}
           title={parentId ? t('patrimoine.points.createTitle', 'Ajouter un point de visite') : t('patrimoine.create.title', 'Ajouter un site patrimonial')}

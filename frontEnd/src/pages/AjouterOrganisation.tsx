@@ -37,6 +37,7 @@ import { organisationPath } from '@/utils/slug';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import type { Wilaya } from '@/types';
 import i18n from 'i18next';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 interface TypeOrganisation {
   id_type_organisation: number;
@@ -338,6 +339,7 @@ const AjouterOrganisation = () => {
       <main className="container py-12">
         <div className="max-w-2xl mx-auto">
           <FormPageHeader
+            aide={lienGuidePour('sommaire', i18n.language)}
             backTo={retour}
             backLabel={t('common.back', 'Retour')}
             title={idModif ? t('organisations.form.titreModifier', 'Modifier la page de l’organisation') : t('organisations.create.title', 'Créer une organisation')}

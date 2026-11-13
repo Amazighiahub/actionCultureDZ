@@ -39,6 +39,7 @@ import FormPageHeader from '@/components/shared/FormPageHeader';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
@@ -437,6 +438,7 @@ const AjouterServicePro: React.FC = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
         <FormPageHeader
+            aide={lienGuidePour('service', i18n.language)}
           onBack={() => navigate(-1)}
           backLabel={t('common.back', 'Retour')}
           title={id ? t('service.editTitle', 'Modifier mon service') : t('service.addTitle', 'Ajouter mon service')}
