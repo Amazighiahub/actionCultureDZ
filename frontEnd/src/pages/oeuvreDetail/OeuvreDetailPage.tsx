@@ -59,6 +59,7 @@ import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hook
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 import SignalerContenu from '@/components/shared/SignalerContenu';
+import CiterCettePage from '@/components/shared/CiterCettePage';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -877,6 +878,17 @@ const OeuvreDetailPage: React.FC = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Citer cette page (étudiants, enseignants, chercheurs ; audit V11 OUT-6). Pas d'auteur : la personne
+              qui publie la fiche n'est pas toujours l'auteur de l'œuvre */}
+          <div className="mt-8">
+            <CiterCettePage source={{
+              cle: `oeuvre_${oeuvre.id_oeuvre}`,
+              titre: getLocalizedText(oeuvre.titre, i18n.language) || '',
+              annee: oeuvre.annee_creation || null,
+              url: `${window.location.origin}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre)}`
+            }} />
+          </div>
 
           {/* Signaler une erreur sur la fiche à l'équipe de modération (audit V11 OUT-2) */}
           <div className="mt-6 flex justify-end">

@@ -6591,5 +6591,10 @@
   "signalement": {
     "ficheBouton": "الإبلاغ عن خطأ",
     "ficheTitre": "الإبلاغ عن خطأ في هذه البطاقة"
+  },
+  "citation": {
+    "titre": "الاستشهاد بهذه الصفحة",
+    "copier": "نسخ",
+    "copiee": "تم النسخ"
   }
 }

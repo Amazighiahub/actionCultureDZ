@@ -15,7 +15,8 @@ interface ShareOptions {
   url?: string;
 }
 
-const copyText = async (value: string): Promise<boolean> => {
+/** Copie dans le presse-papiers (repli pour les anciens navigateurs) ; réutilisée par « Citer cette page » */
+export const copyText = async (value: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(value);
     return true;

@@ -6321,5 +6321,10 @@
   "signalement": {
     "ficheBouton": "Report an error",
     "ficheTitre": "Report an error on this page"
+  },
+  "citation": {
+    "titre": "Cite this page",
+    "copier": "Copy",
+    "copiee": "Copied"
   }
 }

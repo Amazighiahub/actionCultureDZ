@@ -50,6 +50,7 @@ import { OeuvresLieesLieu, DeLaRegion } from '@/components/patrimoine/OeuvresEtR
 import { saisieEnAttente } from '@/hooks/useSaisieConservee';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
+import CiterCettePage from '@/components/shared/CiterCettePage';
 
 // Formulaires de chaque volet repliable (mêmes clés que les sections) : un texte conservé après une
 // session expirée ouvre son volet au retour ; fermé, la section n'est pas affichée (audit V11 FRM-23)
@@ -652,6 +653,12 @@ const PatrimoineDetail = () => {
                 </Button>
               </div>
             )}
+            {/* Citer cette page (audit V11 OUT-6) */}
+            <CiterCettePage source={{
+              cle: `lieu_${site.id_lieu}`,
+              titre: [getLocalizedText(site.nom, lang), lieuLisible].filter(Boolean).join(', '),
+              url: `${window.location.origin}${window.location.pathname}`
+            }} />
             {/* Erreur sur la fiche (date, nom, photo sans droit) : signalée à la modération (audit V11 OUT-2) */}
             {!canEditSite && (
               <div className="flex justify-end">
