@@ -77,6 +77,8 @@ document.addEventListener('DOMContentLoaded', function () {
     bouton.addEventListener('click', function () {
       // Tout montrer avant d'imprimer (blocs pas encore apparus au défilement, arbre dessiné)
       document.querySelectorAll('.apparait, .telephone, .tableau').forEach(function (c) { c.classList.add('vu'); });
+      // Questions fréquentes : toutes les réponses ouvertes sur le papier
+      document.querySelectorAll('details').forEach(function (d) { d.open = true; });
       tracerArbre();
       window.print();
     });

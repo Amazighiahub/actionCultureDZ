@@ -617,7 +617,8 @@
     "fichierTropLourd": "Fichier trop volumineux : choisissez un fichier plus léger.",
     "ok": "OK",
     "aide": "Aide",
-    "nouvelOnglet": "(nouvel onglet)"
+    "nouvelOnglet": "(nouvel onglet)",
+    "faq": "Questions fréquentes"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",

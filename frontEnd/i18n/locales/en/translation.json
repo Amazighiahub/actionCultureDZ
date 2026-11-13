@@ -612,7 +612,8 @@
     "fichierTropLourd": "File too large: choose a smaller file.",
     "ok": "OK",
     "aide": "Help",
-    "nouvelOnglet": "(new tab)"
+    "nouvelOnglet": "(new tab)",
+    "faq": "Frequently asked questions"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",

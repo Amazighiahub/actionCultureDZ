@@ -326,3 +326,17 @@ button.imprimer { background: transparent; color: inherit; cursor: pointer; font
   .tableau { box-shadow: none !important; overflow: visible !important; }
   .tableau table { min-width: 0 !important; }
 }
+
+/* ---------- Questions fréquentes (/guide/faq) ---------- */
+.couverture.faq { min-height: 64svh; }
+.faq-liste { max-width: 820px; display: grid; gap: 12px; }
+.faq-liste details { background: var(--blanc); border: 1px solid #e3e0d4; border-radius: 14px; }
+section.sable .faq-liste details { border-color: transparent; }
+.faq-liste summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 14px 20px; font-weight: 700; font-size: 18px; color: var(--olive-dark); }
+.faq-liste summary::-webkit-details-marker { display: none; }
+.faq-liste summary::after { content: "+"; flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--sable); color: var(--terre); font-size: 20px; line-height: 1; }
+.faq-liste details[open] summary::after { content: "−"; }
+.faq-liste summary:focus-visible { outline: 3px solid var(--ocre); outline-offset: 2px; border-radius: 14px; }
+.faq-liste details p { margin: 0; padding: 0 20px 18px; font-size: 17px; }
+.faq-liste details a { color: var(--terre); }
+.faq-liste b { color: var(--olive-dark); }
