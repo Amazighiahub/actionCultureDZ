@@ -7,6 +7,7 @@ import { useShare } from '@/hooks/useShare';
 import { texteAvecLieu } from '@/utils/textePartage';
 import SignalerContenu from '@/components/shared/SignalerContenu';
 import AffichetteQR from '@/components/patrimoine/AffichetteQR';
+import CompteurScansQr, { useSignalerScanQr } from '@/components/patrimoine/ScansQr';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -181,6 +182,8 @@ const PatrimoineDetail = () => {
   const { isAuthenticated, isAdmin, isValidatedProfessional, hasRole, isOwner } = usePermissions();
 
   const [site, setSite] = useState<SitePatrimoineDetail | null>(null);
+  // Fiche ouverte depuis le QR imprimé : un scan compté (sans IP), avant le passage à l'adresse lisible
+  useSignalerScanQr(site?.id_lieu);
   // Adresse lisible et partageable : /patrimoine/12 -> /patrimoine/12-casbah-d-alger
   const naviguerVersCanonique = useNavigate();
   useEffect(() => {
@@ -1074,6 +1077,7 @@ const PatrimoineDetail = () => {
                 </CardTitle>
               </CardHeader>
               {contenuQr}
+              {canEditSite && <CompteurScansQr idLieu={site.id_lieu} />}
             </Card>
             <div className="md:hidden">
               <Dialog>
@@ -1086,6 +1090,7 @@ const PatrimoineDetail = () => {
                 <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
                   <DialogHeader><DialogTitle>{t('patrimoine.qrCode', 'QR Code')}</DialogTitle></DialogHeader>
                   {contenuQr}
+                  {canEditSite && <CompteurScansQr idLieu={site.id_lieu} />}
                 </DialogContent>
               </Dialog>
             </div>

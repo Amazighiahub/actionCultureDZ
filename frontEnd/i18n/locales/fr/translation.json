@@ -4550,6 +4550,11 @@
     },
     "affichette": {
       "imprimer": "Imprimer l’affichette"
+    },
+    "scansQr": {
+      "aucun": "Ce QR code n’a pas encore été scanné.",
+      "total_one": "Scanné {{count}} fois (30 derniers jours : {{mois}})",
+      "total_other": "Scanné {{count}} fois (30 derniers jours : {{mois}})"
     }
   },
   "toasts": {

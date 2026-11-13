@@ -4545,6 +4545,11 @@
     },
     "affichette": {
       "imprimer": "Print the poster"
+    },
+    "scansQr": {
+      "aucun": "This QR code has not been scanned yet.",
+      "total_one": "Scanned once (last 30 days: {{mois}})",
+      "total_other": "Scanned {{count}} times (last 30 days: {{mois}})"
     }
   },
   "toasts": {

@@ -13,7 +13,7 @@ const { body } = require('express-validator');
 const { aUnTexte } = require('../helpers/i18n');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
-const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter, viewLimiter } = require('../middlewares/rateLimitMiddleware');
 const { msg } = require('../utils/messageValidation');
 const limiteEnvois = [mediasLimiter];
 
@@ -60,6 +60,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // Routes mobile (AVANT /:id pour éviter que "mobile" soit pris comme id)
   router.get('/mobile/nearby', patrimoineController.wrap('getMobileNearby'));
   router.post('/mobile/qr-scan', optionalAuth, patrimoineController.wrap('scanQRCode'));
+  // Scans du QR imprimé : comptés sans IP ; chiffres pour le créateur du site et l'équipe (audit V11 OUT-12)
+  router.post('/:id/scan-qr', viewLimiter, validateId(), patrimoineController.wrap('enregistrerScanQr'));
+  router.get('/:id/scans-qr', authenticate, validateId(), patrimoineController.wrap('statistiquesScansQr'));
   router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
   // Cache HTTP des listes publiques (les sites changent rarement)

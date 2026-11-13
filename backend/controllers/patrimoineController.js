@@ -499,7 +499,8 @@ class PatrimoineController extends BaseController {
     try {
       const siteId = parseInt(req.params.id);
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const siteUrl = `${baseUrl}/patrimoine/${siteId}`;
+      // « ?src=qr » : la fiche ouverte par ce QR compte un scan (sans IP), puis retire le marqueur
+      const siteUrl = `${baseUrl}/patrimoine/${siteId}?src=qr`;
 
       const { format = 'dataurl', size = 300 } = req.query;
       const qrSize = Math.min(Math.max(parseInt(size) || 300, 100), 1000);
@@ -611,6 +612,24 @@ class PatrimoineController extends BaseController {
     const site = await this._findVisibleSite(req, id);
     if (!site) throw AppError.notFound('Site patrimoine');
     res.json({ success: true, data: site.toDetailJSON(req.lang) });
+  }
+
+  /** POST /patrimoine/:id/scan-qr : un scan du QR imprimé (rien sur la personne n'est gardé) */
+  async enregistrerScanQr(req, res) {
+    const id = parseInt(req.params.id, 10);
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const ok = await require('../services/patrimoine/scansQr').enregistrerScan(this._models, id, `${baseUrl}/patrimoine/${id}?src=qr`);
+    if (!ok) return this._notFound(req, res);
+    res.status(201).json({ success: true });
+  }
+
+  /** GET /patrimoine/:id/scans-qr : nombre de scans, pour le créateur du site et l'équipe */
+  async statistiquesScansQr(req, res) {
+    const id = parseInt(req.params.id, 10);
+    // Même règle que la modification de la fiche (créateur du site ou du site parent, modération)
+    if (!(await this._verifierDroitModification(req, res))) return;
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ success: true, data: await require('../services/patrimoine/scansQr').statistiques(this._models, id) });
   }
 
   async getMobileOffline(req, res) {

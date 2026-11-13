@@ -4743,6 +4743,15 @@
     },
     "affichette": {
       "imprimer": "طباعة الملصق"
+    },
+    "scansQr": {
+      "aucun": "لم يُمسح رمز QR هذا بعد.",
+      "total_zero": "مُسح {{count}} مرة (آخر 30 يومًا: {{mois}})",
+      "total_one": "مُسح مرة واحدة (آخر 30 يومًا: {{mois}})",
+      "total_two": "مُسح مرتين (آخر 30 يومًا: {{mois}})",
+      "total_few": "مُسح {{count}} مرات (آخر 30 يومًا: {{mois}})",
+      "total_many": "مُسح {{count}} مرة (آخر 30 يومًا: {{mois}})",
+      "total_other": "مُسح {{count}} مرة (آخر 30 يومًا: {{mois}})"
     }
   },
   "toasts": {

@@ -405,7 +405,12 @@ class CronService {
         data: { nom: user.nom, prenom: user.prenom, unsubscribe_url: buildUnsubscribeUrl(user.id_user) }
       }));
 
-      await this.services.emailQueueService.addBulkEmails(emails, template);
+      // File d'envoi indisponible (Redis) : rien n'est parti, on s'arrête au lieu d'annoncer un envoi
+      const mise = await this.services.emailQueueService.addBulkEmails(emails, template);
+      if (mise && mise.success === false) {
+        logger.error(`📮 Newsletter non envoyée : ${mise.error || 'file d’envoi indisponible'}`);
+        return;
+      }
       totalSent += users.length;
       offset += BATCH_SIZE;
 
@@ -435,7 +440,11 @@ class CronService {
         data: { nom: '', prenom: '', unsubscribe_url: lienDesabonnement(a.id_abonne) }
       }));
       if (emails.length) {
-        await this.services.emailQueueService.addBulkEmails(emails, template);
+        const mise = await this.services.emailQueueService.addBulkEmails(emails, template);
+        if (mise && mise.success === false) {
+          logger.error(`📮 Newsletter : abonnés sans compte non servis (${mise.error || 'file d’envoi indisponible'})`);
+          break;
+        }
         totalSent += emails.length;
         budget -= emails.length;
       }
