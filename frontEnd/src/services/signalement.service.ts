@@ -7,7 +7,7 @@ import { httpClient } from './httpClient';
 import type { ApiResponse } from '@/config/api';
 import { reponseEchec } from '@/utils/erreurServeur';
 
-export type TypeContenuSignalable = 'commentaire' | 'oeuvre' | 'evenement' | 'artisanat';
+export type TypeContenuSignalable = 'commentaire' | 'oeuvre' | 'evenement' | 'artisanat' | 'lieu';
 
 export async function signalerContenu(
   type: TypeContenuSignalable, id: number, motif: string, description?: string

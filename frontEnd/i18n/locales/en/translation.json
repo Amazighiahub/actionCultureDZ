@@ -2901,7 +2901,8 @@
         "oeuvre": "Work",
         "evenement": "Event",
         "user": "User",
-        "artisanat": "Crafts"
+        "artisanat": "Crafts",
+        "lieu": "Heritage site"
       },
       "reasons": {
         "inappropriateContent": "Inappropriate content",

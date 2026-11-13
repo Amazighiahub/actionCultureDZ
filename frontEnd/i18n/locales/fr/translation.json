@@ -3121,7 +3121,8 @@
         "oeuvre": "Œuvre",
         "evenement": "Événement",
         "user": "Utilisateur",
-        "artisanat": "Artisanat"
+        "artisanat": "Artisanat",
+        "lieu": "Site du patrimoine"
       },
       "reasons": {
         "inappropriateContent": "Contenu inapproprié",

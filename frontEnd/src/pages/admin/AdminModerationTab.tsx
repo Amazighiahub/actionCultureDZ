@@ -32,7 +32,7 @@ const RAISONS_SIGNALEMENT_CONFIG: Record<string, string> = Object.fromEntries(
 // Recherche dans la page : ces champs peuvent manquer, ou ne pas être du texte
 const enTexte = (v: unknown): string => (typeof v === 'string' ? v : '').toLowerCase();
 
-const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'artisanat', 'user'];
+const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'artisanat', 'lieu', 'user'];
 
 const AdminModerationTab: React.FC = () => {
   const { t } = useTranslation();
@@ -154,7 +154,7 @@ const AdminModerationTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">{t('admin.moderation.contentReports', 'Contenus')}</p>
               <p className="text-2xl font-bold">
-                {compteurs?.contenu ?? moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement' || s.type === 'artisanat').length ?? 0}
+                {compteurs?.contenu ?? moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement' || s.type === 'artisanat' || s.type === 'lieu').length ?? 0}
               </p>
             </div>
           </CardContent>

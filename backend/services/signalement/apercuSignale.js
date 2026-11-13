@@ -57,6 +57,12 @@ async function apercuSignale(models, type, id) {
       if (!e) return null;
       return { titre: extrait(e.nom_evenement), contenu: extrait(e.description), lien: `/evenements/${e.id_evenement}`, statut: e.statut, auteur: await auteur(models, e.id_user) };
     }
+    case 'lieu': {
+      // (le site n'a pas de texte propre : son adresse sert d'aperçu)
+      const l = await models.Lieu?.findByPk(id, { attributes: ['id_lieu', 'nom', 'adresse', 'statut', 'id_createur'] });
+      if (!l) return null;
+      return { titre: extrait(l.nom), contenu: extrait(l.adresse), lien: `/patrimoine/${l.id_lieu}`, statut: l.statut, auteur: await auteur(models, l.id_createur) };
+    }
     case 'user': {
       const u = await models.User?.findByPk(id, { attributes: ['id_user', 'nom', 'prenom', 'statut'] });
       if (!u) return null;

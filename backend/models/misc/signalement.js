@@ -12,7 +12,8 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     type_entite: {
-      type: DataTypes.ENUM('commentaire', 'oeuvre', 'evenement', 'user', 'artisanat'),
+      // « lieu » : site du patrimoine (migration 20261222-signalement-lieu)
+      type: DataTypes.ENUM('commentaire', 'oeuvre', 'evenement', 'user', 'artisanat', 'lieu'),
       allowNull: false,
       index: true,
       comment: 'Type d\'entité signalée'

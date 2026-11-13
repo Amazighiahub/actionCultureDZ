@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
 import { texteAvecLieu } from '@/utils/textePartage';
+import SignalerContenu from '@/components/shared/SignalerContenu';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -649,6 +650,12 @@ const PatrimoineDetail = () => {
                 <Button asChild variant="outline" size="sm">
                   <Link to={lienPropositionLieu(getLocalizedText(site.nom, lang))}>{t('patrimoine.proposerInfo.bouton', 'Proposer une information')}</Link>
                 </Button>
+              </div>
+            )}
+            {/* Erreur sur la fiche (date, nom, photo sans droit) : signalée à la modération (audit V11 OUT-2) */}
+            {!canEditSite && (
+              <div className="flex justify-end">
+                <SignalerContenu type="lieu" id={site.id_lieu} idAuteur={site.id_createur} />
               </div>
             )}
 

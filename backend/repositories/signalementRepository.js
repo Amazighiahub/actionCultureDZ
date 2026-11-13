@@ -108,6 +108,8 @@ class SignalementRepository extends BaseRepository {
       },
       user: { model: this.models.User, pk: 'id_user' },
       commentaire: { model: this.models.Commentaire, pk: 'id_commentaire', where: { statut: 'publie' } },
+      // Site du patrimoine publié (un brouillon ne se signale pas : sa fiche n'est pas publique)
+      lieu: { model: this.models.Lieu, pk: 'id_lieu', where: { statut: 'publie' } },
       artisanat: {
         model: this.models.Artisanat, pk: 'id_artisanat',
         include: this.models.Oeuvre ? [{ model: this.models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }] : undefined
@@ -145,6 +147,11 @@ class SignalementRepository extends BaseRepository {
           attributes: ['id_user', 'nom', 'prenom', 'email', 'statut']
         }) || null;
 
+      case 'lieu':
+        return this.models.Lieu?.findByPk(id, {
+          attributes: ['id_lieu', 'nom', 'statut']
+        }) || null;
+
       case 'commentaire':
         return this.models.Commentaire?.findByPk(id, {
           attributes: ['id_commentaire', 'contenu', 'statut'],
@@ -166,6 +173,7 @@ class SignalementRepository extends BaseRepository {
     if (type === 'commentaire') return (await this.models.Commentaire?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
     if (type === 'oeuvre') return (await this.models.Oeuvre?.findByPk(id, { attributes: ['saisi_par'] }))?.saisi_par || null;
     if (type === 'evenement') return (await this.models.Evenement?.findByPk(id, { attributes: ['id_user'] }))?.id_user || null;
+    if (type === 'lieu') return (await this.models.Lieu?.findByPk(id, { attributes: ['id_createur'] }))?.id_createur || null;
     if (type === 'artisanat') {
       const a = await this.models.Artisanat?.findByPk(id, { attributes: ['id_oeuvre'] });
       return a?.id_oeuvre ? (await this.models.Oeuvre?.findByPk(a.id_oeuvre, { attributes: ['saisi_par'] }))?.saisi_par || null : null;
@@ -196,6 +204,9 @@ class SignalementRepository extends BaseRepository {
       }
       case 'evenement':
         return retirer(this.models.Evenement, id, 'brouillon');
+      // Site du patrimoine : remis en brouillon (caché du public, rien d'effacé, comme un événement)
+      case 'lieu':
+        return retirer(this.models.Lieu, id, 'brouillon');
       default:
         throw AppError.badRequest('Un compte ne se retire pas comme un contenu : utilisez la suspension');
     }

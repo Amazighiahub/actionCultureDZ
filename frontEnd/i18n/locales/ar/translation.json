@@ -1444,7 +1444,8 @@
         "oeuvre": "عمل",
         "evenement": "حدث",
         "user": "مستخدم",
-        "artisanat": "صناعة تقليدية"
+        "artisanat": "صناعة تقليدية",
+        "lieu": "موقع تراثي"
       },
       "reasons": {
         "inappropriateContent": "محتوى غير لائق",

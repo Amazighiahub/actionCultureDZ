@@ -5,7 +5,7 @@
 
 const BaseService = require('../core/baseService');
 
-const VALID_TYPES = ['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat'];
+const VALID_TYPES = ['commentaire', 'oeuvre', 'evenement', 'user', 'artisanat', 'lieu'];
 const VALID_MOTIFS = [
   'spam', 'contenu_inapproprie', 'faux_contenu', 'violation_droits',
   'harcelement', 'incitation_haine', 'contenu_illegal', 'autre'
