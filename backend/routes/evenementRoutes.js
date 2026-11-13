@@ -60,6 +60,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.get('/:id/participants', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
   router.get('/:id/professionnels/en-attente', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
   router.get('/:id/mes-oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
+  router.get('/:id/articles-a-rattacher', authenticate, validateId(), asyncHandler((req, res) => evenementController.articlesARattacher(req, res)));
   router.get('/:id/mon-inscription', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMyRegistration(req, res)));
   router.get('/:id/export', authenticate, validateId(), asyncHandler((req, res) => evenementController.exportEvent(req, res)));
   router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => evenementController.getById(req, res)));

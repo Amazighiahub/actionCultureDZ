@@ -5313,7 +5313,12 @@
     "noneInEvent": "Aucune œuvre ajoutée à cet événement",
     "availableCount": "Vous avez {{count}} œuvre(s) disponible(s)",
     "noAvailable": "Créez d'abord une œuvre pour pouvoir l'ajouter",
-    "available": "Œuvres disponibles"
+    "available": "Œuvres disponibles",
+    "selectDescArticle": "Choisissez une de vos œuvres, ou un article publié sur Tala DZ (compte rendu, reportage) : il reste à son auteur, l’événement affiche son lien.",
+    "articleAutre": "Ou un article publié sur Tala DZ",
+    "articleRecherche": "Titre de l’article (2 lettres au moins)",
+    "articleAucun": "Aucun article publié ne correspond.",
+    "articleResultats": "Articles trouvés"
   },
   "artisanatForm": {
     "createTitle": "Ajouter un artisanat"

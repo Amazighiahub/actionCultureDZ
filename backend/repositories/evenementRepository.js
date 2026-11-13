@@ -670,14 +670,15 @@ class EvenementRepository extends BaseRepository {
   /**
    * Récupère les oeuvres ajoutées + disponibles pour un user dans un événement
    */
-  async getOeuvresForUser(evenementId, userId) {
+  async getOeuvresForUser(evenementId, userId, { toutesAjoutees = false } = {}) {
     const [oeuvresAjoutees, toutesOeuvres] = await Promise.all([
       this.models.EvenementOeuvre.findAll({
         where: { id_evenement: evenementId },
         include: [{
           model: this.models.Oeuvre,
           as: 'Oeuvre',
-          where: { saisi_par: userId },
+          // Organisateur : toutes les œuvres rattachées (dont les articles d'autres auteurs)
+          ...(toutesAjoutees ? {} : { where: { saisi_par: userId } }),
           required: true
         }],
         order: [['ordre_presentation', 'ASC']]
@@ -803,9 +804,10 @@ class EvenementRepository extends BaseRepository {
   /**
    * Supprime une oeuvre d'un événement
    */
+  /** userId null : sans condition de présentateur (organisateur ou administration) */
   async removeOeuvreFromEvent(evenementId, oeuvreId, userId) {
     return this.models.EvenementOeuvre.destroy({
-      where: { id_evenement: evenementId, id_oeuvre: oeuvreId, id_presentateur: userId }
+      where: { id_evenement: evenementId, id_oeuvre: oeuvreId, ...(userId == null ? {} : { id_presentateur: userId }) }
     });
   }
 

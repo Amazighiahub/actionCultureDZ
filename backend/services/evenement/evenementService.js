@@ -24,6 +24,9 @@ const { memeUtilisateur } = require('../../utils/droits');
 const ROLES_PARTENAIRES = ['co_organisateur', 'partenaire', 'sponsor', 'media_partner', 'soutien'];
 const ROLES_PARTENAIRES_MAX = 10;
 
+/** Articles (type 4) et articles scientifiques (type 5) : l'organisateur peut en rattacher d'autres auteurs */
+const TYPES_ARTICLE = [4, 5];
+
 /** Nom lisible d'un événement (nom multilingue) pour les notifications */
 const nomLisible = (nom) => texteLisible(nom) || 'Événement';
 
@@ -959,8 +962,13 @@ class EvenementService extends BaseService {
   /**
    * Récupère les oeuvres d'un user pour un événement (ajoutées + disponibles)
    */
-  async getMesOeuvres(evenementId, userId) {
-    const { oeuvresAjoutees, toutesOeuvres } = await this.repository.getOeuvresForUser(evenementId, userId);
+  async getMesOeuvres(evenementId, userId, options = {}) {
+    // L'organisateur (et l'administration) voit toutes les œuvres rattachées, y compris les articles
+    // d'autres auteurs ; un participant ne voit que les siennes
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    const gere = Number(evenement.id_user) === Number(userId) || !!options.isAdmin;
+    const { oeuvresAjoutees, toutesOeuvres } = await this.repository.getOeuvresForUser(evenementId, userId, { toutesAjoutees: gere });
     const idsAjoutees = new Set(oeuvresAjoutees.map(eo => eo.id_oeuvre));
     const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.has(o.id_oeuvre));
     return { oeuvres_ajoutees: oeuvresAjoutees, oeuvres_disponibles: oeuvresDisponibles };
@@ -988,8 +996,16 @@ class EvenementService extends BaseService {
       }
     }
 
-    // Vérifier ownership de l'œuvre
-    const oeuvre = await this.repository.findOeuvreByOwner(oeuvreId, userId);
+    // Sa propre œuvre ; ou, pour l'organisateur et l'administration, un article publié d'un autre auteur
+    // (compte rendu, reportage : l'article reste à son auteur, l'événement affiche le lien ; accord de la
+    // responsable le 2026-11-13)
+    let oeuvre = await this.repository.findOeuvreByOwner(oeuvreId, userId);
+    if (!oeuvre && (isOrganizer || options.isAdmin) && this.models?.Oeuvre) {
+      oeuvre = await this.models.Oeuvre.findOne({
+        where: { id_oeuvre: oeuvreId, statut: 'publie', id_type_oeuvre: TYPES_ARTICLE },
+        attributes: ['id_oeuvre']
+      });
+    }
     if (!oeuvre) {
       throw this._notFoundError(oeuvreId);
     }
@@ -1008,6 +1024,33 @@ class EvenementService extends BaseService {
       id_presentateur: userId,
       description_presentation: data.description_presentation,
       duree_presentation: data.duree_presentation
+    });
+  }
+
+  /**
+   * Articles publiés à rattacher (organisateur ou administration) : recherche par titre, sans accents,
+   * articles déjà rattachés exclus. 20 résultats au plus.
+   */
+  async articlesARattacher(evenementId, userId, texte, options = {}) {
+    await this._assertEventOwnerOrAdmin(evenementId, userId, options.isAdmin);
+    const q = String(texte || '').trim().slice(0, 100);
+    if (q.length < 2 || !this.models?.Oeuvre) return [];
+    const { Op } = require('sequelize');
+    const motif = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const deja = this.models.EvenementOeuvre
+      ? (await this.models.EvenementOeuvre.findAll({ where: { id_evenement: evenementId }, attributes: ['id_oeuvre'], raw: true })).map((l) => l.id_oeuvre)
+      : [];
+    return this.models.Oeuvre.findAll({
+      where: {
+        statut: 'publie',
+        id_type_oeuvre: TYPES_ARTICLE,
+        // texte_recherche : titres et descriptions des 5 langues, comparés sans accents (migration 20261120)
+        texte_recherche: { [Op.like]: motif },
+        ...(deja.length ? { id_oeuvre: { [Op.notIn]: deja } } : {})
+      },
+      attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre', 'saisi_par'],
+      order: [['date_creation', 'DESC']],
+      limit: 20
     });
   }
 
@@ -1042,8 +1085,13 @@ class EvenementService extends BaseService {
   /**
    * Supprime une oeuvre d'un événement
    */
-  async removeOeuvreFromEvent(evenementId, oeuvreId, userId) {
-    const deleted = await this.repository.removeOeuvreFromEvent(evenementId, oeuvreId, userId);
+  async removeOeuvreFromEvent(evenementId, oeuvreId, userId, options = {}) {
+    // L'organisateur et l'administration retirent n'importe quelle œuvre de l'événement (dont un
+    // article rattaché d'un autre auteur) ; un participant, seulement celle qu'il a présentée
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    const gere = Number(evenement.id_user) === Number(userId) || !!options.isAdmin;
+    const deleted = await this.repository.removeOeuvreFromEvent(evenementId, oeuvreId, gere ? null : userId);
     if (!deleted) {
       throw this._notFoundError(oeuvreId);
     }

@@ -57,6 +57,13 @@ class EvenementOeuvreService {
   }
 
   /**
+   * Articles publiés d'autres auteurs que l'organisateur peut rattacher (recherche par titre)
+   */
+  async articlesARattacher(evenementId: number, q: string): Promise<ApiResponse<Oeuvre[]>> {
+    return httpClient.get<Oeuvre[]>(`/evenements/${evenementId}/articles-a-rattacher`, { q });
+  }
+
+  /**
    * Ajouter une œuvre à un événement
    */
   async addOeuvre(evenementId: number, data: AddOeuvreData): Promise<ApiResponse<EvenementOeuvre>> {

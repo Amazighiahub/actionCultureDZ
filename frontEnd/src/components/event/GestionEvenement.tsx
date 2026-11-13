@@ -128,6 +128,23 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [loadingOeuvres, setLoadingOeuvres] = useState(true);
   const [showOeuvreDialog, setShowOeuvreDialog] = useState(false);
   const [selectedOeuvre, setSelectedOeuvre] = useState<Oeuvre | null>(null);
+  // Article publié d'un autre auteur (compte rendu, reportage) : recherche par titre
+  const [rechercheArticle, setRechercheArticle] = useState('');
+  const [articlesTrouves, setArticlesTrouves] = useState<Oeuvre[]>([]);
+  const [rechercheEnCours, setRechercheEnCours] = useState(false);
+  useEffect(() => {
+    const q = rechercheArticle.trim();
+    if (!showOeuvreDialog || q.length < 2) { setArticlesTrouves([]); return; }
+    let actif = true;
+    setRechercheEnCours(true);
+    const minuteur = setTimeout(() => {
+      evenementOeuvreService.articlesARattacher(evenementId, q)
+        .then((r) => { if (actif) setArticlesTrouves(r.success && Array.isArray(r.data) ? r.data : []); })
+        .catch(() => { if (actif) setArticlesTrouves([]); })
+        .finally(() => { if (actif) setRechercheEnCours(false); });
+    }, 300);
+    return () => { actif = false; clearTimeout(minuteur); };
+  }, [rechercheArticle, showOeuvreDialog, evenementId]);
   const [oeuvreDescription, setOeuvreDescription] = useState('');
   const [oeuvresDuree, setOeuvresDuree] = useState<number | undefined>();
   const [addingOeuvre, setAddingOeuvre] = useState(false);
@@ -330,6 +347,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         setSelectedOeuvre(null);
         setOeuvreDescription('');
         setOeuvresDuree(undefined);
+        setRechercheArticle('');
+      } else {
+        toast({ title: t('common.error'), description: messageErreurServeur(response, t('oeuvres.addError', 'Erreur lors de l\'ajout')), variant: 'destructive' });
       }
     } catch (error) {
       console.error('Erreur ajout œuvre:', error);
@@ -599,7 +619,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             </h3>
             <Dialog open={showOeuvreDialog} onOpenChange={setShowOeuvreDialog}>
               <DialogTrigger asChild>
-                <Button disabled={!oeuvresData?.oeuvres_disponibles?.length}>
+                <Button>
                   <Plus className="h-4 w-4 me-2" />
                   {t('oeuvres.addToEvent', 'Ajouter une œuvre')}
                 </Button>
@@ -608,7 +628,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                 <DialogHeader>
                   <DialogTitle>{t('oeuvres.selectToAdd', 'Sélectionner une œuvre')}</DialogTitle>
                   <DialogDescription>
-                    {t('oeuvres.selectDesc', 'Choisissez parmi vos œuvres disponibles')}
+                    {t('oeuvres.selectDescArticle', 'Choisissez une de vos œuvres, ou un article publié sur Tala DZ (compte rendu, reportage) : il reste à son auteur, l’événement affiche son lien.')}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -633,6 +653,38 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recherche-article">{t('oeuvres.articleAutre', 'Ou un article publié sur Tala DZ')}</Label>
+                    <Input
+                      id="recherche-article"
+                      type="search"
+                      value={rechercheArticle}
+                      onChange={(e) => setRechercheArticle(e.target.value)}
+                      placeholder={t('oeuvres.articleRecherche', 'Titre de l’article (2 lettres au moins)')}
+                      autoComplete="off"
+                    />
+                    {rechercheEnCours && <p className="text-xs text-muted-foreground">{t('common.loading', 'Chargement...')}</p>}
+                    {!rechercheEnCours && rechercheArticle.trim().length >= 2 && articlesTrouves.length === 0 && (
+                      <p className="text-xs text-muted-foreground">{t('oeuvres.articleAucun', 'Aucun article publié ne correspond.')}</p>
+                    )}
+                    {articlesTrouves.length > 0 && (
+                      <ul className="max-h-48 overflow-y-auto rounded-md border divide-y" aria-label={t('oeuvres.articleResultats', 'Articles trouvés')}>
+                        {articlesTrouves.map((a) => (
+                          <li key={a.id_oeuvre}>
+                            <button
+                              type="button"
+                              aria-pressed={selectedOeuvre?.id_oeuvre === a.id_oeuvre}
+                              onClick={() => setSelectedOeuvre(a)}
+                              className={`w-full text-start px-3 py-2 text-sm hover:bg-muted ${selectedOeuvre?.id_oeuvre === a.id_oeuvre ? 'bg-primary/10 font-medium' : ''}`}
+                            >
+                              {td(a.titre)}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
                   <div className="space-y-2">

@@ -5313,7 +5313,12 @@
     "noneInEvent": "No works added to this event",
     "availableCount": "You have {{count}} work(s) available",
     "noAvailable": "Create a work first to be able to add it",
-    "available": "Available works"
+    "available": "Available works",
+    "selectDescArticle": "Choose one of your works, or an article published on Tala DZ (report, coverage): it stays with its author, the event shows its link.",
+    "articleAutre": "Or an article published on Tala DZ",
+    "articleRecherche": "Article title (at least 2 letters)",
+    "articleAucun": "No published article matches.",
+    "articleResultats": "Articles found"
   },
   "artisanatForm": {
     "createTitle": "Add a craft item"

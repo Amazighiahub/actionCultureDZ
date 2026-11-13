@@ -423,11 +423,24 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** GET /evenements/:id/articles-a-rattacher?q= : articles publiés à rattacher (organisateur, admin) */
+  async articlesARattacher(req, res) {
+    try {
+      const q = typeof req.query.q === 'string' ? req.query.q : '';
+      const data = await this.evenementService.articlesARattacher(parseInt(req.params.id), req.user.id_user, q, { isAdmin: req.user.isAdmin });
+      // Titres multilingues bruts : le site les affiche dans la langue de la personne
+      res.json({ success: true, data: data.map((o) => (o.get ? o.get({ plain: true }) : o)) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getMesOeuvres(req, res) {
     try {
       const data = await this.evenementService.getMesOeuvres(
         parseInt(req.params.id),
-        req.user.id_user
+        req.user.id_user,
+        { isAdmin: req.user.isAdmin }
       );
       res.json({ success: true, data });
     } catch (error) {
@@ -549,7 +562,8 @@ class EvenementController extends BaseController {
       await this.evenementService.removeOeuvreFromEvent(
         parseInt(req.params.id),
         parseInt(req.params.oeuvreId),
-        req.user.id_user
+        req.user.id_user,
+        { isAdmin: req.user.isAdmin }
       );
       res.json({ success: true, message: req.t('oeuvre.removedFromEvent') });
     } catch (error) {
