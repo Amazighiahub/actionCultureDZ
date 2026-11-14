@@ -52,6 +52,18 @@ describe('À la une de l’accueil', () => {
     expect(une[0].srcSet.match(/ \d+w/g)).toEqual([' 768w', ' 1280w', ' 1920w']);
   });
 
+  it('œuvre : la photo principale, sinon la plus récente (une photo remplacée ne revient pas)', async () => {
+    const m = modeles();
+    m.Lieu.findAll = jest.fn(async () => []);
+    m.Oeuvre.findAll = jest.fn(async () => [
+      { id_oeuvre: 61, titre: { fr: 'Poème' }, id_type_oeuvre: 4, Media: [{ id_media: 120, url: img('ancienne') }, { id_media: 134, url: img('recadree') }] },
+      { id_oeuvre: 62, titre: { fr: 'Tapis' }, id_type_oeuvre: 7, Media: [{ id_media: 200, url: img('principale'), is_Principale: true }, { id_media: 201, url: img('autre') }] }
+    ]);
+    const une = await aLaUne(m, 'fr');
+    expect(une.find((u) => u.id === 61).image).toContain('recadree');
+    expect(une.find((u) => u.id === 62).image).toContain('principale');
+  });
+
   it('entrelacer garde tout, dans l’ordre des genres', () => {
     const c = [{ type: 'lieu', id: 1 }, { type: 'lieu', id: 2 }, { type: 'oeuvre', id: 3 }];
     expect(entrelacer(c).map((x) => x.id)).toEqual([1, 3, 2]);

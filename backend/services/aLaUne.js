@@ -45,12 +45,14 @@ async function lieux(models, lang) {
   const lignes = await models.Lieu.findAll({
     where: { statut: 'publie' },
     attributes: ['id_lieu', 'nom'],
-    include: [{ model: models.LieuMedia, attributes: ['url', 'credit'], where: { type: 'image' }, required: true }],
+    include: [{ model: models.LieuMedia, attributes: ['id', 'url', 'credit'], where: { type: 'image' }, required: true }],
     order: [['id_lieu', 'DESC']],
     limit: RESERVE
   });
   return lignes.map((l) => {
-    const photo = (l.LieuMedia || l.LieuMedias || []).find((m) => estImageDuSite(m.url));
+    // Photo principale du lieu : la première ajoutée, comme sur sa page (PatrimoineDetail)
+    const photo = (l.LieuMedia || l.LieuMedias || []).filter((m) => estImageDuSite(m.url))
+      .sort((a, b) => (a.id || 0) - (b.id || 0))[0];
     return photo ? vitrine('lieu', l.id_lieu, texteLisible(l.nom, lang), photo.url, photo.credit) : null;
   }).filter(Boolean);
 }
@@ -60,12 +62,16 @@ async function oeuvres(models, lang) {
   const lignes = await models.Oeuvre.findAll({
     where: { statut: 'publie', id_type_oeuvre: { [Op.in]: TYPES_PHOTO } },
     attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre'],
-    include: [{ model: models.Media, attributes: ['url', 'credit'], where: { type_media: 'image', visible_public: true }, required: true }],
+    include: [{ model: models.Media, attributes: ['id_media', 'url', 'credit', 'is_Principale'], where: { type_media: 'image', visible_public: true }, required: true }],
     order: [['id_oeuvre', 'DESC']],
     limit: RESERVE
   });
   return lignes.map((o) => {
-    const photo = (o.Media || o.Medias || []).find((m) => estImageDuSite(m.url));
+    // Photo principale de l'œuvre (même règle que sa page, oeuvreDTO), sinon la plus récente :
+    // une photo remplacée par l'auteur ne doit pas réapparaître à l'accueil
+    const images = (o.Media || o.Medias || []).filter((m) => estImageDuSite(m.url))
+      .sort((a, b) => Number(!!b.is_Principale) - Number(!!a.is_Principale) || (b.id_media || 0) - (a.id_media || 0));
+    const photo = images[0];
     const type = [4, 5].includes(Number(o.id_type_oeuvre)) ? 'article' : 'oeuvre';
     return photo ? vitrine(type, o.id_oeuvre, texteLisible(o.titre, lang), photo.url, photo.credit) : null;
   }).filter(Boolean);
