@@ -82,6 +82,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // « À lire » de la page d'accueil : derniers articles publiés
   router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
+  // Données ouvertes (CC BY-SA 4.0) : liste publique des lieux, en GeoJSON et en CSV (audit V11 OUT-18)
+  router.get('/donnees-ouvertes.geojson', publicHttpCache(3600), (req, res, next) => { req.formatOuvert = 'geojson'; next(); }, patrimoineController.wrap('donneesOuvertes'));
+  router.get('/donnees-ouvertes.csv', publicHttpCache(3600), (req, res, next) => { req.formatOuvert = 'csv'; next(); }, patrimoineController.wrap('donneesOuvertes'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
   // optionalAuth : le créateur d'un site non publié peut voir sa propre fiche

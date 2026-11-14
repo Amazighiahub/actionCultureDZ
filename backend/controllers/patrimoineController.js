@@ -116,6 +116,20 @@ class PatrimoineController extends BaseController {
     }
   }
 
+  /** Données ouvertes des lieux publiés (GeoJSON ou CSV), licence CC BY-SA 4.0 */
+  async donneesOuvertes(req, res) {
+    const { lireLieux, versGeoJSON, versCSV } = require('../services/patrimoine/donneesOuvertes');
+    const lieux = await lireLieux(this._models);
+    if (req.formatOuvert === 'csv') {
+      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.set('Content-Disposition', 'attachment; filename="taladz-lieux.csv"');
+      return res.send(versCSV(lieux));
+    }
+    res.set('Content-Type', 'application/geo+json; charset=utf-8');
+    res.set('Content-Disposition', 'inline; filename="taladz-lieux.geojson"');
+    return res.send(JSON.stringify(versGeoJSON(lieux)));
+  }
+
   // Vérifier si un site existe déjà (nom + commune)
   async checkDuplicate(req, res) {
     try {

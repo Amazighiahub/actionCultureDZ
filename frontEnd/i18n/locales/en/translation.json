@@ -6413,5 +6413,20 @@
       "profil": "Complete your profile",
       "favori": "Save a place, a work or an event to your favourites"
     }
+  },
+  "donneesOuvertes": {
+    "titre": "Open data",
+    "description": "The list of Tala DZ heritage places, free to reuse under the CC BY-SA 4.0 licence.",
+    "telecharger": "Download the places",
+    "contenu": "All published places: their name in each language, their type, their commune and wilaya, their coordinates and the address of their page. Continuously updated.",
+    "formats": "GeoJSON: for maps, OpenStreetMap and GIS software. CSV: for a spreadsheet (LibreOffice, Excel).",
+    "licenceTitre": "Licence: CC BY-SA 4.0",
+    "licence1": "You may copy, modify and republish this data, even commercially, on two conditions:",
+    "attribution": "credit the source: “Tala DZ (taladz.com), Tala DZ contributors”;",
+    "partage": "share your derived data under the same licence.",
+    "lireLicence": "Read the licence",
+    "champsTitre": "What the files contain",
+    "exclus": "Not included: photos, recorded voices, texts and articles (which remain their authors'), and nothing about the people who added the places.",
+    "contact": "An error in the data, a reuse project? Write to us at contact@taladz.com."
   }
 }
