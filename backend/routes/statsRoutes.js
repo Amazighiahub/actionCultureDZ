@@ -40,6 +40,23 @@ const initStatsRoutes = (models, authMiddleware) => {
       }
     });
 
+  // « Ne pas mettre à l'accueil » : l'équipe écarte une photo de l'accueil, ou l'y remet.
+  // Le contenu reste publié sur sa page. Administration et modération seulement.
+  const equipe = [authMiddleware.authenticate, authMiddleware.requireRole('Administrateur', 'Moderateur')];
+  const asyncHandler = require('../utils/asyncHandler');
+  router.get('/a-la-une/exclusions', ...equipe, asyncHandler(async (req, res) => {
+    const { exclusions } = require('../services/aLaUne');
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ success: true, data: await exclusions(models, req.lang || 'fr') });
+  }));
+  router.patch('/a-la-une/exclusion', ...equipe, asyncHandler(async (req, res) => {
+    const { exclure } = require('../services/aLaUne');
+    const { type, id, exclu } = req.body || {};
+    const ok = await exclure(models, String(type || ''), Number(id), exclu !== false);
+    if (!ok) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+    res.json({ success: true });
+  }));
+
   return router;
 };
 

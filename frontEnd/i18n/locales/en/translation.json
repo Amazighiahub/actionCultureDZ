@@ -949,7 +949,13 @@
       "pause": "Pause slideshow",
       "guide": "How to contribute? Read the guide",
       "aLaUne": "Discover",
-      "photoDe": "Photo: {{nom}}"
+      "photoDe": "Photo: {{nom}}",
+      "retiree": "Photo removed from the home page",
+      "retireeAide": "The content stays published on its page. To put it back: Administration › Moderation.",
+      "retraitEchec": "The photo could not be removed.",
+      "retirer": "Don't show on the home page",
+      "retirerTitre": "Remove this photo from the home page?",
+      "retirerAide": "“{{titre}}” will no longer be shown on the home page. The content stays published on its page; you can put it back in Administration › Moderation."
     },
     "explore": {
       "subtitle": "A digital platform dedicated to the preservation and promotion of Algerian culture in all its richness and diversity.",
@@ -3325,6 +3331,13 @@
       "refuser": "Reject",
       "refuserTitre": "Reject this photo?",
       "refuserAide": "The review stays published without the photo. The author receives your reason; the file is deleted."
+    },
+    "accueil": {
+      "remise": "The photo can appear on the home page again",
+      "echec": "The change could not be saved.",
+      "titre": "Removed from the home page",
+      "aide": "These items stay published on their page; only their photo no longer appears on the home page.",
+      "remettre": "Put back"
     }
   },
   "wilayas": {

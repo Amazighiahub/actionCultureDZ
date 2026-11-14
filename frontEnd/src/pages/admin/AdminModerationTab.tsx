@@ -21,6 +21,7 @@ import { ConfirmDialog, EmptyState, LoadingSkeleton } from '@/components/shared'
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import PhotosAvisEnAttente from './PhotosAvisEnAttente';
+import RetireesDeLAccueil from './RetireesDeLAccueil';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useListeServeur, filtreChoisi } from '@/hooks/useListeServeur';
 import { MOTIFS_SIGNALEMENT } from '@/utils/motifsSignalement';
@@ -106,6 +107,8 @@ const AdminModerationTab: React.FC = () => {
     <div className="space-y-6">
       {/* Photos jointes aux avis sur les services : à valider avant qu'elles paraissent */}
       <PhotosAvisEnAttente />
+      {/* Photos écartées de l'accueil par l'équipe : les y remettre */}
+      <RetireesDeLAccueil />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

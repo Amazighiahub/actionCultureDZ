@@ -64,6 +64,12 @@ module.exports = (sequelize) => {
         key: 'id_oeuvre'
       }
     },
+    // « Ne pas mettre à l'accueil » : photo écartée par l'équipe (migration 20261225)
+    exclu_accueil: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
     statut: {
       type: DataTypes.ENUM('brouillon', 'en_attente', 'publie', 'rejete', 'archive', 'supprime'),
       allowNull: false,

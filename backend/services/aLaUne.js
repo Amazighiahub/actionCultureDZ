@@ -4,6 +4,7 @@
  * d'artisanat ou articles, prises parmi les contenus publiés récents qui ont une photo.
  *  - Pas d'affiche d'événement ni de couverture (livre, film, disque) : leur propre texte se
  *    mélangeait au titre de l'accueil et devenait illisible. Seulement de vraies photos.
+ *  - L'équipe écarte une photo qui ne convient pas : « Ne pas mettre à l'accueil » (exclu_accueil).
  *  - Seulement des images stockées par le site (Cloudinary du site), jamais un lien externe.
  *  - Recadrées par Cloudinary au format de l'accueil (g_auto : le sujet reste dans le cadre).
  *  - Le choix change chaque jour (même choix pour tous pendant la journée : cache cohérent).
@@ -43,7 +44,7 @@ const vitrine = (type, id, titre, url, credit) => ({
 async function lieux(models, lang) {
   if (!models.Lieu || !models.LieuMedia) return [];
   const lignes = await models.Lieu.findAll({
-    where: { statut: 'publie' },
+    where: { statut: 'publie', exclu_accueil: false },
     attributes: ['id_lieu', 'nom'],
     include: [{ model: models.LieuMedia, attributes: ['id', 'url', 'credit'], where: { type: 'image' }, required: true }],
     order: [['id_lieu', 'DESC']],
@@ -60,7 +61,7 @@ async function lieux(models, lang) {
 async function oeuvres(models, lang) {
   if (!models.Oeuvre || !models.Media) return [];
   const lignes = await models.Oeuvre.findAll({
-    where: { statut: 'publie', id_type_oeuvre: { [Op.in]: TYPES_PHOTO } },
+    where: { statut: 'publie', id_type_oeuvre: { [Op.in]: TYPES_PHOTO }, exclu_accueil: false },
     attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre'],
     include: [{ model: models.Media, attributes: ['id_media', 'url', 'credit', 'is_Principale'], where: { type_media: 'image', visible_public: true }, required: true }],
     order: [['id_oeuvre', 'DESC']],
@@ -95,4 +96,31 @@ function entrelacer(choix) {
   return resultat;
 }
 
-module.exports = { aLaUne, recadrer, melangerDuJour, entrelacer };
+/** Modèle et clé d'un contenu de l'accueil ; null si le genre est inconnu */
+function cible(models, type) {
+  if (type === 'lieu') return models.Lieu ? { modele: models.Lieu, cle: 'id_lieu', champ: 'nom' } : null;
+  if (type === 'oeuvre' || type === 'article') return models.Oeuvre ? { modele: models.Oeuvre, cle: 'id_oeuvre', champ: 'titre' } : null;
+  return null;
+}
+
+/** « Ne pas mettre à l'accueil » (exclu = true) ou l'y remettre (false). Faux si le contenu n'existe pas. */
+async function exclure(models, type, id, exclu) {
+  const c = cible(models, type);
+  if (!c || !Number.isInteger(id) || id < 1) return false;
+  const [n] = await c.modele.update({ exclu_accueil: !!exclu }, { where: { [c.cle]: id } });
+  return n > 0;
+}
+
+/** Contenus écartés de l'accueil (pour les y remettre) */
+async function exclusions(models, lang = 'fr') {
+  const liste = [];
+  for (const type of ['lieu', 'oeuvre']) {
+    const c = cible(models, type);
+    if (!c) continue;
+    const lignes = await c.modele.findAll({ where: { exclu_accueil: true }, attributes: [c.cle, c.champ], order: [[c.cle, 'DESC']], limit: 200 });
+    liste.push(...lignes.map((l) => ({ type, id: l[c.cle], titre: texteLisible(l[c.champ], lang) })));
+  }
+  return liste;
+}
+
+module.exports = { aLaUne, recadrer, melangerDuJour, entrelacer, exclure, exclusions };

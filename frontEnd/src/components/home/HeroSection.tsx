@@ -16,6 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { lienSommaireGuides } from '@/utils/lienGuide';
 import { HERO_PREMIERE_IMAGE } from './heroPremiereImage';
 import { evenementPath, lieuPath, oeuvrePath } from '@/utils/slug';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useToast } from '@/components/ui/use-toast';
+import { ConfirmDialog } from '@/components/shared';
+import { messageErreurServeur } from '@/utils/erreurServeur';
 
 /** Photo « À la une » renvoyée par le serveur (contenus publiés par les contributeurs) */
 interface Une {
@@ -35,6 +39,8 @@ interface ImageAccueil {
   title: string;
   lien?: string;
   credit?: string | null;
+  /** Photo d'un contributeur : son contenu (pour « Ne pas mettre à l'accueil ») */
+  une?: { type: Une['type']; id: number };
 }
 
 const lienUne = (u: Une) => (u.type === 'lieu' ? lieuPath(u.id, u.titre)
@@ -56,6 +62,13 @@ const HeroSection: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { isRtl } = useRTL();
   const { isAuthenticated } = useAuth();
+  // Équipe (administration, modération) : peut retirer une photo de l'accueil
+  const { isAdmin, hasRole } = usePermissions();
+  const equipe = isAdmin || hasRole('Moderateur') || hasRole('Modérateur');
+  const { toast } = useToast();
+  const [aRetirer, setARetirer] = useState<ImageAccueil | null>(null);
+  const [retraitEnCours, setRetraitEnCours] = useState(false);
+  const [retirees, setRetirees] = useState<Set<string>>(() => new Set());
   const [currentSlide, setCurrentSlide] = useState(0);
   // Images chargées, par adresse (la liste change quand les photos « À la une » arrivent)
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
@@ -107,9 +120,28 @@ const HeroSection: React.FC = () => {
     },
     staleTime: 10 * 60 * 1000,
   });
-  const heroImages: ImageAccueil[] = unes.length >= 3
-    ? [paysages[0], ...unes.slice(0, 5).map((u) => ({ url: u.image, srcSet: u.srcSet, title: u.titre, lien: lienUne(u), credit: u.credit }))]
+  const unesVisibles = unes.filter((u) => !retirees.has(`${u.type}:${u.id}`));
+  const heroImages: ImageAccueil[] = unesVisibles.length >= 3
+    ? [paysages[0], ...unesVisibles.slice(0, 5).map((u) => ({ url: u.image, srcSet: u.srcSet, title: u.titre, lien: lienUne(u), credit: u.credit, une: { type: u.type, id: u.id } }))]
     : paysages;
+
+  // « Ne pas mettre à l'accueil » : la photo disparaît tout de suite ici, et des accueils suivants
+  const retirerDeLAccueil = async () => {
+    const cible = aRetirer?.une;
+    if (!cible) return;
+    setRetraitEnCours(true);
+    try {
+      const res = await httpClient.patch('/stats/a-la-une/exclusion', { type: cible.type, id: cible.id, exclu: true });
+      if (!res.success) throw res;
+      setRetirees((prev) => new Set(prev).add(`${cible.type}:${cible.id}`));
+      toast({ title: t('home.hero.retiree', 'Photo retirée de l’accueil'), description: t('home.hero.retireeAide', 'Le contenu reste publié sur sa page. Pour la remettre : Administration › Modération.') });
+    } catch (e) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('home.hero.retraitEchec', 'La photo n’a pas pu être retirée.')), variant: 'destructive' });
+    } finally {
+      setRetraitEnCours(false);
+      setARetirer(null);
+    }
+  };
 
   // Statistiques publiques (React Query : en cache, pas rechargées à chaque retour sur l'accueil).
   // En cas d'erreur, les valeurs par défaut ("...") restent affichées.
@@ -365,15 +397,33 @@ const HeroSection: React.FC = () => {
       {/* ===== INDICATEURS DU CAROUSEL + PAUSE ===== */}
       {/* Zone cliquable de 24 px autour de chaque point (cible tactile suffisante) */}
       {imageCourante?.lien && (
+        <div className="absolute bottom-16 sm:bottom-20 end-4 sm:end-8 z-20 flex max-w-[16rem] flex-col items-end gap-1">
         <Link to={imageCourante.lien} data-testid="legende-a-la-une"
-          className="absolute bottom-16 sm:bottom-20 end-4 sm:end-8 z-20 max-w-[16rem] rounded-lg bg-black/55 px-3 py-2 text-white backdrop-blur-sm hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+          className="block w-full rounded-lg bg-black/55 px-3 py-2 text-white backdrop-blur-sm hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
           <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/80">{t('home.hero.aLaUne', 'À découvrir')}</span>
           <span className="block text-sm font-medium leading-snug line-clamp-2" dir="auto">{imageCourante.title}</span>
           {imageCourante.credit && (
             <span className="block text-[11px] text-white/80" dir="auto">{t('home.hero.photoDe', 'Photo : {{nom}}', { nom: imageCourante.credit })}</span>
           )}
         </Link>
+        {equipe && imageCourante.une && (
+          <button type="button" onClick={() => setARetirer(imageCourante)} data-testid="retirer-de-l-accueil"
+            className="rounded-md bg-black/55 px-2 py-1 text-[11px] text-white/90 backdrop-blur-sm hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+            {t('home.hero.retirer', 'Ne pas mettre à l’accueil')}
+          </button>
+        )}
+        </div>
       )}
+      <ConfirmDialog
+        open={!!aRetirer}
+        onOpenChange={(o) => { if (!o && !retraitEnCours) setARetirer(null); }}
+        title={t('home.hero.retirerTitre', 'Retirer cette photo de l’accueil ?')}
+        description={t('home.hero.retirerAide', '« {{titre}} » ne sera plus montré à l’accueil. Le contenu reste publié sur sa page ; vous pourrez le remettre dans Administration › Modération.', { titre: aRetirer?.title || '' })}
+        confirmLabel={t('home.hero.retirer', 'Ne pas mettre à l’accueil')}
+        cancelLabel={t('common.cancel', 'Annuler')}
+        loading={retraitEnCours}
+        onConfirm={retirerDeLAccueil}
+      />
 
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
         {heroImages.map((img, index) => (

@@ -90,6 +90,7 @@ vi.mock('react-i18next', () => ({
 
 // File des photos d'avis : composant à part (requêtes React Query), hors du sujet de ce test
 vi.mock('@/pages/admin/PhotosAvisEnAttente', () => ({ default: () => null }));
+vi.mock('@/pages/admin/RetireesDeLAccueil', () => ({ default: () => null }));
 
 vi.mock('@/hooks/useDashboardAdmin', () => ({
   useDashboardAdmin: () => ({

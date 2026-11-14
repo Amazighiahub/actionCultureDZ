@@ -998,7 +998,13 @@
       "pause": "Mettre en pause le défilement",
       "guide": "Comment contribuer ? Lire le guide",
       "aLaUne": "À découvrir",
-      "photoDe": "Photo : {{nom}}"
+      "photoDe": "Photo : {{nom}}",
+      "retiree": "Photo retirée de l’accueil",
+      "retireeAide": "Le contenu reste publié sur sa page. Pour la remettre : Administration › Modération.",
+      "retraitEchec": "La photo n’a pas pu être retirée.",
+      "retirer": "Ne pas mettre à l’accueil",
+      "retirerTitre": "Retirer cette photo de l’accueil ?",
+      "retirerAide": "« {{titre}} » ne sera plus montré à l’accueil. Le contenu reste publié sur sa page ; vous pourrez le remettre dans Administration › Modération."
     },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",
@@ -3374,6 +3380,13 @@
       "refuser": "Refuser",
       "refuserTitre": "Refuser cette photo ?",
       "refuserAide": "L’avis reste publié sans la photo. L’auteur reçoit votre motif ; le fichier est effacé."
+    },
+    "accueil": {
+      "remise": "La photo peut de nouveau paraître à l’accueil",
+      "echec": "Le changement n’a pas pu être enregistré.",
+      "titre": "Retirées de l’accueil",
+      "aide": "Ces contenus restent publiés sur leur page ; seule leur photo ne paraît plus à l’accueil.",
+      "remettre": "Remettre"
     }
   },
   "wilayas": {

@@ -76,6 +76,12 @@ module.exports = (sequelize) => {
       },
       comment: 'Utilisateur qui a créé ce lieu (pour notifications de contributions)'
     },
+    // « Ne pas mettre à l'accueil » : photo écartée par l'équipe (migration 20261225)
+    exclu_accueil: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
     statut: {
       type: DataTypes.ENUM('brouillon', 'publie', 'archive'),
       allowNull: false,

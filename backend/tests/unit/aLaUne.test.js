@@ -3,7 +3,7 @@
  * articles ; ni affiche ni couverture), recadrées ; choix stable dans la journée ; alternance.
  */
 const { Op } = require('sequelize');
-const { aLaUne, recadrer, melangerDuJour, entrelacer } = require('../../services/aLaUne');
+const { aLaUne, recadrer, melangerDuJour, entrelacer, exclure } = require('../../services/aLaUne');
 
 const COMPTE = 'compte-essai';
 const img = (n) => `https://res.cloudinary.com/${COMPTE}/image/upload/v1/eventculture/${n}.jpg`;
@@ -62,6 +62,18 @@ describe('À la une de l’accueil', () => {
     const une = await aLaUne(m, 'fr');
     expect(une.find((u) => u.id === 61).image).toContain('recadree');
     expect(une.find((u) => u.id === 62).image).toContain('principale');
+  });
+
+  it('« Ne pas mettre à l’accueil » : contenus exclus filtrés, genre inconnu refusé', async () => {
+    const m = modeles();
+    await aLaUne(m, 'fr');
+    expect(m.Lieu.findAll.mock.calls[0][0].where.exclu_accueil).toBe(false);
+    expect(m.Oeuvre.findAll.mock.calls[0][0].where.exclu_accueil).toBe(false);
+    m.Oeuvre.update = jest.fn().mockResolvedValue([1]);
+    await expect(exclure(m, 'article', 11, true)).resolves.toBe(true);
+    expect(m.Oeuvre.update).toHaveBeenCalledWith({ exclu_accueil: true }, { where: { id_oeuvre: 11 } });
+    await expect(exclure(m, 'evenement', 1, true)).resolves.toBe(false);
+    await expect(exclure(m, 'lieu', Number('abc'), true)).resolves.toBe(false);
   });
 
   it('entrelacer garde tout, dans l’ordre des genres', () => {
