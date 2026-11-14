@@ -12,6 +12,7 @@ const LIMITE_PERSONNES = 100;
 const TYPES_ARTICLE = [4, 5];
 const TYPE_ARTISANAT = 7;
 const { EVENEMENT_OUVERT: STATUTS_EVENEMENT } = require('../constants/statuts');
+const { compterPuisLister } = require('../repositories/baseRepository');
 
 /** Professionnels publics de la wilaya : par la wilaya indiquée, ou par leur commune */
 async function wherePersonnes(models, idWilaya) {
@@ -97,7 +98,7 @@ async function listerEvenements(models, idWilaya) {
       include: [{ model: models.Daira, attributes: [], required: true, where: { wilayaId: idWilaya } }]
     }]
   };
-  const { rows, count } = await models.Evenement.findAndCountAll({
+  const { rows, count } = await compterPuisLister(models.Evenement, {
     where,
     attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'image_url'],
     include: [dansLaWilaya],
@@ -110,7 +111,7 @@ async function listerEvenements(models, idWilaya) {
 
 /** Sites publiés de la wilaya (les points de visite restent sur la fiche de leur site) */
 async function listerLieux(models, idWilaya) {
-  const { rows, count } = await models.Lieu.findAndCountAll({
+  const { rows, count } = await compterPuisLister(models.Lieu, {
     where: { statut: 'publie', id_lieu_parent: null },
     attributes: ['id_lieu', 'nom'],
     include: [

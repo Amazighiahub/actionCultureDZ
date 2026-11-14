@@ -117,21 +117,7 @@ class BaseRepository {
     // Le total ne garde que les jointures qui filtrent (avant : toutes, photos, auteur, lieu..., à
     // chaque page de chaque liste), puis vient la page. L'un après l'autre : une seule connexion du
     // pool par liste (audit V11 BDD-12, BDD-18).
-    const jointures = jointuresDuCompte(includes, where);
-    const count = await this.model.count({
-      where,
-      include: jointures === null ? includes : jointures,
-      distinct: true,
-      col: this.model.primaryKeyAttribute
-    });
-    const rows = count === 0 ? [] : await this.model.findAll({
-      where,
-      include: includes,
-      order,
-      limit,
-      offset,
-      attributes
-    });
+    const { rows, count } = await compterPuisLister(this.model, { where, include: includes, order, limit, offset, attributes });
 
     return {
       data: rows,
@@ -353,5 +339,25 @@ class BaseRepository {
   }
 }
 
+/**
+ * Remplace Model.findAndCountAll (même résultat { rows, count }) : le total ne garde que les jointures
+ * qui filtrent (jointuresDuCompte), puis vient la page, l'un après l'autre (une seule connexion du pool).
+ * Les options de page (limit, offset, order, attributes, subQuery, distinct…) ne servent qu'à la lecture.
+ */
+async function compterPuisLister(model, options = {}) {
+  const { where, include, distinct: _distinct, col: _col, ...lecture } = options;
+  const includes = Array.isArray(include) ? include : (include ? [include] : []);
+  const jointures = jointuresDuCompte(includes, where);
+  const count = await model.count({
+    where,
+    include: jointures === null ? includes : jointures,
+    distinct: true,
+    col: model.primaryKeyAttribute
+  });
+  const rows = count === 0 ? [] : await model.findAll({ where, include: includes, ...lecture });
+  return { rows, count };
+}
+
 module.exports = BaseRepository;
 module.exports.jointuresDuCompte = jointuresDuCompte;
+module.exports.compterPuisLister = compterPuisLister;

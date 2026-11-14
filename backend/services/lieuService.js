@@ -15,6 +15,7 @@ const { triParNom } = require('../utils/triParNom');
 const { sanitizeLike } = require('../utils/sanitize');
 const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const { supprimerLieu } = require('./patrimoine/suppressionLieu');
+const { compterPuisLister } = require('../repositories/baseRepository');
 
 
 class LieuService extends BaseService {
@@ -194,7 +195,7 @@ class LieuService extends BaseService {
     // Ordre : nom (même règle que les autres listes de lieux)
     const { order, attributes } = await this._triParNom(lang);
 
-    const result = await this.models.Lieu.findAndCountAll({
+    const result = await compterPuisLister(this.models.Lieu, {
       where,
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -227,7 +228,7 @@ class LieuService extends BaseService {
     const wilaya = await this.models.Wilaya.findByPk(wilayaId);
     if (!wilaya) return { wilaya: null, rows: [], count: 0 };
 
-    const lieux = await this.models.Lieu.findAndCountAll({
+    const lieux = await compterPuisLister(this.models.Lieu, {
       where: { statut: 'publie' },
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -515,7 +516,7 @@ class LieuService extends BaseService {
         )`
       );
 
-      const result = await this.models.Lieu.findAndCountAll({
+      const result = await compterPuisLister(this.models.Lieu, {
         where: {
           ...where,
           [Op.and]: this.sequelize.literal(
@@ -540,7 +541,7 @@ class LieuService extends BaseService {
     }
 
     // Recherche texte classique
-    const result = await this.models.Lieu.findAndCountAll({
+    const result = await compterPuisLister(this.models.Lieu, {
       where,
       include,
       ...(await this._triParNom(lang)),

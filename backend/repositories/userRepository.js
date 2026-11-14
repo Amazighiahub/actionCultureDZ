@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
 const { PUBLIC_USER_PROFILE_ATTRIBUTES, PROFESSIONAL_TYPE_IDS, stripPrivateContact } = require('../constants/publicAttributes');
 const { conditionNom, colonnesNom } = require('./rechercheNom');
+const { triParNom } = require('../utils/triParNom');
 const { STATUTS_EVENEMENT_PUBLICS } = require('../services/liensExternes');
 
 
@@ -506,12 +507,14 @@ class UserRepository extends BaseRepository {
    * @returns {Promise<Array>}
    */
   async searchFiltered(whereClause, limit = 20) {
+    // Nom JSON trié sans accents ni majuscules (audit V11 BDD-15) : le JSON brut se triait dans un ordre faux
+    const { order } = await triParNom(this.model, { colonne: null });
     return this.model.findAll({
       where: whereClause,
       attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
         'entreprise', 'id_type_user', 'statut', 'date_creation'],
       limit,
-      order: [['nom', 'ASC'], ['prenom', 'ASC']]
+      order
     });
   }
 

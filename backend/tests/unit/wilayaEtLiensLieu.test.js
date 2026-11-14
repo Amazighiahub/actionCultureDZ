@@ -86,9 +86,9 @@ describe('page d’une wilaya', () => {
     Article: {},
     Media: {},
     Artisanat: {},
-    Lieu: { findAndCountAll: jest.fn(async () => ({ rows: [], count: 0 })) },
+    Lieu: { count: jest.fn(async () => 0), findAll: jest.fn(async () => []), primaryKeyAttribute: 'id_lieu' },
     LieuMedia: {},
-    Evenement: { findAndCountAll: jest.fn(async () => ({ rows: [], count: 0 })) }
+    Evenement: { count: jest.fn(async () => 0), findAll: jest.fn(async () => []), primaryKeyAttribute: 'id_evenement' }
   });
   const organisations = { annuaire: jest.fn(async () => ({ organisations: [] })) };
 
@@ -119,6 +119,7 @@ describe('page d’une wilaya', () => {
     const v = await vitrineWilaya(m, 15, organisations);
     expect(m.Oeuvre.findAll).not.toHaveBeenCalled();
     expect(v.oeuvres).toEqual({ liste: [], total: 0 });
-    expect(m.Evenement.findAndCountAll).toHaveBeenCalled();
+    // Compte léger puis page (compterPuisLister, audit V11 BDD-12)
+    expect(m.Evenement.count).toHaveBeenCalled();
   });
 });
