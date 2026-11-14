@@ -43,12 +43,14 @@ interface UpdateEvenementData extends Partial<CreateEvenementData> {
   statut?: string;
 }
 
+/** Média d'un événement, tel que le serveur le renvoie (table media) */
 interface EventMedia {
-  id: number;
+  id_media: number;
   url: string;
-  type: string;
-  titre?: string;
-  description?: string;
+  type_media: 'image' | 'video' | 'document' | 'diaporama' | 'audio' | string;
+  titre?: unknown;
+  description?: unknown;
+  credit?: string | null;
   ordre: number;
 }
 
@@ -193,6 +195,15 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
 
   async ajouterDocument(id: number, url: string, titre: string): Promise<ApiResponse<DocumentEvenement>> {
     return httpClient.post<DocumentEvenement>(`/evenements/${id}/documents`, { url, titre });
+  }
+
+  // Photos de l'événement (galerie) : ajoutées par l'organisateur
+  async ajouterPhoto(id: number, photo: { url: string; legende?: string; credit?: string }): Promise<ApiResponse<EventMedia>> {
+    return httpClient.post<EventMedia>(`/evenements/${id}/photos`, photo);
+  }
+
+  async retirerPhoto(id: number, idMedia: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(`/evenements/${id}/photos/${idMedia}`);
   }
 
   async retirerDocument(id: number, idMedia: number): Promise<ApiResponse<void>> {

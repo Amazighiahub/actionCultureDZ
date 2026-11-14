@@ -2,7 +2,7 @@ import MessagesAbonnesCard from '@/components/pro/MessagesAbonnesCard';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { abonnementActuel, activerNotifications, notificationsPossibles } from '@/utils/applicationMobile';
 import React, { useState, useCallback, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PremiersPas from '@/components/user/PremiersPas';
 import { lienGuidePour } from '@/utils/lienGuide';
 import Header from '@/components/Header';
@@ -172,7 +172,7 @@ const DashboardPro = () => {
   const [cancelEventId, setCancelEventId] = useState<number | null>(null);
 
   // État pour la gestion d'événement
-  const [gestionEvenement, setGestionEvenement] = useState<{id: number; nom: string} | null>(null);
+  const [gestionEvenement, setGestionEvenement] = useState<{id: number; nom: string; onglet?: string} | null>(null);
 
   // Utiliser le hook pour récupérer les vraies données de l'API
   const {
@@ -238,6 +238,19 @@ const DashboardPro = () => {
   };
   const { formatDate } = useFormatDate();
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  // Ouverture par l'adresse (/dashboard-pro?gerer=12&onglet=documents) : lien du rappel « ajoutez les
+  // photos de votre événement ». Seulement un événement de la liste du compte ; l'adresse est ensuite nettoyée.
+  const [parametres, setParametres] = useSearchParams();
+  const gererDemande = Number(parametres.get('gerer')) || null;
+  useEffect(() => {
+    if (!gererDemande || !mesEvenements?.items) return;
+    const ev = (mesEvenements.items as Array<{ id_evenement?: number; nom_evenement?: unknown }>).find((e) => e.id_evenement === gererDemande);
+    if (ev) setGestionEvenement({ id: gererDemande, nom: td(ev.nom_evenement as Parameters<typeof td>[0]), onglet: parametres.get('onglet') || undefined });
+    const reste = new URLSearchParams(parametres);
+    reste.delete('gerer'); reste.delete('onglet');
+    setParametres(reste, { replace: true });
+  }, [gererDemande, mesEvenements, parametres, setParametres, td]);
 
   const oeuvresTotal = dashboardStats?.oeuvres?.total ?? 0;
   const evenementsTotal = dashboardStats?.evenements?.total ?? 0;
@@ -1113,6 +1126,7 @@ const DashboardPro = () => {
               <GestionEvenement
                 evenementId={gestionEvenement.id}
                 evenementNom={gestionEvenement.nom}
+                onglet={gestionEvenement.onglet}
                 onClose={() => setGestionEvenement(null)}
               />
             </React.Suspense>

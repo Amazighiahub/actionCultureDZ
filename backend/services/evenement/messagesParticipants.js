@@ -24,18 +24,21 @@ const LIENS = { lien_programme: 'Le lien du programme', lien_whatsapp: 'Le lien 
  * extension ni type, et refuse les liens en « .pdf ». Le site le sert donc lui-même, sous le nom
  * « programme.pdf » ; les autres liens (Drive…) restent tels quels.
  */
-const estPdfDuSite = (url) => {
+/** Fichier mis en ligne par le site sur son compte Cloudinary ; ressource : 'raw' (PDF) ou 'image' */
+const fichierDuSite = (url, ressource) => {
   const compte = process.env.CLOUDINARY_CLOUD_NAME;
   if (typeof url !== 'string' || !compte) return false;
   try {
     // Adresse normalisée : « /raw/upload/../../autre-compte/ » ne passe pas pour un fichier du site
     const adresse = new URL(url);
     return adresse.protocol === 'https:' && adresse.hostname === 'res.cloudinary.com'
-      && adresse.pathname.startsWith(`/${compte}/raw/upload/`);
+      && adresse.pathname.startsWith(`/${compte}/${ressource}/upload/`);
   } catch {
     return false;
   }
 };
+const estPdfDuSite = (url) => fichierDuSite(url, 'raw');
+const estImageDuSite = (url) => fichierDuSite(url, 'image');
 // Le lien du PDF porte une signature : sans elle, les ids se suivent et n'importe qui
 // pourrait lire le programme de tous les messages. Les messages envoyés avant la
 // signature (date ci-dessous) gardent leur ancien lien, déjà dans les e-mails reçus.
@@ -224,4 +227,4 @@ class MessagesParticipants {
   }
 }
 
-module.exports = { MessagesParticipants, lireMessage, lireLien, texteNotification, lienPublicProgramme, estPdfDuSite, CIBLES };
+module.exports = { MessagesParticipants, lireMessage, lireLien, texteNotification, lienPublicProgramme, estPdfDuSite, estImageDuSite, CIBLES };

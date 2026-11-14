@@ -3748,6 +3748,24 @@
       "titre": "Événement en ligne",
       "rejoindre": "Rejoindre la réunion",
       "reserve": "Le lien de réunion est envoyé aux inscrits, dès que leur inscription est validée par l’organisateur."
+    },
+    "photos": {
+      "titre": "Photos de l’événement",
+      "aide": "Montrez comment ça s’est passé : elles s’affichent dans la galerie de la page de l’événement. Seulement des photos que vous avez le droit de publier.",
+      "tropNombreuses": "{{n}} photos au plus peuvent encore être ajoutées.",
+      "ajoutees_one": "{{count}} photo ajoutée à la page de l’événement",
+      "ajoutees_other": "{{count}} photos ajoutées à la page de l’événement",
+      "echec": "Une photo n’a pas pu être ajoutée. Réessayez.",
+      "retirer": "Retirer la photo",
+      "fichiers": "Photos (une ou plusieurs)",
+      "legende": "Légende (facultatif)",
+      "legendeExemple": "ex. Le concert de clôture",
+      "credit": "Photographe (facultatif)",
+      "envoi": "Envoi {{fait}} / {{total}}…",
+      "ajouter": "Ajouter les photos",
+      "max": "30 photos au plus : retirez-en une pour en ajouter une autre.",
+      "retirerTitre": "Retirer cette photo ?",
+      "retirerAide": "Elle disparaît de la galerie de l’événement."
     }
   },
   "places": {
@@ -4135,7 +4153,8 @@
     "showOeuvres": "Présenter des œuvres",
     "oeuvresDisabled": "La gestion des œuvres est désactivée pour cet événement.",
     "oeuvresEnableHint": "Activez \"Présenter des œuvres\" si cet événement inclut des présentations d'œuvres.",
-    "documents": "Documents PDF"
+    "documents": "Documents PDF",
+    "documentsPhotos": "Documents et photos"
   },
   "status": {
     "active": "Actif",

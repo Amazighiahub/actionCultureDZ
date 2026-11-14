@@ -106,6 +106,10 @@ class CronService {
     // 6. Vérification des événements à venir - Toutes les 30 minutes
     this.scheduleJob('upcoming-events-check', '*/30 * * * *', () => this.checkUpcomingEvents());
 
+    // Rappels aux professionnels (photos d'un événement terminé, service pas modifié depuis 6 mois) :
+    // notification sur le site seulement - Tous les lundis à 10 h, heure d'Algérie (audit V11 OUT-23)
+    this.scheduleJob('rappels-contenus', '0 10 * * 1', () => this.rappelsContenus(), { timezone: FUSEAU });
+
     // 7. Nettoyage des fichiers temporaires - Toutes les 6 heures (une seule tâche : app.js en
     // planifiait une seconde, hors verrou, sur les mêmes dossiers)
     this.scheduleJob('clean-temp-files', '0 */6 * * *', () => this.cleanTempFiles());
@@ -266,6 +270,15 @@ class CronService {
   /**
    * 3. Nettoyer les vieilles notifications
    */
+  /** Rappels hebdomadaires aux professionnels (services/rappelsContenus.js) */
+  async rappelsContenus() {
+    if (!this.models || !this.services?.notificationService) return;
+    const { rappelerPhotos, rappelerServices } = require('./rappelsContenus');
+    const photos = await rappelerPhotos(this.models, this.services.notificationService);
+    const services = await rappelerServices(this.models, this.services.notificationService);
+    logger.info(`🔔 Rappels : ${photos} événement(s) sans photo, ${services} service(s) à vérifier`);
+  }
+
   async cleanOldNotifications() {
     if (!this.models?.Notification) return;
 

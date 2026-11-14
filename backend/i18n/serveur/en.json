@@ -437,7 +437,8 @@
     "Ce lieu accueille {n1} service(s) de professionnels : déplacez-les ou retirez-les d'abord": "This place hosts {n1} professional service(s): move or remove them first",
     "Colonne « {t1} » introuvable dans la feuille « {t2} »": "Column “{t1}” not found in the sheet “{t2}”",
     "Vous ne pouvez pas valider {l1} vous-même : un autre membre de l’équipe doit le faire.": "You cannot approve {l1} yourself: another team member must do it.",
-    "Vous avez atteint la limite de {n1} liens": "You have reached the limit of {n1} links"
+    "Vous avez atteint la limite de {n1} liens": "You have reached the limit of {n1} links",
+    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} photos at most per event: remove one first"
   },
   "_libelles": {
     "Adresse": "Address",
@@ -475,5 +476,8 @@
   "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "You have already written to this professional several times today. Try again tomorrow.",
   "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "The message could not be sent. Try again in a moment.",
   "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "Too many messages have been sent today. Try again tomorrow.",
-  "Seul un enregistrement audio est accepté ici.": "Only an audio recording is accepted here."
+  "Seul un enregistrement audio est accepté ici.": "Only an audio recording is accepted here.",
+  "Photo introuvable": "Photo not found",
+  "Seul l'organisateur de l'événement peut gérer ses photos": "Only the event organiser can manage its photos",
+  "Choisissez une photo à envoyer depuis le formulaire": "Choose a photo to send from the form"
 }

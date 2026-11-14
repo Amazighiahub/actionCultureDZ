@@ -45,6 +45,7 @@ import { cleMessageParticipants } from './MessageParticipantsDialog';
 import { saisieEnAttente } from '@/hooks/useSaisieConservee';
 import { useUtilisateurOptionnel } from '@/providers/PermissionsProvider';
 import DocumentsEvenementGestion from './DocumentsEvenementGestion';
+import PhotosEvenementGestion from './PhotosEvenementGestion';
 import { ConfirmDialog } from '@/components/shared';
 import { useToast } from '@/components/ui/use-toast';
 import { programmeService, type Programme } from '@/services/programme.service';
@@ -64,6 +65,8 @@ interface GestionEvenementProps {
   hideOeuvres?: boolean;
   /** Dates de début et fin de l'événement pour le formulaire d'activité */
   eventDates?: { dateDebut: string; dateFin: string };
+  /** Onglet ouvert d'abord (ex. « documents » depuis le rappel « ajoutez vos photos ») */
+  onglet?: string;
 }
 
 // Types d'activités pour les programmes
@@ -93,7 +96,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   evenementNom,
   onClose,
   hideOeuvres = false,
-  eventDates: eventDatesProp
+  eventDates: eventDatesProp,
+  onglet
 }) => {
   const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
@@ -101,8 +105,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   // Message aux participants en cours quand la session a expiré : l'onglet Participants s'ouvre
   // directement, la fenêtre du message s'y rouvre avec le texte (audit V11 FRM-23)
   const utilisateur = useUtilisateurOptionnel();
-  const [ongletInitial] = useState(() =>
-    (saisieEnAttente(cleMessageParticipants(evenementId), utilisateur?.id_user) ? 'participants' : 'programmes'));
+  const [ongletInitial] = useState(() => onglet
+    || (saisieEnAttente(cleMessageParticipants(evenementId), utilisateur?.id_user) ? 'participants' : 'programmes'));
   const { formatTime: hookFormatTime, formatDate } = useFormatDate();
 
   // État pour activer/désactiver la gestion des œuvres
@@ -423,7 +427,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             </TabsTrigger>
             <TabsTrigger value="documents">
               <FileText className="h-4 w-4 me-2" />
-              {t('gestion.documents', 'Documents PDF')}
+              {t('gestion.documentsPhotos', 'Documents et photos')}
             </TabsTrigger>
             {showOeuvresSection && (
               <TabsTrigger value="oeuvres">
@@ -448,9 +452,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
           </div>
         </div>
 
-        {/* Onglet Documents PDF (programme complet, présentation…) */}
-        <TabsContent value="documents">
+        {/* Onglet Documents PDF (programme complet, présentation…) et photos de l'événement (galerie) */}
+        <TabsContent value="documents" className="space-y-6">
           <DocumentsEvenementGestion evenementId={evenementId} />
+          <PhotosEvenementGestion evenementId={evenementId} />
         </TabsContent>
 
         {/* Onglet Programmes */}

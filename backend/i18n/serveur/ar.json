@@ -437,7 +437,8 @@
     "Ce lieu accueille {n1} service(s) de professionnels : déplacez-les ou retirez-les d'abord": "يستقبل هذا المكان خدمات محترفين ({n1}): انقلها أو اسحبها أولًا",
     "Colonne « {t1} » introuvable dans la feuille « {t2} »": "العمود « {t1} » غير موجود في الورقة « {t2} »",
     "Vous ne pouvez pas valider {l1} vous-même : un autre membre de l’équipe doit le faire.": "لا يمكنك المصادقة على {l1} بنفسك: يجب أن يقوم بذلك عضو آخر من الفريق.",
-    "Vous avez atteint la limite de {n1} liens": "بلغت الحد الأقصى: {n1} روابط"
+    "Vous avez atteint la limite de {n1} liens": "بلغت الحد الأقصى: {n1} روابط",
+    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} صورة على الأكثر لكل فعالية: احذف واحدة أولًا"
   },
   "_libelles": {
     "Adresse": "العنوان",
@@ -475,5 +476,8 @@
   "Vous avez déjà écrit plusieurs fois à ce professionnel aujourd’hui. Réessayez demain.": "لقد راسلت هذا المحترف عدة مرات اليوم. أعد المحاولة غدًا.",
   "Le message n’a pas pu être envoyé. Réessayez dans un instant.": "تعذّر إرسال الرسالة. أعد المحاولة بعد لحظة.",
   "Trop de messages ont été envoyés aujourd’hui. Réessayez demain.": "أُرسلت رسائل كثيرة اليوم. أعد المحاولة غدًا.",
-  "Seul un enregistrement audio est accepté ici.": "لا يُقبل هنا إلا تسجيل صوتي."
+  "Seul un enregistrement audio est accepté ici.": "لا يُقبل هنا إلا تسجيل صوتي.",
+  "Photo introuvable": "الصورة غير موجودة",
+  "Seul l'organisateur de l'événement peut gérer ses photos": "وحده منظّم الفعالية يمكنه إدارة صورها",
+  "Choisissez une photo à envoyer depuis le formulaire": "اختر صورة لإرسالها من النموذج"
 }

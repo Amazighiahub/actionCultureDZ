@@ -26,7 +26,7 @@ describe('connexion d’un compte professionnel en vérification', () => {
 
   it('compte en attente : encadré explicatif avec les guides, pas d’erreur rouge', async () => {
     login.mockResolvedValue({ success: false, error: 'en attente', code: 'COMPTE_EN_ATTENTE', status: 403 });
-    render(<MemoryRouter><LoginForm /></MemoryRouter>);
+    render(<MemoryRouter><LoginForm onSwitchToRegister={() => {}} /></MemoryRouter>);
     await seConnecter();
     expect(await screen.findByTestId('compte-en-attente')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Préparer mon portfolio' }).getAttribute('href')).toBe('/guide/portfolio');
@@ -35,7 +35,7 @@ describe('connexion d’un compte professionnel en vérification', () => {
 
   it('compte refusé : encadré avec l’adresse de contact', async () => {
     login.mockResolvedValue({ success: false, error: 'refusé', code: 'COMPTE_REFUSE', status: 403 });
-    render(<MemoryRouter><LoginForm /></MemoryRouter>);
+    render(<MemoryRouter><LoginForm onSwitchToRegister={() => {}} /></MemoryRouter>);
     await seConnecter();
     await waitFor(() => expect(screen.getByTestId('compte-refuse')).toBeTruthy());
     expect(screen.getByRole('link', { name: 'contact@taladz.com' })).toBeTruthy();

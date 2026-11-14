@@ -7,23 +7,17 @@
 const { estPdfDuSite } = require('./messagesParticipants');
 
 const MAX_DOCUMENTS = 5;
-const erreur = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
+const { MediasEvenement, erreur } = require('./mediasEvenement');
 
 /** Adresse publique du PDF, servie par le site */
 const lienDocument = (idEvenement, idMedia) => `/api/evenements/${idEvenement}/documents/${idMedia}/document.pdf`;
 
-class DocumentsEvenement {
+class DocumentsEvenement extends MediasEvenement {
   constructor(models) {
-    this.models = models;
-  }
-
-  async _evenement(idEvenement, utilisateur) {
-    const evenement = await this.models.Evenement.findByPk(idEvenement, { attributes: ['id_evenement', 'id_user'] });
-    if (!evenement) throw erreur('Événement introuvable', 404);
-    if (!utilisateur?.isAdmin && Number(evenement.id_user) !== Number(utilisateur?.id_user)) {
-      throw erreur('Seul l\'organisateur de l\'événement peut gérer ses documents', 403);
-    }
-    return evenement;
+    super(models, {
+      type: 'document', max: MAX_DOCUMENTS, estDuSite: estPdfDuSite,
+      refus: 'Seul l\'organisateur de l\'événement peut gérer ses documents', introuvable: 'Document introuvable'
+    });
   }
 
   /** Documents d'un événement (ordre d'ajout), avec leur adresse de téléchargement */
@@ -43,7 +37,7 @@ class DocumentsEvenement {
     if (!estPdfDuSite(url)) throw erreur('Choisissez un fichier PDF à envoyer depuis le formulaire');
     const nom = String(titre || '').trim().slice(0, 150);
     if (!nom) throw erreur('Donnez un titre au document (ex. « Programme complet »)');
-    const nombre = await this.models.Media.count({ where: { id_evenement: evenement.id_evenement, type_media: 'document' } });
+    const nombre = await this._compter(evenement.id_evenement);
     if (nombre >= MAX_DOCUMENTS) throw erreur(`${MAX_DOCUMENTS} documents au plus par événement : retirez-en un d'abord`);
     const media = await this.models.Media.create({
       id_evenement: evenement.id_evenement,
@@ -55,28 +49,6 @@ class DocumentsEvenement {
       metadata: { uploadedBy: utilisateur.id_user }
     });
     return { id_media: media.id_media, titre: media.titre, lien: lienDocument(evenement.id_evenement, media.id_media) };
-  }
-
-  async retirer(idEvenement, idMedia, utilisateur) {
-    const evenement = await this._evenement(idEvenement, utilisateur);
-    const where = { id_media: idMedia, id_evenement: evenement.id_evenement, type_media: 'document' };
-    const media = await this.models.Media.findOne({ where, attributes: ['url'], raw: true });
-    const n = await this.models.Media.destroy({ where });
-    if (!n) throw erreur('Document introuvable', 404);
-    await this._effacerFichier(media?.url);
-    return true;
-  }
-
-  /** Le fichier retiré ne reste pas sur Cloudinary, sauf si un autre document s'en sert. Un échec n'empêche pas le retrait. */
-  async _effacerFichier(url) {
-    if (!estPdfDuSite(url)) return;
-    try {
-      if (await this.models.Media.count({ where: { url } })) return;
-      // Helper commun (raw : le public_id garde son extension éventuelle)
-      await require('../cloudinaryService').supprimerParUrl(url);
-    } catch (e) {
-      require('../../utils/logger').warn(`PDF non effacé de Cloudinary : ${e.message}`);
-    }
   }
 
   /** Adresse Cloudinary du PDF à servir ; 404 si ce n'est pas un document PDF de cet événement */

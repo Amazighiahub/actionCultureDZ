@@ -134,6 +134,11 @@ const initEvenementRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => evenementController.ajouterDocument(req, res)));
   router.delete('/:id/documents/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.retirerDocument(req, res)));
+  // Photos de l'événement (galerie publique via GET /:id/medias) : ajout et retrait par l'organisateur
+  router.post('/:id/photos', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+    asyncHandler((req, res) => evenementController.ajouterPhoto(req, res)));
+  router.delete('/:id/photos/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => evenementController.retirerPhoto(req, res)));
 
   // Programme en PDF joint à un message (ouvert depuis l'email ou la notification, sans connexion)
   router.get('/:id/messages/:idMessage/programme.pdf', pdfLimiter, validateId(), validateId('idMessage'),

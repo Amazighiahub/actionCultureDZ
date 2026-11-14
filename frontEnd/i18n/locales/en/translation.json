@@ -3743,6 +3743,24 @@
       "titre": "Online event",
       "rejoindre": "Join the meeting",
       "reserve": "The meeting link is sent to registrants as soon as the organiser validates their registration."
+    },
+    "photos": {
+      "titre": "Event photos",
+      "aide": "Show how it went: they appear in the gallery on the event page. Only photos you have the right to publish.",
+      "tropNombreuses": "At most {{n}} more photos can be added.",
+      "ajoutees_one": "{{count}} photo added to the event page",
+      "ajoutees_other": "{{count}} photos added to the event page",
+      "echec": "A photo could not be added. Please try again.",
+      "retirer": "Remove the photo",
+      "fichiers": "Photos (one or more)",
+      "legende": "Caption (optional)",
+      "legendeExemple": "e.g. The closing concert",
+      "credit": "Photographer (optional)",
+      "envoi": "Sending {{fait}} / {{total}}…",
+      "ajouter": "Add the photos",
+      "max": "30 photos at most: remove one to add another.",
+      "retirerTitre": "Remove this photo?",
+      "retirerAide": "It disappears from the event gallery."
     }
   },
   "places": {
@@ -4130,7 +4148,8 @@
     "showOeuvres": "Present works",
     "oeuvresDisabled": "Work management is disabled for this event.",
     "oeuvresEnableHint": "Enable \"Present works\" if this event includes presentations of works.",
-    "documents": "PDF documents"
+    "documents": "PDF documents",
+    "documentsPhotos": "Documents and photos"
   },
   "status": {
     "active": "Active",

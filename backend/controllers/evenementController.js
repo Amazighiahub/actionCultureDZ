@@ -651,6 +651,25 @@ class EvenementController extends BaseController {
     }
   }
 
+  // Photos de l'événement (galerie) : ajout et retrait par l'organisateur ou l'administration
+  async ajouterPhoto(req, res) {
+    try {
+      const data = await container.photosEvenementService.ajouter(parseInt(req.params.id), req.user, req.body || {});
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async retirerPhoto(req, res) {
+    try {
+      await container.photosEvenementService.retirer(parseInt(req.params.id), parseInt(req.params.idMedia), req.user);
+      res.json({ success: true });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** Le PDF servi par le site (même principe que le programme joint à un message) */
   async telechargerDocument(req, res) {
     try {

@@ -324,6 +324,18 @@ class ServiceContainer {
     return this._services.get('documentsEvenement');
   }
 
+  /** Photos de l'événement, ajoutées par l'organisateur (galerie de la page) */
+  get photosEvenementService() {
+    this._checkInitialized();
+
+    if (!this._services.has('photosEvenement')) {
+      const { PhotosEvenement } = require('./evenement/photosEvenement');
+      this._services.set('photosEvenement', new PhotosEvenement(this._models));
+    }
+
+    return this._services.get('photosEvenement');
+  }
+
   /** Propositions de modification d'un article (brouillons validés par l'auteur ou l'administration) */
   get articleRevisionService() {
     this._checkInitialized();
