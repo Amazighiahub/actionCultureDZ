@@ -15,6 +15,31 @@ import { httpClient } from '@/services/httpClient';
 import { Skeleton } from '@/components/ui/skeleton';
 import { lienSommaireGuides } from '@/utils/lienGuide';
 import { HERO_PREMIERE_IMAGE } from './heroPremiereImage';
+import { evenementPath, lieuPath, oeuvrePath } from '@/utils/slug';
+
+/** Photo « À la une » renvoyée par le serveur (contenus publiés par les contributeurs) */
+interface Une {
+  type: 'lieu' | 'oeuvre' | 'article' | 'evenement';
+  id: number;
+  titre: string;
+  credit: string | null;
+  image: string;
+  srcSet: string;
+}
+
+/** Image du défilement ; `lien`, `credit` : seulement pour les photos des contributeurs */
+interface ImageAccueil {
+  url: string;
+  srcSet?: string;
+  fallback?: string;
+  title: string;
+  lien?: string;
+  credit?: string | null;
+}
+
+const lienUne = (u: Une) => (u.type === 'lieu' ? lieuPath(u.id, u.titre)
+  : u.type === 'evenement' ? evenementPath(u.id, u.titre)
+    : oeuvrePath(u.id, u.titre, u.type === 'article' ? 4 : null));
 
 interface PublicStats {
   sites_patrimoniaux: number;
@@ -32,7 +57,8 @@ const HeroSection: React.FC = () => {
   const { isRtl } = useRTL();
   const { isAuthenticated } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
+  // Images chargées, par adresse (la liste change quand les photos « À la une » arrivent)
+  const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   // Images déjà montées : une image n'est téléchargée qu'au moment d'être affichée
   const [mountedSlides, setMountedSlides] = useState<Set<number>>(() => new Set([0]));
   const [paused, setPaused] = useState(false);
@@ -44,7 +70,7 @@ const HeroSection: React.FC = () => {
 
   // Images locales du patrimoine algérien : plusieurs largeurs (srcSet), le navigateur
   // télécharge la plus adaptée à l'écran (66 Ko sur mobile au lieu de 500 Ko)
-  const heroImages = [
+  const paysages: ImageAccueil[] = [
     {
       ...HERO_PREMIERE_IMAGE,
       title: t('home.hero.slides.timgad', 'Ruines romaines de Timgad'),
@@ -69,6 +95,22 @@ const HeroSection: React.FC = () => {
     }
   ];
 
+  // « À la une » : photos des contributeurs (lieux, œuvres, articles, événement à venir), choisies
+  // par le serveur chaque jour. La première image (Timgad, préchargée) reste : la page s'ouvre vite.
+  // Moins de 3 photos : les paysages restent.
+  const langueUne = (i18n.language || 'fr').split('-')[0] === 'tz' ? i18n.language : (i18n.language || 'fr').split('-')[0];
+  const { data: unes = [] } = useQuery({
+    queryKey: ['home', 'a-la-une', langueUne],
+    queryFn: async (): Promise<Une[]> => {
+      const res = await httpClient.get<Une[]>(`/stats/a-la-une?lang=${encodeURIComponent(langueUne)}`);
+      return res.success && Array.isArray(res.data) ? res.data : [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const heroImages: ImageAccueil[] = unes.length >= 3
+    ? [paysages[0], ...unes.slice(0, 5).map((u) => ({ url: u.image, srcSet: u.srcSet, title: u.titre, lien: lienUne(u), credit: u.credit }))]
+    : paysages;
+
   // Statistiques publiques (React Query : en cache, pas rechargées à chaque retour sur l'accueil).
   // En cas d'erreur, les valeurs par défaut ("...") restent affichées.
   const { data: publicStats = null, isLoading: statsLoading } = useQuery({
@@ -78,10 +120,6 @@ const HeroSection: React.FC = () => {
       return response.success && response.data ? response.data : null;
     },
   });
-
-  useEffect(() => {
-    setImagesLoaded(new Array(heroImages.length).fill(false));
-  }, []);
 
   // Défilement automatique, sauf en pause ou si l'utilisateur limite les animations
   useEffect(() => {
@@ -94,7 +132,7 @@ const HeroSection: React.FC = () => {
 
   // Monter l'image courante et précharger la suivante juste avant son tour ; la deuxième attend
   // que la première soit affichée (sinon elle partageait le réseau avec elle sur téléphone)
-  const courantePrete = imagesLoaded[currentSlide] === true;
+  const courantePrete = imagesLoaded[heroImages[currentSlide]?.url] === true;
   useEffect(() => {
     setMountedSlides((prev) => {
       const next = (currentSlide + 1) % heroImages.length;
@@ -104,13 +142,14 @@ const HeroSection: React.FC = () => {
     });
   }, [currentSlide, heroImages.length, courantePrete]);
 
-  const handleImageLoad = (index: number) => {
-    setImagesLoaded(prev => {
-      const newState = [...prev];
-      newState[index] = true;
-      return newState;
-    });
+  const handleImageLoad = (url: string) => {
+    setImagesLoaded(prev => (prev[url] ? prev : { ...prev, [url]: true }));
   };
+  // Liste changée (photos « À la une » arrivées) : l'image courante reste dans les bornes
+  useEffect(() => {
+    if (currentSlide >= heroImages.length) setCurrentSlide(0);
+  }, [heroImages.length, currentSlide]);
+  const imageCourante = heroImages[currentSlide];
 
   // Statistiques dynamiques depuis l'API ou valeurs par défaut
   const stats = [
@@ -153,7 +192,7 @@ const HeroSection: React.FC = () => {
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            {!imagesLoaded[index] && (
+            {!imagesLoaded[image.url] && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 animate-pulse" />
             )}
             {mountedSlides.has(index) && (
@@ -167,7 +206,7 @@ const HeroSection: React.FC = () => {
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : 'low'}
                 decoding={index === 0 ? 'sync' : 'async'}
-                onLoad={() => handleImageLoad(index)}
+                onLoad={() => handleImageLoad(image.url)}
                 onError={(e) => {
                   const target = e.currentTarget;
                   if (image.fallback && !target.src.endsWith(image.fallback)) {
@@ -176,7 +215,7 @@ const HeroSection: React.FC = () => {
                   }
                 }}
                 className={`w-full h-full object-cover object-center ${
-                  index === 0 || imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
+                  index === 0 || imagesLoaded[image.url] ? 'opacity-100' : 'opacity-0'
                 }`}
               />
             )}
@@ -325,6 +364,17 @@ const HeroSection: React.FC = () => {
 
       {/* ===== INDICATEURS DU CAROUSEL + PAUSE ===== */}
       {/* Zone cliquable de 24 px autour de chaque point (cible tactile suffisante) */}
+      {imageCourante?.lien && (
+        <Link to={imageCourante.lien} data-testid="legende-a-la-une"
+          className="absolute bottom-16 sm:bottom-20 end-4 sm:end-8 z-20 max-w-[16rem] rounded-lg bg-black/55 px-3 py-2 text-white backdrop-blur-sm hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/80">{t('home.hero.aLaUne', 'À découvrir')}</span>
+          <span className="block text-sm font-medium leading-snug line-clamp-2" dir="auto">{imageCourante.title}</span>
+          {imageCourante.credit && (
+            <span className="block text-[11px] text-white/80" dir="auto">{t('home.hero.photoDe', 'Photo : {{nom}}', { nom: imageCourante.credit })}</span>
+          )}
+        </Link>
+      )}
+
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
         {heroImages.map((img, index) => (
           <button

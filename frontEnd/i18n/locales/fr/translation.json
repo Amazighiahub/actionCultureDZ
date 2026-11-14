@@ -996,7 +996,9 @@
       "goToSlide": "Image {{index}} sur {{total}} : {{title}}",
       "play": "Reprendre le défilement",
       "pause": "Mettre en pause le défilement",
-      "guide": "Comment contribuer ? Lire le guide"
+      "guide": "Comment contribuer ? Lire le guide",
+      "aLaUne": "À découvrir",
+      "photoDe": "Photo : {{nom}}"
     },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",
