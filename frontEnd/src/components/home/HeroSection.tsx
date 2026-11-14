@@ -113,7 +113,9 @@ const HeroSection: React.FC = () => {
   // Moins de 3 photos : les paysages restent.
   const langueUne = (i18n.language || 'fr').split('-')[0] === 'tz' ? i18n.language : (i18n.language || 'fr').split('-')[0];
   const { data: unes = [] } = useQuery({
-    queryKey: ['home', 'a-la-une', langueUne],
+    // Clé propre : ['home', 'a-la-une', …] est déjà celle des prochains événements (ALaUne.tsx) ;
+    // la même clé faisait recevoir ces photos à la section des événements (cases vides)
+    queryKey: ['home', 'photos-accueil', langueUne],
     queryFn: async (): Promise<Une[]> => {
       const res = await httpClient.get<Une[]>(`/stats/a-la-une?lang=${encodeURIComponent(langueUne)}`);
       return res.success && Array.isArray(res.data) ? res.data : [];
