@@ -864,7 +864,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           <div>
             <p className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</p>
             <div className="p-3 border rounded-lg bg-muted">
-              <Badge variant="secondary">{(user as any)?.TypeUser?.nom_type || (user as any)?.type_user || t("dashboarduser.visiteur")}</Badge>
+              {/* Même règle que le badge du menu : le profil ne contient pas le nom du type (tout pro voyait « Visiteur ») */}
+              <Badge variant="secondary">{isProfessional ? t('header.badges.professional') : t("dashboarduser.visiteur")}</Badge>
             </div>
           </div>
           <div>
