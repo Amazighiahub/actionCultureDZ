@@ -20,6 +20,7 @@ import ListeMoyensPaiement from '@/components/paiement/ListeMoyensPaiement';
 import { commandeService, type Commande, type StatutCommande } from '@/services/commande.service';
 import { oeuvrePath } from '@/utils/slug';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { lienGuidePour } from '@/utils/lienGuide';
 
 const STYLE: Record<StatutCommande, { icone: React.ElementType; classe: string }> = {
   en_attente: { icone: Clock, classe: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200' },
@@ -163,7 +164,7 @@ const ListeCommandes: React.FC<{ charger: () => Promise<{ success: boolean; data
 };
 
 const MesCommandes: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isProfessional } = useAuth();
   const [onglet, setOnglet] = useState(isProfessional ? 'ventes' : 'achats');
   const achats = useCallback(() => commandeService.mesAchats(), []);
@@ -176,7 +177,11 @@ const MesCommandes: React.FC = () => {
       <h1 className="text-2xl font-serif font-bold flex items-center gap-2 mb-2">
         <ShoppingBag className="h-6 w-6 text-primary" aria-hidden="true" />{t('commande.mesCommandes', 'Mes commandes')}
       </h1>
-      <p className="text-sm text-muted-foreground mb-6">{t('paiement.mentionCommandes', 'Les paiements se font directement entre l’acheteur et le vendeur. Tala DZ ne perçoit aucune somme et ne prend aucune commission.')}</p>
+      <p className="text-sm text-muted-foreground mb-6">
+        {t('paiement.mentionCommandes', 'Les paiements se font directement entre l’acheteur et le vendeur. Tala DZ ne perçoit aucune somme et ne prend aucune commission.')}{' '}
+        {/* Guide pas à pas (page statique) : lien classique */}
+        <a href={lienGuidePour('vente', i18n.language)} className="font-medium text-primary underline">{t('commande.commentCaMarche', 'Comment ça marche ?')}</a>
+      </p>
       <Tabs value={onglet} onValueChange={setOnglet}>
         <TabsList>
           {isProfessional && <TabsTrigger value="ventes">{t('commande.mesVentes', 'Mes ventes')}</TabsTrigger>}

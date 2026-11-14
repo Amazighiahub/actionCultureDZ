@@ -6172,7 +6172,8 @@
     "unique": "Œuvre unique : une seule pièce.",
     "telephoneInvalide": "Numéro de téléphone invalide (chiffres, espaces, + au début).",
     "nonEnvoyee": "La commande n’est pas partie. Vérifiez votre connexion puis appuyez de nouveau sur « Envoyer la commande ».",
-    "reponseTarde": "La réponse tarde. Ouvrez « Mes commandes » pour voir si elle est enregistrée avant de réessayer."
+    "reponseTarde": "La réponse tarde. Ouvrez « Mes commandes » pour voir si elle est enregistrée avant de réessayer.",
+    "commentCaMarche": "Comment ça marche ?"
   },
   "paiement": {
     "mention": "Le paiement se fait directement auprès de l’organisateur. Tala DZ ne perçoit aucune somme.",
