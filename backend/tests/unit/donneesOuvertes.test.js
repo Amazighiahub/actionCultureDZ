@@ -36,7 +36,7 @@ describe('données ouvertes des lieux', () => {
 
   it('CSV : en-tête, nombre négatif intact, formule neutralisée', async () => {
     const csv = versCSV(await lireLieux(modeles([{ ...lieu, nom: { fr: '=HYPERLINK("x")' } }])));
-    const [entete, ligne] = csv.replace(/^﻿/, '').split('\r\n');
+    const [entete, ligne] = csv.replace(new RegExp('^' + String.fromCharCode(0xFEFF)), '').split('\r\n');
     expect(entete.startsWith('id,nom_fr,nom_ar')).toBe(true);
     expect(ligne).toContain(',-0.63,');
     expect(ligne).toContain('"\'=HYPERLINK(""x"")"');

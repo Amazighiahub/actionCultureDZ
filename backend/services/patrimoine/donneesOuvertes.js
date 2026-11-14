@@ -78,7 +78,7 @@ function versCSV(lieux) {
   const entetes = ['id', ...LANGUES.map((lg) => `nom_${lg.replace('-', '_')}`), 'type', 'commune', 'wilaya', 'code_wilaya', 'latitude', 'longitude', 'site_parent', 'url', 'mis_a_jour'];
   const lignes = lieux.map((l) => [l.id, ...LANGUES.map((lg) => l.noms[lg]), l.type, l.commune, l.wilaya, l.code_wilaya, l.latitude, l.longitude, l.site_parent, l.url, l.mis_a_jour].map(cellule).join(','));
   // BOM : les accents et l'arabe s'ouvrent correctement dans Excel
-  return '﻿' + [entetes.join(','), ...lignes].join('\r\n') + '\r\n';
+  return String.fromCharCode(0xFEFF) + [entetes.join(','), ...lignes].join('\r\n') + '\r\n';
 }
 
 module.exports = { lireLieux, versGeoJSON, versCSV, cellule, LICENCE };
