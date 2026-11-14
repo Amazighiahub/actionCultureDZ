@@ -8,6 +8,7 @@ const BaseRepository = require('./baseRepository');
 const AppError = require('../utils/appError');
 const { invalidateUserSession } = require('../utils/sessionCache');
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
+const { aRoleAdministration } = require('../constants/roles');
 
 class SignalementRepository extends BaseRepository {
   constructor(models) {
@@ -241,7 +242,7 @@ class SignalementRepository extends BaseRepository {
             attributes: ['id_user', 'id_type_user'],
             include: this.models.Role ? [{ model: this.models.Role, as: 'Roles', attributes: ['nom_role'], through: { attributes: [] } }] : []
           });
-          if (cible && (cible.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR || cible.Roles?.some(r => r.nom_role === 'Administrateur'))) {
+          if (cible && (cible.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR || aRoleAdministration(cible.Roles))) {
             throw AppError.forbidden('Un compte administrateur ne peut pas être sanctionné par un signalement');
           }
           const newStatut = action === 'suspension_temporaire' ? 'suspendu' : 'banni';

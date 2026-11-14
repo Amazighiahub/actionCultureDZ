@@ -33,7 +33,6 @@ const initOrganisationRoutes = require('./organisationRoutes');
 const initLienRoutes = require('./lienRoutes');
 const initPaiementRoutes = require('./paiementRoutes');
 const initCommandeRoutes = require('./commandeRoutes');
-const initMultilingualRoutes = require('./multilingualRoutes');
 const initStatsRoutes = require('./statsRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
@@ -495,7 +494,6 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/lieux', init: initLieuRoutes, args: [models] },
     { path: '/wilayas', init: initWilayaRoutes, args: [models] },
     // /api/languages et /api/set-language sont définis directement dans app.js
-    { path: '/multilingual', init: initMultilingualRoutes, args: [models, authMiddleware] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },
     { path: '/artisanat', init: initArtisanatRoutes, args: [models, authMiddleware] },
     { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth, requireVerifiedEmail: authMiddleware.requireVerifiedEmail, requireRole: authMiddleware.requireRole }] },

@@ -32,4 +32,12 @@ function aUnDesRoles(rolesDuCompte, ...demandes) {
 
 const estRole = (nom, role) => normaliserRole(nom) === normaliserRole(role);
 
-module.exports = { ROLES, normaliserRole, roleDemande, aUnDesRoles, estRole };
+// Protection d'un compte (ne pas le supprimer, le désactiver, le sanctionner) : on reste LARGE et on
+// reconnaît aussi les anciens noms « Admin » et « Super Admin ». Pour DONNER un droit, utiliser estRole.
+const NOMS_ADMIN_PROTEGES = Object.freeze([ROLES.ADMIN, 'Admin', 'Super Admin']);
+/** Le compte (objets { nom_role }) a-t-il un rôle d'administration à protéger ? */
+const aRoleAdministration = (roles) => (roles || []).some((r) => NOMS_ADMIN_PROTEGES.some((n) => estRole(r?.nom_role, n)));
+/** Administration ou modération (protection d'un compte) */
+const aRoleEquipe = (roles) => aRoleAdministration(roles) || (roles || []).some((r) => estRole(r?.nom_role, ROLES.MODERATEUR));
+
+module.exports = { ROLES, normaliserRole, roleDemande, aUnDesRoles, estRole, aRoleAdministration, aRoleEquipe };

@@ -5,6 +5,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { memeUtilisateur, texteRefus } = require('../utils/droits');
 
 class VueController extends BaseController {
   get vueService() {
@@ -135,13 +136,13 @@ class VueController extends BaseController {
 
       // Verifier les permissions
       const canUpdate = vue.id_user ?
-        vue.id_user === req.user?.id_user :
+        memeUtilisateur(vue.id_user, req.user?.id_user) :
         (requestSessionId ? vue.session_id === requestSessionId : false);
 
       if (!canUpdate && !req.user?.isAdmin) {
         return res.status(403).json({
           success: false,
-          message: req.t('auth.forbidden')
+          ...texteRefus(req.t('auth.forbidden'))
         });
       }
 

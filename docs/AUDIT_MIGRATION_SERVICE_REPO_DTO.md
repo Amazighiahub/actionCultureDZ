@@ -63,7 +63,6 @@ Ces controllers utilisent un service mais le service accède directement aux mod
 | `metadataController.js` | `metadataService.js` | ❌ | Lecture seule de tables de référence, un repo n'apporterait pas de valeur |
 | `uploadController.js` | `upload/uploadService.js` | ❌ | Logique fichiers/Cloudinary, pas de CRUD classique |
 | `emailVerificationController.js` | `emailVerificationService.js` | ❌ | Logique transverse (email + token + user), pas un CRUD |
-| `multilingualController.js` | `multilingualService.js` | ❌ | Utilitaire de traduction, pas de données propres |
 | `professionnelController.js` | `professionnelService.js` | ❌ | Agrège plusieurs repos existants (user, oeuvre, evenement) |
 | `searchController.js` | `searchService.js` | ❌ | Recherche multi-entités, agrège plusieurs models |
 | `dashboardController.js` | `dashboard/*.js` (5 services) | ❌ | Agrège plusieurs services (stats, moderation, monitoring, userManagement) |

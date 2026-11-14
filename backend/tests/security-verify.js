@@ -42,8 +42,7 @@ const mods = [
   ['lieuController', '../controllers/lieuController.js'],
   ['professionnelController', '../controllers/professionnelController.js'],
   ['intervenantController', '../controllers/intervenantController.js'],
-  ['notificationRoutes', '../routes/notificationRoutes.js'],
-  ['multilingualRoutes', '../routes/multilingualRoutes.js']
+  ['notificationRoutes', '../routes/notificationRoutes.js']
 ];
 
 mods.forEach(([name, path]) => {

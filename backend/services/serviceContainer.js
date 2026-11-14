@@ -513,16 +513,6 @@ class ServiceContainer {
     return this._services.get('upload');
   }
 
-  get multilingualService() {
-    this._checkInitialized();
-
-    if (!this._services.has('multilingual')) {
-      const MultilingualService = require('./multilingualService');
-      this._services.set('multilingual', new MultilingualService(this._models));
-    }
-
-    return this._services.get('multilingual');
-  }
 
   get organisationService() {
     this._checkInitialized();

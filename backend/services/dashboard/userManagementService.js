@@ -10,6 +10,7 @@ const { TYPE_USER_IDS, REGISTRABLE_TYPE_USER_IDS } = require('../../constants/ty
 const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('../user/userFileCleanup');
 const { annulerEvenementsAVenir } = require('../user/evenementsAVenir');
+const { aRoleAdministration } = require('../../constants/roles');
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
@@ -189,7 +190,7 @@ class DashboardUserManagementService {
 
     // Vérification métier : ne pas supprimer un admin (via Roles OU id_type_user=29)
     if (
-      (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin' || r.nom_role === 'Administrateur'))
+      aRoleAdministration(user.Roles)
       || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR
     ) {
       throw erreurHttp('CANNOT_DELETE_ADMIN', 403);
@@ -434,7 +435,7 @@ class DashboardUserManagementService {
       for (const userId of userIds) {
         const user = await this.userRepo.findWithRoles(userId);
         const estAdmin = user?.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR
-          || user?.Roles?.some(r => ['Admin', 'Super Admin', 'Administrateur'].includes(r.nom_role));
+          || aRoleAdministration(user?.Roles);
         if (!user || estAdmin || Number(userId) === Number(adminId)) {
           results.errors.push({ id: userId, error: 'CANNOT_DEACTIVATE' });
         } else {

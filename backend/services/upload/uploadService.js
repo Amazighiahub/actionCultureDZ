@@ -179,7 +179,8 @@ class UploadService {
   async _photoEffacable(url, userId) {
     if (!this.models.Media) return false;
     const medias = await this.models.Media.findAll({ where: { url }, attributes: ['metadata'] });
-    const siens = medias.length > 0 && medias.every(m => m.metadata?.uploadedBy === userId);
+    // En nombre : uploadedBy peut avoir été enregistré « 12 » dans le JSON
+    const siens = medias.length > 0 && medias.every(m => memeUtilisateur(m.metadata?.uploadedBy, userId));
     return siens && !(await isReferencedElsewhere(this.models, url, { sansMedias: true }));
   }
 

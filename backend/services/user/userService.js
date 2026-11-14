@@ -23,6 +23,7 @@ const { deleteUserFiles } = require('./userFileCleanup');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { evenementsAVenir, annulerEvenementsAVenir } = require('./evenementsAVenir');
 const { texteLisible } = require('../../helpers/i18n');
+const { ROLES, estRole, aRoleAdministration, aRoleEquipe } = require('../../constants/roles');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 90;
 // Jeton précédent encore accepté : la réponse du renouvellement a pu se perdre sur un réseau mobile
@@ -146,7 +147,8 @@ class UserService extends BaseService {
     }
 
     // 2b. Vérifier l'email (admins exemptés uniquement par rôle DB, pas par id_type_user hardcodé)
-    const hasAdminRole = Array.isArray(user.Roles) && user.Roles.some(r => r.nom_role === 'Administrateur');
+    // Donne un droit (connexion sans e-mail vérifié) : nom exact seulement, aux accents près
+    const hasAdminRole = Array.isArray(user.Roles) && user.Roles.some(r => estRole(r.nom_role, ROLES.ADMIN));
     if (!user.email_verifie && !hasAdminRole) {
       throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
@@ -520,7 +522,7 @@ class UserService extends BaseService {
     if (Number(id) === Number(adminId)) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer votre propre compte');
     }
-    if (user.Roles?.some(r => r.nom_role === 'Administrateur')
+    if (aRoleAdministration(user.Roles)
         || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR) {
       throw this._forbiddenError('Impossible de supprimer un compte administrateur');
     }
@@ -811,8 +813,7 @@ class UserService extends BaseService {
     if (Number(userId) === Number(validatorId)) {
       throw this._forbiddenError('Vous ne pouvez pas refuser votre propre compte');
     }
-    const STAFF_ROLES = ['Administrateur', 'Modérateur', 'Moderateur'];
-    if (user.Roles?.some(r => STAFF_ROLES.includes(r.nom_role))) {
+    if (aRoleEquipe(user.Roles)) {
       throw this._forbiddenError('Impossible de refuser un compte administrateur ou modérateur');
     }
     if (user.statut !== 'en_attente_validation') {

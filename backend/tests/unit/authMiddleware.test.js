@@ -505,88 +505,34 @@ describe('authMiddleware', () => {
   });
 
   // =========================================================================
-  // requireDashboardPermission
+  // requireOwnership : le propriétaire est reconnu en nombre (« 12 » = 12), jamais un id vide
   // =========================================================================
-  describe('requireDashboardPermission', () => {
-    it('should return 401 when no user is attached', () => {
-      req.user = undefined;
+  describe('requireOwnership', () => {
+    const avecRessource = (proprietaire) => {
+      mockModels.Oeuvre = { findByPk: jest.fn().mockResolvedValue({ saisi_par: proprietaire }) };
+      return require('../../middlewares/authMiddleware')(mockModels).requireOwnership('Oeuvre', 'id', 'saisi_par');
+    };
 
-      const middleware = authMiddleware.requireDashboardPermission('view_dashboard');
-      middleware(req, res, next);
+    it('« 12 » en base et 12 dans le jeton : même compte, accès accordé', async () => {
+      req.user = { id_user: 12, isAdmin: false };
+      req.params = { id: '5' };
+      await avecRessource('12')(req, res, next);
+      expect(next).toHaveBeenCalled();
+    });
 
-      expect(res.status).toHaveBeenCalledWith(401);
+    it('propriétaire absent (null) : 403, même pour un compte connecté', async () => {
+      req.user = { id_user: 12, isAdmin: false };
+      req.params = { id: '5' };
+      await avecRessource(null)(req, res, next);
       expect(next).not.toHaveBeenCalled();
-    });
-
-    it('should pass for Admin with matching permission', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['Admin'];
-
-      const middleware = authMiddleware.requireDashboardPermission('validate_user');
-      middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-    });
-
-    it('should pass for Super Admin (wildcard *)', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['Super Admin'];
-
-      const middleware = authMiddleware.requireDashboardPermission('any_action_at_all');
-      middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-    });
-
-    it('should reject Moderateur for Admin-only permission', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['Moderateur'];
-
-      const middleware = authMiddleware.requireDashboardPermission('manage_events');
-      middleware(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('should pass Moderateur for moderate_comment', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['Moderateur'];
-
-      const middleware = authMiddleware.requireDashboardPermission('moderate_comment');
-      middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-    });
-
-    it('should reject user with unknown role', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['RandomRole'];
-
-      const middleware = authMiddleware.requireDashboardPermission('view_dashboard');
-      middleware(req, res, next);
-
       expect(res.status).toHaveBeenCalledWith(403);
     });
 
-    it('should reject user with empty roles', () => {
-      req.user = { ...mockUser };
-      req.userRoles = [];
-
-      const middleware = authMiddleware.requireDashboardPermission('view_dashboard');
-      middleware(req, res, next);
-
+    it('autre compte : 403', async () => {
+      req.user = { id_user: 13, isAdmin: false };
+      req.params = { id: '5' };
+      await avecRessource(12)(req, res, next);
       expect(res.status).toHaveBeenCalledWith(403);
-    });
-
-    it('should pass if any role has the permission', () => {
-      req.user = { ...mockUser };
-      req.userRoles = ['User', 'Moderateur'];
-
-      const middleware = authMiddleware.requireDashboardPermission('view_dashboard');
-      middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
     });
   });
 });

@@ -8,6 +8,7 @@ const { body, param, query } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
+const { ROLES, aUnDesRoles } = require('../constants/roles');
 
 const initLieuRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
@@ -214,7 +215,7 @@ const initLieuRoutes = (models) => {
     authMiddleware.authenticate,
     authMiddleware.requireVerifiedEmail,
     // Un professionnel n'a pas forcément le rôle en base : son statut vient de son type de compte
-    (req, res, next) => ((req.user?.roleNames || []).some((r) => ['Contributeur', 'Modérateur'].includes(r))
+    (req, res, next) => (aUnDesRoles(req.user?.roleNames, ROLES.CONTRIBUTEUR, ROLES.MODERATEUR)
       ? next()
       : authMiddleware.requireValidatedProfessional(req, res, next)),
     createLieuValidation,

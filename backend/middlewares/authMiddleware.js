@@ -6,9 +6,8 @@ const { USER_SESSION_PREFIX, invalidateUserSession } = require('../utils/session
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 const { ROLES, normaliserRole, roleDemande, aUnDesRoles, estRole } = require('../constants/roles');
 
-// Refus (401, 403…) : le texte dans « error », comme partout ailleurs sur le serveur, et dans « message »
-// le temps que les anciennes versions du site (en cache chez les visiteurs) le lisent encore (audit V11 COD-B23)
-const texteRefus = (texte) => ({ error: texte, message: texte });
+// texteRefus : le refus (401, 403…) sous « error » et sous « message » (audit V11 COD-B23), partagé dans utils/droits
+const { texteRefus, memeUtilisateur } = require('../utils/droits');
 const {
   verifyAccessToken,
   buildBlacklistKey,
@@ -131,9 +130,8 @@ module.exports = (modelsOrUser) => {
   const USER_CACHE_PREFIX = USER_SESSION_PREFIX;
 
   // Types professionnels: tout sauf visiteur (1) et admin (29)
-  const PROFESSIONAL_TYPE_IDS = new Set(
-    Array.from({ length: 27 }, (_, i) => i + 2) // [2..28]
-  );
+  // Types professionnels (2..28) : source unique dans constants/publicAttributes
+  const PROFESSIONAL_TYPE_IDS = new Set(require('../constants/publicAttributes').PROFESSIONAL_TYPE_IDS);
 
   // Attacher les propriétés helper dérivées sur un objet user (DB ou cache)
   const attachUserHelpers = (user) => {
@@ -678,7 +676,8 @@ module.exports = (modelsOrUser) => {
 
         // Vérifier la propriété
         const ownerId = resource[ownerField];
-        if (ownerId !== req.user.id_user) {
+        // Comparaison en nombre : « 12 » (base, paramètre) et 12 (jeton) désignent le même compte
+        if (!memeUtilisateur(ownerId, req.user.id_user)) {
           return res.status(403).json({
             success: false,
             ...texteRefus(req.t('auth.forbidden'))
@@ -702,38 +701,6 @@ module.exports = (modelsOrUser) => {
   // (Redis + progressive slowdown + account lockout). Ne pas dupliquer ici.
 
   // ====================
-  // PERMISSIONS DASHBOARD
-  // ====================
-
-  /**
-   * Vérifie qu'un utilisateur authentifié a une permission dashboard spécifique
-   * Utilise req.userRoles (déjà chargé par authenticate) + DASHBOARD_PERMISSIONS
-   * Zéro query supplémentaire
-   * @param {string} action - Permission requise (ex: 'validate_user', 'moderate_signalement')
-   */
-  const requireDashboardPermission = (action) => {
-    const { DASHBOARD_PERMISSIONS } = require('../constants/dashboardPermissions');
-
-    return (req, res, next) => {
-      if (!req.user) {
-        return res.status(401).json({ success: false, ...texteRefus(req.t('auth.required')) });
-      }
-
-      const userRoles = req.userRoles || [];
-      const hasPermission = userRoles.some(roleName => {
-        const permissions = DASHBOARD_PERMISSIONS[roleName];
-        return permissions && (permissions.includes('*') || permissions.includes(action));
-      });
-
-      if (!hasPermission) {
-        return res.status(403).json({ success: false, ...texteRefus(req.t('auth.forbidden')) });
-      }
-
-      next();
-    };
-  };
-
-  // ====================
   // EXPORT
   // ====================
 
@@ -754,7 +721,6 @@ module.exports = (modelsOrUser) => {
     requireValidatedProfessional,
     requireOwnerOrAdmin,
     requireOwnership,
-    requireDashboardPermission,
 
     // Helpers exposés
     verifyToken,

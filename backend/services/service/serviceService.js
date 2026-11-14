@@ -8,6 +8,7 @@ const ServiceDTO = require('../../dto/service/serviceDTO');
 const { mergeTranslations, texteLisible } = require('../../helpers/i18n');
 const { sansAccent } = require('../../utils/texte');
 const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+const { memeUtilisateur } = require('../../utils/droits');
 
 /** Nom lisible d'un service (nom multilingue) pour les notifications */
 const nomLisible = (nom) => texteLisible(nom) || 'Service';
@@ -186,7 +187,7 @@ class ServiceService extends BaseService {
    */
   _canManage(existing, userId, isModerator) {
     if (isModerator) return true;
-    return existing.id_user != null && existing.id_user === userId;
+    return memeUtilisateur(existing.id_user, userId);
   }
 
   /**
