@@ -153,11 +153,12 @@ class UserService extends BaseService {
 
     // 2c. Vérifier la validation admin (professionnels)
     if (user.statut === 'en_attente_validation') {
-      throw this._forbiddenError('Votre compte est en attente de validation par un administrateur');
+      // Code lu par la page de connexion : elle explique la vérification au lieu d'une simple erreur
+      throw this._forbiddenError('Votre compte est en attente de validation par un administrateur', 'COMPTE_EN_ATTENTE');
     }
 
     if (user.statut === 'rejete') {
-      throw this._forbiddenError('Votre demande de compte professionnel a été refusée');
+      throw this._forbiddenError('Votre demande de compte professionnel a été refusée', 'COMPTE_REFUSE');
     }
 
     // 4. Mettre à jour la dernière connexion

@@ -3,6 +3,8 @@ import { messageErreurServeur } from '@/utils/erreurServeur';
 import { abonnementActuel, activerNotifications, notificationsPossibles } from '@/utils/applicationMobile';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import PremiersPas from '@/components/user/PremiersPas';
+import { lienGuidePour } from '@/utils/lienGuide';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -197,7 +199,7 @@ const DashboardPro = () => {
     refreshAll
   } = useDashboardPro();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatPriceRange } = useLocalizedNumber();
   const { user: currentUser } = useAuth();
   const { td, safe } = useTranslateData();
@@ -500,19 +502,23 @@ const DashboardPro = () => {
       <SEOHead title={t("dashboardpro.dashboard_professionnel")} noindex />
       
       <main className="container mx-auto py-8 px-4 max-w-6xl">
-        {currentUser && !(currentUser as { wilaya_residence?: number | null; wilayaResidence?: number | null }).wilaya_residence && !(currentUser as { wilayaResidence?: number | null }).wilayaResidence && (
-          <div role="status" className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
-            {t('dashboardpro.rappelWilaya', 'Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.')}{' '}
-            <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('dashboardpro.rappelWilayaLien', 'Compléter mon profil')}</Link>
-          </div>
-        )}
-        {/* Métiers (artiste, poétesse…) : sans eux, le portfolio ne montre que le type du compte */}
-        {currentUser && lireSpecialites((currentUser as { specialites?: unknown }).specialites).length === 0 && (
-          <div role="status" className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
-            {t('dashboardpro.rappelMetiers', 'Indiquez vos métiers (par exemple : artiste peintre, poétesse, conteuse) : ils s’affichent sur votre portfolio et aident à vous trouver.')}{' '}
-            <Link to="/dashboard-user?onglet=profil#mes-metiers" className="font-medium text-primary underline">{t('dashboardpro.rappelMetiersLien', 'Ajouter mes métiers')}</Link>
-          </div>
-        )}
+        {/* Premiers pas (audit V11 OUT-13) : remplace les rappels séparés « wilaya » et « métiers » ; chaque
+            étape se coche toute seule avec les données déjà chargées */}
+        {currentUser && (() => {
+          const u = currentUser as { id_user?: number; photo_url?: string | null; wilaya_residence?: number | null; wilayaResidence?: number | null; specialites?: unknown; biographie?: unknown };
+          const rempli = (v: unknown) => typeof v === 'string' ? v.trim() !== ''
+            : !!v && typeof v === 'object' && Object.values(v as Record<string, unknown>).some((x) => typeof x === 'string' && x.trim() !== '');
+          return (
+            <PremiersPas idUser={u.id_user} etapes={[
+              { cle: 'photo', titre: t('premiersPas.pro.photo', 'Ajoutez votre photo'), fait: !!u.photo_url, lien: '/dashboard-user?onglet=profil' },
+              { cle: 'presentation', titre: t('premiersPas.pro.presentation', 'Présentez-vous en quelques lignes'), fait: rempli(u.biographie), lien: '/dashboard-user?onglet=profil&modifier=1' },
+              { cle: 'wilaya', titre: t('dashboardpro.rappelWilaya', 'Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.'), fait: !!(u.wilaya_residence || u.wilayaResidence), lien: '/dashboard-user?onglet=profil&modifier=1' },
+              { cle: 'metiers', titre: t('premiersPas.pro.metiers', 'Indiquez vos métiers (artiste peintre, conteuse…)'), fait: lireSpecialites(u.specialites).length > 0, lien: '/dashboard-user?onglet=profil#mes-metiers' },
+              { cle: 'publier', titre: t('premiersPas.pro.publier', 'Publiez votre première œuvre, votre premier événement ou objet'), fait: oeuvresTotal + evenementsTotal + servicesTotal + artisanatsTotal > 0, lien: '/ajouter-oeuvre' },
+              { cle: 'notifications', titre: t('premiersPas.notifications', 'Recevez vos notifications sur votre téléphone'), fait: 'notifications', lien: lienGuidePour('telephone', i18n.language), statique: true },
+            ]} />
+          );
+        })()}
         {/* En-tête simplifié */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

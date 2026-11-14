@@ -7,8 +7,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Mail, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
+import { lienGuidePour, lienSommaireGuides } from '@/utils/lienGuide';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -26,7 +27,7 @@ interface LoginFormProps {
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { login, loginLoading } = useAuth();
 
@@ -38,6 +39,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
   // Erreurs de validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Compte professionnel en vérification ou refusé : un encadré explique la suite (audit V11 OUT-13)
+  const [compte, setCompte] = useState<'COMPTE_EN_ATTENTE' | 'COMPTE_REFUSE' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   // Validation
@@ -119,6 +122,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
       } else {
         // Utiliser le message d'erreur spécifique du backend
         const errorMessage = getErrorMessage(result.error || '');
+        if (result.code === 'COMPTE_EN_ATTENTE' || result.code === 'COMPTE_REFUSE') {
+          setErrors({});
+          setCompte(result.code);
+          return;
+        }
+        setCompte(null);
 
         // Un seul message, dans le formulaire (avant : aussi en bulle en haut de l'écran, qui cachait le titre
         // et répétait le même texte). Sur le(s) champ(s) concerné(s), ou au-dessus du bouton.
@@ -212,6 +221,33 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password}</p>
             )}
           </div>
+
+          {compte === 'COMPTE_EN_ATTENTE' && (
+            <Alert role="status" className="border-primary/30 bg-primary/5" data-testid="compte-en-attente">
+              <Clock className="h-4 w-4 text-primary" aria-hidden="true" />
+              <AlertTitle>{t('auth.attente.titre', 'Votre compte professionnel est en cours de vérification')}</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>{t('auth.attente.texte', 'L’équipe vérifie chaque compte professionnel. Vous recevrez un e-mail dès qu’il sera validé : vous pourrez alors vous connecter.')}</p>
+                <p>{t('auth.attente.enAttendant', 'En attendant, préparez votre photo et quelques lignes de présentation, et découvrez les guides.')}</p>
+                <p className="flex flex-wrap gap-x-4 gap-y-1">
+                  {/* Pages statiques (public/guide) : liens classiques */}
+                  <a href={lienGuidePour('portfolio', i18n.language)} className="font-medium text-primary underline">{t('auth.attente.guidePortfolio', 'Préparer mon portfolio')}</a>
+                  <a href={lienSommaireGuides(i18n.language)} className="font-medium text-primary underline">{t('common.contributorGuide', 'Guide du contributeur')}</a>
+                  <a href={lienGuidePour('faq', i18n.language)} className="font-medium text-primary underline">{t('common.faq', 'Questions fréquentes')}</a>
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+          {compte === 'COMPTE_REFUSE' && (
+            <Alert role="status" data-testid="compte-refuse">
+              <AlertCircle className="h-4 w-4" aria-hidden="true" />
+              <AlertTitle>{t('auth.refuse.titre', 'Votre demande de compte professionnel n’a pas été acceptée')}</AlertTitle>
+              <AlertDescription>
+                {t('auth.refuse.texte', 'La raison vous a été envoyée par e-mail. Pour en parler ou envoyer une précision, écrivez-nous à')}{' '}
+                <a href="mailto:contact@taladz.com" className="font-medium underline">contact@taladz.com</a>.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {errors.general && (
             <Alert variant="destructive">

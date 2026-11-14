@@ -33,7 +33,9 @@ import { useAuth } from '@/hooks/useAuth';
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import MesSuivisCard from '@/components/user/MesSuivisCard';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
-import CompleterProfilCard from '@/components/user/CompleterProfilCard';
+import CompleterProfilCard, { champsManquants } from '@/components/user/CompleterProfilCard';
+import PremiersPas from '@/components/user/PremiersPas';
+import { lienGuidePour } from '@/utils/lienGuide';
 import SecuriteCompteCard from '@/components/user/SecuriteCompteCard';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import PagePubliqueCard from '@/components/user/PagePubliqueCard';
@@ -62,7 +64,7 @@ const DashboardUser = () => {
   // Onglet dans l'adresse : il reste ouvert quand la page se recharge (ex. après « Enregistrer » du profil)
   const [searchParams, setSearchParams] = useSearchParams();
   const onglet = searchParams.get('onglet') || 'favoris';
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -226,6 +228,14 @@ const DashboardUser = () => {
               user={user}
               onCompleter={() => setSearchParams({ onglet: 'profil', modifier: '1' }, { replace: true })}
             />
+          )}
+          {/* Premiers pas du visiteur (audit V11 OUT-13) : se cochent tout seuls (profil, favori, notifications) */}
+          {!isProfessional && !loading && (
+            <PremiersPas idUser={user?.id_user} etapes={[
+              { cle: 'profil', titre: t('premiersPas.visiteur.profil', 'Complétez votre profil'), fait: champsManquants(user).length === 0, lien: '/dashboard-user?onglet=profil&modifier=1' },
+              { cle: 'favori', titre: t('premiersPas.visiteur.favori', 'Gardez un lieu, une œuvre ou un événement en favori'), fait: (stats?.total || (mesFavoris.oeuvres.length + mesFavoris.evenements.length + mesFavoris.sites.length)) > 0, lien: '/patrimoine' },
+              { cle: 'notifications', titre: t('premiersPas.notifications', 'Recevez vos notifications sur votre téléphone'), fait: 'notifications', lien: lienGuidePour('telephone', i18n.language), statique: true },
+            ]} />
           )}
         </div>
 

@@ -468,8 +468,10 @@ class HttpClient {
           }
         }
         
-        // Gestion du 403 (interdit)
-        if (error.response?.status === 403) {
+        // Gestion du 403 (interdit). Connexion refusée (e-mail à confirmer, compte pro en vérification ou
+        // refusé) : le formulaire l'explique déjà, sans bulle « Accès refusé » en double
+        const refusConnexion = (originalRequest?.url || '').includes('/users/login');
+        if (error.response?.status === 403 && !refusConnexion) {
           let errorMessage = i18next.t('toasts.noPermission');
           
           if (error.response.data && typeof error.response.data === 'object') {

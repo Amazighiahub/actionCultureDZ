@@ -410,7 +410,17 @@
     "pleaseReconnect": "Please sign in again",
     "seoTitle": "Log in and sign up",
     "emailVerificationPro": "A verification e-mail has been sent to you. After this check, the team will validate your professional account.",
-    "etapeSuivante": "Open the email you received and tap the confirmation button. Remember to check your spam folder."
+    "etapeSuivante": "Open the email you received and tap the confirmation button. Remember to check your spam folder.",
+    "attente": {
+      "titre": "Your professional account is being reviewed",
+      "texte": "The team reviews every professional account. You will receive an e-mail as soon as it is approved: you will then be able to log in.",
+      "enAttendant": "In the meantime, prepare your photo and a few lines about yourself, and read the guides.",
+      "guidePortfolio": "Prepare my portfolio"
+    },
+    "refuse": {
+      "titre": "Your professional account request was not accepted",
+      "texte": "The reason was sent to you by e-mail. To discuss it or add details, write to us at"
+    }
   },
   "categories": {
     "heritageTypes": {
@@ -6365,5 +6375,23 @@
     "titre": "Cite this page",
     "copier": "Copy",
     "copiee": "Copied"
+  },
+  "premiersPas": {
+    "titre": "Your first steps",
+    "avancement": "{{faites}} of {{total}}",
+    "plusTard": "Hide, later",
+    "fait": "(done)",
+    "aFaire": "(to do)",
+    "notifications": "Get your notifications on your phone",
+    "pro": {
+      "photo": "Add your photo",
+      "presentation": "Introduce yourself in a few lines",
+      "metiers": "List your trades (painter, storyteller…)",
+      "publier": "Publish your first work, event or craft item"
+    },
+    "visiteur": {
+      "profil": "Complete your profile",
+      "favori": "Save a place, a work or an event to your favourites"
+    }
   }
 }

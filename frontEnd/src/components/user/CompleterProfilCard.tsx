@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { userService } from '@/services/user.service';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { estFerme, fermer as fermerPourDeBon } from '@/utils/fermetureLocale';
 
 export interface ProfilACompleter {
   id_user?: number;
@@ -53,10 +54,6 @@ function enListe(elements: string[], langue: string): string {
 
 const cleFermeture = (id?: number) => `tala-completer-profil-ferme-${id ?? 'anonyme'}`;
 
-const lireFerme = (id?: number) => {
-  try { return localStorage.getItem(cleFermeture(id)) === '1'; } catch { return false; }
-};
-
 interface Props {
   user: ProfilACompleter | null | undefined;
   onCompleter: () => void;
@@ -64,13 +61,13 @@ interface Props {
 
 const CompleterProfilCard = ({ user, onCompleter }: Props) => {
   const { t, i18n } = useTranslation();
-  const [ferme, setFerme] = useState(() => lireFerme(user?.id_user));
+  const [ferme, setFerme] = useState(() => estFerme(cleFermeture(user?.id_user)));
   const [envoi, setEnvoi] = useState<{ etat: 'repos' | 'envoi' | 'envoye' | 'erreur'; message?: string }>({ etat: 'repos' });
   const manque = champsManquants(user);
   if (!user || ferme || manque.length === 0) return null;
 
   const plusTard = () => {
-    try { localStorage.setItem(cleFermeture(user.id_user), '1'); } catch { /* navigation privée : fermé pour cette visite */ }
+    fermerPourDeBon(cleFermeture(user.id_user));
     setFerme(true);
   };
 

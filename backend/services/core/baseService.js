@@ -165,8 +165,8 @@ class BaseService {
    * Crée une erreur d'accès interdit
    * @param {string} message
    */
-  _forbiddenError(message = 'Accès interdit') {
-    return AppError.forbidden(message);
+  _forbiddenError(message = 'Accès interdit', code = 'FORBIDDEN') {
+    return AppError.forbidden(message, code);
   }
 
   /**

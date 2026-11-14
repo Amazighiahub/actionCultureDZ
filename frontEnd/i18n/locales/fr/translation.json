@@ -410,7 +410,17 @@
     "pleaseReconnect": "Veuillez vous reconnecter",
     "seoTitle": "Connexion et inscription",
     "emailVerificationPro": "Un e-mail de vérification vous a été envoyé. Après cette vérification, votre compte professionnel sera validé par l’équipe.",
-    "etapeSuivante": "Ouvrez l’e-mail reçu et appuyez sur le bouton de confirmation. Pensez à regarder dans les indésirables."
+    "etapeSuivante": "Ouvrez l’e-mail reçu et appuyez sur le bouton de confirmation. Pensez à regarder dans les indésirables.",
+    "attente": {
+      "titre": "Votre compte professionnel est en cours de vérification",
+      "texte": "L’équipe vérifie chaque compte professionnel. Vous recevrez un e-mail dès qu’il sera validé : vous pourrez alors vous connecter.",
+      "enAttendant": "En attendant, préparez votre photo et quelques lignes de présentation, et découvrez les guides.",
+      "guidePortfolio": "Préparer mon portfolio"
+    },
+    "refuse": {
+      "titre": "Votre demande de compte professionnel n’a pas été acceptée",
+      "texte": "La raison vous a été envoyée par e-mail. Pour en parler ou envoyer une précision, écrivez-nous à"
+    }
   },
   "categories": {
     "heritageTypes": {
@@ -6365,5 +6375,23 @@
     "titre": "Citer cette page",
     "copier": "Copier",
     "copiee": "Copié"
+  },
+  "premiersPas": {
+    "titre": "Vos premiers pas",
+    "avancement": "{{faites}} sur {{total}}",
+    "plusTard": "Masquer, plus tard",
+    "fait": "(fait)",
+    "aFaire": "(à faire)",
+    "notifications": "Recevez vos notifications sur votre téléphone",
+    "pro": {
+      "photo": "Ajoutez votre photo",
+      "presentation": "Présentez-vous en quelques lignes",
+      "metiers": "Indiquez vos métiers (artiste peintre, conteuse…)",
+      "publier": "Publiez votre première œuvre, votre premier événement ou objet"
+    },
+    "visiteur": {
+      "profil": "Complétez votre profil",
+      "favori": "Gardez un lieu, une œuvre ou un événement en favori"
+    }
   }
 }
