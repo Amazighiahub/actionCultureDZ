@@ -33,7 +33,6 @@ const Footer = () => {
         // Page statique (public/guide), hors de l'application : lien classique, pas <Link>
         { label: t('common.contributorGuide', 'Guide du contributeur'), href: lienSommaireGuides(i18n.language), statique: true },
         { label: t('common.faq', 'Questions fréquentes'), href: lienGuidePour('faq', i18n.language), statique: true },
-        { label: t('donneesOuvertes.titre', 'Données ouvertes'), href: '/donnees-ouvertes' },
       ]
     },
     {

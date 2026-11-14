@@ -1,7 +1,9 @@
 /**
  * « À la une » de l'accueil (idée de la responsable, 2026-11-14) : les photos des contributeurs
- * remplacent une partie des paysages fixes. Jusqu'à 5 images : 2 lieux, 2 œuvres ou articles,
- * 1 événement à venir, prises parmi les contenus publiés récents qui ont une photo.
+ * remplacent une partie des paysages fixes. Jusqu'à 5 images : 3 lieux, 2 œuvres d'art, objets
+ * d'artisanat ou articles, prises parmi les contenus publiés récents qui ont une photo.
+ *  - Pas d'affiche d'événement ni de couverture (livre, film, disque) : leur propre texte se
+ *    mélangeait au titre de l'accueil et devenait illisible. Seulement de vraies photos.
  *  - Seulement des images stockées par le site (Cloudinary du site), jamais un lien externe.
  *  - Recadrées par Cloudinary au format de l'accueil (g_auto : le sujet reste dans le cadre).
  *  - Le choix change chaque jour (même choix pour tous pendant la journée : cache cohérent).
@@ -13,6 +15,9 @@ const { texteLisible } = require('../helpers/i18n');
 
 const LARGEURS = [768, 1280, 1920];
 const RESERVE = 20; // contenus récents parmi lesquels on choisit
+// Œuvres dont l'image est une photo (et non une couverture avec du texte) : articles (4, 5),
+// œuvre d'art (6), artisanat (7)
+const TYPES_PHOTO = [4, 5, 6, 7];
 
 /** Adresse Cloudinary recadrée pour l'accueil (paysage 16/10), à la largeur demandée */
 function recadrer(url, largeur) {
@@ -53,7 +58,7 @@ async function lieux(models, lang) {
 async function oeuvres(models, lang) {
   if (!models.Oeuvre || !models.Media) return [];
   const lignes = await models.Oeuvre.findAll({
-    where: { statut: 'publie' },
+    where: { statut: 'publie', id_type_oeuvre: { [Op.in]: TYPES_PHOTO } },
     attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre'],
     include: [{ model: models.Media, attributes: ['url', 'credit'], where: { type_media: 'image', visible_public: true }, required: true }],
     order: [['id_oeuvre', 'DESC']],
@@ -66,25 +71,12 @@ async function oeuvres(models, lang) {
   }).filter(Boolean);
 }
 
-async function evenements(models, lang) {
-  if (!models.Evenement) return [];
-  const lignes = await models.Evenement.findAll({
-    where: { statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] }, date_fin: { [Op.gte]: new Date() }, image_url: { [Op.ne]: null } },
-    attributes: ['id_evenement', 'nom_evenement', 'image_url'],
-    order: [['date_debut', 'ASC']],
-    limit: RESERVE
-  });
-  return lignes.filter((e) => estImageDuSite(e.image_url))
-    .map((e) => vitrine('evenement', e.id_evenement, texteLisible(e.nom_evenement, lang), e.image_url, null));
-}
-
-/** Jusqu'à 5 images : 2 lieux, 2 œuvres ou articles, 1 événement (lieux en premier, puis alternance) */
+/** Jusqu'à 5 images : 3 lieux, 2 œuvres d'art, objets d'artisanat ou articles (alternés) */
 async function aLaUne(models, lang = 'fr', jour = new Date()) {
-  const [l, o, e] = await Promise.all([lieux(models, lang), oeuvres(models, lang), evenements(models, lang)]);
+  const [l, o] = await Promise.all([lieux(models, lang), oeuvres(models, lang)]);
   const choix = [
-    ...melangerDuJour(l, jour).slice(0, 2),
-    ...melangerDuJour(o, jour).slice(0, 2),
-    ...melangerDuJour(e, jour).slice(0, 1)
+    ...melangerDuJour(l, jour).slice(0, 3),
+    ...melangerDuJour(o, jour).slice(0, 2)
   ];
   return entrelacer(choix);
 }

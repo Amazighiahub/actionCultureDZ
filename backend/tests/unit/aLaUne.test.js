@@ -1,7 +1,8 @@
 /**
- * « À la une » de l'accueil : seulement des images du site, recadrées ; choix stable dans la journée ;
- * alternance des genres ; 2 lieux, 2 œuvres ou articles, 1 événement au plus.
+ * « À la une » de l'accueil : seulement de vraies photos du site (lieux, œuvres d'art, artisanat,
+ * articles ; ni affiche ni couverture), recadrées ; choix stable dans la journée ; alternance.
  */
+const { Op } = require('sequelize');
 const { aLaUne, recadrer, melangerDuJour, entrelacer } = require('../../services/aLaUne');
 
 const COMPTE = 'compte-essai';
@@ -9,15 +10,15 @@ const img = (n) => `https://res.cloudinary.com/${COMPTE}/image/upload/v1/eventcu
 
 function modeles() {
   return {
-    Lieu: { findAll: jest.fn(async () => [1, 2, 3].map((i) => ({ id_lieu: i, nom: { fr: `Lieu ${i}` }, LieuMedia: [{ url: img(`l${i}`), credit: `Photographe ${i}` }] }))) },
+    Lieu: { findAll: jest.fn(async () => [1, 2, 3, 4].map((i) => ({ id_lieu: i, nom: { fr: `Lieu ${i}` }, LieuMedia: [{ url: img(`l${i}`), credit: `Photographe ${i}` }] }))) },
     LieuMedia: {},
     Oeuvre: { findAll: jest.fn(async () => [
-      { id_oeuvre: 10, titre: { fr: 'Livre' }, id_type_oeuvre: 1, Media: [{ url: img('o10') }] },
       { id_oeuvre: 11, titre: { fr: 'Article' }, id_type_oeuvre: 4, Media: [{ url: img('o11') }] },
+      { id_oeuvre: 13, titre: { fr: 'Tapis' }, id_type_oeuvre: 7, Media: [{ url: img('o13') }] },
       { id_oeuvre: 12, titre: { fr: 'Ailleurs' }, id_type_oeuvre: 6, Media: [{ url: 'https://exemple.com/x.jpg' }] }
     ]) },
     Media: {},
-    Evenement: { findAll: jest.fn(async () => [{ id_evenement: 20, nom_evenement: { fr: 'Festival' }, image_url: img('e20') }]) }
+    Evenement: { findAll: jest.fn(async () => []) }
   };
 }
 
@@ -37,10 +38,13 @@ describe('À la une de l’accueil', () => {
     expect(melangerDuJour(l, jour)).not.toEqual(melangerDuJour(l, new Date('2026-11-15T08:00:00Z')));
   });
 
-  it('2 lieux, 2 œuvres ou articles, 1 événement, en alternance ; jamais d’image d’un autre site', async () => {
-    const une = await aLaUne(modeles(), 'fr', new Date('2026-11-14T08:00:00Z'));
-    expect(une).toHaveLength(5);
-    expect(une.map((u) => u.type)).toEqual(['lieu', expect.stringMatching(/oeuvre|article/), 'evenement', 'lieu', expect.stringMatching(/oeuvre|article/)]);
+  it('3 lieux et 2 photos d’œuvres, en alternance ; ni affiche, ni couverture, ni image d’un autre site', async () => {
+    const m = modeles();
+    const une = await aLaUne(m, 'fr', new Date('2026-11-14T08:00:00Z'));
+    expect(une.map((u) => u.type)).toEqual(['lieu', expect.stringMatching(/oeuvre|article/), 'lieu', expect.stringMatching(/oeuvre|article/), 'lieu']);
+    // Seulement les types dont l'image est une photo (pas de livre, film, disque)
+    expect(m.Oeuvre.findAll.mock.calls[0][0].where.id_type_oeuvre).toEqual({ [Op.in]: [4, 5, 6, 7] });
+    expect(m.Evenement.findAll).not.toHaveBeenCalled();
     expect(une.some((u) => u.id === 12)).toBe(false);
     expect(une.find((u) => u.id === 11).type).toBe('article');
     expect(une.find((u) => u.type === 'lieu').credit).toMatch(/Photographe/);
