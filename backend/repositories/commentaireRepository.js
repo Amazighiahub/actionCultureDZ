@@ -73,6 +73,22 @@ class CommentaireRepository extends BaseRepository {
   }
 
   /**
+   * Photos d'un avis validées par l'équipe (requête à part : n'agrandit pas la jointure paginée)
+   */
+  _photosPubliees() {
+    if (!this.models.CommentairePhoto) return [];
+    return [{
+      model: this.models.CommentairePhoto,
+      as: 'Photos',
+      where: { statut: 'publie' },
+      required: false,
+      separate: true,
+      attributes: ['id_photo', 'url', 'id_commentaire'],
+      order: [['id_photo', 'ASC']]
+    }];
+  }
+
+  /**
    * Avis racines (sans parent) pour un service, paginés
    */
   async findByService(serviceId, { limit, offset }) {
@@ -82,7 +98,7 @@ class CommentaireRepository extends BaseRepository {
         statut: 'publie',
         commentaire_parent_id: null
       },
-      include: [this._userInclude(), this._reponsesInclude()],
+      include: [this._userInclude(), this._reponsesInclude(), ...this._photosPubliees()],
       // Compter les avis, pas les lignes jointes (un avis avec deux réponses comptait trois)
       distinct: true,
       col: 'id_commentaire',

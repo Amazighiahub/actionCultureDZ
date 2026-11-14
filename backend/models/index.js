@@ -268,6 +268,10 @@ const loadModels = (sequelize) => {
   const commentaireModel = loadModelSafely('./misc/commentaire', 'Commentaire', sequelize);
   if (commentaireModel) models.Commentaire = commentaireModel;
 
+  // Photos des avis sur un service (validées par l'équipe avant d'être affichées)
+  const commentairePhotoModel = loadModelSafely('./misc/commentairePhoto', 'CommentairePhoto', sequelize);
+  if (commentairePhotoModel) models.CommentairePhoto = commentairePhotoModel;
+
   const critiqueEvaluationModel = loadModelSafely('./misc/critiqueEvaluation', 'CritiqueEvaluation', sequelize);
   if (critiqueEvaluationModel) models.CritiqueEvaluation = critiqueEvaluationModel;
 

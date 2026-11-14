@@ -106,9 +106,9 @@ class CommentaireController extends BaseController {
   async createCommentaireService(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { contenu, note_qualite, commentaire_parent_id } = req.body;
+      const { contenu, note_qualite, commentaire_parent_id, photos, accord_photos } = req.body;
       const avis = await this.service.creerAvisService(Number(req.params.serviceId), req.user.id_user,
-        { contenu, note_qualite, commentaire_parent_id });
+        { contenu, note_qualite, commentaire_parent_id, photos, accord_photos });
       return this._sendCreated(res, translateDeep(avis, lang), req.t('comment.added'));
     } catch (error) {
       // Les erreurs metier portent une cle de traduction
@@ -253,6 +253,41 @@ class CommentaireController extends BaseController {
       }
 
       return this._sendMessage(res, req.t('comment.statusUpdated', { statut }));
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
+
+  // ========================================================================
+  // PHOTOS DES AVIS SUR UN SERVICE (ADMIN / MODÉRATION)
+  // ========================================================================
+
+  /** Modèles par le conteneur de services, comme le reste du contrôleur */
+  _modeles() {
+    return container.models;
+  }
+
+  /**
+   * Photos d'avis qui attendent la validation de l'équipe
+   */
+  async photosEnAttente(req, res) {
+    try {
+      const photos = await require('../services/commentairePhotos').listerEnAttente(this._modeles());
+      return this._sendSuccess(res, photos);
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Publier ou refuser une photo d'avis (motif obligatoire au refus) ; l'auteur est prévenu
+   */
+  async deciderPhoto(req, res) {
+    try {
+      const { decision, motif } = req.body;
+      const resultat = await require('../services/commentairePhotos').decider(this._modeles(), container.notificationService,
+        Number(req.params.idPhoto), req.user, decision, motif);
+      return this._sendSuccess(res, resultat);
     } catch (error) {
       return this._handleError(res, error);
     }

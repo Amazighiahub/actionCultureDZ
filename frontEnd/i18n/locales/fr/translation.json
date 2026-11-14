@@ -3357,8 +3357,21 @@
         "doublon": "Ce contenu existe déjà sur Tala DZ.",
         "horsSujet": "Ce contenu ne concerne pas la culture ou le patrimoine algériens.",
         "relecture": "Le titre ou la description contient des fautes importantes : relisez-les.",
-        "contact": "Les coordonnées de contact sont incomplètes ou incorrectes."
+        "contact": "Les coordonnées de contact sont incomplètes ou incorrectes.",
+        "personne": "Une personne reconnaissable apparaît sans son accord : choisissez une photo sans visage."
       }
+    },
+    "photosAvis": {
+      "publiee": "Photo publiée avec l’avis",
+      "refusee": "Photo refusée : l’auteur a reçu le motif",
+      "echec": "La décision n’a pas pu être enregistrée.",
+      "titre": "Photos d’avis à valider",
+      "aide": "Vérifiez que la photo montre bien le service, qu’elle n’est pas reprise d’ailleurs et qu’aucune personne n’est reconnaissable sans son accord.",
+      "service": "Service",
+      "publier": "Publier",
+      "refuser": "Refuser",
+      "refuserTitre": "Refuser cette photo ?",
+      "refuserAide": "L’avis reste publié sans la photo. L’auteur reçoit votre motif ; le fichier est effacé."
     }
   },
   "wilayas": {
@@ -5850,7 +5863,18 @@
       "placeholder": "Racontez votre visite : accueil, qualité, prix…",
       "placeholderReponse": "Votre réponse à ce visiteur",
       "reponsePro": "Réponse du professionnel",
-      "aucun": "Aucun avis pour l’instant. Soyez le premier !"
+      "aucun": "Aucun avis pour l’instant. Soyez le premier !",
+      "photos": {
+        "accordRequis": "Cochez la case pour confirmer que vous avez le droit de publier ces photos.",
+        "max": "Trois photos au plus : seules les trois premières sont gardées.",
+        "ajouter": "Ajouter des photos (3 au plus, facultatif)",
+        "accord": "J’ai le droit de publier ces photos (pas de personne reconnaissable sans son accord).",
+        "validation": "Votre avis paraît tout de suite ; les photos, après validation par l’équipe.",
+        "enAttente": "Merci ! Vos photos apparaîtront après validation par l’équipe.",
+        "echec": "Une photo n’a pas pu être envoyée. Réessayez.",
+        "liste": "Photos du visiteur",
+        "agrandir": "Agrandir la photo {{n}}"
+      }
     }
   },
   "catalogue": {

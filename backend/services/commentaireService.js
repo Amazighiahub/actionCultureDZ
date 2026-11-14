@@ -7,6 +7,7 @@
 const BaseService = require('./core/baseService');
 const AppError = require('../utils/appError');
 const { memeUtilisateur } = require('../utils/droits');
+const commentairePhotos = require('./commentairePhotos');
 
 class CommentaireService extends BaseService {
   constructor(repository, options = {}) {
@@ -85,13 +86,18 @@ class CommentaireService extends BaseService {
    * Publier un avis sur un service : service validé uniquement, pas sur son propre service,
    * un seul avis par membre (les réponses passent par commentaire_parent_id).
    */
-  async creerAvisService(serviceId, userId, { contenu, note_qualite, commentaire_parent_id }) {
+  async creerAvisService(serviceId, userId, { contenu, note_qualite, commentaire_parent_id, photos, accord_photos }) {
     const service = this.models.Service
       ? await this.models.Service.findByPk(serviceId, { attributes: ['id', 'id_user', 'statut'] })
       : null;
     if (!service || service.statut !== 'valide') {
       throw new AppError('service.notFound', 404, 'SERVICE_INTROUVABLE');
     }
+    // Photos vérifiées avant toute écriture : une photo refusée n'enregistre pas l'avis sans elle
+    if (commentaire_parent_id && Array.isArray(photos) && photos.length) {
+      throw Object.assign(new Error('Une réponse ne peut pas porter de photos'), { statusCode: 400 });
+    }
+    const urlsPhotos = commentaire_parent_id ? [] : commentairePhotos.verifierPhotos(photos, accord_photos);
     if (commentaire_parent_id) {
       const idParent = await this._parentValide(commentaire_parent_id, 'id_service', serviceId);
       // Une réponse ne porte pas de note
@@ -103,12 +109,28 @@ class CommentaireService extends BaseService {
     if (await this.repository.findAvisServiceDuMembre(serviceId, userId)) {
       throw new AppError('comment.alreadyReviewed', 409, 'AVIS_DEJA_DONNE');
     }
+    let avis;
     try {
-      return await this.repository.createWithAuthor({ contenu, note_qualite, id_user: userId, id_service: serviceId });
+      avis = await this.repository.createWithAuthor({ contenu, note_qualite, id_user: userId, id_service: serviceId });
     } catch (error) {
       // Deux envois simultanés : l'index unique de la base (migration 20261114) refuse le second
       if (error?.name === 'SequelizeUniqueConstraintError') throw new AppError('comment.alreadyReviewed', 409, 'AVIS_DEJA_DONNE');
       throw error;
+    }
+    // Le texte paraît tout de suite ; les photos attendent la validation de l'équipe
+    if (urlsPhotos.length && avis) {
+      await commentairePhotos.attacher(this.models, avis.id_commentaire, userId, urlsPhotos, this._notifications());
+    }
+    return avis;
+  }
+
+  /** Service des notifications (donné au constructeur, sinon celui du conteneur ; aucun dans les tests) */
+  _notifications() {
+    if (this.notificationService) return this.notificationService;
+    try {
+      return require('./serviceContainer').notificationService;
+    } catch {
+      return null;
     }
   }
 
@@ -196,7 +218,12 @@ class CommentaireService extends BaseService {
     if (userId !== undefined && !memeUtilisateur(commentaireInstance.id_user, userId)) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres commentaires');
     }
-    return this.repository.softDelete(commentaireInstance);
+    const resultat = await this.repository.softDelete(commentaireInstance);
+    // Les photos de l'avis ne restent ni en base ni sur Cloudinary (données de la personne)
+    if (this.models?.CommentairePhoto && commentaireInstance.id_commentaire) {
+      await commentairePhotos.supprimerPhotosAvis(this.models, [commentaireInstance.id_commentaire]);
+    }
+    return resultat;
   }
 
   // ========================================================================

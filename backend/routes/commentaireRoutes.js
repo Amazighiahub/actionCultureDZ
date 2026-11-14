@@ -133,9 +133,41 @@ module.exports = (models, middlewares = {}) => {
         .isLength({ max: 2000 }).withMessage(msg('validation.contenu2000')),
       body('note_qualite').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')).toInt(),
       body('commentaire_parent_id').optional({ values: 'null' }).isInt({ min: 1 }).toInt(),
+      // Photos jointes à l'avis (adresses d'images mises en ligne par le site, vérifiées par le service)
+      body('photos').optional().isArray({ max: 3 }).withMessage(msg('validation.photosAvisMax3')),
+      body('photos.*').optional().isString().isLength({ max: 500 }),
+      body('accord_photos').optional().isBoolean().toBoolean(),
     ],
     handleValidationErrors,
     (req, res) => controller.createCommentaireService(req, res));
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PHOTOS DES AVIS (validation par l'équipe) — avant les routes /:id
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /commentaires/admin/photos
+   * Photos d'avis en attente de validation (administration et modération)
+   */
+  router.get('/admin/photos',
+    authMiddleware,
+    requireRole('Administrateur', 'Moderateur'),
+    (req, res) => controller.photosEnAttente(req, res));
+
+  /**
+   * PATCH /commentaires/photos/:idPhoto
+   * Publier ou refuser une photo d'avis (motif obligatoire au refus)
+   */
+  router.patch('/photos/:idPhoto',
+    authMiddleware,
+    validateId('idPhoto'),
+    requireRole('Administrateur', 'Moderateur'),
+    [
+      body('decision').isIn(['publie', 'rejete']).withMessage(msg('validation.invalidStatus')),
+      body('motif').optional({ values: 'null' }).isString().isLength({ max: 1000 }),
+    ],
+    handleValidationErrors,
+    (req, res) => controller.deciderPhoto(req, res));
 
   // ════════════════════════════════════════════════════════════════════════════
   // ROUTES GESTION COMMENTAIRES

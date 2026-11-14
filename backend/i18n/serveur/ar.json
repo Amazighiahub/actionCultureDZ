@@ -479,5 +479,14 @@
   "Seul un enregistrement audio est accepté ici.": "لا يُقبل هنا إلا تسجيل صوتي.",
   "Photo introuvable": "الصورة غير موجودة",
   "Seul l'organisateur de l'événement peut gérer ses photos": "وحده منظّم الفعالية يمكنه إدارة صورها",
-  "Choisissez une photo à envoyer depuis le formulaire": "اختر صورة لإرسالها من النموذج"
+  "Choisissez une photo à envoyer depuis le formulaire": "اختر صورة لإرسالها من النموذج",
+  "Les photos envoyées ne sont pas valides": "الصور المرسلة غير صالحة",
+  "Trois photos au plus par avis": "ثلاث صور على الأكثر لكل رأي",
+  "La même photo est envoyée deux fois": "الصورة نفسها مرسلة مرتين",
+  "Cochez la case pour confirmer que vous avez le droit de publier ces photos": "أشّر على الخانة لتأكيد أن لك الحق في نشر هذه الصور",
+  "Écrivez le motif du refus": "اكتب سبب الرفض",
+  "Cette photo a déjà été examinée": "سبق فحص هذه الصورة",
+  "Une réponse ne peut pas porter de photos": "لا يمكن إرفاق صور بالرد",
+  "Des visiteurs ont joint des photos à leur avis sur un service : elles attendent votre validation avant de paraître.": "أرفق زوار صورًا بآرائهم حول خدمة: تنتظر موافقتك قبل أن تظهر.",
+  "Votre photo est maintenant visible avec votre avis. Merci !": "صورتك ظاهرة الآن مع رأيك. شكرًا!"
 }

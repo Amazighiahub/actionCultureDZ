@@ -577,7 +577,8 @@
     "lienInvalide": "This link is incomplete or wrong",
     "parlerTropLong": "The spoken variety is too long (100 characters at most)",
     "nomVoixTropLong": "The name is too long (150 characters at most)",
-    "accordVoix": "Confirm that the recorded person agrees to their voice being published"
+    "accordVoix": "Confirm that the recorded person agrees to their voice being published",
+    "photosAvisMax3": "Three photos at most per review"
   },
   "article": {
     "blockCreated": "Block created successfully",

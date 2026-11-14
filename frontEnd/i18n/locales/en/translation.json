@@ -3308,8 +3308,21 @@
         "doublon": "This content already exists on Tala DZ.",
         "horsSujet": "This content is not about Algerian culture or heritage.",
         "relecture": "The title or description has major mistakes: please proofread them.",
-        "contact": "The contact details are incomplete or incorrect."
+        "contact": "The contact details are incomplete or incorrect.",
+        "personne": "A recognisable person appears without their consent: choose a photo without faces."
       }
+    },
+    "photosAvis": {
+      "publiee": "Photo published with the review",
+      "refusee": "Photo rejected: the author received the reason",
+      "echec": "The decision could not be saved.",
+      "titre": "Review photos to approve",
+      "aide": "Check that the photo really shows the service, is not copied from elsewhere, and shows no recognisable person without their consent.",
+      "service": "Service",
+      "publier": "Publish",
+      "refuser": "Reject",
+      "refuserTitre": "Reject this photo?",
+      "refuserAide": "The review stays published without the photo. The author receives your reason; the file is deleted."
     }
   },
   "wilayas": {
@@ -5850,7 +5863,18 @@
       "placeholder": "Tell us about your visit: welcome, quality, price…",
       "placeholderReponse": "Your reply to this visitor",
       "reponsePro": "Reply from the owner",
-      "aucun": "No reviews yet. Be the first!"
+      "aucun": "No reviews yet. Be the first!",
+      "photos": {
+        "accordRequis": "Tick the box to confirm you have the right to publish these photos.",
+        "max": "Three photos at most: only the first three are kept.",
+        "ajouter": "Add photos (3 at most, optional)",
+        "accord": "I have the right to publish these photos (no recognisable person without their consent).",
+        "validation": "Your review appears straight away; the photos, after the team approves them.",
+        "enAttente": "Thank you! Your photos will appear once the team approves them.",
+        "echec": "A photo could not be sent. Please try again.",
+        "liste": "Visitor's photos",
+        "agrandir": "Enlarge photo {{n}}"
+      }
     }
   },
   "catalogue": {

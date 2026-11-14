@@ -37,7 +37,11 @@ async function apercuSignale(models, type, id) {
         attributes: ['id_commentaire', 'contenu', 'statut', 'id_user', 'id_oeuvre', 'id_evenement', 'id_service']
       });
       if (!c) return null;
-      return { titre: null, contenu: extrait(c.contenu), lien: lienCommentaire(c), statut: c.statut, auteur: await auteur(models, c.id_user) };
+      // Photos jointes à un avis : toutes (même en attente ou refusées), pour que la modération les voie
+      const photos = models.CommentairePhoto
+        ? (await models.CommentairePhoto.findAll({ where: { id_commentaire: c.id_commentaire }, attributes: ['url'], raw: true })).map(p => p.url)
+        : [];
+      return { titre: null, contenu: extrait(c.contenu), lien: lienCommentaire(c), statut: c.statut, auteur: await auteur(models, c.id_user), photos };
     }
     case 'oeuvre': {
       const o = await models.Oeuvre?.findByPk(id, { attributes: ['id_oeuvre', 'titre', 'description', 'statut', 'saisi_par'] });

@@ -91,6 +91,8 @@ module.exports = (sequelize) => {
     if (models.Service) Commentaire.belongsTo(models.Service, { foreignKey: 'id_service', onDelete: 'CASCADE' });
     Commentaire.belongsTo(models.Commentaire, { as: 'CommentaireParent', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
     Commentaire.hasMany(models.Commentaire, { as: 'Reponses', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
+    // Photos jointes à un avis sur un service
+    if (models.CommentairePhoto) Commentaire.hasMany(models.CommentairePhoto, { as: 'Photos', foreignKey: 'id_commentaire', onDelete: 'CASCADE' });
   };
 
   return Commentaire;

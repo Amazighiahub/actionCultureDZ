@@ -577,7 +577,8 @@
     "lienInvalide": "Ce lien est incomplet ou erroné",
     "parlerTropLong": "La variante parlée est trop longue (100 caractères au plus)",
     "nomVoixTropLong": "Le nom est trop long (150 caractères au plus)",
-    "accordVoix": "Confirmez que la personne enregistrée est d’accord pour que sa voix soit publiée"
+    "accordVoix": "Confirmez que la personne enregistrée est d’accord pour que sa voix soit publiée",
+    "photosAvisMax3": "Trois photos au plus par avis"
   },
   "article": {
     "blockCreated": "Bloc créé avec succès",

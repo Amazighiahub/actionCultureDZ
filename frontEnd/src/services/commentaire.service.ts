@@ -34,12 +34,31 @@ interface AvisService {
   date_creation: string;
   User?: { nom: unknown; prenom: unknown };
   Reponses?: AvisService[];
+  /** Photos validées par l'équipe (les autres n'apparaissent pas) */
+  Photos?: { id_photo: number; url: string }[];
+}
+
+/** Photo d'avis en attente de validation (écran de modération) */
+interface PhotoAvisEnAttente {
+  id_photo: number;
+  url: string;
+  date_creation: string;
+  id_commentaire: number;
+  contenu: string;
+  statut_avis: string | null;
+  id_service: number | null;
+  service_nom: unknown;
+  auteur: { id_user: number; prenom: unknown; nom: unknown } | null;
 }
 
 interface CreateCommentaireData {
   contenu: string;
   note_qualite?: number;
   commentaire_parent_id?: number;
+  /** Avis sur un service : adresses des images déjà mises en ligne (3 au plus) */
+  photos?: string[];
+  /** « J'ai le droit de publier ces photos » : obligatoire s'il y a des photos */
+  accord_photos?: boolean;
 }
 
 class CommentaireService {
@@ -251,6 +270,20 @@ class CommentaireService {
   }
 
   /**
+   * Photos d'avis en attente de validation (administration et modération)
+   */
+  async photosEnAttente(): Promise<ApiResponse<PhotoAvisEnAttente[]>> {
+    return httpClient.get<PhotoAvisEnAttente[]>(`${this.endpoint}/admin/photos`);
+  }
+
+  /**
+   * Publier ou refuser une photo d'avis (motif obligatoire au refus, envoyé à l'auteur)
+   */
+  async deciderPhoto(idPhoto: number, decision: 'publie' | 'rejete', motif?: string): Promise<ApiResponse<{ id_photo: number; statut: string }>> {
+    return httpClient.patch<{ id_photo: number; statut: string }>(`${this.endpoint}/photos/${idPhoto}`, { decision, ...(motif ? { motif } : {}) });
+  }
+
+  /**
    * Modérer un commentaire (admin)
    */
   async moderateCommentaire(
@@ -272,4 +305,4 @@ class CommentaireService {
 }
 
 export const commentaireService = new CommentaireService();
-export type { Commentaire, CreateCommentaireData, AvisService };
+export type { Commentaire, CreateCommentaireData, AvisService, PhotoAvisEnAttente };

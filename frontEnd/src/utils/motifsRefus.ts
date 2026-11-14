@@ -11,6 +11,7 @@ export const MOTIFS_REFUS: { cle: string; defaut: string }[] = [
   { cle: 'admin.refus.motifs.horsSujet', defaut: 'Ce contenu ne concerne pas la culture ou le patrimoine algériens.' },
   { cle: 'admin.refus.motifs.relecture', defaut: 'Le titre ou la description contient des fautes importantes : relisez-les.' },
   { cle: 'admin.refus.motifs.contact', defaut: 'Les coordonnées de contact sont incomplètes ou incorrectes.' },
+  { cle: 'admin.refus.motifs.personne', defaut: 'Une personne reconnaissable apparaît sans son accord : choisissez une photo sans visage.' },
 ];
 
 /** Ajoute un motif au texte déjà saisi (à la ligne s'il y en a déjà un) ; pas de doublon */

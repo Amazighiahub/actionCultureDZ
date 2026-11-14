@@ -479,5 +479,14 @@
   "Seul un enregistrement audio est accepté ici.": "Only an audio recording is accepted here.",
   "Photo introuvable": "Photo not found",
   "Seul l'organisateur de l'événement peut gérer ses photos": "Only the event organiser can manage its photos",
-  "Choisissez une photo à envoyer depuis le formulaire": "Choose a photo to send from the form"
+  "Choisissez une photo à envoyer depuis le formulaire": "Choose a photo to send from the form",
+  "Les photos envoyées ne sont pas valides": "The photos sent are not valid",
+  "Trois photos au plus par avis": "Three photos at most per review",
+  "La même photo est envoyée deux fois": "The same photo is sent twice",
+  "Cochez la case pour confirmer que vous avez le droit de publier ces photos": "Tick the box to confirm you have the right to publish these photos",
+  "Écrivez le motif du refus": "Write the reason for rejection",
+  "Cette photo a déjà été examinée": "This photo has already been reviewed",
+  "Une réponse ne peut pas porter de photos": "A reply cannot include photos",
+  "Des visiteurs ont joint des photos à leur avis sur un service : elles attendent votre validation avant de paraître.": "Visitors have attached photos to their review of a service: they await your approval before appearing.",
+  "Votre photo est maintenant visible avec votre avis. Merci !": "Your photo is now visible with your review. Thank you!"
 }

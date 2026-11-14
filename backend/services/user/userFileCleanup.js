@@ -17,7 +17,9 @@ async function isReferencedElsewhere(models, url, { sansMedias = false } = {}) {
     models.Intervenant && models.Intervenant.count({ where: { photo_url: url } }),
     models.Service && models.Service.count({ where: { photo_url: url } }),
     models.Evenement && models.Evenement.count({ where: { image_url: url } }),
-    models.Organisation && models.Organisation.count({ where: { logo_url: url } })
+    models.Organisation && models.Organisation.count({ where: { logo_url: url } }),
+    // Photo jointe à un avis sur un service
+    models.CommentairePhoto && models.CommentairePhoto.count({ where: { url } })
   ].filter(Boolean);
   const counts = await Promise.all(checks);
   return counts.some(c => c > 0);

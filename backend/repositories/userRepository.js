@@ -704,6 +704,13 @@ class UserRepository extends BaseRepository {
       }
       await destroy(m.Signalement, { id_user_signalant: userId });
       await destroy(m.Signalement, { type_entite: 'user', id_entite: userId });
+      // Photos jointes à ses avis : retirées (l'avis, lui, est rattaché plus bas au compte
+      // « Utilisateur supprimé ») ; les fichiers sont effacés après la transaction avec les autres
+      const photosAvis = m.CommentairePhoto?.findAll
+        ? (await m.CommentairePhoto.findAll({ attributes: ['url'], where: { id_user: userId }, raw: true, ...tx })).map(p => p.url)
+        : [];
+      await destroy(m.CommentairePhoto, { id_user: userId });
+      await detach(m.CommentairePhoto, 'id_moderateur');
 
       // Avis sur un service déjà noté par « Utilisateur supprimé » : un seul avis par compte et
       // par service (index unique, migration 20261114) → celui-ci est retiré au lieu d'être réattribué
@@ -804,7 +811,7 @@ class UserRepository extends BaseRepository {
       if (typeof documents === 'string') {
         try { documents = JSON.parse(documents); } catch { documents = []; }
       }
-      const files = [user.photo_url, ...(Array.isArray(documents) ? documents : [])]
+      const files = [user.photo_url, ...(Array.isArray(documents) ? documents : []), ...photosAvis]
         .map(f => (typeof f === 'string' ? f : f?.url))
         .filter(Boolean);
 
