@@ -110,12 +110,15 @@ class ProgrammeService extends BaseService {
   }
 
   /**
-   * Seul le propriétaire de l'événement gère ses activités, et pas sur un événement annulé ou terminé.
+   * Seul le propriétaire de l'événement gère ses activités, et pas sur un événement annulé.
+   * Un événement terminé reste modifiable (décision de la responsable, 2026-11-15) : l'organisateur
+   * raconte après coup chaque jour (description, intervenants, photos). Aucune notification n'est
+   * alors envoyée aux inscrits (_changementANotifier ne vise que les événements à venir ou en cours).
    * @returns {string|null} code d'erreur, ou null si la modification est permise
    */
   _refusEvenement(evenement, userId) {
     if (!memeUtilisateur(evenement.id_user, userId)) return 'forbidden';
-    if (['annule', 'termine'].includes(evenement.statut)) return 'forbidden';
+    if (evenement.statut === 'annule') return 'evenementAnnule';
     return null;
   }
 

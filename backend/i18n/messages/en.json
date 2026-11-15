@@ -269,7 +269,8 @@
     "reordered": "Programs order updated",
     "statusUpdated": "Program status updated: ${from} → ${to}",
     "orderUpdated": "Programs order updated",
-    "serverErrorGet": "Server error while retrieving programs"
+    "serverErrorGet": "Server error while retrieving programs",
+    "evenementAnnule": "Cancelled event: its programme can no longer be changed."
   },
   "media": {
     "notFound": "Media not found",

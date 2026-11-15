@@ -266,7 +266,8 @@
     "reordered": "ⴰⵎⵉⵣⵣⵡⵔ ⵏ ⵢⵉⵀⵉⵍⵏ ⵢⵜⵜⵡⴰⵍⵇⵎ",
     "statusUpdated": "ⴰⴷⴷⴰⴷ ⵏ ⵓⵀⵉⵍ ⵢⵜⵜⵡⴰⵍⵇⵎ: ${from} → ${to}",
     "orderUpdated": "ⴰⵎⵉⵣⵣⵡⵔ ⵏ ⵢⵉⵀⵉⵍⵏ ⵢⵜⵜⵡⴰⵍⵇⵎ",
-    "serverErrorGet": "ⵜⵓⵛⴹⴰ ⵏ ⵓⵇⴷⴷⴰⵛ ⴷⴳ ⵓⵙⴽⵍⵙ ⵏ ⵢⵉⵀⵉⵍⵏ"
+    "serverErrorGet": "ⵜⵓⵛⴹⴰ ⵏ ⵓⵇⴷⴷⴰⵛ ⴷⴳ ⵓⵙⴽⵍⵙ ⵏ ⵢⵉⵀⵉⵍⵏ",
+    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié."
   },
   "media": {
     "notFound": "ⴰⵎⵉⴷⵢⴰ ⵓⵔ ⵢⵜⵜⵓⵡⴰⴼ ⴰⵔⴰ",

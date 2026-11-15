@@ -266,7 +266,8 @@
     "reordered": "Amizzwer n yihilen yettwalqem",
     "statusUpdated": "Addad n uhil yettwalqem: ${from} → ${to}",
     "orderUpdated": "Amizzwer n yihilen yettwalqem",
-    "serverErrorGet": "Tuccḍa n uqeddac deg usekles n yihilen"
+    "serverErrorGet": "Tuccḍa n uqeddac deg usekles n yihilen",
+    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié."
   },
   "media": {
     "notFound": "Amidya ur yettuwaf ara",

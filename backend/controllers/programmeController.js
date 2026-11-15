@@ -143,6 +143,9 @@ class ProgrammeController extends BaseController {
       if (result.error === 'forbidden') {
         return res.status(403).json({ success: false, error: req.t('auth.forbidden') });
       }
+      if (result.error === 'evenementAnnule') {
+        return res.status(409).json({ success: false, error: req.t('programme.evenementAnnule') });
+      }
       if (result.error === 'lieuNotFound') {
         return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
@@ -166,6 +169,9 @@ class ProgrammeController extends BaseController {
       }
       if (result.error === 'forbidden') {
         return res.status(403).json({ success: false, error: req.t('auth.forbidden') });
+      }
+      if (result.error === 'evenementAnnule') {
+        return res.status(409).json({ success: false, error: req.t('programme.evenementAnnule') });
       }
 
       if (result.notifier) {
