@@ -15,6 +15,9 @@ const { isReferencedElsewhere } = require('./user/userFileCleanup');
 const AGE_MIN_MS = 2 * 60 * 60 * 1000;
 const PAR_PAGE = 500;
 const PAGES_MAX = 10;
+// Effacements et sorties au plus par passage (chaque heure) : jusqu'au 2026-11-15, rien n'était jamais
+// effacé (la ligne « journal » de l'envoi gardait tout) ; le retard part peu à peu, sans charger la base
+const ACTIONS_MAX = 100;
 
 /**
  * @param {object} models - modèles Sequelize
@@ -26,7 +29,7 @@ async function nettoyerQuarantaine(models, deps = {}) {
   const { cloudinary, FOLDERS, deleteAsset } = svc;
   const maintenant = deps.maintenant || Date.now();
   const estUtilisee = deps.estUtilisee || (async (r) => {
-    if (await isReferencedElsewhere(models, r.secure_url, { sansMedias: false })) return true;
+    if (await isReferencedElsewhere(models, r.secure_url, { sansTextes: true })) return true;
     // Dernière vérification avant d'effacer : un profil qui contiendrait l'identifiant sous une autre forme
     return (await models.User.unscoped().count({ where: { photo_url: { [Op.like]: `%${r.public_id}%` } } })) > 0;
   });
@@ -37,7 +40,7 @@ async function nettoyerQuarantaine(models, deps = {}) {
     const n = await models.User.unscoped().count({ where: { photo_url: r.secure_url } });
     if (!n) return false;
     // Copiée ailleurs (intervenant, organisation, événement…) : laissée en place, sinon la copie casserait
-    if (await isReferencedElsewhere({ ...models, User: undefined }, r.secure_url)) return false;
+    if (await isReferencedElsewhere({ ...models, User: undefined }, r.secure_url, { sansTextes: true })) return false;
     const nouveau = `${FOLDERS.profile}/${r.public_id.split('/').pop()}`;
     const res = await cloudinary.uploader.rename(r.public_id, nouveau, { resource_type: 'image' });
     if (!res?.secure_url) return false;
@@ -54,6 +57,7 @@ async function nettoyerQuarantaine(models, deps = {}) {
       ...(curseur ? { next_cursor: curseur } : {}),
     });
     for (const r of reponse?.resources || []) {
+      if (bilan.effacees + bilan.sorties + bilan.echecs >= ACTIONS_MAX) break;
       bilan.vues += 1;
       if (maintenant - new Date(r.created_at).getTime() < AGE_MIN_MS) continue;
       if (await estUtilisee(r)) {
@@ -66,10 +70,10 @@ async function nettoyerQuarantaine(models, deps = {}) {
       else bilan.echecs += 1;
     }
     curseur = reponse?.next_cursor;
-    if (!curseur) break;
+    if (!curseur || bilan.effacees + bilan.sorties + bilan.echecs >= ACTIONS_MAX) break;
   }
   if (bilan.effacees || bilan.echecs) logger.info(`Quarantaine : ${bilan.effacees} photo(s) sans compte effacée(s), ${bilan.echecs} échec(s)`);
   return bilan;
 }
 
-module.exports = { nettoyerQuarantaine, AGE_MIN_MS };
+module.exports = { nettoyerQuarantaine, AGE_MIN_MS, ACTIONS_MAX };

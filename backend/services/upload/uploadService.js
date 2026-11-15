@@ -313,6 +313,11 @@ class UploadService {
       return { media, forbidden: true };
     }
 
+    // Ligne supprimée d'abord ; le fichier ensuite, seulement s'il ne sert plus nulle part (avant : effacé
+    // sans vérifier, un compte pouvait casser un logo ou une affiche qui utilisait le même fichier)
+    await media.destroy();
+    if (await isReferencedElsewhere(this.models, media.url).catch(() => true)) return { media, success: true };
+
     // Supprimer le fichier Cloudinary ou local
     try {
       const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
@@ -331,9 +336,6 @@ class UploadService {
     } catch (err) {
       // Erreur suppression fichier, continuer
     }
-
-    // Supprimer de la base
-    await media.destroy();
 
     return { media, success: true };
   }

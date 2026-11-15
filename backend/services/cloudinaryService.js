@@ -165,8 +165,10 @@ async function supprimerParUrl(url, { publicId, resourceType } = {}) {
   const id = publicId || lu?.publicId;
   if (!id) return false;
   const type = lu?.resourceType || (TYPES_RESSOURCE.includes(resourceType) ? resourceType : 'image');
-  await deleteAsset(id, type);
-  return true;
+  const res = await deleteAsset(id, type);
+  // Vrai seulement si Cloudinary confirme (avant : vrai même en cas d'échec, la trace du fichier était
+  // alors oubliée alors qu'il restait) ; « not found » : déjà parti
+  return res?.result === 'ok' || res?.result === 'not found';
 }
 
 /**

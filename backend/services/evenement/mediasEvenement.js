@@ -42,12 +42,17 @@ class MediasEvenement {
     return true;
   }
 
-  /** Le fichier retiré ne reste pas sur Cloudinary, sauf si un autre média s'en sert. Un échec n'empêche pas le retrait. */
+  /**
+   * Le fichier retiré ne reste pas sur Cloudinary, sauf s'il sert encore ailleurs (vérification commune
+   * userFileCleanup ; avant, la ligne « journal » de l'envoi le faisait toujours garder). Un échec
+   * n'empêche pas le retrait.
+   */
   async _effacerFichier(url) {
     if (!this.genre.estDuSite(url)) return;
     try {
-      if (await this.models.Media.count({ where: { url } })) return;
-      await require('../cloudinaryService').supprimerParUrl(url);
+      const { isReferencedElsewhere, oublierJournal } = require('../user/userFileCleanup');
+      if (await isReferencedElsewhere(this.models, url)) return;
+      if (await require('../cloudinaryService').supprimerParUrl(url)) await oublierJournal(this.models, url);
     } catch (e) {
       require('../../utils/logger').warn(`Fichier non effacé de Cloudinary : ${e.message}`);
     }

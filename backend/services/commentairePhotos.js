@@ -120,8 +120,10 @@ async function decider(models, notificationService, idPhoto, moderateur, decisio
   if (!nombre) throw erreur('Cette photo a déjà été examinée', 409);
 
   if (decision === 'rejete') {
+    // Seulement si le fichier ne sert pas ailleurs : un avis pouvait citer l'affiche ou le logo d'un autre,
+    // que le refus effaçait (relecture du 2026-11-15). La photo refusée elle-même ne compte plus.
     try {
-      await require('./cloudinaryService').supprimerParUrl(photo.url);
+      await require('./user/userFileCleanup').deleteUserFiles(models, [photo.url]);
     } catch (e) {
       logger.warn(`Photo d'avis refusée non effacée de Cloudinary : ${e.message}`);
     }

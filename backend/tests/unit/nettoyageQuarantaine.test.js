@@ -43,3 +43,17 @@ describe('quarantaine : pages et échecs', () => {
     expect(bilan).toEqual({ vues: 2, effacees: 1, gardees: 0, echecs: 1, sorties: 0 });
   });
 });
+
+describe('quarantaine : retard rattrapé peu à peu', () => {
+  it('100 effacements au plus par passage', async () => {
+    const { ACTIONS_MAX } = require('../../services/nettoyageQuarantaine');
+    const vieilles = Array.from({ length: 150 }, (_, i) => ({ public_id: `eventculture/quarantaine/p${i}`, created_at: '2026-11-01T00:00:00Z', secure_url: `https://res.cloudinary.com/x/p${i}` }));
+    const deleteAsset = jest.fn(async () => ({ result: 'ok' }));
+    const bilan = await nettoyerQuarantaine({ User: {} }, {
+      maintenant: Date.parse('2026-11-07T12:00:00Z'), FOLDERS: { quarantaine: 'eventculture/quarantaine' },
+      deleteAsset, estUtilisee: async () => false, cloudinary: { api: { resources: jest.fn(async () => ({ resources: vieilles, next_cursor: 'suite' })) } },
+    });
+    expect(bilan.effacees).toBe(ACTIONS_MAX);
+    expect(deleteAsset).toHaveBeenCalledTimes(ACTIONS_MAX);
+  });
+});
