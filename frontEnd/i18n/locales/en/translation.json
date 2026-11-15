@@ -3795,7 +3795,9 @@
       "jour": "Day (optional)",
       "jourAide": "On the page, photos are grouped by day, with the day’s description and speakers (“Programme” tab).",
       "sansProgramme": "Event over several days? Add each day in the “Programme” tab (date, description, speakers): you can then file your photos under it.",
-      "max60": "60 photos at most: remove one to add another."
+      "max60": "60 photos at most: remove one to add another.",
+      "titreJour": "Photos of this day",
+      "aideJour": "They appear under this day in the programme and in the event gallery. Only photos you have the right to publish."
     }
   },
   "places": {
@@ -5317,7 +5319,8 @@
     "deleteActivity": "Delete activity",
     "confirmDeleteTitle": "Delete “{{titre}}”?",
     "confirmDeleteDesc": "The activity and its list of speakers will be removed from the programme. This cannot be undone.",
-    "voirPhotosJour": "See this day’s photos ({{n}})"
+    "voirPhotosJour": "See this day’s photos ({{n}})",
+    "photosActivite": "Photos of this day"
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",

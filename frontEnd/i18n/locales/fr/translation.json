@@ -3800,7 +3800,9 @@
       "jour": "Jour (facultatif)",
       "jourAide": "Sur la page, les photos sont rangées par jour, avec la description et les intervenants du jour (onglet « Programme »).",
       "sansProgramme": "Événement sur plusieurs jours ? Ajoutez chaque jour dans l’onglet « Programme » (date, description, intervenants) : vous pourrez ensuite y ranger vos photos.",
-      "max60": "60 photos au plus : retirez-en une pour en ajouter une autre."
+      "max60": "60 photos au plus : retirez-en une pour en ajouter une autre.",
+      "titreJour": "Photos de ce jour",
+      "aideJour": "Elles s’affichent sous ce jour dans le programme et dans la galerie de l’événement. Seulement des photos que vous avez le droit de publier."
     }
   },
   "places": {
@@ -5041,7 +5043,8 @@
     "deleteActivity": "Supprimer l’activité",
     "confirmDeleteTitle": "Supprimer « {{titre}} » ?",
     "confirmDeleteDesc": "L’activité et la liste de ses intervenants seront retirées du programme. Cette action est définitive.",
-    "voirPhotosJour": "Voir les photos de ce jour ({{n}})"
+    "voirPhotosJour": "Voir les photos de ce jour ({{n}})",
+    "photosActivite": "Photos de ce jour"
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",

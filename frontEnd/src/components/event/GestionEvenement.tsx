@@ -38,7 +38,8 @@ import {
   ArrowUp,
   ArrowDown,
   UserCheck,
-  Loader2
+  Loader2,
+  Camera
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
 import { cleMessageParticipants } from './MessageParticipantsDialog';
@@ -119,6 +120,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [editingProgramme, setEditingProgramme] = useState<Programme | null>(null);
   // Activité dont la suppression attend confirmation (le titre est rappelé : la corbeille est à côté du crayon)
   const [programmeASupprimer, setProgrammeASupprimer] = useState<Programme | null>(null);
+  // Photos d'un jour du programme, ajoutées depuis ce jour
+  const [programmePhotos, setProgrammePhotos] = useState<Programme | null>(null);
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 
   // Données dynamiques pour le formulaire programme
@@ -582,6 +585,15 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setProgrammePhotos(programme)}
+                          aria-label={t('programme.photosActivite', 'Photos de ce jour')}
+                          title={t('programme.photosActivite', 'Photos de ce jour')}
+                        >
+                          <Camera className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEditProgramme(programme)}
                           aria-label={t('programme.editActivity', 'Modifier l’activité')}
                           title={t('programme.editActivity', 'Modifier l’activité')}
@@ -605,6 +617,21 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               ))}
             </div>
           )}
+          <Dialog open={!!programmePhotos} onOpenChange={(o) => { if (!o) setProgrammePhotos(null); }}>
+            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle dir="auto">{programmePhotos ? td(programmePhotos.titre) : ''}</DialogTitle>
+                <DialogDescription>
+                  {programmePhotos && jourProgramme(programmePhotos)
+                    ? formatDate(jourProgramme(programmePhotos), { weekday: 'long', day: 'numeric', month: 'long' })
+                    : t('programme.photosActivite', 'Photos de ce jour')}
+                </DialogDescription>
+              </DialogHeader>
+              {programmePhotos && (
+                <PhotosEvenementGestion evenementId={evenementId} programmes={programmes} programmeId={programmePhotos.id_programme} />
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Onglet Participants */}

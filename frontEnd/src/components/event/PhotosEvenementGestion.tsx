@@ -31,13 +31,15 @@ interface Props {
   evenementId: number;
   /** Jours du programme de l'événement, pour y ranger les photos */
   programmes?: Programme[];
+  /** Ouvert depuis un jour du programme : seulement les photos de ce jour, envoyées dans ce jour */
+  programmeId?: number;
 }
 
-const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] }) => {
+const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [], programmeId }) => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { formatDate } = useFormatDate();
-  const [jour, setJour] = useState('');
+  const [jour, setJour] = useState(programmeId ? String(programmeId) : '');
   const jours = [...programmes].sort((a, b) => String(a.date_programme || '').localeCompare(String(b.date_programme || '')) || (a.ordre || 0) - (b.ordre || 0));
   const nomJour = (p: Programme) => [
     p.date_programme ? formatDate(new Date(p.date_programme), { weekday: 'short', day: 'numeric', month: 'short' }) : '',
@@ -63,6 +65,8 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] 
     }
   });
   const place = MAX_PHOTOS - photos.length;
+  // Depuis un jour du programme : seulement ses photos (la limite compte toutes celles de l'événement)
+  const affichees = programmeId ? photos.filter((p) => p.id_programme === programmeId) : photos;
 
   const choisir = (e: React.ChangeEvent<HTMLInputElement>) => {
     setErreur(null);
@@ -139,16 +143,18 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] 
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Camera className="h-5 w-5" aria-hidden="true" />
-          {t('event.photos.titre', 'Photos de l’événement')}
+          {programmeId ? t('event.photos.titreJour', 'Photos de ce jour') : t('event.photos.titre', 'Photos de l’événement')}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {t('event.photos.aide', 'Montrez comment ça s’est passé : elles s’affichent dans la galerie de la page de l’événement. Seulement des photos que vous avez le droit de publier.')}
+          {programmeId
+            ? t('event.photos.aideJour', 'Elles s’affichent sous ce jour dans le programme et dans la galerie de l’événement. Seulement des photos que vous avez le droit de publier.')
+            : t('event.photos.aide', 'Montrez comment ça s’est passé : elles s’affichent dans la galerie de la page de l’événement. Seulement des photos que vous avez le droit de publier.')}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {photos.length > 0 && (
+        {affichees.length > 0 && (
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" data-testid="photos-evenement">
-            {photos.map((p) => (
+            {affichees.map((p) => (
               <li key={p.id_media}>
                 <div className="relative">
                   <img src={getAssetUrl(p.url)} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />
@@ -157,7 +163,7 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] 
                     <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </div>
-                {jours.length > 0 && choixJours(`jour-photo-${p.id_media}`, p.id_programme ? String(p.id_programme) : '',
+                {jours.length > 0 && !programmeId && choixJours(`jour-photo-${p.id_media}`, p.id_programme ? String(p.id_programme) : '',
                   (v) => changerJour(p.id_media, v), t('event.photos.jourDeLaPhoto', 'Jour de la photo'), true)}
               </li>
             ))}
@@ -170,7 +176,7 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] 
               <Label htmlFor="photos-evenement">{t('event.photos.fichiers', 'Photos (une ou plusieurs)')}</Label>
               <Input key={cleChamp} id="photos-evenement" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={choisir} disabled={!!envoi} className="mt-1" />
             </div>
-            {jours.length > 0 ? (
+            {programmeId ? null : jours.length > 0 ? (
               <div>
                 <Label htmlFor="photos-jour">{t('event.photos.jour', 'Jour (facultatif)')}</Label>
                 {choixJours('photos-jour', jour, setJour, t('event.photos.jour', 'Jour (facultatif)'))}
