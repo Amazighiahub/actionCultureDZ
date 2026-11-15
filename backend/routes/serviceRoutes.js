@@ -69,6 +69,19 @@ const initServiceRoutes = (models, authMiddleware) => {
     validateGPS,
     asyncHandler((req, res) => serviceController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => serviceController.delete(req, res)));
+  // Galerie de photos (10 au plus) et menus en PDF ou image (3 au plus) : le professionnel ou la modération
+  router.post('/:id/medias', authenticate, createContentLimiter, validateId(),
+    [
+      body('type').isIn(['photo', 'menu']).withMessage(msg('validation.invalidStatus')),
+      body('url').isString().isLength({ min: 10, max: 500 }).withMessage(msg('validation.lienInvalide')),
+      body('nom').optional({ values: 'falsy' }).isString().isLength({ max: 100 }).withMessage(msg('validation.texteTropLong', { max: 100 })),
+    ],
+    handleValidationErrors,
+    asyncHandler((req, res) => serviceController.ajouterMedia(req, res)));
+  router.delete('/:id/medias/:idMedia', authenticate, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => serviceController.retirerMedia(req, res)));
+  router.get('/:id/menus/:idMedia/menu.pdf', optionalAuth, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => serviceController.menuPdf(req, res)));
 
   // Admin actions sur :id
   router.post('/:id/validate', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => serviceController.validate(req, res)));

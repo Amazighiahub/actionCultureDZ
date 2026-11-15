@@ -19,6 +19,8 @@ const { mockNavigate, mockHttpGet, mockHttpPost, utilisateur } = vi.hoisted(() =
 let mockParams: Record<string, string> = {};
 const searchParamsArr = [{ get: () => null }] as const;
 
+// Galerie et menus du service : testés à part (React Query)
+vi.mock('@/components/services/ServiceMediasGestion', () => ({ default: () => null }));
 vi.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/ajouter-mon-service', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,

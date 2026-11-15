@@ -83,10 +83,49 @@ class ServiceController extends BaseController {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
       const notes = await this._notes([raw.id]);
+      // Galerie de photos et menus (PDF ou image) ajoutés par le professionnel
+      const medias = await require('../services/service/mediasService').lister(container.models, raw.id).catch(() => ({ photos: [], menus: [] }));
       res.json({
         success: true,
-        data: { ...service.toDetailJSON(req.lang), note: notes.get(Number(raw.id)) || null }
+        data: { ...service.toDetailJSON(req.lang), note: notes.get(Number(raw.id)) || null, galerie: medias.photos, menus: medias.menus }
       });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // Galerie de photos et menus d'un service (professionnel du service ou modération)
+  async ajouterMedia(req, res) {
+    try {
+      const data = await require('../services/service/mediasService').ajouter(container.models, parseInt(req.params.id), req.user, req.body || {});
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async retirerMedia(req, res) {
+    try {
+      await require('../services/service/mediasService').retirer(container.models, parseInt(req.params.id), parseInt(req.params.idMedia), req.user);
+      res.json({ success: true });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** Menu PDF servi par le site (même principe que les documents d'un événement) */
+  async menuPdf(req, res) {
+    try {
+      const id = parseInt(req.params.id);
+      const service = await container.models.Service.findByPk(id, { attributes: ['id', 'statut', 'id_user'] });
+      if (!service || (service.statut !== 'valide' && !this._canSeeUnpublished(req, service.id_user))) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      const url = await require('../services/service/mediasService').fichierMenu(container.models, id, parseInt(req.params.idMedia));
+      const { servirPdf } = require('../utils/servirPdf');
+      if (!(await servirPdf(res, url, { nomFichier: 'menu.pdf', enCachePublic: service.statut === 'valide' }))) {
+        return res.status(502).json({ success: false, error: req.t('common.serverError') });
+      }
     } catch (error) {
       this._handleError(res, error);
     }

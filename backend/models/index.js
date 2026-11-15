@@ -271,6 +271,9 @@ const loadModels = (sequelize) => {
   // Photos des avis sur un service (validées par l'équipe avant d'être affichées)
   const commentairePhotoModel = loadModelSafely('./misc/commentairePhoto', 'CommentairePhoto', sequelize);
   if (commentairePhotoModel) models.CommentairePhoto = commentairePhotoModel;
+  // Galerie de photos et menus d'un service (restaurant, hôtel…)
+  const serviceMediaModel = loadModelSafely('./places/serviceMedia', 'ServiceMedia', sequelize);
+  if (serviceMediaModel) models.ServiceMedia = serviceMediaModel;
 
   const critiqueEvaluationModel = loadModelSafely('./misc/critiqueEvaluation', 'CritiqueEvaluation', sequelize);
   if (critiqueEvaluationModel) models.CritiqueEvaluation = critiqueEvaluationModel;

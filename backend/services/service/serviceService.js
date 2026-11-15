@@ -267,7 +267,10 @@ class ServiceService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres services');
     }
 
+    // Galerie et menus : les lignes partent avec le service ; leurs fichiers sont effacés ensuite
+    const fichiers = await require('./mediasService').urlsDuService(this.models || {}, id).catch(() => []);
     await this.repository.delete(id);
+    if (fichiers.length) await require('../user/userFileCleanup').deleteUserFiles(this.models, fichiers).catch(() => undefined);
     this.logger.info(`Service supprimé: ${id} par user: ${userId}`);
     return true;
   }

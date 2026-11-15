@@ -45,9 +45,21 @@ class ServiceService {
     };
   }
 
+  // Galerie (10 photos au plus) et menus en PDF ou image (3 au plus) : le fichier est d'abord mis en ligne
+  async ajouterMedia(id: number, media: { type: 'photo' | 'menu'; url: string; nom?: string }): Promise<ApiResponse<MediaService>> {
+    return httpClient.post<MediaService>(`/services/${id}/medias`, media);
+  }
+
+  async retirerMedia(id: number, idMedia: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(`/services/${id}/medias/${idMedia}`);
+  }
+
   async delete(id: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/services/${id}`);
   }
 }
+
+/** Photo de galerie ; menu : PDF servi par le site (`lien`) ou image (`url`) */
+export interface MediaService { id: number; type?: 'photo' | 'menu'; url?: string; nom?: string | null; pdf?: boolean; lien?: string }
 
 export const serviceService = new ServiceService();

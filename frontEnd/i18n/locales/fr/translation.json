@@ -5199,7 +5199,31 @@
       "transport": "Prix d'un trajet. Il sera affiché « par trajet ».",
       "location": "Prix de la location pour une journée. Il sera affiché « par jour »."
     },
-    "prix": "Prix"
+    "prix": "Prix",
+    "medias": {
+      "envoiPhotos": "Envoi {{fait}} / {{total}}…",
+      "photosAjoutees": "Photos ajoutées à votre service",
+      "echec": "Le fichier n’a pas pu être ajouté. Réessayez.",
+      "pdfTropGros": "Le PDF est trop lourd (20 Mo au plus).",
+      "envoi": "Envoi…",
+      "menuAjoute": "Menu ajouté à votre service",
+      "titre": "Photos et menu",
+      "aide": "Montrez votre salle, vos plats, vos chambres, la vue… et, pour un restaurant, votre carte. La photo principale ci-dessus reste la première.",
+      "galerie": "Galerie",
+      "retirerPhoto": "Retirer la photo",
+      "choisirPhotos": "Ajouter des photos (une ou plusieurs)",
+      "ajouterPhotos": "Ajouter les photos",
+      "menus": "Menu, carte ou tarifs",
+      "image": "image",
+      "retirerMenu": "Retirer le menu",
+      "choisirMenu": "Fichier du menu (PDF ou photo)",
+      "nomMenu": "Titre (facultatif)",
+      "nomMenuExemple": "ex. Carte d’été, Menu du jour, Tarifs des chambres",
+      "ajouterMenu": "Ajouter le menu",
+      "retirerTitre": "Retirer ce fichier ?",
+      "retirerAide": "Il disparaît de la page de votre service.",
+      "apresEnregistrement": "Après l’enregistrement, vous pourrez ajouter jusqu’à 10 photos et votre menu (PDF ou photo) depuis « Modifier »."
+    }
   },
   "organisations": {
     "create": {
@@ -5890,6 +5914,14 @@
         "liste": "Photos du visiteur",
         "agrandir": "Agrandir la photo {{n}}"
       }
+    },
+    "galerie": {
+      "agrandir": "Agrandir la photo {{n}} sur {{total}}",
+      "titre": "Photos"
+    },
+    "menus": {
+      "titre": "Menu et tarifs",
+      "sansNom": "Menu {{n}}"
     }
   },
   "catalogue": {

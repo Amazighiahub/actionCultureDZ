@@ -4890,7 +4890,31 @@
       "transport": "Price of one trip. It will be shown \"per trip\".",
       "location": "Rental price for one day. It will be shown \"per day\"."
     },
-    "prix": "Price"
+    "prix": "Price",
+    "medias": {
+      "envoiPhotos": "Uploading {{fait}} / {{total}}…",
+      "photosAjoutees": "Photos added to your service",
+      "echec": "The file could not be added. Please try again.",
+      "pdfTropGros": "The PDF is too large (20 MB maximum).",
+      "envoi": "Uploading…",
+      "menuAjoute": "Menu added to your service",
+      "titre": "Photos and menu",
+      "aide": "Show your dining room, dishes, rooms, the view… and, for a restaurant, your menu. The main photo above stays first.",
+      "galerie": "Gallery",
+      "retirerPhoto": "Remove photo",
+      "choisirPhotos": "Add photos (one or more)",
+      "ajouterPhotos": "Add the photos",
+      "menus": "Menu or prices",
+      "image": "image",
+      "retirerMenu": "Remove menu",
+      "choisirMenu": "Menu file (PDF or photo)",
+      "nomMenu": "Title (optional)",
+      "nomMenuExemple": "e.g. Summer menu, Dish of the day, Room rates",
+      "ajouterMenu": "Add the menu",
+      "retirerTitre": "Remove this file?",
+      "retirerAide": "It will disappear from your service page.",
+      "apresEnregistrement": "After saving, you can add up to 10 photos and your menu (PDF or photo) from “Edit”."
+    }
   },
   "organisations": {
     "create": {
@@ -5890,6 +5914,14 @@
         "liste": "Visitor's photos",
         "agrandir": "Enlarge photo {{n}}"
       }
+    },
+    "galerie": {
+      "agrandir": "Enlarge photo {{n}} of {{total}}",
+      "titre": "Photos"
+    },
+    "menus": {
+      "titre": "Menu and prices",
+      "sansNom": "Menu {{n}}"
     }
   },
   "catalogue": {

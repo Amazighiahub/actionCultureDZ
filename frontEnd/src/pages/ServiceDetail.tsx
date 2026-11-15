@@ -25,6 +25,8 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
 import NoteService from '@/components/services/NoteService';
+import { GalerieService, MenusService } from '@/components/services/GalerieService';
+import type { MediaService } from '@/services/service.service';
 
 interface ServiceFiche {
   id: number;
@@ -49,6 +51,9 @@ interface ServiceFiche {
   id_user?: number | null;
   // Note moyenne des avis publiés (null : aucune note)
   note?: { moyenne: number; nombre: number } | null;
+  // Galerie (en plus de photo_url) et menus en PDF ou image
+  galerie?: MediaService[];
+  menus?: MediaService[];
 }
 
 const ServiceDetail: React.FC = () => {
@@ -140,11 +145,9 @@ const ServiceDetail: React.FC = () => {
           </Alert>
         )}
 
-        <div className="overflow-hidden rounded-xl bg-muted aspect-[16/9] mb-6">
-          {service.photo_url
-            ? <img src={getAssetUrl(service.photo_url, { width: 1200 })} alt={nom} className="w-full h-full object-cover" />
-            : <div className={`w-full h-full flex items-center justify-center ${style.bg}`}><Icone className={`h-20 w-20 ${style.color}`} aria-hidden="true" /></div>}
-        </div>
+        {/* Grande photo et galerie (agrandies au toucher) */}
+        <GalerieService nom={nom} photoPrincipale={service.photo_url} galerie={service.galerie}
+          sansPhoto={<div className={`w-full h-full flex items-center justify-center ${style.bg}`}><Icone className={`h-20 w-20 ${style.color}`} aria-hidden="true" /></div>} />
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Badge variant="secondary" className="gap-1">
@@ -160,6 +163,8 @@ const ServiceDetail: React.FC = () => {
         <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">{nom}</h1>
         {service.note && <NoteService note={service.note} className="mb-4" />}
         {description && <p className="text-lg text-muted-foreground whitespace-pre-line mb-8">{description}</p>}
+        {/* Menu d'un restaurant, tarifs d'un hôtel… (PDF ou image) */}
+        <MenusService menus={service.menus} />
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card>

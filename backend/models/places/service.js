@@ -129,6 +129,8 @@ module.exports = (sequelize) => {
   Service.associate = (models) => {
     Service.belongsTo(models.Lieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Service.belongsTo(models.User, { foreignKey: 'id_user', as: 'Professionnel', onDelete: 'SET NULL' });
+    // Galerie de photos et menus (migration 20261226)
+    if (models.ServiceMedia) Service.hasMany(models.ServiceMedia, { foreignKey: 'id_service', as: 'Medias', onDelete: 'CASCADE' });
   };
 
   return Service;

@@ -488,5 +488,12 @@
   "Cette photo a déjà été examinée": "سبق فحص هذه الصورة",
   "Une réponse ne peut pas porter de photos": "لا يمكن إرفاق صور بالرد",
   "Des visiteurs ont joint des photos à leur avis sur un service : elles attendent votre validation avant de paraître.": "أرفق زوار صورًا بآرائهم حول خدمة: تنتظر موافقتك قبل أن تظهر.",
-  "Votre photo est maintenant visible avec votre avis. Merci !": "صورتك ظاهرة الآن مع رأيك. شكرًا!"
+  "Votre photo est maintenant visible avec votre avis. Merci !": "صورتك ظاهرة الآن مع رأيك. شكرًا!",
+  "Service introuvable": "الخدمة غير موجودة",
+  "Seul le professionnel de ce service peut gérer ses photos et menus": "وحده محترف هذه الخدمة يمكنه إدارة صورها وقوائمها",
+  "Genre de fichier invalide": "نوع الملف غير صالح",
+  "Choisissez un PDF ou une image à envoyer depuis le formulaire": "اختر ملف PDF أو صورة لإرسالها من النموذج",
+  "Dix photos au plus par service : retirez-en une d’abord": "عشر صور على الأكثر لكل خدمة: احذف واحدة أولًا",
+  "Trois menus au plus par service : retirez-en un d’abord": "ثلاث قوائم على الأكثر لكل خدمة: احذف واحدة أولًا",
+  "Fichier introuvable": "الملف غير موجود"
 }

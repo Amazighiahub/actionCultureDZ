@@ -50,6 +50,8 @@ const searchParamsObj = {
 };
 const searchParamsArr = [searchParamsObj] as const;
 
+// Galerie et menus du service : testés à part (React Query)
+vi.mock('@/components/services/ServiceMediasGestion', () => ({ default: () => null }));
 vi.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
   useNavigate: () => mockNavigate,

@@ -488,5 +488,12 @@
   "Cette photo a déjà été examinée": "This photo has already been reviewed",
   "Une réponse ne peut pas porter de photos": "A reply cannot include photos",
   "Des visiteurs ont joint des photos à leur avis sur un service : elles attendent votre validation avant de paraître.": "Visitors have attached photos to their review of a service: they await your approval before appearing.",
-  "Votre photo est maintenant visible avec votre avis. Merci !": "Your photo is now visible with your review. Thank you!"
+  "Votre photo est maintenant visible avec votre avis. Merci !": "Your photo is now visible with your review. Thank you!",
+  "Service introuvable": "Service not found",
+  "Seul le professionnel de ce service peut gérer ses photos et menus": "Only this service's professional can manage its photos and menus",
+  "Genre de fichier invalide": "Invalid file kind",
+  "Choisissez un PDF ou une image à envoyer depuis le formulaire": "Choose a PDF or an image to send from the form",
+  "Dix photos au plus par service : retirez-en une d’abord": "Ten photos at most per service: remove one first",
+  "Trois menus au plus par service : retirez-en un d’abord": "Three menus at most per service: remove one first",
+  "Fichier introuvable": "File not found"
 }
