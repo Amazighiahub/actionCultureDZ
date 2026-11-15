@@ -495,5 +495,8 @@
   "Choisissez un PDF ou une image à envoyer depuis le formulaire": "اختر ملف PDF أو صورة لإرسالها من النموذج",
   "Dix photos au plus par service : retirez-en une d’abord": "عشر صور على الأكثر لكل خدمة: احذف واحدة أولًا",
   "Trois menus au plus par service : retirez-en un d’abord": "ثلاث قوائم على الأكثر لكل خدمة: احذف واحدة أولًا",
-  "Fichier introuvable": "الملف غير موجود"
+  "Fichier introuvable": "الملف غير موجود",
+  "Jour du programme invalide": "يوم البرنامج غير صالح",
+  "Ce jour ne fait pas partie du programme de l’événement": "هذا اليوم ليس من برنامج الفعالية",
+  "60 photos au plus par événement : retirez-en une d'abord": "60 صورة على الأكثر لكل فعالية: احذف واحدة أولًا"
 }

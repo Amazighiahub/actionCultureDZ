@@ -661,6 +661,15 @@ class EvenementController extends BaseController {
     }
   }
 
+  async changerJourPhoto(req, res) {
+    try {
+      const data = await container.photosEvenementService.changerJour(parseInt(req.params.id), parseInt(req.params.idMedia), req.user, req.body?.id_programme);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async retirerPhoto(req, res) {
     try {
       await container.photosEvenementService.retirer(parseInt(req.params.id), parseInt(req.params.idMedia), req.user);

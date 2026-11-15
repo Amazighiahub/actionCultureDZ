@@ -455,7 +455,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         {/* Onglet Documents PDF (programme complet, présentation…) et photos de l'événement (galerie) */}
         <TabsContent value="documents" className="space-y-6">
           <DocumentsEvenementGestion evenementId={evenementId} />
-          <PhotosEvenementGestion evenementId={evenementId} />
+          <PhotosEvenementGestion evenementId={evenementId} programmes={programmes} />
         </TabsContent>
 
         {/* Onglet Programmes */}

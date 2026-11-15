@@ -3788,7 +3788,14 @@
       "ajouter": "Add the photos",
       "max": "30 photos at most: remove one to add another.",
       "retirerTitre": "Remove this photo?",
-      "retirerAide": "It disappears from the event gallery."
+      "retirerAide": "It disappears from the event gallery.",
+      "jourEchec": "The day could not be changed.",
+      "toutEvenement": "Whole event",
+      "jourDeLaPhoto": "Day of the photo",
+      "jour": "Day (optional)",
+      "jourAide": "On the page, photos are grouped by day, with the day’s description and speakers (“Programme” tab).",
+      "sansProgramme": "Event over several days? Add each day in the “Programme” tab (date, description, speakers): you can then file your photos under it.",
+      "max60": "60 photos at most: remove one to add another."
     }
   },
   "places": {
@@ -5309,7 +5316,8 @@
     "editActivity": "Edit activity",
     "deleteActivity": "Delete activity",
     "confirmDeleteTitle": "Delete “{{titre}}”?",
-    "confirmDeleteDesc": "The activity and its list of speakers will be removed from the programme. This cannot be undone."
+    "confirmDeleteDesc": "The activity and its list of speakers will be removed from the programme. This cannot be undone.",
+    "voirPhotosJour": "See this day’s photos ({{n}})"
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",
@@ -5588,7 +5596,8 @@
       "diaporama": "Slideshows",
       "audio": "Audio"
     },
-    "mediaNumero": "Media {{n}}"
+    "mediaNumero": "Media {{n}}",
+    "autresPhotos": "Other photos"
   },
   "gestionArtisanat": {
     "errors": {

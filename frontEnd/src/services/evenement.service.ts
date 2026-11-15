@@ -52,6 +52,8 @@ interface EventMedia {
   description?: unknown;
   credit?: string | null;
   ordre: number;
+  /** Jour du programme de la photo (null : tout l'événement) */
+  id_programme?: number | null;
 }
 
 interface Participant {
@@ -198,8 +200,13 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }
 
   // Photos de l'événement (galerie) : ajoutées par l'organisateur
-  async ajouterPhoto(id: number, photo: { url: string; legende?: string; credit?: string }): Promise<ApiResponse<EventMedia>> {
+  async ajouterPhoto(id: number, photo: { url: string; legende?: string; credit?: string; id_programme?: number | null }): Promise<ApiResponse<EventMedia>> {
     return httpClient.post<EventMedia>(`/evenements/${id}/photos`, photo);
+  }
+
+  /** Range une photo dans un jour du programme (null : tout l'événement) */
+  async changerJourPhoto(id: number, idMedia: number, idProgramme: number | null): Promise<ApiResponse<EventMedia>> {
+    return httpClient.patch<EventMedia>(`/evenements/${id}/photos/${idMedia}`, { id_programme: idProgramme });
   }
 
   async retirerPhoto(id: number, idMedia: number): Promise<ApiResponse<void>> {

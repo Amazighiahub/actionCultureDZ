@@ -17,10 +17,14 @@ import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import type { Media } from '@/types/models/media.types';
+import type { Programme } from '@/types/models/programme.types';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface EventGalleryProps {
   medias: Media[];
+  /** Programme de l'événement : les photos rangées dans un jour s'affichent sous ce jour */
+  programs?: Programme[];
 }
 
 // Icônes par type de média
@@ -261,9 +265,10 @@ const Lightbox: React.FC<LightboxProps> = ({
 };
 
 // Composant principal
-const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
+const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
+  const { formatDate } = useFormatDate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -273,6 +278,25 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
   const filteredMedias = filter === 'all' 
     ? medias 
     : medias.filter(m => m.type_media === filter);
+
+  // Galerie rangée par jour du programme (exposition sur plusieurs jours) : chaque jour avec sa date,
+  // son titre et sa description, puis les photos sans jour. Sans photo rangée : la galerie d'avant.
+  const jours = programs
+    .filter((p) => filteredMedias.some((m) => m.id_programme === p.id_programme))
+    .sort((a, b) => String(a.date_programme || '').localeCompare(String(b.date_programme || '')) || (a.ordre || 0) - (b.ordre || 0));
+  const idsJours = new Set(jours.map((p) => p.id_programme));
+  const sections = jours.length > 0
+    ? [
+        ...jours.map((p) => ({ cle: `j${p.id_programme}`, programme: p as Programme | null, medias: filteredMedias.filter((m) => m.id_programme === p.id_programme) })),
+        { cle: 'autres', programme: null as Programme | null, medias: filteredMedias.filter((m) => !m.id_programme || !idsJours.has(m.id_programme)) }
+      ].filter((s) => s.medias.length > 0)
+    : null;
+  // Ordre de la visionneuse = ordre affiché
+  const ordonnes = sections ? sections.flatMap((s) => s.medias) : filteredMedias;
+  const titreJour = (p: Programme) => [
+    p.date_programme ? formatDate(new Date(p.date_programme), { weekday: 'long', day: 'numeric', month: 'long' }) : '',
+    td(p.titre)
+  ].filter(Boolean).join(' · ');
 
   // Types de médias disponibles
   const mediaTypes = [...new Set(medias.map(m => m.type_media))];
@@ -288,11 +312,11 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
   };
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? filteredMedias.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? ordonnes.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === filteredMedias.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === ordonnes.length - 1 ? 0 : prev + 1));
   };
 
   if (!medias || medias.length === 0) {
@@ -359,7 +383,28 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
       </div>
 
       {/* Galerie */}
-      {viewMode === 'grid' ? (
+      {viewMode === 'grid' && sections ? (
+        <div className="space-y-8">
+          {sections.map((s) => {
+            const debut = ordonnes.indexOf(s.medias[0]);
+            return (
+              <section key={s.cle} aria-label={s.programme ? titreJour(s.programme) : t('gallery.autresPhotos', 'Autres photos')}>
+                <h3 className="text-lg font-semibold first-letter:uppercase" dir="auto">
+                  {s.programme ? titreJour(s.programme) : t('gallery.autresPhotos', 'Autres photos')}
+                </h3>
+                {s.programme && td(s.programme.description) && (
+                  <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground" dir="auto">{td(s.programme.description)}</p>
+                )}
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {s.medias.map((media, i) => (
+                    <GalleryItem key={media.id_media || i} media={media} onClick={() => openLightbox(debut + i)} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredMedias.map((media, index) => (
             <GalleryItem
@@ -371,7 +416,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredMedias.map((media, index) => {
+          {ordonnes.map((media, index) => {
             const Icon = mediaIcons[media.type_media] || ImageIcon;
             return (
               <div
@@ -420,7 +465,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
 
       {/* Lightbox */}
       <Lightbox
-        medias={filteredMedias}
+        medias={ordonnes}
         currentIndex={currentIndex}
         isOpen={lightboxOpen}
         onClose={closeLightbox}

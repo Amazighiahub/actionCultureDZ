@@ -8,7 +8,7 @@ const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddle
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter, importLimiter, pdfLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, importLimiter, pdfLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
@@ -135,8 +135,11 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.delete('/:id/documents/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.retirerDocument(req, res)));
   // Photos de l'événement (galerie publique via GET /:id/medias) : ajout et retrait par l'organisateur
-  router.post('/:id/photos', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+  // Limite des fichiers (400/h) : avec la limite commune des créations (20/h), la 21e photo était refusée
+  router.post('/:id/photos', authenticate, requireVerifiedEmail, mediasLimiter, validateId(),
     asyncHandler((req, res) => evenementController.ajouterPhoto(req, res)));
+  router.patch('/:id/photos/:idMedia', authenticate, requireVerifiedEmail, mediasLimiter, validateId(), validateId('idMedia'),
+    asyncHandler((req, res) => evenementController.changerJourPhoto(req, res)));
   router.delete('/:id/photos/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.retirerPhoto(req, res)));
 

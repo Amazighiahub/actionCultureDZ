@@ -17,10 +17,16 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/Utils';
 import type { Programme, ProgrammeIntervenant } from '@/types/models/programme.types';
+import type { Media } from '@/types/models/media.types';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import { heureProgramme } from '@/utils/programmeHoraire';
 
 interface EventProgramProps {
   programs: Programme[];
+  /** Photos de l'événement : celles rangées dans un jour s'affichent sous ce jour */
+  photos?: Media[];
+  /** Ouvre la galerie (bouton « Voir les photos ») */
+  onVoirPhotos?: () => void;
 }
 
 // Icônes par type d'activité
@@ -38,9 +44,29 @@ interface ProgramItemProps {
   program: Programme;
   isExpanded: boolean;
   onToggle: () => void;
+  photos?: Media[];
+  onVoirPhotos?: () => void;
 }
 
-const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle }) => {
+/** Photos d'un jour du programme : quelques miniatures et un lien vers la galerie */
+const PhotosDuJour: React.FC<{ photos: Media[]; onVoirPhotos?: () => void }> = ({ photos, onVoirPhotos }) => {
+  const { t } = useTranslation();
+  if (photos.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 px-4 pb-4" data-testid="photos-du-jour">
+      {photos.slice(0, 4).map((p) => (
+        <img key={p.id_media} src={getAssetUrl(p.url, { width: 160 })} alt="" loading="lazy" className="h-14 w-14 rounded-md object-cover" />
+      ))}
+      {onVoirPhotos && (
+        <button type="button" onClick={onVoirPhotos} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+          {t('programme.voirPhotosJour', 'Voir les photos de ce jour ({{n}})', { n: photos.length })}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle, photos = [], onVoirPhotos }) => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { formatTime: hookFormatTime } = useFormatDate();
@@ -172,6 +198,8 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
           )}
         </div>
       </button>
+
+      <PhotosDuJour photos={photos} onVoirPhotos={onVoirPhotos} />
 
       {/* Détails étendus */}
       {isExpanded && (
@@ -307,7 +335,8 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
 };
 
 // Composant principal
-const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
+const EventProgram: React.FC<EventProgramProps> = ({ programs, photos = [], onVoirPhotos }) => {
+  const photosDe = (id: number) => photos.filter((m) => m.type_media === 'image' && m.id_programme === id);
   const { t } = useTranslation();
   const { formatDate } = useFormatDate();
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -382,6 +411,8 @@ const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
                     program={program}
                     isExpanded={expandedId === program.id_programme}
                     onToggle={() => toggleExpand(program.id_programme)}
+                    photos={photosDe(program.id_programme)}
+                    onVoirPhotos={onVoirPhotos}
                   />
                 ))}
               </div>
@@ -396,6 +427,8 @@ const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
               program={program}
               isExpanded={expandedId === program.id_programme}
               onToggle={() => toggleExpand(program.id_programme)}
+              photos={photosDe(program.id_programme)}
+              onVoirPhotos={onVoirPhotos}
             />
           ))}
         </div>

@@ -22,6 +22,15 @@ module.exports = (sequelize) => {
         key: 'id_evenement'
       }
     },
+    // Jour du programme où la photo a été prise (événement sur plusieurs jours), migration 20261227
+    id_programme: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'programme',
+        key: 'id_programme'
+      }
+    },
     type_media: {
       type: DataTypes.ENUM('image', 'video', 'document', 'diaporama', 'audio'),
       allowNull: false

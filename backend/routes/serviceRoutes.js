@@ -8,7 +8,7 @@ const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { param, body } = require('express-validator');
 const serviceController = require('../controllers/serviceController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
-const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const { msg } = require('../utils/messageValidation');
 
@@ -70,7 +70,7 @@ const initServiceRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => serviceController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => serviceController.delete(req, res)));
   // Galerie de photos (10 au plus) et menus en PDF ou image (3 au plus) : le professionnel ou la modération
-  router.post('/:id/medias', authenticate, createContentLimiter, validateId(),
+  router.post('/:id/medias', authenticate, mediasLimiter, validateId(),
     [
       body('type').isIn(['photo', 'menu']).withMessage(msg('validation.invalidStatus')),
       body('url').isString().isLength({ min: 10, max: 500 }).withMessage(msg('validation.lienInvalide')),

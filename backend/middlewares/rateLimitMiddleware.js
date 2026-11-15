@@ -240,10 +240,12 @@ const commentLimiter = rateLimit(withStore('comment', {
   },
 }));
 
-// 3c. Rate limiter spécifique uploads authentifiés (30/h/user)
+// 3c. Rate limiter spécifique uploads authentifiés (150/h/user)
+// 150 par heure (avant : 30) : un organisateur qui envoie les photos de son exposition était bloqué
+// à la 31e. Les images sont réduites dans le navigateur avant l'envoi ; seulement des comptes connectés.
 const uploadLimiter = rateLimit(withStore('upload', {
   windowMs: 60 * 60 * 1000, // 1 heure
-  max: IS_PRODUCTION ? 30 : 200, // 30 uploads/h en prod
+  max: IS_PRODUCTION ? 150 : 300,
   keyGenerator: (req) => req.user?.id_user || req.ip,
   handler: (req, res) => {
     res.status(429).json({

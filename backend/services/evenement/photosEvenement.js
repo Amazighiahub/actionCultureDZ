@@ -7,7 +7,8 @@ const { estImageDuSite } = require('./messagesParticipants');
 const { MediasEvenement, erreur } = require('./mediasEvenement');
 const { texteSimple } = require('../patrimoine/creditPhoto');
 
-const MAX_PHOTOS = 30;
+// 60 (avant : 30) : une exposition sur plusieurs jours montre chaque journée
+const MAX_PHOTOS = 60;
 
 class PhotosEvenement extends MediasEvenement {
   constructor(models) {
@@ -17,15 +18,27 @@ class PhotosEvenement extends MediasEvenement {
     });
   }
 
-  async ajouter(idEvenement, utilisateur, { url, legende, credit }) {
+  /** Le jour du programme choisi, s'il appartient bien à cet événement ; sinon null (tout l'événement) */
+  async _jour(idEvenement, idProgramme) {
+    if (idProgramme === undefined || idProgramme === null || idProgramme === '') return null;
+    const id = Number(idProgramme);
+    if (!Number.isInteger(id) || id <= 0) throw erreur('Jour du programme invalide');
+    const jour = await this.models.Programme.findOne({ where: { id_programme: id, id_evenement: idEvenement }, attributes: ['id_programme'] });
+    if (!jour) throw erreur('Ce jour ne fait pas partie du programme de l’événement');
+    return id;
+  }
+
+  async ajouter(idEvenement, utilisateur, { url, legende, credit, id_programme: idProgramme }) {
     const evenement = await this._evenement(idEvenement, utilisateur);
     // Seulement une image mise en ligne par le site : pas de lien vers un autre domaine
     if (!estImageDuSite(url)) throw erreur('Choisissez une photo à envoyer depuis le formulaire');
+    const jour = await this._jour(evenement.id_evenement, idProgramme);
     const nombre = await this._compter(evenement.id_evenement);
     if (nombre >= MAX_PHOTOS) throw erreur(`${MAX_PHOTOS} photos au plus par événement : retirez-en une d'abord`);
     const titre = texteSimple(legende, 200);
     const media = await this.models.Media.create({
       id_evenement: evenement.id_evenement,
+      id_programme: jour,
       type_media: 'image',
       url,
       titre: titre ? { fr: titre } : {},
@@ -34,7 +47,21 @@ class PhotosEvenement extends MediasEvenement {
       ordre: nombre,
       metadata: { uploadedBy: utilisateur.id_user }
     });
-    return { id_media: media.id_media, url: media.url, titre: media.titre, credit: media.credit };
+    return { id_media: media.id_media, url: media.url, titre: media.titre, credit: media.credit, id_programme: jour };
+  }
+
+  /** Range une photo déjà publiée dans un jour du programme (ou la remet sur tout l'événement : null) */
+  async changerJour(idEvenement, idMedia, utilisateur, idProgramme) {
+    const evenement = await this._evenement(idEvenement, utilisateur);
+    const jour = await this._jour(evenement.id_evenement, idProgramme);
+    const [n] = await this.models.Media.update({ id_programme: jour },
+      { where: { id_media: idMedia, id_evenement: evenement.id_evenement, type_media: 'image' } });
+    if (!n) {
+      // MySQL compte 0 ligne si la valeur ne change pas : la photo existe-t-elle ?
+      const existe = await this.models.Media.count({ where: { id_media: idMedia, id_evenement: evenement.id_evenement, type_media: 'image' } });
+      if (!existe) throw erreur('Photo introuvable', 404);
+    }
+    return { id_media: idMedia, id_programme: jour };
   }
 }
 

@@ -9,6 +9,8 @@ export interface Media {
   id_media: number;
   id_oeuvre?: number;
   id_evenement?: number;
+  /** Jour du programme où la photo a été prise (événement sur plusieurs jours) */
+  id_programme?: number | null;
   type_media: TypeMedia;
   url: string;
   titre?: string;

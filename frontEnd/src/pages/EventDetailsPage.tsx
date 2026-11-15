@@ -228,7 +228,7 @@ const EventDetailsPage: React.FC = () => {
                   <TabsContent value="program" className="mt-0">
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
-                        <EventProgram programs={programs || []} />
+                        <EventProgram programs={programs || []} photos={medias || []} onVoirPhotos={() => setActiveTab('gallery')} />
                         <div className="mt-6"><EventDocuments eventId={event.id_evenement} /></div>
                       </Suspense>
                     </ErrorBoundary>
@@ -238,7 +238,7 @@ const EventDetailsPage: React.FC = () => {
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
                         {/* Les PDF sont dans « Documents à télécharger », pas dans la galerie */}
-                        <EventGallery medias={(medias || []).filter(m => m.type_media !== 'document')} />
+                        <EventGallery medias={(medias || []).filter(m => m.type_media !== 'document')} programs={programs || []} />
                       </Suspense>
                     </ErrorBoundary>
                   </TabsContent>

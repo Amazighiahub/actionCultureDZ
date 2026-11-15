@@ -1,7 +1,9 @@
 /**
  * PhotosEvenementGestion — l'organisateur ajoute les photos de son événement (audit V11 OUT-23) :
  * elles s'affichent dans la galerie de la page de l'événement. Plusieurs photos d'un coup, avec une
- * légende et un photographe facultatifs (communs aux photos envoyées ensemble). 30 au plus.
+ * légende et un photographe facultatifs (communs aux photos envoyées ensemble). 60 au plus.
+ * Événement sur plusieurs jours : chaque photo peut être rangée dans un jour du programme (date,
+ * description et intervenants du jour) ; sur la page, la galerie est alors rangée par jour.
  * Même fonctionnement que les documents (DocumentsEvenementGestion) : l'image est mise en ligne,
  * puis rattachée à l'événement.
  */
@@ -17,13 +19,30 @@ import { useToast } from '@/components/ui/use-toast';
 import { evenementService } from '@/services/evenement.service';
 import { uploadService } from '@/services/upload.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
-import { ConfirmDialog } from '@/components/shared';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { useTranslateData } from '@/hooks/useTranslateData';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import type { Programme } from '@/types/models/programme.types';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 
-const MAX_PHOTOS = 30;
+const MAX_PHOTOS = 60;
 
-const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId }) => {
+interface Props {
+  evenementId: number;
+  /** Jours du programme de l'événement, pour y ranger les photos */
+  programmes?: Programme[];
+}
+
+const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [] }) => {
   const { t } = useTranslation();
+  const { td } = useTranslateData();
+  const { formatDate } = useFormatDate();
+  const [jour, setJour] = useState('');
+  const jours = [...programmes].sort((a, b) => String(a.date_programme || '').localeCompare(String(b.date_programme || '')) || (a.ordre || 0) - (b.ordre || 0));
+  const nomJour = (p: Programme) => [
+    p.date_programme ? formatDate(new Date(p.date_programme), { weekday: 'short', day: 'numeric', month: 'short' }) : '',
+    td(p.titre)
+  ].filter(Boolean).join(' · ');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const cle = ['event-photos', evenementId];
@@ -63,7 +82,7 @@ const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId
         setEnvoi({ fait: i, total: fichiers.length });
         const envoye = await uploadService.uploadImage(f);
         if (!envoye.success || !envoye.data?.url) throw envoye;
-        const res = await evenementService.ajouterPhoto(evenementId, { url: envoye.data.url, legende: legende.trim(), credit: credit.trim() });
+        const res = await evenementService.ajouterPhoto(evenementId, { url: envoye.data.url, legende: legende.trim(), credit: credit.trim(), id_programme: jour ? Number(jour) : null });
         if (!res.success) throw res;
         ajoutees += 1;
       }
@@ -79,6 +98,26 @@ const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId
       }
     }
   };
+
+  /** Range une photo déjà publiée dans un autre jour (ou sur tout l'événement) */
+  const changerJour = async (idMedia: number, valeur: string) => {
+    try {
+      const res = await evenementService.changerJourPhoto(evenementId, idMedia, valeur ? Number(valeur) : null);
+      if (!res.success) throw res;
+      queryClient.invalidateQueries({ queryKey: cle });
+      queryClient.invalidateQueries({ queryKey: ['event-medias', evenementId] });
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('event.photos.jourEchec', 'Le jour n’a pas pu être changé.')), variant: 'destructive' });
+    }
+  };
+
+  const choixJours = (id: string, valeur: string, onChange: (v: string) => void, libelle: string, petit = false) => (
+    <select id={id} value={valeur} onChange={(e) => onChange(e.target.value)} disabled={!!envoi} aria-label={libelle}
+      className={petit ? 'mt-1 w-full rounded-md border bg-background px-1 py-1 text-xs' : 'mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm'}>
+      <option value="">{t('event.photos.toutEvenement', 'Tout l’événement')}</option>
+      {jours.map((p) => <option key={p.id_programme} value={String(p.id_programme)}>{nomJour(p)}</option>)}
+    </select>
+  );
 
   const retirer = async () => {
     if (aRetirer === null) return;
@@ -110,12 +149,16 @@ const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId
         {photos.length > 0 && (
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" data-testid="photos-evenement">
             {photos.map((p) => (
-              <li key={p.id_media} className="relative">
-                <img src={getAssetUrl(p.url)} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />
-                <Button type="button" size="icon" variant="secondary" className="absolute end-1 top-1 h-8 w-8"
-                  onClick={() => setARetirer(p.id_media)} aria-label={t('event.photos.retirer', 'Retirer la photo')}>
-                  <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
-                </Button>
+              <li key={p.id_media}>
+                <div className="relative">
+                  <img src={getAssetUrl(p.url)} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />
+                  <Button type="button" size="icon" variant="secondary" className="absolute end-1 top-1 h-8 w-8"
+                    onClick={() => setARetirer(p.id_media)} aria-label={t('event.photos.retirer', 'Retirer la photo')}>
+                    <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
+                  </Button>
+                </div>
+                {jours.length > 0 && choixJours(`jour-photo-${p.id_media}`, p.id_programme ? String(p.id_programme) : '',
+                  (v) => changerJour(p.id_media, v), t('event.photos.jourDeLaPhoto', 'Jour de la photo'), true)}
               </li>
             ))}
           </ul>
@@ -127,6 +170,19 @@ const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId
               <Label htmlFor="photos-evenement">{t('event.photos.fichiers', 'Photos (une ou plusieurs)')}</Label>
               <Input key={cleChamp} id="photos-evenement" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={choisir} disabled={!!envoi} className="mt-1" />
             </div>
+            {jours.length > 0 ? (
+              <div>
+                <Label htmlFor="photos-jour">{t('event.photos.jour', 'Jour (facultatif)')}</Label>
+                {choixJours('photos-jour', jour, setJour, t('event.photos.jour', 'Jour (facultatif)'))}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('event.photos.jourAide', 'Sur la page, les photos sont rangées par jour, avec la description et les intervenants du jour (onglet « Programme »).')}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {t('event.photos.sansProgramme', 'Événement sur plusieurs jours ? Ajoutez chaque jour dans l’onglet « Programme » (date, description, intervenants) : vous pourrez ensuite y ranger vos photos.')}
+              </p>
+            )}
             <div>
               <Label htmlFor="photos-legende">{t('event.photos.legende', 'Légende (facultatif)')}</Label>
               <Input id="photos-legende" value={legende} onChange={(e) => setLegende(e.target.value)} maxLength={200} disabled={!!envoi} className="mt-1"
@@ -147,7 +203,7 @@ const PhotosEvenementGestion: React.FC<{ evenementId: number }> = ({ evenementId
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {t('event.photos.max', '30 photos au plus : retirez-en une pour en ajouter une autre.')}
+            {t('event.photos.max60', '60 photos au plus : retirez-en une pour en ajouter une autre.')}
           </p>
         )}
       </CardContent>
