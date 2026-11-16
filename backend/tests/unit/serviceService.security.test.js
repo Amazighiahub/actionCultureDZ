@@ -53,4 +53,21 @@ describe('ServiceService - droits', () => {
     await service.update(43, { disponible: false }, 7);
     expect(repository.update.mock.calls[0][1]).not.toHaveProperty('statut');
   });
+
+  it('champs de contact laissés vides : null (un service sans e-mail reste modifiable), sans repasser en modération', async () => {
+    const { service, repository } = makeService({ id: 44, id_user: 7, statut: 'valide', email: null, telephone: '0555', site_web: null });
+    await service.update(44, { email: '', telephone: '0555', site_web: '  ' }, 7);
+    const donnees = repository.update.mock.calls[0][1];
+    expect(donnees).toMatchObject({ email: null, site_web: null, telephone: '0555' });
+    expect(donnees.statut).toBeUndefined();
+  });
+
+  it('lot 2 : équipements et capacité sans relecture ; un nouveau lien de réservation repasse en modération', async () => {
+    const a = makeService({ id: 45, id_user: 7, statut: 'valide' });
+    await a.service.update(45, { equipements: ['wifi', 'inconnu'], capacite: '30' }, 7);
+    expect(a.repository.update.mock.calls[0][1]).toEqual({ equipements: ['wifi'], capacite: 30 });
+    const b = makeService({ id: 46, id_user: 7, statut: 'valide', lien_reservation: null });
+    await b.service.update(46, { lien_reservation: 'https://reservation.example.com/x' }, 7);
+    expect(b.repository.update.mock.calls[0][1].statut).toBe('en_attente');
+  });
 });

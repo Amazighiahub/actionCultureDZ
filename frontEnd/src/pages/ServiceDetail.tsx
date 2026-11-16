@@ -22,6 +22,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { idFromSlug, professionnelPath, servicePath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { BoutonsReserver, EquipementsService } from '@/components/services/ServiceDetailsAffichage';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
 import NoteService from '@/components/services/NoteService';
@@ -54,6 +55,12 @@ interface ServiceFiche {
   // Galerie (en plus de photo_url) et menus en PDF ou image
   galerie?: MediaService[];
   menus?: MediaService[];
+  // Lot 2 : équipements, langues, capacité, réservation
+  equipements?: string[] | null;
+  langues?: string[] | null;
+  capacite?: number | null;
+  lien_reservation?: string | null;
+  whatsapp?: string | null;
 }
 
 const ServiceDetail: React.FC = () => {
@@ -162,7 +169,9 @@ const ServiceDetail: React.FC = () => {
         </div>
         <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">{nom}</h1>
         {service.note && <NoteService note={service.note} className="mb-4" />}
+        <BoutonsReserver nom={nom} whatsapp={service.whatsapp} lienReservation={service.lien_reservation} telephone={service.telephone} />
         {description && <p className="text-lg text-muted-foreground whitespace-pre-line mb-8">{description}</p>}
+        <EquipementsService equipements={service.equipements} langues={service.langues} capacite={service.capacite} typeService={service.type_service} />
         {/* Menu d'un restaurant, tarifs d'un hôtel… (PDF ou image) */}
         <MenusService menus={service.menus} />
 

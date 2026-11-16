@@ -4923,6 +4923,26 @@
       "retirerTitre": "Remove this file?",
       "retirerAide": "It will disappear from your service page.",
       "apresEnregistrement": "After saving, you can add up to 10 photos and your menu (PDF or photo) from “Edit”."
+    },
+    "details": {
+      "titre": "Amenities, languages and booking",
+      "aide": "Visitors see at a glance what you offer, and can book directly.",
+      "equipements": "Amenities and services",
+      "langues": "Languages spoken",
+      "capacite": "Capacity",
+      "reserver": "“Book” button",
+      "reserverAide": "Optional. The button appears on your service page with what you fill in: WhatsApp, booking link and your phone.",
+      "whatsapp": "WhatsApp number",
+      "lienReservation": "Online booking link",
+      "capaciteInvalide": "A whole number between 1 and 100,000",
+      "whatsappInvalide": "Invalid WhatsApp number",
+      "unite": {
+        "restaurant": "seats",
+        "hotel": "rooms",
+        "transport": "seats",
+        "guide": "people per group",
+        "location": "people"
+      }
     }
   },
   "organisations": {
@@ -5934,6 +5954,35 @@
     "menus": {
       "titre": "Menu and prices",
       "sansNom": "Menu {{n}}"
+    },
+    "reserver": {
+      "messageWhatsapp": "Hello, I am contacting you from Tala DZ about “{{nom}}”.",
+      "whatsapp": "Book on WhatsApp",
+      "enLigne": "Book online",
+      "appeler": "Call"
+    },
+    "equipementsTitre": "Amenities and services",
+    "languesParlees": "Languages spoken:",
+    "capacite": "Capacity:",
+    "equipements": {
+      "wifi": "Wi-Fi",
+      "parking": "Parking",
+      "climatisation": "Air conditioning",
+      "chauffage": "Heating",
+      "acces_handicape": "Wheelchair access",
+      "terrasse": "Terrace",
+      "piscine": "Swimming pool",
+      "petit_dejeuner": "Breakfast",
+      "cuisine_traditionnelle": "Traditional cuisine",
+      "vegetarien": "Vegetarian dishes",
+      "livraison": "Delivery",
+      "a_emporter": "Takeaway",
+      "paiement_carte": "Card payment",
+      "famille": "Family friendly",
+      "salle_priere": "Prayer room",
+      "transfert_aeroport": "Airport shuttle",
+      "animaux": "Pets allowed",
+      "non_fumeur": "Non-smoking"
     }
   },
   "catalogue": {

@@ -37,6 +37,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import ServiceMediasGestion from '@/components/services/ServiceMediasGestion';
+import ServiceDetailsChamps, { DETAILS_VIDES, type DetailsServiceForm } from '@/components/services/ServiceDetailsChamps';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
@@ -80,6 +81,12 @@ interface ServiceFormData {
   tarif_min: string;
   tarif_max: string;
   disponible: boolean;
+  // Lot 2 : équipements, langues, capacité, réservation
+  equipements: string[];
+  langues: string[];
+  capacite: string;
+  lien_reservation: string;
+  whatsapp: string;
 }
 
 const INITIAL_FORM: ServiceFormData = {
@@ -97,6 +104,7 @@ const INITIAL_FORM: ServiceFormData = {
   tarif_min: '',
   tarif_max: '',
   disponible: true,
+  ...DETAILS_VIDES,
 };
 
 const AjouterServicePro: React.FC = () => {
@@ -165,6 +173,11 @@ const AjouterServicePro: React.FC = () => {
           tarif_min: svc.tarif_min?.toString() || '',
           tarif_max: svc.tarif_max?.toString() || '',
           disponible: svc.disponible !== false,
+          equipements: Array.isArray(svc.equipements) ? svc.equipements.map(String) : [],
+          langues: Array.isArray(svc.langues) ? svc.langues.map(String) : [],
+          capacite: svc.capacite ? String(svc.capacite) : '',
+          lien_reservation: typeof svc.lien_reservation === 'string' ? svc.lien_reservation : '',
+          whatsapp: typeof svc.whatsapp === 'string' ? svc.whatsapp : '',
         });
         if (typeof svc.photo_url === 'string' && svc.photo_url) setPhotoPreview(svc.photo_url);
         setServiceCharge(true);
@@ -361,6 +374,11 @@ const AjouterServicePro: React.FC = () => {
         tarif_min: formData.tarif_min ? parseFloat(formData.tarif_min) : null,
         tarif_max: formData.tarif_max ? parseFloat(formData.tarif_max) : null,
         disponible: formData.disponible,
+        equipements: formData.equipements,
+        langues: formData.langues,
+        capacite: formData.capacite ? Number(formData.capacite) : null,
+        lien_reservation: formData.lien_reservation.trim() || null,
+        whatsapp: formData.whatsapp.trim() || null,
       };
 
       const data = isEditMode && editId
@@ -755,6 +773,18 @@ const AjouterServicePro: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Équipements, langues, capacité, bouton « Réserver » (lot 2) */}
+            <ServiceDetailsChamps
+              valeur={{ equipements: formData.equipements, langues: formData.langues, capacite: formData.capacite, lien_reservation: formData.lien_reservation, whatsapp: formData.whatsapp }}
+              onChange={(v: DetailsServiceForm) => setFormData(prev => ({ ...prev, ...v }))}
+              typeService={formData.type_service}
+              erreurs={{
+                capacite: formData.capacite && !/^[1-9][0-9]{0,4}$|^100000$/.test(formData.capacite) ? t('service.details.capaciteInvalide', 'Un nombre entier entre 1 et 100 000') : undefined,
+                lien_reservation: formData.lien_reservation.trim() && !lienWebValide(formData.lien_reservation.trim()) ? t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)') : undefined,
+                whatsapp: formData.whatsapp.trim() && !/^\+?[0-9\s().-]{8,20}$/.test(formData.whatsapp.trim()) ? t('service.details.whatsappInvalide', 'Numéro WhatsApp invalide') : undefined,
+              }}
+            />
 
             {/* Info validation */}
             <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">

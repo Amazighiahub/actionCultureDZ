@@ -5234,6 +5234,26 @@
       "retirerTitre": "Retirer ce fichier ?",
       "retirerAide": "Il disparaît de la page de votre service.",
       "apresEnregistrement": "Après l’enregistrement, vous pourrez ajouter jusqu’à 10 photos et votre menu (PDF ou photo) depuis « Modifier »."
+    },
+    "details": {
+      "titre": "Équipements, langues et réservation",
+      "aide": "Les visiteurs voient en un coup d’œil ce que vous proposez, et peuvent réserver directement.",
+      "equipements": "Équipements et services",
+      "langues": "Langues parlées",
+      "capacite": "Capacité",
+      "reserver": "Bouton « Réserver »",
+      "reserverAide": "Facultatif. Le bouton s’affiche sur la page de votre service avec ce que vous remplissez : WhatsApp, lien de réservation, et votre téléphone.",
+      "whatsapp": "Numéro WhatsApp",
+      "lienReservation": "Lien de réservation en ligne",
+      "capaciteInvalide": "Un nombre entier entre 1 et 100 000",
+      "whatsappInvalide": "Numéro WhatsApp invalide",
+      "unite": {
+        "restaurant": "couverts",
+        "hotel": "chambres",
+        "transport": "places",
+        "guide": "personnes par groupe",
+        "location": "personnes"
+      }
     }
   },
   "organisations": {
@@ -5934,6 +5954,35 @@
     "menus": {
       "titre": "Menu et tarifs",
       "sansNom": "Menu {{n}}"
+    },
+    "reserver": {
+      "messageWhatsapp": "Bonjour, je vous contacte depuis Tala DZ au sujet de « {{nom}} ».",
+      "whatsapp": "Réserver sur WhatsApp",
+      "enLigne": "Réserver en ligne",
+      "appeler": "Appeler"
+    },
+    "equipementsTitre": "Équipements et services",
+    "languesParlees": "Langues parlées :",
+    "capacite": "Capacité :",
+    "equipements": {
+      "wifi": "Wi-Fi",
+      "parking": "Parking",
+      "climatisation": "Climatisation",
+      "chauffage": "Chauffage",
+      "acces_handicape": "Accès fauteuil roulant",
+      "terrasse": "Terrasse",
+      "piscine": "Piscine",
+      "petit_dejeuner": "Petit-déjeuner",
+      "cuisine_traditionnelle": "Cuisine traditionnelle",
+      "vegetarien": "Plats végétariens",
+      "livraison": "Livraison",
+      "a_emporter": "À emporter",
+      "paiement_carte": "Paiement par carte",
+      "famille": "Adapté aux familles",
+      "salle_priere": "Salle de prière",
+      "transfert_aeroport": "Navette aéroport",
+      "animaux": "Animaux acceptés",
+      "non_fumeur": "Non-fumeur"
     }
   },
   "catalogue": {

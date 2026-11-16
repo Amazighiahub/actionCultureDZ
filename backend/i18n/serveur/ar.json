@@ -498,5 +498,8 @@
   "Fichier introuvable": "الملف غير موجود",
   "Jour du programme invalide": "يوم البرنامج غير صالح",
   "Ce jour ne fait pas partie du programme de l’événement": "هذا اليوم ليس من برنامج الفعالية",
-  "60 photos au plus par événement : retirez-en une d'abord": "60 صورة على الأكثر لكل فعالية: احذف واحدة أولًا"
+  "60 photos au plus par événement : retirez-en une d'abord": "60 صورة على الأكثر لكل فعالية: احذف واحدة أولًا",
+  "Capacité invalide : un nombre entier entre 1 et 100 000": "سعة غير صالحة: عدد صحيح بين 1 و100 000",
+  "Lien de réservation invalide : une adresse qui commence par https://": "رابط الحجز غير صالح: عنوان يبدأ بـ https://",
+  "Numéro WhatsApp invalide": "رقم واتساب غير صالح"
 }

@@ -498,5 +498,8 @@
   "Fichier introuvable": "File not found",
   "Jour du programme invalide": "Invalid programme day",
   "Ce jour ne fait pas partie du programme de l’événement": "This day is not part of the event programme",
-  "60 photos au plus par événement : retirez-en une d'abord": "60 photos at most per event: remove one first"
+  "60 photos au plus par événement : retirez-en une d'abord": "60 photos at most per event: remove one first",
+  "Capacité invalide : un nombre entier entre 1 et 100 000": "Invalid capacity: a whole number between 1 and 100,000",
+  "Lien de réservation invalide : une adresse qui commence par https://": "Invalid booking link: an address starting with https://",
+  "Numéro WhatsApp invalide": "Invalid WhatsApp number"
 }

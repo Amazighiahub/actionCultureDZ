@@ -113,7 +113,13 @@ module.exports = (sequelize) => {
     photo_url: {
       type: DataTypes.STRING(500),
       allowNull: true
-    }
+    },
+    // Lot 2 « comme TripAdvisor » (migration 20261228) : listes fermées, voir services/service/detailsService.js
+    equipements: { type: DataTypes.JSON, allowNull: true },
+    langues: { type: DataTypes.JSON, allowNull: true },
+    capacite: { type: DataTypes.INTEGER, allowNull: true },
+    lien_reservation: { type: DataTypes.STRING(500), allowNull: true },
+    whatsapp: { type: DataTypes.STRING(20), allowNull: true }
   }, {
     tableName: 'services',
     timestamps: true,

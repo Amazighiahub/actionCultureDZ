@@ -170,6 +170,8 @@ class ServiceService extends BaseService {
       tarif_min: data.tarif_min || data.tarifMin || null,
       tarif_max: data.tarif_max || data.tarifMax || null,
       photo_url: data.photo_url || data.photoUrl || null,
+      // Équipements, langues, capacité, réservation (lot 2) : vérifiés, listes fermées
+      ...require('./detailsService').detailsService(data),
       statut: 'en_attente'
     };
 
@@ -221,19 +223,25 @@ class ServiceService extends BaseService {
     if (data.latitude !== undefined) updateData.latitude = data.latitude;
     if (data.longitude !== undefined) updateData.longitude = data.longitude;
     if (data.adresse) updateData.adresse = mergeTranslations(existing.adresse, data.adresse);
-    if (data.telephone !== undefined) updateData.telephone = data.telephone;
-    if (data.email !== undefined) updateData.email = data.email;
-    if (data.site_web !== undefined || data.siteWeb !== undefined) updateData.site_web = data.site_web || data.siteWeb;
+    // Champ laissé vide : null (avant : '' était refusé par la règle isEmail du modèle, et un service
+    // sans e-mail ne pouvait plus être modifié du tout)
+    const videEnNull = (v) => (typeof v === 'string' && !v.trim() ? null : v);
+    if (data.telephone !== undefined) updateData.telephone = videEnNull(data.telephone);
+    if (data.email !== undefined) updateData.email = videEnNull(data.email);
+    if (data.site_web !== undefined || data.siteWeb !== undefined) updateData.site_web = videEnNull(data.site_web || data.siteWeb || null);
     if (data.horaires) updateData.horaires = data.horaires;
     if (data.tarif_min !== undefined || data.tarifMin !== undefined) updateData.tarif_min = data.tarif_min || data.tarifMin;
     if (data.tarif_max !== undefined || data.tarifMax !== undefined) updateData.tarif_max = data.tarif_max || data.tarifMax;
     if (data.photo_url || data.photoUrl) updateData.photo_url = data.photo_url || data.photoUrl;
+    Object.assign(updateData, require('./detailsService').detailsService(data));
 
     // Un service déjà validé dont le contenu public change repasse en modération
     // (sinon un pro pourrait faire valider un contenu puis le remplacer).
     // Lieu, type et position comptent aussi (un service pouvait être déplacé sur un autre lieu sans
     // relecture) ; horaires, tarifs et disponibilité restent modifiables sans repasser en attente.
-    const PUBLIC_FIELDS = ['nom', 'description', 'site_web', 'email', 'telephone', 'photo_url', 'adresse'];
+    // Lien de réservation et WhatsApp : des coordonnées, relues comme le site web et le téléphone ;
+    // équipements, langues et capacité (listes fermées) restent modifiables sans relecture
+    const PUBLIC_FIELDS = ['nom', 'description', 'site_web', 'email', 'telephone', 'photo_url', 'adresse', 'lien_reservation', 'whatsapp'];
     const POSITION = ['id_lieu', 'type_service', 'latitude', 'longitude'];
     // Le formulaire renvoie tous les champs : on compare les valeurs, leur seule présence retirait le
     // service du site à chaque changement d'horaire

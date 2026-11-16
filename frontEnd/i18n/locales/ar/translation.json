@@ -5129,6 +5129,26 @@
       "retirerTitre": "حذف هذا الملف؟",
       "retirerAide": "سيختفي من صفحة خدمتك.",
       "apresEnregistrement": "بعد الحفظ، يمكنك إضافة ما يصل إلى 10 صور وقائمتك (PDF أو صورة) من «تعديل»."
+    },
+    "details": {
+      "titre": "التجهيزات واللغات والحجز",
+      "aide": "يرى الزوار بنظرة واحدة ما تقدّمه، ويمكنهم الحجز مباشرة.",
+      "equipements": "التجهيزات والخدمات",
+      "langues": "اللغات المتحدَّث بها",
+      "capacite": "السعة",
+      "reserver": "زر «احجز»",
+      "reserverAide": "اختياري. يظهر الزر في صفحة خدمتك بما تملؤه: واتساب، رابط الحجز، وهاتفك.",
+      "whatsapp": "رقم واتساب",
+      "lienReservation": "رابط الحجز عبر الإنترنت",
+      "capaciteInvalide": "عدد صحيح بين 1 و100 000",
+      "whatsappInvalide": "رقم واتساب غير صالح",
+      "unite": {
+        "restaurant": "مقعدًا",
+        "hotel": "غرفة",
+        "transport": "مقعدًا",
+        "guide": "شخصًا في المجموعة",
+        "location": "شخصًا"
+      }
     }
   },
   "organisations": {
@@ -6168,6 +6188,35 @@
     "menus": {
       "titre": "قائمة الطعام والأسعار",
       "sansNom": "القائمة {{n}}"
+    },
+    "reserver": {
+      "messageWhatsapp": "مرحبًا، أتواصل معكم من ثالا دي زد بخصوص «{{nom}}».",
+      "whatsapp": "احجز عبر واتساب",
+      "enLigne": "احجز عبر الإنترنت",
+      "appeler": "اتصل"
+    },
+    "equipementsTitre": "التجهيزات والخدمات",
+    "languesParlees": "اللغات المتحدَّث بها:",
+    "capacite": "السعة:",
+    "equipements": {
+      "wifi": "واي فاي",
+      "parking": "موقف سيارات",
+      "climatisation": "تكييف",
+      "chauffage": "تدفئة",
+      "acces_handicape": "مدخل للكراسي المتحركة",
+      "terrasse": "شرفة",
+      "piscine": "مسبح",
+      "petit_dejeuner": "فطور الصباح",
+      "cuisine_traditionnelle": "مطبخ تقليدي",
+      "vegetarien": "أطباق نباتية",
+      "livraison": "توصيل",
+      "a_emporter": "طلبات خارجية",
+      "paiement_carte": "الدفع بالبطاقة",
+      "famille": "مناسب للعائلات",
+      "salle_priere": "مصلّى",
+      "transfert_aeroport": "نقل من وإلى المطار",
+      "animaux": "الحيوانات مقبولة",
+      "non_fumeur": "ممنوع التدخين"
     }
   },
   "catalogue": {
