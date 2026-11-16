@@ -23,6 +23,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Programme } from '@/types/models/programme.types';
+import { jourProgramme } from '@/utils/programmeHoraire';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 
 const MAX_PHOTOS = 60;
@@ -40,9 +41,9 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
   const { td } = useTranslateData();
   const { formatDate } = useFormatDate();
   const [jour, setJour] = useState(programmeId ? String(programmeId) : '');
-  const jours = [...programmes].sort((a, b) => String(a.date_programme || '').localeCompare(String(b.date_programme || '')) || (a.ordre || 0) - (b.ordre || 0));
+  const jours = [...programmes].sort((a, b) => jourProgramme(a).localeCompare(jourProgramme(b)) || (a.ordre || 0) - (b.ordre || 0));
   const nomJour = (p: Programme) => [
-    p.date_programme ? formatDate(new Date(p.date_programme), { weekday: 'short', day: 'numeric', month: 'short' }) : '',
+    jourProgramme(p) ? formatDate(new Date(jourProgramme(p)), { weekday: 'short', day: 'numeric', month: 'short' }) : '',
     td(p.titre)
   ].filter(Boolean).join(' · ');
   const { toast } = useToast();
@@ -81,6 +82,9 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
     if (fichiers.length === 0) return;
     setErreur(null);
     let ajoutees = 0;
+    // Chaque photo rattachée sort de la liste : après un échec (réseau du téléphone), « Ajouter » ne
+    // renvoie que les restantes (avant : les premières partaient deux fois et comptaient dans les 60)
+    let restantes = [...fichiers];
     try {
       for (const [i, f] of fichiers.entries()) {
         setEnvoi({ fait: i, total: fichiers.length });
@@ -89,10 +93,12 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
         const res = await evenementService.ajouterPhoto(evenementId, { url: envoye.data.url, legende: legende.trim(), credit: credit.trim(), id_programme: jour ? Number(jour) : null });
         if (!res.success) throw res;
         ajoutees += 1;
+        restantes = restantes.filter((r) => r !== f);
       }
       toast({ title: t('event.photos.ajoutees', '{{count}} photo(s) ajoutée(s) à la page de l’événement', { count: ajoutees }) });
       setFichiers([]); setLegende(''); setCleChamp((c) => c + 1);
     } catch (e) {
+      setFichiers(restantes);
       setErreur(messageErreurServeur(e, t('event.photos.echec', 'Une photo n’a pas pu être ajoutée. Réessayez.')));
     } finally {
       setEnvoi(null);
@@ -104,7 +110,10 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
   };
 
   /** Range une photo déjà publiée dans un autre jour (ou sur tout l'événement) */
+  const [jourEnCours, setJourEnCours] = useState<number | null>(null);
   const changerJour = async (idMedia: number, valeur: string) => {
+    if (jourEnCours !== null) return;
+    setJourEnCours(idMedia);
     try {
       const res = await evenementService.changerJourPhoto(evenementId, idMedia, valeur ? Number(valeur) : null);
       if (!res.success) throw res;
@@ -112,12 +121,14 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
       queryClient.invalidateQueries({ queryKey: ['event-medias', evenementId] });
     } catch (err) {
       toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('event.photos.jourEchec', 'Le jour n’a pas pu être changé.')), variant: 'destructive' });
+    } finally {
+      setJourEnCours(null);
     }
   };
 
   const choixJours = (id: string, valeur: string, onChange: (v: string) => void, libelle: string, petit = false) => (
-    <select id={id} value={valeur} onChange={(e) => onChange(e.target.value)} disabled={!!envoi} aria-label={libelle}
-      className={petit ? 'mt-1 w-full rounded-md border bg-background px-1 py-1 text-xs' : 'mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm'}>
+    <select id={id} value={valeur} onChange={(e) => onChange(e.target.value)} disabled={!!envoi || jourEnCours !== null} aria-label={libelle}
+      className={petit ? 'mt-1 min-h-10 w-full rounded-md border bg-background px-1 py-2 text-xs' : 'mt-1 min-h-10 w-full rounded-md border bg-background px-3 py-2 text-sm'}>
       <option value="">{t('event.photos.toutEvenement', 'Tout l’événement')}</option>
       {jours.map((p) => <option key={p.id_programme} value={String(p.id_programme)}>{nomJour(p)}</option>)}
     </select>
@@ -153,7 +164,7 @@ const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [],
       </CardHeader>
       <CardContent className="space-y-4">
         {affichees.length > 0 && (
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" data-testid="photos-evenement">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="photos-evenement">
             {affichees.map((p) => (
               <li key={p.id_media}>
                 <div className="relative">

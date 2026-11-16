@@ -5233,7 +5233,8 @@
       "ajouterMenu": "Ajouter le menu",
       "retirerTitre": "Retirer ce fichier ?",
       "retirerAide": "Il disparaît de la page de votre service.",
-      "apresEnregistrement": "Après l’enregistrement, vous pourrez ajouter jusqu’à 10 photos et votre menu (PDF ou photo) depuis « Modifier »."
+      "apresEnregistrement": "Après l’enregistrement, vous pourrez ajouter jusqu’à 10 photos et votre menu (PDF ou photo) depuis « Modifier ».",
+      "ecartees": "Il reste {{place}} place(s) : seules les {{place}} premières photos seront ajoutées."
     },
     "details": {
       "titre": "Équipements, langues et réservation",

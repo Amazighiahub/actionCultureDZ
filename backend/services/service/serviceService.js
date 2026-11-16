@@ -69,7 +69,7 @@ class ServiceService extends BaseService {
 
     if (notesDe) {
       const notes = await notesDe(services.map(s => s.id));
-      const rangs = require('./classementServices').classer(services, notes);
+      const { rangs } = await this.classement(notesDe);
       services = services.map(s => ({ ...s, note: notes.get(Number(s.id)) || null, classement: rangs.get(Number(s.id)) || null }));
     }
 
@@ -85,6 +85,24 @@ class ServiceService extends BaseService {
         || textes(s.lieu?.nom).includes(recherche));
     }
     return { services, wilayas };
+  }
+
+  /**
+   * Classement par type et par wilaya de tous les services validés, gardé 10 minutes en mémoire
+   * (avant : recalculé à chaque fiche ouverte, sur l'annuaire entier). Relecture du 2026-11-16.
+   * @returns {Promise<{ rangs: Map<number,{rang:number,total:number}>, wilayas: Map<number, object|null> }>}
+   */
+  async classement(notesDe) {
+    const maintenant = Date.now();
+    if (this._classementCache && maintenant - this._classementCache.quand < 10 * 60 * 1000) return this._classementCache.valeur;
+    const services = this.repository.findPourClassement ? await this.repository.findPourClassement() : [];
+    const notes = await notesDe(services.map(s => s.id));
+    const valeur = {
+      rangs: require('./classementServices').classer(services, notes),
+      wilayas: new Map(services.map(s => [Number(s.id), s.wilaya]))
+    };
+    this._classementCache = { quand: maintenant, valeur };
+    return valeur;
   }
 
   /**

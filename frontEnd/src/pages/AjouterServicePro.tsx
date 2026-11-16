@@ -287,6 +287,15 @@ const AjouterServicePro: React.FC = () => {
     });
   };
 
+  /** Erreurs des champs du lot 2 (équipements, capacité, réservation), à l'écran et à l'envoi */
+  const erreursDetailsService = (): Partial<Record<'capacite' | 'lien_reservation' | 'whatsapp', string>> => {
+    const e: Partial<Record<'capacite' | 'lien_reservation' | 'whatsapp', string>> = {};
+    if (formData.capacite && !/^[1-9][0-9]{0,4}$|^100000$/.test(formData.capacite)) e.capacite = t('service.details.capaciteInvalide', 'Un nombre entier entre 1 et 100 000');
+    if (formData.lien_reservation.trim() && !lienWebValide(formData.lien_reservation.trim())) e.lien_reservation = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
+    if (formData.whatsapp.trim() && !/^\+?[0-9\s().-]{8,20}$/.test(formData.whatsapp.trim())) e.whatsapp = t('service.details.whatsappInvalide', 'Numéro WhatsApp invalide');
+    return e;
+  };
+
   // Mettre à jour un champ du formulaire
   const updateField = (field: keyof ServiceFormData, value: ServiceFormData[keyof ServiceFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -328,6 +337,9 @@ const AjouterServicePro: React.FC = () => {
       const erreur = erreurDuChamp(champ);
       if (erreur) errs[champ] = erreur;
     }
+    // Équipements, capacité, réservation : mêmes règles que l'affichage (avant : le formulaire partait quand même)
+    const erreursDetails = erreursDetailsService();
+    for (const [champ, erreur] of Object.entries(erreursDetails)) if (erreur) errs[champ] = erreur;
     if (!errs.tarif_min && !errs.tarif_max && formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
       const tarifErr = t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum');
       errs.tarif_min = tarifErr;
@@ -777,13 +789,9 @@ const AjouterServicePro: React.FC = () => {
             {/* Équipements, langues, capacité, bouton « Réserver » (lot 2) */}
             <ServiceDetailsChamps
               valeur={{ equipements: formData.equipements, langues: formData.langues, capacite: formData.capacite, lien_reservation: formData.lien_reservation, whatsapp: formData.whatsapp }}
-              onChange={(v: DetailsServiceForm) => setFormData(prev => ({ ...prev, ...v }))}
+              onChange={(v: DetailsServiceForm) => { setFormData(prev => ({ ...prev, ...v })); setIsDirty(true); }}
               typeService={formData.type_service}
-              erreurs={{
-                capacite: formData.capacite && !/^[1-9][0-9]{0,4}$|^100000$/.test(formData.capacite) ? t('service.details.capaciteInvalide', 'Un nombre entier entre 1 et 100 000') : undefined,
-                lien_reservation: formData.lien_reservation.trim() && !lienWebValide(formData.lien_reservation.trim()) ? t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)') : undefined,
-                whatsapp: formData.whatsapp.trim() && !/^\+?[0-9\s().-]{8,20}$/.test(formData.whatsapp.trim()) ? t('service.details.whatsappInvalide', 'Numéro WhatsApp invalide') : undefined,
-              }}
+              erreurs={erreursDetailsService()}
             />
 
             {/* Info validation */}

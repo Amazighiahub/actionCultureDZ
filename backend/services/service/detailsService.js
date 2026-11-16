@@ -17,6 +17,10 @@ const erreur = (message) => Object.assign(new Error(message), { statusCode: 400 
 function listeFermee(valeur, permises) {
   if (valeur === undefined) return undefined;
   if (valeur === null || valeur === '') return null;
+  // Liste envoyée en texte JSON (formulaire multipart) : '["wifi"]'
+  if (typeof valeur === 'string' && valeur.trim().startsWith('[')) {
+    try { valeur = JSON.parse(valeur); } catch { /* texte simple : traité comme une seule clé */ }
+  }
   const choisies = new Set((Array.isArray(valeur) ? valeur : [valeur]).map((v) => String(v)));
   const liste = permises.filter((p) => choisies.has(p));
   return liste.length ? liste : null;
@@ -48,7 +52,8 @@ function detailsService(data = {}) {
     else {
       let adresse;
       try { adresse = new URL(lien); } catch { throw erreur('Lien de réservation invalide : une adresse qui commence par https://'); }
-      if (!['https:', 'http:'].includes(adresse.protocol) || lien.length > 500) {
+      // Longueur de l'adresse enregistrée (les accents encodés l'allongent), pas du texte saisi
+      if (!['https:', 'http:'].includes(adresse.protocol) || adresse.href.length > 500) {
         throw erreur('Lien de réservation invalide : une adresse qui commence par https://');
       }
       sortie.lien_reservation = adresse.href;

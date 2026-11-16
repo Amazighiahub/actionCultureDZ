@@ -19,19 +19,41 @@ interface Props {
   sansPhoto: React.ReactNode;
 }
 
+/** Visionneuse : flèches du clavier (inversées en arabe) et glissement du doigt pour passer d'une photo à l'autre */
+function useNavigationPhotos(aller: (pas: number) => void) {
+  const debut = React.useRef<number | null>(null);
+  const rtl = () => typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  return {
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowRight') aller(rtl() ? -1 : 1);
+      if (e.key === 'ArrowLeft') aller(rtl() ? 1 : -1);
+    },
+    onTouchStart: (e: React.TouchEvent) => { debut.current = e.touches[0]?.clientX ?? null; },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (debut.current === null) return;
+      const dx = (e.changedTouches[0]?.clientX ?? debut.current) - debut.current;
+      debut.current = null;
+      if (Math.abs(dx) < 40) return;
+      // Glisser vers la gauche = photo suivante (inverse en arabe)
+      aller((dx < 0) !== rtl() ? 1 : -1);
+    },
+  };
+}
+
 export function GalerieService({ nom, photoPrincipale, galerie = [], sansPhoto }: Props) {
   const { t } = useTranslation();
   // La photo principale du service reste la première ; la galerie suit
   const photos = [photoPrincipale, ...galerie.map((g) => g.url)].filter((u): u is string => !!u);
   const [ouverte, setOuverte] = useState<number | null>(null);
   const aller = (pas: number) => setOuverte((i) => (i === null ? null : (i + pas + photos.length) % photos.length));
+  const navigation = useNavigationPhotos(aller);
 
   return (
     <div className="mb-6 space-y-2">
       <div className="overflow-hidden rounded-xl bg-muted aspect-[16/9] max-h-[480px] w-full">
         {photos[0]
           ? (
-            <button type="button" className="h-full w-full" onClick={() => setOuverte(0)}
+            <button type="button" className="h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary" onClick={() => setOuverte(0)}
               aria-label={t('servicesVisiteurs.galerie.agrandir', 'Agrandir la photo {{n}} sur {{total}}', { n: 1, total: photos.length })}>
               <img src={getAssetUrl(photos[0], { width: 1200 })} alt={nom} className="h-full w-full object-cover" />
             </button>
@@ -51,7 +73,7 @@ export function GalerieService({ nom, photoPrincipale, galerie = [], sansPhoto }
         </ul>
       )}
       <Dialog open={ouverte !== null} onOpenChange={(o) => { if (!o) setOuverte(null); }}>
-        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined} {...(photos.length > 1 ? navigation : {})}>
           <DialogTitle className="sr-only">{nom}</DialogTitle>
           {ouverte !== null && (
             <div className="relative">
@@ -125,8 +147,9 @@ export function MenusService({ menus = [] }: { menus?: MediaService[] }) {
 export function PhotosVisiteurs({ photos = [] }: { photos?: { id: number; url: string; prenom?: unknown }[] }) {
   const { t, i18n } = useTranslation();
   const [ouverte, setOuverte] = useState<number | null>(null);
-  if (photos.length === 0) return null;
   const aller = (pas: number) => setOuverte((i) => (i === null ? null : (i + pas + photos.length) % photos.length));
+  const navigation = useNavigationPhotos(aller);
+  if (photos.length === 0) return null;
   const courante = ouverte !== null ? photos[ouverte] : null;
   return (
     <section className="mb-6" aria-labelledby="photos-visiteurs-titre">
@@ -144,7 +167,7 @@ export function PhotosVisiteurs({ photos = [] }: { photos?: { id: number; url: s
         ))}
       </ul>
       <Dialog open={ouverte !== null} onOpenChange={(o) => { if (!o) setOuverte(null); }}>
-        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined} {...(photos.length > 1 ? navigation : {})}>
           <DialogTitle className="sr-only">{t('servicesVisiteurs.photosVisiteurs.titreCourt', 'Photo d’un visiteur')}</DialogTitle>
           {courante && (
             <div className="relative">

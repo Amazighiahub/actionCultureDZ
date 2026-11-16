@@ -35,6 +35,9 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
   const [erreur, setErreur] = useState<string | null>(null);
   const [cleChamp, setCleChamp] = useState(0);
   const [aRetirer, setARetirer] = useState<MediaService | null>(null);
+  const [retraitEnCours, setRetraitEnCours] = useState(false);
+  // Photos choisies au-delà des places libres : écartées, et le professionnel est prévenu
+  const [ecartees, setEcartees] = useState(0);
 
   const { data } = useQuery({
     queryKey: cle,
@@ -49,6 +52,9 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
 
   const ajouterPhotos = async () => {
     setErreur(null);
+    // Chaque photo rattachée sort de la liste : après un échec, « Ajouter » ne renvoie que les restantes
+    // (avant : les premières étaient envoyées deux fois et prenaient des places sur les 10)
+    let restantes = [...photos];
     try {
       for (const [i, f] of photos.entries()) {
         setEnvoi(t('service.medias.envoiPhotos', 'Envoi {{fait}} / {{total}}…', { fait: i + 1, total: photos.length }));
@@ -56,10 +62,12 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
         if (!envoye.success || !envoye.data?.url) throw envoye;
         const res = await serviceService.ajouterMedia(serviceId, { type: 'photo', url: envoye.data.url });
         if (!res.success) throw res;
+        restantes = restantes.filter((r) => r !== f);
       }
-      setPhotos([]); setCleChamp((c) => c + 1);
+      setPhotos([]); setEcartees(0); setCleChamp((c) => c + 1);
       toast({ title: t('service.medias.photosAjoutees', 'Photos ajoutées à votre service') });
     } catch (e) {
+      setPhotos(restantes);
       setErreur(messageErreurServeur(e, t('service.medias.echec', 'Le fichier n’a pas pu être ajouté. Réessayez.')));
     } finally {
       setEnvoi(null); rafraichir();
@@ -89,7 +97,8 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
   };
 
   const retirer = async () => {
-    if (!aRetirer) return;
+    if (!aRetirer || retraitEnCours) return;
+    setRetraitEnCours(true);
     try {
       const res = await serviceService.retirerMedia(serviceId, aRetirer.id);
       if (!res.success) throw res;
@@ -97,6 +106,7 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
     } catch (e) {
       toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(e, t('common.deleteError', 'Impossible de supprimer')), variant: 'destructive' });
     } finally {
+      setRetraitEnCours(false);
       setARetirer(null);
     }
   };
@@ -133,7 +143,17 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
               <div className="min-w-0 flex-1">
                 <Label htmlFor="service-photos" className="text-sm">{t('service.medias.choisirPhotos', 'Ajouter des photos (une ou plusieurs)')}</Label>
                 <Input key={`p${cleChamp}`} id="service-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={!!envoi} className="mt-1"
-                  onChange={(e) => setPhotos(Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/')).slice(0, MAX_PHOTOS - galerie.length))} />
+                  onChange={(e) => {
+                    const choisies = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/'));
+                    const place = MAX_PHOTOS - galerie.length;
+                    setEcartees(Math.max(0, choisies.length - place));
+                    setPhotos(choisies.slice(0, place));
+                  }} />
+                {ecartees > 0 && (
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-400" role="status">
+                    {t('service.medias.ecartees', 'Il reste {{place}} place(s) : seules les {{place}} premières photos seront ajoutées.', { place: MAX_PHOTOS - galerie.length })}
+                  </p>
+                )}
               </div>
               <Button type="button" onClick={ajouterPhotos} disabled={photos.length === 0 || !!envoi}>
                 <Upload className="me-2 h-4 w-4" aria-hidden="true" />{t('service.medias.ajouterPhotos', 'Ajouter les photos')}
@@ -194,6 +214,7 @@ const ServiceMediasGestion: React.FC<{ serviceId: number }> = ({ serviceId }) =>
         confirmLabel={t('common.delete', 'Supprimer')}
         cancelLabel={t('common.cancel', 'Annuler')}
         variant="destructive"
+        loading={retraitEnCours}
         onConfirm={retirer}
       />
     </Card>

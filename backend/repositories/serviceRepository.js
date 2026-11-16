@@ -78,6 +78,25 @@ class ServiceRepository extends BaseRepository {
   }
 
   /**
+   * Services validés pour le classement par wilaya : identifiant, type et wilaya seulement, sans limite
+   * (l'annuaire s'arrête à 500 : les plus anciens sortaient du classement)
+   */
+  async findPourClassement() {
+    const { Lieu, Commune, Daira, Wilaya } = this.models;
+    const include = Lieu && Commune ? [{
+      model: Lieu, required: false, attributes: ['id_lieu'],
+      include: [{ model: Commune, required: false, attributes: ['id_commune'],
+        include: [{ model: Daira, required: false, attributes: ['id_daira'],
+          include: [{ model: Wilaya, required: false, attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'] }] }] }]
+    }] : [];
+    const lignes = await this.model.findAll({ where: { statut: 'valide' }, attributes: ['id', 'type_service'], include });
+    return lignes.map((s) => {
+      const p = s.get({ plain: true });
+      return { id: p.id, type_service: p.type_service, wilaya: p.Lieu?.Commune?.Daira?.Wilaya || null };
+    });
+  }
+
+  /**
    * Détail complet d'un service
    */
   async findWithFullDetails(id) {

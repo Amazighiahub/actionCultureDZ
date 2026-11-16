@@ -89,16 +89,20 @@ async function isReferencedElsewhere(models, url, { sansMedias = false, sansText
     models.MessageEvenement?.count?.({ where: { lien_programme: url } }),
     models.UserCertification?.count?.({ where: { [Op.or]: [{ fichier_certificat: url }, { url_verification: url }] } }),
     models.QRCode?.count?.({ where: { qr_image_url: url } }),
-    models.Signalement?.count?.({ where: { url_screenshot: url } }),
-    // Textes et JSON qui peuvent citer une image : blocs d'articles, propositions de modification en
-    // attente (leur image n'est rattachée qu'à l'acceptation), texte complet d'un article
-    !sansTextes && contient(models.ArticleBlock, 'contenu', motif),
-    !sansTextes && contient(models.ArticleBlock, 'metadata', motif, true),
-    !sansTextes && contient(models.ArticleRevision, 'contenu', motif, true),
-    !sansTextes && contient(models.Article, 'contenu_complet', motif)
+    models.Signalement?.count?.({ where: { url_screenshot: url } })
   ].filter(Boolean);
-  const counts = await Promise.all(checks);
-  return counts.some(c => c === true || c > 0);
+  const utilise = (counts) => counts.some(c => c === true || c > 0);
+  if (utilise(await Promise.all(checks))) return true;
+  if (sansTextes) return false;
+  // Ensuite seulement (parcours complets de tables, plus lents) : textes et JSON qui peuvent citer une
+  // image — blocs d'articles, propositions de modification en attente (leur image n'est rattachée
+  // qu'à l'acceptation), texte complet d'un article
+  return utilise(await Promise.all([
+    contient(models.ArticleBlock, 'contenu', motif),
+    contient(models.ArticleBlock, 'metadata', motif, true),
+    contient(models.ArticleRevision, 'contenu', motif, true),
+    contient(models.Article, 'contenu_complet', motif)
+  ].filter(Boolean)));
 }
 
 /** Lignes « journal » d'un fichier effacé : elles ne servaient à rien (/upload/file/:id renverrait un fichier absent) */

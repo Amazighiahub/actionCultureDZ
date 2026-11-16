@@ -78,9 +78,10 @@ class ServiceController extends BaseController {
   async _classement(raw) {
     if (raw?.statut !== 'valide' || !raw.type_service) return null;
     try {
-      const { services } = await this.serviceService.annuaire({ type: raw.type_service, notesDe: (ids) => this._notes(ids) });
-      const ici = services.find((s) => Number(s.id) === Number(raw.id));
-      return ici?.classement ? { ...ici.classement, wilaya: ici.wilaya ? { id_wilaya: ici.wilaya.id_wilaya, nom: ici.wilaya.nom, wilaya_name_ascii: ici.wilaya.wilaya_name_ascii } : null } : null;
+      const { rangs, wilayas } = await this.serviceService.classement((ids) => this._notes(ids));
+      const rang = rangs.get(Number(raw.id));
+      const w = wilayas.get(Number(raw.id));
+      return rang ? { ...rang, wilaya: w ? { id_wilaya: w.id_wilaya, nom: w.nom, wilaya_name_ascii: w.wilaya_name_ascii } : null } : null;
     } catch {
       return null;
     }
@@ -115,7 +116,7 @@ class ServiceController extends BaseController {
   // Galerie de photos et menus d'un service (professionnel du service ou modération)
   async ajouterMedia(req, res) {
     try {
-      const data = await require('../services/service/mediasService').ajouter(container.models, parseInt(req.params.id), req.user, req.body || {});
+      const data = await require('../services/service/mediasService').ajouter(container.models, parseInt(req.params.id), req.user, req.body || {}, container.notificationService);
       res.status(201).json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
@@ -141,7 +142,8 @@ class ServiceController extends BaseController {
       }
       const url = await require('../services/service/mediasService').fichierMenu(container.models, id, parseInt(req.params.idMedia));
       const { servirPdf } = require('../utils/servirPdf');
-      if (!(await servirPdf(res, url, { nomFichier: 'menu.pdf', enCachePublic: service.statut === 'valide' }))) {
+      // Pas de cache public : un menu retiré (fichier effacé) ne doit plus être servi
+      if (!(await servirPdf(res, url, { nomFichier: 'menu.pdf', enCachePublic: false }))) {
         return res.status(502).json({ success: false, error: req.t('common.serverError') });
       }
     } catch (error) {

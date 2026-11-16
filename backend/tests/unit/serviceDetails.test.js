@@ -30,4 +30,9 @@ describe('détails d’un service', () => {
     expect(() => detailsService({ whatsapp: 'appelez-moi' })).toThrow(/WhatsApp/);
     expect(() => detailsService({ capacite: 0 })).toThrow(expect.objectContaining({ statusCode: 400 }));
   });
+
+  it('liste reçue en texte JSON (formulaire multipart)', () => {
+    expect(detailsService({ equipements: '["wifi","piscine"]' }).equipements).toEqual(['wifi', 'piscine']);
+    expect(detailsService({ langues: 'fr' }).langues).toEqual(['fr']);
+  });
 });

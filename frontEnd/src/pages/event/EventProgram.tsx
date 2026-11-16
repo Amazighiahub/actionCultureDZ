@@ -54,9 +54,14 @@ const PhotosDuJour: React.FC<{ photos: Media[]; onVoirPhotos?: () => void }> = (
   if (photos.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 pb-4" data-testid="photos-du-jour">
-      {photos.slice(0, 4).map((p) => (
+      {photos.slice(0, 4).map((p) => (onVoirPhotos ? (
+        <button key={p.id_media} type="button" onClick={onVoirPhotos} className="overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          aria-label={t('programme.voirPhotosJour', 'Voir les photos de ce jour ({{n}})', { n: photos.length })}>
+          <img src={getAssetUrl(p.url, { width: 160 })} alt="" loading="lazy" className="h-14 w-14 object-cover" />
+        </button>
+      ) : (
         <img key={p.id_media} src={getAssetUrl(p.url, { width: 160 })} alt="" loading="lazy" className="h-14 w-14 rounded-md object-cover" />
-      ))}
+      )))}
       {onVoirPhotos && (
         <button type="button" onClick={onVoirPhotos} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
           {t('programme.voirPhotosJour', 'Voir les photos de ce jour ({{n}})', { n: photos.length })}

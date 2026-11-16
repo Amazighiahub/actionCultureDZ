@@ -58,5 +58,6 @@ export function lienWhatsapp(numero: string): string | null {
   if (!chiffres) return null;
   if (numero.trim().startsWith('00')) chiffres = chiffres.slice(2);
   else if (chiffres.startsWith('0')) chiffres = `213${chiffres.slice(1)}`;
+  else if (/^[567][0-9]{8}$/.test(chiffres)) chiffres = `213${chiffres}`;
   return chiffres.length >= 8 ? `https://wa.me/${chiffres}` : null;
 }

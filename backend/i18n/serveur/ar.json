@@ -501,5 +501,7 @@
   "60 photos au plus par événement : retirez-en une d'abord": "60 صورة على الأكثر لكل فعالية: احذف واحدة أولًا",
   "Capacité invalide : un nombre entier entre 1 et 100 000": "سعة غير صالحة: عدد صحيح بين 1 و100 000",
   "Lien de réservation invalide : une adresse qui commence par https://": "رابط الحجز غير صالح: عنوان يبدأ بـ https://",
-  "Numéro WhatsApp invalide": "رقم واتساب غير صالح"
+  "Numéro WhatsApp invalide": "رقم واتساب غير صالح",
+  "Nouvelles photos sur un service": "صور جديدة في خدمة",
+  "Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.": "أضاف مهني صورًا أو قائمة إلى خدمته المنشورة: هي متاحة الآن، يمكنكم الاطلاع عليها."
 }

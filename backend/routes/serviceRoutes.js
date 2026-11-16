@@ -14,7 +14,7 @@ const { msg } = require('../utils/messageValidation');
 
 const initServiceRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -70,7 +70,7 @@ const initServiceRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => serviceController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => serviceController.delete(req, res)));
   // Galerie de photos (10 au plus) et menus en PDF ou image (3 au plus) : le professionnel ou la modération
-  router.post('/:id/medias', authenticate, mediasLimiter, validateId(),
+  router.post('/:id/medias', authenticate, requireVerifiedEmail, mediasLimiter, validateId(),
     [
       body('type').isIn(['photo', 'menu']).withMessage(msg('validation.invalidStatus')),
       body('url').isString().isLength({ min: 10, max: 500 }).withMessage(msg('validation.lienInvalide')),

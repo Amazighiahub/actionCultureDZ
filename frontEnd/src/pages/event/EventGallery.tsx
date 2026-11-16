@@ -19,6 +19,7 @@ import { cn } from '@/lib/Utils';
 import type { Media } from '@/types/models/media.types';
 import type { Programme } from '@/types/models/programme.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { jourProgramme } from '@/utils/programmeHoraire';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface EventGalleryProps {
@@ -283,7 +284,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
   // son titre et sa description, puis les photos sans jour. Sans photo rangée : la galerie d'avant.
   const jours = programs
     .filter((p) => filteredMedias.some((m) => m.id_programme === p.id_programme))
-    .sort((a, b) => String(a.date_programme || '').localeCompare(String(b.date_programme || '')) || (a.ordre || 0) - (b.ordre || 0));
+    .sort((a, b) => jourProgramme(a).localeCompare(jourProgramme(b)) || (a.ordre || 0) - (b.ordre || 0));
   const idsJours = new Set(jours.map((p) => p.id_programme));
   const sections = jours.length > 0
     ? [
@@ -294,7 +295,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
   // Ordre de la visionneuse = ordre affiché
   const ordonnes = sections ? sections.flatMap((s) => s.medias) : filteredMedias;
   const titreJour = (p: Programme) => [
-    p.date_programme ? formatDate(new Date(p.date_programme), { weekday: 'long', day: 'numeric', month: 'long' }) : '',
+    jourProgramme(p) ? formatDate(new Date(jourProgramme(p)), { weekday: 'long', day: 'numeric', month: 'long' }) : '',
     td(p.titre)
   ].filter(Boolean).join(' · ');
 

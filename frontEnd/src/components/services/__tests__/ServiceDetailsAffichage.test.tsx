@@ -16,6 +16,8 @@ describe('bouton « Réserver » d’un service', () => {
     expect(lienWhatsapp('+213 555 12 34 56')).toBe('https://wa.me/213555123456');
     expect(lienWhatsapp('00213555123456')).toBe('https://wa.me/213555123456');
     expect(lienWhatsapp('12')).toBeNull();
+    // Saisi sans le 0 : l'indicatif 213 est ajouté
+    expect(lienWhatsapp('555 12 34 56')).toBe('https://wa.me/213555123456');
   });
 
   it('WhatsApp avec message prérempli, lien de réservation, téléphone', () => {

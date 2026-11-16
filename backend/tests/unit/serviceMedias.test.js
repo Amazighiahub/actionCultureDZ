@@ -62,4 +62,11 @@ describe('galerie et menus d’un service', () => {
     await expect(fichierMenu(modeles({ trouve: { url: image } }), 5, 3)).rejects.toMatchObject({ statusCode: 404 });
     await expect(fichierMenu(modeles({ trouve: { url: pdf } }), 5, 2)).resolves.toBe(pdf);
   });
+
+  it('deux envois au même instant : la 11e photo est retirée aussitôt', async () => {
+    const m = modeles();
+    m.ServiceMedia.count = jest.fn().mockResolvedValueOnce(9).mockResolvedValueOnce(11);
+    await expect(ajouter(m, 5, { id_user: 12 }, { type: 'photo', url: image })).rejects.toMatchObject({ statusCode: 400 });
+    expect(m.ServiceMedia.destroy).toHaveBeenCalledWith({ where: { id: 30 } });
+  });
 });

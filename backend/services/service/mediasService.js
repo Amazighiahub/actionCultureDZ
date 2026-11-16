@@ -17,7 +17,7 @@ const lienMenu = (idService, idMedia) => `/api/services/${idService}/menus/${idM
 
 /** Le service, si le compte en est le professionnel ou fait partie de la modération */
 async function serviceGere(models, idService, utilisateur) {
-  const service = await models.Service.findByPk(idService, { attributes: ['id', 'id_user'] });
+  const service = await models.Service.findByPk(idService, { attributes: ['id', 'id_user', 'statut'] });
   if (!service) throw erreur('Service introuvable', 404);
   if (!peutGerer(service.id_user, { userId: utilisateur?.id_user, isModerator: estModeration(utilisateur) })) {
     throw erreur('Seul le professionnel de ce service peut gérer ses photos et menus', 403);
@@ -42,7 +42,27 @@ async function lister(models, idService) {
   };
 }
 
-async function ajouter(models, idService, utilisateur, { type, url, nom }) {
+/**
+ * Service déjà validé : sa nouvelle photo ou son nouveau menu paraît tout de suite ; l'équipe est
+ * prévenue pour y jeter un œil (une alerte par service et par heure au plus). Relecture du 2026-11-16.
+ */
+async function prevenirEquipe(models, notificationService, service, utilisateur) {
+  if (!notificationService || service.statut !== 'valide' || estModeration(utilisateur)) return;
+  try {
+    const { premiereFoisPendant } = require('../quotaEmail');
+    if (!(await premiereFoisPendant(`moderation:service-medias:${service.id}`, 3600))) return;
+    const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration');
+    for (const idAdmin of await idsAdministrateurs(models)) {
+      await notifier(notificationService, idAdmin, {
+        titre: 'Nouvelles photos sur un service',
+        message: 'Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.',
+        url_action: `/services/${service.id}`
+      });
+    }
+  } catch { /* une alerte manquée n'empêche pas l'ajout */ }
+}
+
+async function ajouter(models, idService, utilisateur, { type, url, nom }, notificationService = null) {
   if (!['photo', 'menu'].includes(type)) throw erreur('Genre de fichier invalide');
   const service = await serviceGere(models, idService, utilisateur);
   // Photo : une image du site ; menu : une image ou un PDF du site (pas de lien vers un autre domaine)
@@ -56,6 +76,12 @@ async function ajouter(models, idService, utilisateur, { type, url, nom }) {
     id_service: service.id, type, url, ordre: nombre, id_user: utilisateur.id_user,
     nom: type === 'menu' ? (texteSimple(nom, 100) || null) : null
   });
+  // Deux envois au même instant passaient tous les deux le compte : on recompte après l'ajout
+  if ((await models.ServiceMedia.count({ where: { id_service: service.id, type } })) > MAX[type]) {
+    await models.ServiceMedia.destroy({ where: { id: media.id } });
+    throw erreur(type === 'photo' ? 'Dix photos au plus par service : retirez-en une d’abord' : 'Trois menus au plus par service : retirez-en un d’abord');
+  }
+  await prevenirEquipe(models, notificationService, service, utilisateur);
   return { id: media.id, type, url: media.url, nom: media.nom };
 }
 

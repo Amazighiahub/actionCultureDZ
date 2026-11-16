@@ -56,8 +56,8 @@ const ServicesVisiteurs: React.FC = () => {
     return () => { actif = false; };
   }, [q, type, wilaya]);
 
-  const filtres = recherche || type !== 'tous' || wilaya !== 'toutes';
-  const effacer = () => { setRecherche(''); setType('tous'); setWilaya('toutes'); };
+  const filtres = recherche || type !== 'tous' || wilaya !== 'toutes' || tri !== 'recents';
+  const effacer = () => { setRecherche(''); setType('tous'); setWilaya('toutes'); setTri('recents'); };
 
   return (
     <div className="min-h-screen bg-background">

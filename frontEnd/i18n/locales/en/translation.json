@@ -4922,7 +4922,8 @@
       "ajouterMenu": "Add the menu",
       "retirerTitre": "Remove this file?",
       "retirerAide": "It will disappear from your service page.",
-      "apresEnregistrement": "After saving, you can add up to 10 photos and your menu (PDF or photo) from “Edit”."
+      "apresEnregistrement": "After saving, you can add up to 10 photos and your menu (PDF or photo) from “Edit”.",
+      "ecartees": "{{place}} slot(s) left: only the first {{place}} photos will be added."
     },
     "details": {
       "titre": "Amenities, languages and booking",
