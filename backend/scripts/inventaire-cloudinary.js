@@ -119,7 +119,10 @@ async function main() {
   }
 }
 
-main().then((code) => process.exit(code || 0)).catch((e) => {
+// Sortie différée : le journal écrit de façon asynchrone, une sortie immédiate coupait les dernières
+// lignes (« Déplacés vers la corbeille : … » n'apparaissait pas)
+const sortir = (code) => { process.exitCode = code; setTimeout(() => process.exit(code), 1000); };
+main().then((code) => sortir(code || 0)).catch((e) => {
   console.error(`Échec : ${e.message}`);
-  process.exit(1);
+  sortir(1);
 });
