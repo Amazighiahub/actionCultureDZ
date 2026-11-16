@@ -16,7 +16,8 @@ module.exports = (sequelize) => {
       }
     },
     type_entite: {
-      type: DataTypes.ENUM('oeuvre', 'evenement', 'lieu', 'artisanat'),
+      // « service » : migration 20261229 (favoris des services, 2026-11-16)
+      type: DataTypes.ENUM('oeuvre', 'evenement', 'lieu', 'artisanat', 'service'),
       allowNull: false
     },
     id_entite: {

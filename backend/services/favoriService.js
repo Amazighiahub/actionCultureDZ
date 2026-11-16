@@ -10,7 +10,7 @@ const BaseService = require('./core/baseService');
 const { construirePagination } = require('../utils/pagination');
 const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 
-const TYPES_VALIDES = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
+const TYPES_VALIDES = ['oeuvre', 'evenement', 'lieu', 'artisanat', 'service'];
 
 class FavoriService extends BaseService {
   constructor(repository, options = {}) {
@@ -232,6 +232,13 @@ class FavoriService extends BaseService {
               { model: m.Technique, attributes: ['nom'] }
             ]
           });
+        case 'service':
+          // Service aux visiteurs validé (restaurant, hébergement…) : nom, type, photo, lieu
+          return m.Service ? await m.Service.findOne({
+            where: { id: id, statut: 'valide' },
+            attributes: ['id', 'nom', 'type_service', 'photo_url'],
+            include: m.Lieu ? [{ model: m.Lieu, attributes: ['id_lieu', 'nom'], required: false }] : []
+          }) : null;
         default:
           return null;
       }

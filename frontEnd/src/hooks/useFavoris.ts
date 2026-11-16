@@ -10,7 +10,7 @@ import type { PaginationParams } from '@/config/api';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 
 interface UseFavorisOptions {
-  type?: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
+  type?: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service';
   autoFetch?: boolean;
   grouped?: boolean;
 }
@@ -92,7 +92,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
   // Mutation pour ajouter un favori
   const addMutation = useMutation({
     mutationFn: async ({ entity_type, entity_id }: { 
-      entity_type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat'; 
+      entity_type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service'; 
       entity_id: number 
     }) => {
       // L'API attend type_entite / id_entite (entity_type était refusé : « Données invalides »)
@@ -152,7 +152,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
 
   // Fonction pour vérifier si un élément est favori
   const checkIsFavorite = useCallback(async (
-    entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat',
+    entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service',
     entityId: number
   ) => {
     const key = `${entityType}-${entityId}`;
@@ -199,7 +199,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
 
   // Fonction toggle pour ajouter/retirer facilement
   const toggleFavorite = useCallback(async (
-    entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat',
+    entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service',
     entityId: number
   ) => {
     const key = `${entityType}-${entityId}`;
@@ -269,7 +269,8 @@ export function useFavoris(options: UseFavorisOptions = {}) {
       oeuvres: 0,
       evenements: 0,
       lieux: 0,
-      artisanats: 0
+      artisanats: 0,
+      services: 0
     };
   }, [stats]);
 
@@ -309,7 +310,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
  * relue après chaque ajout ou retrait (clé ['favoris', …]). Sans elle, chaque carte démarrait
  * « cœur vide », même pour un vrai favori, et un clic le retirait au lieu de l'ajouter.
  */
-export function useFavorisIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat') {
+export function useFavorisIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service') {
   const { isAuthenticated } = usePermissionsContext();
   const { data } = useQuery({
     queryKey: ['favoris', 'ids', type],
@@ -322,7 +323,7 @@ export function useFavorisIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat
 
 // Hook spécialisé pour vérifier un seul favori
 export function useFavoriCheck(
-  entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat',
+  entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service',
   entityId: number
 ) {
   const [isFavorite, setIsFavorite] = useState(false);

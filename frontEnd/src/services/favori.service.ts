@@ -5,7 +5,7 @@ import { httpClient } from './httpClient';
 interface Favori {
   id_favori: number;
   id_user: number;
-  type_entite: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
+  type_entite: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service';
   id_entite: number;
   date_ajout: string;
   notes?: string;
@@ -15,7 +15,7 @@ interface Favori {
 }
 
 interface AddFavoriData {
-  type_entite: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
+  type_entite: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service';
   id_entite: number;
 }
 
@@ -40,6 +40,7 @@ interface GroupedFavoris {
   evenements: Favori[];
   lieux: Favori[];
   artisanats: Favori[];
+  services: Favori[];
 }
 
 // Interface personnalisée pour la réponse de check
@@ -65,7 +66,8 @@ class FavoriService {
         oeuvres: [],
         evenements: [],
         lieux: [],
-        artisanats: []
+        artisanats: [],
+        services: []
       };
 
       // response.data peut être un tableau ou {favoris: [], pagination: {}}
@@ -74,6 +76,9 @@ class FavoriService {
         switch (fav.type_entite) {
           case 'oeuvre':
             grouped.oeuvres.push(fav);
+            break;
+          case 'service':
+            grouped.services.push(fav);
             break;
           case 'evenement':
             grouped.evenements.push(fav);
@@ -104,7 +109,7 @@ class FavoriService {
   }
 
   /** Identifiants des favoris d'un type (cœurs pleins dans les listes) */
-  async getIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat'): Promise<number[]> {
+  async getIds(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service'): Promise<number[]> {
     const res = await httpClient.get<number[]>(API_ENDPOINTS.favoris.ids(type));
     return res.success && Array.isArray(res.data) ? res.data : [];
   }
@@ -159,7 +164,7 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
   }
 
   // Toggle helper
-  async toggle(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat', entityId: number): Promise<ApiResponse<{ added: boolean; favori?: Favori }>> {
+  async toggle(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service', entityId: number): Promise<ApiResponse<{ added: boolean; favori?: Favori }>> {
     try {
       // 1. Vérifier l'état actuel
       const checkResponse = await this.check(type, entityId);

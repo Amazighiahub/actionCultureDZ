@@ -46,6 +46,7 @@ import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
 import { useFavoris } from '@/hooks/useFavoris';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { notificationService } from '@/services/notification.service';
 import { httpClient } from '@/services/httpClient';
 import { userService } from '@/services/user.service';
@@ -158,7 +159,19 @@ const DashboardUser = () => {
       titre: (fav.entite as { Oeuvre?: { titre?: string } } | undefined)?.Oeuvre?.titre || 'Sans titre',
       materiau: (fav.entite as { Materiau?: { nom?: string } } | undefined)?.Materiau?.nom || '',
       ajouteLe: fav.date_ajout || fav.date_creation
-    })) || []
+    })) || [],
+    // Services aux visiteurs (restaurant, hébergement…) gardés en favori (2026-11-16)
+    services: groupedFavoris?.services?.map(fav => {
+      const e = fav.entite as { nom?: unknown; type_service?: string; Lieu?: { nom?: unknown } } | undefined;
+      return {
+        id: fav.id_entite,
+        favoriId: fav.id_favori,
+        nom: e?.nom || 'Sans nom',
+        type: e?.type_service || 'autre',
+        lieu: e?.Lieu?.nom || '',
+        ajouteLe: fav.date_ajout || fav.date_creation
+      };
+    }) || []
   };
 
   // Handler pour retirer un favori
@@ -413,6 +426,43 @@ const DashboardUser = () => {
                 </Card>
               )}
             </div>
+
+            {/* Services favoris (restaurants, hébergements, guides…) */}
+            {mesFavoris.services.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold font-serif mb-4">{t('dashboarduser.servicesFavoris', 'Services favoris')}</h2>
+                <div className="grid gap-4">
+                  {mesFavoris.services.map((svc) => (
+                    <Card key={svc.id} className="p-4 hover-lift">
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="font-semibold truncate" dir="auto">{getLocalizedText(svc.nom, i18n.language, t('common.unnamed', 'Sans nom'))}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate" dir="auto">
+                            {t(`service.types.${svc.type}`, svc.type)}{svc.lieu ? ` · ${getLocalizedText(svc.lieu, i18n.language, '')}` : ''}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
+                            {svc.ajouteLe ? formatDate(svc.ajouteLe) : '-'}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button variant="outline" size="sm" asChild><Link to={`/services/${svc.id}`}>{t("dashboarduser.voir_2")}</Link></Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            aria-label={t('favoris.toggle', 'Ajouter/Retirer des favoris')}
+                            onClick={() => handleRemoveFavorite(svc.favoriId)}
+                          >
+                            <Heart className="h-4 w-4 fill-current" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Événements favoris */}
             <div>

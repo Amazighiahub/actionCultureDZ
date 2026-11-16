@@ -1640,7 +1640,8 @@
       "envoiEchec": "Le lien n’a pas pu être envoyé. Réessayez dans quelques minutes.",
       "dejaEnvoye": "Un lien vient déjà de vous être envoyé. Attendez quelques minutes avant d’en demander un autre."
     },
-    "photoProfil": "Photo de profil"
+    "photoProfil": "Photo de profil",
+    "servicesFavoris": "Services favoris"
   },
   "dashboardpro": {
     "participants": " participants",

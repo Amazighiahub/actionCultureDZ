@@ -12,7 +12,7 @@ const initFavoriRoutes = (models) => {
   // Validation pour l'ajout de favoris
   const addFavoriValidation = [
     body('type_entite')
-      .isIn(['oeuvre', 'evenement', 'lieu', 'artisanat'])
+      .isIn(['oeuvre', 'evenement', 'lieu', 'artisanat', 'service'])
       .withMessage((value, { req }) => req.t('validation.invalidEntityType')),
     body('id_entite')
       .isInt({ min: 1 })

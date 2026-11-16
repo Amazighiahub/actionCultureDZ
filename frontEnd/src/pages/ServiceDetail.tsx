@@ -23,6 +23,7 @@ import { safeExternalUrl } from '@/utils/safeUrl';
 import { idFromSlug, professionnelPath, servicePath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { BoutonsReserver, EquipementsService } from '@/components/services/ServiceDetailsAffichage';
+import BoutonFavoriService from '@/components/services/BoutonFavoriService';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
 import NoteService from '@/components/services/NoteService';
@@ -193,6 +194,9 @@ const ServiceDetail: React.FC = () => {
         {service.note && <NoteService note={service.note} className="mb-2" />}
         <ClassementService classement={service.classement} typeService={service.type_service} className="mb-4" />
         <BoutonsReserver nom={nom} whatsapp={service.whatsapp} lienReservation={service.lien_reservation} telephone={service.telephone} />
+        {service.statut === undefined || service.statut === 'valide' ? (
+          <div className="mb-6"><BoutonFavoriService serviceId={service.id} /></div>
+        ) : null}
         {description && <p className="text-lg text-muted-foreground whitespace-pre-line mb-8">{description}</p>}
         <EquipementsService equipements={service.equipements} langues={service.langues} capacite={service.capacite} typeService={service.type_service} />
         {/* Menu d'un restaurant, tarifs d'un hôtel… (PDF ou image) */}
