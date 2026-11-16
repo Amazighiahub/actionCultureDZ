@@ -30,6 +30,8 @@ export interface ServiceAnnuaire {
   wilaya?: Wilaya | null;
   // Rang dans la wilaya pour ce type de service (null : pas classé)
   classement?: Classement | null;
+  // Équipements (filtres de la liste)
+  equipements?: string[] | null;
 }
 
 const ServiceCard: React.FC<{ service: ServiceAnnuaire }> = ({ service }) => {

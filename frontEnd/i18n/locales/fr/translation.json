@@ -6014,6 +6014,17 @@
       "recents": "Les plus récents",
       "note": "Les mieux notés",
       "avis": "Les plus d’avis"
+    },
+    "filtres": {
+      "plus": "Filtres",
+      "note": "Note minimale",
+      "toutesNotes": "Toutes les notes",
+      "note3": "3 étoiles et plus",
+      "note4": "4 étoiles et plus",
+      "budget": "Budget",
+      "tousBudgets": "Tous les budgets",
+      "budgetMax": "À partir de moins de {{montant}} DZD",
+      "equipements": "Équipements"
     }
   },
   "catalogue": {

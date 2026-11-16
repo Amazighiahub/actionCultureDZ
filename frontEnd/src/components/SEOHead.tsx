@@ -290,6 +290,55 @@ export function buildArticleJsonLd(oeuvre: any): Record<string, any> {
   };
 }
 
+/** Type schema.org d'un service aux visiteurs */
+const TYPES_SERVICE_SCHEMA: Record<string, string> = {
+  restaurant: 'Restaurant', hotel: 'LodgingBusiness', artisanat: 'Store', guide: 'LocalBusiness',
+  transport: 'LocalBusiness', location: 'LocalBusiness', autre: 'LocalBusiness',
+};
+
+/**
+ * Fiche d'un service (restaurant, hébergement…) pour les moteurs de recherche : nom, adresse, téléphone,
+ * prix, position et note des avis (étoiles dans les résultats), comme TripAdvisor (2026-11-16).
+ * La note n'est donnée que s'il y a des avis : les avis sont ceux des visiteurs du site, pas du service.
+ */
+export function buildServiceJsonLd(service: {
+  id: number; nom: string; description?: string; type_service?: string; photo_url?: string | null;
+  galerie?: { url?: string }[]; adresse?: string; ville?: string; telephone?: string | null; site_web?: string | null;
+  latitude?: number | string | null; longitude?: number | string | null; tarif_min?: number | string | null;
+  tarif_max?: number | string | null; note?: { moyenne: number; nombre: number } | null;
+}): Record<string, any> {
+  const images = [service.photo_url, ...(service.galerie || []).map((g) => g.url)].filter((u): u is string => !!u).map(absoluteImage);
+  const lat = Number(service.latitude);
+  const lon = Number(service.longitude);
+  const prix = [service.tarif_min, service.tarif_max].filter((v) => v !== null && v !== undefined && v !== '').map(Number);
+  return {
+    '@context': 'https://schema.org',
+    '@type': TYPES_SERVICE_SCHEMA[service.type_service || 'autre'] || 'LocalBusiness',
+    name: service.nom,
+    description: service.description ? service.description.substring(0, 300) : undefined,
+    image: images.length ? images.slice(0, 5) : undefined,
+    url: `${SITE_URL}/services/${service.id}`,
+    telephone: service.telephone || undefined,
+    sameAs: service.site_web || undefined,
+    address: service.adresse || service.ville ? {
+      '@type': 'PostalAddress',
+      streetAddress: service.adresse || undefined,
+      addressLocality: service.ville || undefined,
+      addressCountry: 'DZ',
+    } : undefined,
+    geo: Number.isFinite(lat) && Number.isFinite(lon) && (lat || lon) ? { '@type': 'GeoCoordinates', latitude: lat, longitude: lon } : undefined,
+    priceRange: prix.length ? `${Math.min(...prix)}–${Math.max(...prix)} DZD` : undefined,
+    currenciesAccepted: prix.length ? 'DZD' : undefined,
+    aggregateRating: service.note && service.note.nombre > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: service.note.moyenne,
+      reviewCount: service.note.nombre,
+      bestRating: 5,
+      worstRating: 1,
+    } : undefined,
+  };
+}
+
 export function buildBreadcrumbJsonLd(items: Array<{ name: string; url: string }>): Record<string, any> {
   return {
     '@context': 'https://schema.org',

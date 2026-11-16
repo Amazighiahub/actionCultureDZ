@@ -6014,6 +6014,17 @@
       "recents": "Most recent",
       "note": "Top rated",
       "avis": "Most reviewed"
+    },
+    "filtres": {
+      "plus": "Filters",
+      "note": "Minimum rating",
+      "toutesNotes": "All ratings",
+      "note3": "3 stars and up",
+      "note4": "4 stars and up",
+      "budget": "Budget",
+      "tousBudgets": "All budgets",
+      "budgetMax": "Starting under {{montant}} DZD",
+      "equipements": "Amenities"
     }
   },
   "catalogue": {

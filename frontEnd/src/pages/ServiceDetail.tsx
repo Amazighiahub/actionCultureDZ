@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Clock, ExternalLink, Globe, Mail, MapPin, Phone, User } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SEOHead from '@/components/SEOHead';
+import SEOHead, { buildServiceJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,8 @@ interface ServiceFiche {
   horaires?: unknown;
   tarif_min?: string | number | null;
   tarif_max?: string | number | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   Lieu?: {
     id_lieu: number; nom: unknown; adresse?: unknown;
     Commune?: { nom?: unknown; Daira?: { Wilaya?: { nom?: string; wilaya_name_ascii?: string } } };
@@ -141,6 +143,21 @@ const ServiceDetail: React.FC = () => {
         description={description.slice(0, 160) || t('servicesVisiteurs.subtitleShort', 'Où manger, où dormir, avec qui visiter, près des lieux du patrimoine')}
         image={service.photo_url ? getAssetUrl(service.photo_url) : undefined}
         type="website"
+        noindex={service.statut !== undefined && service.statut !== 'valide'}
+        jsonLd={service.statut === undefined || service.statut === 'valide' ? [
+          // Étoiles et coordonnées dans les résultats des moteurs de recherche
+          buildServiceJsonLd({
+            id: service.id, nom, description, type_service: service.type_service, photo_url: service.photo_url,
+            galerie: service.galerie, adresse, ville: nomWilaya || undefined, telephone: service.telephone,
+            site_web: service.site_web, latitude: service.latitude, longitude: service.longitude,
+            tarif_min: service.tarif_min, tarif_max: service.tarif_max, note: service.note,
+          }),
+          buildBreadcrumbJsonLd([
+            { name: 'Accueil', url: '/' },
+            { name: t('servicesVisiteurs.title', 'Services aux visiteurs'), url: '/patrimoine/services' },
+            { name: nom, url: `/services/${service.id}` },
+          ]),
+        ] : undefined}
       />
       <Header />
       <main className="container py-8 max-w-4xl">

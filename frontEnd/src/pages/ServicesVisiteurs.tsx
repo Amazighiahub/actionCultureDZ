@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, X, Store } from 'lucide-react';
+import { Search, X, Store, SlidersHorizontal } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
@@ -22,6 +22,8 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
 import { lienGuidePour } from '@/utils/lienGuide';
 import { trierParNote } from '@/utils/noteServices';
+import { EQUIPEMENTS_SERVICE } from '@/constants/serviceDetails';
+import { filtrerServices, BUDGETS } from '@/utils/filtresServices';
 
 const ServicesVisiteurs: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -32,6 +34,11 @@ const ServicesVisiteurs: React.FC = () => {
   const [wilaya, setWilaya] = useState('toutes');
   // Tri « comme TripAdvisor » : récents (ordre du serveur), mieux notés, plus d'avis
   const [tri, setTri] = useState<'recents' | 'note' | 'avis'>('recents');
+  // Filtres « comme TripAdvisor » (2026-11-16) : note minimale, budget, équipements
+  const [plusDeFiltres, setPlusDeFiltres] = useState(false);
+  const [noteMin, setNoteMin] = useState(0);
+  const [budget, setBudget] = useState(0);
+  const [equipements, setEquipements] = useState<string[]>([]);
   const [services, setServices] = useState<ServiceAnnuaire[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -56,8 +63,14 @@ const ServicesVisiteurs: React.FC = () => {
     return () => { actif = false; };
   }, [q, type, wilaya]);
 
-  const filtres = recherche || type !== 'tous' || wilaya !== 'toutes' || tri !== 'recents';
-  const effacer = () => { setRecherche(''); setType('tous'); setWilaya('toutes'); setTri('recents'); };
+  const filtresAvances = noteMin > 0 || budget > 0 || equipements.length > 0;
+  const filtres = recherche || type !== 'tous' || wilaya !== 'toutes' || tri !== 'recents' || filtresAvances;
+  const effacer = () => {
+    setRecherche(''); setType('tous'); setWilaya('toutes'); setTri('recents');
+    setNoteMin(0); setBudget(0); setEquipements([]);
+  };
+  const basculerEquipement = (cle: string) => setEquipements((l) => (l.includes(cle) ? l.filter((c) => c !== cle) : [...l, cle]));
+  const affiches = filtrerServices(services, { noteMin, budget, equipements });
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,12 +136,59 @@ const ServicesVisiteurs: React.FC = () => {
                   <SelectItem value="avis">{t('servicesVisiteurs.tri.avis', 'Les plus d’avis')}</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant={filtresAvances ? 'secondary' : 'outline'} onClick={() => setPlusDeFiltres((v) => !v)}
+                aria-expanded={plusDeFiltres} aria-controls="filtres-avances" className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                {t('servicesVisiteurs.filtres.plus', 'Filtres')}
+                {filtresAvances && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{(noteMin > 0 ? 1 : 0) + (budget > 0 ? 1 : 0) + equipements.length}</span>}
+              </Button>
               {filtres && (
                 <Button variant="ghost" size="icon" onClick={effacer} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
                   <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
+            {plusDeFiltres && (
+              <div id="filtres-avances" className="mt-4 space-y-4 border-t pt-4">
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <Select value={String(noteMin)} onValueChange={(v) => setNoteMin(Number(v))}>
+                    <SelectTrigger className="sm:w-[220px]" aria-label={t('servicesVisiteurs.filtres.note', 'Note minimale')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">{t('servicesVisiteurs.filtres.toutesNotes', 'Toutes les notes')}</SelectItem>
+                      <SelectItem value="3">{t('servicesVisiteurs.filtres.note3', '3 étoiles et plus')}</SelectItem>
+                      <SelectItem value="4">{t('servicesVisiteurs.filtres.note4', '4 étoiles et plus')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={String(budget)} onValueChange={(v) => setBudget(Number(v))}>
+                    <SelectTrigger className="sm:w-[260px]" aria-label={t('servicesVisiteurs.filtres.budget', 'Budget')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">{t('servicesVisiteurs.filtres.tousBudgets', 'Tous les budgets')}</SelectItem>
+                      {BUDGETS.map((b) => (
+                        <SelectItem key={b} value={String(b)}>{t('servicesVisiteurs.filtres.budgetMax', 'À partir de moins de {{montant}} DZD', { montant: b.toLocaleString(lang.startsWith('ar') ? 'ar-DZ' : 'fr-DZ') })}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium">{t('servicesVisiteurs.filtres.equipements', 'Équipements')}</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {EQUIPEMENTS_SERVICE.map(({ cle, icone: Icone, libelle }) => {
+                      const actif = equipements.includes(cle);
+                      return (
+                        <Button key={cle} type="button" size="sm" variant={actif ? 'default' : 'outline'} aria-pressed={actif}
+                          onClick={() => basculerEquipement(cle)} className="gap-1.5">
+                          <Icone className="h-3.5 w-3.5" aria-hidden="true" />{t(`servicesVisiteurs.equipements.${cle}`, libelle)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -137,7 +197,7 @@ const ServicesVisiteurs: React.FC = () => {
             <LoadingSkeleton type="card" count={8} />
           ) : erreur ? (
             <Card className="p-8 text-center"><p className="text-destructive">{t('common.loadError', 'Erreur de chargement')}</p></Card>
-          ) : services.length === 0 ? (
+          ) : affiches.length === 0 ? (
             <Card className="p-10 text-center space-y-3">
               <Store className="h-10 w-10 mx-auto text-muted-foreground" aria-hidden="true" />
               <p className="text-lg font-medium">
@@ -153,7 +213,7 @@ const ServicesVisiteurs: React.FC = () => {
             </Card>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(tri === 'recents' ? services : trierParNote(services, tri)).map(s => <ServiceCard key={s.id} service={s} />)}
+              {(tri === 'recents' ? affiches : trierParNote(affiches, tri)).map(s => <ServiceCard key={s.id} service={s} />)}
             </div>
           )}
         </ErrorBoundary>
