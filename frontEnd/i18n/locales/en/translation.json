@@ -4948,6 +4948,16 @@
         "guide": "people per group",
         "location": "people"
       }
+    },
+    "stats": {
+      "vues": "Page views",
+      "whatsapp": "WhatsApp clicks",
+      "reservation": "“Book online” clicks",
+      "appel": "“Call” clicks",
+      "titre": "Statistics (last 30 days)",
+      "depuisDebut": "Since the start: {{n}}",
+      "vuesParJour": "Views per day",
+      "aide": "A view or click is counted once a day per visitor. Your own visits don’t count. No personal data is kept."
     }
   },
   "organisations": {

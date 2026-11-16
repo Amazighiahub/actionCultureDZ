@@ -5261,6 +5261,16 @@
         "guide": "personnes par groupe",
         "location": "personnes"
       }
+    },
+    "stats": {
+      "vues": "Vues de la fiche",
+      "whatsapp": "Clics WhatsApp",
+      "reservation": "Clics « Réserver en ligne »",
+      "appel": "Clics « Appeler »",
+      "titre": "Statistiques (30 derniers jours)",
+      "depuisDebut": "Depuis le début : {{n}}",
+      "vuesParJour": "Vues par jour",
+      "aide": "Une vue ou un clic est compté une fois par jour et par visiteur. Vos propres visites ne comptent pas. Aucune donnée personnelle n’est gardée."
     }
   },
   "organisations": {

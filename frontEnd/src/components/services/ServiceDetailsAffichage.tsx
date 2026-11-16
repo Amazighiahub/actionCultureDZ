@@ -8,9 +8,12 @@ import { CalendarCheck, Languages, MessageCircle, Phone, Users } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { EQUIPEMENTS_SERVICE, LANGUES_SERVICE, UNITE_CAPACITE, lienWhatsapp } from '@/constants/serviceDetails';
+import { signalerService } from '@/utils/statsService';
 
-export function BoutonsReserver({ nom, whatsapp, lienReservation, telephone }: {
+export function BoutonsReserver({ nom, whatsapp, lienReservation, telephone, idService }: {
   nom: string; whatsapp?: string | null; lienReservation?: string | null; telephone?: string | null;
+  /** Pour compter les clics (statistiques du professionnel) */
+  idService?: number;
 }) {
   const { t } = useTranslation();
   const wa = whatsapp ? lienWhatsapp(whatsapp) : null;
@@ -21,21 +24,21 @@ export function BoutonsReserver({ nom, whatsapp, lienReservation, telephone }: {
     <div className="mb-6 flex flex-wrap gap-2" data-testid="boutons-reserver">
       {wa && (
         <Button asChild className="gap-2 bg-[#1f7a4d] hover:bg-[#186640]">
-          <a href={`${wa}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
+          <a href={`${wa}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" onClick={() => idService && signalerService(idService, 'whatsapp')}>
             <MessageCircle className="h-4 w-4" aria-hidden="true" />{t('servicesVisiteurs.reserver.whatsapp', 'Réserver sur WhatsApp')}
           </a>
         </Button>
       )}
       {lien && (
         <Button asChild variant={wa ? 'outline' : 'default'} className="gap-2">
-          <a href={lien} target="_blank" rel="noopener noreferrer">
+          <a href={lien} target="_blank" rel="noopener noreferrer" onClick={() => idService && signalerService(idService, 'reservation')}>
             <CalendarCheck className="h-4 w-4" aria-hidden="true" />{t('servicesVisiteurs.reserver.enLigne', 'Réserver en ligne')}
           </a>
         </Button>
       )}
       {telephone && (
         <Button asChild variant="outline" className="gap-2">
-          <a href={`tel:${telephone.replace(/\s/g, '')}`}>
+          <a href={`tel:${telephone.replace(/\s/g, '')}`} onClick={() => idService && signalerService(idService, 'appel')}>
             <Phone className="h-4 w-4" aria-hidden="true" />{t('servicesVisiteurs.reserver.appeler', 'Appeler')}
           </a>
         </Button>

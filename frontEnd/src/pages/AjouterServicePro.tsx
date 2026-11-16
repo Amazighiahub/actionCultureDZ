@@ -37,6 +37,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import ServiceMediasGestion from '@/components/services/ServiceMediasGestion';
+import ServiceStatistiques from '@/components/services/ServiceStatistiques';
 import ServiceDetailsChamps, { DETAILS_VIDES, type DetailsServiceForm } from '@/components/services/ServiceDetailsChamps';
 import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
@@ -832,7 +833,10 @@ const AjouterServicePro: React.FC = () => {
         {/* Galerie et menus : rattachés à un service déjà enregistré */}
         <div className="mt-6">
           {isEditMode && editId ? (
-            <ServiceMediasGestion serviceId={editId} />
+            <div className="space-y-6">
+              <ServiceStatistiques serviceId={editId} />
+              <ServiceMediasGestion serviceId={editId} />
+            </div>
           ) : (
             <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
               {t('service.medias.apresEnregistrement', 'Après l’enregistrement, vous pourrez ajouter jusqu’à 10 photos et votre menu (PDF ou photo) depuis « Modifier ».')}

@@ -123,6 +123,26 @@ class ServiceController extends BaseController {
     }
   }
 
+  // Statistiques d'un service : signal (public) et lecture (professionnel du service ou modération)
+  async compterStat(req, res) {
+    try {
+      const compte = await require('../services/service/statsService').compter(container.models, parseInt(req.params.id), req.body.action, req.user);
+      res.json({ success: true, data: { compte } });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async statistiques(req, res) {
+    try {
+      const data = await require('../services/service/statsService').statistiques(container.models, parseInt(req.params.id), req.user);
+      res.set('Cache-Control', 'private, no-store');
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async retirerMedia(req, res) {
     try {
       await require('../services/service/mediasService').retirer(container.models, parseInt(req.params.id), parseInt(req.params.idMedia), req.user);

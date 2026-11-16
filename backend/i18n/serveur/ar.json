@@ -506,5 +506,8 @@
   "Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.": "أضاف مهني صورًا أو قائمة إلى خدمته المنشورة: هي متاحة الآن، يمكنكم الاطلاع عليها.",
   "Trop de messages envoyés en une heure : réessayez plus tard.": "رسائل كثيرة في ساعة واحدة: أعد المحاولة لاحقًا.",
   "Trop d’invitations envoyées en une heure : réessayez plus tard.": "دعوات كثيرة في ساعة واحدة: أعد المحاولة لاحقًا.",
-  "Un événement annulé ne peut plus être modifié": "لا يمكن تعديل فعالية ملغاة"
+  "Un événement annulé ne peut plus être modifié": "لا يمكن تعديل فعالية ملغاة",
+  "Action inconnue": "إجراء غير معروف",
+  "Seul le professionnel de ce service peut voir ses statistiques": "وحده مهني هذه الخدمة يمكنه رؤية إحصائياتها",
+  "Trop de demandes : réessayez plus tard.": "طلبات كثيرة: أعد المحاولة لاحقًا."
 }

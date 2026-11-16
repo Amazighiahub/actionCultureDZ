@@ -506,5 +506,8 @@
   "Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.": "A professional added photos or a menu to their published service: they are online, you can review them.",
   "Trop de messages envoyés en une heure : réessayez plus tard.": "Too many messages sent in one hour: please try again later.",
   "Trop d’invitations envoyées en une heure : réessayez plus tard.": "Too many invitations sent in one hour: please try again later.",
-  "Un événement annulé ne peut plus être modifié": "A cancelled event can no longer be edited"
+  "Un événement annulé ne peut plus être modifié": "A cancelled event can no longer be edited",
+  "Action inconnue": "Unknown action",
+  "Seul le professionnel de ce service peut voir ses statistiques": "Only this service’s professional can see its statistics",
+  "Trop de demandes : réessayez plus tard.": "Too many requests: please try again later."
 }

@@ -23,6 +23,7 @@ import { safeExternalUrl } from '@/utils/safeUrl';
 import { idFromSlug, professionnelPath, servicePath } from '@/utils/slug';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { BoutonsReserver, EquipementsService } from '@/components/services/ServiceDetailsAffichage';
+import { signalerService } from '@/utils/statsService';
 import BoutonFavoriService from '@/components/services/BoutonFavoriService';
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
@@ -86,6 +87,11 @@ const ServiceDetail: React.FC = () => {
     if (`/services/${id}` !== canonique) navigate(canonique + window.location.search + window.location.hash, { replace: true });
   }, [service, id, navigate]);
   const [etat, setEtat] = useState<'chargement' | 'ok' | 'introuvable'>('chargement');
+
+  // Vue de la fiche (statistiques du professionnel ; une fois par jour et par navigateur)
+  useEffect(() => {
+    if (service?.id && (service.statut === undefined || service.statut === 'valide')) signalerService(service.id, 'vue');
+  }, [service?.id, service?.statut]);
 
   useEffect(() => {
     const n = idFromSlug(id) ?? NaN;
@@ -193,7 +199,7 @@ const ServiceDetail: React.FC = () => {
         <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">{nom}</h1>
         {service.note && <NoteService note={service.note} className="mb-2" />}
         <ClassementService classement={service.classement} typeService={service.type_service} className="mb-4" />
-        <BoutonsReserver nom={nom} whatsapp={service.whatsapp} lienReservation={service.lien_reservation} telephone={service.telephone} />
+        <BoutonsReserver nom={nom} whatsapp={service.whatsapp} lienReservation={service.lien_reservation} telephone={service.telephone} idService={service.id} />
         {service.statut === undefined || service.statut === 'valide' ? (
           <div className="mb-6"><BoutonFavoriService serviceId={service.id} /></div>
         ) : null}

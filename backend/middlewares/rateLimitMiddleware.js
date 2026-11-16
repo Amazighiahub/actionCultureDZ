@@ -275,6 +275,9 @@ const mediasLimiter = limiteParPersonne('medias', 60 * 60 * 1000, 400, 'Trop d�
 // Message à tous les participants : 10 par heure (un envoi part vers chacun d'eux) ; relances : 60.
 const messagesParticipantsLimiter = limiteParPersonne('messages-participants', 60 * 60 * 1000, 10, 'Trop de messages envoyés en une heure : réessayez plus tard.');
 const invitationsLimiter = limiteParPersonne('invitations', 60 * 60 * 1000, 60, 'Trop d’invitations envoyées en une heure : réessayez plus tard.');
+// Statistiques d'un service (vues, clics) : le navigateur compte une fois par jour ; la limite évite
+// seulement les abus (60 signaux par heure et par personne)
+const statsServiceLimiter = limiteParPersonne('stats-service', 60 * 60 * 1000, 60, 'Trop de demandes : réessayez plus tard.');
 // Moyens de paiement : le mot de passe y est vérifié (pas d'essais en masse)
 const moyensPaiementLimiter = limiteParPersonne('moyens-paiement', 15 * 60 * 1000, 10, 'Trop d’essais : réessayez dans 15 minutes.');
 // Nouvelles commandes : 10 par heure et par personne (vendeurs protégés des notifications en masse)
@@ -680,6 +683,7 @@ module.exports = {
   mediasLimiter,
   messagesParticipantsLimiter,
   invitationsLimiter,
+  statsServiceLimiter,
   suiviLimiter, contactProLimiter,
   commandeLimiter,
   commandeEtapeLimiter,

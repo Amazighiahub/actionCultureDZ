@@ -8,7 +8,7 @@ const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { param, body } = require('express-validator');
 const serviceController = require('../controllers/serviceController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
-const { createContentLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, mediasLimiter, statsServiceLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const { msg } = require('../utils/messageValidation');
 
@@ -80,6 +80,12 @@ const initServiceRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => serviceController.ajouterMedia(req, res)));
   router.delete('/:id/medias/:idMedia', authenticate, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => serviceController.retirerMedia(req, res)));
+  // Statistiques pour le professionnel : signal d'une vue ou d'un clic (sans compte ni IP), et lecture
+  router.post('/:id/stat', optionalAuth, statsServiceLimiter, validateId(),
+    [body('action').isIn(['vue', 'whatsapp', 'reservation', 'appel']).withMessage(msg('validation.invalidStatus'))],
+    handleValidationErrors,
+    asyncHandler((req, res) => serviceController.compterStat(req, res)));
+  router.get('/:id/stats', authenticate, validateId(), asyncHandler((req, res) => serviceController.statistiques(req, res)));
   router.get('/:id/menus/:idMedia/menu.pdf', optionalAuth, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => serviceController.menuPdf(req, res)));
 
