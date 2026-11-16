@@ -6217,6 +6217,31 @@
       "transfert_aeroport": "نقل من وإلى المطار",
       "animaux": "الحيوانات مقبولة",
       "non_fumeur": "ممنوع التدخين"
+    },
+    "classement": {
+      "texte": "رقم {{rang}} من بين {{total}} {{genre}} في {{wilaya}}",
+      "sansWilaya": "رقم {{rang}} من بين {{total}} {{genre}}",
+      "genres": {
+        "restaurant": "مطاعم",
+        "hotel": "أماكن إقامة",
+        "guide": "مرشدين",
+        "transport": "خدمات نقل",
+        "artisanat": "حرفيين",
+        "location": "خدمات كراء",
+        "autre": "خدمات"
+      }
+    },
+    "photosVisiteurs": {
+      "titre": "صور الزوار ({{n}})",
+      "agrandir": "تكبير صورة الزائر {{n}} من {{total}}",
+      "titreCourt": "صورة زائر",
+      "par": "نشرها {{prenom}}"
+    },
+    "tri": {
+      "label": "ترتيب",
+      "recents": "الأحدث",
+      "note": "الأعلى تقييمًا",
+      "avis": "الأكثر آراءً"
     }
   },
   "catalogue": {

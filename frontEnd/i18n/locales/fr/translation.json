@@ -5983,6 +5983,31 @@
       "transfert_aeroport": "Navette aéroport",
       "animaux": "Animaux acceptés",
       "non_fumeur": "Non-fumeur"
+    },
+    "classement": {
+      "texte": "N° {{rang}} sur {{total}} {{genre}} à {{wilaya}}",
+      "sansWilaya": "N° {{rang}} sur {{total}} {{genre}}",
+      "genres": {
+        "restaurant": "restaurants",
+        "hotel": "hébergements",
+        "guide": "guides",
+        "transport": "transports",
+        "artisanat": "artisans",
+        "location": "locations",
+        "autre": "services"
+      }
+    },
+    "photosVisiteurs": {
+      "titre": "Photos des visiteurs ({{n}})",
+      "agrandir": "Agrandir la photo de visiteur {{n}} sur {{total}}",
+      "titreCourt": "Photo d’un visiteur",
+      "par": "Publiée par {{prenom}}"
+    },
+    "tri": {
+      "label": "Trier",
+      "recents": "Les plus récents",
+      "note": "Les mieux notés",
+      "avis": "Les plus d’avis"
     }
   },
   "catalogue": {

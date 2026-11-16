@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import type { MediaService } from '@/services/service.service';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface Props {
   nom: string;
@@ -111,6 +112,61 @@ export function MenusService({ menus = [] }: { menus?: MediaService[] }) {
         <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
           <DialogTitle className="sr-only">{t('servicesVisiteurs.menus.titre', 'Menu et tarifs')}</DialogTitle>
           {image && <img src={getAssetUrl(image, { width: 1600 })} alt="" className="max-h-[85vh] w-full rounded object-contain" />}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+/**
+ * Photos des visiteurs (jointes à leurs avis, relues par l'équipe), en haut de la page du service,
+ * comme TripAdvisor : miniatures, agrandies au toucher, avec le prénom de l'auteur.
+ */
+export function PhotosVisiteurs({ photos = [] }: { photos?: { id: number; url: string; prenom?: unknown }[] }) {
+  const { t, i18n } = useTranslation();
+  const [ouverte, setOuverte] = useState<number | null>(null);
+  if (photos.length === 0) return null;
+  const aller = (pas: number) => setOuverte((i) => (i === null ? null : (i + pas + photos.length) % photos.length));
+  const courante = ouverte !== null ? photos[ouverte] : null;
+  return (
+    <section className="mb-6" aria-labelledby="photos-visiteurs-titre">
+      <h2 id="photos-visiteurs-titre" className="mb-2 text-sm font-semibold text-muted-foreground">
+        {t('servicesVisiteurs.photosVisiteurs.titre', 'Photos des visiteurs ({{n}})', { n: photos.length })}
+      </h2>
+      <ul className="flex gap-2 overflow-x-auto pb-1">
+        {photos.map((p, i) => (
+          <li key={p.id} className="shrink-0">
+            <button type="button" onClick={() => setOuverte(i)} className="block overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              aria-label={t('servicesVisiteurs.photosVisiteurs.agrandir', 'Agrandir la photo de visiteur {{n}} sur {{total}}', { n: i + 1, total: photos.length })}>
+              <img src={getAssetUrl(p.url, { width: 200 })} alt="" loading="lazy" className="h-16 w-16 object-cover sm:h-20 sm:w-20" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <Dialog open={ouverte !== null} onOpenChange={(o) => { if (!o) setOuverte(null); }}>
+        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{t('servicesVisiteurs.photosVisiteurs.titreCourt', 'Photo d’un visiteur')}</DialogTitle>
+          {courante && (
+            <div className="relative">
+              <img src={getAssetUrl(courante.url, { width: 1600 })} alt="" className="max-h-[80vh] w-full rounded object-contain" />
+              {photos.length > 1 && (
+                <>
+                  <Button type="button" size="icon" variant="secondary" className="absolute start-2 top-1/2 -translate-y-1/2" onClick={() => aller(-1)} aria-label={t('common.previous', 'Précédent')}>
+                    <ChevronLeft className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+                  </Button>
+                  <Button type="button" size="icon" variant="secondary" className="absolute end-2 top-1/2 -translate-y-1/2" onClick={() => aller(1)} aria-label={t('common.next', 'Suivant')}>
+                    <ChevronRight className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+                  </Button>
+                </>
+              )}
+              <p className="mt-1 text-center text-sm text-muted-foreground" dir="auto">
+                {getLocalizedText(courante.prenom, i18n.language, '')
+                  ? t('servicesVisiteurs.photosVisiteurs.par', 'Publiée par {{prenom}}', { prenom: getLocalizedText(courante.prenom, i18n.language, '') })
+                  : t('servicesVisiteurs.photosVisiteurs.titreCourt', 'Photo d’un visiteur')}
+                {photos.length > 1 && ` · ${ouverte! + 1} / ${photos.length}`}
+              </p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </section>

@@ -21,6 +21,7 @@ import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
 import { lienGuidePour } from '@/utils/lienGuide';
+import { trierParNote } from '@/utils/noteServices';
 
 const ServicesVisiteurs: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -29,6 +30,8 @@ const ServicesVisiteurs: React.FC = () => {
   const q = useDebouncedValue(recherche, 300);
   const [type, setType] = useState('tous');
   const [wilaya, setWilaya] = useState('toutes');
+  // Tri « comme TripAdvisor » : récents (ordre du serveur), mieux notés, plus d'avis
+  const [tri, setTri] = useState<'recents' | 'note' | 'avis'>('recents');
   const [services, setServices] = useState<ServiceAnnuaire[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -110,6 +113,16 @@ const ServicesVisiteurs: React.FC = () => {
                   {wilayas.map(w => <SelectItem key={w.id_wilaya} value={String(w.id_wilaya)}>{nomWilaya(w, lang)}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={tri} onValueChange={(v) => setTri(v as 'recents' | 'note' | 'avis')}>
+                <SelectTrigger className="md:w-[200px]" aria-label={t('servicesVisiteurs.tri.label', 'Trier')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recents">{t('servicesVisiteurs.tri.recents', 'Les plus récents')}</SelectItem>
+                  <SelectItem value="note">{t('servicesVisiteurs.tri.note', 'Les mieux notés')}</SelectItem>
+                  <SelectItem value="avis">{t('servicesVisiteurs.tri.avis', 'Les plus d’avis')}</SelectItem>
+                </SelectContent>
+              </Select>
               {filtres && (
                 <Button variant="ghost" size="icon" onClick={effacer} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
                   <X className="h-4 w-4" />
@@ -140,7 +153,7 @@ const ServicesVisiteurs: React.FC = () => {
             </Card>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {services.map(s => <ServiceCard key={s.id} service={s} />)}
+              {(tri === 'recents' ? services : trierParNote(services, tri)).map(s => <ServiceCard key={s.id} service={s} />)}
             </div>
           )}
         </ErrorBoundary>

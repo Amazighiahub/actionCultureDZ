@@ -5983,6 +5983,31 @@
       "transfert_aeroport": "Airport shuttle",
       "animaux": "Pets allowed",
       "non_fumeur": "Non-smoking"
+    },
+    "classement": {
+      "texte": "No. {{rang}} of {{total}} {{genre}} in {{wilaya}}",
+      "sansWilaya": "No. {{rang}} of {{total}} {{genre}}",
+      "genres": {
+        "restaurant": "restaurants",
+        "hotel": "places to stay",
+        "guide": "guides",
+        "transport": "transport services",
+        "artisanat": "craftspeople",
+        "location": "rentals",
+        "autre": "services"
+      }
+    },
+    "photosVisiteurs": {
+      "titre": "Visitor photos ({{n}})",
+      "agrandir": "Enlarge visitor photo {{n}} of {{total}}",
+      "titreCourt": "Visitor photo",
+      "par": "Shared by {{prenom}}"
+    },
+    "tri": {
+      "label": "Sort",
+      "recents": "Most recent",
+      "note": "Top rated",
+      "avis": "Most reviewed"
     }
   },
   "catalogue": {

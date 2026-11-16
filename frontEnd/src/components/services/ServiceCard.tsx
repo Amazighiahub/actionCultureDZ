@@ -14,6 +14,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { nomWilaya, type Wilaya } from '@/components/gastronomie/PlatCard';
 import { styleTypeService, tarifAvecUnite } from './typesService';
 import NoteService from './NoteService';
+import ClassementService, { type Classement } from './ClassementService';
 
 export interface ServiceAnnuaire {
   id: number;
@@ -27,6 +28,8 @@ export interface ServiceAnnuaire {
   note?: { moyenne: number; nombre: number } | null;
   lieu?: { id_lieu: number; nom: unknown; commune?: { nom?: unknown } | null } | null;
   wilaya?: Wilaya | null;
+  // Rang dans la wilaya pour ce type de service (null : pas classé)
+  classement?: Classement | null;
 }
 
 const ServiceCard: React.FC<{ service: ServiceAnnuaire }> = ({ service }) => {
@@ -73,6 +76,7 @@ const ServiceCard: React.FC<{ service: ServiceAnnuaire }> = ({ service }) => {
           </p>
         )}
         {service.note && <NoteService note={service.note} />}
+        <ClassementService classement={service.classement} typeService={service.type_service} wilaya={service.wilaya} />
         {aTarif && (
           <p className="text-sm font-medium text-primary">{tarifAvecUnite(t, service.type_service, formatPriceRange(service.tarif_min ?? undefined, service.tarif_max ?? undefined))}</p>
         )}

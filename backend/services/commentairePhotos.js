@@ -96,6 +96,25 @@ async function listerEnAttente(models) {
 }
 
 /**
+ * Photos des visiteurs d'un service, en haut de sa page (« comme TripAdvisor », 2026-11-16) : seulement
+ * les photos publiées par l'équipe, d'avis publiés, les plus récentes d'abord ; prénom de l'auteur seul.
+ */
+async function photosVisiteurs(models, idService, max = 12) {
+  if (!models.CommentairePhoto || !models.Commentaire) return [];
+  const photos = await models.CommentairePhoto.findAll({
+    where: { statut: 'publie' },
+    attributes: ['id_photo', 'url', 'date_creation'],
+    include: [
+      { model: models.Commentaire, as: 'Avis', required: true, attributes: ['id_commentaire'], where: { id_service: idService, statut: 'publie' } },
+      ...(models.User ? [{ model: models.User, as: 'Auteur', attributes: ['prenom'], required: false }] : [])
+    ],
+    order: [['date_creation', 'DESC'], ['id_photo', 'DESC']],
+    limit: max
+  });
+  return photos.map((p) => ({ id: p.id_photo, url: p.url, prenom: p.Auteur?.prenom || null, date: p.date_creation }));
+}
+
+/**
  * Décision de l'équipe : « publie » (la photo paraît avec l'avis) ou « rejete » (motif obligatoire,
  * le fichier est effacé de Cloudinary, la ligne reste pour l'historique). L'auteur est prévenu.
  */
@@ -162,4 +181,4 @@ async function supprimerPhotosAvis(models, idsCommentaire) {
   }
 }
 
-module.exports = { verifierPhotos, attacher, listerEnAttente, decider, supprimerPhotosAvis, MAX_PHOTOS_AVIS };
+module.exports = { verifierPhotos, attacher, listerEnAttente, decider, supprimerPhotosAvis, photosVisiteurs, MAX_PHOTOS_AVIS };

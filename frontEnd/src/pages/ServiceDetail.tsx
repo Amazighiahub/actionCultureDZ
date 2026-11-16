@@ -26,7 +26,8 @@ import { BoutonsReserver, EquipementsService } from '@/components/services/Servi
 import { styleTypeService, tarifAvecUnite } from '@/components/services/typesService';
 import ServiceAvis from '@/components/services/ServiceAvis';
 import NoteService from '@/components/services/NoteService';
-import { GalerieService, MenusService } from '@/components/services/GalerieService';
+import { GalerieService, MenusService, PhotosVisiteurs } from '@/components/services/GalerieService';
+import ClassementService, { type Classement } from '@/components/services/ClassementService';
 import type { MediaService } from '@/services/service.service';
 
 interface ServiceFiche {
@@ -61,6 +62,9 @@ interface ServiceFiche {
   capacite?: number | null;
   lien_reservation?: string | null;
   whatsapp?: string | null;
+  // Photos jointes aux avis (relues par l'équipe) et rang dans la wilaya
+  photos_visiteurs?: { id: number; url: string; prenom?: unknown }[];
+  classement?: Classement | null;
 }
 
 const ServiceDetail: React.FC = () => {
@@ -155,6 +159,7 @@ const ServiceDetail: React.FC = () => {
         {/* Grande photo et galerie (agrandies au toucher) */}
         <GalerieService nom={nom} photoPrincipale={service.photo_url} galerie={service.galerie}
           sansPhoto={<div className={`w-full h-full flex items-center justify-center ${style.bg}`}><Icone className={`h-20 w-20 ${style.color}`} aria-hidden="true" /></div>} />
+        <PhotosVisiteurs photos={service.photos_visiteurs} />
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Badge variant="secondary" className="gap-1">
@@ -168,7 +173,8 @@ const ServiceDetail: React.FC = () => {
           )}
         </div>
         <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">{nom}</h1>
-        {service.note && <NoteService note={service.note} className="mb-4" />}
+        {service.note && <NoteService note={service.note} className="mb-2" />}
+        <ClassementService classement={service.classement} typeService={service.type_service} className="mb-4" />
         <BoutonsReserver nom={nom} whatsapp={service.whatsapp} lienReservation={service.lien_reservation} telephone={service.telephone} />
         {description && <p className="text-lg text-muted-foreground whitespace-pre-line mb-8">{description}</p>}
         <EquipementsService equipements={service.equipements} langues={service.langues} capacite={service.capacite} typeService={service.type_service} />

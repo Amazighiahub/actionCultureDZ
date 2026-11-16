@@ -48,10 +48,10 @@ class ServiceController extends BaseController {
       const data = await this.serviceService.annuaire({
         type: typeof type === 'string' && type ? type : null,
         wilaya: wilaya && /^\d+$/.test(String(wilaya)) ? Number(wilaya) : null,
-        q: typeof q === 'string' ? q.slice(0, 100) : ''
+        q: typeof q === 'string' ? q.slice(0, 100) : '',
+        // Note et classement par wilaya (sur tous les services, avant les filtres)
+        notesDe: (ids) => this._notes(ids)
       });
-      const notes = await this._notes(data.services.map(s => s.id));
-      data.services = data.services.map(s => ({ ...s, note: notes.get(Number(s.id)) || null }));
       res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
@@ -74,6 +74,18 @@ class ServiceController extends BaseController {
     }
   }
 
+  /** Rang du service parmi ceux du même type dans sa wilaya ({ rang, total, wilaya }), ou null */
+  async _classement(raw) {
+    if (raw?.statut !== 'valide' || !raw.type_service) return null;
+    try {
+      const { services } = await this.serviceService.annuaire({ type: raw.type_service, notesDe: (ids) => this._notes(ids) });
+      const ici = services.find((s) => Number(s.id) === Number(raw.id));
+      return ici?.classement ? { ...ici.classement, wilaya: ici.wilaya ? { id_wilaya: ici.wilaya.id_wilaya, nom: ici.wilaya.nom, wilaya_name_ascii: ici.wilaya.wilaya_name_ascii } : null } : null;
+    } catch {
+      return null;
+    }
+  }
+
   async getById(req, res) {
     try {
       const service = await this.serviceService.findWithFullDetails(parseInt(req.params.id));
@@ -85,9 +97,15 @@ class ServiceController extends BaseController {
       const notes = await this._notes([raw.id]);
       // Galerie de photos et menus (PDF ou image) ajoutés par le professionnel
       const medias = await require('../services/service/mediasService').lister(container.models, raw.id).catch(() => ({ photos: [], menus: [] }));
+      // Photos des visiteurs (avis, relues par l'équipe) et classement dans la wilaya
+      const photosVisiteurs = await require('../services/commentairePhotos').photosVisiteurs(container.models, raw.id).catch(() => []);
+      const classement = await this._classement(raw);
       res.json({
         success: true,
-        data: { ...service.toDetailJSON(req.lang), note: notes.get(Number(raw.id)) || null, galerie: medias.photos, menus: medias.menus }
+        data: {
+          ...service.toDetailJSON(req.lang), note: notes.get(Number(raw.id)) || null, galerie: medias.photos, menus: medias.menus,
+          photos_visiteurs: photosVisiteurs, classement
+        }
       });
     } catch (error) {
       this._handleError(res, error);

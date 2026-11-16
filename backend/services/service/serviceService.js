@@ -49,7 +49,12 @@ class ServiceService extends BaseService {
    * services validés, filtrés par type, wilaya et texte ; les wilayas proposées sont
    * celles où il existe au moins un service (avant filtrage).
    */
-  async annuaire({ type = null, wilaya = null, q = '' } = {}) {
+  /**
+   * @param {object} [options]
+   * @param {(ids:number[]) => Promise<Map<number,{moyenne:number,nombre:number}>>} [options.notesDe] - notes des avis ;
+   *   avec elle, chaque service reçoit sa note et son classement (calculé sur tous les services, avant les filtres)
+   */
+  async annuaire({ type = null, wilaya = null, q = '', notesDe = null } = {}) {
     const lignes = (await this.repository.findAnnuaire()).map(s => s.get({ plain: true }));
     let services = lignes.map(s => {
       const w = s.Lieu?.Commune?.Daira?.Wilaya || null;
@@ -61,6 +66,12 @@ class ServiceService extends BaseService {
         professionnel: Professionnel || null
       };
     });
+
+    if (notesDe) {
+      const notes = await notesDe(services.map(s => s.id));
+      const rangs = require('./classementServices').classer(services, notes);
+      services = services.map(s => ({ ...s, note: notes.get(Number(s.id)) || null, classement: rangs.get(Number(s.id)) || null }));
+    }
 
     const wilayas = [...new Map(services.filter(s => s.wilaya).map(s => [s.wilaya.id_wilaya, s.wilaya])).values()]
       .sort((a, b) => String(a.wilaya_name_ascii || '').localeCompare(String(b.wilaya_name_ascii || '')));
