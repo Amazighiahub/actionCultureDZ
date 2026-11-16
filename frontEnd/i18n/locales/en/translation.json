@@ -753,7 +753,8 @@
       "retirerPartenaire": "Remove {{nom}}",
       "ajouterPartenaire": "Add a partner organisation",
       "choisirPartenaire": "Choose an organisation",
-      "partenaireAbsent": "Organisation not in the list? It first needs its own page on Tala DZ."
+      "partenaireAbsent": "Organisation not in the list? It first needs its own page on Tala DZ.",
+      "startDatePastEnCours": "The start date has passed: if the event is ongoing, enter its end date (today or later)."
     },
     "types": {
       "concert": "Concert",
@@ -3686,7 +3687,9 @@
       "maxOeuvres_one": "Up to {{count}} work",
       "maxOeuvres_other": "Up to {{count}} works",
       "nbPersonnes_one": "{{count}} person",
-      "nbPersonnes_other": "{{count}} people"
+      "nbPersonnes_other": "{{count}} people",
+      "annule": "This event is cancelled: registrations are closed.",
+      "reporte": "This event is postponed: registrations will reopen with the new date."
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -5341,7 +5344,9 @@
     "confirmDeleteTitle": "Delete “{{titre}}”?",
     "confirmDeleteDesc": "The activity and its list of speakers will be removed from the programme. This cannot be undone.",
     "voirPhotosJour": "See this day’s photos ({{n}})",
-    "photosActivite": "Photos of this day"
+    "photosActivite": "Photos of this day",
+    "photos": "Photos",
+    "placesMax": "{{n}} places at most"
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",

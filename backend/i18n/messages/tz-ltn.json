@@ -267,7 +267,8 @@
     "statusUpdated": "Addad n uhil yettwalqem: ${from} → ${to}",
     "orderUpdated": "Amizzwer n yihilen yettwalqem",
     "serverErrorGet": "Tuccḍa n uqeddac deg usekles n yihilen",
-    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié."
+    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié.",
+    "statutInvalide": "Statut identique ou inconnu : choisissez un autre statut."
   },
   "media": {
     "notFound": "Amidya ur yettuwaf ara",

@@ -8,7 +8,7 @@ const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddle
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
-const { createContentLimiter, importLimiter, pdfLimiter, mediasLimiter } = require('../middlewares/rateLimitMiddleware');
+const { createContentLimiter, importLimiter, pdfLimiter, mediasLimiter, messagesParticipantsLimiter, invitationsLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
@@ -122,7 +122,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
   // Messages de l'organisateur à ses participants (changement de programme, PDF, WhatsApp, Drive…)
   router.get('/:id/participants/messages', authenticate, validateId(),
     asyncHandler((req, res) => evenementController.listerMessagesParticipants(req, res)));
-  router.post('/:id/participants/messages', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+  router.post('/:id/participants/messages', authenticate, requireVerifiedEmail, messagesParticipantsLimiter, validateId(),
     asyncHandler((req, res) => evenementController.envoyerMessageParticipants(req, res)));
   // Documents PDF de l'événement (programme complet, présentation…) : liste et téléchargement publics,
   // ajout et retrait par l'organisateur ou l'administration
@@ -130,7 +130,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => evenementController.listerDocuments(req, res)));
   router.get('/:id/documents/:idMedia/document.pdf', pdfLimiter, optionalAuth, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.telechargerDocument(req, res)));
-  router.post('/:id/documents', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+  router.post('/:id/documents', authenticate, requireVerifiedEmail, mediasLimiter, validateId(),
     asyncHandler((req, res) => evenementController.ajouterDocument(req, res)));
   router.delete('/:id/documents/:idMedia', authenticate, requireVerifiedEmail, validateId(), validateId('idMedia'),
     asyncHandler((req, res) => evenementController.retirerDocument(req, res)));
@@ -148,11 +148,11 @@ const initEvenementRoutes = (models, authMiddleware) => {
     asyncHandler((req, res) => evenementController.programmeMessage(req, res)));
 
   // Même e-mail, en une fois, à tous les participants qui n'ont pas fini
-  router.post('/:id/participants/invitations', authenticate, requireVerifiedEmail, createContentLimiter, validateId(),
+  router.post('/:id/participants/invitations', authenticate, requireVerifiedEmail, invitationsLimiter, validateId(),
     asyncHandler((req, res) => evenementController.renvoyerInvitations(req, res)));
 
   // Email « Choisir mon mot de passe » renvoyé à un participant qui ne l'a pas encore fait
-  router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, createContentLimiter, validateId(), validateId('userId'),
+  router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, invitationsLimiter, validateId(), validateId('userId'),
     asyncHandler((req, res) => evenementController.renvoyerInvitation(req, res)));
 
   // Participants validation (owner ou admin)

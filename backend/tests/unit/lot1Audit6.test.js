@@ -23,8 +23,16 @@ describe('Dates d’un événement', () => {
   test('modifier un événement déjà commencé : accepté si la date de début ne change pas', async () => {
     Evenement.findByPk.mockResolvedValue({ date_debut: new Date(Date.now() - 86400e3) });
     expect(await verifier({ date_debut: jour(-1), date_fin: jour(1) }, { method: 'PUT', id: 7 })).toBe('ok');
-    // … mais déplacer le début dans le passé reste refusé
-    expect(await verifier({ date_debut: jour(-5), date_fin: jour(1) }, { method: 'PUT', id: 7 })).toBe(400);
+    // Début dans le passé avec une fin à venir : événement en cours, accepté (décision du 2026-11-16)
+    expect(await verifier({ date_debut: jour(-5), date_fin: jour(1) }, { method: 'PUT', id: 7 })).toBe('ok');
+    // … mais un début et une fin déjà passés restent refusés
+    expect(await verifier({ date_debut: jour(-5), date_fin: jour(-2) }, { method: 'PUT', id: 7 })).toBe(400);
+  });
+
+  test('créer un événement déjà commencé : accepté si sa fin est aujourd’hui ou plus tard', async () => {
+    expect(await verifier({ date_debut: jour(-3), date_fin: jour(4) })).toBe('ok');
+    expect(await verifier({ date_debut: jour(-3), date_fin: jour(0) })).toBe('ok');
+    expect(await verifier({ date_debut: jour(-3), date_fin: jour(-1) })).toBe(400);
   });
 
   test('fin avant le début : refusé', async () => {

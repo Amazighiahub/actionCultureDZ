@@ -762,7 +762,8 @@
       "retirerPartenaire": "إزالة {{nom}}",
       "ajouterPartenaire": "إضافة منظمة شريكة",
       "choisirPartenaire": "اختر منظمة",
-      "partenaireAbsent": "المنظمة غير موجودة في القائمة؟ يجب أن تكون لها صفحة على ثالا أولًا."
+      "partenaireAbsent": "المنظمة غير موجودة في القائمة؟ يجب أن تكون لها صفحة على ثالا أولًا.",
+      "startDatePastEnCours": "تاريخ البداية فات: إن كانت الفعالية جارية، أدخل تاريخ نهايتها (اليوم أو بعده)."
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -3868,7 +3869,9 @@
       "nbPersonnes_two": "شخصان",
       "nbPersonnes_few": "{{count}} أشخاص",
       "nbPersonnes_many": "{{count}} شخصًا",
-      "nbPersonnes_other": "{{count}} شخص"
+      "nbPersonnes_other": "{{count}} شخص",
+      "annule": "هذه الفعالية ملغاة: التسجيلات مغلقة.",
+      "reporte": "هذه الفعالية مؤجلة: ستُفتح التسجيلات مع الموعد الجديد."
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -5555,7 +5558,9 @@
     "confirmDeleteTitle": "حذف «{{titre}}»؟",
     "confirmDeleteDesc": "سيُحذف النشاط وقائمة متدخليه من البرنامج. هذا الإجراء نهائي.",
     "voirPhotosJour": "عرض صور هذا اليوم ({{n}})",
-    "photosActivite": "صور هذا اليوم"
+    "photosActivite": "صور هذا اليوم",
+    "photos": "الصور",
+    "placesMax": "{{n}} مقعدًا على الأكثر"
   },
   "emailChange": {
     "noTokenProvided": "لم يتم تقديم رمز التأكيد.",

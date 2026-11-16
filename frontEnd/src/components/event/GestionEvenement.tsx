@@ -564,19 +564,20 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {programme.heure_debut && (
+                          {/* Jour de l'activité, même sans heure (avant : 5 jours d'exposition sans horaire
+                              donnaient 5 cartes impossibles à distinguer) */}
+                          {(programme.heure_debut || jourProgramme(programme)) && (
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
-                              {/* Jour de l'activité (événement sur plusieurs jours) */}
-                              {jourProgramme(programme) && <span className="capitalize">{formatDate(jourProgramme(programme), { weekday: 'short', day: 'numeric', month: 'short' })} ·</span>}
-                              {formatTime(programme.heure_debut)}
-                              {programme.heure_fin && ` - ${formatTime(programme.heure_fin)}`}
+                              {jourProgramme(programme) && <span className="capitalize">{formatDate(jourProgramme(programme), { weekday: 'short', day: 'numeric', month: 'short' })}{programme.heure_debut ? ' ·' : ''}</span>}
+                              {programme.heure_debut && formatTime(programme.heure_debut)}
+                              {programme.heure_debut && programme.heure_fin && ` - ${formatTime(programme.heure_fin)}`}
                             </span>
                           )}
                           {programme.nb_participants_max && (
                             <span className="flex items-center gap-1">
                               <Users className="h-3.5 w-3.5" />
-                              Max {programme.nb_participants_max}
+                              {t('programme.placesMax', '{{n}} places au plus', { n: programme.nb_participants_max })}
                             </span>
                           )}
                         </div>
@@ -586,10 +587,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => setProgrammePhotos(programme)}
-                          aria-label={t('programme.photosActivite', 'Photos de ce jour')}
                           title={t('programme.photosActivite', 'Photos de ce jour')}
+                          className="gap-1"
                         >
-                          <Camera className="h-4 w-4" />
+                          <Camera className="h-4 w-4" aria-hidden="true" />
+                          {/* Texte visible : l'infobulle ne s'affiche pas au toucher */}
+                          <span>{t('programme.photos', 'Photos')}</span>
                         </Button>
                         <Button
                           variant="ghost"

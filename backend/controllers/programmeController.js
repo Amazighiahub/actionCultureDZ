@@ -8,6 +8,10 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
+const { estModeration } = require('../utils/droits');
+
+/** L'équipe (admin, modération) peut aider un organisateur sur son programme (2026-11-16) */
+const equipe = (req) => estModeration(req.user);
 
 class ProgrammeController extends BaseController {
   get programmeService() {
@@ -134,7 +138,7 @@ class ProgrammeController extends BaseController {
       const { evenementId } = req.params;
 
       const result = await this.programmeService.createProgramme(
-        evenementId, req.user.id_user, lang, req.body
+        evenementId, req.user.id_user, lang, req.body, equipe(req)
       );
 
       if (result.error === 'evenementNotFound') {
@@ -150,6 +154,13 @@ class ProgrammeController extends BaseController {
         return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
 
+      // Inscrits prévenus de la nouvelle activité : une alerte par événement et par heure au plus
+      if (result.notifier && result.programme?.id_programme) {
+        const { premiereFoisPendant } = require('../services/quotaEmail');
+        premiereFoisPendant(`programme-nouveau:${evenementId}`, 3600)
+          .then((premiere) => premiere && this.notificationService.notifierModificationProgramme(result.programme.id_programme, result.notifier))
+          .catch(() => { /* une alerte manquée n'empêche pas l'ajout */ });
+      }
       this._sendCreated(res, translateDeep(result.programme, lang), req.t('programme.created'));
     } catch (error) {
       this._handleError(res, error);
@@ -161,7 +172,7 @@ class ProgrammeController extends BaseController {
       const lang = req.lang || 'fr';
 
       const result = await this.programmeService.updateProgramme(
-        req.params.id, req.user.id_user, lang, req.body
+        req.params.id, req.user.id_user, lang, req.body, equipe(req)
       );
 
       if (result.error === 'notFound') {
@@ -192,7 +203,7 @@ class ProgrammeController extends BaseController {
   async deleteProgramme(req, res) {
     try {
       const result = await this.programmeService.deleteProgramme(
-        req.params.id, req.user.id_user, { ip: req.ip, userAgent: req.get?.('User-Agent') }
+        req.params.id, req.user.id_user, { ip: req.ip, userAgent: req.get?.('User-Agent'), equipe: equipe(req) }
       );
 
       if (result.error === 'notFound') {
@@ -213,7 +224,7 @@ class ProgrammeController extends BaseController {
       const { statut } = req.body;
 
       const result = await this.programmeService.updateStatut(
-        req.params.id, req.user.id_user, statut
+        req.params.id, req.user.id_user, statut, equipe(req)
       );
 
       if (result.error === 'notFound') {
@@ -221,6 +232,10 @@ class ProgrammeController extends BaseController {
       }
       if (result.error === 'forbidden') {
         return res.status(403).json({ success: false, error: req.t('auth.forbidden') });
+      }
+
+      if (result.error === 'statutInvalide') {
+        return res.status(400).json({ success: false, error: req.t('programme.statutInvalide') });
       }
 
       if (result.shouldNotify) {
@@ -248,7 +263,7 @@ class ProgrammeController extends BaseController {
       const lang = req.lang || 'fr';
 
       const result = await this.programmeService.duplicateProgramme(
-        req.params.id, req.user.id_user
+        req.params.id, req.user.id_user, equipe(req)
       );
 
       if (result.error === 'notFound') {
@@ -270,7 +285,7 @@ class ProgrammeController extends BaseController {
       const { programmes } = req.body;
 
       const result = await this.programmeService.reorderProgrammes(
-        evenementId, req.user.id_user, programmes
+        evenementId, req.user.id_user, programmes, equipe(req)
       );
 
       if (result.error === 'evenementNotFound') {

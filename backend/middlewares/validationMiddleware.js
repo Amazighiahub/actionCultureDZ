@@ -96,7 +96,10 @@ const validationMiddleware = {
       // Comparaison par jour, en heure d'Algérie : « 2026-10-29 » vaut minuit UTC, déjà passé le jour
       // même ; un événement de ce soir doit pouvoir être créé. En modification (PUT), seule une date
       // de début changée est contrôlée : un événement en cours doit rester modifiable (lieu, contact…)
-      const debutPasse = date_debut && jourAlger(date_debut) < jourAlger(new Date())
+      // Événement déjà commencé (exposition ouverte depuis quelques jours) : permis si sa date de fin est
+      // aujourd'hui ou plus tard (décision de la responsable, 2026-11-16)
+      const enCours = date_fin && jourAlger(date_fin) >= jourAlger(new Date());
+      const debutPasse = date_debut && jourAlger(date_debut) < jourAlger(new Date()) && !enCours
         && !(req.method === 'PUT' && await memeJourQueLeDebutActuel(req.params.id, date_debut));
       if (debutPasse) {
         return res.status(400).json({

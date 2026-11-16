@@ -802,7 +802,8 @@
       "retirerPartenaire": "Retirer {{nom}}",
       "ajouterPartenaire": "Ajouter une organisation partenaire",
       "choisirPartenaire": "Choisir une organisation",
-      "partenaireAbsent": "Organisation absente de la liste ? Elle doit d’abord avoir sa page sur Tala DZ."
+      "partenaireAbsent": "Organisation absente de la liste ? Elle doit d’abord avoir sa page sur Tala DZ.",
+      "startDatePastEnCours": "La date de début est passée : si l’événement est en cours, indiquez sa date de fin (aujourd’hui ou plus tard)."
     },
     "types": {
       "concert": "Concert",
@@ -3691,7 +3692,9 @@
       "maxOeuvres_one": "{{count}} œuvre au maximum",
       "maxOeuvres_other": "{{count}} œuvres au maximum",
       "nbPersonnes_one": "{{count}} personne",
-      "nbPersonnes_other": "{{count}} personnes"
+      "nbPersonnes_other": "{{count}} personnes",
+      "annule": "Cet événement est annulé : les inscriptions sont fermées.",
+      "reporte": "Cet événement est reporté : les inscriptions rouvriront avec la nouvelle date."
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -5044,7 +5047,9 @@
     "confirmDeleteTitle": "Supprimer « {{titre}} » ?",
     "confirmDeleteDesc": "L’activité et la liste de ses intervenants seront retirées du programme. Cette action est définitive.",
     "voirPhotosJour": "Voir les photos de ce jour ({{n}})",
-    "photosActivite": "Photos de ce jour"
+    "photosActivite": "Photos de ce jour",
+    "photos": "Photos",
+    "placesMax": "{{n}} places au plus"
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",

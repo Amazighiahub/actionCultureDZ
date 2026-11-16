@@ -267,7 +267,8 @@
     "statusUpdated": "ⴰⴷⴷⴰⴷ ⵏ ⵓⵀⵉⵍ ⵢⵜⵜⵡⴰⵍⵇⵎ: ${from} → ${to}",
     "orderUpdated": "ⴰⵎⵉⵣⵣⵡⵔ ⵏ ⵢⵉⵀⵉⵍⵏ ⵢⵜⵜⵡⴰⵍⵇⵎ",
     "serverErrorGet": "ⵜⵓⵛⴹⴰ ⵏ ⵓⵇⴷⴷⴰⵛ ⴷⴳ ⵓⵙⴽⵍⵙ ⵏ ⵢⵉⵀⵉⵍⵏ",
-    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié."
+    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié.",
+    "statutInvalide": "Statut identique ou inconnu : choisissez un autre statut."
   },
   "media": {
     "notFound": "ⴰⵎⵉⴷⵢⴰ ⵓⵔ ⵢⵜⵜⵓⵡⴰⴼ ⴰⵔⴰ",

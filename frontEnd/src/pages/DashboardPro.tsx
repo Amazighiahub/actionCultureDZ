@@ -883,8 +883,8 @@ const DashboardPro = () => {
                           onClick={() => handleView('evenement', evenement)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {/* Modifiable aussi après publication (pas une fois annulé ou terminé) */}
-                        {evenement.statut !== 'annule' && evenement.statut !== 'termine' && (
+                        {/* Modifiable aussi après publication et après sa fin (corriger, prolonger) ; pas une fois annulé */}
+                        {evenement.statut !== 'annule' && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -894,7 +894,8 @@ const DashboardPro = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        {!['brouillon', 'en_attente', 'annule'].includes(evenement.statut as string) && (
+                        {/* Annuler : pas un événement déjà terminé (le serveur refusait ensuite) */}
+                        {!['brouillon', 'en_attente', 'annule', 'termine'].includes(evenement.statut as string) && (
                           <Button
                             variant="ghost"
                             size="sm"

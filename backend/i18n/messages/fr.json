@@ -270,7 +270,8 @@
     "statusUpdated": "Statut du programme mis à jour",
     "orderUpdated": "Ordre des programmes mis à jour",
     "serverErrorGet": "Erreur serveur lors de la récupération des programmes",
-    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié."
+    "evenementAnnule": "Événement annulé : son programme ne peut plus être modifié.",
+    "statutInvalide": "Statut identique ou inconnu : choisissez un autre statut."
   },
   "media": {
     "notFound": "Média non trouvé",

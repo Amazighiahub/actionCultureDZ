@@ -55,7 +55,7 @@ class ProgrammeService extends BaseService {
   // CRÉATION / MODIFICATION / SUPPRESSION
   // ========================================================================
 
-  async createProgramme(evenementId, userId, lang, data) {
+  async createProgramme(evenementId, userId, lang, data, equipe = false) {
     const { titre, description, intervenants = [], id_lieu, ...rest } = data;
 
     // Lectures et écritures sur une seule connexion : la ligne de l'événement est verrouillée
@@ -63,7 +63,7 @@ class ProgrammeService extends BaseService {
     const transaction = await this.sequelize.transaction();
     try {
       const evenement = await this.models.Evenement.findByPk(evenementId, { transaction, lock: Transaction.LOCK.UPDATE });
-      const refus = !evenement ? 'evenementNotFound' : this._refusEvenement(evenement, userId);
+      const refus = !evenement ? 'evenementNotFound' : this._refusEvenement(evenement, userId, equipe);
       if (refus) {
         await transaction.rollback();
         return { error: refus };
@@ -78,7 +78,7 @@ class ProgrammeService extends BaseService {
       }
 
       const programmeData = {
-        titre: this._prepareMultiLang(titre, lang) || {},
+        titre: this._titreOuDescription(this._prepareMultiLang(titre, lang), this._prepareMultiLang(description, lang)),
         description: this._prepareMultiLang(description, lang) || { fr: '' },
         id_evenement: evenementId,
         id_lieu,
@@ -101,7 +101,11 @@ class ProgrammeService extends BaseService {
       await this._lierIntervenants(programme.id_programme, intervenants, transaction);
 
       await transaction.commit();
-      return { programme: await this._getProgrammeComplet(programme.id_programme) };
+      // Inscrits prévenus d'une activité ajoutée (décision de la responsable : toujours prévenir des
+      // changements) ; une alerte par événement et par heure au plus, l'organisateur saisit souvent
+      // plusieurs jours d'affilée
+      const notifier = ['publie', 'en_cours', 'termine'].includes(evenement.statut) ? 'nouveau' : null;
+      return { programme: await this._getProgrammeComplet(programme.id_programme), notifier };
     } catch (error) {
       // Une erreur de relecture après le commit ne doit pas tenter d'annuler une transaction terminée
       if (!transaction.finished) await transaction.rollback();
@@ -109,15 +113,37 @@ class ProgrammeService extends BaseService {
     }
   }
 
+  /** Propriétaire de l'événement, ou l'équipe (admin, modération) qui aide un organisateur (2026-11-16) */
+  _gere(idProprietaire, userId, equipe = false) {
+    return equipe === true || memeUtilisateur(idProprietaire, userId);
+  }
+
   /**
-   * Seul le propriétaire de l'événement gère ses activités, et pas sur un événement annulé.
+   * Titre d'une activité laissé vide : début de sa description, dans chaque langue (le formulaire le
+   * présente comme facultatif, le serveur l'exigeait). Relecture du 2026-11-16.
+   */
+  _titreOuDescription(titre, description) {
+    const t = titre && typeof titre === 'object' ? { ...titre } : {};
+    if (Object.values(t).some(v => typeof v === 'string' && v.trim())) return t;
+    const d = description && typeof description === 'object' ? description : {};
+    for (const [langue, texte] of Object.entries(d)) {
+      if (typeof texte !== 'string' || !texte.trim()) continue;
+      // Première ligne ou première phrase (point, point d'exclamation ou d'interrogation, aussi arabe)
+      const ligne = texte.trim().split(/\r?\n|(?<=[.!?؟])\s/)[0].trim();
+      t[langue] = ligne.length > 60 ? `${ligne.slice(0, 59).trimEnd()}…` : ligne;
+    }
+    return t;
+  }
+
+  /**
+   * Seul le propriétaire de l'événement (ou l'équipe) gère ses activités, et pas sur un événement annulé.
    * Un événement terminé reste modifiable (décision de la responsable, 2026-11-15) : l'organisateur
    * raconte après coup chaque jour (description, intervenants, photos). Aucune notification n'est
    * alors envoyée aux inscrits (_changementANotifier ne vise que les événements à venir ou en cours).
    * @returns {string|null} code d'erreur, ou null si la modification est permise
    */
-  _refusEvenement(evenement, userId) {
-    if (!memeUtilisateur(evenement.id_user, userId)) return 'forbidden';
+  _refusEvenement(evenement, userId, equipe = false) {
+    if (!this._gere(evenement.id_user, userId, equipe)) return 'forbidden';
     if (evenement.statut === 'annule') return 'evenementAnnule';
     return null;
   }
@@ -148,7 +174,9 @@ class ProgrammeService extends BaseService {
 
   /** Activité annulée, reportée ou déplacée sur un événement visible : type de message aux inscrits, sinon null */
   _changementANotifier(programme, updates) {
-    if (!['publie', 'planifie', 'en_cours'].includes(programme.Evenement?.statut)) return null;
+    // Décision de la responsable (2026-11-16) : toujours prévenir les inscrits d'un changement,
+    // y compris sur un événement terminé ; pas sur un brouillon ni un événement annulé
+    if (!['publie', 'planifie', 'en_cours', 'termine'].includes(programme.Evenement?.statut)) return null;
     if (updates.statut && updates.statut !== programme.statut && ['annule', 'reporte'].includes(updates.statut)) {
       return updates.statut;
     }
@@ -169,7 +197,7 @@ class ProgrammeService extends BaseService {
     return brut?.notes_organisateur ?? '';
   }
 
-  async updateProgramme(id, userId, lang, data) {
+  async updateProgramme(id, userId, lang, data, equipe = false) {
     const { titre, description, intervenants, ...rest } = data;
 
     const allowedFields = ['id_lieu', 'lieu_specifique', 'date_programme', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
@@ -194,7 +222,7 @@ class ProgrammeService extends BaseService {
       }
 
       // Propriétaire de l'événement, et événement encore modifiable
-      const refus = this._refusEvenement(programme.Evenement, userId);
+      const refus = this._refusEvenement(programme.Evenement, userId, equipe);
       if (refus) {
         await transaction.rollback();
         return { error: refus };
@@ -236,6 +264,7 @@ class ProgrammeService extends BaseService {
    * @param {Object} [contexte] - { ip, userAgent } de la requête
    */
   async deleteProgramme(id, userId, contexte = {}) {
+    const equipe = contexte.equipe === true;
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this._lirePourModification(id, transaction, [
@@ -247,7 +276,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
+      if (!this._gere(programme.Evenement.id_user, userId, equipe)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -286,7 +315,7 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async updateStatut(id, userId, statut) {
+  async updateStatut(id, userId, statut, equipe = false) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this._lirePourModification(id, transaction);
@@ -296,7 +325,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
+      if (!this._gere(programme.Evenement.id_user, userId, equipe)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -304,17 +333,12 @@ class ProgrammeService extends BaseService {
       const ancienStatut = programme.statut;
 
       // Validation des transitions de statut
-      const validTransitions = {
-        planifie: ['en_cours', 'annule', 'reporte'],
-        en_cours: ['termine', 'annule'],
-        reporte: ['planifie', 'annule'],
-        termine: [],
-        annule: []
-      };
-      const allowed = validTransitions[ancienStatut] || [];
-      if (!allowed.includes(statut)) {
+      // Tout statut connu, sauf le même : un statut mis par erreur (terminé, annulé) se corrige
+      // (avant : définitif, et un changement non prévu répondait « Accès refusé »)
+      const STATUTS = ['planifie', 'en_cours', 'termine', 'annule', 'reporte'];
+      if (!STATUTS.includes(statut) || statut === ancienStatut) {
         await transaction.rollback();
-        return { error: 'forbidden' };
+        return { error: 'statutInvalide' };
       }
 
       await programme.update({ statut }, { transaction });
@@ -335,7 +359,7 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async duplicateProgramme(id, userId) {
+  async duplicateProgramme(id, userId, equipe = false) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this._lirePourModification(id, transaction);
@@ -345,7 +369,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (!memeUtilisateur(programme.Evenement.id_user, userId)) {
+      if (!this._gere(programme.Evenement.id_user, userId, equipe)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -374,12 +398,12 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async reorderProgrammes(evenementId, userId, programmes) {
+  async reorderProgrammes(evenementId, userId, programmes, equipe = false) {
     const transaction = await this.sequelize.transaction();
     try {
       // Même connexion que les mises à jour, événement verrouillé (comme l'ajout d'une activité)
       const evenement = await this.models.Evenement.findByPk(evenementId, { transaction, lock: Transaction.LOCK.UPDATE });
-      if (!evenement || !memeUtilisateur(evenement.id_user, userId)) {
+      if (!evenement || !this._gere(evenement.id_user, userId, equipe)) {
         await transaction.rollback();
         return { error: evenement ? 'forbidden' : 'evenementNotFound' };
       }

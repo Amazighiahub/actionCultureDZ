@@ -18,14 +18,13 @@ const initProgrammeRoutes = (models) => {
   // ========================================================================
 
   const programmeValidation = [
+    // Titre facultatif (le formulaire le présente ainsi) : vide, le début de la description le remplace
+    // (programmeService._titreOuDescription) ; « J2 » est accepté. 255 caractères au plus.
     body('titre')
+      .optional({ values: 'null' })
       .custom((value) => {
-        if (typeof value === 'string') {
-          return value.trim().length >= 3 && value.trim().length <= 255;
-        }
-        if (typeof value === 'object') {
-          return Object.values(value).some(v => v && v.length >= 3);
-        }
+        if (typeof value === 'string') return value.trim().length <= 255;
+        if (value && typeof value === 'object') return Object.values(value).every(v => v == null || (typeof v === 'string' && v.length <= 255));
         return false;
       })
       .withMessage((value, { req }) => req.t('validation.invalidName')),

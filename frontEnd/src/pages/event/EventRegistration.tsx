@@ -290,8 +290,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const finEvenement = finEffective(event.date_debut, event.date_fin);
   const isEventPast = finEvenement ? finEvenement <= new Date() : false;
 
+  // Annulé ou reporté : pas d'inscription (le serveur la refusait après le clic)
+  const annuleOuReporte = event.statut === 'annule' || event.statut === 'reporte';
+
   // Déterminer si l'inscription est possible
-  const canRegister = !isEventFull && !isRegistrationClosed && !isEventPast && !isRegistered;
+  const canRegister = !isEventFull && !isRegistrationClosed && !isEventPast && !isRegistered && !annuleOuReporte;
 
   // Soumettre l'inscription
   const handleSubmit = async () => {
@@ -460,7 +463,17 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         </div>
 
         {/* Messages d'état */}
-        {isEventPast && (
+        {annuleOuReporte && (
+          <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-center" role="status">
+            <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">
+              {event.statut === 'annule'
+                ? t('event.registration.annule', 'Cet événement est annulé : les inscriptions sont fermées.')
+                : t('event.registration.reporte', 'Cet événement est reporté : les inscriptions rouvriront avec la nouvelle date.')}
+            </p>
+          </div>
+        )}
+
+        {isEventPast && !annuleOuReporte && (
           <div className="p-3 bg-muted rounded-lg text-center">
             <p className="text-sm text-muted-foreground">
               {t('event.registration.eventPast', 'Cet événement est terminé')}

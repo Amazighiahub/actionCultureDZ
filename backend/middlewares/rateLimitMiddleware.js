@@ -270,6 +270,11 @@ const contactProLimiter = limiteParPersonne('contact-pro', 60 * 60 * 1000, 5, 'T
 // Médias des fiches (œuvres, artisanat, patrimoine, extraits) : le site les envoie un par un
 // 400 par heure : un catalogue importé envoie une couverture par livre (300 lignes au plus)
 const mediasLimiter = limiteParPersonne('medias', 60 * 60 * 1000, 400, 'Trop d’envois de fichiers en une heure : réessayez plus tard.');
+// Gestion d'un événement par son organisateur (2026-11-16) : avant, messages, invitations, documents et
+// créations partageaient 20 actions par heure ; 15 relances d'invitation bloquaient tout le reste.
+// Message à tous les participants : 10 par heure (un envoi part vers chacun d'eux) ; relances : 60.
+const messagesParticipantsLimiter = limiteParPersonne('messages-participants', 60 * 60 * 1000, 10, 'Trop de messages envoyés en une heure : réessayez plus tard.');
+const invitationsLimiter = limiteParPersonne('invitations', 60 * 60 * 1000, 60, 'Trop d’invitations envoyées en une heure : réessayez plus tard.');
 // Moyens de paiement : le mot de passe y est vérifié (pas d'essais en masse)
 const moyensPaiementLimiter = limiteParPersonne('moyens-paiement', 15 * 60 * 1000, 10, 'Trop d’essais : réessayez dans 15 minutes.');
 // Nouvelles commandes : 10 par heure et par personne (vendeurs protégés des notifications en masse)
@@ -673,6 +678,8 @@ module.exports = {
   uploadLimiter,
   moyensPaiementLimiter,
   mediasLimiter,
+  messagesParticipantsLimiter,
+  invitationsLimiter,
   suiviLimiter, contactProLimiter,
   commandeLimiter,
   commandeEtapeLimiter,

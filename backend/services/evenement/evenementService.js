@@ -455,11 +455,13 @@ class EvenementService extends BaseService {
         throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
       }
 
-      // L'organisateur complète son événement après publication (lieu exact, tarif, horaires…) ;
-      // un événement annulé ou terminé reste figé. Le statut ne change pas ici (routes /publish, /cancel).
-      if (['annule', 'termine'].includes(existing.statut)) {
-        throw this._validationError('Un événement annulé ou terminé ne peut plus être modifié');
+      // L'organisateur complète son événement après publication (lieu exact, tarif, horaires…), et aussi
+      // après sa fin (décision de la responsable, 2026-11-16 : corriger le texte, l'image, prolonger une
+      // exposition). Un événement annulé reste figé. Le statut ne change ici que pour une prolongation.
+      if (existing.statut === 'annule') {
+        throw this._validationError('Un événement annulé ne peut plus être modifié');
       }
+      const termineAvant = existing.statut === 'termine';
 
       const updateData = {};
       // Fusion des langues : une langue laissée vide ne remplace pas la traduction existante
@@ -527,7 +529,8 @@ class EvenementService extends BaseService {
       }
 
       // Date ou lieu changés sur un événement visible : les inscrits seront prévenus après l'enregistrement
-      if (EVENEMENT_OUVERT.includes(existing.statut)) {
+      // (terminé compris : toujours prévenir les inscrits d'un changement, décision du 2026-11-16)
+      if (EVENEMENT_OUVERT.includes(existing.statut) || termineAvant) {
         const dateChangee = updateData.date_debut
           && new Date(updateData.date_debut).getTime() !== new Date(existing.date_debut).getTime();
         // id_lieu à null compte aussi : un événement passé en ligne perd son lieu, les inscrits doivent le savoir
@@ -547,8 +550,17 @@ class EvenementService extends BaseService {
       // Partenaires changés : une page publiée ne doit pas se réclamer d'une institution sans contrôle
       const empreinte = (l) => l.map((p) => `${p.id_organisation}=${p.role}`).sort().join(',');
       if (partenaires !== null && empreinte(partenaires) !== empreinte(partenairesActuels)) changes.push(`partenaires:${empreinte(partenaires)}`);
-      if (EVENEMENT_OUVERT.includes(existing.statut) && !options.isAdmin && changes.length) {
+      if ((EVENEMENT_OUVERT.includes(existing.statut) || termineAvant) && !options.isAdmin && changes.length) {
         aVerifier = changes.map((c) => (c.startsWith('partenaires:') ? c : `${c}:${valeur(c, updateData[c])}`)).join('|');
+      }
+
+      // Événement terminé prolongé (nouvelle date de fin à venir) : il redevient en cours, ou publié s'il
+      // n'a pas encore commencé ; le passage automatique le refermera à sa nouvelle fin
+      if (termineAvant && (updateData.date_debut !== undefined || updateData.date_fin !== undefined)) {
+        const debut = updateData.date_debut !== undefined ? updateData.date_debut : existing.date_debut;
+        const fin = updateData.date_fin !== undefined ? updateData.date_fin : existing.date_fin;
+        const maintenant = new Date();
+        if (finEffective(debut, fin) > maintenant) updateData.statut = new Date(debut) <= maintenant ? 'en_cours' : 'publie';
       }
 
       await this.repository.update(id, updateData, { transaction });
@@ -981,7 +993,9 @@ class EvenementService extends BaseService {
     // L'événement doit exister et être encore ouvert
     const evenement = await this.repository.findById(evenementId);
     if (!evenement) throw this._notFoundError(evenementId);
-    if (['annule', 'termine'].includes(evenement.statut)) {
+    // Terminé : permis (2026-11-16) — un compte rendu, un reportage s'ajoutent justement après ;
+    // annulé : refusé
+    if (evenement.statut === 'annule') {
       throw this._validationError('Cet événement n\'accepte plus de nouvelles œuvres');
     }
 

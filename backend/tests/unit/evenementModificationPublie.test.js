@@ -1,6 +1,6 @@
 /**
  * Modification d'un événement publié : permise à son organisateur (et à l'administration),
- * refusée une fois l'événement annulé ou terminé, refusée à un autre compte.
+ * et après sa fin (prolongation : il redevient en cours) ; refusée une fois annulé, refusée à un autre compte.
  */
 jest.mock('../../utils/redisClient', () => ({
   getRedisClient: jest.fn().mockResolvedValue(null),
@@ -40,6 +40,18 @@ describe('EvenementService.update — événement publié', () => {
 
   it('refusé à un autre compte, et une fois l’événement annulé', async () => {
     await expect(makeSvc({ id_evenement: 1, id_user: 60, statut: 'publie' }).update(1, {}, 12)).rejects.toThrow(/vos propres/);
-    await expect(makeSvc({ id_evenement: 1, id_user: 60, statut: 'annule' }).update(1, {}, 60)).rejects.toThrow(/annulé ou terminé/);
+    await expect(makeSvc({ id_evenement: 1, id_user: 60, statut: 'annule' }).update(1, {}, 60)).rejects.toThrow(/annulé/);
+  });
+
+  it('terminé : modifiable ; prolongé jusqu’à demain, il redevient en cours', async () => {
+    const hier = new Date(Date.now() - 3 * 86400e3);
+    const svc = makeSvc({ id_evenement: 1, id_user: 60, statut: 'termine', date_debut: hier, date_fin: new Date(Date.now() - 86400e3) });
+    const demain = new Date(Date.now() + 86400e3).toISOString().slice(0, 10);
+    await svc.update(1, { date_fin: demain, heure_fin: '18:00' }, 60);
+    expect(svc.repository.update.mock.calls[0][1].statut).toBe('en_cours');
+    // Texte corrigé sans changer les dates : reste terminé
+    const svc2 = makeSvc({ id_evenement: 1, id_user: 60, statut: 'termine', date_debut: hier, date_fin: hier });
+    await svc2.update(1, { description: { fr: 'Texte corrigé' } }, 60);
+    expect(svc2.repository.update.mock.calls[0][1].statut).toBeUndefined();
   });
 });

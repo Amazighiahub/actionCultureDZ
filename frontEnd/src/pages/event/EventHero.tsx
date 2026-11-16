@@ -42,7 +42,8 @@ const EventHero: React.FC<EventHeroProps> = ({
   // Événement passé : pas de bouton « S'inscrire » ni « Ajouter à mon agenda ». Même règle que le serveur :
   // un jour sans heure vaut toute la journée (avant : « terminé » dès 1 h du matin le jour même)
   const finEvenement = finEffective(event.date_debut, event.date_fin);
-  const termine = finEvenement ? finEvenement <= new Date() : false;
+  // Fini, annulé ou reporté : pas d'ajout à l'agenda
+  const termine = (finEvenement ? finEvenement <= new Date() : false) || event.statut === 'annule' || event.statut === 'reporte';
   // Agenda : titre, dates, lieu et adresse de la page (jamais le lien de réunion en ligne)
   const lieuAgenda = [td(event.Lieu?.nom), td(event.Lieu?.adresse)].filter(Boolean).join(', ') || null;
   const evenementAgenda = {

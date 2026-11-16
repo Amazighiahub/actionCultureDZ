@@ -503,5 +503,8 @@
   "Lien de réservation invalide : une adresse qui commence par https://": "Invalid booking link: an address starting with https://",
   "Numéro WhatsApp invalide": "Invalid WhatsApp number",
   "Nouvelles photos sur un service": "New photos on a service",
-  "Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.": "A professional added photos or a menu to their published service: they are online, you can review them."
+  "Un professionnel a ajouté des photos ou un menu à son service déjà publié : elles sont en ligne, vous pouvez les regarder.": "A professional added photos or a menu to their published service: they are online, you can review them.",
+  "Trop de messages envoyés en une heure : réessayez plus tard.": "Too many messages sent in one hour: please try again later.",
+  "Trop d’invitations envoyées en une heure : réessayez plus tard.": "Too many invitations sent in one hour: please try again later.",
+  "Un événement annulé ne peut plus être modifié": "A cancelled event can no longer be edited"
 }

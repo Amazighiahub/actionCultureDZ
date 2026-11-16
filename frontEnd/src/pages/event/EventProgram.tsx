@@ -181,7 +181,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
             {program.nb_participants_max && (
               <span className="flex items-center gap-1">
                 <Users className="h-3.5 w-3.5" />
-                Max {program.nb_participants_max}
+                {t('programme.placesMax', '{{n}} places au plus', { n: program.nb_participants_max })}
               </span>
             )}
             

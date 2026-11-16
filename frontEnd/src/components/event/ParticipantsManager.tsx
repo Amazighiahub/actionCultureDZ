@@ -169,6 +169,22 @@ interface Stats {
   par_role: Record<string, number>;
 }
 
+/** Actions proposées pour chaque statut d'une participation (le serveur les accepte toutes, sauf sur une invitation) */
+type ActionParticipant = 'confirmer' | 'rejeter' | 'marquer_present' | 'marquer_absent';
+const ACTIONS_PAR_STATUT: Record<string, ActionParticipant[]> = {
+  inscrit: ['confirmer', 'marquer_present', 'rejeter'],
+  confirme: ['marquer_present', 'marquer_absent', 'rejeter'],
+  present: ['marquer_absent'],
+  absent: ['marquer_present', 'confirmer'],
+  annule: ['confirmer'],
+};
+const ACTION_AFFICHAGE: Record<ActionParticipant, { libelle: string; defaut: string; Icone: React.ElementType; variante: 'default' | 'outline' | 'destructive' }> = {
+  confirmer: { libelle: 'pro.participants.actions.confirm', defaut: 'Confirmer', Icone: UserCheck, variante: 'outline' },
+  rejeter: { libelle: 'pro.participants.actions.reject', defaut: 'Refuser', Icone: UserX, variante: 'destructive' },
+  marquer_present: { libelle: 'pro.participants.actions.markPresent', defaut: 'Présent', Icone: CheckCircle, variante: 'default' },
+  marquer_absent: { libelle: 'pro.participants.actions.markAbsent', defaut: 'Absent', Icone: XCircle, variante: 'outline' },
+};
+
 const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   evenementId,
   evenementNom
@@ -552,7 +568,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
             {Object.entries(stats.par_statut).map(([statut, count]) => (
               <div key={statut} className="text-center p-2 bg-muted/50 rounded-lg">
                 <div className="text-lg font-bold">{count}</div>
-                <div className="text-xs text-muted-foreground capitalize">{statut}</div>
+                <div className="text-xs text-muted-foreground">{libelleStatut(statut, t)}</div>
               </div>
             ))}
           </div>
@@ -760,79 +776,34 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         {t('pro.participants.viewProfile', 'Voir profil')}
                       </Button>
 
-                      {/* Boutons de validation selon le statut actuel */}
+                      {/* Actions selon le statut : chaque décision se corrige (avant : présent, absent ou refusé
+                          étaient définitifs), et une personne inscrite qui arrive se marque présente d'un coup */}
                       <div className="flex flex-wrap gap-1">
-                        {/* Si inscrit -> peut confirmer ou rejeter */}
-                        {participant.statut_participation === 'inscrit' && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleParticipantAction(participant.id_user, 'confirmer')}
-                              disabled={actionLoading === participant.id_user}
-                            >
-                              {actionLoading === participant.id_user ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <UserCheck className="h-4 w-4 me-1" />
-                              )}
-                              {t('pro.participants.actions.confirm', 'Confirmer')}
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleParticipantAction(participant.id_user, 'rejeter')}
-                              disabled={actionLoading === participant.id_user}
-                            >
-                              {actionLoading === participant.id_user ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <UserX className="h-4 w-4 me-1" />
-                              )}
-                              {t('pro.participants.actions.reject', 'Refuser')}
-                            </Button>
-                          </>
-                        )}
-
-                        {/* Si confirmé -> peut marquer présent ou absent */}
-                        {participant.statut_participation === 'confirme' && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleParticipantAction(participant.id_user, 'marquer_present')}
-                              disabled={actionLoading === participant.id_user}
-                            >
-                              {actionLoading === participant.id_user ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 me-1" />
-                              )}
-                              {t('pro.participants.actions.markPresent', 'Présent')}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleParticipantAction(participant.id_user, 'marquer_absent')}
-                              disabled={actionLoading === participant.id_user}
-                            >
-                              {actionLoading === participant.id_user ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <XCircle className="h-4 w-4 me-1" />
-                              )}
-                              {t('pro.participants.actions.markAbsent', 'Absent')}
-                            </Button>
-                          </>
-                        )}
-
-                        {/* Si présent -> afficher badge */}
                         {participant.statut_participation === 'present' && (
                           <Badge className="bg-primary/15 text-primary">
                             <CheckCircle className="h-3 w-3 me-1" />
                             {t('status.present', 'Présent')}
                           </Badge>
                         )}
+                        {(ACTIONS_PAR_STATUT[participant.statut_participation as string] || []).map((action) => {
+                          const { libelle, defaut, Icone, variante } = ACTION_AFFICHAGE[action];
+                          return (
+                            <Button
+                              key={action}
+                              variant={variante}
+                              size="sm"
+                              onClick={() => handleParticipantAction(participant.id_user, action)}
+                              disabled={actionLoading === participant.id_user}
+                            >
+                              {actionLoading === participant.id_user ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Icone className="h-4 w-4 me-1" />
+                              )}
+                              {t(libelle, defaut)}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

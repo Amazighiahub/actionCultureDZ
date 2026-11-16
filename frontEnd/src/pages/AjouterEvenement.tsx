@@ -462,8 +462,8 @@ const AjouterEvenement = () => {
       case 'dateDebut':
         if (!formData.dateDebut) {
           error = t('events.create.startDateRequired', 'La date de début est requise');
-        } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger()) {
-          error = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
+        } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger() && !(formData.dateFin && formData.dateFin >= aujourdhuiAlger())) {
+          error = t('events.create.startDatePastEnCours', 'La date de début est passée : si l’événement est en cours, indiquez sa date de fin (aujourd’hui ou plus tard).');
         }
         break;
       case 'dateFin':
@@ -671,8 +671,9 @@ const AjouterEvenement = () => {
     // à la sortie du champ et par la bulle du navigateur, retirée par noValidate)
     if (!formData.dateDebut) {
       newErrors.dateDebut = t('events.create.startDateRequired', 'La date de début est requise');
-    } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger()) {
-      newErrors.dateDebut = t('events.create.startDatePast', 'La date de début ne peut pas être passée');
+    } else if (!isEditMode && formData.dateDebut < aujourdhuiAlger() && !(formData.dateFin && formData.dateFin >= aujourdhuiAlger())) {
+      // Déjà commencé : permis si la date de fin est aujourd'hui ou plus tard (exposition déjà ouverte)
+      newErrors.dateDebut = t('events.create.startDatePastEnCours', 'La date de début est passée : si l’événement est en cours, indiquez sa date de fin (aujourd’hui ou plus tard).');
     }
 
     // Date limite d'inscription : au plus tard le jour du début
@@ -1170,7 +1171,6 @@ const AjouterEvenement = () => {
                     <Input
                       id="date-debut"
                       type="date"
-                      min={isEditMode ? undefined : aujourdhuiAlger()}
                       value={formData.dateDebut}
                       onChange={(e) => { clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateDebut: e.target.value })); }}
                       onBlur={() => validateFieldOnBlur('dateDebut')}
@@ -1187,7 +1187,7 @@ const AjouterEvenement = () => {
                       id="date-fin"
                       type="date"
                       value={formData.dateFin}
-                      onChange={(e) => { clearFieldError('dateFin'); setFormData(prev => ({ ...prev, dateFin: e.target.value })); }}
+                      onChange={(e) => { clearFieldError('dateFin'); clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateFin: e.target.value })); }}
                       onBlur={() => validateFieldOnBlur('dateFin')}
                       aria-invalid={!!fieldErrors.dateFin}
                       aria-describedby={fieldErrors.dateFin ? 'dateFin-error' : undefined}
