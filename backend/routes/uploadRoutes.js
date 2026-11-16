@@ -197,29 +197,8 @@ const initUploadRoutes = (models, authMiddleware) => {
     rateLimitMiddleware.upload,
     multerErrorGuard(uploadService.uploadImageSafe(MAX_IMAGE_SIZE).array('images', 10)),
     validateMagicBytesBuffer(IMAGE_MIMES, { maxFileSize: MAX_IMAGE_SIZE }),
-    async (req, res, next) => {
-      try {
-        if (!req.files || req.files.length === 0) return next();
-        const { uploadImageBuffer } = require('../services/upload/cloudinaryUploader');
-        // Upload sequentiel : garantit qu'un echec partiel est log, et evite
-        // de saturer Cloudinary / le quota.
-        for (const file of req.files) {
-          const result = await uploadImageBuffer(file.buffer, { originalname: file.originalname });
-          file.path = result.secure_url;
-          file.filename = result.public_id;
-          file.size = result.bytes || file.size;
-          file.buffer = undefined;
-        }
-        next();
-      } catch (error) {
-        logger.error('upload_multiple: Cloudinary batch push failed', { message: error?.message });
-        return res.status(502).json({
-          success: false,
-          code: 'UPLOAD_STORAGE_FAILED',
-          error: req.t ? req.t('upload.failed') : "Echec de l'upload, veuillez reessayer."
-        });
-      }
-    },
+    // Étape commune (plusieurs fichiers, un par un ; un échec partiel efface ceux déjà envoyés)
+    pushBufferToCloudinary({ type: 'image', context: 'default' }),
     auditMiddleware.logAction('upload_multiple', { entityType: 'media' }),
     async (req, res) => {
       try {

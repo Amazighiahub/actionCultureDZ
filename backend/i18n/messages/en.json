@@ -346,7 +346,8 @@
     "mediaError": "Error uploading media",
     "emptyFile": "Empty or invalid file",
     "failed": "Upload failed, please try again.",
-    "tooManyFiles": "Too many files"
+    "tooManyFiles": "Too many files",
+    "champInattendu": "File sent in an unexpected field."
   },
   "search": {
     "minLength": "Search term must contain at least ${min} characters",

@@ -1,65 +1,14 @@
 // services/uploadService.js
-// Stockage Cloudinary via multer-storage-cloudinary
-// Images  : resize auto, quality:auto:good, format:auto (WebP/AVIF)
-// Vidéos  : 1280x720, 2Mbit/s, MP4
-// Audios  : Cloudinary resource_type 'video'
-// Docs    : mémoire puis cloudinaryUploader (uploadDocumentSafe), resource_type 'raw'
+// Réception des fichiers en mémoire (multer) avant le contrôle des octets (middlewares/uploadSecurity)
+// puis l'envoi à Cloudinary (services/upload/cloudinaryUploader). 2026-11-16 : l'ancien envoi direct à
+// Cloudinary sans contrôle (uploadImage, uploadProfilePhoto) est retiré ; il ne servait plus qu'à
+// l'affiche des événements, passée au chemin sûr.
 
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const path = require('path');
-const {
-  cloudinary,
-  FOLDERS,
-  IMAGE_TRANSFORMS
-} = require('./cloudinaryService');
-// Un seul générateur de public_id (avant : copie ici, justifiée par une dépendance circulaire
-// qui n'existe pas — cloudinaryUploader n'importe pas uploadService ; audit V11 COD-B15)
-const { buildPublicId } = require('./upload/cloudinaryUploader');
 
 class UploadService {
   constructor() {
     // Aucun dossier local à créer - tout va sur Cloudinary
-  }
-
-  // ============================================================
-  // Images — avec transformations Cloudinary
-  // context: 'default' | 'profile'
-  // ============================================================
-  uploadImage(context = 'default') {
-    const folder = context === 'profile' ? FOLDERS.profile : FOLDERS.image;
-    const transformation = context === 'profile'
-      ? IMAGE_TRANSFORMS.profile
-      : IMAGE_TRANSFORMS.default;
-
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: (req, file) => ({
-        folder,
-        public_id:     buildPublicId(file.originalname, 'img'),
-        resource_type: 'image',
-        transformation,
-        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
-      })
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowed = /jpeg|jpg|png|gif|webp/;
-      if (allowed.test(file.mimetype) && allowed.test(path.extname(file.originalname).toLowerCase())) {
-        cb(null, true);
-      } else {
-        cb(new Error('Format d\'image non supporté. Formats acceptés : JPG, PNG, GIF, WEBP'));
-      }
-    };
-
-    return multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
-  }
-
-  // ============================================================
-  // Photo de profil — recadrage face 500x500
-  // ============================================================
-  uploadProfilePhoto() {
-    return this.uploadImage('profile');
   }
 
   // ============================================================
@@ -83,7 +32,8 @@ class UploadService {
       if (allowed.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Format d\'image non supporté. Formats acceptés : JPG, PNG, GIF, WEBP'));
+        // Code connu de multerErrorGuard : 400 « Type de fichier non autorisé » (avant : 500, ex. photo HEIC)
+        cb(Object.assign(new Error('Format d\'image non supporté. Formats acceptés : JPG, PNG, GIF, WEBP'), { code: 'UPLOAD_INVALID_TYPE' }));
       }
     };
     return multer({
@@ -107,7 +57,7 @@ class UploadService {
       if (allowed.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Format de document non supporté'));
+        cb(Object.assign(new Error('Format de document non supporté'), { code: 'UPLOAD_INVALID_TYPE' }));
       }
     };
     return multer({
@@ -115,20 +65,6 @@ class UploadService {
       limits: { fileSize: maxSize },
       fileFilter
     });
-  }
-
-  // Helper taille fichier (conservé pour compatibilité)
-  formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  // Cloudinary gère le stockage — pas de nettoyage local
-  async cleanTempFiles() {
-    return 0;
   }
 }
 

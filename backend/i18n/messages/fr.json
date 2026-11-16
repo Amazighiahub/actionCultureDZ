@@ -346,7 +346,8 @@
     "mediaError": "Erreur lors de l'upload des médias",
     "emptyFile": "Fichier vide ou invalide",
     "failed": "Échec de l'envoi, veuillez réessayer.",
-    "tooManyFiles": "Trop de fichiers"
+    "tooManyFiles": "Trop de fichiers",
+    "champInattendu": "Fichier envoyé dans un champ non prévu."
   },
   "search": {
     "minLength": "Le terme de recherche doit contenir au moins ${min} caractères",

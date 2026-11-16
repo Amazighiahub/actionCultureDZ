@@ -49,11 +49,23 @@ function sendRejection(res, status, code, message, details) {
  * @param {number} [opts.maxFileSize]  re-check taille (defense en profondeur)
  * @returns {import('express').RequestHandler}
  */
+/**
+ * Fichiers reçus, quelle que soit la forme de multer : .single() (req.file), .array() (req.files tableau)
+ * ou .fields() (req.files objet par champ). Avant (2026-11-16), seul req.file était envoyé à Cloudinary et
+ * la forme .fields() faisait échouer le contrôle des octets : l'affiche d'un événement passait donc par un
+ * envoi direct sans ce contrôle.
+ */
+function fichiersRecus(req) {
+  if (Array.isArray(req.files)) return req.files;
+  if (req.files && typeof req.files === 'object') return Object.values(req.files).flat();
+  return req.file ? [req.file] : [];
+}
+
 function validateMagicBytesBuffer(allowedMimeTypes, opts = {}) {
   const { maxFileSize } = opts;
 
   return (req, res, next) => {
-    const files = req.files || (req.file ? [req.file] : []);
+    const files = fichiersRecus(req);
 
     if (files.length === 0) {
       return next();
@@ -146,39 +158,61 @@ function validateMagicBytesBuffer(allowedMimeTypes, opts = {}) {
  */
 function pushBufferToCloudinary({ type = 'image', context = 'default' } = {}) {
   return async (req, res, next) => {
-    if (!req.file || !Buffer.isBuffer(req.file.buffer)) {
+    // Tous les fichiers encore en mémoire, l'un après l'autre (un échec partiel est journalisé et ne sature
+    // pas Cloudinary)
+    const aEnvoyer = fichiersRecus(req).filter((f) => Buffer.isBuffer(f.buffer));
+    if (aEnvoyer.length === 0) {
       return next();
     }
 
+    const envoyes = [];
+    let enCours = null;
     try {
-      const originalname = req.file.originalname;
-      const result = type === 'document'
-        ? await uploadDocumentBuffer(req.file.buffer, { originalname })
-        : await uploadImageBuffer(req.file.buffer, { originalname, context });
+      for (const file of aEnvoyer) {
+        enCours = file;
+        const originalname = file.originalname;
+        const result = type === 'document'
+          ? await uploadDocumentBuffer(file.buffer, { originalname })
+          : await uploadImageBuffer(file.buffer, { originalname, context });
 
-      // Normalise req.file : le controller + service travaillent sur ce shape
-      // (identique au shape produit par multer-storage-cloudinary).
-      req.file.path = result.secure_url;
-      req.file.filename = result.public_id;
-      req.file.size = result.bytes || req.file.size;
-      // On garde le mimetype detecte par validateMagicBytesBuffer (plus fiable
-      // que result.format qui est l'extension).
-      req.file._cloudinary = {
-        public_id: result.public_id,
-        resource_type: result.resource_type,
-        format: result.format,
-        width: result.width,
-        height: result.height
-      };
-      // Libere le buffer apres upload reussi : Node pourra GC la RAM.
-      req.file.buffer = undefined;
+        // Normalise le fichier : le controller + service travaillent sur ce shape
+        // (identique au shape produit par multer-storage-cloudinary).
+        file.path = result.secure_url;
+        file.filename = result.public_id;
+        file.size = result.bytes || file.size;
+        // On garde le mimetype detecte par validateMagicBytesBuffer (plus fiable
+        // que result.format qui est l'extension).
+        file._cloudinary = {
+          public_id: result.public_id,
+          resource_type: result.resource_type,
+          format: result.format,
+          width: result.width,
+          height: result.height
+        };
+        // Libere le buffer apres upload reussi : Node pourra GC la RAM.
+        file.buffer = undefined;
+        envoyes.push(result.secure_url);
+      }
 
+      // La requête peut encore être refusée après l'envoi (pas le droit, données invalides) : le fichier
+      // ne servirait à rien, il est effacé à la fin de la réponse (relecture du 2026-11-16)
+      if (typeof res.once === 'function') {
+        res.once('finish', () => {
+          if (res.statusCode < 400) return;
+          const { supprimerParUrl } = require('../services/cloudinaryService');
+          for (const url of envoyes) supprimerParUrl(url).catch(() => undefined);
+        });
+      }
       next();
     } catch (error) {
+      // Échec partiel : les fichiers déjà envoyés pour cette requête ne restent pas sur Cloudinary
+      for (const url of envoyes) {
+        await require('../services/cloudinaryService').supprimerParUrl(url).catch(() => undefined);
+      }
       logger.error('uploadSecurity: Cloudinary push failed', {
         type,
         context,
-        originalname: req.file?.originalname,
+        originalname: enCours?.originalname,
         message: error?.message,
         http_code: error?.http_code
       });
@@ -205,7 +239,10 @@ function multerErrorGuard(uploader) {
       if (err.code === 'LIMIT_FILE_SIZE') {
         return sendRejection(res, 413, 'UPLOAD_TOO_LARGE', req.t ? req.t('upload.fileTooLarge') : 'Fichier trop volumineux');
       }
-      if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+      if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return sendRejection(res, 400, 'UPLOAD_UNEXPECTED_FIELD', req.t ? req.t('upload.champInattendu') : 'Fichier envoyé dans un champ non prévu');
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
         return sendRejection(res, 400, 'UPLOAD_TOO_MANY', req.t ? req.t('upload.tooManyFiles') : 'Trop de fichiers');
       }
       if (err.code === 'UPLOAD_INVALID_TYPE') {

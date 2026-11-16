@@ -343,7 +343,8 @@
     "mediaError": "Tuccḍa deg uzen n yimidyaten",
     "emptyFile": "Afaylu d ilem neɣ ur iɣed ara",
     "failed": "Asali ur yedda ara, ttxil-k ɛreḍ tikelt nniḍen.",
-    "tooManyFiles": "Aṭas n yifuyla"
+    "tooManyFiles": "Aṭas n yifuyla",
+    "champInattendu": "Fichier envoyé dans un champ non prévu."
   },
   "search": {
     "minLength": "Awal n unadi yessefk ad yesɛu ${min} n yisekkilen",

@@ -14,6 +14,17 @@ const uploadService = require('../services/uploadService');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { msg } = require('../utils/messageValidation');
 
+// Affiche et, facultative, image de partage (aperçu Facebook, WhatsApp… ; carrée de préférence) : en
+// mémoire, octets vérifiés (vraie image), puis envoyées à Cloudinary — comme toutes les autres images.
+// Avant (2026-11-16) : envoi direct à Cloudinary, sans ce contrôle.
+const { validateMagicBytesBuffer, pushBufferToCloudinary, multerErrorGuard } = require('../middlewares/uploadSecurity');
+const { MAX_IMAGE_SIZE, IMAGE_MIMES } = require('../constants/uploadMimes');
+const imagesEvenement = [
+  multerErrorGuard(uploadService.uploadImageSafe(MAX_IMAGE_SIZE).fields([{ name: 'affiche', maxCount: 1 }, { name: 'image_partage', maxCount: 1 }])),
+  validateMagicBytesBuffer(IMAGE_MIMES, { maxFileSize: MAX_IMAGE_SIZE }),
+  pushBufferToCloudinary({ type: 'image', context: 'default' })
+];
+
 const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
@@ -70,7 +81,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
     requireValidatedProfessional,
     createContentLimiter,
     // Affiche et, facultative, image de partage (aperçu Facebook, WhatsApp… ; carrée de préférence)
-    uploadService.uploadImage().fields([{ name: 'affiche', maxCount: 1 }, { name: 'image_partage', maxCount: 1 }]),
+    ...imagesEvenement,
     validateStringLengths,
     [
       body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage(msg('validation.nomEvenementInvalide')),
@@ -86,9 +97,11 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.put('/:id', authenticate,
     requireVerifiedEmail,
     requireValidatedProfessional,
+    // Images en mémoire (jusqu'à 2 × 10 Mo) : limite comme pour les autres envois de fichiers
+    mediasLimiter,
     validateId(),
     // Affiche et, facultative, image de partage (aperçu Facebook, WhatsApp… ; carrée de préférence)
-    uploadService.uploadImage().fields([{ name: 'affiche', maxCount: 1 }, { name: 'image_partage', maxCount: 1 }]),
+    ...imagesEvenement,
     validateStringLengths,
     validateEventCreation,
     asyncHandler((req, res) => evenementController.update(req, res)));
