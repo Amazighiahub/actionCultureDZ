@@ -11,8 +11,7 @@ const moderationMethods = {
       const data = await container.moderationService.getPendingOeuvres({ page, limit });
       res.json({ success: true, data });
     } catch (error) {
-      console.error('Erreur getPendingOeuvres:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -22,8 +21,7 @@ const moderationMethods = {
       const data = await container.moderationService.getSignalementsModerationQueue({ page, limit, type });
       res.json({ success: true, data });
     } catch (error) {
-      console.error('Erreur getModerationQueue:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -32,8 +30,7 @@ const moderationMethods = {
       const signalements = await container.moderationService.getReportedContent();
       res.json({ success: true, data: signalements });
     } catch (error) {
-      console.error('Erreur getReportedContent:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 

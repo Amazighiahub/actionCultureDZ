@@ -251,9 +251,8 @@ const loadModels = (sequelize) => {
   const userSpecialiteModel = loadModelSafely('./associations/userSpecialite', 'UserSpecialite', sequelize);
   if (userSpecialiteModel) models.UserSpecialite = userSpecialiteModel;
 
-  // 11. Certifications
-  const userCertificationModel = loadModelSafely('./misc/userCertification', 'UserCertification', sequelize);
-  if (userCertificationModel) models.UserCertification = userCertificationModel;
+  // 11. Certifications : retiré le 2026-11-16 — modèle chargé depuis un chemin inexistant, table
+  // user_certifications jamais créée par une migration, aucune fonction ne s'en servait (code mort)
 
   const emailVerificationModel = loadModelSafely('./misc/emailVerification', 'EmailVerification', sequelize);
   if (emailVerificationModel) models.EmailVerification = emailVerificationModel;

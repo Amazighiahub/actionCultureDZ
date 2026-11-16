@@ -63,7 +63,7 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
-import { getLocalizedText } from '@/utils/getLocalizedText';
+import { getLocalizedText, initiales, texteRecherchable } from '@/utils/getLocalizedText';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
@@ -457,7 +457,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const filteredParticipants = participants.filter(p => {
     const matchSearch = !searchQuery || 
-      `${p.User.nom} ${p.User.prenom} ${p.User.email}`.toLowerCase().includes(searchQuery.toLowerCase());
+      texteRecherchable(p.User.nom, p.User.prenom, p.User.email).includes(searchQuery.toLowerCase());
     const matchStatut = filterStatut === 'all' || p.statut_participation === filterStatut;
     const matchRole = filterRole === 'all' || p.role_participation === filterRole;
     return matchSearch && matchStatut && matchRole;
@@ -604,7 +604,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={participant.User.photo_profil} />
                       <AvatarFallback>
-                        {participant.User.prenom?.[0]}{participant.User.nom?.[0]}
+                        {initiales(participant.User.prenom, participant.User.nom, i18n.language)}
                       </AvatarFallback>
                     </Avatar>
 
@@ -835,7 +835,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={getAssetUrl(profilData.profil.photo_url)} />
                   <AvatarFallback className="text-xl">
-                    {profilData.profil.prenom?.[0]}{profilData.profil.nom?.[0]}
+                    {initiales(profilData.profil.prenom, profilData.profil.nom, i18n.language)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">

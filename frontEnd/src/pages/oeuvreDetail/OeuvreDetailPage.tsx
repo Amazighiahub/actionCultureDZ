@@ -27,7 +27,7 @@ import {
 import { LoadingSkeleton } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import SEOHead, { buildOeuvreJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
-import { getLocalizedText } from '@/utils/getLocalizedText';
+import { getLocalizedText, initiales } from '@/utils/getLocalizedText';
 
 // ✅ Import du HeroSection avec effet flip 3D
 import { HeroSection, enTeteAfficheDescription } from '@/components/oeuvre/HeroSection';
@@ -343,11 +343,12 @@ const OeuvreDetailPage: React.FC = () => {
 
   // Recommander l'œuvre (partage)
   const handleRecommander = async () => {
-    const title = oeuvre?.titre || '';
+    // Titre multilingue { fr, ar } : dans la langue du site (avant : « [object Object] » dans le partage)
+    const title = getLocalizedText(oeuvre?.titre, i18n.language);
     const url = window.location.href;
     try {
       if (typeof navigator.share !== 'function') throw new Error('no-share');
-      await navigator.share({ title: String(title), text: t('oeuvre.shareText', 'Découvrez cette œuvre : {{title}}', { title: String(title) }), url });
+      await navigator.share({ title, text: t('oeuvre.shareText', 'Découvrez cette œuvre : {{title}}', { title }), url });
     } catch (err) {
       // Annulation de la feuille de partage : ne pas ouvrir la fenêtre de repli
       if ((err as DOMException)?.name !== 'AbortError') setShowShareModal(true);
@@ -705,7 +706,7 @@ const OeuvreDetailPage: React.FC = () => {
                         <Avatar className="h-20 w-20">
                           <AvatarImage src={auteurInfo.photo_url} alt={`${auteurInfo.prenom} ${auteurInfo.nom}`} />
                           <AvatarFallback className="text-lg">
-                            {auteurInfo.prenom?.[0]}{auteurInfo.nom?.[0]}
+                            {initiales(auteurInfo.prenom, auteurInfo.nom, i18n.language)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">

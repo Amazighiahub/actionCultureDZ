@@ -28,6 +28,10 @@ class CommentaireController extends BaseController {
       const lang = req.lang || 'fr';
       const { oeuvreId } = req.params;
       const { page, limit, offset } = this._paginate(req, { limit: 10 });
+      // Œuvre retirée, refusée ou pas encore publiée : ses avis ne sont plus lisibles
+      if (!(await this.service.findOeuvre(oeuvreId))) {
+        return res.status(404).json({ success: false, error: req.t('oeuvre.notFound') });
+      }
 
       const commentaires = await this.service.getCommentairesOeuvre(oeuvreId, { limit, offset });
 
@@ -52,6 +56,10 @@ class CommentaireController extends BaseController {
       const lang = req.lang || 'fr';
       const { evenementId } = req.params;
       const { page, limit, offset } = this._paginate(req, { limit: 10 });
+      // Événement en brouillon ou en attente : ses avis ne sont pas lisibles
+      if (!(await this.service.findEvenement(evenementId))) {
+        return res.status(404).json({ success: false, error: req.t('evenement.notFound') });
+      }
 
       const commentaires = await this.service.getCommentairesEvenement(evenementId, { limit, offset });
 

@@ -1,4 +1,5 @@
 const BaseRepository = require('./baseRepository');
+const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 const { Op, Sequelize } = require('sequelize');
 const { buildMultiLangExactMatch } = require('../helpers/i18n');
 
@@ -171,7 +172,7 @@ class OrganisationRepository extends BaseRepository {
     if (!liens.length) return [];
     const roles = new Map(liens.map(l => [l.id_evenement, l.role]));
     const evenements = await Evenement.findAll({
-      where: { id_evenement: { [Op.in]: [...roles.keys()] }, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+      where: { id_evenement: { [Op.in]: [...roles.keys()] }, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
       attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'image_url', 'statut'],
       order: [['date_debut', 'DESC']],
       limit

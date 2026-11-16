@@ -67,11 +67,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
       req.entity = entity;
       next();
     } catch (error) {
-      console.error(req.t ? req.t('error.checkingEntity') : 'Error checking entity:', error);
-      res.status(500).json({
-        success: false,
-        message: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   };
 
@@ -146,7 +142,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
     validateEntityType,
     checkEntityExists,
     statsVisibles,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const { type, id } = req.params;
         
@@ -166,10 +162,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
           }
         });
       } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+        return next(error);
       }
     }
   );
@@ -177,7 +170,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // Obtenir les entités les plus vues (top populaire)
   router.get('/popular/:type',
     validateEntityType,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const { type } = req.params;
         const { periode = '7j' } = req.query;
@@ -271,11 +264,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
           params: { type, limit, periode }
         });
       } catch (error) {
-        console.error('Erreur récupération populaires:', error);
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+        return next(error);
       }
     }
   );
@@ -287,7 +276,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // Obtenir l'historique de mes vues
   router.get('/mes-vues',
     authenticate,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const { type } = req.query;
         // Bornée comme les autres listes (avant : limit sans plafond, « abc » donnait NaN)
@@ -310,10 +299,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
           pagination: { ...construirePagination(count, page, limit), currentPage: page, perPage: limit }
         });
       } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+        return next(error);
       }
     }
   );
@@ -321,7 +307,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // Supprimer mon historique de vues
   router.delete('/mes-vues',
     authenticate,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const { type, dateDebut, dateFin } = req.body;
         
@@ -340,10 +326,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
           message: req.t ? req.t('vue.historyDeleted', { count: deleted }) : `${deleted} view(s) deleted`
         });
       } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+        return next(error);
       }
     }
   );

@@ -20,31 +20,38 @@ import { evenementService } from '@/services/evenement.service';
 import { uploadService } from '@/services/upload.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import type { Programme } from '@/types/models/programme.types';
 import { jourProgramme } from '@/utils/programmeHoraire';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 
+import { getLocalizedText } from '@/utils/getLocalizedText';
 const MAX_PHOTOS = 60;
+
+/** Ce qu'il faut d'un jour du programme (les deux types « Programme » du site conviennent) */
+interface JourProgramme {
+  id_programme: number;
+  titre?: unknown;
+  date_programme?: unknown;
+  heure_debut?: string | null;
+  ordre?: number;
+}
 
 interface Props {
   evenementId: number;
   /** Jours du programme de l'événement, pour y ranger les photos */
-  programmes?: Programme[];
+  programmes?: JourProgramme[];
   /** Ouvert depuis un jour du programme : seulement les photos de ce jour, envoyées dans ce jour */
   programmeId?: number;
 }
 
 const PhotosEvenementGestion: React.FC<Props> = ({ evenementId, programmes = [], programmeId }) => {
-  const { t } = useTranslation();
-  const { td } = useTranslateData();
+  const { t, i18n } = useTranslation();
   const { formatDate } = useFormatDate();
   const [jour, setJour] = useState(programmeId ? String(programmeId) : '');
   const jours = [...programmes].sort((a, b) => jourProgramme(a).localeCompare(jourProgramme(b)) || (a.ordre || 0) - (b.ordre || 0));
-  const nomJour = (p: Programme) => [
+  const nomJour = (p: JourProgramme) => [
     jourProgramme(p) ? formatDate(new Date(jourProgramme(p)), { weekday: 'short', day: 'numeric', month: 'short' }) : '',
-    td(p.titre)
+    getLocalizedText(p.titre, i18n.language)
   ].filter(Boolean).join(' · ');
   const { toast } = useToast();
   const queryClient = useQueryClient();

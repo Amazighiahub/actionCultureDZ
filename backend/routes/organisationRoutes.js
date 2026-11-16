@@ -58,12 +58,12 @@ module.exports = (_models, authMiddleware) => {
    * GET /api/organisations/me
    * Organisations de l'utilisateur connecté
    */
-  router.get('/me', authMiddleware.authenticate, async (req, res) => {
+  router.get('/me', authMiddleware.authenticate, async (req, res, next) => {
     try {
       const organisations = await get().findByUser(req.user.id_user);
       res.json({ success: true, data: organisations });
     } catch (error) {
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Server error' });
+      return next(error);
     }
   });
 
@@ -71,12 +71,12 @@ module.exports = (_models, authMiddleware) => {
    * GET /api/organisations/types
    * Types d'organisations disponibles (public)
    */
-  router.get('/types', async (req, res) => {
+  router.get('/types', async (req, res, next) => {
     try {
       const types = await get().getTypes();
       res.json({ success: true, data: types });
     } catch (error) {
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Server error' });
+      return next(error);
     }
   });
 
@@ -95,7 +95,7 @@ module.exports = (_models, authMiddleware) => {
       ...champsVitrine
     ],
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const { organisation, created } = await get().create(req.body, req.user.id_user);
         res.status(created ? 201 : 200).json({ success: true, data: organisation });
@@ -107,7 +107,7 @@ module.exports = (_models, authMiddleware) => {
         }
         const logger = require('../utils/logger');
         logger.error('Erreur création organisation:', error);
-        res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Server error' });
+        return next(error);
       }
     }
   );
@@ -179,7 +179,7 @@ module.exports = (_models, authMiddleware) => {
     optionalAuth,
     param('id').isInt().withMessage((_, { req }) => req.t('validation.invalidId')),
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const organisation = await get().findById(parseInt(req.params.id));
         // Même règle que la vitrine : adresse et contacts d'une page non validée restent à son équipe
@@ -195,7 +195,7 @@ module.exports = (_models, authMiddleware) => {
         if (error.code === 'NOT_FOUND') {
           return res.status(404).json({ success: false, error: req.t ? req.t('common.notFound') : 'Not found' });
         }
-        res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Server error' });
+        return next(error);
       }
     }
   );

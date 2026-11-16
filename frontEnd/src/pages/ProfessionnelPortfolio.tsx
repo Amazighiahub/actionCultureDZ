@@ -32,6 +32,7 @@ import { idFromSlug, professionnelPath, evenementPath, oeuvrePath, artisanatPath
 import { ListeLiens, type LienExterne } from '@/components/shared/LiensExternes';
 import { ItemCard, ItemGrid as Grid, firstImage, type MediaItem } from '@/components/shared/ItemCard';
 
+import { initiales } from '@/utils/getLocalizedText';
 // Types d'œuvres « articles » (page /articles/:id)
 const ARTICLE_TYPES = [4, 5];
 
@@ -189,7 +190,7 @@ const ProfessionnelPortfolio: React.FC = () => {
         <section className="flex flex-col gap-6 md:flex-row md:items-start">
           <Avatar className="h-28 w-28 shrink-0 text-2xl">
             <AvatarImage src={profil.photo_url ? getAssetUrl(profil.photo_url, { width: 224 }) : undefined} alt="" />
-            <AvatarFallback>{`${profil.prenom?.[0] || ''}${profil.nom?.[0] || ''}`.toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{initiales(profil.prenom, profil.nom, i18n.language)}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1 space-y-3">

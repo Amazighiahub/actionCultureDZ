@@ -7,6 +7,7 @@
 // liste des œuvres et des événements, liens, et données structurées schema.org.
 
 const express = require('express');
+const { estPublic, EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
 const { nomComplet } = require('../utils/texte');
@@ -162,7 +163,7 @@ const initOgRoutes = (models) => {
       const ev = await models.Evenement.findByPk(id, {
         include: [{ model: models.Media, as: 'Medias', attributes: ['url', 'type_media', 'is_Principale', 'ordre'], required: false }],
       });
-      if (!ev || ['brouillon', 'en_attente'].includes(ev.statut)) return null;
+      if (!ev || !estPublic('evenement', ev.statut)) return null;
       const date = dateFr(ev.date_debut);
       const desc = summary(ev.description);
       const path = evenementPath(id, ev.nom_evenement);
@@ -324,7 +325,7 @@ const initOgRoutes = (models) => {
         order: [['date_creation', 'DESC']], limit: MAX_LISTE,
       }) : []));
       const evenements = await sansEchec(() => (models.Evenement?.findAll ? models.Evenement.findAll({
-        where: { id_user: u.id_user, statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }, attributes: ['id_evenement', 'nom_evenement', 'date_debut'],
+        where: { id_user: u.id_user, statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } }, attributes: ['id_evenement', 'nom_evenement', 'date_debut'],
         order: [['date_debut', 'DESC']], limit: MAX_LISTE,
       }) : []));
       const liens = await sansEchec(() => (models.LienExterne?.findAll ? models.LienExterne.findAll({

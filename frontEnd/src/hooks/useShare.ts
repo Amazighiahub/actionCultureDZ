@@ -8,10 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction, type ToastActionElement } from '@/components/ui/toast';
 import { lienWhatsApp } from '@/utils/textePartage';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface ShareOptions {
-  title: string;
-  text?: string;
+  /** Texte simple ou multilingue ({ fr, ar… }) : mis dans la langue du site (avant : « [object Object] ») */
+  title: unknown;
+  text?: unknown;
   url?: string;
 }
 
@@ -36,10 +38,12 @@ export const copyText = async (value: string): Promise<boolean> => {
 };
 
 export function useShare() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
 
-  return useCallback(async ({ title, text, url = window.location.href }: ShareOptions) => {
+  return useCallback(async ({ title: titreBrut, text: texteBrut, url = window.location.href }: ShareOptions) => {
+    const title = getLocalizedText(titreBrut, i18n.language);
+    const text = texteBrut === undefined ? undefined : getLocalizedText(texteBrut, i18n.language);
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title, text, url });
@@ -58,5 +62,5 @@ export function useShare() {
     toast(copied
       ? { title: t('share.copied', 'Lien copié'), action: whatsapp }
       : { title: t('common.error', 'Erreur'), description: url, variant: 'destructive', action: whatsapp });
-  }, [t, toast]);
+  }, [t, i18n.language, toast]);
 }

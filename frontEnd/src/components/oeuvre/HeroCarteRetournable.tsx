@@ -70,7 +70,7 @@ export const CarteRetournable: React.FC<CarteRetournableProps> = ({ format, reto
 export const BoutonsSurvolCarte: React.FC<{ onAgrandir: () => void }> = ({ onAgrandir }) => {
   const { t } = useTranslation();
   return (
-    <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+    <div className="absolute bottom-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300">
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onAgrandir(); }}

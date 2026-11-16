@@ -12,8 +12,7 @@ const usersMethods = {
       const result = await container.userManagementService.getAllUsersFiltered({ search, type_user, statut, page, limit });
       res.json({ success: true, data: { items: result.data, pagination: result.pagination } });
     } catch (error) {
-      console.error('Erreur getAllUsers:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -24,8 +23,7 @@ const usersMethods = {
       const result = await container.userManagementService.getPendingUsers({ page, limit });
       res.json({ success: true, data: { items: result.data, pagination: result.pagination } });
     } catch (error) {
-      console.error('Erreur getPendingUsers:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -39,8 +37,7 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      console.error('Erreur getUserDetails:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -61,8 +58,7 @@ const usersMethods = {
       if (error.statusCode === 400 || error.statusCode === 403) {
         return res.status(error.statusCode).json({ success: false, error: error.message });
       }
-      console.error('Erreur updateUser:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -85,8 +81,7 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      console.error('Erreur deleteUser:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError'), details: process.env.NODE_ENV === 'development' ? error.message : undefined });
+      this._handleError(res, error);
     }
   },
 
@@ -99,8 +94,7 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      console.error('Erreur reactivateUser:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -120,8 +114,7 @@ const usersMethods = {
       if (error.statusCode === 403) {
         return res.status(403).json({ success: false, error: error.message });
       }
-      console.error('Erreur changeUserRole:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -137,8 +130,7 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      console.error('Erreur resetUserPassword:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -153,8 +145,7 @@ const usersMethods = {
         : 'Type changé.', data });
     } catch (error) {
       if (error.statusCode) return res.status(error.statusCode).json({ success: false, error: error.message });
-      console.error('Erreur changerTypeCompte:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -170,8 +161,7 @@ const usersMethods = {
       if (error.message === 'EMAIL_ALREADY_VERIFIED') {
         return res.status(409).json({ success: false, error: req.t('admin.emailAlreadyVerified', 'L\'email est déjà vérifié') });
       }
-      console.error('Erreur verifyEmailManually:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -184,8 +174,7 @@ const usersMethods = {
       const users = await container.userManagementService.quickSearchUsers(q, type);
       res.json({ success: true, data: users });
     } catch (error) {
-      console.error('Erreur searchUsers:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -209,8 +198,7 @@ const usersMethods = {
       };
       res.json({ success: true, message: `${messages[action] || 'Action effectuée'} pour ${results.success.length} utilisateurs`, data: results });
     } catch (error) {
-      console.error('Erreur bulkUserAction:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -247,8 +235,7 @@ const usersMethods = {
         res.end();
       }
     } catch (error) {
-      console.error('Erreur exportUsers:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 

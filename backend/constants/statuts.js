@@ -41,7 +41,20 @@ const EVENEMENT_NON_PUBLIC = Object.freeze(['brouillon', 'en_attente']);
 /** Œuvre en préparation (brouillon ou soumise à la modération) */
 const OEUVRE_NON_PUBLIC = Object.freeze(['brouillon', 'en_attente']);
 
+/**
+ * Le contenu est-il public ? Une seule règle pour tout le serveur (2026-11-16 ; avant : recopiée dans
+ * les commentaires, le programme…). Œuvre : « publie » seulement (refusée, archivée, retirée : non).
+ * Événement : tout sauf brouillon et en attente (terminé, annulé, reporté restent consultables) ; un
+ * statut non chargé n'est pas compté comme caché (même règle qu'avant, recopiée partout).
+ */
+const estPublic = (type, statut) => {
+  if (type === 'oeuvre') return statut === 'publie';
+  if (type === 'evenement') return !EVENEMENT_NON_PUBLIC.includes(statut);
+  return false;
+};
+
 module.exports = {
+  estPublic,
   EVENEMENT_TOUS,
   EVENEMENT_PUBLIE,
   EVENEMENT_OUVERT,

@@ -127,7 +127,7 @@ const initMetadataRoutes = (models) => {
   router.get('/communes/:communeId/localites',
     cacheMetadata,
     validationMiddleware.validateId('communeId'),
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const communeId = parseInt(req.params.communeId);
         const Localite = models.Localite;
@@ -143,7 +143,7 @@ const initMetadataRoutes = (models) => {
       } catch (error) {
         // Message interne journalisé, jamais renvoyé (il pouvait décrire la base)
         require('../utils/logger').error('metadata localites :', error.message);
-        res.status(500).json({ success: false, error: 'Erreur serveur' });
+        return next(error);
       }
     }
   );

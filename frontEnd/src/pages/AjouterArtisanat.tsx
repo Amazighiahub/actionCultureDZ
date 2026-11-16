@@ -14,8 +14,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MotsClesInput from '@/components/shared/MotsClesInput';
 import {
-  Save, Upload, X, Loader2, AlertCircle,
-  Tag, DollarSign, Clock, Package
+  Save,
+  Upload,
+  Loader2,
+  AlertCircle,
+  Tag,
+  DollarSign,
+  Clock,
+  Package
 } from 'lucide-react';
 import { artisanatService, CreateArtisanatData } from '@/services/artisanat.service';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +40,7 @@ import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { lienGuidePour } from '@/utils/lienGuide';
 
+import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
 interface FormData {
   nom: RequiredTranslatableValue;
   description: RequiredTranslatableValue;
@@ -702,14 +709,7 @@ const AjouterArtisanat: React.FC = () => {
                             alt={`Preview ${index + 1}`}
                             className="w-full h-24 object-cover rounded"
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeMedia(index)}
-                            aria-label={t('common.delete', 'Supprimer')}
-                            className="absolute -top-2 -end-2 bg-destructive text-white rounded-full p-1"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          <BoutonRetirerApercu onClick={() => removeMedia(index)} />
                         </div>
                       ))}
                     </div>

@@ -4,7 +4,8 @@
  */
 const mockContainer = { notificationService: {} };
 jest.mock('../../services/serviceContainer', () => mockContainer);
-const monitoringMethods = require('../../controllers/dashboard/monitoringMethods');
+// Par le contrôleur, comme les routes : ses méthodes y sont liées (this._handleError)
+const monitoringMethods = require('../../controllers/dashboardController');
 
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); r.headersSent = false; return r; };
 const req = (body) => ({ body, user: { id_user: 1 }, t: (k, d) => d || k });

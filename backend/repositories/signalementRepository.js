@@ -4,6 +4,7 @@
  */
 
 const { Op } = require('sequelize');
+const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 const BaseRepository = require('./baseRepository');
 const AppError = require('../utils/appError');
 const { invalidateUserSession } = require('../utils/sessionCache');
@@ -105,7 +106,7 @@ class SignalementRepository extends BaseRepository {
       oeuvre: { model: this.models.Oeuvre, pk: 'id_oeuvre', where: { statut: 'publie' } },
       evenement: {
         model: this.models.Evenement, pk: 'id_evenement',
-        where: { statut: { [Op.notIn]: ['brouillon', 'en_attente'] } }
+        where: { statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } }
       },
       user: { model: this.models.User, pk: 'id_user' },
       commentaire: { model: this.models.Commentaire, pk: 'id_commentaire', where: { statut: 'publie' } },

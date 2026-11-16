@@ -22,6 +22,7 @@ import NotificationBell from '@/components/NotificationBell';
 import { professionnelPath } from '@/utils/slug';
 import { lienSommaireGuides } from '@/utils/lienGuide';
 
+import { getLocalizedText, initiales } from '@/utils/getLocalizedText';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -123,7 +124,7 @@ const Header = () => {
 
   const getInitials = () => {
     if (!user) return '?';
-    return `${user.prenom?.[0] || ''}${user.nom?.[0] || ''}`.toUpperCase();
+    return initiales(user.prenom, user.nom, i18n.language);
   };
 
   const getRoleBadge = () => {
@@ -135,7 +136,7 @@ const Header = () => {
 
   // Portfolio public : professionnels validés uniquement
   const portfolioLink = user && isProfessional && !needsValidation
-    ? professionnelPath(user.id_user, String(user.prenom || ''), String(user.nom || ''))
+    ? professionnelPath(user.id_user, getLocalizedText(user.prenom, 'fr'), getLocalizedText(user.nom, 'fr'))
     : null;
 
   const getDashboardLink = () => {

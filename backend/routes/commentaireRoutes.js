@@ -26,15 +26,11 @@ module.exports = (models, middlewares = {}) => {
    * GET /commentaires/oeuvre/:oeuvreId
    * Récupérer les commentaires d'une œuvre (public)
    */
-  router.get('/oeuvre/:oeuvreId', validateId('oeuvreId'), async (req, res) => {
+  router.get('/oeuvre/:oeuvreId', validateId('oeuvreId'), async (req, res, next) => {
     try {
       await controller.getCommentairesOeuvre(req, res);
     } catch (error) {
-      console.error('Erreur route GET /oeuvre/:oeuvreId:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -52,15 +48,11 @@ module.exports = (models, middlewares = {}) => {
       body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
     try {
       await controller.createCommentaireOeuvre(req, res);
     } catch (error) {
-      console.error('Erreur route POST /oeuvre/:oeuvreId:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -72,15 +64,11 @@ module.exports = (models, middlewares = {}) => {
    * GET /commentaires/evenement/:evenementId
    * Récupérer les commentaires d'un événement (public)
    */
-  router.get('/evenement/:evenementId', validateId('evenementId'), async (req, res) => {
+  router.get('/evenement/:evenementId', validateId('evenementId'), async (req, res, next) => {
     try {
       await controller.getCommentairesEvenement(req, res);
     } catch (error) {
-      console.error('Erreur route GET /evenement/:evenementId:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -98,15 +86,11 @@ module.exports = (models, middlewares = {}) => {
       body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
     try {
       await controller.createCommentaireEvenement(req, res);
     } catch (error) {
-      console.error('Erreur route POST /evenement/:evenementId:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -187,7 +171,7 @@ module.exports = (models, middlewares = {}) => {
       body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage(msg('validation.note1a5')),
     ],
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
     try {
       // Vérifier que l'utilisateur est propriétaire du commentaire
       const commentaire = await models.Commentaire.findByPk(req.params.id);
@@ -209,11 +193,7 @@ module.exports = (models, middlewares = {}) => {
       req.resource = commentaire;
       await controller.updateCommentaire(req, res);
     } catch (error) {
-      console.error('Erreur route PUT /:id:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -221,7 +201,7 @@ module.exports = (models, middlewares = {}) => {
    * DELETE /commentaires/:id
    * Supprimer un commentaire (son auteur, ou l'administration et la modération)
    */
-  router.delete('/:id', authMiddleware, validateId(), async (req, res) => {
+  router.delete('/:id', authMiddleware, validateId(), async (req, res, next) => {
     try {
       const commentaire = await models.Commentaire.findByPk(req.params.id);
       
@@ -242,11 +222,7 @@ module.exports = (models, middlewares = {}) => {
       req.resource = commentaire;
       await controller.deleteCommentaire(req, res);
     } catch (error) {
-      console.error('Erreur route DELETE /:id:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   });
 
@@ -268,15 +244,11 @@ module.exports = (models, middlewares = {}) => {
       body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage(msg('validation.invalidStatus'))
     ],
     handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         await controller.moderateCommentaire(req, res);
       } catch (error) {
-        console.error('Erreur route PUT /:id/moderate:', error);
-        res.status(500).json({
-          success: false,
-          error: req.t ? req.t('common.serverError') : 'Server error'
-        });
+        return next(error);
       }
     }
   );

@@ -31,6 +31,7 @@ import i18n from 'i18next';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lienGuidePour } from '@/utils/lienGuide';
 
+import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const getTypeIcon = (typeId: number): React.ReactNode => {
@@ -557,7 +558,7 @@ const AjouterOeuvre: React.FC = () => {
                                     <div className="relative">
                                         <img src={media.preview} alt={media.titre || 'Aperçu'} className="w-full h-32 object-cover rounded" />
                                         {!media.isPrincipal && media.type === 'image' &&
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded cursor-pointer flex items-center justify-center"
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded cursor-pointer flex items-center justify-center [@media(hover:none)]:opacity-100 [@media(hover:none)]:inset-auto [@media(hover:none)]:bottom-0 [@media(hover:none)]:start-0 [@media(hover:none)]:end-0 [@media(hover:none)]:py-1"
                                           onClick={() => handleSetPrincipalMedia(media.id)} role="button" tabIndex={0}
                                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSetPrincipalMedia(media.id); } }}>
                                             <div className="text-white text-center">
@@ -575,11 +576,7 @@ const AjouterOeuvre: React.FC = () => {
                                     }
                                     <p className="text-sm truncate">{media.file.name}</p>
                                     <p className="text-xs text-muted-foreground">{(media.file.size / 1024 / 1024).toFixed(2)}{t("ajouteroeuvre.mb")}</p>
-                                    <Button type="button" size="sm" variant="ghost"
-                                      className="absolute top-2 end-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
-                                      onClick={() => handleMediaRemove(media.id)}>
-                                      <X className="h-4 w-4" />
-                                    </Button>
+                                    <BoutonRetirerApercu position="dedans" onClick={() => handleMediaRemove(media.id)} />
                                   </div>
                                 </div>
                               )}

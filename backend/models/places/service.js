@@ -139,5 +139,13 @@ module.exports = (sequelize) => {
     if (models.ServiceMedia) Service.hasMany(models.ServiceMedia, { foreignKey: 'id_service', as: 'Medias', onDelete: 'CASCADE' });
   };
 
+  // Comme Oeuvre, Evenement, Lieu et Artisanat : les favoris du service partent avec lui (2026-11-16 ;
+  // favoris de services ajoutés le même jour). Galerie, menus, avis, statistiques : clés en CASCADE.
+  Service.afterDestroy(async (service, options) => {
+    const { Favori } = sequelize.models;
+    const tx = options?.transaction ? { transaction: options.transaction } : {};
+    if (Favori) await Favori.destroy({ where: { type_entite: 'service', id_entite: service.id }, ...tx });
+  });
+
   return Service;
 };

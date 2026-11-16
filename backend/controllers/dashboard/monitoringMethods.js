@@ -14,8 +14,7 @@ const monitoringMethods = {
       );
       res.json({ success: true, data: alerts });
     } catch (error) {
-      console.error('Erreur getAlerts:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -28,8 +27,7 @@ const monitoringMethods = {
       );
       res.json({ success: true, data });
     } catch (error) {
-      console.error('Erreur getNotifications:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -80,8 +78,7 @@ const monitoringMethods = {
         if (error.message === 'NO_TARGET_USERS') {
           return res.status(400).json({ success: false, error: req.t('notification.noTargetUsers', 'Aucun destinataire dans ce groupe') });
         }
-        console.error('Erreur broadcastNotification:', error.message);
-        res.status(500).json({ success: false, error: req.t('common.serverError') });
+        this._handleError(res, error);
       }
     }
   }

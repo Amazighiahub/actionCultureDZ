@@ -46,11 +46,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
         error: req.t ? req.t('auth.forbidden') : 'Forbidden'
       });
     } catch (error) {
-      console.error('Erreur vérification permissions:', error);
-      return res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   };
 

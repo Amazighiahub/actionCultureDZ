@@ -14,7 +14,7 @@ const cache = new CacheManager({ namespace: 'wilaya-vitrine', defaultTTL: 5 * 60
 const initWilayaRoutes = (models) => {
   const router = express.Router();
 
-  router.get('/:id/vitrine', validateId(), publicHttpCache(180), async (req, res) => {
+  router.get('/:id/vitrine', validateId(), publicHttpCache(180), async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);
       const data = await cache.getOrSet(`v:${id}`, () => vitrineWilaya(models, id, container.organisationService));
@@ -22,7 +22,7 @@ const initWilayaRoutes = (models) => {
       res.json({ success: true, data });
     } catch (error) {
       logger.error('Page de wilaya :', { message: error.message });
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return next(error);
     }
   });
 

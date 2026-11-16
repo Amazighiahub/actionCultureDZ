@@ -49,11 +49,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
 
       next();
     } catch (error) {
-      console.error(req.t ? req.t('common.errorCheckingProperty') : 'Error checking property:', error);
-      res.status(500).json({
-        success: false,
-        message: req.t ? req.t('common.serverError') : 'Server error'
-      });
+      return next(error);
     }
   };
 

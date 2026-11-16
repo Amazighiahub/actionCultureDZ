@@ -377,7 +377,7 @@ const ArticleViewPage: React.FC = () => {
   };
 
   const share = useShare();
-  const handleShare = () => share({ title: String(oeuvre?.titre || 'Article') });
+  const handleShare = () => share({ title: oeuvre?.titre || 'Article' });
 
   const handlePrint = () => {
     window.print();
@@ -754,10 +754,10 @@ const ArticleViewPage: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               <ImagesReseaux open={imagesOpen} onOpenChange={setImagesOpen}
-                contenu={{ titre: String(oeuvre.titre || ''), sousTitre: auteurPartage || undefined, image: imagePartage ? getAssetUrl(imagePartage) : undefined }}
+                contenu={{ titre: getLocalizedText(oeuvre.titre, i18n.language), sousTitre: auteurPartage || undefined, image: imagePartage ? getAssetUrl(imagePartage) : undefined }}
                 lien={`${window.location.origin}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4)}`}
                 resume={chapeau || resumeArticle || undefined}
-                nomFichier={`taladz-${slugify(String(oeuvre.titre || '')) || 'article'}`} />
+                nomFichier={`taladz-${slugify(getLocalizedText(oeuvre.titre, 'fr')) || 'article'}`} />
               {peutModifier &&
               <Button asChild size="sm" variant="outline" className="me-1">
                   <Link to={`/editer-article/${oeuvre.id_oeuvre}`}>
@@ -791,7 +791,7 @@ const ArticleViewPage: React.FC = () => {
       {/* Article sans aucune image : couverture dessinée avec son titre (pas d'image inventée) */}
       {!blocOuverture?.media && !blocsCorps.some(b => b.type_block === 'image' && b.media) &&
         !(oeuvre.Media || []).some((m: { type_media?: string; url?: string }) => (m.type_media || 'image') === 'image' && m.url) &&
-      <CouvertureAuto titre={String(oeuvre.titre || '')} auteur={articleHelpers.getAuteur(articleData) || undefined} rtl={sensContenu === 'rtl'} />
+      <CouvertureAuto titre={getLocalizedText(oeuvre.titre, i18n.language)} auteur={articleHelpers.getAuteur(articleData) || undefined} rtl={sensContenu === 'rtl'} />
       }
 
       {/* Photo d'ouverture */}

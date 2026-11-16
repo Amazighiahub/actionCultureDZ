@@ -60,4 +60,12 @@ for (const methods of allMethods) {
   }
 }
 
-module.exports = new DashboardController();
+// Les routes passent les méthodes sans les appeler sur le contrôleur (dashboardController.getAllUsers) :
+// chaque méthode est liée à l'instance, sinon `this` (this._handleError…) est vide et une erreur faisait
+// planter la requête au lieu de répondre proprement (2026-11-16)
+const instance = new DashboardController();
+for (const nom of Object.getOwnPropertyNames(DashboardController.prototype)) {
+  if (nom !== 'constructor' && typeof instance[nom] === 'function') instance[nom] = instance[nom].bind(instance);
+}
+
+module.exports = instance;

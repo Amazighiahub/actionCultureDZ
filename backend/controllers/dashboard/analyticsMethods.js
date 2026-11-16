@@ -34,8 +34,7 @@ const analyticsMethods = {
       );
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('Erreur getDetailedStats:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -48,8 +47,7 @@ const analyticsMethods = {
       );
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('Erreur getPatrimoineDashboard:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -64,8 +62,7 @@ const analyticsMethods = {
       );
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('Erreur getQRStats:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -79,8 +76,7 @@ const analyticsMethods = {
       );
       res.json({ success: true, data: analytics });
     } catch (error) {
-      console.error('Erreur getAdvancedAnalytics:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -90,8 +86,7 @@ const analyticsMethods = {
       const data = await container.analyticsService.getAuditLogs({ page, limit, userId, action, startDate, endDate });
       res.json({ success: true, data });
     } catch (error) {
-      console.error('Erreur getAuditLogs:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   },
 
@@ -107,8 +102,7 @@ const analyticsMethods = {
       }
       res.json({ success: true, data: report });
     } catch (error) {
-      console.error('Erreur generateActivityReport:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      this._handleError(res, error);
     }
   }
 

@@ -87,7 +87,6 @@ async function isReferencedElsewhere(models, url, { sansMedias = false, sansText
     models.ServiceMedia?.count?.({ where: { url } }),
     // Programme PDF joint à un message aux participants
     models.MessageEvenement?.count?.({ where: { lien_programme: url } }),
-    models.UserCertification?.count?.({ where: { [Op.or]: [{ fichier_certificat: url }, { url_verification: url }] } }),
     models.QRCode?.count?.({ where: { qr_image_url: url } }),
     models.Signalement?.count?.({ where: { url_screenshot: url } })
   ].filter(Boolean);

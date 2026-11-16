@@ -623,7 +623,8 @@
     "ok": "OK",
     "aide": "Help",
     "nouvelOnglet": "(new tab)",
-    "faq": "Frequently asked questions"
+    "faq": "Frequently asked questions",
+    "retirerPhoto": "Remove photo"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",

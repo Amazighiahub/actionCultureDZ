@@ -82,7 +82,7 @@ const initNotificationRoutes = (models) => {
       body('auth').isString().isLength({ min: 16, max: 255 }).matches(/^[A-Za-z0-9_-]+=*$/),
     ],
     validationMiddleware.handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
       const push = require('../services/pushService');
       if (!push.adresseAutorisee(req.body.endpoint)) {
         return res.status(400).json({ success: false, error: req.t('common.badRequest') });
@@ -90,8 +90,8 @@ const initNotificationRoutes = (models) => {
       try {
         await push.abonner(models, req.user.id_user, req.body);
         res.json({ success: true });
-      } catch {
-        res.status(500).json({ success: false, error: req.t('common.serverError') });
+      } catch (error) {
+        return next(error);
       }
     }
   );
@@ -100,12 +100,12 @@ const initNotificationRoutes = (models) => {
     authMiddleware.authenticate,
     [body('endpoint').isString().isLength({ max: 512 })],
     validationMiddleware.handleValidationErrors,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         await require('../services/pushService').desabonner(models, req.user.id_user, req.body.endpoint);
         res.json({ success: true });
-      } catch {
-        res.status(500).json({ success: false, error: req.t('common.serverError') });
+      } catch (error) {
+        return next(error);
       }
     }
   );

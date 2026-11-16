@@ -7,6 +7,7 @@
  */
 
 const path = require('path');
+const { estPublic } = require('../../constants/statuts');
 const fs = require('fs').promises;
 const logger = require('../../utils/logger');
 const cloudinarySvc = require('../cloudinaryService');
@@ -147,8 +148,8 @@ class UploadService {
     // seuls son auteur et l'administration y accèdent.
     const oeuvre = media.Oeuvre;
     const evenement = media.Evenement;
-    const parentCache = (oeuvre && oeuvre.statut !== 'publie')
-      || (evenement && ['brouillon', 'en_attente'].includes(evenement.statut));
+    const parentCache = (oeuvre && !estPublic('oeuvre', oeuvre.statut))
+      || (evenement && !estPublic('evenement', evenement.statut));
     const isPublic = this._getMediaVisibility(media) && !parentCache;
     const uploadedBy = this._getUploadedBy(media) ?? oeuvre?.saisi_par ?? evenement?.id_user ?? null;
 
@@ -355,8 +356,8 @@ class UploadService {
     // seuls son auteur et l'administration y accèdent.
     const oeuvre = media.Oeuvre;
     const evenement = media.Evenement;
-    const parentCache = (oeuvre && oeuvre.statut !== 'publie')
-      || (evenement && ['brouillon', 'en_attente'].includes(evenement.statut));
+    const parentCache = (oeuvre && !estPublic('oeuvre', oeuvre.statut))
+      || (evenement && !estPublic('evenement', evenement.statut));
     const isPublic = this._getMediaVisibility(media) && !parentCache;
     const uploadedBy = this._getUploadedBy(media) ?? oeuvre?.saisi_par ?? evenement?.id_user ?? null;
 

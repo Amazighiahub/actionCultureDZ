@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useGeographicSelection } from '@/hooks/useGeographie';
 
+import { getLocalizedText } from '@/utils/getLocalizedText';
 interface GeoSelectorProps {
   wilayaId: number | null;
   dairaId: number | null;
@@ -45,7 +46,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
   useEffect(() => { setSelectedCommune(communeId); }, [communeId]);
 
   const getWilayaName = (w: Record<string, unknown>): string => {
-    if (i18n.language === 'ar' && w.nom) return String(w.nom);
+    if (i18n.language === 'ar' && w.nom) return getLocalizedText(w.nom, 'ar');
     return String(w.wilaya_name_ascii || w.nom || '');
   };
 

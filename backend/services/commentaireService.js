@@ -4,6 +4,7 @@
  * Architecture: Controller → Service → Repository → Database
  * Délègue tous les accès Sequelize au CommentaireRepository.
  */
+const { estPublic } = require('../constants/statuts');
 const BaseService = require('./core/baseService');
 const AppError = require('../utils/appError');
 const { memeUtilisateur } = require('../utils/droits');
@@ -65,9 +66,9 @@ class CommentaireService extends BaseService {
    */
   async findOeuvre(oeuvreId) {
     if (!this.models.Oeuvre) return null;
-    // On ne commente qu'une œuvre publiée
+    // On ne commente (et on ne lit les avis) que d'une œuvre publiée
     const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
-    return oeuvre && oeuvre.statut === 'publie' ? oeuvre : null;
+    return oeuvre && estPublic('oeuvre', oeuvre.statut) ? oeuvre : null;
   }
 
   /**
@@ -77,9 +78,9 @@ class CommentaireService extends BaseService {
    */
   async findEvenement(evenementId) {
     if (!this.models.Evenement) return null;
-    // Pas de commentaire sur un brouillon ni sur un événement en attente de validation
+    // Pas de commentaire (ni de lecture) sur un brouillon ni sur un événement en attente de validation
     const evenement = await this.models.Evenement.findByPk(evenementId);
-    return evenement && !['brouillon', 'en_attente'].includes(evenement.statut) ? evenement : null;
+    return evenement && estPublic('evenement', evenement.statut) ? evenement : null;
   }
 
   /**

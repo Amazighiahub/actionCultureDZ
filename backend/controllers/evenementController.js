@@ -4,6 +4,7 @@
  */
 
 const BaseController = require('./baseController');
+const { estPublic } = require('../constants/statuts');
 const container = require('../services/serviceContainer');
 const { conditionRecherche } = require('../utils/multiLangSearchBuilder');
 const { lienPour } = require('../utils/lienEnLigne');
@@ -84,7 +85,7 @@ class EvenementController extends BaseController {
    */
   _cache(req, evenement) {
     const raw = evenement?._raw || evenement;
-    return !!raw && ['brouillon', 'en_attente'].includes(raw.statut) && !this._canSeeUnpublished(req, raw.id_user);
+    return !!raw && !estPublic('evenement', raw.statut) && !this._canSeeUnpublished(req, raw.id_user);
   }
 
   /** Lien de l'événement en ligne, si cette personne y a droit (inscrite, organisatrice ou équipe) */
@@ -686,7 +687,7 @@ class EvenementController extends BaseController {
       const evenement = await this.evenementService.findById(id);
       if (this._cache(req, evenement)) return this._introuvable(req, res);
       const url = await container.documentsEvenementService.fichier(id, parseInt(req.params.idMedia));
-      const publie = !['brouillon', 'en_attente'].includes(evenement.statut);
+      const publie = estPublic('evenement', evenement.statut);
       if (!(await servirPdf(res, url, { nomFichier: 'document.pdf', enCachePublic: publie }))) {
         return res.status(502).json({ success: false, error: req.t('common.serverError') });
       }

@@ -34,4 +34,19 @@ export const aDuTexte = (value: unknown): boolean => {
   return false;
 };
 
+/**
+ * Initiales d'un avatar (« AB ») depuis un prénom et un nom, texte simple ou multilingue (2026-11-16 :
+ * `prenom?.[0]` sur un nom { fr, ar } ne donnait rien). Array.from : une lettre arabe ou un emoji entier.
+ */
+export const initiales = (prenom: unknown, nom: unknown, lang: string = 'fr'): string =>
+  [prenom, nom].map((v) => Array.from(getLocalizedText(v, lang).trim())[0] || '').join('').toUpperCase();
+
+/**
+ * Texte d'une recherche : toutes les langues d'un texte multilingue, en minuscules (2026-11-16 : un nom
+ * { fr, ar } devenait « [object Object] » et la recherche ne le trouvait jamais).
+ */
+export const texteRecherchable = (...valeurs: unknown[]): string =>
+  valeurs.map((v) => (v && typeof v === 'object' ? Object.values(v as Record<string, unknown>).filter((x) => typeof x === 'string').join(' ') : String(v ?? '')))
+    .join(' ').toLowerCase();
+
 export default getLocalizedText;

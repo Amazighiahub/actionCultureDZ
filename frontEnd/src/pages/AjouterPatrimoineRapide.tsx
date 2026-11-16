@@ -26,8 +26,17 @@ import { Button } from '@/components/ui/button';
 import { RequiredLabel } from '@/components/ui/required-label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  ArrowLeft, ArrowRight, MapPin, Building2, Camera,
-  Loader2, AlertCircle, CheckCircle2, Upload, X, Footprints, DoorOpen
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  Building2,
+  Camera,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Upload,
+  Footprints,
+  DoorOpen
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import MultiLangInput from '@/components/MultiLangInput';
@@ -47,6 +56,7 @@ import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { lienGuidePour } from '@/utils/lienGuide';
 
+import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 
@@ -651,13 +661,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   {mediaPreviews.map((preview, index) => (
                     <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
                       <img src={preview} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => handleMediaRemove(index)}
-                        className="absolute top-1 end-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <BoutonRetirerApercu position="dedans" onClick={() => handleMediaRemove(index)} />
                     </div>
                   ))}
                 </div>

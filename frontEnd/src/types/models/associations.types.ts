@@ -112,23 +112,6 @@ export interface UserSpecialite {
   date_ajout: string;
 }
 
-export interface UserCertification {
-  id_certification: number;
-  id_user: number;
-  nom_certification: string;
-  organisme?: string;
-  numero_certification?: string;
-  date_obtention?: string;
-  date_expiration?: string;
-  url_verification?: string;
-  fichier_certificat?: string;
-  verifie: boolean;
-  date_verification?: string;
-  id_user_verificateur?: number; // NOUVEAU : qui a vérifié
-  date_creation: string;
-  date_modification: string;
-  Verificateur?: User; // NOUVEAU : relation
-}
 
 // =====================================================
 // ASSOCIATIONS OEUVRE

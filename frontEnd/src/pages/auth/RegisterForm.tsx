@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Palette, Mail, Lock, UserPlus, Upload, Calendar, Phone, MapPin, AlertCircle, X, Loader2, Check, Eye, EyeOff } from 'lucide-react';
+import { User, Palette, Mail, Lock, UserPlus, Upload, Calendar, Phone, MapPin, AlertCircle, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
@@ -35,6 +35,7 @@ import type { AuthResult } from '@/types/models/auth.types';
 import { Link } from 'react-router-dom';
 
 
+import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
 /**
  * Mot de passe écrit de gauche à droite même en arabe, y compris affiché en clair (audit V11 UX-22).
  * Le bouton « œil » reste en fin de ligne (à gauche en arabe) : la marge intérieure suit. « ! » :
@@ -928,14 +929,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                                     e.currentTarget.src = '/images/default-avatar.svg';
                                   }}
                                 />
-                                <button
-                                  type="button"
-                                  onClick={removePhoto}
-                                  className="absolute -top-2 -end-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors shadow-sm"
-                                  aria-label={t('auth.register.removePhoto')}
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                <BoutonRetirerApercu onClick={removePhoto} libelle={t('auth.register.removePhoto', 'Retirer la photo')} />
                               </div>
                             )}
                             <div className="flex-1">

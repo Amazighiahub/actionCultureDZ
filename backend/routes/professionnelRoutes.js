@@ -62,11 +62,11 @@ const initProfessionnelRoutes = (models) => {
   // ========================================
   // Messages déjà rédigés pour garder le lien avec ses abonnés et les participants de ses événements
   const messagesPro = require('../services/messagesProfessionnels');
-  router.get('/messages-abonnes', async (req, res) => {
+  router.get('/messages-abonnes', async (req, res, next) => {
     try {
       res.json({ success: true, data: await messagesPro.options(models, req.user.id_user) });
-    } catch {
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+    } catch (error) {
+      return next(error);
     }
   });
   router.post('/messages-abonnes', async (req, res) => {

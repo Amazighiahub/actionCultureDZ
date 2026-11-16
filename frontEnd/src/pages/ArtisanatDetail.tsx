@@ -40,6 +40,7 @@ import { idFromSlug, artisanatPath } from '@/utils/slug';
 import ContenuIntrouvable from '@/components/shared/ContenuIntrouvable';
 import SignalerContenu from '@/components/shared/SignalerContenu';
 
+import { initiales } from '@/utils/getLocalizedText';
 interface ArtisanatData {
   id_artisanat: number;
   id?: number;
@@ -116,7 +117,7 @@ const ArtisanatDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const inviterConnexion = useInviterConnexion();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
 
@@ -547,7 +548,7 @@ const ArtisanatDetail: React.FC = () => {
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={artisan.photo_url} />
                         <AvatarFallback className="text-lg">
-                          {artisan.prenom?.[0]}{artisan.nom?.[0]}
+                          {initiales(artisan.prenom, artisan.nom, i18n.language)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">

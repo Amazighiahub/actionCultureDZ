@@ -6,6 +6,7 @@
  * Les requêtes complexes (geo, includes profondes) restent dans le service.
  */
 const BaseService = require('./core/baseService');
+const { EVENEMENT_NON_PUBLIC } = require('../constants/statuts');
 const { Op } = require('sequelize');
 const { pasTermine } = require('../helpers/finEvenement');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
@@ -305,7 +306,7 @@ class LieuService extends BaseService {
         {
           model: this.models.Evenement,
           // Événements publiés seulement, pas encore terminés
-          where: { [Op.and]: [pasTermine(new Date(), 'Evenements')], statut: { [Op.notIn]: ['brouillon', 'en_attente'] } },
+          where: { [Op.and]: [pasTermine(new Date(), 'Evenements')], statut: { [Op.notIn]: EVENEMENT_NON_PUBLIC } },
           required: false
         }
       ]

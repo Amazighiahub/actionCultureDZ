@@ -118,13 +118,13 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
           aria-label={isFavorite
             ? t('artisanat.removeFromFavorites', 'Retirer des favoris')
             : t('artisanat.addToFavorites', 'Ajouter aux favoris')}
-          className="absolute top-3 end-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
+          className="absolute top-3 end-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
         >
           <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Actions au survol */}
-        <div className="absolute bottom-3 start-3 end-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 start-3 end-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 text-white text-sm">
             {artisanat.statistiques?.nombre_vues !== undefined && (
               <span className="flex items-center gap-1">

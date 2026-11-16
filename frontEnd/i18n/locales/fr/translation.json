@@ -628,7 +628,8 @@
     "ok": "OK",
     "aide": "Aide",
     "nouvelOnglet": "(nouvel onglet)",
-    "faq": "Questions fréquentes"
+    "faq": "Questions fréquentes",
+    "retirerPhoto": "Retirer la photo"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",

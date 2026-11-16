@@ -2,7 +2,6 @@
  * Page d'un service, lot 2 « comme TripAdvisor » : boutons « Réserver » (WhatsApp, lien de
  * réservation, téléphone) et équipements, langues parlées, capacité. Rien ne s'affiche sans données.
  */
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarCheck, Languages, MessageCircle, Phone, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';

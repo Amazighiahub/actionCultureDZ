@@ -29,6 +29,9 @@ describe('CommentaireController', () => {
 
   beforeEach(() => {
     controller = CommentaireController;
+    // Lecture des avis : œuvre et événement publics par défaut (vérifiés avant la liste, 2026-11-16)
+    mockCommentaireService.findOeuvre.mockResolvedValue({ id_oeuvre: 1, statut: 'publie' });
+    mockCommentaireService.findEvenement.mockResolvedValue({ id_evenement: 1, statut: 'publie' });
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

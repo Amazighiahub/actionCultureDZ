@@ -25,9 +25,24 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  Save, Loader2, AlertCircle, CheckCircle2,
-  MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
-  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, X
+  Save,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  MapPin,
+  Building2,
+  Utensils,
+  Hotel,
+  Car,
+  Compass,
+  ShoppingBag,
+  Phone,
+  Mail,
+  Globe,
+  Clock,
+  DollarSign,
+  Camera,
+  Upload
 } from 'lucide-react';
 import { LieuSelector } from '@/components/LieuSelector';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +59,7 @@ import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validatio
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { lienGuidePour } from '@/utils/lienGuide';
 
+import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
   { value: 'restaurant', label: { fr: 'Restaurant / Café', ar: 'مطعم / مقهى', en: 'Restaurant / Cafe', 'tz-ltn': 'Asensu / Aqahwi', 'tz-tfng': 'ⴰⵙⵏⵙⵓ / ⴰⵇⴰⵀⵡⵉ' }, icon: Utensils },
@@ -575,14 +591,7 @@ const AjouterServicePro: React.FC = () => {
                           alt={t('auth.register.photoPreview', 'Aperçu de la photo')}
                           className="w-24 h-24 object-cover rounded-lg"
                         />
-                        <button
-                          type="button"
-                          onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                          className="absolute -top-2 -end-2 bg-destructive text-white rounded-full p-1"
-                          aria-label={t('common.remove', 'Supprimer')}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        <BoutonRetirerApercu onClick={() => { setPhotoFile(null); setPhotoPreview(null); }} />
                       </div>
                     ) : (
                       <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-emerald-400 transition-colors">

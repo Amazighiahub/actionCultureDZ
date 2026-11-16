@@ -10,6 +10,7 @@ const { Op, Transaction } = require('sequelize');
 const { createMultiLang, mergeTranslations, texteLisible } = require('../helpers/i18n');
 const { csvCell } = require('../utils/csv');
 const { peutGerer, estModeration, memeUtilisateur } = require('../utils/droits');
+const { estPublic } = require('../constants/statuts');
 
 const CHAMPS_INTERVENANT_CONSERVES = ['heure_debut_intervention', 'heure_fin_intervention', 'honoraires', 'frais_deplacement', 'logement_requis', 'materiel_technique', 'date_confirmation', 'notes_organisateur'];
 
@@ -34,7 +35,7 @@ class ProgrammeService extends BaseService {
   async evenementVisible(evenementId, user = null) {
     const evenement = await this.models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user', 'statut'] });
     if (!evenement) return false;
-    if (!['brouillon', 'en_attente'].includes(evenement.statut)) return true;
+    if (estPublic('evenement', evenement.statut)) return true;
     return peutGerer(evenement.id_user, { userId: user?.id_user ?? null, isModerator: estModeration(user) });
   }
 

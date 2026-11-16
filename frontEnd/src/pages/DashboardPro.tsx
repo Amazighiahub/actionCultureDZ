@@ -73,6 +73,7 @@ import { lireSpecialites } from '@/utils/specialites';
 import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
 import type { TexteMultilingue } from '@/types/common/multilingual.types';
 
+import { getLocalizedText } from '@/utils/getLocalizedText';
 /** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
 interface DashboardItem {
   id?: number;
@@ -544,7 +545,7 @@ const DashboardPro = () => {
               {/* Page publique du professionnel */}
               {currentUser && (
                 <Button asChild variant="outline">
-                  <Link to={professionnelPath(currentUser.id_user, String(currentUser.prenom || ''), String(currentUser.nom || ''))}>
+                  <Link to={professionnelPath(currentUser.id_user, getLocalizedText(currentUser.prenom, 'fr'), getLocalizedText(currentUser.nom, 'fr'))}>
                     <IdCard className="h-4 w-4 me-2" aria-hidden="true" />
                     {t('header.userMenu.myPortfolio', 'Mon portfolio')}
                   </Link>

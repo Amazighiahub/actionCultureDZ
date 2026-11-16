@@ -4,8 +4,10 @@
  */
 
 const { peutGerer } = require('./droits');
+const { OEUVRE_NON_PUBLIC } = require('../constants/statuts');
 
-const STATUTS_EN_COURS = ['brouillon', 'en_attente'];
+// Article (œuvre) en préparation : règle commune de constants/statuts
+const STATUTS_EN_COURS = OEUVRE_NON_PUBLIC;
 
 /** Œuvre de l'article, avec son résumé et ses images (pour l'include du lien) */
 const includeOeuvreCarte = (models) => ({
