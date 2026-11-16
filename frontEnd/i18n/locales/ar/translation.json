@@ -6523,7 +6523,8 @@
       "ccBySaCourt": "CC BY-SA",
       "domainePublicCourt": "ملك عام"
     },
-    "nonPrecise": "غير محدد"
+    "nonPrecise": "غير محدد",
+    "autorisationCocher": "ضع علامة في خانة «يحق لي نشر هذه الصور» تحت صورك."
   },
   "carte": {
     "zoomAvant": "تكبير",

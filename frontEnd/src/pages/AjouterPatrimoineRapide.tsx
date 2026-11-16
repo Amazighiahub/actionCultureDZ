@@ -170,11 +170,19 @@ const AjouterPatrimoineRapide: React.FC = () => {
       if (medias.length === 0) {
         newErrors.medias = t('patrimoine.errors.photoRequired', 'Au moins une photo est requise');
       } else if (!creditPhotos.autorise) {
-        newErrors.medias = t('credit.autorisationRequise', 'Confirmez que vous avez le droit de publier ces photos.');
+        newErrors.autorisation = t('credit.autorisationCocher', 'Cochez la case « J’ai le droit de publier ces photos » sous vos photos.');
       }
     }
 
     setErrors(newErrors);
+    // La case est sous les photos, souvent hors de l'écran : on y descend
+    if (newErrors.autorisation) {
+      setTimeout(() => {
+        const caseAutorisation = document.getElementById('credit-creation-autorise');
+        caseAutorisation?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        caseAutorisation?.focus();
+      }, 0);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -657,8 +665,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
               {/* Photographe ou source, droits, et droit de publier */}
               {medias.length > 0 && (
-                <CreditPhotoChamps valeur={creditPhotos} id="credit-creation"
-                  onChange={(v) => { setCreditPhotos(v); if (v.autorise) setErrors(prev => { const { medias: _m, ...rest } = prev; return rest; }); }} />
+                <CreditPhotoChamps valeur={creditPhotos} id="credit-creation" erreurAutorisation={errors.autorisation}
+                  onChange={(v) => { setCreditPhotos(v); if (v.autorise) setErrors(prev => { const { autorisation: _a, ...rest } = prev; return rest; }); }} />
               )}
 
               {/* Récapitulatif complet */}

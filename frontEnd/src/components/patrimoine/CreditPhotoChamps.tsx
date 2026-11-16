@@ -23,8 +23,10 @@ const CreditPhotoChamps: React.FC<{
   onChange: (v: ValeurCreditPhoto) => void;
   /** Case « j'ai le droit de publier » : à l'envoi de nouvelles photos seulement */
   avecAutorisation?: boolean;
+  /** Erreur de la case « droit de publier », affichée juste sous elle */
+  erreurAutorisation?: string;
   id?: string;
-}> = ({ valeur, onChange, avecAutorisation = true, id = 'credit-photo' }) => {
+}> = ({ valeur, onChange, avecAutorisation = true, id = 'credit-photo', erreurAutorisation }) => {
   const { t } = useTranslation();
   const maj = (champs: Partial<ValeurCreditPhoto>) => onChange({ ...valeur, ...champs });
 
@@ -54,12 +56,16 @@ const CreditPhotoChamps: React.FC<{
         </Select>
       </div>
       {avecAutorisation && (
-        <div className="flex items-start gap-2">
-          <Checkbox id={`${id}-autorise`} checked={valeur.autorise} className="mt-0.5"
-            onCheckedChange={(c) => maj({ autorise: c === true })} />
-          <Label htmlFor={`${id}-autorise`} className="font-normal leading-snug">
-            {t('credit.autorisation', 'J’ai le droit de publier ces photos : j’en suis l’auteur, j’ai l’accord du photographe, ou elles sont libres de droits.')}
-          </Label>
+        <div className={erreurAutorisation ? 'rounded-md border border-destructive bg-destructive/5 p-2' : ''}>
+          <div className="flex items-start gap-2">
+            <Checkbox id={`${id}-autorise`} checked={valeur.autorise} className="mt-0.5"
+              aria-invalid={!!erreurAutorisation} aria-describedby={erreurAutorisation ? `${id}-autorise-erreur` : undefined}
+              onCheckedChange={(c) => maj({ autorise: c === true })} />
+            <Label htmlFor={`${id}-autorise`} className="font-normal leading-snug">
+              {t('credit.autorisation', 'J’ai le droit de publier ces photos : j’en suis l’auteur, j’ai l’accord du photographe, ou elles sont libres de droits.')}
+            </Label>
+          </div>
+          {erreurAutorisation && <p id={`${id}-autorise-erreur`} role="alert" className="mt-1 text-sm text-destructive">{erreurAutorisation}</p>}
         </div>
       )}
     </div>

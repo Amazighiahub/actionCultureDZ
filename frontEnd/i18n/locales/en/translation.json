@@ -6245,7 +6245,8 @@
       "ccBySaCourt": "CC BY-SA",
       "domainePublicCourt": "Public domain"
     },
-    "nonPrecise": "Not specified"
+    "nonPrecise": "Not specified",
+    "autorisationCocher": "Tick the box “I have the right to publish these photos” below your photos."
   },
   "carte": {
     "zoomAvant": "Zoom in",
