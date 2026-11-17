@@ -82,9 +82,13 @@ export interface EditeurOeuvre {
  */
 export interface IntervenantSearchResult {
   // Format retourné par le contrôleur
-  id: number;
+  /** Fiche d'auteur ; null pour un professionnel inscrit qui n'en a pas encore (créée à l'enregistrement) */
+  id: number | null;
   label: string;
-  value: number;
+  value: number | null;
+  /** « professionnel » : compte de l'annuaire public, ajouté comme contributeur inscrit (2026-11-17) */
+  source?: 'intervenant' | 'professionnel';
+  id_user?: number | null;
   titre?: string;
   organisation?: string;
   specialites?: string[];

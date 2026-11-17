@@ -125,7 +125,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
     }
     
     return {
-      id_intervenant: result.id,
+      id_intervenant: result.id ?? 0,
       nom,
       prenom,
       titre_professionnel: result.titre,
@@ -207,14 +207,17 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
     }
   }, [editeurSearchQuery, editeurs]);
 
-  // Ajouter un intervenant existant
+  /** Déjà choisi : même fiche d'auteur, ou même compte de professionnel */
+  const dejaAjoute = (result: IntervenantSearchResult) => selectedIntervenants.some(item =>
+    (result.source === 'professionnel'
+      ? item.type === 'contributeur' && (item.data as ContributeurOeuvre).id_user === result.id_user
+      : item.type === 'existant' && (item.data as IntervenantExistant).id_intervenant === result.id));
+
+  // Ajouter un intervenant existant (fiche d'auteur) ou un professionnel inscrit
   const handleAddExistingIntervenant = (result: IntervenantSearchResult, typeUserId: number) => {
     
     // Vérifier si déjà ajouté
-    const alreadyAdded = selectedIntervenants.some(
-      item => item.type === 'existant' && 
-      (item.data as IntervenantExistant).id_intervenant === result.id
-    );
+    const alreadyAdded = dejaAjoute(result);
 
     if (alreadyAdded) {
       console.warn('⚠️ Intervenant déjà ajouté');
@@ -229,6 +232,26 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
     // Convertir le résultat de recherche en format d'affichage
     const displayData = convertToDisplay(result);
+
+    // Professionnel de l'annuaire sans fiche : contributeur inscrit, sa fiche est créée à l'enregistrement
+    if (result.source === 'professionnel' && result.id_user) {
+      setSelectedIntervenants(prev => [...prev, {
+        id: `contributeur-${result.id_user}-${Date.now()}`,
+        type: 'contributeur',
+        display: { ...displayData, id_intervenant: 0 },
+        role: typeUser.nom_type,
+        id_type_user: typeUserId,
+        data: {
+          id_user: result.id_user,
+          id_type_user: typeUserId,
+          role_principal: true,
+          ordre_apparition: selectedIntervenants.length + 1
+        } as ContributeurOeuvre
+      }]);
+      setSearchQuery('');
+      setSearchResults([]);
+      return;
+    }
 
     const displayIntervenant: DisplayIntervenant = {
       id: `existant-${result.id}-${Date.now()}`,
@@ -423,20 +446,20 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
             {!searching && searchResults.length > 0 && (
               <div className="border rounded-lg p-2 space-y-2 max-h-60 overflow-y-auto">
                 {searchResults.map((result) => {
-                  const isAlreadyAdded = selectedIntervenants.some(
-                    item => item.type === 'existant' && 
-                    (item.data as IntervenantExistant).id_intervenant === result.id
-                  );
+                  const isAlreadyAdded = dejaAjoute(result);
 
                   return (
                     <div 
-                      key={result.id}
+                      key={result.id ?? `pro-${result.id_user}`}
                       className={`p-2 rounded ${isAlreadyAdded ? 'opacity-50 bg-secondary/30' : 'hover:bg-secondary/50'}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <p className="font-medium">
                             {result.label}
+                            {result.source === 'professionnel' && (
+                              <span className={`text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5 ${rtlClasses.marginStart(2)}`}>{t('contributors.professionnelInscrit', 'Professionnel inscrit')}</span>
+                            )}
                             {isAlreadyAdded && <span className={`text-sm text-muted-foreground ${rtlClasses.marginStart(2)}`}>({t('contributors.alreadyAdded')})</span>}
                           </p>
                           <p className="text-sm text-muted-foreground">

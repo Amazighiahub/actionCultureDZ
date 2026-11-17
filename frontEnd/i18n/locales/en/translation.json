@@ -646,7 +646,8 @@
     "selectRole": "Role (Author, Translator, Illustrator...)",
     "title": "Authors and contributors",
     "addedCount": "{{count}} contributors added",
-    "helperText": "Add the main author, then contributors. If you are the author, search your name."
+    "helperText": "Add the main author, then contributors. If you are the author, search your name.",
+    "professionnelInscrit": "Registered professional"
   },
   "errors": {
     "generic": {

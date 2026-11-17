@@ -208,7 +208,7 @@ class IntervenantService extends BaseService {
 
     return this.models.Intervenant.findAll({
       where,
-      attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation', 'specialites', 'photo_url'],
+      attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation', 'specialites', 'photo_url', 'id_user'],
       limit: parseInt(limit),
       // Nom : colonne nom_tri indexée en français, sinon texte dans la langue sans accents ni majuscules
       // (avant : JSON brut sans JSON_UNQUOTE, ordre binaire faux) (audit V11 BDD-15)

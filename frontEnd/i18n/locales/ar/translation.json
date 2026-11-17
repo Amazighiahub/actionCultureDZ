@@ -655,7 +655,8 @@
     "addedCount_few": "تمت إضافة {{count}} مساهمين",
     "addedCount_many": "تمت إضافة {{count}} مساهماً",
     "addedCount": "تمت إضافة {{count}} مساهمين",
-    "helperText": "أضف المؤلف الرئيسي، ثم المساهمين. إذا كنت المؤلف، ابحث عن اسمك."
+    "helperText": "أضف المؤلف الرئيسي، ثم المساهمين. إذا كنت المؤلف، ابحث عن اسمك.",
+    "professionnelInscrit": "مهني مسجل"
   },
   "errors": {
     "generic": {

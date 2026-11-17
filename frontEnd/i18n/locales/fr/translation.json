@@ -651,7 +651,8 @@
     "searchPlaceholder": "Rechercher un auteur par nom...",
     "selectRole": "Rôle (Auteur, Traducteur, Illustrateur...)",
     "title": "Auteurs et contributeurs",
-    "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom."
+    "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom.",
+    "professionnelInscrit": "Professionnel inscrit"
   },
   "comments": {
     "actions": {

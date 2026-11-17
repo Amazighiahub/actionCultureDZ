@@ -101,6 +101,12 @@ class IntervenantController extends BaseController {
 
       const intervenants = await this.intervenantService.searchIntervenants(q, limit, lang);
       const translated = translateDeep(intervenants, lang);
+      // Professionnels de l'annuaire public (mêmes règles : validés, profil public) sans fiche d'auteur :
+      // proposés aussi, la fiche est créée à l'enregistrement (utilisateurs_inscrits). Demande du 2026-11-17.
+      const dejaFiche = new Set(translated.map(i => i.id_user).filter(Boolean));
+      const pros = await container.userService.findValidatedProfessionals({ q: String(q).slice(0, 100), page: 1, limit: 8 })
+        .then(r => (r.data || []).map(u => (u.toJSON ? u.toJSON(lang) : u)))
+        .catch(() => []);
 
       res.json({
         success: true,
@@ -113,8 +119,22 @@ class IntervenantController extends BaseController {
           titre: i.titre_professionnel,
           organisation: i.organisation,
           specialites: i.specialites || [],
-          photo_url: i.photo_url
-        })),
+          photo_url: i.photo_url,
+          // Compte lié jamais renvoyé (fiche publique sans compte lié) ; il sert seulement à écarter le doublon
+          source: 'intervenant'
+        })).concat(pros.filter(u => u.id_user && !dejaFiche.has(u.id_user)).map(u => ({
+          id: null,
+          label: `${u.prenom || ''} ${u.nom || ''}`.trim(),
+          value: null,
+          prenom: u.prenom,
+          nom: u.nom,
+          titre: u.TypeUser?.nom_type || null,
+          organisation: u.entreprise || null,
+          specialites: Array.isArray(u.specialites) ? u.specialites : [],
+          photo_url: u.photo_url,
+          id_user: u.id_user,
+          source: 'professionnel'
+        }))),
         lang
       });
     } catch (error) {
