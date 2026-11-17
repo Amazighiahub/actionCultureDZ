@@ -1,7 +1,6 @@
 // types/models/programme.types.ts
 
 import { StatutProgramme, TypeActivite, NiveauRequis } from '../enums/programme.enums';
-import { MaterielRequis } from './specific-types';
 import { Evenement } from './evenement.types';
 import { Lieu } from './lieu.types';
 import { User } from './user.types';
@@ -28,6 +27,8 @@ export interface ProgrammeIntervenant extends User {
 
 export interface Programme {
   id_programme: number;
+  /** Articles et œuvres publiés rattachés à cette activité (compte rendu…), renvoyés par le programme */
+  oeuvres_liees?: Array<{ id_oeuvre: number; titre: unknown; id_type_oeuvre?: number | null }>;
   titre: string;
   description?: string;
   id_evenement: number;
@@ -41,7 +42,8 @@ export interface Programme {
   type_activite: TypeActivite;
   duree_estimee?: number;
   nb_participants_max?: number;
-  materiel_requis: MaterielRequis[];
+  /** Liste de textes (« chevalet », « papier aquarelle »…), comme le formulaire l'enregistre */
+  materiel_requis: string[];
   niveau_requis?: NiveauRequis;
   langue_principale: string;
   traduction_disponible: boolean;

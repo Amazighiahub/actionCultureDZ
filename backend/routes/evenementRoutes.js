@@ -115,6 +115,8 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.post('/:id/oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.addOeuvre(req, res)));
   // /reorder avant /:oeuvreId : sinon « reorder » était lu comme un numéro d'œuvre (400 à chaque fois)
   router.put('/:id/oeuvres/reorder', authenticate, validateId(), asyncHandler((req, res) => evenementController.reorderOeuvres(req, res)));
+  router.patch('/:id/oeuvres/:oeuvreId/activite', authenticate, validateId(), validateId('oeuvreId'),
+    asyncHandler((req, res) => evenementController.lierOeuvreAActivite(req, res)));
   router.put('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.updateOeuvre(req, res)));
   router.delete('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.removeOeuvre(req, res)));
 

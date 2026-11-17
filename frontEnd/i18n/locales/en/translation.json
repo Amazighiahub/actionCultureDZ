@@ -5371,7 +5371,9 @@
     "voirPhotosJour": "See this day’s photos ({{n}})",
     "photosActivite": "Photos of this day",
     "photos": "Photos",
-    "placesMax": "{{n}} places at most"
+    "placesMax": "{{n}} places at most",
+    "sansTitre": "Activity",
+    "articlesActivite": "Read about this activity"
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",
@@ -5498,7 +5500,10 @@
     "articleAutre": "Or an article published on Tala DZ",
     "articleRecherche": "Article title (at least 2 letters)",
     "articleAucun": "No published article matches.",
-    "articleResultats": "Articles found"
+    "articleResultats": "Articles found",
+    "activite": "Related activity (optional)",
+    "toutEvenement": "Whole event",
+    "activiteAide": "The article or work is also shown under this activity, in the programme."
   },
   "artisanatForm": {
     "createTitle": "Add a craft item"

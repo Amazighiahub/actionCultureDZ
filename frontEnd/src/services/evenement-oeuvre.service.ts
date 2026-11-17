@@ -9,6 +9,8 @@ export interface EvenementOeuvre {
   id_evenement: number;
   id_oeuvre: number;
   id_presentateur?: number;
+  /** Activité du programme sous laquelle l'œuvre ou l'article s'affiche (vide = tout l'événement) */
+  id_programme?: number | null;
   ordre_presentation: number;
   duree_presentation?: number;
   description_presentation?: string;
@@ -23,6 +25,7 @@ export interface EvenementOeuvre {
 // Données pour ajouter une œuvre
 export interface AddOeuvreData {
   id_oeuvre: number;
+  id_programme?: number | null;
   description_presentation?: string;
   duree_presentation?: number;
 }
@@ -71,6 +74,11 @@ class EvenementOeuvreService {
       API_ENDPOINTS.evenements.addOeuvre(evenementId),
       data
     );
+  }
+
+  /** Afficher une œuvre ou un article sous une activité du programme (null = tout l'événement) */
+  async lierActivite(evenementId: number, oeuvreId: number, idProgramme: number | null): Promise<ApiResponse<{ id_programme: number | null }>> {
+    return httpClient.patch<{ id_programme: number | null }>(`/evenements/${evenementId}/oeuvres/${oeuvreId}/activite`, { id_programme: idProgramme });
   }
 
   /**

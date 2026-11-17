@@ -5064,7 +5064,9 @@
     "voirPhotosJour": "Voir les photos de ce jour ({{n}})",
     "photosActivite": "Photos de ce jour",
     "photos": "Photos",
-    "placesMax": "{{n}} places au plus"
+    "placesMax": "{{n}} places au plus",
+    "sansTitre": "Activité",
+    "articlesActivite": "À lire sur cette activité"
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",
@@ -5498,7 +5500,10 @@
     "articleAutre": "Ou un article publié sur Tala DZ",
     "articleRecherche": "Titre de l’article (2 lettres au moins)",
     "articleAucun": "Aucun article publié ne correspond.",
-    "articleResultats": "Articles trouvés"
+    "articleResultats": "Articles trouvés",
+    "activite": "Activité concernée (facultatif)",
+    "toutEvenement": "Tout l’événement",
+    "activiteAide": "L’article ou l’œuvre s’affiche aussi sous cette activité, dans le programme."
   },
   "artisanatForm": {
     "createTitle": "Ajouter un artisanat"

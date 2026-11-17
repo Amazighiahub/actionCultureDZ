@@ -1024,6 +1024,8 @@ class EvenementService extends BaseService {
       throw this._notFoundError(oeuvreId);
     }
 
+    const idProgramme = await this._activiteDeLEvenement(evenementId, data.id_programme);
+
     // Vérifier doublon
     const existing = await this.repository.findEvenementOeuvre(evenementId, oeuvreId);
     if (existing) {
@@ -1037,8 +1039,33 @@ class EvenementService extends BaseService {
       id_oeuvre: oeuvreId,
       id_presentateur: userId,
       description_presentation: data.description_presentation,
-      duree_presentation: data.duree_presentation
+      duree_presentation: data.duree_presentation,
+      id_programme: idProgramme
     });
+  }
+
+  /**
+   * Activité choisie pour une œuvre ou un article : elle doit appartenir à cet événement.
+   * Vide (null, '', absent) = tout l'événement. 2026-11-17 : le compte rendu d'une activité apparaît sous elle.
+   */
+  async _activiteDeLEvenement(evenementId, idProgramme) {
+    if (idProgramme === undefined || idProgramme === null || idProgramme === '') return null;
+    const id = Number(idProgramme);
+    const activite = Number.isInteger(id) && id > 0 && this.models?.Programme
+      ? await this.models.Programme.findOne({ where: { id_programme: id, id_evenement: evenementId }, attributes: ['id_programme'] })
+      : null;
+    if (!activite) throw this._validationError('Cette activité ne fait pas partie de cet événement');
+    return id;
+  }
+
+  /** Rattacher une œuvre ou un article déjà présent à une activité (ou à tout l'événement) : organisateur ou admin */
+  async lierOeuvreAActivite(evenementId, oeuvreId, idProgramme, userId, options = {}) {
+    await this._assertEventOwnerOrAdmin(evenementId, userId, options.isAdmin);
+    const lien = await this.repository.findEvenementOeuvre(evenementId, oeuvreId);
+    if (!lien) throw this._notFoundError(oeuvreId);
+    await lien.update({ id_programme: await this._activiteDeLEvenement(evenementId, idProgramme) });
+    await this._viderCachesListes();
+    return { id_oeuvre: Number(oeuvreId), id_programme: lien.id_programme };
   }
 
   /**

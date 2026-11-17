@@ -1,3 +1,4 @@
+import type { Programme as ProgrammeModele } from '@/types/models/programme.types';
 // services/programme.service.ts - Version adaptée pour User comme intervenant
 import { dureeMinutes } from '@/utils/programmeHoraire';
 import { API_ENDPOINTS, ApiResponse } from '@/config/api';
@@ -28,32 +29,8 @@ interface IntervenantUser {
   };
 }
 
-interface Programme {
-  id_programme: number;
-  id_evenement: number;
-  titre: string;
-  description?: string;
-  type_activite: string;
-  heure_debut: string;
-  heure_fin: string;
-  id_lieu?: number;
-  lieu_specifique?: string;
-  nb_participants_max?: number;
-  niveau_requis?: string;
-  materiel_requis?: string[];
-  statut: 'planifie' | 'en_cours' | 'termine' | 'annule' | 'reporte';
-  ordre: number;
-  // Relations
-  Lieu?: {
-    nom: string;
-    adresse?: string;
-    latitude?: number;
-    longitude?: number;
-  };
-  Intervenants?: IntervenantUser[];
-  date_creation: string;
-  date_modification: string;
-}
+// Type partagé (types/models/programme.types) : l'ancien type local, incomplet (sans date_programme…), en doublait un second (2026-11-17)
+type Programme = ProgrammeModele;
 
 // Données pour créer/modifier une association intervenant
 interface IntervenantData {

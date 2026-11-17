@@ -41,7 +41,34 @@ class ProgrammeService extends BaseService {
 
   async getProgrammesByEvenement(evenementId, filters = {}) {
     const programmes = await this.repository.findByEvenement(evenementId, filters);
+    await this._ajouterOeuvresLiees(evenementId, programmes);
     return { programmes, byDay: this._groupByDay(programmes) };
+  }
+
+  /**
+   * Articles et œuvres publiés rattachés à chaque activité (compte rendu d'un atelier…), affichés sous
+   * elle dans le programme (2026-11-17). Une requête pour tout l'événement.
+   */
+  async _ajouterOeuvresLiees(evenementId, programmes) {
+    const { EvenementOeuvre, Oeuvre } = this.models;
+    if (!programmes.length || !EvenementOeuvre?.rawAttributes?.id_programme || !Oeuvre) return;
+    const liens = await EvenementOeuvre.findAll({
+      where: { id_evenement: evenementId, id_programme: { [Op.ne]: null } },
+      attributes: ['id_programme', 'id_oeuvre', 'ordre_presentation'],
+      include: [{ model: Oeuvre, as: 'Oeuvre', where: { statut: 'publie' }, attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre'], required: true }],
+      order: [['ordre_presentation', 'ASC']]
+    });
+    const parActivite = new Map();
+    for (const lien of liens) {
+      const liste = parActivite.get(lien.id_programme) || [];
+      liste.push(lien.Oeuvre.get({ plain: true }));
+      parActivite.set(lien.id_programme, liste);
+    }
+    for (const programme of programmes) {
+      const oeuvres = parActivite.get(programme.id_programme) || [];
+      if (programme.setDataValue) programme.setDataValue('oeuvres_liees', oeuvres);
+      else programme.oeuvres_liees = oeuvres;
+    }
   }
 
   async getProgrammeById(id) {

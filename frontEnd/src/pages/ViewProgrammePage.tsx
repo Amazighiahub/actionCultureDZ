@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy, User, Mic } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
-import { programmeService, IntervenantUser } from '@/services/programme.service';
+import { programmeService } from '@/services/programme.service';
+import type { ProgrammeIntervenant } from '@/types/models/programme.types';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
@@ -28,7 +29,7 @@ const ViewProgrammePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
-  const [rawIntervenants, setRawIntervenants] = useState<IntervenantUser[]>([]);
+  const [rawIntervenants, setRawIntervenants] = useState<ProgrammeIntervenant[]>([]);
   const [lieuNom, setLieuNom] = useState<string | null>(null);
 
   // Charger les données du programme

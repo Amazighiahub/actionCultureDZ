@@ -137,6 +137,15 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     return () => { actif = false; clearTimeout(minuteur); };
   }, [rechercheArticle, showOeuvreDialog, evenementId]);
   const [oeuvreDescription, setOeuvreDescription] = useState('');
+  // Activité du programme concernée (compte rendu d'un atelier…) ; « aucune » = tout l'événement (2026-11-17)
+  const [oeuvreActivite, setOeuvreActivite] = useState('aucune');
+  const nomActivite = (p: Programme) => [p.date_programme ? formatDate(String(p.date_programme)) : '', td(p.titre) || t('programme.sansTitre', 'Activité')]
+    .filter(Boolean).join(' · ');
+  const changerActivite = async (oeuvreId: number, valeur: string) => {
+    const reponse = await evenementOeuvreService.lierActivite(evenementId, oeuvreId, valeur === 'aucune' ? null : Number(valeur)).catch((e) => e);
+    if (reponse?.success) loadOeuvres();
+    else toast({ title: t('common.error'), description: messageErreurServeur(reponse, t('common.errorOccurred', 'Une erreur est survenue')), variant: 'destructive' });
+  };
   const [oeuvresDuree, setOeuvresDuree] = useState<number | undefined>();
   const [addingOeuvre, setAddingOeuvre] = useState(false);
 
@@ -328,7 +337,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
       const response = await evenementOeuvreService.addOeuvre(evenementId, {
         id_oeuvre: selectedOeuvre.id_oeuvre,
         description_presentation: oeuvreDescription || undefined,
-        duree_presentation: oeuvresDuree
+        duree_presentation: oeuvresDuree,
+        id_programme: oeuvreActivite === 'aucune' ? null : Number(oeuvreActivite)
       });
 
       if (response.success) {
@@ -338,6 +348,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         setSelectedOeuvre(null);
         setOeuvreDescription('');
         setOeuvresDuree(undefined);
+        setOeuvreActivite('aucune');
         setRechercheArticle('');
       } else {
         toast({ title: t('common.error'), description: messageErreurServeur(response, t('oeuvres.addError', 'Erreur lors de l\'ajout')), variant: 'destructive' });
@@ -706,6 +717,22 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     )}
                   </div>
 
+                  {programmes.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="activite-oeuvre">{t('oeuvres.activite', 'Activité concernée (facultatif)')}</Label>
+                      <Select value={oeuvreActivite} onValueChange={setOeuvreActivite}>
+                        <SelectTrigger id="activite-oeuvre"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="aucune">{t('oeuvres.toutEvenement', 'Tout l’événement')}</SelectItem>
+                          {programmes.map((p) => (
+                            <SelectItem key={p.id_programme} value={String(p.id_programme)}>{nomActivite(p)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">{t('oeuvres.activiteAide', 'L’article ou l’œuvre s’affiche aussi sous cette activité, dans le programme.')}</p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="duree">{t('oeuvres.duration', 'Durée de présentation (min)')}</Label>
                     <Input
@@ -808,6 +835,19 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                           )}
                           <Badge variant="outline">#{item.ordre_presentation}</Badge>
                         </div>
+                        {programmes.length > 0 && (
+                          <div className="mt-2 max-w-sm">
+                            <Select value={item.id_programme ? String(item.id_programme) : 'aucune'} onValueChange={(v) => changerActivite(item.id_oeuvre, v)}>
+                              <SelectTrigger className="h-8 text-xs" aria-label={t('oeuvres.activite', 'Activité concernée (facultatif)')}><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="aucune">{t('oeuvres.toutEvenement', 'Tout l’événement')}</SelectItem>
+                                {programmes.map((p) => (
+                                  <SelectItem key={p.id_programme} value={String(p.id_programme)}>{nomActivite(p)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
 
                       <Button

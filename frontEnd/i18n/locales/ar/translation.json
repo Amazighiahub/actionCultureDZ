@@ -5585,7 +5585,9 @@
     "voirPhotosJour": "عرض صور هذا اليوم ({{n}})",
     "photosActivite": "صور هذا اليوم",
     "photos": "الصور",
-    "placesMax": "{{n}} مقعدًا على الأكثر"
+    "placesMax": "{{n}} مقعدًا على الأكثر",
+    "sansTitre": "نشاط",
+    "articlesActivite": "للقراءة عن هذا النشاط"
   },
   "emailChange": {
     "noTokenProvided": "لم يتم تقديم رمز التأكيد.",
@@ -5712,7 +5714,10 @@
     "articleAutre": "أو مقال منشور على ثالا",
     "articleRecherche": "عنوان المقال (حرفان على الأقل)",
     "articleAucun": "لا يوجد مقال منشور مطابق.",
-    "articleResultats": "المقالات الموجودة"
+    "articleResultats": "المقالات الموجودة",
+    "activite": "النشاط المعني (اختياري)",
+    "toutEvenement": "الفعالية كاملة",
+    "activiteAide": "يظهر المقال أو العمل أيضًا تحت هذا النشاط، في البرنامج."
   },
   "artisanatForm": {
     "createTitle": "إضافة منتج حرفي"

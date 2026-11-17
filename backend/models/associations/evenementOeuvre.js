@@ -32,6 +32,15 @@ module.exports = (sequelize) => {
       },
       comment: 'Utilisateur qui présente l\'œuvre'
     },
+    // Activité du programme concernée (compte rendu d'un atelier…), vide = tout l'événement ; migration 20261231
+    id_programme: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'programme',
+        key: 'id_programme'
+      }
+    },
     
     // ===== NOUVEAUX CHAMPS AJOUTÉS =====
     
@@ -85,6 +94,10 @@ module.exports = (sequelize) => {
       as: 'Oeuvre',
       onDelete: 'CASCADE'
     });
+
+    if (models.Programme) {
+      EvenementOeuvre.belongsTo(models.Programme, { foreignKey: 'id_programme', as: 'Activite', onDelete: 'SET NULL' });
+    }
 
     EvenementOeuvre.belongsTo(models.User, {
       as: 'Presentateur',

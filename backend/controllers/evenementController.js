@@ -328,6 +328,17 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** PATCH /evenements/:id/oeuvres/:oeuvreId/activite { id_programme } : sous quelle activité l'afficher */
+  async lierOeuvreAActivite(req, res) {
+    try {
+      const data = await this.evenementService.lierOeuvreAActivite(parseInt(req.params.id), parseInt(req.params.oeuvreId),
+        req.body.id_programme, req.user.id_user, { isAdmin: req.user.isAdmin });
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** GET /evenements/:id/transformer : événements du même organisateur qui peuvent recevoir l'activité */
   async ciblesTransformation(req, res) {
     try {
@@ -535,7 +546,8 @@ class EvenementController extends BaseController {
         req.user.id_user,
         {
           description_presentation: req.body.description_presentation,
-          duree_presentation: req.body.duree_presentation
+          duree_presentation: req.body.duree_presentation,
+          id_programme: req.body.id_programme
         },
         { isAdmin: req.user.isAdmin }
       );

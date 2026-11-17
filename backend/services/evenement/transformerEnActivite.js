@@ -153,6 +153,10 @@ async function transformer(models, idSource, idCible) {
       where: { id_evenement: s, statut_participation: STATUTS_A_PREVENIR }, attributes: ['id_user'], raw: true, transaction
     })).map((l) => l.id_user);
     await deplacerSansDoublon(EvenementUser, s, c, 'id_user', transaction);
+    // Articles et œuvres de l'événement en double : affichés sous l'activité qu'il devient
+    if (nouvelle && EvenementOeuvre?.rawAttributes?.id_programme) {
+      await EvenementOeuvre.update({ id_programme: nouvelle.id_programme }, { where: { id_evenement: s, id_programme: null }, transaction });
+    }
     await deplacerSansDoublon(EvenementOeuvre, s, c, 'id_oeuvre', transaction);
 
     // 4. Commentaires, liens, messages aux participants, parcours

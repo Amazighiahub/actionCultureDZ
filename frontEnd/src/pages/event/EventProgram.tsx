@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, User, MapPin, Users, ChevronDown, ChevronUp,
   Play, Pause,
-  Mic, Video, FileText
+  Mic, Video, FileText, BookOpen
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -20,6 +20,9 @@ import type { Programme, ProgrammeIntervenant } from '@/types/models/programme.t
 import type { Media } from '@/types/models/media.types';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { heureProgramme } from '@/utils/programmeHoraire';
+import { Link } from 'react-router-dom';
+import { oeuvrePath } from '@/utils/slug';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface EventProgramProps {
   programs: Programme[];
@@ -47,6 +50,24 @@ interface ProgramItemProps {
   photos?: Media[];
   onVoirPhotos?: () => void;
 }
+
+/** Articles et œuvres rattachés à l'activité (compte rendu d'un atelier…), toujours visibles (2026-11-17) */
+const OeuvresDeLActivite: React.FC<{ oeuvres?: Programme['oeuvres_liees'] }> = ({ oeuvres }) => {
+  const { t, i18n } = useTranslation();
+  if (!oeuvres?.length) return null;
+  return (
+    <ul className="flex flex-col gap-1 px-4 pb-4" data-testid="oeuvres-activite" aria-label={t('programme.articlesActivite', 'À lire sur cette activité')}>
+      {oeuvres.map((o) => (
+        <li key={o.id_oeuvre}>
+          <Link to={oeuvrePath(o.id_oeuvre, o.titre, o.id_type_oeuvre)} className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline">
+            <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {getLocalizedText(o.titre as never, i18n.language, t('common.unnamed', 'Sans titre'))}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+};
 
 /** Photos d'un jour du programme : quelques miniatures et un lien vers la galerie */
 const PhotosDuJour: React.FC<{ photos: Media[]; onVoirPhotos?: () => void }> = ({ photos, onVoirPhotos }) => {
@@ -205,6 +226,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
       </button>
 
       <PhotosDuJour photos={photos} onVoirPhotos={onVoirPhotos} />
+      <OeuvresDeLActivite oeuvres={program.oeuvres_liees} />
 
       {/* Détails étendus */}
       {isExpanded && (
@@ -307,7 +329,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
                 <div className="flex flex-wrap gap-2">
                   {program.materiel_requis.map((item, index) => (
                     <Badge key={index} variant="secondary">
-                      {typeof item === 'string' ? item : item.nom}
+                      {typeof item === 'string' ? item : (item as { nom?: string } | null)?.nom /* anciennes lignes en objet */}
                     </Badge>
                   ))}
                 </div>
