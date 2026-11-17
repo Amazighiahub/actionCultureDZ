@@ -6620,5 +6620,9 @@
       "profil": "Complete your profile",
       "favori": "Save a place, a work or an event to your favourites"
     }
+  },
+  "nouvelleVersion": {
+    "texte": "A new version of the site is available.",
+    "recharger": "Reload"
   }
 }

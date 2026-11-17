@@ -6620,5 +6620,9 @@
       "profil": "Complétez votre profil",
       "favori": "Gardez un lieu, une œuvre ou un événement en favori"
     }
+  },
+  "nouvelleVersion": {
+    "texte": "Une nouvelle version du site est disponible.",
+    "recharger": "Recharger"
   }
 }

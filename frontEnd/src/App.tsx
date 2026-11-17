@@ -3,6 +3,7 @@ import '../i18n/config';
 
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
+import NouvelleVersion from '@/components/shared/NouvelleVersion';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DirectionProvider } from "@radix-ui/react-direction";
 import { useRTL } from "@/hooks/useRTL";
@@ -497,6 +498,8 @@ const App = () => (
 
           <InvitationInstallation />
           <Toaster />
+          {/* Onglet resté ouvert pendant une mise en ligne : propose de recharger */}
+          <NouvelleVersion />
         </BrowserRouter>
       </PermissionsProvider>
     </TooltipProvider>
