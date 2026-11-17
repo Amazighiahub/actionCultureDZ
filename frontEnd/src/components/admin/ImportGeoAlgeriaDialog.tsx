@@ -136,7 +136,7 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Download className="h-5 w-5" />{t('admin.patrimoine.geo.titre', 'Importer des lieux (GeoAlgeria)')}</DialogTitle>
           <DialogDescription>
-            {t('admin.patrimoine.geo.aide', 'Sites historiques, parcs et attractions d’OpenStreetMap et de Wikidata. Les lieux importés restent en brouillon, invisibles, jusqu’à leur publication.')}
+            {t('admin.patrimoine.geo.aide', 'Sites historiques, monuments, parcs et réserves d’OpenStreetMap (complétés par Wikidata). Les lieux importés restent en brouillon, invisibles, jusqu’à leur publication.')}
           </DialogDescription>
         </DialogHeader>
 

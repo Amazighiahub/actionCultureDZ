@@ -13,9 +13,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const [dossierTourisme, dossierCommunes] = process.argv.slice(2);
+// 3e dossier facultatif : tuiles Overpass (tuile1.json…) d'OpenStreetMap, plus complètes que GeoAlgeria
+const [dossierTourisme, dossierCommunes, dossierOverpass] = process.argv.slice(2);
 if (!dossierTourisme || !dossierCommunes) {
-  console.error('Usage : node scripts/geoalgeria/preparerLieux.js <tourisme/package> <geoalgeria/package>');
+  console.error('Usage : node scripts/geoalgeria/preparerLieux.js <tourisme/package> <geoalgeria/package> [<dossier des tuiles Overpass>]');
   process.exit(1);
 }
 const lire = (dossier, fichier) => JSON.parse(fs.readFileSync(path.join(dossier, 'data', fichier), 'utf8'));
@@ -32,7 +33,14 @@ const TYPE_PATRIMOINE = {
 };
 // Pré-cochés : les vrais lieux ; décochés : types souvent faux (manèges, quartiers, bornes…)
 const ATTRACTIONS_COCHEES = new Set(['museum', 'cave', 'waterfall', 'zoo', 'tourist_attraction']);
-const HISTORIQUES_DECOCHES = new Set(['boundary_stone', 'water_tap', 'aircraft', 'school', 'district', 'building', 'wreck']);
+const HISTORIQUES_DECOCHES = new Set(['boundary_stone', 'water_tap', 'aircraft', 'school', 'district', 'building', 'wreck', 'yes', 'milestone', 'mine', 'wash_house', 'movie_set', 'tank', 'stone']);
+// Jamais proposés : ni patrimoine ni tourisme (croix de chemin, valeurs fausses comme « neurologue », « city »)
+const HISTORIQUES_EXCLUS = new Set(['wayside_cross', 'neurologue', 'city']);
+// Compléments OpenStreetMap
+Object.assign(TYPE_PATRIMOINE, {
+  tomb: 'edifice_religieux', city_gate: 'monument', watchtower: 'palais_forteresse', aqueduct: 'site_archeologique',
+  roman_road: 'site_archeologique', unesco_world_heritage: 'site_archeologique', church: 'edifice_religieux', noria: 'monument', granary: 'monument'
+});
 
 const ARABE = /[؀-ۿ]/;
 /** « Aïn El Fouara; عين الفوارة » → { fr: 'Aïn El Fouara', ar: 'عين الفوارة' } */
@@ -86,31 +94,60 @@ function communeProche(lat, lng, wilaya) {
   };
 }
 
-const CATEGORIES = [['historic.json', 'historique'], ['parks.json', 'parc'], ['attractions.json', 'attraction']];
+/** Pré-coché : un vrai lieu, au nom lisible */
+const preCocher = (categorie, type, texte) => !estUnCode(texte)
+  && (categorie === 'parc' || (categorie === 'historique' && !HISTORIQUES_DECOCHES.has(type)) || (categorie === 'attraction' && ATTRACTIONS_COCHEES.has(type)));
+
 const lieux = [];
-for (const [fichier, categorie] of CATEGORIES) {
-  for (const e of lire(dossierTourisme, fichier)) {
-    const type = e.type || e.category || '';
-    const nom = nomMultilingue(e);
-    const texte = nom.fr || nom.ar || '';
-    let preCoche = categorie === 'parc'
-      || (categorie === 'historique' && !HISTORIQUES_DECOCHES.has(type))
-      || (categorie === 'attraction' && ATTRACTIONS_COCHEES.has(type));
-    if (estUnCode(texte)) preCoche = false;
-    lieux.push({
-      id: e.id, categorie, type, nom,
-      lat: e.lat, lng: e.lng, precision: e.geo_precision,
-      source: e.source, refs: e.refs || {},
-      typePatrimoine: TYPE_PATRIMOINE[type] || 'monument',
-      preCoche,
-      commune: communeProche(e.lat, e.lng, e.wilaya_code)
-    });
+const ajouter = (l) => lieux.push({ ...l, typePatrimoine: TYPE_PATRIMOINE[l.type] || 'monument', preCoche: preCocher(l.categorie, l.type, l.nom.fr || l.nom.ar || '') });
+
+// Sans attractions (décision de la responsable, 2026-11-17 : manèges, quartiers, faux points)
+if (dossierOverpass) {
+  // OpenStreetMap directement (Overpass) : sites historiques, parcs et réserves nommés, plus complets que GeoAlgeria
+  const vus = new Set();
+  for (const f of fs.readdirSync(dossierOverpass).filter((x) => /^tuile\d+\.json$/.test(x)).sort()) {
+    for (const e of JSON.parse(fs.readFileSync(path.join(dossierOverpass, f), 'utf8')).elements || []) {
+      const cleOsm = `${e.type}/${e.id}`;
+      if (vus.has(cleOsm)) continue;
+      vus.add(cleOsm);
+      const t = e.tags || {};
+      const lat = e.lat ?? e.center?.lat;
+      const lng = e.lon ?? e.center?.lon;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const categorie = t.historic ? 'historique' : 'parc';
+      const type = t.historic || t.boundary || t.leisure;
+      if (categorie === 'historique' && HISTORIQUES_EXCLUS.has(type)) continue;
+      const nom = (t['name:fr'] || t['name:ar'])
+        ? { ...(t['name:fr'] ? { fr: t['name:fr'].trim() } : {}), ...(t['name:ar'] ? { ar: t['name:ar'].trim() } : {}) }
+        : nomMultilingue({ name: t.name });
+      if (t.name && !nom.fr && !nom.ar) Object.assign(nom, nomMultilingue({ name: t.name }));
+      if (!nom.fr && !nom.ar) continue;
+      ajouter({
+        id: `osm-${e.type}-${e.id}`, categorie, type, nom, lat, lng, precision: 'exact', source: 'osm',
+        refs: { osm: cleOsm, ...(t.wikidata ? { wikidata: t.wikidata } : {}) },
+        commune: communeProche(lat, lng, null)
+      });
+    }
+  }
+  // Wikidata (via GeoAlgeria) : seulement les sites absents d'OpenStreetMap (rien à moins de 200 m)
+  for (const e of lire(dossierTourisme, 'historic.json').filter((x) => x.source === 'wikidata')) {
+    if (lieux.some((l) => distance(l.lat, l.lng, e.lat, e.lng) < 0.2)) continue;
+    ajouter({ id: e.id, categorie: 'historique', type: e.type || '', nom: nomMultilingue(e), lat: e.lat, lng: e.lng,
+      precision: e.geo_precision, source: e.source, refs: e.refs || {}, commune: communeProche(e.lat, e.lng, e.wilaya_code) });
+  }
+} else {
+  for (const [fichier, categorie] of [['historic.json', 'historique'], ['parks.json', 'parc']]) {
+    for (const e of lire(dossierTourisme, fichier)) {
+      ajouter({ id: e.id, categorie, type: e.type || e.category || '', nom: nomMultilingue(e), lat: e.lat, lng: e.lng,
+        precision: e.geo_precision, source: e.source, refs: e.refs || {}, commune: communeProche(e.lat, e.lng, e.wilaya_code) });
+    }
   }
 }
 
 const sortie = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'lieux.json');
 fs.mkdirSync(path.dirname(sortie), { recursive: true });
 const version = JSON.parse(fs.readFileSync(path.join(dossierTourisme, 'package.json'), 'utf8')).version;
-fs.writeFileSync(sortie, JSON.stringify({ source: `@geoalgeria/tourisme ${version}`, prepare_le: new Date().toISOString().slice(0, 10), lieux }));
+const source = dossierOverpass ? `OpenStreetMap (Overpass) + Wikidata via @geoalgeria/tourisme ${version}` : `@geoalgeria/tourisme ${version}`;
+fs.writeFileSync(sortie, JSON.stringify({ source, prepare_le: new Date().toISOString().slice(0, 10), lieux }));
 const n = (f) => lieux.filter(f).length;
 console.log(`${lieux.length} lieux, ${n((l) => l.preCoche)} pré-cochés, sans commune : ${n((l) => !l.commune)}, commune à plus de 30 km : ${n((l) => l.commune && l.commune.km > 30)}`);

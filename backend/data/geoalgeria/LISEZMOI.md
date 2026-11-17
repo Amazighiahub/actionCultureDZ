@@ -1,6 +1,8 @@
 # Lieux GeoAlgeria (import de l'administration)
 
-`lieux.json` contient les sites historiques, parcs et attractions du paquet `@geoalgeria/tourisme`, préparés par
+`lieux.json` contient les sites historiques, monuments, parcs et réserves nommés d'OpenStreetMap (téléchargés par le
+serveur Overpass, 17 novembre 2026), complétés par les sites Wikidata de `@geoalgeria/tourisme` absents d'OpenStreetMap.
+Sans les attractions (manèges, quartiers, faux points : décision de la responsable). Préparés par
 `scripts/geoalgeria/preparerLieux.js`. Chaque lieu est rattaché à la commune la plus proche, d'après le paquet
 `geoalgeria`.
 
@@ -14,4 +16,8 @@
 Téléchargez les deux paquets (`npm pack @geoalgeria/tourisme geoalgeria`), décompressez-les dans un dossier à part
 (ne lancez pas leur code), puis :
 
-    node scripts/geoalgeria/preparerLieux.js <dossier tourisme/package> <dossier geoalgeria/package>
+    node scripts/geoalgeria/preparerLieux.js <dossier tourisme/package> <dossier geoalgeria/package> <dossier des tuiles Overpass>
+
+Les tuiles Overpass (tuile1.json…) sont des réponses de https://overpass-api.de/api/interpreter, une par morceau de
+l'Algérie, à la requête : `nwr["historic"][~"^name(:fr|:ar)?$"~"."]; nwr["boundary"~"^(national_park|protected_area)$"]["name"];
+nwr["leisure"="nature_reserve"]["name"]; out center tags;` (serveur public : quelques requêtes espacées, jamais en boucle).

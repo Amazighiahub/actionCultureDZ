@@ -3060,7 +3060,7 @@
       },
       "geo": {
         "titre": "Import places (GeoAlgeria)",
-        "aide": "Historic sites, parks and attractions from OpenStreetMap and Wikidata. Imported places stay as hidden drafts until published.",
+        "aide": "Historic sites, monuments, parks and reserves from OpenStreetMap (with Wikidata). Imported places stay as hidden drafts until published.",
         "ongletImporter": "Import",
         "ongletPublier": "To publish ({{n}})",
         "wilaya": "Wilaya",
