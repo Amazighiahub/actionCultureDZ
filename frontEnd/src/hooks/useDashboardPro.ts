@@ -8,9 +8,71 @@ import { evenementService } from '@/services/evenement.service';
 import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { serviceService } from '@/services/service.service';
-import { httpClient } from '@/services/httpClient';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { useToast } from '@/components/ui/use-toast';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
+
+/**
+ * Élément d'une liste du tableau de bord pro (œuvre, événement, service, site patrimoine, artisanat),
+ * tel que le serveur le renvoie : les textes peuvent être multilingues, les montants arrivent parfois en texte.
+ */
+export interface ElementPro {
+  id?: number;
+  id_oeuvre?: number;
+  id_evenement?: number;
+  id_site?: number;
+  /** Sites patrimoine : identifiant renvoyé par le serveur */
+  id_lieu?: number;
+  id_service?: number;
+  id_artisanat?: number;
+  titre?: TexteMultilingue;
+  nom?: TexteMultilingue;
+  nom_evenement?: TexteMultilingue;
+  description?: TexteMultilingue;
+  /** Texte, ou lieu inclus ({ nom }) */
+  lieu?: string | { nom?: TexteMultilingue };
+  type?: TexteMultilingue;
+  /** Clé du type de service (« hotel », « guide »…) */
+  type_service?: string;
+  type_oeuvre?: { nom_type?: TexteMultilingue };
+  TypeOeuvre?: { nom_type?: TexteMultilingue };
+  vues?: number;
+  visites?: number;
+  note_moyenne?: number;
+  statut?: string;
+  date_debut?: string;
+  Lieu?: { nom?: TexteMultilingue; adresse?: TexteMultilingue };
+  nombre_participants?: number;
+  wilaya?: TexteMultilingue;
+  /** Colonnes DECIMAL : arrivent en texte (« 1500.00 ») */
+  tarif_min?: number | string | null;
+  tarif_max?: number | string | null;
+  horaires?: TexteMultilingue;
+  en_stock?: number;
+  sur_commande?: boolean;
+  prix_min?: number | string | null;
+  prix_max?: number | string | null;
+  Materiau?: { nom?: TexteMultilingue };
+  Technique?: { nom?: TexteMultilingue };
+  materiau?: TexteMultilingue;
+  technique?: TexteMultilingue;
+  [key: string]: unknown;
+}
+
+/** Liste du tableau de bord pro : seul le total de la pagination est lu */
+export interface ListePro {
+  items: ElementPro[];
+  pagination: { total?: number };
+}
+
+/** Statistiques renvoyées par GET /professionnel/dashboard (dans « statistiques ») */
+export interface StatistiquesPro {
+  /** Vues de tous les contenus du professionnel (œuvres, événements, artisanat, services) */
+  vues_total?: number;
+  oeuvres?: { total?: number; publiees?: number; en_attente?: number };
+  evenements?: { total?: number; a_venir?: number };
+  artisanats?: { total?: number; en_vente?: number };
+}
 
 interface UseDashboardProOptions {
   autoFetch?: boolean;
@@ -31,11 +93,13 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     refetch: refetchStats
   } = useQuery({
     queryKey: ['dashboard-pro-stats'],
-    queryFn: async () => {
+    queryFn: async (): Promise<StatistiquesPro> => {
       const response = await professionnelService.getDashboard();
       if (!response.success) throw new Error(response.error);
-      const rawData = (response.data || {}) as Record<string, unknown>;
-      return (rawData.statistiques as Record<string, unknown>) || rawData;
+      // Le serveur renvoie { statistiques, recent } (et non la forme DashboardStats annoncée par le service)
+      const brut: unknown = response.data || {};
+      const rawData = brut as StatistiquesPro & { statistiques?: StatistiquesPro };
+      return rawData.statistiques || rawData;
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -50,7 +114,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     error: errorOeuvres
   } = useQuery({
     queryKey: ['dashboard-pro-oeuvres'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListePro> => {
       const response = await oeuvreService.getMyOeuvres({
         limit: 50,
         page: 1
@@ -61,8 +125,8 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       }
 
       const responseData = (response.data || {}) as Record<string, unknown>;
-      const items = (responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : [])) as unknown[];
-      const pagination = response.pagination || (responseData.pagination as Record<string, unknown>) || { total: items.length || 0 };
+      const items = (responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : [])) as ElementPro[];
+      const pagination = response.pagination || (responseData.pagination as ListePro['pagination'] | undefined) || { total: items.length || 0 };
 
       return {
         items,
@@ -93,7 +157,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     error: errorEvenements
   } = useQuery({
     queryKey: ['dashboard-pro-evenements'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListePro> => {
       const response = await professionnelService.getEvenements({ limit: 50 });
 
       if (!response.success) {
@@ -101,14 +165,14 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       }
 
       const responseData = (response.data || {}) as Record<string, unknown>;
-      const evenementsList = ((responseData?.evenements || responseData?.items || []) as Record<string, unknown>[]);
+      const evenementsList = ((responseData?.evenements || responseData?.items || []) as ElementPro[]);
 
       // (Avant : une requête « programmes » par événement, jusqu'à 50 à chaque ouverture du
       // tableau de bord, pour un champ jamais affiché — la gestion d'un événement charge les siens.)
       if (evenementsList.length > 0) {
         return {
           items: evenementsList,
-          pagination: responseData?.pagination || { total: evenementsList.length }
+          pagination: (responseData?.pagination as ListePro['pagination'] | undefined) || { total: evenementsList.length }
         };
       }
 
@@ -141,12 +205,12 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     refetch: refetchServices
   } = useQuery({
     queryKey: ['dashboard-pro-services'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListePro> => {
       const response = await serviceService.getMyServices({ limit: 50, page: 1 });
       if (!response.success) throw new Error(response.error);
       const data = (response.data || {}) as Record<string, unknown>;
-      const items = (Array.isArray(data) ? data : ((data?.items || data?.data || []) as unknown[]));
-      const pagination = response.pagination || (data?.pagination as Record<string, unknown>) || { total: items.length };
+      const items = (Array.isArray(data) ? data : (data?.items || data?.data || [])) as ElementPro[];
+      const pagination = response.pagination || (data?.pagination as ListePro['pagination'] | undefined) || { total: items.length };
       return { items, pagination };
     },
     enabled: autoFetch,
@@ -161,28 +225,31 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     refetch: refetchArtisanats
   } = useQuery({
     queryKey: ['dashboard-pro-artisanats'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListePro> => {
       const response = await professionnelService.getArtisanats({ limit: 50, page: 1 });
       if (!response.success) throw new Error(response.error);
 
-      const responseData = response.data as Record<string, unknown> | unknown[] | null;
+      // Selon la route, la liste arrive dans « items », dans « artisanats » ou directement en tableau
+      const responseData: unknown = response.data ?? null;
+      const rd = (responseData && typeof responseData === 'object' && !Array.isArray(responseData))
+        ? responseData as { items?: ElementPro[]; artisanats?: ElementPro[]; pagination?: ListePro['pagination'] }
+        : null;
 
-      if (responseData && !Array.isArray(responseData) && (responseData as Record<string, unknown>)?.items) {
-        return responseData as { items: unknown[]; pagination: Record<string, unknown> };
+      if (rd?.items) {
+        return { items: rd.items, pagination: rd.pagination || {} };
       }
 
-      if (responseData && !Array.isArray(responseData) && (responseData as Record<string, unknown>)?.artisanats) {
-        const rd = responseData as Record<string, unknown>;
-        const artisanats = rd.artisanats as unknown[];
+      if (rd?.artisanats) {
+        const artisanats = rd.artisanats;
         return {
           items: artisanats,
-          pagination: (rd.pagination as Record<string, unknown>) || { total: artisanats.length || 0 }
+          pagination: rd.pagination || { total: artisanats.length || 0 }
         };
       }
 
       if (Array.isArray(responseData)) {
         return {
-          items: responseData,
+          items: responseData as ElementPro[],
           pagination: { total: responseData.length }
         };
       }
@@ -204,16 +271,22 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     refetch: refetchPatrimoines
   } = useQuery({
     queryKey: ['dashboard-pro-patrimoines'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListePro> => {
       const response = await patrimoineService.getMySites({ limit: 50 });
 
       if (!response.success) {
         throw new Error(response.error || 'Erreur lors du chargement des sites patrimoine');
       }
 
+      // Le serveur renvoie un tableau dans « data » (pagination à côté), et non la forme
+      // PaginatedResponse<SitePatrimoine> annoncée par le service ; les deux formes sont acceptées
+      const donnees: unknown = response.data;
+      const enListe = (donnees && typeof donnees === 'object' && !Array.isArray(donnees))
+        ? donnees as { items?: ElementPro[]; pagination?: ListePro['pagination'] }
+        : null;
       return {
-        items: response.data?.items || response.data || [],
-        pagination: response.data?.pagination || { total: 0 }
+        items: enListe?.items || (Array.isArray(donnees) ? donnees as ElementPro[] : []),
+        pagination: enListe?.pagination || { total: 0 }
       };
     },
     enabled: autoFetch,

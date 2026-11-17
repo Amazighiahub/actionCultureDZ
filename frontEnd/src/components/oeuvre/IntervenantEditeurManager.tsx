@@ -27,7 +27,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { oeuvreService } from '@/services/oeuvre.service';
-import { metadataService } from '@/services/metadata.service';
 import IntervenantModal from '@/components/modals/IntervenantModal';
 import { useParams } from 'react-router-dom';
 import { saisieEnAttente } from '@/hooks/useSaisieConservee';

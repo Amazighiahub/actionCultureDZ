@@ -139,7 +139,7 @@ vi.mock('@/components/ui/tabs', () => ({
 
 // Select simplifie
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, ...props }: any) => (
+  Select: ({ children, value, onValueChange }: any) => (
     <div data-testid="select-root" data-value={value}>
       {React.Children.map(children, (child: any) =>
         child ? React.cloneElement(child, { _onValueChange: onValueChange, _value: value }) : null
@@ -152,7 +152,7 @@ vi.mock('@/components/ui/select', () => ({
     </button>
   )),
   SelectValue: ({ placeholder, _value }: any) => <span>{_value || placeholder || ''}</span>,
-  SelectContent: ({ children, _onValueChange, _value }: any) => (
+  SelectContent: ({ children, _onValueChange }: any) => (
     <div role="listbox">{React.Children.map(children, (child: any) =>
       child ? React.cloneElement(child, { _onValueChange }) : null
     )}</div>

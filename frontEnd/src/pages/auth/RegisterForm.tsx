@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Palette, Mail, Lock, UserPlus, Upload, Calendar, Phone, MapPin, AlertCircle, Loader2, Check, Eye, EyeOff } from 'lucide-react';
+import { User, Palette, UserPlus, AlertCircle, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
@@ -24,7 +24,6 @@ import { FORMATS_IMAGE_ACCEPTES } from '@/utils/prepareImageForUpload';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS } from '@/types/models/auth.types';
 import { useWilayas } from '@/hooks/useGeographie';
 import GeoSelector from '@/components/shared/GeoSelector';
-import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 import { normaliserTelephone, telephoneValide } from '@/utils/telephone';
@@ -71,7 +70,7 @@ const CHAMP_DU_SERVEUR: Record<string, string> = {
 };
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { registerVisitor, registerProfessional, registerLoading } = useAuth();
   // Liste des wilayas : chargée par GeoSelector ; on attend seulement son chargement
@@ -460,8 +459,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         hasPhoto: !!photoUrl
       });
 
-      let success = false;
-      
       let registrationResult: { success: boolean; error?: string };
 
       if (userType === 'visiteur') {

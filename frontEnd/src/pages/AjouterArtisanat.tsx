@@ -131,7 +131,9 @@ const AjouterArtisanat: React.FC = () => {
     try {
       const response = await artisanatService.getForEdit(editId);
       if (response.success && response.data) {
-        const art = response.data as Record<string, unknown>;
+        // Le serveur renvoie plus de champs que le type Artisanat (prix_min, sur_commande, tags...) :
+        // copie en objet simple pour les lire un par un en vérifiant leur type
+        const art: Record<string, unknown> = { ...response.data };
         const toObj = (v: unknown): RequiredTranslatableValue => {
           if (typeof v === 'object' && v !== null) {
             const obj = v as Record<string, unknown>;
@@ -139,17 +141,24 @@ const AjouterArtisanat: React.FC = () => {
           }
           return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
         };
+        // Nombre reçu (les DECIMAL de MySQL arrivent en texte, ex. « 1500.00 ») ; rien sinon
+        const nombreRecu = (v: unknown): number | undefined => {
+          if (typeof v === 'number') return v;
+          if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
+          return undefined;
+        };
+        const oeuvre = response.data.Oeuvre;
         setFormData({
           // Nom et description sont portés par l'œuvre parente
-          nom: toObj(art.nom ?? (art.Oeuvre as Record<string, unknown> | undefined)?.titre),
-          description: toObj(art.description ?? (art.Oeuvre as Record<string, unknown> | undefined)?.description),
-          id_materiau: art.id_materiau || 0,
-          id_technique: art.id_technique || 0,
-          prix_min: (art.prix_min as number | undefined) ?? (art.prix != null ? Number(art.prix) : undefined),
-          prix_max: art.prix_max,
-          delai_fabrication: art.delai_fabrication,
-          sur_commande: art.sur_commande || false,
-          en_stock: art.en_stock,
+          nom: toObj(art.nom ?? oeuvre?.titre),
+          description: toObj(art.description ?? oeuvre?.description),
+          id_materiau: nombreRecu(art.id_materiau) || 0,
+          id_technique: nombreRecu(art.id_technique) || 0,
+          prix_min: nombreRecu(art.prix_min) ?? nombreRecu(art.prix),
+          prix_max: nombreRecu(art.prix_max),
+          delai_fabrication: nombreRecu(art.delai_fabrication),
+          sur_commande: Boolean(art.sur_commande),
+          en_stock: nombreRecu(art.en_stock),
           tags: (Array.isArray(art.tags) ? art.tags : []).map((t: unknown) => {
             if (typeof t === 'object' && t !== null && 'nom' in t) return (t as { nom: string }).nom;
             return typeof t === 'string' ? t : '';
@@ -472,7 +481,7 @@ const AjouterArtisanat: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {materiaux.map((m) => (
-                            <SelectItem key={m.id_materiau || m.id} value={String(m.id_materiau || m.id)}>
+                            <SelectItem key={m.id_materiau} value={String(m.id_materiau)}>
                               {getLocalizedName(m)}
                             </SelectItem>
                           ))}
@@ -504,7 +513,7 @@ const AjouterArtisanat: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {techniques.map((tech) => (
-                            <SelectItem key={tech.id_technique || tech.id} value={String(tech.id_technique || tech.id)}>
+                            <SelectItem key={tech.id_technique} value={String(tech.id_technique)}>
                               {getLocalizedName(tech)}
                             </SelectItem>
                           ))}

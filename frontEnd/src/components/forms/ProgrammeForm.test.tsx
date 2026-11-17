@@ -2,7 +2,7 @@
  * Tests pour ProgrammeForm - Formulaire de gestion des programmes d'événements
  * Couvre la validation des champs, les intervenants, et les options
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // ============================================================================
 // FONCTIONS DE VALIDATION EXTRAITES DU COMPOSANT

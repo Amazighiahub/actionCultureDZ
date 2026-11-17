@@ -11,7 +11,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,6 +60,9 @@ interface ArtisanatData {
   dimensions?: string;
   poids?: string;
   prix?: number;
+  /** Lus seulement s'ils sont présents (mots-clés et image du référencement) */
+  type_artisanat?: string;
+  image_url?: string;
   // Données étendues pour la page détail
   Oeuvre?: {
     id_oeuvre: number;
@@ -128,7 +130,6 @@ const ArtisanatDetail: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: unknown }>({ open: false, type: '', item: null });
   const { isAuthenticated, user: utilisateur } = useAuth();
 
   useEffect(() => {
@@ -171,28 +172,6 @@ const ArtisanatDetail: React.FC = () => {
       setError(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const _handleDeleteItem = (type: string, item: unknown) => {
-    setDeleteDialog({ open: true, type, item });
-  };
-
-  const confirmDelete = async () => {
-    const { type: _type, item: _item } = deleteDialog;
-    setDeleteDialog({ open: false, type: '', item: null });
-    try {
-      // TODO: Appel API suppression selon le type
-      toast({
-        title: t('common.deleted', 'Supprimé'),
-        description: t('common.deletedDesc', 'L\'élément a été supprimé')
-      });
-    } catch (err) {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('common.deleteError', 'Impossible de supprimer'),
-        variant: 'destructive'
-      });
     }
   };
 
@@ -282,7 +261,7 @@ const ArtisanatDetail: React.FC = () => {
   const artisan = artisanat?.Oeuvre?.Saiseur;
 
   const seoKeywords = [
-    td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom), (artisanat as Record<string, unknown>)?.type_artisanat as string | undefined,
+    td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom), artisanat?.type_artisanat,
     Materiau?.nom, Technique?.nom, 'artisanat algérien', 'artisanat traditionnel',
     'fait main', 'Algérie'
   ].filter(Boolean) as string[];
@@ -292,7 +271,7 @@ const ArtisanatDetail: React.FC = () => {
       <SEOHead
         title={td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || 'Artisanat'}
         description={td(artisanat?.Oeuvre?.description)?.substring(0, 160) || `Artisanat traditionnel algérien`}
-        image={(medias[0] as Record<string, unknown>)?.url_media as string || medias[0]?.url || (artisanat as Record<string, unknown>)?.image_url as string}
+        image={(medias[0] as Record<string, unknown>)?.url_media as string || medias[0]?.url || artisanat?.image_url}
         type="product"
         keywords={seoKeywords}
         jsonLd={[
@@ -702,24 +681,6 @@ const ArtisanatDetail: React.FC = () => {
           </div>
         </div>
       </main>
-
-      {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('common.confirmDelete', 'Confirmer la suppression')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('common.confirmDeleteDesc', 'Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Annuler')}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('common.delete', 'Supprimer')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Footer />
     </>

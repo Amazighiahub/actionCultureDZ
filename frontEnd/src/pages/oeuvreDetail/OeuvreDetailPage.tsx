@@ -20,7 +20,7 @@ import {
   Info, Users, Image, MessageCircle, Calendar, ArrowLeft,
   BookOpen, Sparkles, ThumbsUp, Send, Loader2,
   Share2, MapPin, CalendarCheck, ImageIcon,
-  Palette, Ruler, Frame, PenTool, Stamp, Weight, Tag
+  Palette, Ruler, Frame, PenTool, Weight, Tag
 } from 'lucide-react';
 
 // Composants partagés

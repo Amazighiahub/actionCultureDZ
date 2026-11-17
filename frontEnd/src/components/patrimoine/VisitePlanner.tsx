@@ -10,7 +10,7 @@ import { useShare } from '@/hooks/useShare';
 import { lienItineraire, texteParcours } from '@/utils/itineraireParcours';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { tarifAvecUnite } from '@/components/services/typesService';
-import { parcoursIntelligentService } from '@/services/parcours.service';
+import { parcoursIntelligentService, type ParcoursGenere } from '@/services/parcours.service';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Calendar,
   Clock,
   MapPin,
   Route,
@@ -44,7 +43,6 @@ import {
   Church,
   Loader2,
   Navigation,
-  Download,
   Share2,
   Printer,
   CheckCircle2,
@@ -93,31 +91,6 @@ const MARKER_COLORS: Record<string, string> = {
   default: '#6b7280',
 };
 
-interface ParcoursEtape {
-  id: number;
-  nom: string;
-  type: string;
-  latitude?: number;
-  longitude?: number;
-  distance: number;
-  duree: number;
-  description?: string;
-  image?: string;
-  horaires?: string;
-  note?: number;
-}
-
-interface ParcoursGenere {
-  etapes: ParcoursEtape[];
-  distanceTotale: number;
-  dureeEstimee: number;
-  pointsInteret: number;
-  services?: {
-    restaurants?: Array<{ id: number; nom: string; latitude?: number; longitude?: number; distance: number; telephone?: string; tarif_min?: number; tarif_max?: number }>;
-    hotels?: Array<{ id: number; nom: string; latitude?: number; longitude?: number; distance: number; telephone?: string; tarif_min?: number; tarif_max?: number }>;
-  };
-}
-
 // Icônes par type de site
 const TYPE_ICONS: Record<string, React.ElementType> = {
   monument: Landmark,
@@ -136,7 +109,6 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 const VisitePlanner: React.FC<VisitePlannerProps> = ({
   isOpen,
   onClose,
-  siteId,
   siteName,
   siteLatitude,
   siteLongitude,
@@ -209,6 +181,8 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
         includeHotels,
       });
 
+      // Réponse refusée ou vide : message d'erreur (avant : écran « résultat » avec un parcours vide)
+      if (!result.success || !result.data) throw result;
       setParcours(result.data);
       setStep('result');
     } catch (err) {

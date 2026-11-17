@@ -7,20 +7,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw,
+  Search, Edit, Trash2, Eye, RefreshCw,
   MapPin, Award, X, Landmark, AlertCircle, FileSpreadsheet
 } from 'lucide-react';
 
@@ -210,9 +203,8 @@ const AdminPatrimoineTab: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPatrimoines.map((item: any) => {
             const nom = getLocalizedText(item.nom, currentLang, 'Sans nom');
-            const description = getLocalizedText(item.description, currentLang);
             const wilaya = (item.wilaya as any)?.wilaya_name_ascii || item.wilaya?.nom || (item.Commune?.Daira?.Wilaya as any)?.wilaya_name_ascii || item.Commune?.Daira?.Wilaya?.nom || '';
-            const type = item.type || item.typePatrimoine || '';
+            const type: string = item.type || item.typePatrimoine || '';
             const imageUrl = item.image_url || item.medias?.[0]?.url;
 
             return (

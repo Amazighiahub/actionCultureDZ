@@ -9,9 +9,7 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
@@ -26,19 +24,15 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  BookOpen,
   Share2,
-  Bookmark,
   Heart,
   MessageCircle,
   Printer,
   CheckCircle,
   Award,
   Globe,
-  Hash,
   FileText,
   Loader2,
-  Link as LinkIcon,
   Star,
   ChevronUp,
   Send,
@@ -212,7 +206,8 @@ const ArticleViewPage: React.FC = () => {
   const inviterConnexion = useInviterConnexion();
 
   // États
-  const [oeuvre, setOeuvre] = useState<Oeuvre | null>(null);
+  // image_url : image principale ajoutée par le serveur (OeuvreDTO._addComputedFields), absente du type Oeuvre
+  const [oeuvre, setOeuvre] = useState<(Oeuvre & { image_url?: string }) | null>(null);
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -267,7 +262,7 @@ const ArticleViewPage: React.FC = () => {
       setScrollToTop(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Charger l'article et ses blocs
@@ -497,7 +492,8 @@ const ArticleViewPage: React.FC = () => {
         if (oi.Intervenant) {
           contributeurs.push({
             nom: `${getLocalizedText(oi.Intervenant.prenom)} ${getLocalizedText(oi.Intervenant.nom)}`,
-            role: oi.TypeUser?.nom || 'Contributeur',
+            // nom_type est multilingue côté serveur ; « nom » n'existait pas : toujours « Contributeur »
+            role: getLocalizedText(oi.TypeUser?.nom_type, i18n.language) || 'Contributeur',
             principal: oi.role_principal,
             photo: oi.Intervenant.photo_url,
             organisation: oi.Intervenant.organisation
@@ -687,17 +683,17 @@ const ArticleViewPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       {oeuvre && (
         <SEOHead
-          title={oeuvre.titre || 'Article'}
-          description={oeuvre.description?.substring(0, 160) || undefined}
-          image={oeuvre.image_url || oeuvre.couverture_url || undefined}
+          title={getLocalizedText(oeuvre.titre, i18n.language) || 'Article'}
+          description={getLocalizedText(oeuvre.description, i18n.language).substring(0, 160) || undefined}
+          image={oeuvre.image_url || undefined}
           type="article"
-          keywords={oeuvre.Tags?.map((tag) => tag.nom) || []}
+          keywords={oeuvre.Tags?.map((tag) => getLocalizedText(tag.nom, i18n.language)) || []}
           jsonLd={[
             buildArticleJsonLd(oeuvre),
             buildBreadcrumbJsonLd([
               { name: 'Accueil', url: '/' },
               { name: 'Oeuvres', url: '/oeuvres' },
-              { name: oeuvre.titre || 'Article', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4) },
+              { name: getLocalizedText(oeuvre.titre, i18n.language) || 'Article', url: oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4) },
             ]),
           ]}
         />
@@ -822,7 +818,7 @@ const ArticleViewPage: React.FC = () => {
           }
         </div>
 
-        <h1 className="mag-titre" dir={sensContenu} lang={langueContenu}>{oeuvre.titre}</h1>
+        <h1 className="mag-titre" dir={sensContenu} lang={langueContenu}>{getLocalizedText(oeuvre.titre, i18n.language)}</h1>
 
         {languesLecture.length > 1 &&
         <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm" aria-label={t('article.lireEn', 'Lire en')}>
@@ -1171,7 +1167,7 @@ const ArticleViewPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2">
                     {oeuvre.Tags.map((tag) =>
                 <Badge key={tag.id_tag} variant="outline">
-                        #{tag.nom}
+                        #{getLocalizedText(tag.nom, i18n.language)}
                       </Badge>
                 )}
                   </div>

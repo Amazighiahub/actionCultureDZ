@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { favoriService } from '@/services/favori.service';
-import type { Favori, FavoriStats, PopularItem, GroupedFavoris } from '@/services/favori.service';
+import type { Favori, GroupedFavoris } from '@/services/favori.service';
 import { useToast } from '@/components/ui/use-toast';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { PaginationParams } from '@/config/api';
@@ -263,7 +263,17 @@ export function useFavoris(options: UseFavorisOptions = {}) {
   // Compteurs par type
   const getCounts = useCallback(() => {
     if (stats) {
-      return stats.favoris_par_type;
+      // Le serveur renvoie { total, byType: { oeuvre, evenement, lieu, artisanat, service } } (clés au
+      // singulier, absentes quand il n'y a aucun favori de ce type). Avant : lecture de
+      // « favoris_par_type », qui n'existe pas, donc des compteurs vides dès que les statistiques arrivaient.
+      const parType: Partial<Record<string, number>> = stats.byType;
+      return {
+        oeuvres: parType.oeuvre ?? 0,
+        evenements: parType.evenement ?? 0,
+        lieux: parType.lieu ?? 0,
+        artisanats: parType.artisanat ?? 0,
+        services: parType.service ?? 0
+      };
     }
     return {
       oeuvres: 0,

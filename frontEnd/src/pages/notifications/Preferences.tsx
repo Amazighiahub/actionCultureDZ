@@ -59,7 +59,7 @@ const PreferenceSection: React.FC<{
   description?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ title, description, icon, children }) => {const { t } = useTranslation();
+}> = ({ title, description, icon, children }) => {
   return (
     <div className="bg-card rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-start gap-3 mb-4">
@@ -83,7 +83,7 @@ const PreferenceItem: React.FC<{
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
-}> = ({ label, description, checked, onChange, disabled = false }) => {const { t } = useTranslation();
+}> = ({ label, description, checked, onChange, disabled = false }) => {
   return (
     <label className={`flex items-start justify-between ${disabled ? 'opacity-60' : ''}`}>
       <div className="flex-1 pe-4">

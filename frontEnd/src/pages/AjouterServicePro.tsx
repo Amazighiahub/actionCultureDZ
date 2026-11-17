@@ -18,17 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RequiredLabel } from '@/components/ui/required-label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   Save,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   MapPin,
   Building2,
   Utensils,
@@ -39,10 +35,8 @@ import {
   Phone,
   Mail,
   Globe,
-  Clock,
   DollarSign,
-  Camera,
-  Upload
+  Camera
 } from 'lucide-react';
 import { LieuSelector } from '@/components/LieuSelector';
 import { useAuth } from '@/hooks/useAuth';
@@ -82,6 +76,25 @@ const AIDE_TARIF: Record<string, string> = {
 
 // Texte multilingue du formulaire : type commun (types/common/multilingual.types)
 type MultiLangText = RequiredTranslatableValue;
+
+/** Texte reçu (objet multilingue, ancien texte simple ou rien) mis en texte complet, une case par langue */
+const toML = (v: unknown): MultiLangText => {
+  if (typeof v === 'object' && v !== null) {
+    const obj = v as Record<string, unknown>;
+    const langue = (code: string): string => {
+      const texte = obj[code];
+      return typeof texte === 'string' ? texte : '';
+    };
+    return { fr: langue('fr'), ar: langue('ar'), en: langue('en'), 'tz-ltn': langue('tz-ltn'), 'tz-tfng': langue('tz-tfng') };
+  }
+  return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+};
+
+/** Champ texte reçu de l'API : chaîne vide s'il manque ou n'est pas du texte */
+const texteRecu = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+/** Nombre ou texte reçu (ex. DECIMAL de MySQL renvoyé en texte) remis en texte pour le champ */
+const nombreEnTexte = (v: unknown): string => (typeof v === 'number' || typeof v === 'string' ? String(v) : '');
 
 interface ServiceFormData {
   nom: MultiLangText;
@@ -132,7 +145,7 @@ const AjouterServicePro: React.FC = () => {
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
   const [searchParams] = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { direction } = useRTL();
@@ -168,27 +181,20 @@ const AjouterServicePro: React.FC = () => {
       const result = await httpClient.get<Record<string, unknown>>(`/services/${editId}`, { i18n: 'all' });
       if (result.success && result.data) {
         const svc = result.data;
-        const toML = (v: unknown): MultiLangText => {
-          if (typeof v === 'object' && v !== null) {
-            const obj = v as Record<string, unknown>;
-            return { fr: (obj.fr as string) || '', ar: (obj.ar as string) || '', en: (obj.en as string) || '', 'tz-ltn': (obj['tz-ltn'] as string) || '', 'tz-tfng': (obj['tz-tfng'] as string) || '' };
-          }
-          return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
-        };
         setFormData({
           nom: toML(svc.nom),
           description: toML(svc.description),
-          type_service: svc.type_service || '',
-          id_lieu: svc.id_lieu || null,
-          latitude: svc.latitude?.toString() || '',
-          longitude: svc.longitude?.toString() || '',
+          type_service: texteRecu(svc.type_service),
+          id_lieu: typeof svc.id_lieu === 'number' && svc.id_lieu ? svc.id_lieu : null,
+          latitude: nombreEnTexte(svc.latitude),
+          longitude: nombreEnTexte(svc.longitude),
           adresse: toML(svc.adresse),
-          telephone: svc.telephone || '',
-          email: svc.email || '',
-          site_web: svc.site_web || '',
+          telephone: texteRecu(svc.telephone),
+          email: texteRecu(svc.email),
+          site_web: texteRecu(svc.site_web),
           horaires: toML(svc.horaires),
-          tarif_min: svc.tarif_min?.toString() || '',
-          tarif_max: svc.tarif_max?.toString() || '',
+          tarif_min: nombreEnTexte(svc.tarif_min),
+          tarif_max: nombreEnTexte(svc.tarif_max),
           disponible: svc.disponible !== false,
           equipements: Array.isArray(svc.equipements) ? svc.equipements.map(String) : [],
           langues: Array.isArray(svc.langues) ? svc.langues.map(String) : [],
@@ -324,16 +330,6 @@ const AjouterServicePro: React.FC = () => {
       delete next[field];
       return next;
     });
-  };
-
-  // Mettre à jour un champ multilingue
-  const updateMultiLangField = (field: keyof ServiceFormData, lang: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: { ...(prev[field] as MultiLangText), [lang]: value },
-    }));
-    setIsDirty(true);
-    setError(null);
   };
 
   // Valider le formulaire
@@ -556,11 +552,13 @@ const AjouterServicePro: React.FC = () => {
               <CardContent className="space-y-4">
                 {/* Nom */}
                 <div className="space-y-2">
-                  <RequiredLabel required>{t('service.name', 'Nom du service')}</RequiredLabel>
+                  {/* Libellé dans le champ : relié à la zone de saisie (avant, libellé vide et id « undefined-fr ») */}
                   <MultiLangInput
                     name="nom"
+                    label={t('service.name', 'Nom du service')}
+                    required
                     value={formData.nom}
-                    onChange={(value) => updateField('nom', value)}
+                    onChange={(value) => updateField('nom', toML(value))}
                     requiredLanguages={[]}
                     placeholder="Ex: Restaurant Le Casbah"
                     // Message et marque rouge sur la zone de la langue ouverte (aria-invalid passé ici était ignoré)
@@ -570,12 +568,14 @@ const AjouterServicePro: React.FC = () => {
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label>{t('service.description', 'Description')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                  {/* « multiline » n'existait pas : la description tenait sur une seule ligne */}
                   <MultiLangInput
+                    name="description"
+                    label={`${t('service.description', 'Description')} (${t('common.optional')})`}
                     value={formData.description}
-                    onChange={(value) => updateField('description', value)}
+                    onChange={(value) => updateField('description', toML(value))}
                     placeholder={t('service.descriptionPlaceholder', 'Décrivez votre service...')}
-                    multiline
+                    type="textarea"
                     requiredLanguages={[]}
                   />
                 </div>
@@ -649,10 +649,11 @@ const AjouterServicePro: React.FC = () => {
 
                 {/* Adresse et coordonnées */}
                 <div className="space-y-2">
-                  <Label>{t('service.address', 'Adresse')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <MultiLangInput
+                    name="adresse"
+                    label={`${t('service.address', 'Adresse')} (${t('common.optional')})`}
                     value={formData.adresse}
-                    onChange={(value) => updateField('adresse', value)}
+                    onChange={(value) => updateField('adresse', toML(value))}
                     placeholder={t('service.addressPlaceholder', 'Adresse complète...')}
                     requiredLanguages={[]}
                   />
@@ -728,13 +729,11 @@ const AjouterServicePro: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    {t('service.hours', 'Horaires')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
-                  </Label>
                   <MultiLangInput
+                    name="horaires"
+                    label={`${t('service.hours', 'Horaires')} (${t('common.optional')})`}
                     value={formData.horaires}
-                    onChange={(value) => updateField('horaires', value)}
+                    onChange={(value) => updateField('horaires', toML(value))}
                     placeholder={t('service.hoursPlaceholder', 'Ex : tous les jours, 9 h – 18 h')}
                     requiredLanguages={[]}
                   />

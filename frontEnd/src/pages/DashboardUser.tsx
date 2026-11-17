@@ -28,7 +28,7 @@ import {
   Pencil,
   Hammer,
 } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import ApplicationMobileCard from '@/components/user/ApplicationMobileCard';
 import MesSuivisCard from '@/components/user/MesSuivisCard';
@@ -59,6 +59,27 @@ import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lireSpecialites } from '@/utils/specialites';
 import { lienWebValide } from '@/utils/validationChamps';
 
+/**
+ * Champs lus sur l'élément d'un favori. Le serveur traduit les textes, mais un champ
+ * peut encore arriver multilingue : on passe toujours par getLocalizedText.
+ */
+interface EntiteFavori {
+  titre?: unknown;
+  nom?: unknown;
+  nom_evenement?: unknown;
+  auteur?: unknown;
+  lieu?: unknown;
+  wilaya?: unknown;
+  type_lieu?: unknown;
+  date_debut?: string;
+  TypeOeuvre?: { nom_type?: unknown };
+  Users?: Array<{ nom?: unknown }>;
+  Lieu?: { nom?: unknown };
+  Commune?: { Daira?: { Wilaya?: { nom?: unknown } } };
+}
+const entiteDe = (fav: { entite?: Record<string, unknown> }): EntiteFavori | undefined =>
+  fav.entite as EntiteFavori | undefined;
+
 const DashboardUser = () => {
   const { user } = useAuth();
   const { isProfessional } = usePermissions();
@@ -67,7 +88,6 @@ const DashboardUser = () => {
   const onglet = searchParams.get('onglet') || 'favoris';
   const { t, i18n } = useTranslation();
   const { formatDate } = useFormatDate();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Notifications via React Query
@@ -128,31 +148,41 @@ const DashboardUser = () => {
   const groupedFavoris = favoris as GroupedFavoris | null;
 
   // Extraire les données des favoris
+  const lang = i18n.language;
   const mesFavoris = {
-    oeuvres: groupedFavoris?.oeuvres?.map(fav => ({
-      id: fav.id_entite,
-      favoriId: fav.id_favori,
-      titre: fav.entite?.titre || 'Sans titre',
-      type: fav.entite?.TypeOeuvre?.nom_type || 'Œuvre',
-      auteur: fav.entite?.Users?.[0]?.nom || fav.entite?.auteur || '',
-      ajouteLe: fav.date_ajout || fav.date_creation
-    })) || [],
-    evenements: groupedFavoris?.evenements?.map(fav => ({
-      id: fav.id_entite,
-      favoriId: fav.id_favori,
-      nom: fav.entite?.nom_evenement || fav.entite?.titre || 'Sans titre',
-      date: fav.entite?.date_debut,
-      lieu: fav.entite?.Lieu?.nom || fav.entite?.lieu || '',
-      ajouteLe: fav.date_ajout || fav.date_creation
-    })) || [],
-    sites: groupedFavoris?.lieux?.map(fav => ({
-      id: fav.id_entite,
-      favoriId: fav.id_favori,
-      nom: fav.entite?.nom || 'Sans nom',
-      type: fav.entite?.type_lieu || 'Site',
-      wilaya: fav.entite?.Commune?.Daira?.Wilaya?.nom || fav.entite?.wilaya || '',
-      ajouteLe: fav.date_ajout || fav.date_creation
-    })) || [],
+    oeuvres: groupedFavoris?.oeuvres?.map(fav => {
+      const e = entiteDe(fav);
+      return {
+        id: fav.id_entite,
+        favoriId: fav.id_favori,
+        titre: getLocalizedText(e?.titre, lang, 'Sans titre'),
+        type: getLocalizedText(e?.TypeOeuvre?.nom_type, lang, 'Œuvre'),
+        auteur: getLocalizedText(e?.Users?.[0]?.nom, lang) || getLocalizedText(e?.auteur, lang),
+        ajouteLe: fav.date_ajout || fav.date_creation
+      };
+    }) || [],
+    evenements: groupedFavoris?.evenements?.map(fav => {
+      const e = entiteDe(fav);
+      return {
+        id: fav.id_entite,
+        favoriId: fav.id_favori,
+        nom: getLocalizedText(e?.nom_evenement, lang) || getLocalizedText(e?.titre, lang, 'Sans titre'),
+        date: e?.date_debut,
+        lieu: getLocalizedText(e?.Lieu?.nom, lang) || getLocalizedText(e?.lieu, lang),
+        ajouteLe: fav.date_ajout || fav.date_creation
+      };
+    }) || [],
+    sites: groupedFavoris?.lieux?.map(fav => {
+      const e = entiteDe(fav);
+      return {
+        id: fav.id_entite,
+        favoriId: fav.id_favori,
+        nom: getLocalizedText(e?.nom, lang, 'Sans nom'),
+        type: getLocalizedText(e?.type_lieu, lang, 'Site'),
+        wilaya: getLocalizedText(e?.Commune?.Daira?.Wilaya?.nom, lang) || getLocalizedText(e?.wilaya, lang),
+        ajouteLe: fav.date_ajout || fav.date_creation
+      };
+    }) || [],
     artisanats: groupedFavoris?.artisanats?.map(fav => ({
       id: fav.id_entite,
       favoriId: fav.id_favori,

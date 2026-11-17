@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, it, test, expect, vi } from 'vitest';
 import { getSafeRedirectPath, safeExternalUrl, getAllowedEmbedUrl } from '../safeUrl';
 
 describe('getSafeRedirectPath', () => {

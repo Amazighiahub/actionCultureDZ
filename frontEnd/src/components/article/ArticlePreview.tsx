@@ -83,22 +83,25 @@ const renderPreviewBlock = (block: ArticleBlock, index: number, t: TFunction) =>
 
     case 'list': {
       if (!isListBlock(block)) return null;
+      // contenu_json est typé « any » dans ArticleBlock : la garde isListBlock ne le précise pas
+      const items: string[] = block.contenu_json;
       return block.metadata?.listType === 'ordered' ? (
-        <ol key={index}>{block.contenu_json.map((item, i) => <li key={i}>{item}</li>)}</ol>
+        <ol key={index}>{items.map((item, i) => <li key={i}>{item}</li>)}</ol>
       ) : (
-        <ul key={index}>{block.contenu_json.map((item, i) => <li key={i}>{item}</li>)}</ul>
+        <ul key={index}>{items.map((item, i) => <li key={i}>{item}</li>)}</ul>
       );
     }
 
     case 'table': {
       if (!isTableBlock(block)) return null;
+      const tableau: { headers: string[]; rows: string[][] } = block.contenu_json;
       return (
         <table key={index}>
           <thead>
-            <tr>{block.contenu_json.headers.map((header, i) => <th key={i}>{header}</th>)}</tr>
+            <tr>{tableau.headers.map((header, i) => <th key={i}>{header}</th>)}</tr>
           </thead>
           <tbody>
-            {block.contenu_json.rows.map((row, i) => (
+            {tableau.rows.map((row, i) => (
               <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
             ))}
           </tbody>

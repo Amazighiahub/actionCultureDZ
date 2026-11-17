@@ -13,7 +13,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 // ---------------------------------------------------------------------------
 // vi.hoisted — stableT pour éviter la boucle useEffect([..., t])
@@ -99,7 +98,7 @@ vi.mock('@/services/httpClient', () => ({
 
 // ProgrammeForm — mock simplifié exposant les callbacks et initialData
 vi.mock('@/components/forms/ProgrammeForm', () => ({
-  default: ({ eventId, initialData, onSubmit, onCancel, mode, loading, error, success, lieux, users }: any) => (
+  default: ({ eventId, initialData, onSubmit, onCancel, mode, loading, error, success, lieux }: any) => (
     <div data-testid="programme-form">
       <span data-testid="form-mode">{mode}</span>
       <span data-testid="form-event-id">{eventId}</span>

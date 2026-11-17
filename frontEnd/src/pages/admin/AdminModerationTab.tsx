@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -230,6 +230,7 @@ const AdminModerationTab: React.FC = () => {
         <div className="space-y-4">
           {filteredSignalements.map((signalement: any) => {
             const TypeIcon = getTypeIcon(signalement.type);
+            const typeSignale: string = signalement.type;
             const reasonKey = RAISONS_SIGNALEMENT_CONFIG[signalement.reason];
 
             return (
@@ -240,7 +241,7 @@ const AdminModerationTab: React.FC = () => {
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <TypeIcon className="h-4 w-4 text-muted-foreground" />
                         <Badge variant="outline">
-                          {t(`admin.moderation.types.${signalement.type}`, signalement.type)}
+                          {t(`admin.moderation.types.${typeSignale}`, typeSignale)}
                         </Badge>
                         <Badge variant="secondary">
                           {reasonKey ? t(reasonKey, signalement.reason) : signalement.reason}

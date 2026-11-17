@@ -41,7 +41,6 @@ import {
 import { patrimoineService } from '@/services/patrimoine.service';
 import MultiLangInput from '@/components/MultiLangInput';
 import GeoSelector from '@/components/shared/GeoSelector';
-import { useAuth } from '@/hooks/useAuth';
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
@@ -95,7 +94,6 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { direction } = useRTL();
-  const { user } = useAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const parentId = parseInt(searchParams.get('parent') || '', 10) || null;

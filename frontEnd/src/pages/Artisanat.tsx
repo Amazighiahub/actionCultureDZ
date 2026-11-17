@@ -38,7 +38,10 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { sansAccent } from '@/utils/slug';
 
 
-import ArtisanatCard from '@/components/artisanat/ArtisanatCard';
+import ArtisanatCard, { type ArtisanatCarteDonnees } from '@/components/artisanat/ArtisanatCard';
+
+// Clé de la carte : le serveur renvoie id_artisanat (le type du service ne connaît que id)
+const cleArtisanat = (a: ArtisanatCarteDonnees) => a.id_artisanat || a.id;
 
 // Liens du menu (?materiau=bois…) : slug du nom français ; « bijoux » n'est pas un matériau
 const MATERIAU_ALIASES: Record<string, string> = { bijoux: 'argent' };
@@ -298,7 +301,7 @@ const Artisanat: React.FC = () => {
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {displayedArtisanats.map((artisanat) => (
                   <ArtisanatCard
-                    key={artisanat.id_artisanat || artisanat.id}
+                    key={cleArtisanat(artisanat)}
                     artisanat={artisanat}
                   />
                 ))}

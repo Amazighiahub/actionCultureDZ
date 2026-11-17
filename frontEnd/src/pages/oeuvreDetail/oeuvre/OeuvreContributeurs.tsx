@@ -4,10 +4,9 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Users, Award, Star, ExternalLink } from 'lucide-react';
+import { Users, Award, Star } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';

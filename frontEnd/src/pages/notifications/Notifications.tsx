@@ -290,7 +290,11 @@ export default function NotificationsPage() {
                 <Filter className="w-4 h-4" />{t("notifications_notifications.filtrer")}
 
               </h2>
-              <Select value={filter} onValueChange={(v) => setFilter(v)}>
+              <Select value={filter} onValueChange={(v) => {
+                // La liste ne propose que les valeurs de notificationTypes : on retrouve la valeur typée
+                const choix = notificationTypes.find((type) => type.value === v);
+                if (choix) setFilter(choix.value);
+              }}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>

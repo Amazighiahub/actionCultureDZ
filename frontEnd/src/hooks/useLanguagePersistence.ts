@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export const useLanguagePersistence = () => {
   const { i18n } = useTranslation();
-  const { isAuthenticated } = useAuth();
   
   // Clé spéciale pour stocker la langue préférée de l'utilisateur
   const USER_LANG_KEY = 'user_preferred_language';

@@ -40,7 +40,7 @@ describe('evenementService', () => {
 
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/evenements/9'));
       expect(result.success).toBe(true);
-      expect(result.data.id_evenement).toBe(9);
+      expect(result.data?.id_evenement).toBe(9);
     });
   });
 
@@ -59,7 +59,7 @@ describe('evenementService', () => {
     it('appelle GET /evenements/:id/medias', async () => {
       mockGet.mockResolvedValue({ success: true, data: [] });
 
-      const result = await evenementService.getMedias(9);
+      await evenementService.getMedias(9);
 
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/evenements/9/medias'));
     });
@@ -69,7 +69,7 @@ describe('evenementService', () => {
     it('appelle GET /evenements/:id/participants/public', async () => {
       mockGet.mockResolvedValue({ success: true, data: { participants: [], total: 0 } });
 
-      const result = await evenementService.getPublicParticipants(9);
+      await evenementService.getPublicParticipants(9);
 
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/evenements/9/participants/public'));
     });
@@ -127,7 +127,7 @@ describe('evenementService', () => {
     it('appelle DELETE /evenements/:id/register', async () => {
       mockDelete.mockResolvedValue({ success: true });
 
-      const result = await evenementService.desinscription(9);
+      await evenementService.desinscription(9);
 
       expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining('/evenements/9'));
     });
@@ -141,7 +141,7 @@ describe('evenementService', () => {
 
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/evenements/9/qrcode'));
       expect(result.success).toBe(true);
-      expect(result.data.qr_data_url).toBeDefined();
+      expect(result.data?.qr_data_url).toBeDefined();
     });
   });
 });

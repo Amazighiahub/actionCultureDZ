@@ -121,7 +121,9 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     const cacheKey = `cache_${API_ENDPOINTS.favoris.check(type, entityId)}`;
     localStorage.removeItem(cacheKey);
     
-    const response = await httpClient.get<{ isFavorite?: boolean; is_favorite?: boolean }>(API_ENDPOINTS.favoris.check(type, entityId));
+    // isFavorite peut aussi arriver à la racine de la réponse (ancien format)
+    const response: ApiResponse<{ isFavorite?: boolean; is_favorite?: boolean; favori?: unknown }> & { isFavorite?: boolean } =
+      await httpClient.get<{ isFavorite?: boolean; is_favorite?: boolean; favori?: unknown }>(API_ENDPOINTS.favoris.check(type, entityId));
     
     // L'API retourne probablement :
     // - Soit { success: true, data: { isFavorite: boolean } }
@@ -130,13 +132,13 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     // Vérifier où se trouve isFavorite
     const isFavorite = response.data?.isFavorite || 
                       response.data?.is_favorite || 
-                      (response as Record<string, unknown>).isFavorite || 
+                      response.isFavorite || 
                       false;
     
     return {
       success: response.success,
       isFavorite: isFavorite,
-      data: response.data
+      data: response.data ? { ...response.data } : null
     };
   } catch (error) {
     return {

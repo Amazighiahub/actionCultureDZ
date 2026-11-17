@@ -65,56 +65,52 @@ class CommentaireService {
   private endpoint = '/commentaires';
 
   /**
-   * ✅ Récupérer les commentaires d'une œuvre
-   * Gère gracieusement les erreurs 501 (Not Implemented)
+   * Liste des commentaires (œuvre ou événement), au format paginé commun { items, pagination }.
+   * Gère gracieusement les erreurs (ex. 501 Not Implemented) : liste vide, sans erreur.
    */
-  async getCommentairesOeuvre(
-    oeuvreId: number, 
-    page = 1, 
-    limit = 10
+  private async listeCommentaires(
+    url: string,
+    page: number,
+    limit: number
   ): Promise<ApiResponse<PaginatedResponse<Commentaire>>> {
+    const listeVide: PaginatedResponse<Commentaire> = { items: [], pagination: { total: 0, page, pages: 1, limit } };
     try {
       const response = await httpClient.get<{
         commentaires: Commentaire[];
         pagination: { total: number; page: number; pages: number; limit: number };
-      }>(`${this.endpoint}/oeuvre/${oeuvreId}`, { page, limit });
+      }>(url, { page, limit });
 
       if (response.success && response.data) {
         return {
           success: true,
           data: {
             items: response.data.commentaires || [],
-            total: response.data.pagination?.total || 0,
-            page: response.data.pagination?.page || page,
-            pages: response.data.pagination?.pages || 1,
-            limit: response.data.pagination?.limit || limit,
+            pagination: {
+              total: response.data.pagination?.total || 0,
+              page: response.data.pagination?.page || page,
+              pages: response.data.pagination?.pages || 1,
+              limit: response.data.pagination?.limit || limit,
+            },
           }
         };
       }
 
       // Si pas de succès, retourner liste vide sans erreur
-      return {
-        success: true,
-        data: {
-          items: [],
-          total: 0,
-          page,
-          pages: 1,
-          limit,
-        }
-      };
-    } catch (error: unknown) {
-      return {
-        success: true, // ← Retourner succès avec liste vide
-        data: {
-          items: [],
-          total: 0,
-          page,
-          pages: 1,
-          limit,
-        }
-      };
+      return { success: true, data: listeVide };
+    } catch {
+      return { success: true, data: listeVide }; // ← Retourner succès avec liste vide
     }
+  }
+
+  /**
+   * ✅ Récupérer les commentaires d'une œuvre
+   */
+  async getCommentairesOeuvre(
+    oeuvreId: number, 
+    page = 1, 
+    limit = 10
+  ): Promise<ApiResponse<PaginatedResponse<Commentaire>>> {
+    return this.listeCommentaires(`${this.endpoint}/oeuvre/${oeuvreId}`, page, limit);
   }
 
   /**
@@ -125,47 +121,7 @@ class CommentaireService {
     page = 1, 
     limit = 10
   ): Promise<ApiResponse<PaginatedResponse<Commentaire>>> {
-    try {
-      const response = await httpClient.get<{
-        commentaires: Commentaire[];
-        pagination: { total: number; page: number; pages: number; limit: number };
-      }>(`${this.endpoint}/evenement/${evenementId}`, { page, limit });
-
-      if (response.success && response.data) {
-        return {
-          success: true,
-          data: {
-            items: response.data.commentaires || [],
-            total: response.data.pagination?.total || 0,
-            page: response.data.pagination?.page || page,
-            pages: response.data.pagination?.pages || 1,
-            limit: response.data.pagination?.limit || limit,
-          }
-        };
-      }
-
-      return {
-        success: true,
-        data: {
-          items: [],
-          total: 0,
-          page,
-          pages: 1,
-          limit,
-        }
-      };
-    } catch (error: unknown) {
-      return {
-        success: true,
-        data: {
-          items: [],
-          total: 0,
-          page,
-          pages: 1,
-          limit,
-        }
-      };
-    }
+    return this.listeCommentaires(`${this.endpoint}/evenement/${evenementId}`, page, limit);
   }
 
   /**

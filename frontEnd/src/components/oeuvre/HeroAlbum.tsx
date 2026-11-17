@@ -45,7 +45,7 @@ interface HeroAlbumProps {
 }
 
 const HeroAlbum: React.FC<HeroAlbumProps> = ({
-  oeuvre, medias, mainImage, titre, description,
+  oeuvre, mainImage, titre, description,
   mainContributors, gt, viewCount, commentsCount,
   isFavorite, favoriteLoading, onToggleFavorite, shareButton,
   playableMedia, handlePlay, noMediaMsg,

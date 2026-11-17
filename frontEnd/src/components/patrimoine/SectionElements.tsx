@@ -231,7 +231,7 @@ export default function SectionElements({
     if (champManquant(addForm)) return;
     setAddSaving(true);
     try {
-      const res = await httpClient.post<{ success: boolean; data: PatrimoineElement }>(
+      const res = await httpClient.post<PatrimoineElement>(
         `/patrimoine/${lieuId}/${cfg.endpoint}`,
         addForm.payload()
       );
@@ -264,7 +264,7 @@ export default function SectionElements({
     if (champManquant(editForm)) return;
     setEditSaving(true);
     try {
-      const res = await httpClient.patch<{ success: boolean; data: PatrimoineElement }>(
+      const res = await httpClient.patch<PatrimoineElement>(
         `/patrimoine/${lieuId}/${cfg.endpoint}/${editItem.id}`,
         editForm.payload()
       );

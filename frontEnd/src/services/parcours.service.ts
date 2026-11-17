@@ -18,26 +18,34 @@ interface Etape {
   type?: string;
 }
 
-interface ParcoursIntelligent {
-  id_parcours?: number;
-  nom_parcours: TranslatableValue;
-  description: TranslatableValue;
-  duree_estimee: number; // en minutes
-  distance_km: number;
-  difficulte: 'facile' | 'moyen' | 'difficile';
-  theme?: string;
-  point_depart?: string;
-  point_arrivee?: string;
-  etapes: Etape[];
-  qrCodeParcours?: string;
+/**
+ * Parcours personnalisé tel que le serveur le renvoie (services/parcours/parcoursService.js, 2026-11-17 :
+ * l'ancien type « ParcoursIntelligent » ne correspondait pas à la réponse).
+ */
+interface ParcoursEtape {
+  id: number;
+  nom: string;
+  type: string;
+  latitude?: number;
+  longitude?: number;
+  distance: number;
+  duree: number;
+  description?: string;
+  image?: string;
+  horaires?: string;
+  note?: number;
+}
+
+interface ServiceProche { id: number; nom: string; latitude?: number; longitude?: number; distance: number; telephone?: string; tarif_min?: number; tarif_max?: number }
+
+interface ParcoursGenere {
+  etapes: ParcoursEtape[];
+  distanceTotale: number;
+  dureeEstimee: number;
+  pointsInteret: number;
   services?: {
-    restaurants?: Record<string, unknown>[];
-    hotels?: Record<string, unknown>[];
-  };
-  statistiques?: {
-    vues?: number;
-    utilisations?: number;
-    notesMoyenne?: string;
+    restaurants?: ServiceProche[];
+    hotels?: ServiceProche[];
   };
 }
 
@@ -82,14 +90,15 @@ class ParcoursIntelligentService {
   private baseUrl = '/parcours';
 
   // Générer un parcours personnalisé
-  async generatePersonnalise(params: GenerateParcoursParams): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>(`${this.baseUrl}/personnalise`, params);
+  async generatePersonnalise(params: GenerateParcoursParams): Promise<ApiResponse<ParcoursGenere>> {
+    return httpClient.post<ParcoursGenere>(`${this.baseUrl}/personnalise`, params);
   }
 }
 
 export const parcoursIntelligentService = new ParcoursIntelligentService();
 export type {
-  ParcoursIntelligent,
+  ParcoursGenere,
+  ParcoursEtape,
   CreateParcoursData,
   GenerateParcoursParams,
   ParcoursStats,

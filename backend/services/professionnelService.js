@@ -218,12 +218,40 @@ class ProfessionnelService {
   // DASHBOARD
   // ========================================================================
 
+  /**
+   * Vues de tous les contenus du professionnel : œuvres et articles, événements, artisanat (table vues),
+   * et fiches de ses services (service_stat). 2026-11-17 : la carte « Vues totales » restait à 0, le
+   * serveur n'envoyait jamais ce chiffre.
+   */
+  async _vuesTotales(userId) {
+    const { Vue, Oeuvre, Evenement, Artisanat, Service } = this.models;
+    if (!Vue) return 0;
+    const ids = (lignes, cle) => lignes.map((l) => l[cle]);
+    const [oeuvres, evenements, artisanats, services] = await Promise.all([
+      Oeuvre.findAll({ where: { saisi_par: userId }, attributes: ['id_oeuvre'], raw: true }),
+      Evenement.findAll({ where: { id_user: userId }, attributes: ['id_evenement'], raw: true }),
+      Artisanat ? Artisanat.findAll({ attributes: ['id_artisanat'], include: [{ model: Oeuvre, where: { saisi_par: userId }, attributes: [], required: true }], raw: true }) : [],
+      Service ? Service.findAll({ where: { id_user: userId }, attributes: ['id'], raw: true }) : []
+    ]);
+    const cibles = [
+      ['oeuvre', ids(oeuvres, 'id_oeuvre')], ['evenement', ids(evenements, 'id_evenement')], ['artisanat', ids(artisanats, 'id_artisanat')]
+    ].filter(([, liste]) => liste.length).map(([type, liste]) => ({ type_entite: type, id_entite: liste }));
+    const vues = cibles.length ? await Vue.count({ where: { [Op.or]: cibles } }) : 0;
+    let vuesServices = 0;
+    if (services.length) {
+      const [[ligne]] = await Service.sequelize.query('SELECT COALESCE(SUM(vues), 0) AS n FROM service_stat WHERE id_service IN (:ids)',
+        { replacements: { ids: ids(services, 'id') } }).catch(() => [[{ n: 0 }]]);
+      vuesServices = Number(ligne?.n || 0);
+    }
+    return vues + vuesServices;
+  }
+
   async getDashboard(userId) {
     const [
       totalOeuvres, oeuvresPubliees, oeuvresEnAttente,
       totalEvenements, evenementsAvenir,
       totalArtisanats,
-      recentOeuvres, recentEvenements
+      recentOeuvres, recentEvenements, vuesTotal
     ] = await Promise.all([
       this.models.Oeuvre.count({ where: { saisi_par: userId } }),
       this.models.Oeuvre.count({ where: { saisi_par: userId, statut: 'publie' } }),
@@ -246,11 +274,13 @@ class ProfessionnelService {
         include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'], required: false }],
         limit: 5,
         order: [['date_creation', 'DESC']]
-      })
+      }),
+      this._vuesTotales(userId).catch(() => 0)
     ]);
 
     return {
       statistiques: {
+        vues_total: vuesTotal,
         oeuvres: { total: totalOeuvres, publiees: oeuvresPubliees, en_attente: oeuvresEnAttente },
         evenements: { total: totalEvenements, a_venir: evenementsAvenir },
         artisanats: { total: totalArtisanats, en_vente: 0 }

@@ -5,7 +5,7 @@ import { TypeOeuvre, Langue, Editeur, Categorie, TagMotCle } from './references.
 import { Media } from './media.types';
 import { CritiqueEvaluation } from './tracking.types';
 import { Evenement } from './evenement.types';
-import { OeuvreIntervenant, EvenementOeuvre } from './associations.types';
+import { OeuvreIntervenant } from './associations.types';
 import { Livre, Film, AlbumMusical, Article, ArticleScientifique, Artisanat, OeuvreArt } from './oeuvres-specialisees.types';
 
 

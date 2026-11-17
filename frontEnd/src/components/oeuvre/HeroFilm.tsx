@@ -47,7 +47,6 @@ interface HeroFilmProps {
 
 const HeroFilm: React.FC<HeroFilmProps> = ({
   oeuvre,
-  medias,
   mainImage,
   titre,
   description,
@@ -92,7 +91,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
               badgeRecto={(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
                 <Badge className="bg-purple-600 text-white border-0 shadow-lg">
                   <Clock className="h-3 w-3 me-1" />
-                  {oeuvre.Film.duree_minutes} min
+                  {oeuvre.Film?.duree_minutes} min
                 </Badge>
               )}
               motifVerso={
@@ -122,7 +121,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 ...(oeuvre.Film?.duree_minutes ? [{
                   cle: 'duree',
                   libelle: t('works.duration.label', 'Durée'),
-                  valeur: `${oeuvre.Film.duree_minutes} min`,
+                  valeur: `${oeuvre.Film?.duree_minutes} min`,
                 }] : []),
               ]}
               textes={{
@@ -168,7 +167,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                 {(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
                   <Badge variant="outline">
                     <Clock className="h-3 w-3 me-1" />
-                    {oeuvre.Film.duree_minutes} min
+                    {oeuvre.Film?.duree_minutes} min
                   </Badge>
                 )}
                 {Number((oeuvre as any).note_moyenne) > 0 && (
@@ -284,7 +283,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
               {(oeuvre.Film?.duree_minutes ?? 0) > 0 && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  <span className="font-medium">{oeuvre.Film.duree_minutes}</span>
+                  <span className="font-medium">{oeuvre.Film?.duree_minutes}</span>
                   <span className="text-sm">min</span>
                 </div>
               )}

@@ -106,7 +106,7 @@ vi.mock('@/services/patrimoine.service', () => ({
 
 // -- Radix Select -> native HTML for jsdom --
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, ...props }: any) => {
+  Select: ({ children, value, onValueChange }: any) => {
     return (
       <div data-testid="select-root" data-value={value}>
         {React.Children.map(children, (child: any) =>
@@ -123,7 +123,7 @@ vi.mock('@/components/ui/select', () => ({
   SelectValue: ({ placeholder, _value }: any) => (
     <span>{_value || placeholder || ''}</span>
   ),
-  SelectContent: ({ children, _onValueChange, _value }: any) => (
+  SelectContent: ({ children, _onValueChange }: any) => (
     <div role="listbox" data-testid="select-content">
       {React.Children.map(children, (child: any) =>
         child ? React.cloneElement(child, { _onValueChange }) : null
@@ -144,12 +144,12 @@ vi.mock('@/components/ui/select', () => ({
 
 // -- RadioGroup -> simple mock --
 vi.mock('@/components/ui/radio-group', () => ({
-  RadioGroup: ({ children, value, onValueChange, className, ...props }: any) => (
+  RadioGroup: ({ children, value, className }: any) => (
     <div data-testid="radio-group-lieu" className={className} data-value={value}>
       {children}
     </div>
   ),
-  RadioGroupItem: ({ value, id, ...props }: any) => (
+  RadioGroupItem: ({ value, id }: any) => (
     <input type="radio" id={id} value={value} data-testid={`radio-${id}`} readOnly />
   ),
 }));

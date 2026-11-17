@@ -14,15 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Calendar, Clock, MapPin, Users, Plus, X, Save, Loader2, 
-  ArrowLeft, Edit, Eye, User, Mic, Video, FileText, Play, Pause,
-  Upload, Trash2, AlertCircle, CheckCircle
+  Calendar, MapPin, Users, Plus, X, Save, Loader2,
+  ArrowLeft, Eye, Mic, Video, FileText, Play, Pause,
+  Trash2, AlertCircle, CheckCircle
 } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormField from './FormField';
-import { cn } from '@/lib/Utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { programmeService, CreateProgrammeData, IntervenantData } from '@/services/programme.service';
+import type { IntervenantData } from '@/services/programme.service';
 import IntervenantSaisie from '@/components/forms/IntervenantSaisie';
 import { intervenantValide } from '@/utils/programmeIntervenants';
 import { aDuTexte } from '@/utils/getLocalizedText';
@@ -84,16 +83,6 @@ interface ProgrammeFormProps {
   users?: unknown[];
   eventDates?: { dateDebut: string; dateFin: string };
 }
-
-// Icônes par type d'activité
-const activityIcons: Record<string, React.ElementType> = {
-  conference: Mic,
-  atelier: Users,
-  projection: Video,
-  presentation: FileText,
-  pause: Pause,
-  autre: Play
-};
 
 // Types d'activités - les labels sont traduits via t() dans le composant
 const typesActivite = [
@@ -157,9 +146,6 @@ const generateDateRange = (startDate: string, endDate: string): string[] => {
   }
   return dates;
 };
-
-// Niveaux requis - labels traduits via t()
-const niveauxKeys = ['debutant', 'intermediaire', 'avance', 'tous_niveaux'] as const;
 
 // Rôles d'intervenant - labels traduits via t()
 const rolesIntervenantKeys = ['principal', 'co_intervenant', 'moderateur', 'animateur', 'invite'] as const;

@@ -60,6 +60,23 @@ import DocumentsEvenementChoix, { envoyerDocumentsEvenement, type DocumentChoisi
 import DocumentsEvenementGestion from '@/components/event/DocumentsEvenementGestion';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lienGuidePour } from '@/utils/lienGuide';
+import type { Evenement } from '@/types/models/evenement.types';
+
+/** Fiche reçue pour la modification : colonnes du modèle absentes du type partagé Evenement */
+type EvenementEdition = Evenement & { image_partage_url?: string | null; tarification?: unknown };
+
+type TextesFormulaire = { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string };
+/** Texte enregistré (multilingue, ancien texte simple ou null) → les cinq langues du formulaire */
+const textesFormulaire = (valeur: unknown): TextesFormulaire => {
+  const v: Record<string, unknown> = valeur && typeof valeur === 'object'
+    ? valeur as Record<string, unknown>
+    : { fr: typeof valeur === 'string' ? valeur : '' };
+  const lire = (cle: string): string => {
+    const texte = v[cle];
+    return typeof texte === 'string' ? texte : '';
+  };
+  return { fr: lire('fr'), ar: lire('ar'), en: lire('en'), 'tz-ltn': lire('tz-ltn'), 'tz-tfng': lire('tz-tfng') };
+};
 
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
@@ -202,19 +219,19 @@ const AjouterEvenement = () => {
     try {
       const response = await evenementService.getForEdit(editId);
       if (response.success && response.data) {
-        const evt = response.data as Record<string, unknown>;
+        const evt: EvenementEdition = response.data;
         setFormData({
-          nom: typeof evt.nom_evenement === 'object' ? evt.nom_evenement : { fr: evt.nom_evenement || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-          description: typeof evt.description === 'object' ? evt.description : { fr: evt.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          nom: textesFormulaire(evt.nom_evenement),
+          description: textesFormulaire(evt.description),
           idTypeEvenement: evt.id_type_evenement?.toString() || '',
-          dateDebut: partiesEvenement(evt.date_debut as string).date,
-          dateFin: partiesEvenement(evt.date_fin as string).date,
-          heureDebut: partiesEvenement(evt.date_debut as string).heure,
-          heureFin: partiesEvenement(evt.date_fin as string).heure,
+          dateDebut: partiesEvenement(evt.date_debut).date,
+          dateFin: partiesEvenement(evt.date_fin).date,
+          heureDebut: partiesEvenement(evt.date_debut).heure,
+          heureFin: partiesEvenement(evt.date_fin).heure,
           maxParticipants: evt.capacite_max?.toString() || '',
-          dateLimite: evt.date_limite_inscription ? partiesEvenement(evt.date_limite_inscription as string).date : '',
-          contactEmail: (evt.contact_email as string) || '',
-          contactTelephone: (evt.contact_telephone as string) || '',
+          dateLimite: evt.date_limite_inscription ? partiesEvenement(evt.date_limite_inscription).date : '',
+          contactEmail: evt.contact_email || '',
+          contactTelephone: evt.contact_telephone || '',
           tarif: evt.tarif?.toString() || '',
           urlVirtuel: evt.lien_en_ligne || '',
           // Mots-clés : nom dans la langue de l'interface, sinon le premier renseigné
@@ -229,7 +246,7 @@ const AjouterEvenement = () => {
         // Organisation : la fiche envoie la liste Organisations (avec le rôle), pas id_organisation
         const orgs = (Array.isArray(evt.Organisations) ? evt.Organisations : []) as Array<{ id_organisation: number; nom?: unknown; EvenementOrganisation?: { role?: string } }>;
         const orgPrincipale = orgs.find(o => o.EvenementOrganisation?.role === 'organisateur_principal') || orgs[0];
-        const idOrg = (evt.id_organisation as number | undefined) ?? orgPrincipale?.id_organisation;
+        const idOrg = evt.id_organisation ?? orgPrincipale?.id_organisation;
         if (idOrg) setSelectedOrganisationId(idOrg);
         setPartenaires(orgs
           .filter(o => o.id_organisation !== idOrg)
@@ -238,7 +255,7 @@ const AjouterEvenement = () => {
             return { id_organisation: o.id_organisation, nom: o.nom, role: (ROLES_PARTENAIRES as readonly string[]).includes(role || '') ? role as RolePartenaire : 'partenaire' };
           }));
         if (typeof evt.statut === 'string') setStatutActuel(evt.statut);
-        const tarification = tarificationDe(evt as { tarif?: number; tarification?: unknown });
+        const tarification = tarificationDe(evt);
         setTarifForm({
           mode: tarification.mode,
           prix: tarification.mode === 'payant' ? String(evt.tarif ?? '') : '',

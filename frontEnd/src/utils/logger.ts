@@ -5,8 +5,6 @@
 
 const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
 interface LoggerOptions {
   prefix?: string;
   emoji?: string;

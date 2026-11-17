@@ -8,14 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Users, Building2, Mail, Phone, Globe, ExternalLink,
-  Award, Star, MapPin
+  Users, Building2, Mail, Phone, Globe,
+  Award, Star
 } from 'lucide-react';
-import { LazyImage, EmptyState } from '@/components/shared';
+import { LazyImage } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
-import type { Organisation } from '@/types/models/organisation.types';
-import type { User } from '@/types/models/user.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 import { Link } from 'react-router-dom';

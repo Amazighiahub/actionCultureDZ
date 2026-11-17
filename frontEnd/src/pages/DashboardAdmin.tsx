@@ -71,6 +71,8 @@ const DashboardAdmin: React.FC = () => {
   }, [searchParams]);
 
   // Wrapper pour mettre à jour state + URL ensemble
+  // Les onglets n'envoient que des identifiants de VALID_TABS
+  const estOnglet = (v: string): v is AdminTabId => (VALID_TABS as readonly string[]).includes(v);
   const setActiveTab = (tab: AdminTabId) => {
     setActiveTabState(tab);
     setSearchParams(tab === 'overview' ? {} : { tab });
@@ -175,7 +177,7 @@ const DashboardAdmin: React.FC = () => {
         )}
 
         {/* Navigation par onglets */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => { if (estOnglet(v)) setActiveTab(v); }} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {tabs.map((tab) => (
               <TabsTrigger

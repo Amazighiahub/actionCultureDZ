@@ -20,7 +20,7 @@ import { Commentaire, Favori } from '../models/tracking.types';
 /**
  * Interface pour TypeUser
  */
-import { OeuvreUser, OeuvreIntervenant } from './associations.types';
+import { OeuvreUser } from './associations.types';
 
 export interface TypeUser {
   id_type_user: number;

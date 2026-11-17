@@ -48,18 +48,19 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { oeuvrePath } from '@/utils/slug';
 
-// Icônes par type
-const TYPE_ICONS: Record<string, React.ElementType> = {
-  livre: Book,
-  litterature: Book,
-  film: Film,
-  cinema: Film,
-  musique: Music,
-  art: Palette,
-  peinture: Palette,
-  article: FileText,
-  default: Sparkles
+// Icônes par type, selon id_type_oeuvre (1 livre, 2 film, 3 musique, 4-5 article, 6 art). Avant : clé
+// TypeOeuvre.code ou oeuvre.type, que le serveur n'envoie pas — toutes les cartes avaient l'icône par défaut
+const TYPE_ICONS: Record<number, React.ElementType> = {
+  1: Book,
+  2: Film,
+  3: Music,
+  4: FileText,
+  5: FileText,
+  6: Palette,
 };
+
+// Champs ajoutés par le serveur (OeuvreDTO._addComputedFields), absents du type Oeuvre
+type OeuvreListee = Oeuvre & { image_principale?: string; image_url?: string };
 
 // Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
 const STRETCHED_LINK_CLASS =
@@ -67,12 +68,12 @@ const STRETCHED_LINK_CLASS =
 
 // Composant carte d'œuvre
 interface OeuvreCardProps {
-  oeuvre: Record<string, unknown>;
+  oeuvre: OeuvreListee;
   onFavorite?: (id: number) => void;
 }
 
 const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const { toast } = useToast();
   const inviterConnexion = useInviterConnexion();
@@ -83,10 +84,13 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const [choixFavori, setIsFavorite] = useState<boolean | null>(null);
   const [favLoading, setFavLoading] = useState(false);
 
-  const typeCode = oeuvre.TypeOeuvre?.code?.toLowerCase() || oeuvre.type?.toLowerCase() || 'default';
-  const TypeIcon = TYPE_ICONS[typeCode] || TYPE_ICONS.default;
-  const oeuvreUrl = oeuvrePath(Number(oeuvre.id_oeuvre), oeuvre.titre, oeuvre.id_type_oeuvre as number | undefined);
-  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(oeuvre.id_oeuvre as number));
+  const TypeIcon = TYPE_ICONS[oeuvre.id_type_oeuvre] || Sparkles;
+  const oeuvreUrl = oeuvrePath(Number(oeuvre.id_oeuvre), oeuvre.titre, oeuvre.id_type_oeuvre);
+  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(oeuvre.id_oeuvre));
+  // Le serveur traduit déjà le titre ; getLocalizedText couvre aussi un titre resté multilingue
+  const titre = getLocalizedText(oeuvre.titre, i18n.language);
+  // Number() : la note peut arriver en texte ou null (toFixed plantait alors)
+  const note = oeuvre.note_moyenne == null ? null : Number(oeuvre.note_moyenne);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -120,7 +124,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
         <LazyImage
           src={oeuvre.image_principale || oeuvre.image_url || '/images/placeholder-oeuvre.svg'}
           maxWidth={640}
-          alt={oeuvre.titre}
+          alt={titre}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-oeuvre.svg"
         />
@@ -155,10 +159,10 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
                 {Number(oeuvre.nb_vues)}
               </span>
             )}
-            {oeuvre.note_moyenne !== undefined && (
+            {note !== null && !Number.isNaN(note) && (
               <span className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                {oeuvre.note_moyenne.toFixed(1)}
+                {note.toFixed(1)}
               </span>
             )}
           </div>
@@ -166,7 +170,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
             <Link
               to={oeuvreUrl}
               tabIndex={-1}
-              aria-label={`${t('common.view', 'Voir')} : ${oeuvre.titre}`}
+              aria-label={`${t('common.view', 'Voir')} : ${titre}`}
             >
               {t('common.view', 'Voir')}
               <ArrowRight className="h-3 w-3 ms-1 rtl:-scale-x-100" aria-hidden="true" />
@@ -178,14 +182,14 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
       <CardContent className="p-4">
         <h3 className="font-semibold line-clamp-2 mb-1 group-hover:text-primary transition-colors">
           <Link to={oeuvreUrl} className={STRETCHED_LINK_CLASS}>
-            {oeuvre.titre}
+            {titre}
           </Link>
         </h3>
-        
-        {/* Auteur / Saiseur */}
-        {(oeuvre.auteur || oeuvre.Saiseur) && (
+
+        {/* Saiseur (le champ « auteur » au premier niveau n'est jamais envoyé par le serveur) */}
+        {oeuvre.Saiseur && (
           <p className="text-sm text-muted-foreground mb-2">
-            {oeuvre.auteur || `${getLocalizedText(oeuvre.Saiseur?.prenom)} ${getLocalizedText(oeuvre.Saiseur?.nom)}`}
+            {`${getLocalizedText(oeuvre.Saiseur.prenom)} ${getLocalizedText(oeuvre.Saiseur.nom)}`}
           </p>
         )}
 
@@ -289,12 +293,12 @@ const Oeuvres: React.FC = () => {
         result.sort((a, b) => (Number(b.nb_vues) || 0) - (Number(a.nb_vues) || 0));
         break;
       case 'title':
-        result.sort((a, b) => (a.titre || '').localeCompare(b.titre || ''));
+        result.sort((a, b) => getLocalizedText(a.titre, i18n.language).localeCompare(getLocalizedText(b.titre, i18n.language)));
         break;
     }
 
     return result;
-  }, [oeuvres, recherche, resultatsRecherche, typeFilter, sortBy]);
+  }, [oeuvres, recherche, resultatsRecherche, typeFilter, sortBy, i18n.language]);
 
   // Reset des filtres
   const resetFilters = () => {
@@ -389,7 +393,7 @@ const Oeuvres: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tous">{t('common.all', 'Tous')}</SelectItem>
-                  {typesOeuvres?.map((type: Record<string, unknown>) => (
+                  {typesOeuvres?.map((type) => (
                     <SelectItem key={type.id_type_oeuvre} value={type.id_type_oeuvre.toString()}>
                       {getLocalizedText(type.nom_type)}
                     </SelectItem>

@@ -3,7 +3,7 @@ import { detailsDesChamps, messageErreurServeur, useDefilerVersErreur } from '@/
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,8 +15,6 @@ import { httpClient } from '@/services/httpClient';
 import AntiRobot, { useAntiRobot } from '@/components/shared/AntiRobot';
 import { emailValide } from '@/utils/validationChamps';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
-
-const CONTACT_EMAIL = 'contact@taladz.com';
 
 const APropos = () => {
   const { t } = useTranslation();

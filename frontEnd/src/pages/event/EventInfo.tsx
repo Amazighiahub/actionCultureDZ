@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import {
-  MapPin, Clock, Calendar, Users, Ticket, Phone, Mail,
+  MapPin, Calendar, Users, Ticket, Phone, Mail,
   Globe, Accessibility, Baby, Award, CheckCircle, AlertCircle,
   Navigation, ExternalLink, Tag
 } from 'lucide-react';

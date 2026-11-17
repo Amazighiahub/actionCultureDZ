@@ -4,7 +4,6 @@
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 const { oeuvre, blocs, http, toast, auth, editeur } = vi.hoisted(() => ({

@@ -10,7 +10,6 @@
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import React from 'react';
 
 const { mockNavigate, mockApercu, mockImporter, mockCarte } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),

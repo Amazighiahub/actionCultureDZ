@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 import type {
-  ArticleBlock,
   ArticleBlockEditorProps,
   MediaInfo,
 } from '@/types/models/articles.types';
@@ -324,7 +323,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <div className="space-y-2">
                   <Label>{t("article_articleeditor.lignes_une_par")}</Label>
                   <Textarea dir="auto" spellCheck
-                    value={block.contenu_json.rows.map((row) => row.join(' | ')).join('\n')}
+                    value={block.contenu_json.rows.map((row: string[]) => row.join(' | ')).join('\n')}
                     onChange={(e) => {
                       const rows = e.target.value.split('\n').map((line) =>
                         line.split('|').map((cell) => cell.trim())

@@ -4,18 +4,16 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   Image as ImageIcon, Video, FileText, Music,
   ChevronLeft, ChevronRight, X, ZoomIn, Download,
-  Play, Maximize2, Grid, List
+  Play, Grid, List
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/Utils';
 import type { Media } from '@/types/models/media.types';
 import type { Programme } from '@/types/models/programme.types';
 import { useFormatDate } from '@/hooks/useFormatDate';

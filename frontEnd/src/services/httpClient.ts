@@ -9,7 +9,7 @@ import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams
 import { apiLogger } from '@/utils/logger';
 import { TECHNIQUE } from '@/utils/erreurServeur';
 
-interface ApiUploadOptions<T = unknown> {
+interface ApiUploadOptions {
   fieldName?: string;
   additionalData?: Record<string, any>;
   headers?: Record<string, string>;
@@ -98,9 +98,10 @@ export async function doRefreshToken(): Promise<RefreshResult> {
 }
 
 // Types pour les requêtes
-interface QueuedRequest<T = unknown> {
-  request: () => Promise<T>;
-  resolve: (value: T) => void;
+// La file mélange des requêtes de tous types : le résultat y circule en « unknown »
+interface QueuedRequest {
+  request: () => Promise<unknown>;
+  resolve: (value: unknown) => void;
   reject: (error: any) => void;
   url?: string;
   method?: string;
@@ -158,7 +159,8 @@ class ImprovedRequestQueue {
     return new Promise((resolve, reject) => {
       this.queue.push({ 
         request, 
-        resolve, 
+        // value est le résultat de `request` ci-dessus : c'est donc bien un T
+        resolve: (value) => resolve(value as T), 
         reject,
         url,
         method,
@@ -365,7 +367,6 @@ class HttpClient {
         // Extraire les infos de rate limit depuis les headers
         const remaining = response.headers['x-ratelimit-remaining'];
         const limit = response.headers['x-ratelimit-limit'];
-        const reset = response.headers['x-ratelimit-reset'];
 
         if (remaining !== undefined) {
           const percentUsed = ((parseInt(limit) - parseInt(remaining)) / parseInt(limit)) * 100;

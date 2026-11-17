@@ -146,17 +146,19 @@ const EventDetailsPage: React.FC = () => {
     { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Plus d’infos') },
   ];
 
+  // Textes multilingues (ou déjà traduits par le serveur) : toujours une chaîne pour le SEO
+  const descriptionEvenement = getLocalizedText(event.description, i18n.language);
   const seoKeywords = [
-    event.nom_evenement || event.titre, event.TypeEvenement?.nom,
-    event.Lieu?.nom, 'événement culturel', 'culture algérienne', 'Algérie'
-  ].filter(Boolean) as string[];
+    titreEvenement, getLocalizedText(event.TypeEvenement?.nom_type, i18n.language),
+    getLocalizedText(event.Lieu?.nom, i18n.language), 'événement culturel', 'culture algérienne', 'Algérie'
+  ].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={event.nom_evenement || event.titre}
-        description={event.description?.substring(0, 160) || `Événement culturel en Algérie`}
-        image={event.image_url || event.couverture_url}
+        title={titreEvenement}
+        description={descriptionEvenement.substring(0, 160) || `Événement culturel en Algérie`}
+        image={event.image_url}
         type="event"
         keywords={seoKeywords}
         jsonLd={[
@@ -164,7 +166,7 @@ const EventDetailsPage: React.FC = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Événements', url: '/evenements' },
-            { name: event.nom_evenement || event.titre || '', url: evenementPath(event.id_evenement, event.nom_evenement) },
+            { name: titreEvenement, url: evenementPath(event.id_evenement, event.nom_evenement) },
           ]),
         ]}
       />
@@ -288,7 +290,7 @@ const EventDetailsPage: React.FC = () => {
                         <Suspense fallback={<SectionFallback />}>
                           <ServicesProximite
                             lieuId={event.Lieu.id_lieu}
-                            lieuName={event.Lieu.nom || ''}
+                            lieuName={getLocalizedText(event.Lieu.nom, i18n.language)}
                             variant="full"
                             showTitle={true}
                           />

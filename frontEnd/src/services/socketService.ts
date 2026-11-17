@@ -366,8 +366,10 @@ interface SocketConfig {
   withCredentials?: boolean;
 }
 
-// Type pour un handler d'événement générique
-type EventHandler = (...args: unknown[]) => void;
+// Un écouteur de l'un des événements connus (chacun garde le type de sa donnée)
+type EventHandler = SocketEvents[keyof SocketEvents];
+// Donnée de l'un des événements connus, gardée en attente tant que la connexion n'est pas prête
+type EventData = Parameters<SocketEvents[keyof SocketEvents]>[0];
 
 // ================================================
 // SERVICE SOCKET
@@ -387,7 +389,7 @@ class SocketService {
   };
   
   private listeners: Map<string, Set<EventHandler>> = new Map();
-  private messageQueue: Array<{ event: string; data: unknown }> = [];
+  private messageQueue: Array<{ event: keyof SocketEvents; data: EventData }> = [];
   private isConnecting = false;
   private connectionPromise: Promise<void> | null = null;
   
@@ -511,7 +513,9 @@ class SocketService {
     this.listeners.get(event)!.add(handler);
 
     if (this.socket && this.isConnected) {
-      this.socket.on(event, handler as (...args: unknown[]) => void);
+      // Nom en texte : socket.io accepte alors tout écouteur (sa liste d'événements n'est pas typée ici)
+      const nom: string = event;
+      this.socket.on(nom, handler);
     }
   }
 
@@ -536,7 +540,8 @@ class SocketService {
         }
       }
       if (this.socket) {
-        this.socket.off(event, handler as (...args: unknown[]) => void);
+        const nom: string = event;
+        this.socket.off(nom, handler);
       }
     }
   }
@@ -598,7 +603,7 @@ class SocketService {
   private flushMessageQueue(): void {
     while (this.messageQueue.length > 0) {
       const { event, data } = this.messageQueue.shift()!;
-      this.emit(event as keyof SocketEvents, data);
+      this.emit(event, data);
     }
   }
 

@@ -20,13 +20,14 @@ import { mapToBackendDTO, type CreateOeuvreBackendDTO } from '@/types/api/create
 import type { SupportedLanguage } from '@/types/common/multilingual.types';
 import type { TagMotCle, TypeOeuvre, Categorie } from '@/types/models/references.types';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
-import type { ArticleBlock, ArticleSaveResponse, ArticleFormData } from '@/types/models/articles.types';
+import type { ArticleBlock, ArticleSaveResponse } from '@/types/models/articles.types';
 import type {
   IntervenantExistant,
   NouvelIntervenant,
   ContributeurOeuvre,
   EditeurOeuvre,
   DetailsSpecifiques,
+  DetailsLivre,
 } from '@/types/api/oeuvre-creation.types';
 import type {
   FormData,
@@ -34,7 +35,6 @@ import type {
   MediaUpload,
   ArticleEditorSavePayload,
   MediaUploadResult,
-  ArticleBlockToSave,
   PisteAlbum,
 } from './types';
 import { INITIAL_FORM_DATA } from './types';
@@ -373,8 +373,6 @@ export function useAjouterOeuvre() {
     });
     setSuggestedTags(suggestions.slice(0, 8));
   }, [metadata.types_oeuvres, formData.id_type_oeuvre, formData.titre, formData.description]);
-
-  const getTypeIcon = useCallback((typeId: number) => typeId, []);
 
   // ============================================================================
   // HANDLERS
@@ -722,7 +720,9 @@ export function useAjouterOeuvre() {
     switch (typeOeuvre.id_type_oeuvre) {
       case 1: // Livre
         // Champ vidé : chaîne vide, effacée par le serveur (absent, l'ancien extrait restait)
-        details.livre = { isbn: formData.isbn, nb_pages: formData.nb_pages, extrait: formData.extrait ?? '' };
+        // « extrait » est lu par le serveur mais manque dans le type partagé DetailsLivre (à y ajouter)
+        const livre: DetailsLivre & { extrait: string } = { isbn: formData.isbn, nb_pages: formData.nb_pages, extrait: formData.extrait ?? '' };
+        details.livre = livre;
         break;
       case 2: // Film
         details.film = { duree_minutes: formData.duree_minutes, realisateur: formData.realisateur };
@@ -843,6 +843,8 @@ export function useAjouterOeuvre() {
 
       try {
         let oeuvreResponse;
+        // Identifiant de l'œuvre créée (création seulement : la réponse d'une mise à jour n'a pas de « oeuvre »)
+        let idCree: number | undefined;
         const mediaFiles = medias.map((m) => m.file);
         // Envoi un par un avec progression ; les échecs sont comptés pour prévenir l'utilisateur
         let failedMedias = 0;
@@ -896,6 +898,7 @@ export function useAjouterOeuvre() {
           if (oeuvreResponse.success) await uploadExtraits(Number(editId));
         } else {
           oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+          idCree = oeuvreResponse.data?.oeuvre?.id_oeuvre;
 
           if (oeuvreResponse.success && mediaFiles.length > 0 && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
             const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
@@ -930,9 +933,9 @@ export function useAjouterOeuvre() {
         }
 
         // Si l'utilisateur a cliqué "Publier" (pas brouillon), soumettre automatiquement pour validation
-        if (!isDraft && !isEditMode && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
+        if (!isDraft && !isEditMode && idCree) {
           try {
-            avertirSiNonSoumise(await oeuvreService.submitForValidation(oeuvreResponse.data.oeuvre.id_oeuvre));
+            avertirSiNonSoumise(await oeuvreService.submitForValidation(idCree));
           } catch (err) {
             console.warn('Soumission auto pour validation échouée:', err);
           }

@@ -17,7 +17,6 @@ import { MapPin, Navigation, Loader2, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { lieuService } from '@/services/lieu.service';
 import { messageErreurServeur } from '@/utils/erreurServeur';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Icônes des marqueurs servies localement (voir src/lib/leafletIcons.ts)

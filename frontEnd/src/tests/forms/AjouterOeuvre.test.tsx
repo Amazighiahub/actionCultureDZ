@@ -206,7 +206,7 @@ vi.mock('@/components/Footer', () => ({ default: () => <footer data-testid="foot
 
 // -- Radix Select -> native HTML select pour jsdom --
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, ...props }: any) => {
+  Select: ({ children, value, onValueChange }: any) => {
     return (
       <div data-testid="select-root" data-value={value}>
         {React.Children.map(children, (child: any) =>
@@ -223,7 +223,7 @@ vi.mock('@/components/ui/select', () => ({
   SelectValue: ({ placeholder, _value }: any) => (
     <span>{_value || placeholder || ''}</span>
   ),
-  SelectContent: ({ children, _onValueChange, _value }: any) => (
+  SelectContent: ({ children, _onValueChange }: any) => (
     <div role="listbox" data-testid="select-content">
       {React.Children.map(children, (child: any) =>
         child ? React.cloneElement(child, { _onValueChange }) : null
@@ -657,11 +657,6 @@ describe('AjouterOeuvre', () => {
       // The remove button is an X button in the media card
       // It's rendered with className containing "opacity-0 group-hover:opacity-100"
       // but it exists in DOM. Find the button with an X icon near the media.
-      const removeButtons = screen.getAllByRole('button').filter(b => {
-        // The remove button has variant="ghost" and contains an X icon
-        // It's also type="button" and has specific className
-        return b.classList.contains('absolute') || b.closest('.relative.group') !== null;
-      });
 
       // Alternative approach: find by the file name text, then find the remove button in that context
       const fileName = screen.getByText('photo.jpg');
@@ -888,7 +883,7 @@ describe('AjouterOeuvre', () => {
         expectedDetails: { oeuvre_art: { technique: 'Huile sur toile', dimensions: '100x100 cm', support: 'Toile' } },
       },
     ])('construit les details specifiques corrects pour $typeName', async ({ typeName, setup, expectedTypeId, expectedDetails }) => {
-      mockMapToBackendDTO.mockImplementation((formData: any, contributeurs: any, intervenantsExistants: any, nouveauxIntervenants: any, editeurs: any, detailsSpecifiques: any) => ({
+      mockMapToBackendDTO.mockImplementation((formData: any, _contributeurs: any, _intervenantsExistants: any, _nouveauxIntervenants: any, _editeurs: any, detailsSpecifiques: any) => ({
         titre: formData.titre,
         description: formData.description,
         id_type_oeuvre: formData.id_type_oeuvre,

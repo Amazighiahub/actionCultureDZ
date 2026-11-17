@@ -3,7 +3,7 @@
  * Marqueurs colorés par catégorie + filtres toggle + popups détaillés
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { MapContainer, ZoomControl, Marker, Popup, Polyline } from 'react-leaflet';
 import FondDeCarte from '@/components/shared/FondDeCarte';
 import { useTranslation } from 'react-i18next';
@@ -14,8 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
-  MapPin, Maximize2, Navigation, Landmark, Utensils, Hotel,
-  Calendar, Star, Clock, Filter, Eye, EyeOff, Car, Palette, Route
+  Maximize2, Navigation, Landmark, Utensils, Hotel,
+  Calendar, Clock, Eye, EyeOff, Car, Palette, Route
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';

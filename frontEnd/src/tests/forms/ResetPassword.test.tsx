@@ -11,7 +11,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 // ---------------------------------------------------------------------------
 // vi.hoisted — variables accessibles dans les factories vi.mock (hoisted)

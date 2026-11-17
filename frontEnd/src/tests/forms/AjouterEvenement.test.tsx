@@ -147,7 +147,7 @@ vi.mock('@/hooks/usePermissions', () => ({ usePermissions: () => mockPermissions
 
 // -- Radix Select → native HTML select pour jsdom --
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, ...props }: any) => {
+  Select: ({ children, value, onValueChange }: any) => {
     return (
       <div data-testid="select-root" data-value={value}>
         {React.Children.map(children, (child: any) =>
@@ -164,7 +164,7 @@ vi.mock('@/components/ui/select', () => ({
   SelectValue: ({ placeholder, _value }: any) => (
     <span>{_value || placeholder || ''}</span>
   ),
-  SelectContent: ({ children, _onValueChange, _value }: any) => (
+  SelectContent: ({ children, _onValueChange }: any) => (
     <div role="listbox" data-testid="select-content">
       {React.Children.map(children, (child: any) =>
         child ? React.cloneElement(child, { _onValueChange }) : null

@@ -6,7 +6,7 @@
  *     HTML pur (aucune dépendance shadcn/i18n) pour résister à tout crash.
  *  2. Section (pages) — fallback shadcn + i18n classique.
  */
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

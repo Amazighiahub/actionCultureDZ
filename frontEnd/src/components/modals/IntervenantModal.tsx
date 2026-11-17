@@ -25,10 +25,6 @@ import {
 import {
   Loader2,
   User,
-  Mail,
-  Phone,
-  Building2,
-  Globe,
   AlertCircle,
   Plus,
   X } from
@@ -76,7 +72,6 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
   const [typesError, setTypesError] = useState<string | null>(null);
 
   // Autres états
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [checkingEmail, setCheckingEmail] = useState(false);
@@ -163,11 +158,12 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
           setEmailExists(response);
 
           // Pré-remplir si l'utilisateur existe
-          if (response.exists && response.user) {
+          const utilisateur = response.user;
+          if (response.exists && utilisateur) {
             setFormData((prev) => ({
               ...prev,
-              nom: response.user.nom || prev.nom,
-              prenom: response.user.prenom || prev.prenom
+              nom: utilisateur.nom || prev.nom,
+              prenom: utilisateur.prenom || prev.prenom
             }));
           }
         } catch (error) {
@@ -506,9 +502,9 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={loading || loadingTypes || relevantTypes.length === 0}>
+            disabled={loadingTypes || relevantTypes.length === 0}>
 
-            {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}{t("modals_intervenantmodal.ajouter_lintervenant")}
+            {t("modals_intervenantmodal.ajouter_lintervenant")}
 
           </Button>
         </DialogFooter>

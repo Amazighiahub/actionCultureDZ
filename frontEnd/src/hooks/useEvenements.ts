@@ -91,13 +91,14 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
           };
         }
 
-        // Si data a une propriété items
+        // Si data a une propriété items (PaginatedResponse : la pagination est dans data.pagination)
         if (responseData && 'items' in responseData) {
+          const pagination = responseData.pagination ?? paginationData;
           return {
             items: responseData.items || [],
-            total: responseData.total || 0,
-            totalPages: responseData.totalPages || responseData.pages || 1,
-            page: responseData.page || 1
+            total: pagination?.total || 0,
+            totalPages: pagination?.pages || 1,
+            page: pagination?.page || 1
           };
         }
 

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import type { Lieu } from '@/types/models/lieu.types';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 import { rafraichirTableauDeBord, rafraichirEvenement } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
@@ -57,9 +58,9 @@ const EditProgrammePage: React.FC = () => {
         if (eventRes?.success && eventRes.data) {
           const evt = eventRes.data;
           // Jours à l'heure de l'Algérie (la date UTC peut être la veille)
-          const dateDebut = partiesEvenement(evt.date_debut as string).date || evt.date_debut;
-          const dateFin = partiesEvenement(evt.date_fin as string).date || dateDebut;
+          const dateDebut = partiesEvenement(evt.date_debut).date || evt.date_debut;
           if (dateDebut) {
+            const dateFin = partiesEvenement(evt.date_fin).date || dateDebut;
             setEventDates({ dateDebut, dateFin });
           }
         }
@@ -149,7 +150,9 @@ const EditProgrammePage: React.FC = () => {
         heure_debut: heurePourApi(data.date_programme, data.heure_debut),
         heure_fin: heurePourApi(data.date_programme, data.heure_fin),
         id_lieu: data.id_lieu,
-        lieu_specifique: data.lieu_specifique,
+        // Colonne texte simple côté serveur (comme GestionEvenement) : jamais l'objet multilingue
+        // ('' si effacé : le lieu précisé doit pouvoir être retiré)
+        lieu_specifique: getLocalizedText(data.lieu_specifique, 'fr'),
         nb_participants_max: data.nb_participants_max,
         niveau_requis: data.niveau_requis,
         materiel_requis: data.materiel_requis,

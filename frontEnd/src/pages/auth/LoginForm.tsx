@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Mail, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
+import { LogIn, Loader2, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import { lienGuidePour, lienSommaireGuides } from '@/utils/lienGuide';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';

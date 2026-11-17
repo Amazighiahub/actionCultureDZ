@@ -43,30 +43,9 @@ const ARABIC_NUMERALS: Record<string, string> = {
   ',': '٬', // Séparateur de milliers arabe
 };
 
-// Convertisseur inverse (arabe vers latin)
-const LATIN_NUMERALS: Record<string, string> = {
-  '٠': '0',
-  '١': '1',
-  '٢': '2',
-  '٣': '3',
-  '٤': '4',
-  '٥': '5',
-  '٦': '6',
-  '٧': '7',
-  '٨': '8',
-  '٩': '9',
-  '٫': '.',
-  '٬': ',',
-};
-
 // Fonction pour convertir les nombres en chiffres arabes
 const convertToArabicNumerals = (text: string): string => {
   return text.replace(/[0-9.,]/g, (match) => ARABIC_NUMERALS[match] || match);
-};
-
-// Fonction pour convertir les chiffres arabes en latins
-const convertToLatinNumerals = (text: string): string => {
-  return text.replace(/[٠-٩٫٬]/g, (match) => LATIN_NUMERALS[match] || match);
 };
 
 // Devise par défaut selon la langue
@@ -351,7 +330,6 @@ export const useLocalizedNumber = () => {
   ): string => {
     const formattedMin = formatNumber(min, options);
     const formattedMax = formatNumber(max, options);
-    const translations = NUMBER_FORMATS[i18n.language] || NUMBER_FORMATS['fr'];
     
     return `${formattedMin} - ${formattedMax}`;
   };

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
-import type { CategoryGroupedByGenre } from '@/services/metadata.service';import { useTranslation } from "react-i18next";
+import type { CategoryGroupedByGenre } from '@/services/metadata.service';
 import { t } from 'i18next';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 

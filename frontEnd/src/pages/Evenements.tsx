@@ -3,14 +3,14 @@
  * Avec lazy loading des images et composants séparés
  */
 import MissionModule from '@/components/shared/MissionModule';
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { tarificationDe } from '@/utils/tarifEvenement';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +23,8 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  Calendar, MapPin, Users, Search, Filter, ArrowRight,
-  Loader2, RefreshCw, X
+  Calendar, MapPin, Users, Search, ArrowRight,
+  RefreshCw, X
 } from 'lucide-react';
 
 // Composants partagés
@@ -45,6 +45,8 @@ import { statutAffiche, echeanceEvenement, libelleEcheance, bornesPeriode, type 
 import { useWilayas, formatWilayaName } from '@/hooks/useGeographie';
 import { evenementPath } from '@/utils/slug';
 import { partiesEvenement } from '@/utils/dateHeureEvenement';
+import { getLocalizedText } from '@/utils/getLocalizedText';
+import type { Evenement } from '@/types/models/evenement.types';
 
 // Types d'événements — labels resolved via t() in JSX
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
@@ -57,19 +59,21 @@ const STRETCHED_LINK_CLASS =
 
 // Composant carte d'événement
 interface EventCardProps {
-  event: Record<string, unknown>;
+  /** Carte de la liste : le serveur envoie les textes déjà traduits, getLocalizedText gère les deux formes */
+  event: Evenement;
 }
 
 const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Échéance lisible par le public (« Demain », « Dans 4 jours », « Terminé ») au lieu du statut
   // interne « Publié » (audit V11 UX-17)
-  const termine = statutAffiche(event.statut as string | undefined, event.date_debut as string | undefined, event.date_fin as string | undefined) === 'termine';
-  const echeance = termine ? { cle: 'termine' as const } : echeanceEvenement(event.date_debut as string | undefined, event.date_fin as string | undefined);
+  const termine = statutAffiche(event.statut, event.date_debut, event.date_fin) === 'termine';
+  const echeance = termine ? { cle: 'termine' as const } : echeanceEvenement(event.date_debut, event.date_fin);
   const libelleQuand = libelleEcheance(echeance, t);
   const { formatPrice } = useLocalizedNumber();
   const { formatDate } = useFormatDate();
-  const eventTitle = event.nom_evenement || event.titre;
+  const eventTitle = getLocalizedText(event.nom_evenement, i18n.language);
+  const nomLieu = getLocalizedText(event.Lieu?.nom, i18n.language);
   const eventUrl = evenementPath(Number(event.id_evenement), event.nom_evenement);
 
   const capacityPercentage = event.capacite_max
@@ -82,9 +86,9 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
       <div className="relative h-48 overflow-hidden">
         <LazyImage
           containerClassName="h-full"
-          src={event.image_url || event.affiche_url || '/images/placeholder-event.svg'}
+          src={event.image_url || '/images/placeholder-event.svg'}
           maxWidth={640}
-          alt={event.nom_evenement}
+          alt={eventTitle}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-event.svg"
         />
@@ -120,10 +124,10 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
 
         <div className="space-y-2 text-sm text-muted-foreground">
           {/* Lieu */}
-          {(event.lieu || event.Lieu?.nom) && (
+          {nomLieu && (
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{event.lieu || event.Lieu?.nom}</span>
+              <span className="truncate">{nomLieu}</span>
             </div>
           )}
 
@@ -163,7 +167,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
         <div className="mt-4 flex items-center justify-between">
           {tarificationDe(event).mode === 'profil' ? (
             <span className="text-sm font-medium text-primary">{t('events.tarif.selonProfil', 'Tarif selon votre profil')}</span>
-          ) : event.gratuit || !Number(event.tarif) ? (
+          ) : !Number(event.tarif) ? (
             <Badge variant="secondary">{t('events.free', 'Gratuit')}</Badge>
           ) : (
             <span className="font-semibold text-primary">{formatPrice(Number(event.tarif))}</span>

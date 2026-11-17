@@ -6,7 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, User } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { PublicParticipant } from '@/services/evenement.service';

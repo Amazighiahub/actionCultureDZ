@@ -15,6 +15,7 @@ import {
 import { LazyImage } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Evenement } from '@/types/models/evenement.types';
+import type { TypeEvenement } from '@/types/models/references.types';
 
 interface EventMetadataProps {
   event: Evenement;
@@ -25,7 +26,10 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
   const { td } = useTranslateData();
   const navigate = useNavigate();
 
-  const typeNom = td(event.TypeEvenement?.nom_type);
+  // « accepte_soumissions » : colonne du modèle TypeEvenement côté serveur, absente du type partagé
+  // (la fiche ne l'envoie pas encore : le badge reste caché tant qu'elle n'est pas ajoutée)
+  const typeEvenement: (TypeEvenement & { accepte_soumissions?: boolean }) | undefined = event.TypeEvenement;
+  const typeNom = td(typeEvenement?.nom_type);
   const oeuvres = event.Oeuvres || [];
   const organisations = event.Organisations || [];
 
@@ -85,7 +89,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
                 {t('event.metadata.capacity', 'Capacité')}: {event.capacite_max}
               </Badge>
             )}
-            {event.TypeEvenement?.accepte_soumissions && (
+            {typeEvenement?.accepte_soumissions && (
               <Badge variant="outline" className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
                 <BookOpen className="h-3.5 w-3.5" />
                 {t('event.metadata.acceptsSubmissions', 'Accepte les soumissions')}

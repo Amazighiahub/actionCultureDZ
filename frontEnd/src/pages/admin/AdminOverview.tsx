@@ -237,7 +237,7 @@ const AdminOverview: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               {t('admin.pending.users', 'Utilisateurs en attente')}
-              {pendingUsers?.items?.length > 0 && (
+              {pendingUsers?.items && pendingUsers.items.length > 0 && (
                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                   {pendingUsers.pagination?.total ?? pendingUsers.items.length}
                 </Badge>
@@ -250,7 +250,7 @@ const AdminOverview: React.FC = () => {
           <CardContent>
             {loadingPendingUsers ? (
               <LoadingSkeleton type="list" count={3} />
-            ) : pendingUsers?.items?.length > 0 ? (
+            ) : pendingUsers?.items && pendingUsers.items.length > 0 ? (
               <div className="space-y-3">
                 {pendingUsers.items.slice(0, 5).map((user: any) => (
                   <PendingItem
@@ -285,7 +285,7 @@ const AdminOverview: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
               {t('admin.pending.works', 'Œuvres en attente')}
-              {pendingOeuvres?.items?.length > 0 && (
+              {pendingOeuvres?.items && pendingOeuvres.items.length > 0 && (
                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                   {pendingOeuvres.pagination?.total ?? pendingOeuvres.items.length}
                 </Badge>
@@ -298,7 +298,7 @@ const AdminOverview: React.FC = () => {
           <CardContent>
             {loadingPendingOeuvres ? (
               <LoadingSkeleton type="list" count={3} />
-            ) : pendingOeuvres?.items?.length > 0 ? (
+            ) : pendingOeuvres?.items && pendingOeuvres.items.length > 0 ? (
               <div className="space-y-3">
                 {pendingOeuvres.items.slice(0, 5).map((oeuvre: any) => (
                   <PendingItem
@@ -336,7 +336,7 @@ const AdminOverview: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
               {t('admin.moderation.title', 'Signalements')}
-              {moderationQueue?.items?.length > 0 && (
+              {moderationQueue?.items && moderationQueue.items.length > 0 && (
                 <Badge variant="secondary" className="bg-red-100 text-red-800">
                   {moderationQueue.items.length}
                 </Badge>
@@ -346,7 +346,7 @@ const AdminOverview: React.FC = () => {
           <CardContent>
             {loadingModeration ? (
               <LoadingSkeleton type="list" count={3} />
-            ) : moderationQueue?.items?.length > 0 ? (
+            ) : moderationQueue?.items && moderationQueue.items.length > 0 ? (
               <div className="space-y-2">
                 {moderationQueue.items.slice(0, 5).map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">

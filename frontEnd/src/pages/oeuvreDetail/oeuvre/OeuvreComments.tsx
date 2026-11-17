@@ -11,14 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
-  MessageCircle, Star, Send, AlertCircle, User, Clock
+  MessageCircle, Send, AlertCircle, User, Clock
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { ResultatEnvoi } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
-import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface Comment {

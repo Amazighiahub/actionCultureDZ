@@ -24,7 +24,7 @@ const nombreOuVide = (valeur: string, entier = false): number | null => {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Composant champs Art avec sélecteurs
-const ArtFields: React.FC<{ formData: FormData; handleInputChange: (field: string, value: any) => void; t: any }> = ({ formData, handleInputChange, t }) => {
+const ArtFields: React.FC<{ formData: FormData; handleInputChange: (field: keyof FormData, value: FormData[keyof FormData] | null) => void; t: any }> = ({ formData, handleInputChange, t }) => {
   const [customTechnique, setCustomTechnique] = React.useState(false);
   const [customSupport, setCustomSupport] = React.useState(false);
 

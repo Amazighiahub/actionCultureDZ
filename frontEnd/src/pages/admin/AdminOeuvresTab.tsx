@@ -15,19 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   BookOpen, Search, CheckCircle, XCircle, Edit,
-  MoreVertical, Eye, Trash2, RefreshCw,
-  Book, Film, Music, Palette, X, AlertCircle
+  Eye, Trash2, RefreshCw, X, AlertCircle
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 import {
-  LazyImage,
   EmptyState,
   LoadingSkeleton,
   StatusBadge,
@@ -40,19 +31,8 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { Pagination } from '@/components/shared/Pagination';
 import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 
-// Helper pour extraire le texte multilingue
-
 // Types de filtres
 const STATUS_OPTIONS = ['tous', 'publie', 'en_attente', 'brouillon', 'rejete'];
-
-// Icônes par type
-const TYPE_ICONS: Record<string, React.ElementType> = {
-  'livre': Book,
-  'film': Film,
-  'musique': Music,
-  'art': Palette,
-  'default': BookOpen
-};
 
 const AdminOeuvresTab: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -101,11 +81,6 @@ const AdminOeuvresTab: React.FC = () => {
   const resetFilters = () => {
     setSearchQuery('');
     setStatusFilter('tous');
-  };
-
-  const getTypeIcon = (type: string): React.ElementType => {
-    const typeName = getLocalizedText(type, 'fr', '').toLowerCase();
-    return TYPE_ICONS[typeName] || TYPE_ICONS.default;
   };
 
   const loading = loadingOeuvres;

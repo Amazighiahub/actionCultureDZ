@@ -63,3 +63,19 @@ export * from './enums/liaison.enums';
 
 // Enums communs
 export * from './enums/common.enums';
+
+// ============================================
+// NOMS DÉFINIS DEUX FOIS
+// ============================================
+// Ces noms existent dans deux fichiers : avec « export * » seul, ils n'étaient exportés par aucun
+// des deux. On choisit ici explicitement la définition de référence.
+
+// Intervenant d'un programme vu comme un utilisateur (l'autre version, dans associations.types,
+// décrit la ligne de la table de liaison)
+export type { ProgrammeIntervenant } from './models/programme.types';
+// Étape d'un parcours, avec ses relations
+export type { ParcoursLieu } from './models/associations.types';
+// Même liste de statuts dans les deux fichiers
+export type { StatutOeuvre } from './enums/oeuvre.enums';
+// L'enum suit exactement la liste du serveur (modèle editeur.js)
+export { TypeEditeur } from './models/references.types';

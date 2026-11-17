@@ -9,7 +9,7 @@ import { useShare } from '@/hooks/useShare';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Calendar, MapPin, Clock, Users, Heart, Share2,
+  Calendar, MapPin, Users, Heart, Share2,
   Ticket, ExternalLink
 } from 'lucide-react';
 import { LazyImage, StatusBadge } from '@/components/shared';
@@ -72,7 +72,8 @@ const EventHero: React.FC<EventHeroProps> = ({
     });
   };
 
-  const hasImage = !!(event.image_url || event.couverture_url);
+  // (le serveur n'envoie aucun « couverture_url » : seule image_url existe)
+  const hasImage = !!event.image_url;
 
   // Version compacte sans image
   if (!hasImage) {
@@ -85,7 +86,7 @@ const EventHero: React.FC<EventHeroProps> = ({
               <StatusBadge status={statutAffiche(event.statut, event.date_debut, event.date_fin)} />
               {event.TypeEvenement && (
                 <Badge variant="secondary">
-                  {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
+                  {td(event.TypeEvenement.nom_type)}
                 </Badge>
               )}
               {modeTarif === 'gratuit' && (
@@ -196,7 +197,7 @@ const EventHero: React.FC<EventHeroProps> = ({
       <div className="relative h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden">
         <LazyImage
           containerClassName="h-full"
-          src={event.image_url || event.couverture_url || '/images/placeholder-event.svg'}
+          src={event.image_url || '/images/placeholder-event.svg'}
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover"
           fallback="/images/placeholder-event.svg"
@@ -217,7 +218,7 @@ const EventHero: React.FC<EventHeroProps> = ({
 
                 {event.TypeEvenement && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                    {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
+                    {td(event.TypeEvenement.nom_type)}
                   </Badge>
                 )}
 

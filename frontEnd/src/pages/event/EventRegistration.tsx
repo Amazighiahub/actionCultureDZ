@@ -34,7 +34,6 @@ import {
   AlertCircle, Loader2, UserPlus, UserMinus,
   Mail, Phone, Palette, BookOpen, Music, Film, Heart
 } from 'lucide-react';
-import { httpClient } from '@/services/httpClient';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +42,9 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import type { Evenement } from '@/types/models/evenement.types';
+import type { TypeEvenement } from '@/types/models/references.types';
+import type { TexteMultilingue } from '@/types/common/multilingual.types';
+import { texteRecherchable } from '@/utils/getLocalizedText';
 import type { InscriptionPayload } from '@/services/evenement.service';
 import type { ResultatInscription } from '@/hooks/useEventDetails';
 import { messageErreurServeur } from '@/utils/erreurServeur';
@@ -62,28 +64,32 @@ interface ConfigSoumission {
   type_oeuvre: string[];
   requis: boolean;
   max_soumissions: number;
-  label: string;
+  /** Texte multilingue { fr, ar, en } (scripts de configuration des types) */
+  label: TexteMultilingue;
 }
 
+/** Seuls ces deux réglages servent ici */
 interface InscriptionConfig {
-  id_evenement: number;
-  nom_evenement: string;
-  type_evenement: string;
-  inscription_requise: boolean;
-  date_limite_inscription: string | null;
-  places_disponibles: number | null;
-  est_complet: boolean;
-  deja_inscrit: boolean;
   accepte_soumissions: boolean;
   config_soumission: ConfigSoumission | null;
 }
 
+/**
+ * Réglages de soumission d'œuvres : colonnes du modèle TypeEvenement côté serveur,
+ * absentes du type partagé TypeEvenement.
+ */
+type TypeEvenementSoumissions = TypeEvenement & {
+  accepte_soumissions?: boolean;
+  config_soumission?: ConfigSoumission | null;
+};
+
 interface OeuvreSimple {
   id_oeuvre: number;
-  titre: string;
-  description?: string;
+  titre: TexteMultilingue;
+  description?: TexteMultilingue;
   image_url?: string;
-  TypeOeuvre?: { nom_type: string };
+  /** nom_type est un texte multilingue côté serveur */
+  TypeOeuvre?: { nom_type: TexteMultilingue };
 }
 
 interface EventRegistrationProps {
@@ -184,17 +190,16 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const loadInscriptionConfig = async () => {
     try {
       setConfigLoading(true);
+      // Ces réglages appartiennent au type d'événement (modèle TypeEvenement côté serveur)
+      const typeEvenement: TypeEvenementSoumissions | undefined = event.TypeEvenement;
       setInscriptionConfig({
-        type_inscription: event.type_inscription || 'libre',
-        capacite_max: event.capacite_max || null,
-        nombre_inscrits: event.nombre_inscrits || 0,
-        accepte_soumissions: event.accepte_soumissions || false,
-        config_soumission: event.config_soumission || null,
-      } as InscriptionConfig);
+        accepte_soumissions: typeEvenement?.accepte_soumissions || false,
+        config_soumission: typeEvenement?.config_soumission || null,
+      });
 
-      if (event.accepte_soumissions) {
+      if (typeEvenement?.accepte_soumissions) {
         // Config passée directement : l'état inscriptionConfig n'est pas encore à jour ici
-        loadMesOeuvres(event.config_soumission?.type_oeuvre || []);
+        loadMesOeuvres(typeEvenement.config_soumission?.type_oeuvre || []);
       }
     } catch (error) {
       // Silencieux
@@ -215,7 +220,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         if (typesAcceptes.length > 0) {
           // Filtrer les œuvres dont le type correspond aux types acceptés
           const oeuvresFiltrees = oeuvresRaw.filter(oeuvre => {
-            const typeOeuvre = (oeuvre.TypeOeuvre?.nom_type as string)?.toLowerCase() || '';
+            // nom_type multilingue : toutes ses langues, en minuscules (toLowerCase plantait sur l'objet)
+            const typeOeuvre = texteRecherchable(oeuvre.TypeOeuvre?.nom_type);
             // Vérifier si le type de l'œuvre correspond à un des types acceptés
             return typesAcceptes.some(typeAccepte => {
               const typeNorm = typeAccepte.toLowerCase();
@@ -232,10 +238,10 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                      (typeNorm.includes('poem') && typeOeuvre.includes('poème'));
             });
           });
-          setMesOeuvres(oeuvresFiltrees as OeuvreSimple[]);
+          setMesOeuvres(oeuvresFiltrees);
         } else {
           // Si pas de filtre de type, afficher toutes les œuvres
-          setMesOeuvres(oeuvresRaw as OeuvreSimple[]);
+          setMesOeuvres(oeuvresRaw);
         }
       }
     } catch (error) {
@@ -262,8 +268,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     setSelectedOeuvres(prev => [...prev, oeuvreId]);
   };
 
-  const getOeuvreTypeIcon = (type?: string) => {
-    const typeLower = type?.toLowerCase() || '';
+  const getOeuvreTypeIcon = (type?: TexteMultilingue) => {
+    const typeLower = texteRecherchable(type);
     if (typeLower.includes('livre') || typeLower.includes('book')) return BookOpen;
     if (typeLower.includes('musique') || typeLower.includes('music')) return Music;
     if (typeLower.includes('film') || typeLower.includes('video')) return Film;

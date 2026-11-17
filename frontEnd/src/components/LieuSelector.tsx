@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { MapPin, Search, Plus, X, Loader2, Copy, Locate } from 'lucide-react';
+import { MapPin, Search, Plus, X, Loader2, Locate } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { lieuService } from '@/services/lieu.service';
 import { Lieu } from '@/types/models/lieu.types';
@@ -52,8 +52,7 @@ interface LieuSelectorProps {
 export const LieuSelector: React.FC<LieuSelectorProps> = ({
   value,
   onChange,
-  wilayaId,
-  required = false
+  wilayaId
 }) => {
   const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
@@ -264,22 +263,6 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     setAddressSearch('');
   };
 
-  const copyCoordinates = (lat: number, lng: number) => {
-    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    navigator.clipboard.writeText(coords).then(() => {
-      toast({
-        title: t('common.success'),
-        description: t('places.coordinatesCopied'),
-      });
-    }).catch(() => {
-      toast({
-        title: t('common.error'),
-        description: t('places.copyError'),
-        variant: "destructive"
-      });
-    });
-  };
-
   // Calculer la distance entre deux points (formule de Haversine)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // Rayon de la Terre en km
@@ -337,7 +320,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
         toast({
           title: t('places.duplicate.title'),
           description: t('places.duplicate.description'),
-          variant: "warning"
+          variant: "default"
         });
         
         if (duplicateCheck.data.lieu) {
@@ -357,7 +340,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
       const response = await lieuService.create({
         ...newLieu,
         wilayaId,
-        detail: newLieu.description ? {
+        details: newLieu.description ? {
           description: newLieu.description
         } : undefined
       });

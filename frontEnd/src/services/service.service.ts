@@ -2,7 +2,7 @@
  * Service pour les services culturels (restaurant, hébergement, guide, etc.)
  * Entité distincte de l'artisanat.
  */
-import { ApiResponse, PaginatedResponse } from '@/config/api';
+import { ApiResponse, PaginatedResponse, PaginationInfo } from '@/config/api';
 import { httpClient } from './httpClient';
 
 export interface Service {
@@ -24,7 +24,8 @@ export interface Service {
 
 class ServiceService {
   async getMyServices(params?: { page?: number; limit?: number }): Promise<ApiResponse<PaginatedResponse<Service>>> {
-    const response = await httpClient.get<PaginatedResponse<Service>>('/services/my/list', {
+    // Le serveur renvoie la liste seule, ou rangée sous « data » ou « items »
+    const response = await httpClient.get<Service[] | { data?: Service[]; items?: Service[]; pagination?: PaginationInfo }>('/services/my/list', {
       params: { page: params?.page ?? 1, limit: params?.limit ?? 50 },
     });
 
@@ -34,7 +35,7 @@ class ServiceService {
 
     const data = response.data;
     const items = Array.isArray(data) ? data : data?.data ?? data?.items ?? [];
-    const pagination = data?.pagination ?? response.pagination ?? { total: items.length, page: 1, limit: 50, pages: 1 };
+    const pagination = (Array.isArray(data) ? undefined : data?.pagination) ?? response.pagination ?? { total: items.length, page: 1, limit: 50, pages: 1 };
 
     return {
       success: true,

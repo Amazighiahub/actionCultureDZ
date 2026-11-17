@@ -26,9 +26,45 @@ import { artisanatPath } from '@/utils/slug';
 const STRETCHED_LINK_CLASS =
   'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
 
+/** Artisan affiché sous le titre (prénom et nom, texte simple ou multilingue) */
+interface ArtisanCarte {
+  prenom?: unknown;
+  nom?: unknown;
+}
+
+/**
+ * Ce que la carte lit d'un produit (liste /artisanat ou accueil). Tout est facultatif : selon la
+ * route, le serveur renvoie le titre dans Oeuvre ou directement, et les photos dans Oeuvre.Media ou medias.
+ * Les textes restent « unknown » : ils passent tous par getLocalizedText.
+ */
+export interface ArtisanatCarteDonnees {
+  id?: number;
+  id_artisanat?: number;
+  nom?: unknown;
+  titre?: unknown;
+  description?: unknown;
+  image_url?: string | null;
+  medias?: Array<{ url?: string }>;
+  prix?: number | string | null;
+  prix_min?: number | string | null;
+  prix_max?: number | string | null;
+  note_moyenne?: number | string | null;
+  // « vues » : nom du champ dans le type du service artisanat
+  statistiques?: { nombre_vues?: number; vues?: number };
+  artisan?: ArtisanCarte | null;
+  Materiau?: { nom?: unknown } | null;
+  Technique?: { nom?: unknown } | null;
+  Oeuvre?: {
+    titre?: unknown;
+    description?: unknown;
+    Media?: Array<{ url?: string }>;
+    Saiseur?: ArtisanCarte | null;
+  } | null;
+}
+
 // Composant carte d'artisanat
 interface ArtisanatCardProps {
-  artisanat: Record<string, unknown>;
+  artisanat: ArtisanatCarteDonnees;
   onFavorite?: (id: number) => void;
 }
 
@@ -46,13 +82,13 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
 
   // Extraire les données de l'artisanat (peut venir de Oeuvre ou directement)
   const rawTitre = artisanat.Oeuvre?.titre || artisanat.nom || artisanat.titre || 'Sans titre';
-  const titre = typeof rawTitre === 'object' && rawTitre !== null ? (rawTitre as Record<string, string>).fr || Object.values(rawTitre)[0] || 'Sans titre' : rawTitre;
+  const titre = getLocalizedText(rawTitre) || 'Sans titre';
   const imageUrl = artisanat.Oeuvre?.Media?.[0]?.url ||
                    artisanat.medias?.[0]?.url ||
                    artisanat.image_url ||
                    '/images/placeholder-artisanat.svg';
   const artisan = artisanat.Oeuvre?.Saiseur || artisanat.artisan;
-  const description = getLocalizedText((artisanat.Oeuvre as { description?: unknown } | undefined)?.description ?? artisanat.description) || '';
+  const description = getLocalizedText(artisanat.Oeuvre?.description ?? artisanat.description) || '';
   const materiau = getLocalizedText(artisanat.Materiau?.nom) || '';
   const technique = getLocalizedText(artisanat.Technique?.nom) || '';
   const prix = artisanat.prix || artisanat.prix_min;

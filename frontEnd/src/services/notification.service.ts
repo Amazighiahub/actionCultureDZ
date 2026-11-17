@@ -17,6 +17,14 @@ export type {
   UpdatePreferencesData,
   BroadcastNotificationData
 } from '../types/models/notification.types';
+/** Liste telle que renvoyée par le serveur : sous « notifications » ou « items », au format API ou déjà converti */
+interface ListeNotificationsRecue {
+  notifications?: Array<NotificationAPI | Notification>;
+  items?: Array<NotificationAPI | Notification>;
+  pagination?: NotificationListResponse['pagination'];
+  stats?: NotificationListResponse['stats'];
+}
+
 class UnifiedNotificationService {
   // ================================================
   // MÉTHODES PRINCIPALES
@@ -38,7 +46,7 @@ async getNotifications(
     if (options.nonLues !== undefined) params.nonLues = options.nonLues;
     if (options.type) params.type = options.type;
 
-    const response = await httpClient.get<NotificationListResponse>(API_ENDPOINTS.notifications.list, params);
+    const response = await httpClient.get<ListeNotificationsRecue>(API_ENDPOINTS.notifications.list, params);
 
     if (!response.success) {
       return {
@@ -50,7 +58,7 @@ async getNotifications(
 
     const data = response.data;
     return {
-      notifications: (data?.notifications || data?.items || []).map((n: NotificationAPI) => mapAPIToNotification(n)),
+      notifications: (data?.notifications || data?.items || []).map((n) => mapAPIToNotification(n)),
       pagination: data?.pagination || { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
       stats: data?.stats || { nonLues: 0, total: 0 }
     };
@@ -75,11 +83,11 @@ async getNotifications(
 
       const data = response.data;
 
-      if (data && data.nonLues !== undefined) {
+      if (data && 'nonLues' in data && data.nonLues !== undefined) {
         return data;
       }
 
-      if (data && data.total_unread !== undefined) {
+      if (data && 'total_unread' in data && data.total_unread !== undefined) {
         return mapAPISummaryToSummary(data);
       }
 

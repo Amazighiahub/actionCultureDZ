@@ -31,10 +31,15 @@ const CARD_LINK_CLASS = 'block rounded-lg focus-visible:outline-none focus-visib
 // Remonter en haut de page après navigation vers une autre œuvre
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+// Champs en plus du type Oeuvre : image_url est ajoutée par le serveur (image principale)
+type OeuvreCarte = Oeuvre & { image_url?: string; couverture_url?: string; sous_titre?: string };
+
 // Carte d'œuvre compacte
-const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
+const OeuvreCard: React.FC<{ oeuvre: OeuvreCarte }> = ({ oeuvre }) => {
   const { i18n } = useTranslation();
   const lang = i18n.language || 'fr';
+  // Number() : la note peut arriver en texte (colonne décimale) ; une note 0 n'affiche plus « 0 »
+  const note = Number(oeuvre.note_moyenne) || 0;
 
   return (
     <Link to={oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, oeuvre.id_type_oeuvre)} onClick={scrollToTop} className={CARD_LINK_CLASS}>
@@ -42,7 +47,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden">
           <LazyImage
-            src={(oeuvre as Oeuvre & Record<string, unknown>).image_url || (oeuvre as Oeuvre & Record<string, unknown>).couverture_url || '/images/placeholder-oeuvre.svg'}
+            src={oeuvre.image_url || oeuvre.couverture_url ||'/images/placeholder-oeuvre.svg'}
             alt={getLocalizedText(oeuvre.titre, lang)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             fallback="/images/placeholder-oeuvre.svg"
@@ -61,11 +66,11 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
           )}
 
           {/* Note */}
-          {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne && (oeuvre as Oeuvre & Record<string, unknown>).note_moyenne > 0 && (
+          {note > 0 && (
             <div className="absolute top-2 end-2">
               <Badge className="bg-yellow-500 text-black text-xs">
                 <Star className="h-3 w-3 me-0.5 fill-current" />
-                {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne.toFixed(1)}
+                {note.toFixed(1)}
               </Badge>
             </div>
           )}
@@ -77,9 +82,9 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
             {getLocalizedText(oeuvre.titre, lang)}
           </h4>
         
-          {(oeuvre as Oeuvre & Record<string, unknown>).sous_titre && (
+          {oeuvre.sous_titre && (
             <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 italic">
-              {(oeuvre as Oeuvre & Record<string, unknown>).sous_titre}
+              {oeuvre.sous_titre}
             </p>
           )}
 
@@ -87,10 +92,10 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
             {oeuvre.annee_creation && (
               <span>{oeuvre.annee_creation}</span>
             )}
-            {(oeuvre as Oeuvre & Record<string, unknown>).nb_vues !== undefined && (
+            {oeuvre.nb_vues !== undefined && (
               <span className="flex items-center gap-1">
                 <Eye className="h-3 w-3" aria-hidden="true" />
-                {((oeuvre as Oeuvre & Record<string, unknown>).nb_vues as number).toLocaleString()}
+                {oeuvre.nb_vues.toLocaleString()}
               </span>
             )}
           </div>
@@ -103,7 +108,6 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre }> = ({ oeuvre }) => {
 // Composant principal
 const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
   oeuvreId,
-  typeId,
   limit = 4
 }) => {
   const { t } = useTranslation();

@@ -1,39 +1,25 @@
 // components/oeuvre/HeroSection.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import HeroLivre from './HeroLivre';
 import HeroFilm from './HeroFilm';
 import HeroAlbum from './HeroAlbum';
 import HeroArticle from './HeroArticle';
 import HeroDefault from './HeroDefault';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
-  ChevronLeft, BookOpen, Film, Music, Palette, FileText,
-  Sparkles, Eye, Heart, Share2, Star, Play, MessageCircle,
-  User, Calendar, Clock, Headphones, RotateCcw, Quote, Globe,
-  BookMarked, Facebook, Twitter, Link as LinkIcon, Copy, ZoomIn, X,
-  Beaker, ExternalLink, CheckCircle, Hash, Image as ImageIcon
+  Share2, MessageCircle, Facebook, Twitter, Copy, Image as ImageIcon
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import { getMainImage } from '@/types/models/media-extended.types';
-import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import i18n from 'i18next';
@@ -54,7 +40,7 @@ const ShareButton = ({
   shareOpen: boolean;
   setShareOpen: (open: boolean) => void;
   onShare: (platform: string) => void;
-  t: (key: string, fallback?: string) => string;
+  t: TFunction;
   variant?: "outline" | "default" | "ghost";
   className?: string;
   iconOnly?: boolean;
@@ -121,19 +107,6 @@ interface HeroSectionProps {
   onShare?: () => void; // Optional - le composant gère le partage en interne maintenant
 }
 
-const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
-  const iconMap: Record<number, typeof BookOpen> = {
-    1: BookOpen,   // Livre
-    2: Film,       // Film
-    3: Music,      // Album Musical
-    6: Palette,    // Œuvre d'Art
-    7: Sparkles,   // Artisanat
-  };
-
-  const Icon = iconMap[typeId] || Sparkles;
-  return <Icon className="h-5 w-5" />;
-};
-
 /**
  * L'en-tête affiche-t-il déjà la description en entier ? Oui pour les livres, films, albums et articles
  * (HeroLivre, HeroFilm, HeroAlbum, HeroArticle) ; non pour l'en-tête par défaut (art, artisanat…).
@@ -152,23 +125,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   favoriteLoading,
   onToggleFavorite,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
-  const { formatNumber, formatPrice } = useLocalizedNumber();
-  const { rtlClasses, direction } = useRTL();
 
-  // État pour l'effet flip du livre
-  const [isFlipped, setIsFlipped] = useState(false);
   // État pour le menu de partage
   const [shareOpen, setShareOpen] = useState(false);
   // Images prêtes à publier (Instagram, Facebook)
   const [imagesOpen, setImagesOpen] = useState(false);
-  // État pour la modal d'extrait
-  const [showExcerpt, setShowExcerpt] = useState(false);
-  // État pour le zoom de la couverture
-  const [showZoom, setShowZoom] = useState(false);
-  // État pour la modal de lecture vidéo/audio
-  const [showPlayer, setShowPlayer] = useState(false);
   // Message "pas de média"
   const [noMediaMsg, setNoMediaMsg] = useState(false);
 
@@ -177,13 +139,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const audioMedia = medias.find(m => m.type_media === 'audio');
   const playableMedia = videoMedia || audioMedia;
 
+  // Appelé par HeroFilm / HeroAlbum seulement quand il n'y a rien à lire : ils ouvrent eux-mêmes
+  // leur lecteur quand un média existe (l'ancien état showPlayer d'ici n'affichait rien)
   const handlePlay = () => {
-    if (playableMedia) {
-      setShowPlayer(true);
-    } else {
-      setNoMediaMsg(true);
-      setTimeout(() => setNoMediaMsg(false), 3000);
-    }
+    setNoMediaMsg(true);
+    setTimeout(() => setNoMediaMsg(false), 3000);
   };
 
   // Fonction de partage
@@ -191,7 +151,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     const url = window.location.href;
     const text = t('oeuvre.share.text', 'Découvrez "{{title}}" - {{type}}', {
       title: titre,
-      type: oeuvre.TypeOeuvre?.nom_type || 'Œuvre'
+      type: typeOeuvre
     });
 
     switch (platform) {
@@ -229,11 +189,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const titre = gt(oeuvre.titre);
   const description = gt(oeuvre.description);
 
-  const mainImage = getMainImage(medias);
+  // Les héros attendent null quand il n'y a pas d'image
+  const mainImage = getMainImage(medias) ?? null;
   const typeId = oeuvre.id_type_oeuvre;
-  const typeOeuvre = typeof oeuvre.TypeOeuvre?.nom_type === 'object'
-    ? (oeuvre.TypeOeuvre.nom_type as Record<string, string>).fr || Object.values(oeuvre.TypeOeuvre.nom_type as Record<string, string>)[0] || 'Œuvre'
-    : oeuvre.TypeOeuvre?.nom_type || 'Œuvre';
+  // Nom du type dans la langue du site (avant : toujours le français s'il arrivait multilingue)
+  const typeOeuvre = gt(oeuvre.TypeOeuvre?.nom_type) || 'Œuvre';
   
   // Fonction helper pour obtenir les contributeurs principaux
   const getMainContributors = () => {
@@ -247,7 +207,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const auteurs = mainContributors.map((c: any) => `${gt(c.prenom)} ${gt(c.nom)}`.trim()).filter(Boolean).join(', ');
   const dialogImages = (
     <ImagesReseaux open={imagesOpen} onOpenChange={setImagesOpen}
-      contenu={{ titre, sousTitre: auteurs || gt(oeuvre.TypeOeuvre?.nom_type) || typeOeuvre, image: mainImage }}
+      contenu={{ titre, sousTitre: auteurs || typeOeuvre, image: mainImage ?? undefined }}
       lien={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
       resume={description}
       nomFichier={`taladz-${slugify(titre) || 'oeuvre'}`} />

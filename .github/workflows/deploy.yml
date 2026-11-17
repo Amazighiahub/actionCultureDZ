@@ -113,6 +113,12 @@ jobs:
         working-directory: ./frontEnd
         run: npm run lint
 
+      # Types vérifiés à chaque publication (2026-11-17 : 482 erreurs s'étaient accumulées sans ce
+      # contrôle ; ramenées à 0, elles ne peuvent plus revenir)
+      - name: Type-check frontend
+        working-directory: ./frontEnd
+        run: npm run typecheck
+
       - name: Test frontend
         working-directory: ./frontEnd
         run: npm test -- --run --passWithNoTests

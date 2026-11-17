@@ -236,7 +236,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       TypeUser?: { id_type_user: number; nom_type: string };
       OeuvreIntervenant?: { personnage?: string; role_principal?: boolean; description_role?: string };
     };
-    const intervenants = (oeuvre as Record<string, unknown>).Intervenants as IntervenantWithJunction[] | undefined;
+    // Intervenants : liste à plat ajoutée par le serveur (OeuvreDTO._addComputedFields), absente du type Oeuvre
+    const intervenants = (oeuvre as typeof oeuvre & { Intervenants?: IntervenantWithJunction[] }).Intervenants;
     if (intervenants) {
       intervenants.forEach((intervenant) => {
         result.push({

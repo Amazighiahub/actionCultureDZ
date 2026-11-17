@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
-  MessageCircle, Star, ThumbsUp, Reply,
+  MessageCircle, ThumbsUp, Reply,
   Send, AlertCircle, User, Clock, Loader2
 } from 'lucide-react';
 import type { ResultatEnvoi } from '@/utils/erreurServeur';

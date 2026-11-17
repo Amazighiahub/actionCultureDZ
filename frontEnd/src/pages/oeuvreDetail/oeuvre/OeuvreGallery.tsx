@@ -13,7 +13,6 @@ import {
   Play, Grid, List
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
-import { cn } from '@/lib/Utils';
 import type { Media } from '@/types/models/media.types';
 import { getAssetUrl } from '@/helpers/assetUrl';
 

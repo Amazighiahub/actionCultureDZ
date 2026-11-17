@@ -51,7 +51,7 @@ import { ConfirmDialog } from '@/components/shared';
 import { useToast } from '@/components/ui/use-toast';
 import { programmeService, type Programme } from '@/services/programme.service';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
-import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
+import { evenementOeuvreService, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
@@ -69,22 +69,6 @@ interface GestionEvenementProps {
   /** Onglet ouvert d'abord (ex. « documents » depuis le rappel « ajoutez vos photos ») */
   onglet?: string;
 }
-
-// Types d'activités pour les programmes
-const TYPES_ACTIVITE = [
-  { value: 'conference', label: 'Conférence' },
-  { value: 'atelier', label: 'Atelier' },
-  { value: 'spectacle', label: 'Spectacle' },
-  { value: 'exposition', label: 'Exposition' },
-  { value: 'visite', label: 'Visite guidée' },
-  { value: 'projection', label: 'Projection' },
-  { value: 'concert', label: 'Concert' },
-  { value: 'lecture', label: 'Lecture' },
-  { value: 'debat', label: 'Débat' },
-  { value: 'formation', label: 'Formation' },
-  { value: 'ceremonie', label: 'Cérémonie' },
-  { value: 'autre', label: 'Autre' }
-];
 
 type TextesLangues = { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string };
 const textesEnregistres = (valeur: unknown, langue: string): TextesLangues => ({

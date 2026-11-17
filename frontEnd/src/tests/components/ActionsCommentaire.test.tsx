@@ -4,7 +4,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 const { auth, service, toast } = vi.hoisted(() => ({
   auth: { value: {} as Record<string, unknown> },

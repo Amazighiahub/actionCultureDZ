@@ -263,7 +263,8 @@ class PermissionsService {
   /**
    * Vérifie si l'utilisateur peut créer un événement pour une organisation
    */
-  canCreateEventForOrganisation(organisationId?: number): boolean {
+  // L'organisation n'est pas encore vérifiée (appartenance) : seul le droit de créer compte
+  canCreateEventForOrganisation(_organisationId?: number): boolean {
     if (!this.currentUser) return false;
     
     // Admin peut créer pour n'importe quelle organisation

@@ -20,7 +20,7 @@ import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2, Pencil,
   CheckCircle2, Info, History, Image as ImageIcon, Play,
-  Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints,
+  Compass, TreePine, Utensils, Headphones, DoorOpen, ChevronLeft, Footprints,
   Leaf, Drama, Amphora, UserRound
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';

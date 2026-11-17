@@ -18,6 +18,7 @@
     "analyze": "npx vite-bundle-visualizer",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",

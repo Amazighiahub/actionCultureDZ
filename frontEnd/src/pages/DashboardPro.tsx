@@ -57,7 +57,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
-import { useDashboardPro } from '@/hooks/useDashboardPro';
+import { useDashboardPro, type ElementPro } from '@/hooks/useDashboardPro';
 import { useTranslation } from "react-i18next";
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
@@ -71,49 +71,11 @@ import MoyensPaiement from '@/components/pro/MoyensPaiement';
 import AccesCommandes from '@/components/commande/AccesCommandes';
 import { lireSpecialites } from '@/utils/specialites';
 import VisibiliteFiche from '@/components/pro/VisibiliteFiche';
-import type { TexteMultilingue } from '@/types/common/multilingual.types';
+import type { TFunction } from 'i18next';
 
 import { getLocalizedText } from '@/utils/getLocalizedText';
-/** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
-interface DashboardItem {
-  id?: number;
-  id_oeuvre?: number;
-  id_evenement?: number;
-  id_site?: number;
-  /** Sites patrimoine : identifiant renvoyé par le serveur */
-  id_lieu?: number;
-  id_service?: number;
-  id_artisanat?: number;
-  titre?: unknown;
-  nom?: unknown;
-  nom_evenement?: unknown;
-  description?: unknown;
-  lieu?: unknown;
-  type?: unknown;
-  type_service?: unknown;
-  type_oeuvre?: { nom_type?: unknown };
-  TypeOeuvre?: { nom_type?: unknown };
-  vues?: number;
-  visites?: number;
-  note_moyenne?: number;
-  statut?: string;
-  date_debut?: string;
-  Lieu?: { nom?: unknown; adresse?: unknown };
-  nombre_participants?: number;
-  wilaya?: unknown;
-  tarif_min?: number;
-  tarif_max?: number;
-  horaires?: unknown;
-  en_stock?: number;
-  sur_commande?: boolean;
-  prix_min?: number;
-  prix_max?: number;
-  Materiau?: { nom?: unknown };
-  Technique?: { nom?: unknown };
-  materiau?: unknown;
-  technique?: unknown;
-  [key: string]: unknown;
-}
+/** Élément d'une liste du tableau de bord (œuvre, événement, service, site, artisanat) */
+type DashboardItem = ElementPro;
 
 interface ItemRowProps {
   item: DashboardItem;
@@ -125,7 +87,7 @@ interface ItemRowProps {
 }
 
 // Helper pour le badge statut événement
-const getEventStatusBadge = (statut: string | undefined, t: (key: string, fallback?: string) => string) => {
+const getEventStatusBadge = (statut: string | undefined, t: TFunction) => {
   const s = statut || 'brouillon';
   const labels: Record<string, string> = {
     brouillon: t('events.status.draft', 'Brouillon'),
@@ -151,7 +113,7 @@ const getEventStatusBadge = (statut: string | undefined, t: (key: string, fallba
 };
 
 // Statut d'une œuvre, en clair
-const libelleStatutOeuvre = (statut: unknown, t: (key: string, fallback?: string) => string) => {
+const libelleStatutOeuvre = (statut: unknown, t: TFunction) => {
   const s = typeof statut === 'string' ? statut : 'brouillon';
   const labels: Record<string, string> = {
     brouillon: t('dashboardpro.oeuvreStatus.brouillon', 'Brouillon'),
@@ -189,7 +151,6 @@ const DashboardPro = () => {
     loadingArtisanats,
     loadingServices,
     loadingPatrimoines,
-    error: errorStats,
     errorOeuvres,
     errorEvenements,
     errorArtisanats,
@@ -203,7 +164,7 @@ const DashboardPro = () => {
   const { t, i18n } = useTranslation();
   const { formatPriceRange } = useLocalizedNumber();
   const { user: currentUser } = useAuth();
-  const { td, safe } = useTranslateData();
+  const { td } = useTranslateData();
   const { notifications, summary, markAsRead, markAllAsRead } = useNotifications();
   const [notifOpen, setNotifOpen] = useState(false);
   const unreadCount = summary?.nonLues ?? 0;
@@ -246,8 +207,8 @@ const DashboardPro = () => {
   const gererDemande = Number(parametres.get('gerer')) || null;
   useEffect(() => {
     if (!gererDemande || !mesEvenements?.items) return;
-    const ev = (mesEvenements.items as Array<{ id_evenement?: number; nom_evenement?: unknown }>).find((e) => e.id_evenement === gererDemande);
-    if (ev) setGestionEvenement({ id: gererDemande, nom: td(ev.nom_evenement as Parameters<typeof td>[0]), onglet: parametres.get('onglet') || undefined });
+    const ev = mesEvenements.items.find((e) => e.id_evenement === gererDemande);
+    if (ev) setGestionEvenement({ id: gererDemande, nom: td(ev.nom_evenement), onglet: parametres.get('onglet') || undefined });
     const reste = new URLSearchParams(parametres);
     reste.delete('gerer'); reste.delete('onglet');
     setParametres(reste, { replace: true });
@@ -257,14 +218,14 @@ const DashboardPro = () => {
   const evenementsTotal = dashboardStats?.evenements?.total ?? 0;
   const servicesTotal = mesServices?.pagination?.total ?? 0;
   const artisanatsTotal = mesArtisanats?.pagination?.total ?? dashboardStats?.artisanats?.total ?? 0;
-  const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
+  const vuesTotal = dashboardStats?.vues_total ?? 0;
 
   // Fonction de filtrage par recherche (utilise la valeur debouncée)
   const filterBySearch = useCallback((items: DashboardItem[]) => {
     if (!items || !debouncedSearch) return items;
     return items.filter((item) => {
       // Extraire les valeurs string des champs (y compris objets multilingues)
-      const getValue = (field: TexteMultilingue): string => {
+      const getValue = (field: unknown): string => {
         if (!field) return '';
         if (typeof field === 'string') return field;
         if (typeof field === 'object' && !Array.isArray(field)) {
@@ -391,7 +352,7 @@ const DashboardPro = () => {
               {item.Lieu && (
                 <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
-                  {td(item.Lieu.nom) || td(item.lieu?.nom) || '-'}
+                  {td(item.Lieu.nom) || td(typeof item.lieu === 'object' ? item.lieu.nom : undefined) || '-'}
                 </span>
               )}
             </div>);
@@ -507,7 +468,9 @@ const DashboardPro = () => {
       // (manquait : la suppression envoyait DELETE /artisanat/undefined)
       artisanat: item?.id_artisanat || item?.id
     };
-    await deleteItem(type, ids[type]);
+    const id = ids[type];
+    if (id == null) return;
+    await deleteItem(type, id);
   };
 
   return (
@@ -788,7 +751,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesOeuvres?.items && mesOeuvres.items.length > 0 ?
-                  filterBySearch(mesOeuvres.items as DashboardItem[]).map((oeuvre) =>
+                  filterBySearch(mesOeuvres.items).map((oeuvre) =>
                   <ItemRow
                     key={oeuvre.id_oeuvre}
                     item={oeuvre}
@@ -837,7 +800,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
-                  filterBySearch(mesEvenements.items as DashboardItem[]).map((evenement) =>
+                  filterBySearch(mesEvenements.items).map((evenement) =>
                   <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-border last:border-0">
                     {/* Téléphone : infos puis boutons en dessous ; écran large : côte à côte */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
@@ -869,10 +832,12 @@ const DashboardPro = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setGestionEvenement({
-                            id: evenement.id_evenement,
-                            nom: td(evenement.nom_evenement)
-                          })}
+                          onClick={() => {
+                            if (evenement.id_evenement) setGestionEvenement({
+                              id: evenement.id_evenement,
+                              nom: td(evenement.nom_evenement)
+                            });
+                          }}
                           title={t("dashboardpro.manage_event", "Gérer programmes et œuvres")}
                         >
                           <Settings className="h-4 w-4 me-1" />
@@ -959,7 +924,7 @@ const DashboardPro = () => {
                       </Button>
                     </div>
                   ) : mesServices?.items && mesServices.items.length > 0 ? (
-                    filterBySearch(mesServices.items as DashboardItem[]).map((item) => (
+                    filterBySearch(mesServices.items).map((item) => (
                       <ItemRow
                         key={item.id || item.id_service}
                         item={item}
@@ -1005,7 +970,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesArtisanats?.items && mesArtisanats.items.length > 0 ?
-                  filterBySearch(mesArtisanats.items as DashboardItem[]).map((item) =>
+                  filterBySearch(mesArtisanats.items).map((item) =>
                   <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-border last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -1015,7 +980,7 @@ const DashboardPro = () => {
                           <span>{td(item.Technique?.nom) || td(item.technique) || ""}</span>
                           {(item.prix_min != null || item.prix_max != null) && (
                             <span className="font-medium text-primary">
-                              {formatPriceRange(item.prix_min as number | string | null, item.prix_max as number | string | null)}
+                              {formatPriceRange(item.prix_min ?? null, item.prix_max ?? null)}
                             </span>
                           )}
                           <Badge variant={typeof item.en_stock === 'number' && item.en_stock > 0 ? 'default' : item.sur_commande ? 'secondary' : 'outline'}>
@@ -1086,7 +1051,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesPatrimoines?.items && mesPatrimoines.items.length > 0 ?
-                  filterBySearch(mesPatrimoines.items as DashboardItem[]).map((site) =>
+                  filterBySearch(mesPatrimoines.items).map((site) =>
                   <ItemRow
                     key={site.id_lieu || site.id_site || site.id}
                     item={site}

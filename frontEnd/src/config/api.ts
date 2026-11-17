@@ -520,7 +520,8 @@ export const API_ENDPOINTS = { // Documentation complète de l'API
   },
 
   articleBlocks: {
-    getByArticle: (articleId, articleType?) => `/article-blocks/article/${articleId}/${articleType}`,
+    getByArticle: (articleId: number, articleType: 'article' | 'article_scientifique' = 'article') =>
+      `/article-blocks/article/${articleId}/${articleType}`,
     createBatch: '/article-blocks/batch',
   },
   // ================================================

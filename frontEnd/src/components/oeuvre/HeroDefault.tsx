@@ -46,7 +46,6 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
   typeId,
   typeOeuvre,
   mainContributors,
-  viewCount,
   isFavorite,
   favoriteLoading,
   onToggleFavorite,

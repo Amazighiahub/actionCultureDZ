@@ -15,7 +15,6 @@ const rafraichirCloche = () => queryClient.invalidateQueries({ queryKey: ['notif
 import type {
   Notification,
   NotificationSummary,
-  NotificationPreferences,
   LoadNotificationsOptions,
   UpdatePreferencesData
 } from '../types/models/notification.types';
@@ -222,7 +221,7 @@ export function useNotifications(): UseNotificationsReturn {
     }, 1000);
 
     // Handlers pour les événements de notification
-    const handlers = {
+    const handlers: { [K in keyof NotificationEventMap]: (data: NotificationEventMap[K]) => void } = {
       'notification:new': (notification: Notification) => {
         setNotifications(prev => [notification, ...prev]);
         
@@ -271,9 +270,9 @@ export function useNotifications(): UseNotificationsReturn {
     };
 
     // Enregistrer les événements
-    Object.entries(handlers).forEach(([event, handler]) => {
-      addEventListener(event as keyof NotificationEventMap, handler as NotificationEventMap[keyof NotificationEventMap]);
-    });
+    addEventListener('notification:new', handlers['notification:new']);
+    addEventListener('notification:updated', handlers['notification:updated']);
+    addEventListener('notifications:allRead', handlers['notifications:allRead']);
 
     // Charger les données initiales
     const initData = async () => {

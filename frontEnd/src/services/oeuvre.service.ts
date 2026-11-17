@@ -7,6 +7,7 @@ import { Media } from '@/types/models/media.types';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // ========================================
 // EXPORTS DE TYPES - AJOUTER CE BLOC !
@@ -112,12 +113,14 @@ class OeuvreService {
         // Attendre un peu et vérifier si l'œuvre a été créée
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const checkResult = await this.checkRecentOeuvre(data.titre);
+        // Titre multilingue : on cherche son texte (avant, l'objet partait tel quel dans la recherche)
+        const checkResult = await this.checkRecentOeuvre(getLocalizedText(data.titre));
         if (checkResult.success && checkResult.data) {
           return {
             success: true,
             data: {
-              oeuvre: checkResult.data,
+              // La réponse de création attend un titre en texte
+              oeuvre: { ...checkResult.data, titre: getLocalizedText(checkResult.data.titre) },
               message: i18next.t('oeuvreService.creeeApresDelai', 'Œuvre créée (retrouvée après un délai dépassé)')
             }
           };
@@ -198,8 +201,8 @@ class OeuvreService {
         limit: 1
       });
 
-      if (response.success && response.data?.oeuvres?.length > 0) {
-        const oeuvre = response.data.oeuvres[0];
+      const oeuvre = response.success ? response.data?.oeuvres?.[0] : undefined;
+      if (oeuvre) {
 
         const createdAt = new Date(oeuvre.date_creation);
         const now = new Date();

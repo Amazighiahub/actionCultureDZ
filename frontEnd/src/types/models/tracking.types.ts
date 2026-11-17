@@ -12,7 +12,7 @@ import { User } from './user.types';
 import { Oeuvre } from './oeuvre.types';
 import { Evenement } from './evenement.types';
 import { Programme } from './programme.types';
-import { AuditDetails, DynamicFilters } from './specific-types';
+import { AuditDetails } from './specific-types';
 
 export interface Commentaire {
   id_commentaire: number;
