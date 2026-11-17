@@ -53,6 +53,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('deciderProposition'));
   router.post('/import-releve/apercu', authenticate, requireModeration, ...releveUpload, patrimoineController.wrap('apercuReleve'));
   router.post('/import-releve', authenticate, requireModeration, ...releveUpload, patrimoineController.wrap('importerReleve'));
+  // Lieux GeoAlgeria (OpenStreetMap, Wikidata) : wilayas, aperçu, import en brouillon ; puis relecture des brouillons
+  router.get('/import-geoalgeria/wilayas', authenticate, requireModeration, patrimoineController.wrap('geoAlgeriaWilayas'));
+  router.get('/import-geoalgeria', authenticate, requireModeration, patrimoineController.wrap('geoAlgeriaApercu'));
+  router.post('/import-geoalgeria', authenticate, requireModeration, patrimoineController.wrap('geoAlgeriaImporter'));
+  router.get('/admin/brouillons', authenticate, requireModeration, patrimoineController.wrap('brouillonsARelire'));
+  router.post('/admin/brouillons', authenticate, requireModeration, patrimoineController.wrap('deciderBrouillons'));
 
   // ============================================================================
   // ROUTES PUBLIQUES

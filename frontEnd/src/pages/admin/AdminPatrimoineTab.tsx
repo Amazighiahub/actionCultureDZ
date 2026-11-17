@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Search, Edit, Trash2, Eye, RefreshCw,
-  MapPin, Award, X, Landmark, AlertCircle, FileSpreadsheet
+  MapPin, Award, X, Landmark, AlertCircle, FileSpreadsheet, Download
 } from 'lucide-react';
 
 import {
@@ -33,6 +33,7 @@ import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeS
 import { adminService } from '@/services/admin.service';
 import { useToast } from '@/components/ui/use-toast';
 import ImportReleveDialog from '@/components/admin/ImportReleveDialog';
+import ImportGeoAlgeriaDialog from '@/components/admin/ImportGeoAlgeriaDialog';
 import PropositionsPatrimoine from './PropositionsPatrimoine';
 import { TYPES_PATRIMOINE } from '@/utils/typesPatrimoine';
 
@@ -52,6 +53,8 @@ const AdminPatrimoineTab: React.FC = () => {
   const [selectedItemName, setSelectedItemName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  // Lieux GeoAlgeria (OpenStreetMap, Wikidata), importés en brouillon puis publiés (2026-11-17)
+  const [importGeoOpen, setImportGeoOpen] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -129,6 +132,10 @@ const AdminPatrimoineTab: React.FC = () => {
           <Button onClick={() => setImportOpen(true)}>
             <FileSpreadsheet className="h-4 w-4 me-2" />
             {t('admin.patrimoine.import.title', 'Importer un relevé Excel')}
+          </Button>
+          <Button variant="outline" onClick={() => setImportGeoOpen(true)}>
+            <Download className="h-4 w-4 me-2" />
+            {t('admin.patrimoine.geo.titre', 'Importer des lieux (GeoAlgeria)')}
           </Button>
           <Button variant="outline" onClick={refreshAll}>
             <RefreshCw className="h-4 w-4 me-2" />
@@ -276,6 +283,7 @@ const AdminPatrimoineTab: React.FC = () => {
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 
       <ImportReleveDialog open={importOpen} onOpenChange={setImportOpen} onImported={refreshAll} />
+      <ImportGeoAlgeriaDialog open={importGeoOpen} onOpenChange={setImportGeoOpen} onImported={refreshAll} />
 
       {/* Dialog suppression */}
       <ConfirmDialog

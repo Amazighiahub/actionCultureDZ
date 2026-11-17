@@ -514,5 +514,8 @@
   "Choisissez un autre événement que celui à transformer": "Choose an event other than the one being turned into an activity",
   "Les deux événements doivent avoir le même organisateur": "Both events must have the same organiser",
   "L’événement choisi est annulé : choisissez-en un autre": "The chosen event is cancelled: choose another one",
-  "Cette activité ne fait pas partie de cet événement": "This activity is not part of this event"
+  "Cette activité ne fait pas partie de cet événement": "This activity is not part of this event",
+  "Wilaya invalide": "Invalid wilaya",
+  "Choisissez au moins un lieu": "Choose at least one place",
+  "${MAX_IMPORT} lieux au plus par import": "${MAX_IMPORT} places at most per import"
 }

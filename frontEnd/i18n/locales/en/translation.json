@@ -3057,6 +3057,30 @@
           "type": "Type"
         },
         "creation": "New place suggested by a member (open it to check)"
+      },
+      "geo": {
+        "titre": "Import places (GeoAlgeria)",
+        "aide": "Historic sites, parks and attractions from OpenStreetMap and Wikidata. Imported places stay as hidden drafts until published.",
+        "ongletImporter": "Import",
+        "ongletPublier": "To publish ({{n}})",
+        "wilaya": "Wilaya",
+        "choisirWilaya": "Choose a wilaya",
+        "historiques": "Historic sites",
+        "parcs": "Parks and reserves",
+        "attractions": "Attractions (to sort: many are not tourist sites)",
+        "toutCocher": "Select all",
+        "toutDecocher": "Clear all",
+        "deja": "already on Tala DZ",
+        "voirCarte": "See on the map",
+        "coches": "{{n}} place(s) selected",
+        "importer": "Import as drafts",
+        "bilan": "{{crees}} place(s) created as drafts; {{deja}} already present, not recreated. Review them in the “To publish” tab.",
+        "publies": "{{n}} place(s) published.",
+        "ecartes": "{{n}} place(s) set aside.",
+        "aucunBrouillon": "No draft places.",
+        "ecarter": "Set aside",
+        "publier": "Publish ({{n}})",
+        "licence": "Data © OpenStreetMap contributors (ODbL) and Wikidata, via GeoAlgeria. The source is shown on each imported page."
       }
     },
     "overview": {

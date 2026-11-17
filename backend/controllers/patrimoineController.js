@@ -13,6 +13,7 @@ const { nomsSimilaires, textesNom } = require('../utils/nomLieu');
 const historique = require('../services/patrimoine/historiqueLieu');
 const elements = require('../services/patrimoine/elementsLieu');
 const propositions = require('../services/patrimoine/propositionsLieu');
+const importGeoAlgeria = require('../services/patrimoine/importGeoAlgeria');
 
 // Champs qu'un créateur (professionnel) peut modifier sur son site
 const CHAMPS_MODIFIABLES_CREATEUR = ['nom', 'adresse', 'typePatrimoine', 'latitude', 'longitude', 'description', 'histoire', 'horaires', 'referencesHistoriques', 'repere'];
@@ -713,6 +714,28 @@ class PatrimoineController extends BaseController {
   }
 
   // Relevé Excel de points de visite (modèle Taladz), réservé à la modération
+  // Import de lieux GeoAlgeria (modération, 2026-11-17)
+  async geoAlgeriaWilayas(req, res) {
+    res.json({ success: true, data: await importGeoAlgeria.wilayas(this._models) });
+  }
+
+  async geoAlgeriaApercu(req, res) {
+    res.json({ success: true, data: await importGeoAlgeria.apercu(this._models, req.query.wilaya) });
+  }
+
+  async geoAlgeriaImporter(req, res) {
+    const bilan = await importGeoAlgeria.importer(this._models, this.patrimoineService, req.body?.ids, req.user.id_user);
+    res.json({ success: true, data: bilan });
+  }
+
+  async brouillonsARelire(req, res) {
+    res.json({ success: true, data: await importGeoAlgeria.brouillons(this._models) });
+  }
+
+  async deciderBrouillons(req, res) {
+    res.json({ success: true, data: await importGeoAlgeria.decider(this._models, req.body?.ids, req.body?.decision) });
+  }
+
   async apercuReleve(req, res) {
     const parentId = req.body?.parentId ? parseInt(req.body.parentId, 10) : null;
     const apercu = await this.patrimoineService.apercuReleve(req.file.buffer, { parentId });
