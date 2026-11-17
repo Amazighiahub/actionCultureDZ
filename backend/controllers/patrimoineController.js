@@ -724,7 +724,8 @@ class PatrimoineController extends BaseController {
   }
 
   async geoAlgeriaImporter(req, res) {
-    const bilan = await importGeoAlgeria.importer(this._models, this.patrimoineService, req.body?.ids, req.user.id_user);
+    const bilan = await importGeoAlgeria.importer(this._models, this.patrimoineService, req.body?.ids, req.user.id_user,
+      { commePoints: req.body?.commePoints });
     res.json({ success: true, data: bilan });
   }
 

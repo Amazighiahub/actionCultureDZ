@@ -3306,13 +3306,14 @@
         "voirCarte": "Voir sur la carte",
         "coches": "{{n}} lieu(x) coché(s)",
         "importer": "Importer en brouillon",
-        "bilan": "{{crees}} lieu(x) créé(s) en brouillon ; {{deja}} déjà présent(s), non recréé(s). Relisez-les dans l’onglet « À publier ».",
+        "bilan": "{{crees}} lieu(x) créé(s) en brouillon, dont {{points}} point(s) de visite ; {{deja}} déjà présent(s), non recréé(s). Relisez-les dans l’onglet « À publier ».",
         "publies": "{{n}} lieu(x) publié(s).",
         "ecartes": "{{n}} lieu(x) écarté(s).",
         "aucunBrouillon": "Aucun lieu en brouillon.",
         "ecarter": "Écarter",
         "publier": "Publier ({{n}})",
-        "licence": "Données © contributeurs OpenStreetMap (ODbL) et Wikidata, via GeoAlgeria. La source est indiquée sur chaque fiche importée."
+        "licence": "Données © contributeurs OpenStreetMap (ODbL) et Wikidata, via GeoAlgeria. La source est indiquée sur chaque fiche importée.",
+        "pointDe": "Point de visite de « {{site}} »"
       }
     },
     "overview": {

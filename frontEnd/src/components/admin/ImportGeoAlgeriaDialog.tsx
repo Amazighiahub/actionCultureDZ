@@ -23,8 +23,10 @@ interface PointGeo {
   id: string; categorie: 'historique' | 'parc' | 'attraction'; type: string; nom: Record<string, string>;
   lat: number; lng: number; preCoche: boolean; typePatrimoine: string; commune: { id_commune: number; nom: string };
   deja: { id_lieu: number; nom: unknown; statut: string } | null; source: string;
+  /** Site déjà sur Tala DZ dont ce point est une partie (forum, arc de Timgad…) */
+  site: { id_lieu: number; nom: unknown } | null;
 }
-interface Brouillon { id_lieu: number; nom: unknown; latitude: number; longitude: number; commune: string; wilaya: string; codeW: number }
+interface Brouillon { id_lieu: number; nom: unknown; latitude: number; longitude: number; commune: string; wilaya: string; codeW: number; site?: unknown }
 
 const CATEGORIES: Array<PointGeo['categorie']> = ['historique', 'parc', 'attraction'];
 const carte = (lat: number, lng: number) => `https://www.google.com/maps?q=${lat},${lng}`;
@@ -38,6 +40,8 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
   const [wilaya, setWilaya] = useState('');
   const [points, setPoints] = useState<PointGeo[] | null>(null);
   const [coches, setCoches] = useState<Set<string>>(new Set());
+  // Points à rattacher comme points de visite de leur site (par défaut : tous ceux qui en ont un)
+  const [enPoints, setEnPoints] = useState<Set<string>>(new Set());
   const [brouillons, setBrouillons] = useState<Brouillon[] | null>(null);
   const [choixBrouillons, setChoixBrouillons] = useState<Set<number>>(new Set());
   const [envoi, setEnvoi] = useState(false);
@@ -67,6 +71,7 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
         const liste = r.success && r.data ? r.data.points : [];
         setPoints(liste);
         setCoches(new Set(liste.filter((p) => p.preCoche && !p.deja).map((p) => p.id)));
+        setEnPoints(new Set(liste.filter((p) => p.site).map((p) => p.id)));
       })
       .catch((e) => { setPoints([]); setMessage({ ok: false, texte: messageErreurServeur(e, echec) }); });
   }, [echec]);
@@ -85,11 +90,12 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
   const importer = async () => {
     setEnvoi(true); setMessage(null);
     try {
-      const r = await httpClient.post<{ crees: number; deja: number; ignores: number }>('/patrimoine/import-geoalgeria', { ids: [...coches] });
+      const r = await httpClient.post<{ crees: number; points: number; deja: number; ignores: number }>('/patrimoine/import-geoalgeria',
+        { ids: [...coches], commePoints: [...coches].filter((id) => enPoints.has(id)) });
       if (!r.success || !r.data) throw r;
       setMessage({ ok: true, texte: t('admin.patrimoine.geo.bilan', {
-        crees: r.data.crees, deja: r.data.deja,
-        defaultValue: '{{crees}} lieu(x) créé(s) en brouillon ; {{deja}} déjà présent(s), non recréé(s). Relisez-les dans l’onglet « À publier ».'
+        crees: r.data.crees, deja: r.data.deja, points: r.data.points ?? 0,
+        defaultValue: '{{crees}} lieu(x) créé(s) en brouillon, dont {{points}} point(s) de visite ; {{deja}} déjà présent(s), non recréé(s). Relisez-les dans l’onglet « À publier ».'
       }) });
       onImported();
       chargerBrouillons();
@@ -175,6 +181,13 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
                         <span className="block text-xs text-muted-foreground">
                           {[p.commune.nom, t(`patrimoine.types.${p.typePatrimoine}`, p.typePatrimoine), p.deja ? t('admin.patrimoine.geo.deja', 'déjà sur Tala DZ') : ''].filter(Boolean).join(' · ')}
                         </span>
+                        {p.site && !p.deja && (
+                          <label className="mt-1 flex items-center gap-2 text-xs">
+                            <Checkbox checked={enPoints.has(p.id)}
+                              onCheckedChange={() => setEnPoints((prev) => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} />
+                            {t('admin.patrimoine.geo.pointDe', { site: getLocalizedText(p.site.nom, lang, ''), defaultValue: 'Point de visite de « {{site}} »' })}
+                          </label>
+                        )}
                       </span>
                       <a href={carte(p.lat, p.lng)} target="_blank" rel="noopener noreferrer" className="text-primary" aria-label={t('admin.patrimoine.geo.voirCarte', 'Voir sur la carte')}>
                         <MapPin className="h-4 w-4" />
@@ -211,7 +224,10 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
                         onCheckedChange={() => setChoixBrouillons((prev) => { const n = new Set(prev); if (n.has(b.id_lieu)) n.delete(b.id_lieu); else n.add(b.id_lieu); return n; })} />
                       <span className="flex-1 min-w-0">
                         <a href={`/patrimoine/${b.id_lieu}`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:underline" dir="auto">{getLocalizedText(b.nom, lang, '')}</a>
-                        <span className="block text-xs text-muted-foreground">{`${b.commune} · ${String(b.codeW).padStart(2, '0')} ${b.wilaya}`}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {[b.site ? t('admin.patrimoine.geo.pointDe', { site: getLocalizedText(b.site, lang, ''), defaultValue: 'Point de visite de « {{site}} »' }) : '',
+                            `${b.commune} · ${String(b.codeW).padStart(2, '0')} ${b.wilaya}`].filter(Boolean).join(' · ')}
+                        </span>
                       </span>
                       <a href={carte(b.latitude, b.longitude)} target="_blank" rel="noopener noreferrer" className="text-primary" aria-label={t('admin.patrimoine.geo.voirCarte', 'Voir sur la carte')}>
                         <MapPin className="h-4 w-4" />

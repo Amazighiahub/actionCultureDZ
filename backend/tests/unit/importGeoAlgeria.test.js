@@ -37,7 +37,7 @@ describe('Import GeoAlgeria : commune du point', () => {
 describe('Import GeoAlgeria : import et décisions', () => {
   const models = {
     sequelize: { query: jest.fn(), QueryTypes: { SELECT: 'SELECT' } },
-    Lieu: { update: jest.fn().mockResolvedValue([2]) }
+    Lieu: { update: jest.fn().mockResolvedValue([2]), findAll: jest.fn().mockResolvedValue([]) }
   };
 
   test('import : création en brouillon par la création habituelle ; doublon sauté ; liste bornée', async () => {
@@ -55,11 +55,37 @@ describe('Import GeoAlgeria : import et décisions', () => {
     await expect(g.importer(models, { create }, Array.from({ length: 501 }, (_, i) => `x${i}`), 75)).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  test('publier ou écarter : seulement des brouillons de sites principaux', async () => {
+  test('publier ou écarter : seulement des brouillons (sites et points de visite)', async () => {
     await g.decider(models, [5, '6', 'x'], 'publier');
-    expect(models.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, { where: { id_lieu: [5, 6], statut: 'brouillon', id_lieu_parent: null } });
+    expect(models.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, { where: { id_lieu: [5, 6], statut: 'brouillon' } });
     await g.decider(models, [5], 'ecarter');
     expect(models.Lieu.update).toHaveBeenLastCalledWith({ statut: 'archive' }, expect.anything());
     await expect(g.decider(models, [5], 'supprimer')).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
+describe('Import GeoAlgeria : points de visite d’un site existant (Timgad)', () => {
+  const timgad = { id_lieu: 24, nom: { fr: 'Timgad' }, latitude: '35.4836', longitude: '6.4668', typePatrimoine: 'site_archeologique', id_lieu_parent: null };
+  const capitole = { id_lieu: 30, nom: { fr: 'Capitole' }, latitude: '35.4842', longitude: '6.4660', id_lieu_parent: 24 };
+  const voisins = [timgad, capitole];
+  const point = (nom, lat, lng, type = 'archaeological_site') => ({ categorie: 'historique', type, nom: { fr: nom }, lat, lng });
+
+  test('une ruine à moins de 1,5 km de Timgad en devient un point ; le site lui-même non ; un monument aux morts non', () => {
+    expect(g.siteParent(voisins, point('Arc de Trajan', 35.4847, 6.4652))?.id_lieu).toBe(24);
+    // Le site lui-même, sous un autre nom : pas un point, mais « déjà sur Tala DZ »
+    expect(g.siteParent(voisins, point('Ruines romaines de Timgad', 35.4836, 6.4668))).toBeNull();
+    expect(g.dejaPresent(voisins, point('Ruines romaines de Timgad', 35.4900, 6.4700), null)?.id_lieu).toBe(24);
+    expect(g.siteParent(voisins, point('Timgad', 35.4836, 6.4668))).toBeNull();
+    const imedghassen = { id_lieu: 40, nom: { fr: 'Imedghassen (Medracen), mausolée royal numide' }, latitude: '35.7', longitude: '6.3', typePatrimoine: 'site_archeologique', id_lieu_parent: null };
+    expect(g.siteParent([imedghassen], point('Medracen', 35.701, 6.301))).toBeNull();
+    expect(g.dejaPresent([imedghassen], point('Medracen', 35.701, 6.301), null)?.id_lieu).toBe(40);
+    expect(g.siteParent(voisins, point('Monument aux morts', 35.4847, 6.4652, 'war_memorial'))).toBeNull();
+    expect(g.siteParent(voisins, point('Lambèse', 35.4889, 6.2558))).toBeNull();
+  });
+
+  test('déjà présent parmi les points du site : même nom, ou à 30 m ; un voisin à 80 m reste nouveau', () => {
+    expect(g.dejaPresent(voisins, point('Capitole', 35.4800, 6.4600), timgad)?.id_lieu).toBe(30);
+    expect(g.dejaPresent(voisins, point('Capitol', 35.48422, 6.46602), timgad)?.id_lieu).toBe(30);
+    expect(g.dejaPresent(voisins, point('Forum', 35.4849, 6.4660), timgad)).toBeNull();
   });
 });

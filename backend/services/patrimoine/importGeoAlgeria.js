@@ -16,6 +16,18 @@ const { sansAccent } = require('../../utils/texte');
 const FICHIER = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'lieux.json');
 const MAX_IMPORT = 500;
 const TOLERANCE = 0.001; // ~100 m, comme la création d'un site
+// Points de visite : une partie d'un site déjà sur Tala DZ (forum, arc, thermes de Timgad…), demande du 2026-11-17
+const TYPES_POINT = new Set(['archaeological_site', 'ruins', 'temple', 'library', 'city_gate', 'citywalls', 'heritage', 'building', 'theatre']);
+const TYPES_SITE_PARENT = ['site_archeologique', 'palais_forteresse'];
+const RAYON_SITE_KM = 1.5;
+const TOLERANCE_POINT_KM = 0.03; // points d'un même site très proches : 30 m, ou même nom
+
+const km = (a, b, c, d) => {
+  const r = Math.PI / 180;
+  const x = (d - b) * r * Math.cos(((a + c) / 2) * r);
+  const y = (c - a) * r;
+  return Math.sqrt(x * x + y * y) * 6371;
+};
 
 let donnees = null;
 /** Lieux préparés (lus une fois) */
@@ -110,30 +122,85 @@ async function apercu(models, codeW) {
     if (c && c.codeW === code) points.push({ p, c });
   }
   if (!points.length) return { source: lieuxPrepares().source, points: [] };
-  // Lieux existants autour des points (une requête, colonnes indexées)
-  const lats = points.map(({ p }) => p.lat);
-  const lngs = points.map(({ p }) => p.lng);
-  const existants = await models.Lieu.findAll({
-    where: {
-      latitude: { [Op.between]: [Math.min(...lats) - TOLERANCE, Math.max(...lats) + TOLERANCE] },
-      longitude: { [Op.between]: [Math.min(...lngs) - TOLERANCE, Math.max(...lngs) + TOLERANCE] },
-      statut: { [Op.ne]: 'archive' }
-    },
-    attributes: ['id_lieu', 'nom', 'latitude', 'longitude', 'statut'], raw: true
-  });
+  const voisins = await lieuxVoisins(models, points.map(({ p }) => p));
   return {
     source: lieuxPrepares().source,
     points: points.map(({ p, c }) => {
-      const proche = existants.find((l) => Math.abs(Number(l.latitude) - p.lat) <= TOLERANCE && Math.abs(Number(l.longitude) - p.lng) <= TOLERANCE);
+      const site = siteParent(voisins, p);
+      const proche = dejaPresent(voisins, p, site);
       return {
         id: p.id, categorie: p.categorie, type: p.type, nom: p.nom, lat: p.lat, lng: p.lng,
         precision: p.precision, source: p.source, typePatrimoine: p.typePatrimoine,
         preCoche: p.preCoche && !proche,
         commune: { id_commune: c.id_commune, nom: c.ascii },
+        site: site ? { id_lieu: site.id_lieu, nom: site.nom } : null,
         deja: proche ? { id_lieu: proche.id_lieu, nom: proche.nom, statut: proche.statut } : null
       };
     })
   };
+}
+
+/** Lieux du site autour des points (une requête, colonnes indexées), sites et points de visite */
+async function lieuxVoisins(models, points) {
+  const marge = RAYON_SITE_KM / 100; // ~1,5 km en degrés, large
+  const lats = points.map((p) => p.lat);
+  const lngs = points.map((p) => p.lng);
+  return models.Lieu.findAll({
+    where: {
+      latitude: { [Op.between]: [Math.min(...lats) - marge, Math.max(...lats) + marge] },
+      longitude: { [Op.between]: [Math.min(...lngs) - marge, Math.max(...lngs) + marge] },
+      statut: { [Op.ne]: 'archive' }
+    },
+    attributes: ['id_lieu', 'nom', 'latitude', 'longitude', 'statut', 'typePatrimoine', 'id_lieu_parent'], raw: true
+  });
+}
+
+const nomsDe = (nom) => {
+  let objet = nom || {};
+  if (typeof nom === 'string') {
+    try { objet = JSON.parse(nom); } catch { objet = { fr: nom }; }
+  }
+  return Object.values(objet).filter((v) => typeof v === 'string' && v.trim()).map(cle);
+};
+const memeNom = (a, b) => { const x = nomsDe(a); return nomsDe(b).some((n) => n && x.includes(n)); };
+/**
+ * Même lieu nommé autrement : le nom du point contient celui du site (« Ruines romaines de Timgad » pour
+ * Timgad), ou l'inverse (« Medracen » pour « Imedghassen (Medracen), mausolée royal numide »)
+ */
+const contientNom = (site, point) => {
+  const s = nomsDe(site).filter((n) => n.length >= 4);
+  return nomsDe(point).filter((n) => n.length >= 4).some((n) => s.some((x) => n.includes(x) || x.includes(n)));
+};
+
+/** Le point désigne un site déjà présent tout proche (« Ruines romaines de Timgad » = Timgad) */
+function estUnSiteExistant(voisins, p) {
+  return voisins.find((l) => !l.id_lieu_parent && contientNom(l.nom, p.nom)
+    && km(p.lat, p.lng, Number(l.latitude), Number(l.longitude)) < RAYON_SITE_KM) || null;
+}
+
+/** Site déjà sur Tala DZ dont ce point est une partie (le plus proche, à moins de 1,5 km) */
+function siteParent(voisins, p) {
+  if (p.categorie !== 'historique' || !TYPES_POINT.has(p.type)) return null;
+  let meilleur = null;
+  let d = Infinity;
+  for (const l of voisins) {
+    if (l.id_lieu_parent || !TYPES_SITE_PARENT.includes(l.typePatrimoine)) continue;
+    const e = km(p.lat, p.lng, Number(l.latitude), Number(l.longitude));
+    // Le site lui-même (« Timgad », « Ruines romaines de Timgad ») n'est pas un de ses points
+    if (e < RAYON_SITE_KM && e < d && !contientNom(l.nom, p.nom)) { d = e; meilleur = l; }
+  }
+  return meilleur;
+}
+
+/** Lieu déjà présent : pour un point de visite, même nom ou à 30 m parmi les points du site ; sinon à 100 m */
+function dejaPresent(voisins, p, site) {
+  const lui = estUnSiteExistant(voisins, p);
+  if (lui) return lui;
+  if (site) {
+    return voisins.find((l) => l.id_lieu_parent === site.id_lieu
+      && (memeNom(l.nom, p.nom) || km(p.lat, p.lng, Number(l.latitude), Number(l.longitude)) <= TOLERANCE_POINT_KM)) || null;
+  }
+  return voisins.find((l) => Math.abs(Number(l.latitude) - p.lat) <= TOLERANCE && Math.abs(Number(l.longitude) - p.lng) <= TOLERANCE) || null;
 }
 
 /** Source citée sur la fiche (obligation de la licence ODbL pour OpenStreetMap) */
@@ -145,23 +212,33 @@ function mentionSource(p) {
   return { fr: 'Position et nom : GeoAlgeria.', ar: 'الموقع والاسم: GeoAlgeria.' };
 }
 
-/** Importe les points choisis en brouillon ; un point déjà présent (même endroit ou même nom dans la commune) est sauté */
-async function importer(models, patrimoineService, ids, idAdmin) {
+/**
+ * Importe les points choisis en brouillon ; un point déjà présent (même endroit ou même nom) est sauté.
+ * `commePoints` : ids à rattacher comme points de visite du site voisin (recalculé ici, jamais celui du client).
+ */
+async function importer(models, patrimoineService, ids, idAdmin, { commePoints = [] } = {}) {
   if (!Array.isArray(ids) || !ids.length) throw Object.assign(new Error('Choisissez au moins un lieu'), { statusCode: 400 });
   if (ids.length > MAX_IMPORT) throw Object.assign(new Error(`${MAX_IMPORT} lieux au plus par import`), { statusCode: 400 });
   const communes = await communesDuSite(models);
   const parId = new Map(lieuxPrepares().lieux.map((p) => [p.id, p]));
-  const bilan = { crees: 0, deja: 0, ignores: 0, ids: [] };
-  for (const id of new Set(ids.map(String))) {
-    const p = parId.get(id);
-    const c = p && communeDuPoint(communes, p);
-    if (!p || !c || (!p.nom.fr && !p.nom.ar)) { bilan.ignores++; continue; }
+  const enPoints = new Set((Array.isArray(commePoints) ? commePoints : []).map(String));
+  const uniques = [...new Set(ids.map(String))];
+  const choisis = uniques.map((id) => parId.get(id)).filter(Boolean);
+  const voisins = choisis.length ? await lieuxVoisins(models, choisis) : [];
+  const bilan = { crees: 0, points: 0, deja: 0, ignores: uniques.length - choisis.length, ids: [] };
+  for (const p of choisis) {
+    const c = communeDuPoint(communes, p);
+    if (!c || (!p.nom.fr && !p.nom.ar)) { bilan.ignores++; continue; }
+    const parent = enPoints.has(p.id) ? siteParent(voisins, p) : null;
+    if ((parent || estUnSiteExistant(voisins, p)) && dejaPresent(voisins, p, parent)) { bilan.deja++; continue; }
     try {
       const site = await patrimoineService.create({
         nom: p.nom, latitude: p.lat, longitude: p.lng, typePatrimoine: p.typePatrimoine,
-        communeId: c.id_commune, id_createur: idAdmin, referencesHistoriques: mentionSource(p)
+        communeId: c.id_commune, id_createur: idAdmin, referencesHistoriques: mentionSource(p),
+        ...(parent ? { id_lieu_parent: parent.id_lieu } : {})
       }, { isModerator: true, enAttente: true });
       bilan.crees++;
+      if (parent) bilan.points++;
       bilan.ids.push(site.id_lieu);
     } catch (e) {
       if (e.statusCode === 409) bilan.deja++;
@@ -172,18 +249,19 @@ async function importer(models, patrimoineService, ids, idAdmin) {
 }
 
 /**
- * Brouillons à relire : sites principaux en brouillon, sans proposition de membre en attente (celles-là
+ * Brouillons à relire : sites et points de visite en brouillon, sans proposition de membre en attente (celles-là
  * passent par l'écran des propositions). Les plus récents d'abord, 300 au plus.
  */
 async function brouillons(models) {
   return models.sequelize.query(`SELECT l.id_lieu, l.nom, l.latitude, l.longitude, l.typePatrimoine, c.commune_name_ascii AS commune,
-        w.codeW, w.wilaya_name_ascii AS wilaya
+        w.codeW, w.wilaya_name_ascii AS wilaya, l.id_lieu_parent, parent.nom AS site
       FROM lieu l
       JOIN communes c ON c.id_commune = l.communeId
       JOIN dairas d ON d.id_daira = c.dairaId
       JOIN wilayas w ON w.id_wilaya = d.wilayaId
-      WHERE l.statut = 'brouillon' AND l.id_lieu_parent IS NULL
-        AND NOT EXISTS (SELECT 1 FROM proposition_lieu p WHERE p.id_lieu = l.id_lieu AND p.statut = 'en_attente')
+      LEFT JOIN lieu parent ON parent.id_lieu = l.id_lieu_parent
+      WHERE l.statut = 'brouillon'
+        AND NOT EXISTS (SELECT 1 FROM proposition_lieu p WHERE p.id_lieu IN (l.id_lieu, COALESCE(l.id_lieu_parent, 0)) AND p.statut = 'en_attente')
       ORDER BY l.id_lieu DESC LIMIT 300`, { type: models.sequelize.QueryTypes.SELECT });
 }
 
@@ -193,11 +271,11 @@ async function decider(models, ids, decision) {
   if (!['publier', 'ecarter'].includes(decision)) throw Object.assign(new Error('Décision invalide'), { statusCode: 400 });
   const liste = [...new Set(ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, MAX_IMPORT);
   const [n] = await models.Lieu.update({ statut: decision === 'publier' ? 'publie' : 'archive' },
-    { where: { id_lieu: liste, statut: 'brouillon', id_lieu_parent: null } });
+    { where: { id_lieu: liste, statut: 'brouillon' } });
   return { modifies: n };
 }
 
 /** Pour les tests : relire le fichier et les communes */
 function _vider() { donnees = null; communesCache = null; }
 
-module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, _vider };
+module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, siteParent, dejaPresent, _vider };

@@ -3074,13 +3074,14 @@
         "voirCarte": "See on the map",
         "coches": "{{n}} place(s) selected",
         "importer": "Import as drafts",
-        "bilan": "{{crees}} place(s) created as drafts; {{deja}} already present, not recreated. Review them in the “To publish” tab.",
+        "bilan": "{{crees}} place(s) created as drafts, including {{points}} visit point(s); {{deja}} already present, not recreated. Review them in the “To publish” tab.",
         "publies": "{{n}} place(s) published.",
         "ecartes": "{{n}} place(s) set aside.",
         "aucunBrouillon": "No draft places.",
         "ecarter": "Set aside",
         "publier": "Publish ({{n}})",
-        "licence": "Data © OpenStreetMap contributors (ODbL) and Wikidata, via GeoAlgeria. The source is shown on each imported page."
+        "licence": "Data © OpenStreetMap contributors (ODbL) and Wikidata, via GeoAlgeria. The source is shown on each imported page.",
+        "pointDe": "Visit point of “{{site}}”"
       }
     },
     "overview": {

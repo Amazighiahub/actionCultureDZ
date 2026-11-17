@@ -30,9 +30,9 @@ vi.mock('@/components/ui/select', () => ({
 
 import ImportGeoAlgeriaDialog from '../ImportGeoAlgeriaDialog';
 
-const point = (id: string, nom: string, preCoche: boolean, deja = false) => ({
+const point = (id: string, nom: string, preCoche: boolean, deja = false, site: { id_lieu: number; nom: unknown } | null = null) => ({
   id, categorie: 'historique', type: 'castle', typePatrimoine: 'palais_forteresse', nom: { fr: nom }, lat: 31.9, lng: 5.3,
-  preCoche, commune: { id_commune: 1, nom: 'Ouargla' }, deja: deja ? { id_lieu: 9, nom: { fr: nom }, statut: 'publie' } : null, source: 'osm'
+  preCoche, commune: { id_commune: 1, nom: 'Ouargla' }, deja: deja ? { id_lieu: 9, nom: { fr: nom }, statut: 'publie' } : null, source: 'osm', site
 });
 
 describe('Importer des lieux GeoAlgeria', () => {
@@ -41,12 +41,12 @@ describe('Importer des lieux GeoAlgeria', () => {
     get.mockImplementation(async (url: string) => {
       if (url.endsWith('/wilayas')) return { success: true, data: [{ id_wilaya: 30, codeW: 30, nom: 'ورقلة', wilaya_name_ascii: 'Ouargla', points: 3 }] };
       if (url.endsWith('/brouillons')) return { success: true, data: [] };
-      return { success: true, data: { points: [point('h1', 'Bordj Chandez', true), point('h2', 'pk 178/49', false), point('h3', 'Bab Azi', true, true)] } };
+      return { success: true, data: { points: [point('h1', 'Bordj Chandez', true), point('h2', 'pk 178/49', false), point('h3', 'Bab Azi', true, true), point('h4', 'Arc de Trajan', true, false, { id_lieu: 24, nom: { fr: 'Timgad' } })] } };
     });
   });
 
   it('pré-coche les vrais lieux, grise ceux déjà présents, n’envoie que les cochés et garde le bilan', async () => {
-    post.mockResolvedValue({ success: true, data: { crees: 1, deja: 0, ignores: 0 } });
+    post.mockResolvedValue({ success: true, data: { crees: 2, points: 1, deja: 0, ignores: 0 } });
     render(<ImportGeoAlgeriaDialog open onOpenChange={() => {}} onImported={() => {}} />);
     await waitFor(() => expect(screen.getByRole('option', { name: /30 · Ouargla \(3\)/ })).toBeTruthy());
     fireEvent.change(screen.getByLabelText('wilaya'), { target: { value: '30' } });
@@ -54,8 +54,10 @@ describe('Importer des lieux GeoAlgeria', () => {
     expect(screen.getByRole('checkbox', { name: 'Bordj Chandez' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('checkbox', { name: 'pk 178/49' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('checkbox', { name: 'Bab Azi' }).hasAttribute('disabled')).toBe(true);
+    // Partie d'un site déjà présent : proposée comme point de visite de Timgad
+    expect(screen.getByText('Point de visite de « Timgad »')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Importer en brouillon/ }));
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/patrimoine/import-geoalgeria', { ids: ['h1'] }));
-    expect(await screen.findByText(/1 lieu\(x\) créé\(s\) en brouillon/)).toBeTruthy();
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/patrimoine/import-geoalgeria', { ids: ['h1', 'h4'], commePoints: ['h4'] }));
+    expect(await screen.findByText(/2 lieu\(x\) créé\(s\) en brouillon, dont 1 point\(s\) de visite/)).toBeTruthy();
   });
 });
