@@ -587,7 +587,8 @@ class EvenementController extends BaseController {
       const reordered = await this.evenementService.reorderOeuvres(
         parseInt(req.params.id),
         req.user.id_user,
-        oeuvres
+        oeuvres,
+        { isAdmin: req.user.isAdmin }
       );
 
       res.json({

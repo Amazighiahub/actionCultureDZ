@@ -13,7 +13,7 @@ import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Calendar, Search, CheckCircle, XCircle, Edit,
   MoreVertical, Eye, Trash2, RefreshCw,
-  MapPin, Users, Clock, X, AlertCircle, ListPlus
+  MapPin, Users, Clock, X, AlertCircle, ListPlus, Settings
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -40,6 +40,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
 import TransformerEnActiviteDialog from './TransformerEnActiviteDialog';
+import FenetreGestionEvenement, { type EvenementAGerer } from '@/components/event/FenetreGestionEvenement';
 import { useToast } from '@/components/ui/use-toast';
 
 // Helper pour extraire le texte multilingue
@@ -63,6 +64,8 @@ const AdminEvenementsTab: React.FC = () => {
   // Événement créé par erreur au lieu d'une activité : transformé en activité d'un autre (2026-11-17)
   const [aTransformer, setATransformer] = useState<{ id_evenement: number; nom_evenement: unknown } | null>(null);
   const { toast } = useToast();
+  // Gestion (programme, œuvres et articles, participants, photos) d'un événement créé au nom d'un organisateur
+  const [aGerer, setAGerer] = useState<EvenementAGerer | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -288,6 +291,12 @@ const AdminEvenementsTab: React.FC = () => {
                           <Eye className="h-4 w-4 me-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>
+                        {event.statut !== 'annule' && (
+                          <DropdownMenuItem onClick={() => setAGerer({ id: event.id_evenement, nom })}>
+                            <Settings className="h-4 w-4 me-2" />
+                            {t('admin.events.gerer', 'Gérer (programme, articles, photos…)')}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => navigate(`/modifier-evenement/${event.id_evenement}`)}>
                           <Edit className="h-4 w-4 me-2" />
                           {t('common.edit', 'Modifier')}
@@ -336,6 +345,8 @@ const AdminEvenementsTab: React.FC = () => {
           setRefus(null);
         }}
       />
+
+      <FenetreGestionEvenement evenement={aGerer} onClose={() => setAGerer(null)} />
 
       <TransformerEnActiviteDialog
         source={aTransformer}

@@ -3250,7 +3250,8 @@
         "voirResume": "See summary",
         "confirmer": "Turn into activity",
         "fait": "Event turned into an activity"
-      }
+      },
+      "gerer": "Manage (programme, articles, photos…)"
     },
     "services": {
       "title": "Services Management",

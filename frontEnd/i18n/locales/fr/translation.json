@@ -3029,7 +3029,8 @@
         "voirResume": "Voir le résumé",
         "confirmer": "Transformer",
         "fait": "Événement transformé en activité"
-      }
+      },
+      "gerer": "Gérer (programme, articles, photos…)"
     },
     "services": {
       "title": "Gestion des services",

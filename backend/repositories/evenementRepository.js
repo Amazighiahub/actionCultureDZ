@@ -780,9 +780,10 @@ class EvenementRepository extends BaseRepository {
     const [results] = await this.model.sequelize.query(
       `UPDATE \`${tableName}\`
        SET ordre_presentation = CASE id_oeuvre ${cases} END
-       WHERE id_evenement = ? AND id_presentateur = ? AND id_oeuvre IN (${ids})`,
+       WHERE id_evenement = ?${userId == null ? '' : ' AND id_presentateur = ?'} AND id_oeuvre IN (${ids})`,
       {
-        replacements: [evenementId, userId],
+        // userId null : organisateur ou administration, toutes les œuvres de l'événement
+        replacements: userId == null ? [evenementId] : [evenementId, userId],
         type: 'UPDATE'
       }
     );
@@ -795,7 +796,7 @@ class EvenementRepository extends BaseRepository {
    */
   async getOeuvresOrdered(evenementId, userId) {
     return this.models.EvenementOeuvre.findAll({
-      where: { id_evenement: evenementId, id_presentateur: userId },
+      where: { id_evenement: evenementId, ...(userId == null ? {} : { id_presentateur: userId }) },
       include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }],
       order: [['ordre_presentation', 'ASC']]
     });

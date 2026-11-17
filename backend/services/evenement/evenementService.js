@@ -1115,12 +1115,17 @@ class EvenementService extends BaseService {
   /**
    * Réordonne les oeuvres d'un événement
    */
-  async reorderOeuvres(evenementId, userId, oeuvres) {
+  async reorderOeuvres(evenementId, userId, oeuvres, options = {}) {
     if (!oeuvres || !oeuvres.length) {
       throw this._validationError('Liste des oeuvres requise');
     }
-    await this.repository.reorderOeuvres(evenementId, userId, oeuvres);
-    return this.repository.getOeuvresOrdered(evenementId, userId);
+    // Organisateur ou administration : toutes les œuvres de l'événement (comme le retrait) ; sinon les
+    // siennes seulement. Avant : seulement celles qu'on avait présentées soi-même (2026-11-17)
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    const gere = memeUtilisateur(evenement.id_user, userId) || !!options.isAdmin;
+    await this.repository.reorderOeuvres(evenementId, gere ? null : userId, oeuvres);
+    return this.repository.getOeuvresOrdered(evenementId, gere ? null : userId);
   }
 
   /**

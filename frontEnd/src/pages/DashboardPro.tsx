@@ -1,7 +1,8 @@
 import MessagesAbonnesCard from '@/components/pro/MessagesAbonnesCard';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { abonnementActuel, activerNotifications, notificationsPossibles } from '@/utils/applicationMobile';
-import React, { useState, useCallback, useEffect } from 'react';
+import FenetreGestionEvenement from '@/components/event/FenetreGestionEvenement';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PremiersPas from '@/components/user/PremiersPas';
 import { lienGuidePour } from '@/utils/lienGuide';
@@ -13,11 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
@@ -64,7 +60,6 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 // Gestion d'un événement (participants, programme…) : chargée à l'ouverture de « Gérer »
-const GestionEvenement = React.lazy(() => import('@/components/event/GestionEvenement'));
 import { oeuvreService } from '@/services/oeuvre.service';
 import SEOHead from '@/components/SEOHead';
 import MoyensPaiement from '@/components/pro/MoyensPaiement';
@@ -1079,27 +1074,8 @@ const DashboardPro = () => {
 
       <Footer />
 
-      {/* Dialog de gestion d'événement (programmes, œuvres) */}
-      <Dialog
-        open={gestionEvenement !== null}
-        onOpenChange={(open) => !open && setGestionEvenement(null)}
-      >
-        <DialogContent className="w-[calc(100%-2rem)] max-w-4xl max-h-[90vh] overflow-y-auto [&>*]:min-w-0" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">
-            {t('gestion.title', "Gestion de l'événement")}{gestionEvenement?.nom ? ` – ${gestionEvenement.nom}` : ''}
-          </DialogTitle>
-          {gestionEvenement && (
-            <React.Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-muted" />}>
-              <GestionEvenement
-                evenementId={gestionEvenement.id}
-                evenementNom={gestionEvenement.nom}
-                onglet={gestionEvenement.onglet}
-                onClose={() => setGestionEvenement(null)}
-              />
-            </React.Suspense>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Gestion d'événement (programmes, œuvres) : fenêtre commune avec l'administration */}
+      <FenetreGestionEvenement evenement={gestionEvenement} onClose={() => setGestionEvenement(null)} />
 
       <ConfirmDialog
         open={cancelEventId !== null}
