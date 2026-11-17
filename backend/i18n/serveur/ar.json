@@ -509,5 +509,9 @@
   "Un événement annulé ne peut plus être modifié": "لا يمكن تعديل فعالية ملغاة",
   "Action inconnue": "إجراء غير معروف",
   "Seul le professionnel de ce service peut voir ses statistiques": "وحده مهني هذه الخدمة يمكنه رؤية إحصائياتها",
-  "Trop de demandes : réessayez plus tard.": "طلبات كثيرة: أعد المحاولة لاحقًا."
+  "Trop de demandes : réessayez plus tard.": "طلبات كثيرة: أعد المحاولة لاحقًا.",
+  "Choisissez l’événement qui recevra l’activité": "اختر الفعالية التي ستستقبل النشاط",
+  "Choisissez un autre événement que celui à transformer": "اختر فعالية أخرى غير التي تريد تحويلها",
+  "Les deux événements doivent avoir le même organisateur": "يجب أن يكون للفعاليتين نفس المنظِّم",
+  "L’événement choisi est annulé : choisissez-en un autre": "الفعالية المختارة ملغاة: اختر فعالية أخرى"
 }

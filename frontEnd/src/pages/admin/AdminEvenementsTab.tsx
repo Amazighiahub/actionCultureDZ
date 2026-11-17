@@ -13,7 +13,7 @@ import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Calendar, Search, CheckCircle, XCircle, Edit,
   MoreVertical, Eye, Trash2, RefreshCw,
-  MapPin, Users, Clock, X, AlertCircle
+  MapPin, Users, Clock, X, AlertCircle, ListPlus
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -39,6 +39,8 @@ import { heureEvenement } from '@/utils/dateHeureEvenement';
 import { Pagination } from '@/components/shared/Pagination';
 import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
+import TransformerEnActiviteDialog from './TransformerEnActiviteDialog';
+import { useToast } from '@/components/ui/use-toast';
 
 // Helper pour extraire le texte multilingue
 
@@ -58,6 +60,9 @@ const AdminEvenementsTab: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   // Refus d'un événement en attente : le motif est envoyé à l'organisateur
   const [refus, setRefus] = useState<{ eventId: number; nom: string } | null>(null);
+  // Événement créé par erreur au lieu d'une activité : transformé en activité d'un autre (2026-11-17)
+  const [aTransformer, setATransformer] = useState<{ id_evenement: number; nom_evenement: unknown } | null>(null);
+  const { toast } = useToast();
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -293,6 +298,12 @@ const AdminEvenementsTab: React.FC = () => {
                             {t('admin.events.cancel', 'Annuler')}
                           </DropdownMenuItem>
                         )}
+                        {event.statut !== 'annule' && (
+                          <DropdownMenuItem onClick={() => setATransformer({ id_evenement: event.id_evenement, nom_evenement: event.nom_evenement })}>
+                            <ListPlus className="h-4 w-4 me-2" />
+                            {t('admin.events.transformer.menu', 'Transformer en activité…')}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
@@ -323,6 +334,16 @@ const AdminEvenementsTab: React.FC = () => {
           if (!refus) return;
           await updateEvenementStatus(refus.eventId, 'rejete', motif);
           setRefus(null);
+        }}
+      />
+
+      <TransformerEnActiviteDialog
+        source={aTransformer}
+        onClose={() => setATransformer(null)}
+        onTransforme={() => {
+          setATransformer(null);
+          toast({ title: t('admin.events.transformer.fait', 'Événement transformé en activité') });
+          refreshAll();
         }}
       />
 

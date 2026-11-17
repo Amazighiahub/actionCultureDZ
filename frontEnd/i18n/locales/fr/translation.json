@@ -804,7 +804,9 @@
       "ajouterPartenaire": "Ajouter une organisation partenaire",
       "choisirPartenaire": "Choisir une organisation",
       "partenaireAbsent": "Organisation absente de la liste ? Elle doit d’abord avoir sa page sur Tala DZ.",
-      "startDatePastEnCours": "La date de début est passée : si l’événement est en cours, indiquez sa date de fin (aujourd’hui ou plus tard)."
+      "startDatePastEnCours": "La date de début est passée : si l’événement est en cours, indiquez sa date de fin (aujourd’hui ou plus tard).",
+      "dejaAuxDates": "Vous avez déjà un événement à ces dates. S’il s’agit d’une partie de cet événement (un jour, un atelier, une conférence…), ajoutez plutôt une activité à son programme :",
+      "ajouterActiviteA": "Ajouter une activité à « {{nom}} »"
     },
     "types": {
       "concert": "Concert",
@@ -3015,7 +3017,18 @@
       "rejectTitle": "Refuser cet événement ?",
       "rejectDesc": "« {{nom}} » revient en brouillon. L’organisateur reçoit votre motif, corrige l’événement et peut le renvoyer.",
       "rejectReason": "Motif du refus",
-      "rejectPlaceholder": "Ex. : il manque l’adresse exacte et l’heure de début."
+      "rejectPlaceholder": "Ex. : il manque l’adresse exacte et l’heure de début.",
+      "transformer": {
+        "menu": "Transformer en activité…",
+        "titre": "Transformer en activité",
+        "aide": "« {{nom}} » deviendra une activité du programme de l’événement choisi. Ses photos, inscrits et commentaires y seront déplacés, puis il sera supprimé. Les inscrits sont prévenus.",
+        "choisir": "Événement qui reçoit l’activité (même organisateur)",
+        "aucun": "Cet organisateur n’a pas d’autre événement.",
+        "resume": "Vers « {{cible}} » : {{activites}} activité(s), {{photos}} photo(s) ou document(s), {{inscrits}} inscrit(s) déplacé(s) ; {{deja}} personne(s) y étaient déjà inscrites. L’événement en double sera supprimé.",
+        "voirResume": "Voir le résumé",
+        "confirmer": "Transformer",
+        "fait": "Événement transformé en activité"
+      }
     },
     "services": {
       "title": "Gestion des services",

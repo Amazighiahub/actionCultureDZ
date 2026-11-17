@@ -48,6 +48,7 @@ import { API_ENDPOINTS } from '@/config/api';
 // Import des types
 import { Wilaya } from '@/types';
 import { partiesEvenement, aujourdhuiAlger } from '@/utils/dateHeureEvenement';
+import EvenementDejaAuxDates from '@/components/event/EvenementDejaAuxDates';
 import FormPageHeader from '@/components/shared/FormPageHeader';
 import MotsClesInput from '@/components/shared/MotsClesInput';
 import TarifEvenementFields, { type ValeurTarif } from '@/components/event/TarifEvenementFields';
@@ -1212,6 +1213,9 @@ const AjouterEvenement = () => {
                     {fieldErrors.dateFin && <p id="dateFin-error" role="alert" className="text-sm text-destructive">{fieldErrors.dateFin}</p>}
                   </div>
                 </div>
+
+                {/* Création seulement : un événement aux mêmes dates appelle peut-être une activité (2026-11-17) */}
+                {!isEditMode && !isAdmin && <EvenementDejaAuxDates dateDebut={formData.dateDebut} dateFin={formData.dateFin} />}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">

@@ -755,7 +755,9 @@
       "ajouterPartenaire": "Add a partner organisation",
       "choisirPartenaire": "Choose an organisation",
       "partenaireAbsent": "Organisation not in the list? It first needs its own page on Tala DZ.",
-      "startDatePastEnCours": "The start date has passed: if the event is ongoing, enter its end date (today or later)."
+      "startDatePastEnCours": "The start date has passed: if the event is ongoing, enter its end date (today or later).",
+      "dejaAuxDates": "You already have an event on these dates. If this is part of it (a day, a workshop, a talk…), add an activity to its programme instead:",
+      "ajouterActiviteA": "Add an activity to “{{nom}}”"
     },
     "types": {
       "concert": "Concert",
@@ -3236,7 +3238,18 @@
       "rejectTitle": "Decline this event?",
       "rejectDesc": "“{{nom}}” goes back to draft. The organiser receives your reason, fixes the event and can send it again.",
       "rejectReason": "Reason",
-      "rejectPlaceholder": "E.g. the exact address and start time are missing."
+      "rejectPlaceholder": "E.g. the exact address and start time are missing.",
+      "transformer": {
+        "menu": "Turn into an activity…",
+        "titre": "Turn into an activity",
+        "aide": "“{{nom}}” will become an activity in the programme of the chosen event. Its photos, registrations and comments will be moved there, then it will be deleted. Registered people are notified.",
+        "choisir": "Event receiving the activity (same organiser)",
+        "aucun": "This organiser has no other event.",
+        "resume": "To “{{cible}}”: {{activites}} activity(ies), {{photos}} photo(s) or document(s), {{inscrits}} registration(s) moved; {{deja}} person(s) were already registered there. The duplicate event will be deleted.",
+        "voirResume": "See summary",
+        "confirmer": "Turn into activity",
+        "fait": "Event turned into an activity"
+      }
     },
     "services": {
       "title": "Services Management",

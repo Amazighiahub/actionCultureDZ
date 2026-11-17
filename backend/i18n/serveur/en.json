@@ -509,5 +509,9 @@
   "Un événement annulé ne peut plus être modifié": "A cancelled event can no longer be edited",
   "Action inconnue": "Unknown action",
   "Seul le professionnel de ce service peut voir ses statistiques": "Only this service’s professional can see its statistics",
-  "Trop de demandes : réessayez plus tard.": "Too many requests: please try again later."
+  "Trop de demandes : réessayez plus tard.": "Too many requests: please try again later.",
+  "Choisissez l’événement qui recevra l’activité": "Choose the event that will receive the activity",
+  "Choisissez un autre événement que celui à transformer": "Choose an event other than the one being turned into an activity",
+  "Les deux événements doivent avoir le même organisateur": "Both events must have the same organiser",
+  "L’événement choisi est annulé : choisissez-en un autre": "The chosen event is cancelled: choose another one"
 }

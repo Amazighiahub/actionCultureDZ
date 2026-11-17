@@ -328,6 +328,36 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** GET /evenements/:id/transformer : événements du même organisateur qui peuvent recevoir l'activité */
+  async ciblesTransformation(req, res) {
+    try {
+      const data = await this.evenementService.ciblesTransformation(parseInt(req.params.id));
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** GET /evenements/:id/transformer/apercu?cible=12 : ce qui sera déplacé */
+  async apercuTransformation(req, res) {
+    try {
+      const data = await this.evenementService.apercuTransformation(parseInt(req.params.id), parseInt(req.query.cible));
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /** POST /evenements/:id/transformer { cible: 12 } : l'événement devient une activité de l'autre */
+  async transformerEnActivite(req, res) {
+    try {
+      const data = await this.evenementService.transformerEnActivite(parseInt(req.params.id), parseInt(req.body.cible), req.user.id_user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async cancel(req, res) {
     try {
       const evenement = await this.evenementService.cancel(

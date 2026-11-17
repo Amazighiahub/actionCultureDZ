@@ -1302,6 +1302,46 @@ class EvenementService extends BaseService {
     return EvenementDTO.fromEntity(updated);
   }
 
+  // ============================================================================
+  // ÉVÉNEMENT CRÉÉ PAR ERREUR → ACTIVITÉ D'UN AUTRE (modération, 2026-11-17)
+  // ============================================================================
+
+  /** Événements du même organisateur qui peuvent recevoir l'activité */
+  async ciblesTransformation(id) {
+    return require('./transformerEnActivite').cibles(this.models, id);
+  }
+
+  /** Ce que la transformation va déplacer, pour le résumé affiché avant confirmation */
+  async apercuTransformation(id, idCible) {
+    return require('./transformerEnActivite').apercu(this.models, id, idCible);
+  }
+
+  /** Transforme l'événement `id` en activité de `idCible` ; ses inscrits sont prévenus */
+  async transformerEnActivite(id, idCible, adminId) {
+    const { cible, aPrevenir, nomSource } = await require('./transformerEnActivite').transformer(this.models, id, idCible);
+    this.cache.invalidate();
+    await this._viderCachesListes();
+    this.logger.info(`Événement ${id} transformé en activité de ${idCible} par admin: ${adminId}`);
+    const nomCible = texteLisible(cible.nom_evenement);
+    const url = evenementPath(cible.id_evenement, cible.nom_evenement);
+    const service = this.notificationService || new (require('../notificationService'))(this.models);
+    for (const idUser of aPrevenir) {
+      await notifier(service, idUser, {
+        titre: 'Votre inscription a changé de page',
+        message: `« ${nomSource} » fait désormais partie du programme de « ${nomCible} ». Votre inscription est gardée sur cette page.`,
+        url_action: url, metadata: { id_evenement: cible.id_evenement }
+      });
+    }
+    if (!memeUtilisateur(cible.id_user, adminId)) {
+      await notifier(service, cible.id_user, {
+        titre: 'Événement regroupé',
+        message: `« ${nomSource} » est devenu une activité du programme de « ${nomCible} ». Ajoutez vos prochaines activités depuis « Gérer » de cet événement.`,
+        url_action: `/dashboard-pro?gerer=${cible.id_evenement}&onglet=programmes`, metadata: { id_evenement: cible.id_evenement }
+      });
+    }
+    return { id_evenement: cible.id_evenement, prevenus: aPrevenir.length };
+  }
+
   /**
    * Statistiques (cached 5 min)
    */

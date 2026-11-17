@@ -175,6 +175,15 @@ const initEvenementRoutes = (models, authMiddleware) => {
   // Cancel (owner or admin)
   router.post('/:id/cancel', authenticate, validateId(), asyncHandler((req, res) => evenementController.cancel(req, res)));
 
+  // Événement créé par erreur → activité d'un autre événement du même organisateur (administration)
+  router.get('/:id/transformer', authenticate, requireRole(['Admin']), validateId(),
+    asyncHandler((req, res) => evenementController.ciblesTransformation(req, res)));
+  router.get('/:id/transformer/apercu', authenticate, requireRole(['Admin']), validateId(),
+    asyncHandler((req, res) => evenementController.apercuTransformation(req, res)));
+  router.post('/:id/transformer', authenticate, requireRole(['Admin']), validateId(),
+    [body('cible').isInt({ min: 1 }).withMessage(msg('validation.invalidId'))], handleValidationErrors,
+    asyncHandler((req, res) => evenementController.transformerEnActivite(req, res)));
+
   // Publish (admin)
   router.post('/:id/publish', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => evenementController.publish(req, res)));
 
