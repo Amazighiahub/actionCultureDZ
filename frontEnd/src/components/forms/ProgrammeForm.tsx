@@ -657,7 +657,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
               {/* Intervenants */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                {/* Passe à la ligne sur téléphone : le titre passait sous le bouton « Ajouter un intervenant » */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Label className="text-base font-medium">{t('programme.form.participants.label')}</Label>
                   {!isReadOnly && (
                     <Button type="button" variant="outline" size="sm" onClick={addIntervenant}>

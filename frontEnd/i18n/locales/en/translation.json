@@ -6649,5 +6649,21 @@
   "nouvelleVersion": {
     "texte": "A new version of the site is available.",
     "recharger": "Reload"
+  },
+  "poesie": {
+    "carte": "Poetry",
+    "titrePage": "Publish a poem",
+    "sousTitre": "Poetry",
+    "motCle": "poetry",
+    "aide": "Paste the poem: one line per verse, an empty line between stanzas. Choose the layout and where the image goes.",
+    "disposition": "Layout",
+    "uneColonne": "One column",
+    "deuxColonnes": "Two columns (large screens)",
+    "image": "Image",
+    "imageGauche": "Left of the poem",
+    "imageDroite": "Right of the poem",
+    "imageDessus": "Above the poem",
+    "sansImage": "No image",
+    "contenu": "The poem"
   }
 }

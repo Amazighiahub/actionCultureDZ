@@ -150,6 +150,8 @@ export function useAjouterOeuvre() {
 
   // États pour ArticleEditor
   const [useArticleEditor, setUseArticleEditor] = useState(false);
+  // Section « Poésie » : un article ouvert directement en mode poème (?type=poeme ou carte « Poésie »)
+  const [modePoeme, setModePoeme] = useState(() => searchParams.get('type') === 'poeme');
   const [showEditorChoice, setShowEditorChoice] = useState(false);
 
   // Ref synchrone pour bloquer les double-envois (mobile double-tap)
@@ -190,6 +192,12 @@ export function useAjouterOeuvre() {
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  // Lien direct « Publier un poème » (?type=poeme) : article en mode poème
+  useEffect(() => {
+    if (modePoeme && !isEditMode) setFormData(prev => (prev.id_type_oeuvre === 4 ? prev : { ...prev, id_type_oeuvre: 4 }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modePoeme]);
 
   useEffect(() => {
     if (!cibleArticle) return;
@@ -1016,7 +1024,7 @@ export function useAjouterOeuvre() {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle,
+    useArticleEditor, setUseArticleEditor, showEditorChoice, cibleArticle, modePoeme, setModePoeme,
     // Handlers
     handleInputChange,
     handleTagAdd, handleTagRemove,

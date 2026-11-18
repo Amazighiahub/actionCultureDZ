@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Upload, Save, X, Plus, AlertCircle,
-  Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star, MapPin,
+  Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star, MapPin, Feather,
 } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import ArticleEditor from '@/components/article/ArticleEditor';
@@ -62,7 +62,7 @@ const AjouterOeuvre: React.FC = () => {
     searchOeuvreResults, setSearchOeuvreResults,
     medias, isDragging,
     suggestedTags, newTag, setNewTag, showTagSuggestions, setShowTagSuggestions,
-    useArticleEditor, showEditorChoice, cibleArticle,
+    useArticleEditor, showEditorChoice, cibleArticle, modePoeme, setModePoeme,
     handleInputChange,
     handleTagAdd, handleTagRemove,
     handleMediaUpload, handleDragOver, handleDragLeave, handleDrop,
@@ -170,7 +170,8 @@ const AjouterOeuvre: React.FC = () => {
               numero: formData.numero,
               peer_reviewed: formData.peer_reviewed
             }}
-            onBack={() => handleInputChange('id_type_oeuvre', 0)}
+            onBack={() => { setModePoeme(false); handleInputChange('id_type_oeuvre', 0); }}
+            modePoeme={modePoeme}
             onSave={handleArticleEditorSave} /> :
 
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }} noValidate>
@@ -249,6 +250,7 @@ const AjouterOeuvre: React.FC = () => {
                         'bg-primary text-primary-foreground' :
                         'hover:bg-secondary hover:text-secondary-foreground'}`}
                         onClick={() => {
+                          setModePoeme(false);
                           handleInputChange('id_type_oeuvre', type.id_type_oeuvre);
                           if ([6, 7].includes(type.id_type_oeuvre)) { // Œuvre d'Art, Artisanat
                             handleInputChange('je_suis_auteur', true);
@@ -256,6 +258,15 @@ const AjouterOeuvre: React.FC = () => {
                         }}>
                           {getTypeIcon(type.id_type_oeuvre)}
                           <span className="font-medium">{getLocalizedText(type.nom_type)}</span>
+                        </Button>
+                      )}
+                      {/* Section « Poésie » : le modèle Poème de l'éditeur d'articles, ouvert directement */}
+                      {!isEditMode && (
+                      <Button type="button" variant="outline"
+                        className="h-auto py-4 flex flex-col items-center space-y-2 hover-lift hover:bg-secondary hover:text-secondary-foreground"
+                        onClick={() => { setModePoeme(true); handleInputChange('id_type_oeuvre', 4); }}>
+                          <Feather className="h-6 w-6" aria-hidden="true" />
+                          <span className="font-medium">{t('poesie.carte', 'Poésie')}</span>
                         </Button>
                       )}
                     </div>

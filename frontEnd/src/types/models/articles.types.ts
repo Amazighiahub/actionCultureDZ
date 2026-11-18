@@ -93,6 +93,11 @@ export interface ArticleBlock {
     titrePage?: string;
     /** Libellé du bouton d'enregistrement (« Envoyer la proposition »…) */
     libelleEnregistrer?: string;
+    /**
+     * Section « Poésie » (2026-11-17) : l'article démarre avec le modèle Poème, avec deux réglages simples
+     * (une ou deux colonnes, place de l'image) et le mot-clé « poésie »
+     */
+    modePoeme?: boolean;
   }
   
   export interface ArticleBlockEditorProps {

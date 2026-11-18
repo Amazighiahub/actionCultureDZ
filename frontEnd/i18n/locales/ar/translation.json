@@ -6927,5 +6927,21 @@
   "nouvelleVersion": {
     "texte": "تتوفر نسخة جديدة من الموقع.",
     "recharger": "إعادة التحميل"
+  },
+  "poesie": {
+    "carte": "الشعر",
+    "titrePage": "نشر قصيدة",
+    "sousTitre": "الشعر",
+    "motCle": "شعر",
+    "aide": "الصق القصيدة: بيت في كل سطر، وسطر فارغ بين مقطعين. اختر التنسيق ومكان الصورة.",
+    "disposition": "التنسيق",
+    "uneColonne": "عمود واحد",
+    "deuxColonnes": "عمودان (الشاشة الكبيرة)",
+    "image": "الصورة",
+    "imageGauche": "على يسار القصيدة",
+    "imageDroite": "على يمين القصيدة",
+    "imageDessus": "فوق القصيدة",
+    "sansImage": "بدون صورة",
+    "contenu": "القصيدة"
   }
 }

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AideRedaction, ChoixModele, estBlocVide } from './ModelesEtAide';
+import { AideRedaction, ChoixModele, estBlocVide, blocsDuModele } from './ModelesEtAide';
+import ReglagesPoeme from './ReglagesPoeme';
 import { SaisieConserveeAvis } from '@/hooks/useSaisieConservee';
 import { directionTexte } from '@/utils/directionTexte';
 import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,7 @@ import { SUPPORTED_LANGUAGES, infoLangue, nomLangue } from '@/types/common/multi
 // Langues de l'article : liste et noms communs (audit V11 COD-6 ; avant « Tamazight (Latin) » ici seulement)
 const LANG_OPTIONS = SUPPORTED_LANGUAGES.map(infoLangue);
 
-const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave, titrePage, libelleEnregistrer }) => {
+const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave, titrePage, libelleEnregistrer, modePoeme = false }) => {
   const { t } = useTranslation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
@@ -116,6 +117,15 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
     editor.setEditLang('ar');
   };
 
+  // Section « Poésie » : un nouvel article commence par le modèle Poème, avec le mot-clé « poésie »
+  const pretAuPoeme = modePoeme && !articleId && !editor.loading && editor.blocks.length === 0;
+  useEffect(() => {
+    if (!pretAuPoeme) return;
+    editor.remplacerBlocs(blocsDuModele('poeme', (cle, defaut) => t(cle, defaut)).map(b => ({ ...b, _uid: generateBlockUid() } as typeof b)));
+    editor.handleAddTag(t('poesie.motCle', 'poésie'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pretAuPoeme]);
+
   if (editor.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -146,14 +156,18 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
               )}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">
-                  {titrePage || (articleId
-                    ? t('article_articleeditor.modifierArticle', 'Modifier l\'article')
-                    : t('article_articleeditor.creerArticle', 'Créer un article'))}
+                  {titrePage || (modePoeme && !articleId
+                    ? t('poesie.titrePage', 'Publier un poème')
+                    : articleId
+                      ? t('article_articleeditor.modifierArticle', 'Modifier l\'article')
+                      : t('article_articleeditor.creerArticle', 'Créer un article'))}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {editor.formData.type === 'article_scientifique'
-                    ? t('article_articleeditor.articleScientifique', 'Article scientifique')
-                    : t('article_articleeditor.article', 'Article')}
+                  {modePoeme
+                    ? t('poesie.sousTitre', 'Poésie')
+                    : editor.formData.type === 'article_scientifique'
+                      ? t('article_articleeditor.articleScientifique', 'Article scientifique')
+                      : t('article_articleeditor.article', 'Article')}
                 </p>
               </div>
             </div>
@@ -356,10 +370,13 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                 </CardContent>
               </Card>
 
+              {/* Section « Poésie » : disposition et image en deux choix simples */}
+              {modePoeme && !enTraduction && <ReglagesPoeme blocks={editor.blocks} onChange={editor.remplacerBlocs} />}
+
               {/* Blocks */}
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("article_articleeditor.contenu_larticle")}</CardTitle>
+                  <CardTitle>{modePoeme ? t('poesie.contenu', 'Le poème') : t("article_articleeditor.contenu_larticle")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {editor.blocks.length === 0 && (

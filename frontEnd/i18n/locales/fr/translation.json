@@ -6649,5 +6649,21 @@
   "nouvelleVersion": {
     "texte": "Une nouvelle version du site est disponible.",
     "recharger": "Recharger"
+  },
+  "poesie": {
+    "carte": "Poésie",
+    "titrePage": "Publier un poème",
+    "sousTitre": "Poésie",
+    "motCle": "poésie",
+    "aide": "Collez le poème : un vers par ligne, une ligne vide entre deux strophes. Choisissez la disposition et la place de l’image.",
+    "disposition": "Disposition",
+    "uneColonne": "Une colonne",
+    "deuxColonnes": "Deux colonnes (grand écran)",
+    "image": "Image",
+    "imageGauche": "À gauche du poème",
+    "imageDroite": "À droite du poème",
+    "imageDessus": "Au-dessus du poème",
+    "sansImage": "Sans image",
+    "contenu": "Le poème"
   }
 }
