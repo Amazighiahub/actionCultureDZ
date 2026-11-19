@@ -2865,4 +2865,61 @@ INSERT INTO `communes` (`id_commune`, `nom`, `commune_name_ascii`, `dairaId`, `c
 (1540, 'حاسي القارة', 'Hassi Gara', 547, '2025-11-21 09:53:13', '2025-11-21 09:53:13'),
 (1541, 'حاسي الفحل', 'Hassi Fehal', 548, '2025-11-21 09:53:13', '2025-11-21 09:53:13');
 
+-- =============================================================================
+-- Découpage à 69 wilayas (2026-11-19) : mêmes changements que migrations/20261232-wilayas-69.js
+-- =============================================================================
+INSERT IGNORE INTO `wilayas` (`id_wilaya`, `codeW`, `nom`, `wilaya_name_ascii`, `createdAt`, `updatedAt`) VALUES
+(59, 59, 'آفلو', 'Aflou', NOW(), NOW()),
+(60, 60, 'بريكة', 'Barika', NOW(), NOW()),
+(61, 61, 'القنطرة', 'El Kantara', NOW(), NOW()),
+(62, 62, 'بئر العاتر', 'Bir El Ater', NOW(), NOW()),
+(63, 63, 'العريشة', 'El Aricha', NOW(), NOW()),
+(64, 64, 'قصر الشلالة', 'Ksar Chellala', NOW(), NOW()),
+(65, 65, 'عين وسارة', 'Ain Oussera', NOW(), NOW()),
+(66, 66, 'مسعد', 'Messaad', NOW(), NOW()),
+(67, 67, 'قصر البخاري', 'Ksar El Boukhari', NOW(), NOW()),
+(68, 68, 'بوسعادة', 'Bou Saada', NOW(), NOW()),
+(69, 69, 'الأبيض سيدي الشيخ', 'El Abiodh Sidi Cheikh', NOW(), NOW());
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 59) x) WHERE w.codeW = 3 AND d.daira_name_ascii = 'Aflou';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 59) x) WHERE w.codeW = 3 AND d.daira_name_ascii = 'Brida';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 59) x) WHERE w.codeW = 3 AND d.daira_name_ascii = 'El Ghicha';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 59) x) WHERE w.codeW = 3 AND d.daira_name_ascii = 'Gueltat Sidi Saad';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 59) x) WHERE w.codeW = 3 AND d.daira_name_ascii = 'Oued Morra';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 60) x) WHERE w.codeW = 5 AND d.daira_name_ascii = 'Barika';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 60) x) WHERE w.codeW = 5 AND d.daira_name_ascii = 'Djezzar';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 60) x) WHERE w.codeW = 5 AND d.daira_name_ascii = 'Seggana';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 61) x) WHERE w.codeW = 7 AND d.daira_name_ascii = 'Djemorah';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 61) x) WHERE w.codeW = 7 AND d.daira_name_ascii = 'El Kantara';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 61) x) WHERE w.codeW = 7 AND d.daira_name_ascii = 'El Outaya';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 62) x) WHERE w.codeW = 12 AND d.daira_name_ascii = 'Bir El Ater';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 62) x) WHERE w.codeW = 12 AND d.daira_name_ascii = 'Negrine';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 63) x) WHERE w.codeW = 13 AND d.daira_name_ascii = 'Sidi Djillali';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 64) x) WHERE w.codeW = 14 AND d.daira_name_ascii = 'Hamadia';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 64) x) WHERE w.codeW = 14 AND d.daira_name_ascii = 'Ksar Chellala';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 65) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Ain Oussera';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 65) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Birine';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 65) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Had Sahary';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 65) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Sidi Laadjel';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 66) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Faidh El Botma';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 66) x) WHERE w.codeW = 17 AND d.daira_name_ascii = 'Messaad';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Ain Boucif';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Aziz';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Chahbounia';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Chellalat El Adhaoura';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Ksar El Boukhari';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 67) x) WHERE w.codeW = 26 AND d.daira_name_ascii = 'Ouled Antar';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Ain El Melh';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Ben Srour';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Bousaada';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Djebel Messaad';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Khoubana';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Medjedel';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Ouled Sidi Brahim';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 68) x) WHERE w.codeW = 28 AND d.daira_name_ascii = 'Sidi Ameur';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 69) x) WHERE w.codeW = 32 AND d.daira_name_ascii = 'Boussemghoun';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 69) x) WHERE w.codeW = 32 AND d.daira_name_ascii = 'Chellala';
+UPDATE `dairas` d JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET d.wilayaId = (SELECT id_wilaya FROM (SELECT id_wilaya FROM wilayas WHERE codeW = 69) x) WHERE w.codeW = 32 AND d.daira_name_ascii = 'Labiodh Sidi Cheikh';
+INSERT INTO `dairas` (`nom`, `daira_name_ascii`, `wilayaId`, `createdAt`, `updatedAt`) SELECT 'العريشة', 'El Aricha', id_wilaya, NOW(), NOW() FROM `wilayas` WHERE codeW = 63 AND NOT EXISTS (SELECT 1 FROM (SELECT d.id_daira FROM dairas d JOIN wilayas w ON w.id_wilaya = d.wilayaId WHERE w.codeW = 63 AND d.daira_name_ascii = 'El Aricha') y);
+UPDATE `communes` c JOIN `dairas` d ON d.id_daira = c.dairaId JOIN `wilayas` w ON w.id_wilaya = d.wilayaId SET c.dairaId = (SELECT id_daira FROM (SELECT d2.id_daira FROM dairas d2 JOIN wilayas w2 ON w2.id_wilaya = d2.wilayaId WHERE w2.codeW = 63 AND d2.daira_name_ascii = 'El Aricha') z) WHERE w.codeW = 13 AND d.daira_name_ascii = 'Sebdou' AND c.commune_name_ascii IN ('El Aricha', 'El Gor');
+
 SET FOREIGN_KEY_CHECKS = 1;

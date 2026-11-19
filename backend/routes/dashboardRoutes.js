@@ -9,6 +9,7 @@ const cacheMiddleware = require('../middlewares/cacheMiddleware');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const { body, query, param } = require('express-validator');
 const { msg } = require('../utils/messageValidation');
+const { NB_WILAYAS } = require('../constants/geographie');
 
 const initDashboardRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
@@ -191,7 +192,7 @@ const initDashboardRoutes = (models) => {
       body('biographie').optional().isString().withMessage((value, { req }) => req.t('validation.invalidBiography')),
       body('entreprise').optional().isString().withMessage((value, { req }) => req.t('validation.invalidCompany')),
       body('site_web').optional().isURL().withMessage((value, { req }) => req.t('validation.invalidWebsite')),
-      body('wilaya_residence').optional().isInt({ min: 1, max: 58 }).withMessage((value, { req }) => req.t('validation.invalidWilaya'))
+      body('wilaya_residence').optional().isInt({ min: 1, max: NB_WILAYAS }).withMessage((value, { req }) => req.t('validation.invalidWilaya'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,

@@ -54,7 +54,7 @@ function distanceEdition(a, b) {
 }
 
 let communesCache = null;
-/** Communes de Tala DZ, avec le code de leur wilaya (découpage à 58), indexées par nom sans accents */
+/** Communes de Tala DZ, avec le code de leur wilaya, indexées par nom sans accents (découpage à 69 wilayas, migration 20261232) */
 async function communesDuSite(models) {
   if (communesCache) return communesCache;
   const lignes = await models.sequelize.query(`SELECT c.id_commune, c.commune_name_ascii AS ascii, c.nom, w.codeW
@@ -111,7 +111,7 @@ async function wilayas(models) {
   return liste.map((w) => ({ ...w, points: compte.get(Number(w.codeW)) || 0 }));
 }
 
-/** Points d'une wilaya (code à 58), avec leur commune et le lieu déjà présent au même endroit */
+/** Points d'une wilaya (code de la base, 1 à 69), avec leur commune et le lieu déjà présent au même endroit */
 async function apercu(models, codeW) {
   const code = Number(codeW);
   if (!Number.isInteger(code) || code < 1) throw Object.assign(new Error('Wilaya invalide'), { statusCode: 400 });

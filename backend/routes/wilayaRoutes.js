@@ -8,8 +8,9 @@ const CacheManager = require('../utils/CacheManager');
 const container = require('../services/serviceContainer');
 const { vitrineWilaya } = require('../services/wilayaVitrine');
 const logger = require('../utils/logger');
+const { NB_WILAYAS } = require('../constants/geographie');
 
-const cache = new CacheManager({ namespace: 'wilaya-vitrine', defaultTTL: 5 * 60 * 1000, maxSize: 58 });
+const cache = new CacheManager({ namespace: 'wilaya-vitrine', defaultTTL: 5 * 60 * 1000, maxSize: NB_WILAYAS });
 
 const initWilayaRoutes = (models) => {
   const router = express.Router();
