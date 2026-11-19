@@ -130,3 +130,51 @@ describe('GET /api/og/professionnels/:id', () => {
     expect(res.status).toBe(404);
   });
 });
+
+/**
+ * Anti-retour (2026-11-19, référencement) : ~1 000 fiches de lieux importées sans texte partageaient la même
+ * description. Chaque fiche a maintenant la sienne (type, commune, wilaya, points de visite), et les pages des
+ * wilayas listent leurs sites.
+ */
+describe('GET /api/og/patrimoine et /api/og/wilayas', () => {
+  const timgad = {
+    id_lieu: 24, statut: 'publie', nom: { fr: 'Timgad' }, typePatrimoine: 'site_archeologique', latitude: '35.48', longitude: '6.46',
+    id_lieu_parent: null, DetailLieu: null, LieuMedia: [],
+    Commune: { commune_name_ascii: 'Timgad', Daira: { Wilaya: { id_wilaya: 5, wilaya_name_ascii: 'Batna' } } },
+  };
+  const lieux = (lieu, points = [], parent = null) => ({
+    Commune: {}, Daira: {}, Wilaya: {},
+    Lieu: { findByPk: jest.fn(async () => lieu), findAll: jest.fn(async () => points), findOne: jest.fn(async () => parent) },
+  });
+
+  it('lieu sans texte : description propre, commune, wilaya, points de visite et données structurées', async () => {
+    const res = await request(app(models(lieux(timgad, [{ id_lieu: 30, nom: { fr: 'Capitole' } }, { id_lieu: 31, nom: { fr: 'Arc de Trajan' } }]))))
+      .get('/api/og/patrimoine/24');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<meta name="description" content="Site archéologique à Timgad, wilaya de Batna, en Algérie. 2 points de visite.');
+    expect(res.text).toContain('<a href="https://taladz.com/patrimoine/31-arc-de-trajan">Arc de Trajan</a>');
+    expect(res.text).toContain('https://taladz.com/wilayas/5-batna');
+    expect(res.text).toContain('"addressLocality":"Timgad","addressRegion":"Batna"');
+    expect(res.text).toContain('"containsPlace"');
+  });
+
+  it('point de visite : rattaché à son site, et une vraie description passe avant la phrase automatique', async () => {
+    const capitole = { ...timgad, id_lieu: 30, nom: { fr: 'Capitole' }, id_lieu_parent: 24, DetailLieu: { description: { fr: 'Temple de la triade capitoline.' } } };
+    const res = await request(app(models(lieux(capitole, [], { id_lieu: 24, nom: { fr: 'Timgad' } })))).get('/api/og/patrimoine/30');
+    expect(res.text).toContain('<meta name="description" content="Temple de la triade capitoline.">');
+    expect(res.text).toContain('Fait partie de');
+    expect(res.text).toContain('"containedInPlace"');
+  });
+
+  it('page d’une wilaya : ses sites avec un lien chacun', async () => {
+    const m = models({
+      Wilaya: { findByPk: jest.fn(async () => ({ id_wilaya: 5, wilaya_name_ascii: 'Batna', codeW: 5 })) },
+      sequelize: { QueryTypes: { SELECT: 'SELECT' }, query: jest.fn(async () => [{ id_lieu: 24, nom: '{"fr":"Timgad"}', typePatrimoine: 'site_archeologique', commune: 'Timgad' }]) },
+    });
+    const res = await request(app(m)).get('/api/og/wilayas/5');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Patrimoine de la wilaya de Batna (05) : 1 site');
+    expect(res.text).toContain('<a href="https://taladz.com/patrimoine/24-timgad">Timgad</a> — Site archéologique, Timgad');
+    expect(res.text).toContain('<link rel="canonical" href="https://taladz.com/wilayas/5-batna">');
+  });
+});

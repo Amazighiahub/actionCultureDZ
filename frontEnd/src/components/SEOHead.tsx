@@ -219,19 +219,30 @@ export function buildEvenementJsonLd(event: any): Record<string, any> {
   };
 }
 
-export function buildPatrimoineJsonLd(site: any): Record<string, any> {
+/**
+ * Lieu de patrimoine. `description` : phrase automatique quand la fiche n'a pas de texte. Commune et wilaya en
+ * lettres latines (avant : le nom arabe de la base, quelle que soit la langue) ; site parent et points de visite
+ * reliés (2026-11-19).
+ */
+export function buildPatrimoineJsonLd(site: any, { description }: { description?: string } = {}): Record<string, any> {
   const image = site.medias?.find((m: any) => m.type === 'image')?.url;
+  const parent = site.Ancetres?.length ? site.Ancetres[site.Ancetres.length - 1] : null;
+  const commune = site.commune?.commune_name_ascii || site.Commune?.commune_name_ascii || text(site.Commune?.nom);
+  const wilaya = site.wilaya?.wilaya_name_ascii || site.Commune?.Daira?.Wilaya?.wilaya_name_ascii || text(site.Commune?.Daira?.Wilaya?.nom);
   return {
     '@context': 'https://schema.org',
-    '@type': 'LandmarksOrHistoricalBuildings',
+    '@type': ['TouristAttraction', 'LandmarksOrHistoricalBuildings'],
     name: text(site.nom),
-    description: (text(site.DetailLieu?.description) || text(site.description)).substring(0, 300),
+    description: ((text(site.DetailLieu?.description) || text(site.description)).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      || description || '').substring(0, 300),
     address: {
       '@type': 'PostalAddress',
-      addressLocality: text(site.Commune?.nom),
-      addressRegion: text(site.Commune?.Daira?.Wilaya?.nom),
+      addressLocality: commune,
+      addressRegion: wilaya,
       addressCountry: 'DZ',
     },
+    containedInPlace: parent ? { '@type': 'TouristAttraction', name: text(parent.nom), url: `${SITE_URL}/patrimoine/${parent.id_lieu}` } : undefined,
+    containsPlace: (site.SousLieux || []).slice(0, 50).map((p: any) => ({ '@type': 'TouristAttraction', name: text(p.nom), url: `${SITE_URL}/patrimoine/${p.id_lieu}` })),
     geo: site.latitude && site.longitude ? {
       '@type': 'GeoCoordinates',
       latitude: site.latitude,

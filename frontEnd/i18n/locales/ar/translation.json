@@ -4922,6 +4922,25 @@
       "voirWilaya": "{{wilaya}}: {{n}} موقعًا، عرض على الخريطة",
       "toutes": "عرض الولايات الـ{{n}}",
       "moins": "عرض أقل"
+    },
+    "typesPhrase": {
+      "ville_village": "مدينة أو قرية تاريخية",
+      "monument": "معلم",
+      "musee": "متحف",
+      "site_archeologique": "موقع أثري",
+      "site_naturel": "موقع طبيعي",
+      "edifice_religieux": "مبنى ديني",
+      "palais_forteresse": "قصر أو حصن",
+      "autre": "مكان تراثي"
+    },
+    "auto": {
+      "communeWilaya": "في {{commune}}، ولاية {{wilaya}}",
+      "commune": "في {{commune}}",
+      "phrase": "{{type}} {{ou}}، في الجزائر.",
+      "partieDe": "نقطة زيارة في «{{site}}».",
+      "unPoint": "نقطة زيارة واحدة.",
+      "points": "{{n}} نقاط زيارة.",
+      "fin": "الموقع على الخريطة والطريق والصور والتاريخ على ثالا دي زد."
     }
   },
   "toasts": {

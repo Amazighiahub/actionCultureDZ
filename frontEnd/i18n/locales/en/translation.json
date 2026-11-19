@@ -4716,6 +4716,25 @@
       "voirWilaya": "{{wilaya}}: {{n}} sites, see on the map",
       "toutes": "See all {{n}} wilayas",
       "moins": "Show less"
+    },
+    "typesPhrase": {
+      "ville_village": "Historic town or village",
+      "monument": "Monument",
+      "musee": "Museum",
+      "site_archeologique": "Archaeological site",
+      "site_naturel": "Natural site",
+      "edifice_religieux": "Religious building",
+      "palais_forteresse": "Palace or fortress",
+      "autre": "Heritage place"
+    },
+    "auto": {
+      "communeWilaya": "in {{commune}}, {{wilaya}} province",
+      "commune": "in {{commune}}",
+      "phrase": "{{type}} {{ou}}, Algeria.",
+      "partieDe": "Visit point of “{{site}}”.",
+      "unPoint": "1 visit point.",
+      "points": "{{n}} visit points.",
+      "fin": "Map location, directions, photos and history on Tala DZ."
     }
   },
   "toasts": {

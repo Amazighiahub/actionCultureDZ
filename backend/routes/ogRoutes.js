@@ -12,7 +12,8 @@ const logger = require('../utils/logger');
 const { texteLisible } = require('../helpers/i18n');
 const { nomComplet } = require('../utils/texte');
 const { escapeHtml } = require('../utils/sanitize');
-const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, servicePath } = require('../utils/slug');
+const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, servicePath, wilayaPath } = require('../utils/slug');
+const { descriptionAutoLieu, TYPE_PHRASE_FR, de: descriptionDe } = require('../services/patrimoine/descriptionLieu');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
@@ -250,27 +251,87 @@ const initOgRoutes = (models) => {
         include: [
           { model: models.DetailLieu, attributes: ['description'], required: false },
           { model: models.LieuMedia, attributes: ['url', 'type'], required: false },
+          ...(models.Commune ? [{
+            model: models.Commune, attributes: ['commune_name_ascii'], required: false,
+            include: [{ model: models.Daira, attributes: ['id_daira'], required: false,
+              include: [{ model: models.Wilaya, attributes: ['id_wilaya', 'wilaya_name_ascii'], required: false }] }],
+          }] : []),
         ],
       });
       if (!l || l.statut !== 'publie') return null;
       const description = l.DetailLieu && l.DetailLieu.description;
       const image = firstImage(l.LieuMedia || l.LieuMedias);
+      // Commune, wilaya, site parent et points de visite : la fiche dit où se trouve le lieu et ce qu'on y voit,
+      // et un lieu sans texte a sa propre description (avant : la même pour ~1 000 fiches importées)
+      const commune = l.Commune?.commune_name_ascii || '';
+      const wilaya = l.Commune?.Daira?.Wilaya;
+      const parent = l.id_lieu_parent
+        ? await sansEchec(() => models.Lieu.findOne({ where: { id_lieu: l.id_lieu_parent, statut: 'publie' }, attributes: ['id_lieu', 'nom'] }), null)
+        : null;
+      const points = await sansEchec(() => models.Lieu.findAll({
+        where: { id_lieu_parent: id, statut: 'publie' }, attributes: ['id_lieu', 'nom'],
+        order: [['ordre_visite', 'ASC'], ['id_lieu', 'ASC']], limit: MAX_LISTE,
+      }));
+      const auto = descriptionAutoLieu({ type: l.typePatrimoine, commune, wilaya: wilaya?.wilaya_name_ascii, nbPoints: points.length, parent: parent && text(parent.nom) });
+      const path = lieuPath(id, l.nom);
       return {
-        title: text(l.nom),
-        description: summary(description) || undefined,
+        title: [text(l.nom), commune && !text(l.nom).includes(commune) ? commune : ''].filter(Boolean).join(', '),
+        description: summary(description) || auto,
         image,
         type: 'place',
-        path: lieuPath(id, l.nom),
-        corps: [sectionFaits([['Adresse', text(l.adresse)]]), paragraphes(description)].join('\n'),
+        path,
+        corps: [
+          sectionFaits([
+            ['Type', TYPE_PHRASE_FR[l.typePatrimoine]], ['Commune', commune], ['Wilaya', wilaya?.wilaya_name_ascii], ['Adresse', text(l.adresse)],
+          ]),
+          parent ? sectionLiens('Fait partie de', [{ url: `${SITE_URL}${lieuPath(parent.id_lieu, parent.nom)}`, texte: text(parent.nom) }]) : '',
+          paragraphes(description) || `<p>${escapeHtml(auto)}</p>`,
+          sectionLiens('Points de visite', points.map((p) => ({ url: `${SITE_URL}${lieuPath(p.id_lieu, p.nom)}`, texte: text(p.nom) }))),
+          wilaya ? sectionLiens('Dans la même wilaya', [{ url: `${SITE_URL}${wilayaPath(wilaya.id_wilaya, wilaya.wilaya_name_ascii)}`, texte: `Wilaya ${descriptionDe(wilaya.wilaya_name_ascii)}` }]) : '',
+        ].filter(Boolean).join('\n'),
         jsonLd: {
           '@context': 'https://schema.org',
-          '@type': 'TouristAttraction',
+          '@type': ['TouristAttraction', 'LandmarksOrHistoricalBuildings'],
           name: text(l.nom),
-          description: summary(description, 500),
+          description: summary(description, 500) || auto,
           image: imageAbsolue(image),
-          url: `${SITE_URL}${lieuPath(id, l.nom)}`,
-          address: l.adresse ? { '@type': 'PostalAddress', streetAddress: text(l.adresse), addressCountry: 'DZ' } : undefined,
+          url: `${SITE_URL}${path}`,
+          address: { '@type': 'PostalAddress', streetAddress: text(l.adresse), addressLocality: commune, addressRegion: wilaya?.wilaya_name_ascii, addressCountry: 'DZ' },
           geo: l.latitude && l.longitude ? { '@type': 'GeoCoordinates', latitude: Number(l.latitude), longitude: Number(l.longitude) } : undefined,
+          containedInPlace: parent ? { '@type': 'TouristAttraction', name: text(parent.nom), url: `${SITE_URL}${lieuPath(parent.id_lieu, parent.nom)}` } : undefined,
+          containsPlace: points.map((p) => ({ '@type': 'TouristAttraction', name: text(p.nom), url: `${SITE_URL}${lieuPath(p.id_lieu, p.nom)}` })),
+        },
+      };
+    },
+    /** Page d'une wilaya (/wilayas/16-alger) : ses sites de patrimoine, avec un lien vers chacun */
+    async wilayas(id) {
+      if (!models.Wilaya) return null;
+      const w = await models.Wilaya.findByPk(id, { attributes: ['id_wilaya', 'wilaya_name_ascii', 'codeW'] });
+      if (!w) return null;
+      const sites = await sansEchec(() => models.sequelize.query(`SELECT l.id_lieu, l.nom, l.typePatrimoine, c.commune_name_ascii AS commune
+          FROM lieu l JOIN communes c ON c.id_commune = l.communeId JOIN dairas d ON d.id_daira = c.dairaId
+          WHERE d.wilayaId = :id AND l.statut = 'publie' AND l.id_lieu_parent IS NULL
+          ORDER BY (SELECT COUNT(*) FROM lieu e WHERE e.id_lieu_parent = l.id_lieu AND e.statut = 'publie') DESC, l.id_lieu ASC
+          LIMIT 200`, { replacements: { id }, type: models.sequelize.QueryTypes.SELECT }));
+      const nom = w.wilaya_name_ascii;
+      const description = sites.length
+        ? `Patrimoine de la wilaya ${descriptionDe(nom)} (${String(w.codeW).padStart(2, '0')}) : ${sites.length} site${sites.length > 1 ? 's' : ''} historiques, monuments et lieux naturels sur la carte, avec écrivains, artisans, œuvres et événements de la wilaya, sur Tala DZ.`
+        : `Écrivains, artisans, œuvres, événements et lieux de la wilaya ${descriptionDe(nom)}, sur Tala DZ.`;
+      const path = wilayaPath(w.id_wilaya, nom);
+      return {
+        title: `Wilaya ${descriptionDe(nom)} : patrimoine et culture`,
+        description,
+        type: 'website',
+        path,
+        corps: [`<p>${escapeHtml(description)}</p>`,
+          sectionLiens('Sites de patrimoine', sites.map((s) => ({
+            url: `${SITE_URL}${lieuPath(s.id_lieu, s.nom)}`, texte: text(s.nom),
+            detail: [TYPE_PHRASE_FR[s.typePatrimoine], s.commune].filter(Boolean).join(', '),
+          }))),
+          `<p><a href="${SITE_URL}/patrimoine?wilaya=${w.id_wilaya}">Voir la carte du patrimoine de la wilaya</a></p>`].join('\n'),
+        jsonLd: {
+          '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Wilaya ${descriptionDe(nom)}`, description, url: `${SITE_URL}${path}`,
+          about: { '@type': 'AdministrativeArea', name: nom, containedInPlace: { '@type': 'Country', name: 'Algérie' } },
         },
       };
     },

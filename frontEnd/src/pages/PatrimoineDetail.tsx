@@ -42,6 +42,7 @@ import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio'
 import { usePermissions } from '@/hooks/usePermissions';
 import { jourProgramme, heureProgramme } from '@/utils/programmeHoraire';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
+import { descriptionAutoLieu } from '@/utils/descriptionLieu';
 import { evenementPath, idFromSlug, lieuPath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import type { TranslatableValue } from '@/types/common/multilingual.types';
@@ -406,6 +407,14 @@ const PatrimoineDetail = () => {
     ? getMediaLabel(visuels[selectedMediaIndex], selectedMediaIndex)
     : siteDisplayName;
 
+  // Description pour les moteurs : le texte de la fiche, sinon une phrase propre au lieu (type, commune, wilaya,
+  // points de visite). Avant : la même phrase pour ~1 000 fiches importées sans texte (2026-11-19)
+  const parentSeo = ancetres.length ? getLocalizedText(ancetres[ancetres.length - 1].nom, lang) : null;
+  const descriptionSeo = (getLocalizedText(site?.DetailLieu?.description, lang) || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 160)
+    || descriptionAutoLieu(t, {
+      type: site?.typePatrimoine, commune: nomGeo(site.commune), wilaya: nomGeo(site.wilaya),
+      nbPoints: points.length, parent: parentSeo,
+    });
   const seoKeywords = [
     getLocalizedText(site?.nom, lang), site?.typePatrimoine,
     site?.Commune?.Daira?.Wilaya?.nom, 'patrimoine algérien', 'site historique', 'Algérie',
@@ -416,12 +425,12 @@ const PatrimoineDetail = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title={getLocalizedText(site?.nom, lang)}
-        description={getLocalizedText(site?.DetailLieu?.description, lang)?.substring(0, 160) || `Découvrez ${getLocalizedText(site?.nom, lang)} — patrimoine culturel algérien`}
+        description={descriptionSeo}
         image={getMainImage()}
         type="place"
         keywords={seoKeywords}
         jsonLd={[
-          buildPatrimoineJsonLd(site),
+          buildPatrimoineJsonLd(site, { description: descriptionSeo }),
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Patrimoine', url: '/patrimoine' },

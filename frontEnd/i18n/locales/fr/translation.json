@@ -4721,6 +4721,25 @@
       "voirWilaya": "{{wilaya}} : {{n}} sites, voir sur la carte",
       "toutes": "Voir les {{n}} wilayas",
       "moins": "Afficher moins"
+    },
+    "typesPhrase": {
+      "ville_village": "Ville ou village historique",
+      "monument": "Monument",
+      "musee": "Musée",
+      "site_archeologique": "Site archéologique",
+      "site_naturel": "Site naturel",
+      "edifice_religieux": "Édifice religieux",
+      "palais_forteresse": "Palais ou forteresse",
+      "autre": "Lieu de patrimoine"
+    },
+    "auto": {
+      "communeWilaya": "à {{commune}}, wilaya {{deWilaya}}",
+      "commune": "à {{commune}}",
+      "phrase": "{{type}} {{ou}}, en Algérie.",
+      "partieDe": "Point de visite de « {{site}} ».",
+      "unPoint": "1 point de visite.",
+      "points": "{{n}} points de visite.",
+      "fin": "Position sur la carte, itinéraire, photos et histoire sur Tala DZ."
     }
   },
   "toasts": {
