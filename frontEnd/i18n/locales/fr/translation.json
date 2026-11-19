@@ -4684,6 +4684,26 @@
       "envoyer": "Envoyer la voix",
       "envoyee": "Voix ajoutée au guide audio. Merci !",
       "de": "Voix : {{nom}}"
+    },
+    "carte": {
+      "wilaya": "Wilaya",
+      "daira": "Daïra",
+      "commune": "Commune",
+      "toutesWilayas": "Toute l’Algérie",
+      "toutesDairas": "Toutes les daïras",
+      "toutesCommunes": "Toutes les communes",
+      "legende": "Types de lieux",
+      "vueCarte": "Carte",
+      "vueListe": "Liste ({{n}})",
+      "zoomerPoints": "Zoomez pour voir les points de visite",
+      "partieDe": "Partie de « {{site}} »",
+      "nbPoints": "{{n}} points de visite",
+      "voirFiche": "Voir la fiche",
+      "itineraire": "Itinéraire",
+      "dansLaZone": "{{n}} sites dans la zone",
+      "zoomerPlus": "Et {{n}} autres : zoomez ou choisissez une wilaya.",
+      "source": "Positions des lieux : Tala DZ et © contributeurs OpenStreetMap.",
+      "voirPoints": "Voir les points de visite"
     }
   },
   "toasts": {

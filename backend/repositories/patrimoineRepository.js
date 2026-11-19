@@ -362,6 +362,26 @@ class PatrimoineRepository extends BaseRepository {
   /**
    * Données pour la carte (coordonnées + infos minimales)
    */
+  /**
+   * Carte d'exploration (page Patrimoine, 2026-11-19) : tous les lieux publiés, sites et points de visite (de sites
+   * publiés), avec commune, daïra et wilaya pour les filtres, le nombre de points de chaque site et une photo.
+   * Une requête, colonnes indexées ; pas de limite (quelques milliers de lignes courtes).
+   */
+  async carteExploration() {
+    return this.model.sequelize.query(`SELECT l.id_lieu, l.nom, l.latitude, l.longitude, l.typePatrimoine, l.id_lieu_parent,
+        l.communeId, c.dairaId, d.wilayaId, COALESCE(p.nb, 0) AS nb_points, m.url AS image
+      FROM lieu l
+      JOIN communes c ON c.id_commune = l.communeId
+      JOIN dairas d ON d.id_daira = c.dairaId
+      LEFT JOIN lieu parent ON parent.id_lieu = l.id_lieu_parent
+      LEFT JOIN (SELECT id_lieu_parent, COUNT(*) AS nb FROM lieu WHERE statut = 'publie' AND id_lieu_parent IS NOT NULL GROUP BY id_lieu_parent) p
+        ON p.id_lieu_parent = l.id_lieu
+      LEFT JOIN (SELECT id_lieu, MIN(id) AS premiere FROM lieu_medias WHERE type = 'image' GROUP BY id_lieu) mm ON mm.id_lieu = l.id_lieu
+      LEFT JOIN lieu_medias m ON m.id = mm.premiere
+      WHERE l.statut = 'publie' AND l.latitude IS NOT NULL AND l.longitude IS NOT NULL
+        AND (l.id_lieu_parent IS NULL OR parent.statut = 'publie')`, { type: this.model.sequelize.QueryTypes.SELECT });
+  }
+
   async findForMap(options = {}) {
     const { typePatrimoine, wilayaId } = options;
     // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)

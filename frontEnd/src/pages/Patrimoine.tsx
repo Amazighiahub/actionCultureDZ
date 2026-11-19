@@ -27,8 +27,8 @@ import type { TranslatableValue } from '@/types/common/multilingual.types';
 import type { TypePatrimoine } from '@/utils/typesPatrimoine';
 import CarteALaDemande from '@/components/shared/CarteALaDemande';
 
-// Lazy loading pour CartePatrimoine
-const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
+// Carte d'exploration (bulles, couleurs par type, points de visite, wilaya › daïra › commune), chargée à la demande
+const CarteExploration = lazy(() => import('@/components/patrimoine/CarteExploration'));
 
 const SITES_PAGE_SIZE = 12;
 
@@ -297,7 +297,7 @@ const Patrimoine = () => {
           {/* Économie de données (2G, mode « économiser les données ») : carte au toucher (audit V11 OUT-11) */}
           <CarteALaDemande hauteur="h-80">
             <Suspense fallback={<MapSkeleton />}>
-              <CartePatrimoine />
+              <CarteExploration type={filterType} />
             </Suspense>
           </CarteALaDemande>
         </div>

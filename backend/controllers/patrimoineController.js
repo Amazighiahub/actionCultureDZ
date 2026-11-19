@@ -104,6 +104,11 @@ class PatrimoineController extends BaseController {
     }
   }
 
+  /** GET /patrimoine/carte-exploration : tous les lieux publiés, en lignes courtes (page Patrimoine) */
+  async getCarteExploration(req, res) {
+    res.json({ success: true, data: await this.patrimoineService.carteExploration(req.lang || 'fr') });
+  }
+
   async getMap(req, res) {
     try {
       const { typePatrimoine, wilayaId } = req.query;

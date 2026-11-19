@@ -88,6 +88,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // « À lire » de la page d'accueil : derniers articles publiés
   router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
+  router.get('/carte-exploration', cachePublic, patrimoineController.wrap('getCarteExploration'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
   // optionalAuth : le créateur d'un site non publié peut voir sa propre fiche

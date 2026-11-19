@@ -88,6 +88,21 @@ class PatrimoineService extends BaseService {
   /**
    * Données pour la carte
    */
+  /**
+   * Carte d'exploration : lignes courtes, nom dans la langue demandée (repli sur le français puis l'arabe).
+   * [id, nom, lat, lng, type, idParent, idCommune, idDaira, idWilaya, nbPoints, image]
+   */
+  async carteExploration(lang = 'fr') {
+    const lignes = await this.repository.carteExploration();
+    const nom = (v) => {
+      let o = v;
+      if (typeof v === 'string') { try { o = JSON.parse(v); } catch { return v; } }
+      return (o && (o[lang] || o.fr || o.ar || Object.values(o).find(Boolean))) || '';
+    };
+    return lignes.map((l) => [l.id_lieu, nom(l.nom), Number(l.latitude), Number(l.longitude), l.typePatrimoine,
+      l.id_lieu_parent || null, l.communeId, l.dairaId, l.wilayaId, Number(l.nb_points) || 0, l.image || null]);
+  }
+
   async findForMap(options = {}) {
     const sites = await this.repository.findForMap(options);
     return PatrimoineDTO.fromEntities(sites);

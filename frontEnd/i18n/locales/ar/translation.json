@@ -4885,6 +4885,26 @@
       "envoyer": "إرسال الصوت",
       "envoyee": "أُضيف الصوت إلى الدليل الصوتي. شكرًا!",
       "de": "الصوت: {{nom}}"
+    },
+    "carte": {
+      "wilaya": "الولاية",
+      "daira": "الدائرة",
+      "commune": "البلدية",
+      "toutesWilayas": "كل الجزائر",
+      "toutesDairas": "كل الدوائر",
+      "toutesCommunes": "كل البلديات",
+      "legende": "أنواع الأماكن",
+      "vueCarte": "الخريطة",
+      "vueListe": "القائمة ({{n}})",
+      "zoomerPoints": "قرّب لرؤية نقاط الزيارة",
+      "partieDe": "جزء من « {{site}} »",
+      "nbPoints": "{{n}} نقطة زيارة",
+      "voirFiche": "عرض البطاقة",
+      "itineraire": "المسار",
+      "dansLaZone": "{{n}} موقعًا في المنطقة",
+      "zoomerPlus": "و{{n}} أخرى: قرّب أو اختر ولاية.",
+      "source": "مواقع الأماكن: Tala DZ و© مساهمو OpenStreetMap.",
+      "voirPoints": "عرض نقاط الزيارة"
     }
   },
   "toasts": {
