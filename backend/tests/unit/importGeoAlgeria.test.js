@@ -101,7 +101,9 @@ describe('Import GeoAlgeria : qualité des noms (2026-11-19)', () => {
 
   test('banques, cités, ronds-points, écoles primaires : pas du patrimoine', () => {
     for (const n of ['Banque de développement local', 'Cité Khalla', 'Rond-point du 20 Avril', 'École primaire de Souk Ouadda']) expect(g.pasPatrimoine({ fr: n })).toBe(true);
-    for (const n of ['Villa des Fresques', 'Ancien bordj siège de la Jemâa', 'Siège de Laghouat']) expect(g.pasPatrimoine({ fr: n })).toBe(false);
+    for (const n of ['Salle des fêtes Tobna', 'Salle', 'APC el harrach', 'complexe ADIM']) expect(g.pasPatrimoine({ fr: n })).toBe(true);
+    // Patrimoine de la guerre de libération et lieux anciens : gardés
+    for (const n of ['Villa des Fresques', 'Ancien bordj siège de la Jemâa', 'Siège de Laghouat', 'PC de la Wilaya III', 'Caserne Bab Lakouas', 'Centre de torture de l’époque coloniale', 'le vieux marché']) expect(g.pasPatrimoine({ fr: n })).toBe(false);
   });
 
   test('un lieu au même endroit (30 m) qu’un lieu existant n’est jamais recréé, même comme point de visite', () => {

@@ -14,28 +14,19 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 // Ronds colorés des bulles (sans elle, les bulles n'étaient que des chiffres)
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Navigation, X, List, Map as IconeCarte, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import FondDeCarte from '@/components/shared/FondDeCarte';
-import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { useGeographicSelection } from '@/hooks/useGeographie';
 import { COULEUR_TYPE, couleurType } from '@/utils/couleursPatrimoine';
 
-/** Ligne du serveur : [id, nom, lat, lng, type, idParent, idCommune, idDaira, idWilaya, nbPoints, image] */
-type Ligne = [number, string, number, number, string, number | null, number, number, number, number, string | null];
-export interface LieuCarte {
-  id: number; nom: string; lat: number; lng: number; type: string; parent: number | null;
-  commune: number; daira: number; wilaya: number; nbPoints: number; image: string | null;
-}
-const lire = (l: Ligne): LieuCarte => ({
-  id: l[0], nom: l[1], lat: l[2], lng: l[3], type: l[4], parent: l[5], commune: l[6], daira: l[7], wilaya: l[8], nbPoints: l[9], image: l[10]
-});
+import { useLieuxCarte, type LieuCarte } from '@/hooks/useLieuxCarte';
+export type { LieuCarte };
 
 const ALGERIE = L.latLngBounds([18.9, -8.7], [37.2, 12]);
 const ZOOM_POINTS = 15; // points de visite visibles à partir de ce zoom
@@ -121,14 +112,14 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
   const [centrage, setCentrage] = useState<Centrage | null>(null);
   const centrer = (l: LieuCarte, zoom: number) => setCentrage((c) => ({ lat: l.lat, lng: l.lng, zoom, n: (c?.n || 0) + 1 }));
 
-  const { data: lieux = [], isLoading } = useQuery({
-    queryKey: ['carte-exploration', lang],
-    queryFn: async () => {
-      const r = await httpClient.get<Ligne[]>('/patrimoine/carte-exploration');
-      return (r.success && Array.isArray(r.data) ? r.data : []).map(lire);
-    },
-    staleTime: 5 * 60 * 1000
-  });
+  const { lieux, isLoading } = useLieuxCarte();
+  // Lien « voir sur la carte » d'une wilaya (?wilaya=12) : la carte s'ouvre filtrée sur elle
+  const [params] = useSearchParams();
+  const wilayaDemandee = Number(params.get('wilaya')) || null;
+  useEffect(() => {
+    if (wilayaDemandee && wilayaDemandee !== geo.selectedWilaya) geo.setSelectedWilaya(wilayaDemandee);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wilayaDemandee]);
 
   const filtres = { wilaya: geo.selectedWilaya, daira: geo.selectedDaira, commune: geo.selectedCommune, typesCaches, type };
   const visibles = useMemo(() => filtrerLieux(lieux, filtres),

@@ -29,6 +29,8 @@ import CarteALaDemande from '@/components/shared/CarteALaDemande';
 
 // Carte d'exploration (bulles, couleurs par type, points de visite, wilaya › daïra › commune), chargée à la demande
 const CarteExploration = lazy(() => import('@/components/patrimoine/CarteExploration'));
+// Rubriques Incontournables, Près de vous, par wilaya (mêmes données que la carte)
+const DecouvrirPatrimoine = lazy(() => import('@/components/patrimoine/DecouvrirPatrimoine'));
 
 const SITES_PAGE_SIZE = 12;
 
@@ -286,8 +288,8 @@ const Patrimoine = () => {
           </Card>
         )}
 
-        {/* Carte interactive avec Suspense */}
-        <div className="mb-12">
+        {/* Carte interactive avec Suspense (cible du lien « voir sur la carte » d'une wilaya) */}
+        <div id="carte-patrimoine" className="mb-12 scroll-mt-24">
           <div className="flex items-center gap-2 mb-6">
             <Compass className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold font-serif">
@@ -301,6 +303,10 @@ const Patrimoine = () => {
             </Suspense>
           </CarteALaDemande>
         </div>
+
+        <Suspense fallback={null}>
+          <DecouvrirPatrimoine />
+        </Suspense>
 
         {/* Grille des sites (cible du bouton « Choisir un lieu » de l'encadré du bas) */}
         <div id="sites-patrimoine" className="mb-12 scroll-mt-24">

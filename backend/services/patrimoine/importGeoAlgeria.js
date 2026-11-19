@@ -229,8 +229,11 @@ function dejaPresent(voisins, p, site) {
 const GENERIQUES = /^(site archeologique( important| romain)?|site historique|ruines?( romaines)?|vestiges?|tombeau|tombe|mausolee|monument( aux morts| aux martyrs| historique| commemoratif)?|memorial|stele|qoubba|koubba|ksar|kasbah|casbah|fort|bordj|cimetiere( des martyrs)?|zaouia|mosquee|porte|temple|thermes|necropole|gravures rupestres|peintures rupestres|tour|puits)$/;
 const motsSimples = (t) => sansAccent(t).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
-/** Pas du patrimoine malgré le classement d'OpenStreetMap : banques, cités d'habitation, ronds-points, écoles primaires */
-const PAS_PATRIMOINE = /^(banque|cite|rond point|ecole primaire)\b/;
+/**
+ * Pas du patrimoine malgré le classement d'OpenStreetMap : banques, cités d'habitation, ronds-points, écoles
+ * primaires, salles des fêtes (classées « château »), sièges d'APC, complexes (2026-11-19)
+ */
+const PAS_PATRIMOINE = /^(banque|cite|rond point|ecole primaire|salle( des fetes)?|apc|complexe)\b/;
 const pasPatrimoine = (nom) => PAS_PATRIMOINE.test(motsSimples(nom?.fr || ''));
 
 /** Nom complété par la commune quand il est générique ; sinon inchangé */

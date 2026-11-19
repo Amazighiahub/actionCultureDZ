@@ -4700,6 +4700,19 @@
       "source": "Place positions: Tala DZ and © OpenStreetMap contributors.",
       "voirPoints": "Show the visit points",
       "aCompleter": "This page needs completing: do you have a photo or information?"
+    },
+    "decouvrir": {
+      "incontournables": "Must-see",
+      "pres": "Near you",
+      "presAide": "Sites within 150 km of you. Your position is only used for this calculation and is not stored.",
+      "presBouton": "Find sites near me",
+      "presRefus": "Location unavailable: allow location access, or choose a wilaya on the map.",
+      "presAucun": "No site within 150 km yet.",
+      "km": "{{km}} km away",
+      "parWilaya": "Heritage by wilaya",
+      "voirWilaya": "{{wilaya}}: {{n}} sites, see on the map",
+      "toutes": "See all {{n}} wilayas",
+      "moins": "Show less"
     }
   },
   "toasts": {
