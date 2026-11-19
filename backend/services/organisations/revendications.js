@@ -1,3 +1,4 @@
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 /**
  * Demandes « C'est mon organisation » : un professionnel demande à devenir responsable d'une
  * organisation qui n'en a pas (par exemple une maison d'édition reprise de la liste des éditeurs).
@@ -5,7 +6,6 @@
  */
 const ROLES_GESTION = ['responsable', 'directeur'];
 
-const erreur = (message, statusCode, code) => Object.assign(new Error(message), { statusCode, code });
 const q = (models, sql, replacements, options = {}) =>
   models.Organisation.sequelize.query(sql, { replacements, type: models.Organisation.sequelize.QueryTypes.SELECT, ...options });
 

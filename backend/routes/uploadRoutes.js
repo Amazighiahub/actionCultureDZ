@@ -2,7 +2,7 @@
 const fs = require('fs');
 const express = require('express');
 const router = express.Router();
-const uploadService = require('../services/uploadService');
+const uploadService = require('../services/upload/receptionFichiers');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 const {

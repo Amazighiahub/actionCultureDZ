@@ -10,7 +10,7 @@ const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter, importLimiter, pdfLimiter, mediasLimiter, messagesParticipantsLimiter, invitationsLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
-const uploadService = require('../services/uploadService');
+const uploadService = require('../services/upload/receptionFichiers');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { msg } = require('../utils/messageValidation');
 

@@ -21,16 +21,13 @@ import {
 } from 'lucide-react';
 
 import { artisanatService } from '@/services/artisanat.service';
-import { favoriService } from '@/services/favori.service';
+import { useFavoriCheck } from '@/hooks/useFavoris';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
-import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { useChangementLangue } from '@/hooks/useChangementLangue';
-import { rafraichirFavoris } from '@/lib/queryClient';
 import LieuxDeOeuvre from '@/components/oeuvre/LieuxDeOeuvre';
 import BoutonSuivre from '@/components/shared/BoutonSuivre';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
@@ -118,19 +115,17 @@ const ArtisanatDetail: React.FC = () => {
   const { formatPrice, formatPriceRange, formatNumber } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const inviterConnexion = useInviterConnexion();
   const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
-  const { toast } = useToast();
 
   const [artisanat, setArtisanat] = useState<ArtisanatData | null>(null);
+  // Favori : outil commun (vérification, ajout/retrait, message, invitation à se connecter)
+  const { isFavorite, toggle: toggleFavorite } = useFavoriCheck('artisanat', artisanat?.id_artisanat ?? 0);
   const [loading, setLoading] = useState(true);
   // Erreur reçue telle quelle : la page distingue « introuvable » d'une panne (audit V11 UX-7)
   const [error, setError] = useState<unknown>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const { isAuthenticated, user: utilisateur } = useAuth();
+  const { user: utilisateur } = useAuth();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -156,14 +151,6 @@ const ArtisanatDetail: React.FC = () => {
       if (response.success && response.data) {
         const artisanData = response.data as unknown as ArtisanatData;
         setArtisanat(artisanData);
-
-        // Vérifier l'état du favori
-        if (isAuthenticated) {
-          try {
-            const favCheck = await favoriService.check('artisanat', artisanatId);
-            setIsFavorite(favCheck.isFavorite);
-          } catch { /* ignore */ }
-        }
       } else {
         setError(response);
       }
@@ -179,34 +166,6 @@ const ArtisanatDetail: React.FC = () => {
   const share = useShare();
   const handleShare = () => share({ title: td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || '' });
 
-  const toggleFavorite = async () => {
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    if (!artisanat || favoriteLoading) return;
-    setFavoriteLoading(true);
-    try {
-      const result = await favoriService.toggle('artisanat', artisanat.id_artisanat);
-      if (result.success) {
-        const added = result.data?.added ?? !isFavorite;
-        setIsFavorite(added);
-        rafraichirFavoris();
-        toast({
-          title: added
-            ? t('favoris.added', 'Ajouté aux favoris')
-            : t('favoris.removed', 'Retiré des favoris'),
-          description: added
-            ? t('toasts.addedToFavoritesDesc', 'L\'élément a été ajouté à vos favoris')
-            : t('toasts.removedFromFavoritesDesc', 'L\'élément a été retiré de vos favoris')
-        });
-      }
-    } catch (err) {
-      console.error('Erreur toggle favori:', err);
-    } finally {
-      setFavoriteLoading(false);
-    }
-  };
 
   const nextImage = () => {
     if (medias && currentImageIndex < medias.length - 1) {

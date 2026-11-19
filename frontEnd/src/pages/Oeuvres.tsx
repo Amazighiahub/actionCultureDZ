@@ -4,14 +4,11 @@
  */
 import MissionModule from '@/components/shared/MissionModule';
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useFavorisIds } from '@/hooks/useFavoris';
+import { useQuery } from '@tanstack/react-query';
+import { useFavoriCarte } from '@/hooks/useFavoris';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { useAuth } from '@/hooks/useAuth';
-import { favoriService } from '@/services/favori.service';
-import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,7 +42,6 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { oeuvrePath } from '@/utils/slug';
 
 // Icônes par type, selon id_type_oeuvre (1 livre, 2 film, 3 musique, 4-5 article, 6 art). Avant : clé
@@ -75,47 +71,16 @@ interface OeuvreCardProps {
 const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const { t, i18n } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
-  const { toast } = useToast();
-  const inviterConnexion = useInviterConnexion();
-  const { isAuthenticated } = useAuth();
-  // Cœur plein pour un vrai favori ; après un clic, le choix de la personne s'affiche aussitôt
-  const idsFavoris = useFavorisIds('oeuvre');
-  const queryClient = useQueryClient();
-  const [choixFavori, setIsFavorite] = useState<boolean | null>(null);
-  const [favLoading, setFavLoading] = useState(false);
 
   const TypeIcon = TYPE_ICONS[oeuvre.id_type_oeuvre] || Sparkles;
   const oeuvreUrl = oeuvrePath(Number(oeuvre.id_oeuvre), oeuvre.titre, oeuvre.id_type_oeuvre);
-  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(oeuvre.id_oeuvre));
+  // Cœur : outil commun des cartes (état, connexion, message)
+  const { isFavorite, basculer: handleFavoriteClick } = useFavoriCarte('oeuvre', oeuvre.id_oeuvre as number);
   // Le serveur traduit déjà le titre ; getLocalizedText couvre aussi un titre resté multilingue
   const titre = getLocalizedText(oeuvre.titre, i18n.language);
   // Number() : la note peut arriver en texte ou null (toFixed plantait alors)
   const note = oeuvre.note_moyenne == null ? null : Number(oeuvre.note_moyenne);
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    if (favLoading) return;
-    setFavLoading(true);
-    try {
-      const result = await favoriService.toggle('oeuvre', oeuvre.id_oeuvre as number);
-      if (result.success) {
-        const added = result.data?.added ?? !isFavorite;
-        setIsFavorite(added);
-        queryClient.invalidateQueries({ queryKey: ['favoris'] });
-        toast({
-          title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
-        });
-      }
-    } catch {
-      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
-    } finally {
-      setFavLoading(false);
-    }
-  };
 
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group">

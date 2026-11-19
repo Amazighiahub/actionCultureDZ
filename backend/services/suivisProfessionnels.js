@@ -6,10 +6,10 @@
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
+const { erreurHttp: erreur } = require('../utils/erreurHttp');
 
 const TAILLE_LOT = 500;
 
-const erreur = (message, statusCode) => Object.assign(new Error(message), { statusCode });
 
 async function suivre(models, idUser, idPro) {
   if (Number(idUser) === Number(idPro)) throw erreur('Vous ne pouvez pas vous suivre vous-même', 400);

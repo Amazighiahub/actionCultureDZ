@@ -9,6 +9,7 @@
 const crypto = require('crypto');
 const { budgetEnvoiGroupe } = require('../quotaEmail');
 const { Op } = require('sequelize');
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 
 /** À qui : « tous » = toute personne inscrite sauf les annulés / refusés */
 const CIBLES = {
@@ -53,7 +54,6 @@ const lienPublicProgramme = (m) => (estPdfDuSite(m.lien_programme)
   ? `${process.env.FRONTEND_URL}/api/evenements/${m.id_evenement}/messages/${m.id_message}/programme.pdf?cle=${signaturePdf(m.id_message)}`
   : m.lien_programme);
 
-const erreur = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 const texte = (v) => (typeof v === 'string' ? v.trim() : '');
 
 /** Lien http(s) complet, sinon erreur claire ; vide = pas de lien */

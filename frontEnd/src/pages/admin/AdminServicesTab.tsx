@@ -43,9 +43,9 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { Pagination } from '@/components/shared/Pagination';
 import { useListeServeur, filtreChoisi, termeRecherche } from '@/hooks/useListeServeur';
 import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
+// Types de service : liste commune (avant : une copie ici)
+import { TYPES_SERVICE } from '@/components/services/typesService';
 
-// Valeurs du champ type_service (modèle Service)
-const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'];
 const STATUTS = ['tous', 'en_attente', 'valide', 'rejete'];
 
 const AdminServicesTab: React.FC = () => {

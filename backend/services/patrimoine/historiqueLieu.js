@@ -10,6 +10,7 @@ const { idsAdministrateurs, notifier } = require('../../utils/notifierModeration
 const logger = require('../../utils/logger');
 const { texteLisible } = require('../../helpers/i18n');
 const { nomComplet } = require('../../utils/texte');
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 /** Textes suivis, avec leur nom dans les messages */
 const LIBELLES = {
@@ -123,9 +124,9 @@ async function restaurer(models, { idLieu, idHistorique, idUser }) {
     const cible = CHAMPS_LIEU.includes(champ)
       ? await models.Lieu.findByPk(idLieu, { transaction })
       : await models.DetailLieu.findOne({ where: { id_lieu: idLieu }, transaction });
-    if (!cible) throw Object.assign(new Error('Lieu introuvable'), { statusCode: 404 });
+    if (!cible) throw erreurHttp('Lieu introuvable', 404);
     if (champ === 'nom' && !texteDe(valeur)) {
-      throw Object.assign(new Error('Un lieu doit garder un nom : cette version n’en avait pas'), { statusCode: 400 });
+      throw erreurHttp('Un lieu doit garder un nom : cette version n’en avait pas', 400);
     }
     const actuelle = cible[champ];
     await cible.update({ [champ]: valeur }, { transaction });

@@ -4217,7 +4217,16 @@
     "placeLabel": "ⴰⴷⴻⴳ ⵏ ⵓⵎⴻⵥⵍⵓ",
     "placeHint": "ⵏⴰⴷⵉ ⴰⴷⴻⴳ (ⴰⵙⵎⴻⵍ, ⵜⴰⵖⵍⴰⵎⵜ, ⵜⴰⴷⴷⴰⵔⵜ). ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ? « ⵔⵏⵓ ⴰⴷⴻⴳ ⴰⵎⴰⵢⵏⵓⵜ »: ⵉⵙⴻⵎ, ⵜⴰⵏⵙⴰ ⴷ ⵜⴻⵏⵇⵉⴹⵜ ⵖⴻⴼ ⵜⴽⴰⵔⴹⴰ.",
     "addressPlaceholder": "ⵜⴰⵏⵙⴰ ⵜⵓⵎⵎⵉⴷⵜ...",
-    "hoursPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵢⴰⵍ ⴰⵙⵙ, 9 ⵀ – 18 ⵀ"
+    "hoursPlaceholder": "ⴰⵎⴻⴷⵢⴰ: ⵢⴰⵍ ⴰⵙⵙ, 9 ⵀ – 18 ⵀ",
+    "typesFormulaire": {
+      "restaurant": "ⴰⵙⵏⵙⵓ / ⴰⵇⴰⵀⵡⵉ",
+      "hotel": "ⴰⵏⵙⴰⵡⵏ",
+      "guide": "ⴰⵎⵙⵙⴰⴷⴰⵖ ⵏ ⵜⵎⴰⵣⵉⵔⵜ",
+      "transport": "ⴰⵏⴰⴳⵉ",
+      "artisanat": "ⵜⴰⵡⵓⵔⵉ ⵏ ⵓⴼⵓⵙ / ⵜⴰⵃⴰⵏⵓⵜ",
+      "location": "ⴰⵙⴽⴰⵔⵉ",
+      "autre": "ⵜⴰⵏⴱⴰⴹⵜ ⵏⵏⵉⴹⵏ"
+    }
   },
   "organisations": {
     "create": {

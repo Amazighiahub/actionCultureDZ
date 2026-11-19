@@ -702,17 +702,12 @@ class OeuvreService extends BaseService {
   /** Fichiers Cloudinary de médias supprimés (sans effet sur les fichiers hébergés ailleurs) ; un échec est journalisé */
   async _supprimerFichiersCloudinary(medias) {
     if (!medias?.length) return;
-    const { supprimerParUrl, getResourceType } = require('../cloudinaryService');
-    const { isReferencedElsewhere } = require('../user/userFileCleanup');
+    const { getResourceType } = require('../cloudinaryService');
+    const { effacerSiInutilise } = require('../user/userFileCleanup');
     for (const media of medias) {
-      // Fichier encore utilisé ailleurs (même adresse reprise sur une autre fiche…) : gardé
-      if (await isReferencedElsewhere(this.models, media.url).catch(() => true)) continue;
       const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
-      // Type lu dans l'URL ; le type MIME ne sert que si l'URL ne le dit pas (helper commun, audit V11 COD-B15)
-      await supprimerParUrl(media.url, {
-        publicId: meta.cloudinaryPublicId,
-        resourceType: getResourceType(media.mime_type)
-      });
+      // Gardé s'il sert encore ailleurs ; type lu dans l'URL, le type MIME seulement si l'URL ne le dit pas
+      await effacerSiInutilise(this.models, media.url, { publicId: meta.cloudinaryPublicId, resourceType: getResourceType(media.mime_type) });
     }
   }
 

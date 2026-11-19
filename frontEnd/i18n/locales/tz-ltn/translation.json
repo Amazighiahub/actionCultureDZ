@@ -4217,7 +4217,16 @@
     "placeLabel": "Adeg n umeẓlu",
     "placeHint": "Nadi adeg (asmel, taɣlamt, taddart). Ur yettwaf ara? « Rnu adeg amaynut »: isem, tansa d tenqiḍt ɣef tkarḍa.",
     "addressPlaceholder": "Tansa tummidt...",
-    "hoursPlaceholder": "Amedya: yal ass, 9 h – 18 h"
+    "hoursPlaceholder": "Amedya: yal ass, 9 h – 18 h",
+    "typesFormulaire": {
+      "restaurant": "Asensu / Aqahwi",
+      "hotel": "Ansawen",
+      "guide": "Amessadaɣ n tmazirt",
+      "transport": "Anagi",
+      "artisanat": "Tawuri n ufus / Taḥanut",
+      "location": "Askari",
+      "autre": "Tanbaḍt nniḍen"
+    }
   },
   "organisations": {
     "create": {

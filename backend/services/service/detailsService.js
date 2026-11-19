@@ -1,3 +1,4 @@
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 /**
  * Détails d'un service « comme TripAdvisor », lot 2 (accord de la responsable, 2026-11-16) :
  * équipements, langues parlées, capacité, bouton « Réserver » (lien de réservation, WhatsApp).
@@ -11,7 +12,6 @@ const EQUIPEMENTS = [
 const LANGUES = ['ar', 'dz', 'tz', 'fr', 'en', 'es', 'it', 'de', 'tr', 'zh'];
 const CAPACITE_MAX = 100000;
 
-const erreur = (message) => Object.assign(new Error(message), { statusCode: 400 });
 
 /** Liste fermée : clés connues, sans doublon, dans l'ordre de la liste ; vide → null */
 function listeFermee(valeur, permises) {

@@ -24,6 +24,7 @@ const { configAvecProfil, tarificationDe, montantInscription } = require('./tari
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { sansAccent: sansAccentBase } = require('../../utils/texte');
 const { budgetEnvoiGroupe } = require('../quotaEmail');
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 const LIGNES_MAX = 500;
 const PLAFOND_INVITATIONS_JOUR = 1000;
@@ -85,7 +86,7 @@ async function lireClasseur(buffer) {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buffer);
   const ws = wb.worksheets[0];
-  if (!ws) throw Object.assign(new Error('Le classeur est vide'), { statusCode: 400 });
+  if (!ws) throw erreurHttp('Le classeur est vide', 400);
   const titres = [];
   ws.getRow(1).eachCell({ includeEmpty: true }, (cell, col) => { titres[col] = texte(cell); });
   const lignes = [];
@@ -203,9 +204,9 @@ class ImportInscriptions {
     const evenement = await Evenement.findByPk(idEvenement, {
       include: [{ model: TypeEvenement, as: 'TypeEvenement', attributes: ['config_inscription'], required: false }]
     });
-    if (!evenement) throw Object.assign(new Error('Événement introuvable'), { statusCode: 404 });
+    if (!evenement) throw erreurHttp('Événement introuvable', 404);
     if (!utilisateur.isAdmin && Number(evenement.id_user) !== Number(utilisateur.id_user)) {
-      throw Object.assign(new Error('Seul l\'organisateur de l\'événement peut importer ses inscriptions'), { statusCode: 403 });
+      throw erreurHttp('Seul l\'organisateur de l\'événement peut importer ses inscriptions', 403);
     }
     const config = configAvecProfil(evenement.TypeEvenement?.config_inscription, tarificationDe(evenement));
     return { evenement, config };
@@ -222,7 +223,7 @@ class ImportInscriptions {
     const colonnes = associerColonnes(titres, listerChamps(config));
     const reconnues = Object.values(colonnes);
     if (!reconnues.some(c => c.compte === 'email')) {
-      throw Object.assign(new Error('Colonne « E-mail » introuvable dans la première ligne du classeur'), { statusCode: 400 });
+      throw erreurHttp('Colonne « E-mail » introuvable dans la première ligne du classeur', 400);
     }
 
     const emails = [];
@@ -283,7 +284,7 @@ class ImportInscriptions {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
     // Les e-mails mèneraient à une page invisible ou fermée
     if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
-      throw Object.assign(new Error('Publiez d\'abord l\'événement : les invitations mènent à sa page'), { statusCode: 400 });
+      throw erreurHttp('Publiez d\'abord l\'événement : les invitations mènent à sa page', 400);
     }
     const apercu = await this.apercu(buffer, idEvenement, utilisateur, { profils });
     const aFaire = apercu.lignes.filter(l => (!choisies || choisies.includes(l.ligne)) && l.action === 'inviter');
@@ -370,7 +371,7 @@ class ImportInscriptions {
       }
     });
     if (deja + nombre > PLAFOND_INVITATIONS_JOUR) {
-      throw Object.assign(new Error(`${PLAFOND_INVITATIONS_JOUR} invitations au plus par 24 heures (déjà ${deja} envoyées) : importez le reste demain, ou contactez l'équipe Tala DZ`), { statusCode: 429 });
+      throw erreurHttp(`${PLAFOND_INVITATIONS_JOUR} invitations au plus par 24 heures (déjà ${deja} envoyées) : importez le reste demain, ou contactez l'équipe Tala DZ`, 429);
     }
   }
 
@@ -403,7 +404,7 @@ class ImportInscriptions {
   async renvoyerInvitations(idEvenement, utilisateur) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
     if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
-      throw Object.assign(new Error('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse'), { statusCode: 400 });
+      throw erreurHttp('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse', 400);
     }
     const inscriptions = await this.models.EvenementUser.findAll({
       where: { id_evenement: evenement.id_evenement, statut_participation: { [Op.ne]: 'annule' } },
@@ -435,12 +436,12 @@ class ImportInscriptions {
   async renvoyerInvitation(idEvenement, idUser, utilisateur) {
     const { evenement } = await this._evenement(idEvenement, utilisateur);
     if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
-      throw Object.assign(new Error('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse'), { statusCode: 400 });
+      throw erreurHttp('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse', 400);
     }
     const inscription = await this.models.EvenementUser.findOne({ where: { id_evenement: evenement.id_evenement, id_user: idUser } });
-    if (!inscription) throw Object.assign(new Error('Cette personne n\'est pas inscrite à l\'événement'), { statusCode: 404 });
+    if (!inscription) throw erreurHttp('Cette personne n\'est pas inscrite à l\'événement', 404);
     const user = await this.models.User.findByPk(idUser);
-    if (!user) throw Object.assign(new Error('Compte introuvable'), { statusCode: 404 });
+    if (!user) throw erreurHttp('Compte introuvable', 404);
     if (user.email_verifie) {
       // Compte actif dont l'invitation attend sa réponse : nouvelle demande de confirmation
       if (inscription.statut_participation === 'invitation') {
@@ -449,7 +450,7 @@ class ImportInscriptions {
         }
         return { email: user.email };
       }
-      throw Object.assign(new Error('Cette personne a déjà choisi son mot de passe'), { statusCode: 400 });
+      throw erreurHttp('Cette personne a déjà choisi son mot de passe', 400);
     }
     if (!this.emailService || !(await this._inviter(user, evenement))) {
       throw new AppError('L\'email n\'a pas pu être envoyé, réessayez plus tard', 502, 'EMAIL_NON_ENVOYE');

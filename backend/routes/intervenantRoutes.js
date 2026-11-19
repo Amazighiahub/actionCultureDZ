@@ -167,11 +167,9 @@ const initIntervenantRoutes = (models, authMiddleware) => {
   );
 
   // Articles complets consacrés à la personnalité : modération et professionnels validés
-  const requireModerationOuPro = (req, res, next) =>
-    (req.user?.isAdmin || req.user?.isModerateur) ? next() : authMiddleware.requireValidatedProfessional(req, res, next);
   router.post('/:id/articles',
     authMiddleware.authenticate,
-    requireModerationOuPro,
+    authMiddleware.requireModerationOuPro,
     validationMiddleware.validateId('id'),
     [body('id_oeuvre').isInt({ min: 1 }).withMessage(msg('validation.articleInvalide'))],
     validationMiddleware.handleValidationErrors,

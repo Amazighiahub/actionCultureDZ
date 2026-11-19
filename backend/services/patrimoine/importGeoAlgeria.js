@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize');
 const { sansAccent } = require('../../utils/texte');
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 const FICHIER = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'lieux.json');
 const FICHIER_NOMS = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'noms.json');
@@ -132,7 +133,7 @@ async function wilayas(models) {
 /** Points d'une wilaya (code de la base, 1 à 69), avec leur commune et le lieu déjà présent au même endroit */
 async function apercu(models, codeW) {
   const code = Number(codeW);
-  if (!Number.isInteger(code) || code < 1) throw Object.assign(new Error('Wilaya invalide'), { statusCode: 400 });
+  if (!Number.isInteger(code) || code < 1) throw erreurHttp('Wilaya invalide', 400);
   const communes = await communesDuSite(models);
   const points = [];
   for (const p of lieuxPrepares().lieux) {
@@ -285,8 +286,8 @@ function mentionSource(p) {
  * `commePoints` : ids à rattacher comme points de visite du site voisin (recalculé ici, jamais celui du client).
  */
 async function importer(models, patrimoineService, ids, idAdmin, { commePoints = [] } = {}) {
-  if (!Array.isArray(ids) || !ids.length) throw Object.assign(new Error('Choisissez au moins un lieu'), { statusCode: 400 });
-  if (ids.length > MAX_IMPORT) throw Object.assign(new Error(`${MAX_IMPORT} lieux au plus par import`), { statusCode: 400 });
+  if (!Array.isArray(ids) || !ids.length) throw erreurHttp('Choisissez au moins un lieu', 400);
+  if (ids.length > MAX_IMPORT) throw erreurHttp(`${MAX_IMPORT} lieux au plus par import`, 400);
   const communes = await communesDuSite(models);
   const parId = new Map(lieuxPrepares().lieux.map((p) => [p.id, p]));
   const enPoints = new Set((Array.isArray(commePoints) ? commePoints : []).map(String));
@@ -342,10 +343,10 @@ async function brouillons(models) {
  * proposé par un membre (proposition en attente) passe par la modération des propositions, pas par ici.
  */
 async function decider(models, ids, decision) {
-  if (!Array.isArray(ids) || !ids.length) throw Object.assign(new Error('Choisissez au moins un lieu'), { statusCode: 400 });
-  if (!['publier', 'ecarter'].includes(decision)) throw Object.assign(new Error('Décision invalide'), { statusCode: 400 });
+  if (!Array.isArray(ids) || !ids.length) throw erreurHttp('Choisissez au moins un lieu', 400);
+  if (!['publier', 'ecarter'].includes(decision)) throw erreurHttp('Décision invalide', 400);
   // Au-delà de la limite : refus clair (avant : les lieux en trop étaient ignorés sans le dire)
-  if (ids.length > MAX_IMPORT) throw Object.assign(new Error(`${MAX_IMPORT} lieux au plus par import`), { statusCode: 400 });
+  if (ids.length > MAX_IMPORT) throw erreurHttp(`${MAX_IMPORT} lieux au plus par import`, 400);
   const liste = [...new Set(ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
   if (!liste.length) return { modifies: 0 };
   const proposes = new Set((await models.sequelize.query(`SELECT l.id_lieu FROM lieu l

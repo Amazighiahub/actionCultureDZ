@@ -180,19 +180,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   // FAVORIS (utilise le hook existant)
   // ============================================
   
-  const { isFavorite, toggleFavorite: toggleFavoriBase } = useFavoriCheck(
-    'evenement',
-    eventId
-  );
-
-  const toggleFavorite = async () => {
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    
-    await toggleFavoriBase();
-  };
+  // Invitation à se connecter comprise (useFavoriCheck)
+  const { isFavorite, toggle: toggleFavorite } = useFavoriCheck('evenement', eventId);
 
   // ============================================
   // MUTATIONS

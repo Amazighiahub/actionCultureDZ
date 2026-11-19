@@ -3,6 +3,7 @@
  * Sert aux décisions qu'un modérateur ne doit pas prendre sur son propre contenu.
  */
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
+const { erreurHttp } = require('./erreurHttp');
 
 async function estAdministrateur(models, idUser) {
   if (!idUser || !models?.User) return false;
@@ -21,7 +22,7 @@ async function estAdministrateur(models, idUser) {
 async function refuserSiSonPropreContenu(models, idDecideur, idProprietaire, quoi) {
   if (!idDecideur || Number(idDecideur) !== Number(idProprietaire)) return;
   if (await estAdministrateur(models, idDecideur)) return;
-  throw Object.assign(new Error(`Vous ne pouvez pas valider ${quoi} vous-même : un autre membre de l’équipe doit le faire.`), { statusCode: 403, code: 'AUTO_VALIDATION' });
+  throw erreurHttp(`Vous ne pouvez pas valider ${quoi} vous-même : un autre membre de l’équipe doit le faire.`, 403, 'AUTO_VALIDATION');
 }
 
 module.exports = { estAdministrateur, refuserSiSonPropreContenu };

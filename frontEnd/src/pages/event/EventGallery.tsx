@@ -6,262 +6,21 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import {
-  Image as ImageIcon, Video, FileText, Music,
-  ChevronLeft, ChevronRight, X, ZoomIn, Download,
-  Play, Grid, List
-} from 'lucide-react';
+import { Image as ImageIcon, Grid, List } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import type { Media } from '@/types/models/media.types';
 import type { Programme } from '@/types/models/programme.types';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { jourProgramme } from '@/utils/programmeHoraire';
-import { getAssetUrl } from '@/helpers/assetUrl';
-
+import { VignetteMedia, VisionneuseMedias, ICONES_MEDIA } from '@/components/shared/VisionneuseMedias';
 interface EventGalleryProps {
   medias: Media[];
   /** Programme de l'événement : les photos rangées dans un jour s'affichent sous ce jour */
   programs?: Programme[];
 }
 
-// Icônes par type de média
-const mediaIcons: Record<string, React.ElementType> = {
-  image: ImageIcon,
-  video: Video,
-  audio: Music,
-  document: FileText
-};
-
-// Composant pour un élément de la galerie
-interface GalleryItemProps {
-  media: Media;
-  onClick: () => void;
-}
-
-const GalleryItem: React.FC<GalleryItemProps> = ({ media, onClick }) => {
-  const { td } = useTranslateData();
-  const Icon = mediaIcons[media.type_media] || ImageIcon;
-  const isVideo = media.type_media === 'video';
-  const isAudio = media.type_media === 'audio';
-  const isDocument = media.type_media === 'document';
-
-  return (
-    <div
-      className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-muted"
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-    >
-      {/* Image ou placeholder */}
-      {media.type_media === 'image' || isVideo ? (
-        <LazyImage
-          // Vidéo : le fichier vidéo n'est pas une image → vignette ou visuel vidéo par défaut
-          src={isVideo
-            ? (media.thumbnail_url || '/images/video-placeholder.svg')
-            : (media.url || media.thumbnail_url || '/images/placeholder-media.svg')}
-          alt={td(media.titre) || td(media.description) || 'Media'}
-          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          fallback={isVideo ? '/images/video-placeholder.svg' : '/images/placeholder-media.svg'}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-muted">
-          <Icon className="h-12 w-12 text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Overlay au survol */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-        {/* Icône lecture toujours visible pour une vidéo (pas de survol sur mobile) */}
-        <div className={isVideo ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity'}>
-          {isVideo ? (
-            <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-              <Play className="h-8 w-8 text-white" />
-            </div>
-          ) : (
-            <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-              <ZoomIn className="h-6 w-6 text-white" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Badge type */}
-      {(isVideo || isAudio || isDocument) && (
-        <div className="absolute top-2 start-2">
-          <Badge variant="secondary" className="bg-black/50 text-white border-0">
-            <Icon className="h-3 w-3 me-1" />
-            {media.type_media}
-          </Badge>
-        </div>
-      )}
-
-      {/* Titre si présent */}
-      {td(media.titre) && (
-        <div className="absolute bottom-0 start-0 end-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-          <p className="text-white text-sm truncate">{td(media.titre)}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Lightbox pour visualiser les médias
-interface LightboxProps {
-  medias: Media[];
-  currentIndex: number;
-  isOpen: boolean;
-  onClose: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
-}
-
-const Lightbox: React.FC<LightboxProps> = ({
-  medias,
-  currentIndex,
-  isOpen,
-  onClose,
-  onPrevious,
-  onNext
-}) => {
-  const { t } = useTranslation();
-  const { td } = useTranslateData();
-  const currentMedia = medias[currentIndex];
-
-  if (!currentMedia) return null;
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const isRtl = document.dir === 'rtl';
-    if (e.key === 'ArrowLeft') { if (isRtl) onNext(); else onPrevious(); }
-    if (e.key === 'ArrowRight') { if (isRtl) onPrevious(); else onNext(); }
-    if (e.key === 'Escape') onClose();
-  };
-
-  const renderMedia = () => {
-    switch (currentMedia.type_media) {
-      case 'video':
-        return (
-          <video
-            src={getAssetUrl(currentMedia.url)}
-            controls
-            preload="metadata"
-            playsInline
-            className="max-h-[80vh] max-w-full rounded-lg"
-          >
-            {t('media.videoNotSupported', 'Votre navigateur ne supporte pas la lecture vidéo.')}
-          </video>
-        );
-
-      case 'audio':
-        return (
-          <div className="bg-muted p-8 rounded-lg text-center">
-            <Music className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="mb-4 font-medium">{td(currentMedia.titre) || 'Audio'}</p>
-            <audio src={getAssetUrl(currentMedia.url)} controls preload="metadata" className="w-full max-w-md">
-              {t('media.audioNotSupported', 'Votre navigateur ne supporte pas la lecture audio.')}
-            </audio>
-          </div>
-        );
-
-      case 'document':
-        return (
-          <div className="bg-muted p-8 rounded-lg text-center">
-            <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="mb-4 font-medium">{td(currentMedia.titre) || 'Document'}</p>
-            <Button asChild>
-              <a href={getAssetUrl(currentMedia.url)} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 me-2" />
-                {t('common.download', 'Télécharger')}
-              </a>
-            </Button>
-          </div>
-        );
-
-      default:
-        return (
-          <img
-            src={getAssetUrl(currentMedia.url)}
-            alt={td(currentMedia.titre) || td(currentMedia.description) || 'Image'}
-            className="max-h-[80vh] max-w-full object-contain rounded-lg"
-          />
-        );
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-0"
-        onKeyDown={handleKeyDown}
-      >
-        <DialogTitle className="sr-only">
-          {td(currentMedia.titre) || `Media ${currentIndex + 1}`}
-        </DialogTitle>
-        
-        {/* Bouton fermer */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 end-4 z-50 text-white hover:bg-white/20"
-          onClick={onClose}
-          aria-label={t('common.close', 'Fermer')}
-        >
-          <X className="h-6 w-6" aria-hidden="true" />
-        </Button>
-
-        {/* Navigation précédent */}
-        {medias.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute start-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
-            onClick={onPrevious}
-            aria-label={t('common.previous', 'Précédent')}
-          >
-            <ChevronLeft className="h-8 w-8 rtl:-scale-x-100" aria-hidden="true" />
-          </Button>
-        )}
-
-        {/* Contenu */}
-        <div className="flex items-center justify-center min-h-[60vh] p-8">
-          {renderMedia()}
-        </div>
-
-        {/* Navigation suivant */}
-        {medias.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute end-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
-            onClick={onNext}
-            aria-label={t('common.next', 'Suivant')}
-          >
-            <ChevronRight className="h-8 w-8 rtl:-scale-x-100" aria-hidden="true" />
-          </Button>
-        )}
-
-        {/* Infos et compteur */}
-        <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-          <div className="flex items-center justify-between text-white">
-            <div>
-              {td(currentMedia.titre) && (
-                <p className="font-medium">{td(currentMedia.titre)}</p>
-              )}
-              {td(currentMedia.description) && (
-                <p className="text-sm text-white/70">{td(currentMedia.description)}</p>
-              )}
-            </div>
-            <div className="text-sm text-white/70">
-              {currentIndex + 1} / {medias.length}
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+// Vignette et visionneuse communes (components/shared/VisionneuseMedias.tsx) ; avant : une copie ici
 
 // Composant principal
 const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) => {
@@ -342,7 +101,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
             {t('gallery.all', 'Tous')} ({medias.length})
           </Button>
           {mediaTypes.map((type) => {
-            const Icon = mediaIcons[type] || ImageIcon;
+            const Icon = ICONES_MEDIA[type] || ImageIcon;
             const count = medias.filter(m => m.type_media === type).length;
             return (
               <Button
@@ -396,7 +155,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
                 )}
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {s.medias.map((media, i) => (
-                    <GalleryItem key={media.id_media || i} media={media} onClick={() => openLightbox(debut + i)} />
+                    <VignetteMedia key={media.id_media || i} media={media} onClick={() => openLightbox(debut + i)} />
                   ))}
                 </div>
               </section>
@@ -406,7 +165,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredMedias.map((media, index) => (
-            <GalleryItem
+            <VignetteMedia
               key={media.id_media || index}
               media={media}
               onClick={() => openLightbox(index)}
@@ -416,7 +175,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
       ) : (
         <div className="space-y-2">
           {ordonnes.map((media, index) => {
-            const Icon = mediaIcons[media.type_media] || ImageIcon;
+            const Icon = ICONES_MEDIA[media.type_media] || ImageIcon;
             return (
               <div
                 key={media.id_media || index}
@@ -463,7 +222,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias, programs = [] }) =>
       )}
 
       {/* Lightbox */}
-      <Lightbox
+      <VisionneuseMedias
         medias={ordonnes}
         currentIndex={currentIndex}
         isOpen={lightboxOpen}

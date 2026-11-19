@@ -11,7 +11,7 @@ const { estPublic } = require('../../constants/statuts');
 const fs = require('fs').promises;
 const logger = require('../../utils/logger');
 const cloudinarySvc = require('../cloudinaryService');
-const { isReferencedElsewhere } = require('../user/userFileCleanup');
+const { isReferencedElsewhere, effacerSiInutilise } = require('../user/userFileCleanup');
 const { memeUtilisateur } = require('../../utils/droits');
 
 class UploadService {
@@ -317,26 +317,19 @@ class UploadService {
     // Ligne supprimée d'abord ; le fichier ensuite, seulement s'il ne sert plus nulle part (avant : effacé
     // sans vérifier, un compte pouvait casser un logo ou une affiche qui utilisait le même fichier)
     await media.destroy();
+    const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
+    // Fichier Cloudinary : aide commune (gardé s'il sert ailleurs, journal oublié, échec journalisé)
+    if (cloudinarySvc.isCloudinaryUrl(media.url)) {
+      await effacerSiInutilise(this.models, media.url, {
+        publicId: meta.cloudinaryPublicId, resourceType: meta.cloudinaryResourceType || cloudinarySvc.getResourceType(media.mime_type)
+      });
+      return { media, success: true };
+    }
     if (await isReferencedElsewhere(this.models, media.url).catch(() => true)) return { media, success: true };
 
-    // Supprimer le fichier Cloudinary ou local
-    try {
-      const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
-      const publicId = meta.cloudinaryPublicId || cloudinarySvc.extractPublicId(media.url);
-
-      if (publicId) {
-        const resourceType = meta.cloudinaryResourceType ||
-                             cloudinarySvc.getResourceType(media.mime_type);
-        await cloudinarySvc.deleteAsset(publicId, resourceType);
-      } else {
-        // Retrocompatibilite: fichier local
-        const storagePath = this._getStoragePath(media) || media.url;
-        const filePath = this._securePath(storagePath);
-        if (filePath) await fs.unlink(filePath).catch(() => {});
-      }
-    } catch (err) {
-      // Erreur suppression fichier, continuer
-    }
+    // Ancien fichier local (avant Cloudinary) ; un échec n'empêche pas le retrait
+    const filePath = this._securePath(this._getStoragePath(media) || media.url);
+    if (filePath) await fs.unlink(filePath).catch(() => {});
 
     return { media, success: true };
   }

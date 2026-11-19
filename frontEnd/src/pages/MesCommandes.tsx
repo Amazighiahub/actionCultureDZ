@@ -22,6 +22,7 @@ import { oeuvrePath } from '@/utils/slug';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { lienGuidePour } from '@/utils/lienGuide';
 
+import { useConfirmation } from '@/hooks/useConfirmation';
 const STYLE: Record<StatutCommande, { icone: React.ElementType; classe: string }> = {
   en_attente: { icone: Clock, classe: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200' },
   payee: { icone: CheckCircle, classe: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200' },
@@ -31,6 +32,8 @@ const STYLE: Record<StatutCommande, { icone: React.ElementType; classe: string }
 
 const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = ({ c, onMaj }) => {
   const { t } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const { toast } = useToast();
   const { formatPrice } = useLocalizedNumber();
   const { formatDate } = useFormatDate();
@@ -53,7 +56,7 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
   }[c.livraison];
 
   const agir = async (d: { statut?: StatutCommande; montant_total?: number }, question?: string) => {
-    if (question && !window.confirm(question)) return;
+    if (question && !(await confirmer({ titre: question, variante: 'warning' }))) return;
     setEnCours(true);
     const r = await commandeService.mettreAJour(c.id_commande, d).catch(() => null);
     setEnCours(false);
@@ -63,6 +66,7 @@ const CarteCommande: React.FC<{ c: Commande; onMaj: (c: Commande) => void }> = (
 
   return (
     <Card>
+      {fenetreConfirmation}
       <CardContent className="p-4 space-y-3 text-sm">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">

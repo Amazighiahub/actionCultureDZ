@@ -7,7 +7,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_k: string, d?: unknown, o?: Record<string, unknown>) => {
     const s = typeof d === 'string' ? d : _k;
     return o ? s.replace(/\{\{(\w+)\}\}/g, (_, n) => String(o[n])) : s;
-  } }),
+  }, i18n: { language: 'fr' } }),
 }));
 
 const img = (n: string) => `https://res.cloudinary.com/demo/image/upload/v1/eventculture/${n}.jpg`;

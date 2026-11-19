@@ -6,8 +6,8 @@
  */
 const { memeUtilisateur } = require('../../utils/droits');
 
-const erreur = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 class MediasEvenement {
   /**
    * @param {object} models
@@ -49,13 +49,7 @@ class MediasEvenement {
    */
   async _effacerFichier(url) {
     if (!this.genre.estDuSite(url)) return;
-    try {
-      const { isReferencedElsewhere, oublierJournal } = require('../user/userFileCleanup');
-      if (await isReferencedElsewhere(this.models, url)) return;
-      if (await require('../cloudinaryService').supprimerParUrl(url)) await oublierJournal(this.models, url);
-    } catch (e) {
-      require('../../utils/logger').warn(`Fichier non effacé de Cloudinary : ${e.message}`);
-    }
+    await require('../user/userFileCleanup').effacerSiInutilise(this.models, url);
   }
 }
 

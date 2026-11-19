@@ -14,6 +14,7 @@ const { texteLisible } = require('../../helpers/i18n');
 const { nomComplet } = require('../../utils/texte');
 const logger = require('../../utils/logger');
 const elements = require('./elementsLieu');
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 
 const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif', 'creation'];
 const LIBELLES = {
@@ -24,7 +25,6 @@ const LIBELLES = {
   element_modif: 'une modification de'
 };
 
-const erreur = (message, statusCode, code) => Object.assign(new Error(message), { statusCode, code });
 const lireJson = (v) => {
   if (typeof v !== 'string') return v;
   try { return JSON.parse(v); } catch { return v; }

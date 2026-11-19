@@ -14,7 +14,7 @@ const { aRoleAdministration } = require('../../constants/roles');
 
 // Erreur avec son code HTTP (404, 400, 409…) : sinon une erreur attendue finissait en 500.
 // Le texte ne change pas (les contrôleurs le comparent encore).
-const erreurHttp = (message, statusCode) => Object.assign(new Error(message), { statusCode });
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {

@@ -20,12 +20,11 @@ const limiteEnvois = [mediasLimiter];
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail, requireModerationOuPro } = authMiddleware;
   // Actions destructives sur un site (partagé) : réservées à la modération
   const requireModeration = requireRole('Administrateur', 'Moderateur');
-  // Modification d'un site : modération, ou professionnel validé (le contrôleur vérifie qu'il en est le créateur)
-  const requireModerationOuPro = (req, res, next) =>
-    (req.user?.isAdmin || req.user?.isModerateur) ? next() : requireValidatedProfessional(req, res, next);
+  // Modification d'un site : modération, ou professionnel validé (le contrôleur vérifie qu'il en est le créateur) :
+  // requireModerationOuPro (middlewares/authMiddleware.js)
 
   // Photos d'un site : équipe et professionnels validés ; un membre, seulement pour le lieu qu'il vient
   // d'ajouter et qui attend la relecture de l'équipe

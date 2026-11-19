@@ -1,4 +1,5 @@
-// services/uploadService.js
+// services/upload/receptionFichiers.js (ancien services/uploadService.js, renommé le 2026-11-19 : même nom que
+// services/upload/uploadService.js, qui enregistre les médias ; celui-ci ne fait que recevoir les fichiers)
 // Réception des fichiers en mémoire (multer) avant le contrôle des octets (middlewares/uploadSecurity)
 // puis l'envoi à Cloudinary (services/upload/cloudinaryUploader). 2026-11-16 : l'ancien envoi direct à
 // Cloudinary sans contrôle (uploadImage, uploadProfilePhoto) est retiré ; il ne servait plus qu'à

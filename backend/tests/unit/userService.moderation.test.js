@@ -32,11 +32,20 @@ describe('UserService.validateUser', () => {
     expect(repository.validate).not.toHaveBeenCalled();
   });
 
-  it('valide un compte en attente et invalide son cache de session', async () => {
-    const { service, repository } = makeService({ id_user: 77, statut: 'en_attente_validation' });
+  it('anti-retour 2026-11-19 : valide par la version unique du tableau de bord (notification, e-mail)', async () => {
+    const { service } = makeService({ id_user: 77, statut: 'en_attente_validation' });
+    const gestion = { validateUserAction: jest.fn().mockResolvedValue({ success: true }), suspendUserAction: jest.fn().mockResolvedValue({}) };
+    service._gestionComptes = () => gestion;
     await service.validateUser(77, 2);
-    expect(repository.validate).toHaveBeenCalledWith(77, 2);
-    expect(mockDel).toHaveBeenCalledWith(['user:session:77']);
+    expect(gestion.validateUserAction).toHaveBeenCalledWith(77, { valide: true, validateur_id: 2 });
+  });
+
+  it('anti-retour 2026-11-19 : suspend par la version unique (qui protège les comptes de l’administration)', async () => {
+    const { service } = makeService({ id_user: 77, statut: 'actif' });
+    const gestion = { suspendUserAction: jest.fn().mockResolvedValue({}) };
+    service._gestionComptes = () => gestion;
+    await service.suspendUser(77, 2, 7, 'Spam');
+    expect(gestion.suspendUserAction).toHaveBeenCalledWith(77, { raison: 'Spam', duree: 7, suspendu_par: 2 });
   });
 });
 

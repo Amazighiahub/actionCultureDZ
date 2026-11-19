@@ -785,16 +785,16 @@ class UserService extends BaseService {
     if (user.statut !== 'en_attente_validation') {
       throw this._conflictError('Seul un compte en attente peut être validé');
     }
-    await require('../../utils/estAdministrateur').refuserSiSonPropreContenu(this.models, validatorId, userId, 'votre propre compte');
-
-    const updatedUser = await this.repository.validate(userId, validatorId);
-    await invalidateUserSession(userId);
-
+    // Une seule validation pour tout le site : celle du tableau de bord (refus de son propre compte, notification et
+    // e-mail à la personne). Avant : une 2e version ici, sans prévenir la personne (lot 3 doublons, 2026-11-19).
+    await this._gestionComptes().validateUserAction(userId, { valide: true, validateur_id: validatorId });
     this.logger.info(`Utilisateur validé: ${userId} par: ${validatorId}`);
+    return UserDTO.fromEntity(await this.repository.findById(userId));
+  }
 
-    // TODO: Envoyer notification à l'utilisateur
-
-    return UserDTO.fromEntity(updatedUser);
+  /** Gestion des comptes du tableau de bord (chargée à l'appel : le conteneur charge aussi ce service) */
+  _gestionComptes() {
+    return require('../serviceContainer').userManagementService;
   }
 
   /**
@@ -856,14 +856,11 @@ class UserService extends BaseService {
       throw this._validationError('Un motif de suspension est requis');
     }
 
-    const updatedUser = await this.repository.suspend(userId, adminId, duree, motif);
-    await invalidateUserSession(userId);
-
+    // Une seule suspension pour tout le site : celle du tableau de bord, qui protège les comptes de l'administration.
+    // Avant : une 2e version ici, qui laissait suspendre un administrateur (lot 3 doublons, 2026-11-19).
+    await this._gestionComptes().suspendUserAction(userId, { raison: motif, duree, suspendu_par: adminId });
     this.logger.info(`Utilisateur suspendu: ${userId} par: ${adminId} pour ${duree} jours`);
-
-    // TODO: Envoyer notification à l'utilisateur
-
-    return UserDTO.fromEntity(updatedUser);
+    return UserDTO.fromEntity(await this.repository.findById(userId));
   }
 
   /**

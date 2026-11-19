@@ -67,3 +67,36 @@ describe('aides pour les textes multilingues', () => {
     expect(t).not.toContain('[object');
   });
 });
+
+/**
+ * Lot 3, doublons (2026-11-19) : une liste ou une aide commune n'est définie qu'à un seul endroit.
+ * Avant : la liste des types de service en 3 copies (annuaire, formulaire, administration).
+ */
+describe('une seule définition (anti-retour des copies)', () => {
+  const UNIQUES: { nom: string; re: RegExp; fichier: string }[] = [
+    { nom: 'TYPES_SERVICE', re: /\bconst TYPES_SERVICE\s*=/, fichier: 'components/services/typesService.ts' },
+    // Visionneuse de médias plein écran : 4 copies avant (galerie d'événement, d'œuvre, de service, photos des visiteurs)
+    { nom: 'visionneuse de médias', re: /\bconst (Lightbox|VisionneuseMedias)\b|function useNavigationPhotos\b/, fichier: 'components/shared/VisionneuseMedias.tsx' },
+    { nom: 'useConfirmation', re: /\bfunction useConfirmation\b/, fichier: 'hooks/useConfirmation.tsx' },
+    // État d'un favori sur une page de détail : useFavoriCheck (avant : refait à la main sur l'article et l'artisanat,
+    // et l'invitation à se connecter recopiée 5 fois)
+    { nom: 'vérification d’un favori', re: /favoriService\.check\(/, fichier: 'hooks/useFavoris.ts' },
+    { nom: 'invitation à se connecter pour un favori', re: /auth\.loginToFavorite/, fichier: 'hooks/useFavoris.ts' },
+  ];
+  for (const u of UNIQUES) {
+    it(`${u.nom} : seulement dans ${u.fichier}`, () => {
+      const trouves = fichiers(RACINE).filter((f) => u.re.test(fs.readFileSync(f, 'utf8')))
+        .map((f) => path.relative(RACINE, f).split(path.sep).join('/'));
+      expect(trouves).toEqual([u.fichier]);
+    });
+  }
+
+  // window.confirm : fenêtre du navigateur (anglais sur certains téléphones, sans arabe, bloquée dans certaines
+  // applications). Utiliser useConfirmation ; seule la sortie d'une page modifiée garde la fenêtre du navigateur.
+  it('pas de window.confirm hors useUnsavedChanges', () => {
+    const trouves = fichiers(RACINE)
+      .filter((f) => fs.readFileSync(f, 'utf8').split('\n').some((l) => /(window\.|[^.\w])confirm\(/.test(l) && !/^\s*(\/\/|\*)/.test(l)))
+      .map((f) => path.relative(RACINE, f).split(path.sep).join('/'));
+    expect(trouves).toEqual(['hooks/useUnsavedChanges.ts']);
+  });
+});

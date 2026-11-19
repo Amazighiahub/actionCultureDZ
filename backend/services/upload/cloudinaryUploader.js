@@ -17,7 +17,7 @@ const logger = require('../../utils/logger');
 
 /**
  * Genere un public_id Cloudinary unique a partir d'un nom d'origine.
- * Seule version du site : services/uploadService.js l'importe (audit V11 COD-B15).
+ * Seule version du site : services/upload/receptionFichiers.js l'importe (audit V11 COD-B15).
  */
 function buildPublicId(originalname, prefix = '') {
   const ext = path.extname(originalname || '').toLowerCase();

@@ -79,7 +79,7 @@ describe('envoi sûr des images', () => {
   });
 
   it('type refusé (photo HEIC) : 400 « type non autorisé », pas une erreur serveur', () => {
-    const uploadService = require('../../services/uploadService');
+    const uploadService = require('../../services/upload/receptionFichiers');
     const multer = uploadService.uploadImageSafe(1e6);
     const filtre = multer.fileFilter || multer._fileFilter;
     const appels = [];
@@ -88,7 +88,7 @@ describe('envoi sûr des images', () => {
       expect(appels[0]).toMatchObject({ code: 'UPLOAD_INVALID_TYPE' });
     } else {
       // multer ne montre pas son filtre : lecture du code source
-      const src = require('fs').readFileSync(require.resolve('../../services/uploadService'), 'utf8');
+      const src = require('fs').readFileSync(require.resolve('../../services/upload/receptionFichiers'), 'utf8');
       expect(src).toMatch(/code: 'UPLOAD_INVALID_TYPE'/);
     }
   });

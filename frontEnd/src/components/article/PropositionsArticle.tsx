@@ -20,6 +20,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { SaisieConserveeAvis, saisieEnAttente, useSaisieConservee } from '@/hooks/useSaisieConservee';
+import { useConfirmation } from '@/hooks/useConfirmation';
 import {
   articleRevisionService, comparerBlocs,
   type BlocRevision, type RevisionDetail, type RevisionResume
@@ -64,6 +65,8 @@ const ResumeBloc: React.FC<{ bloc: BlocRevision }> = ({ bloc }) => {
 
 const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreActuel, descriptionActuelle, propositionAOuvrir, onAcceptee }) => {
   const { t } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const { toast } = useToast();
   const { user } = useAuth();
   const { formatDate } = useFormatDate();
@@ -138,7 +141,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
       // L'article a changé depuis la proposition : le décideur choisit en connaissance de cause
       if ((e as { code?: string }).code === 'ARTICLE_MODIFIE' && !forcer) {
         setEnvoi(false);
-        if (window.confirm(t('revisions.articleModifie', 'L’article a été modifié depuis cette proposition. L’accepter remplacera ces changements. Continuer ?'))) {
+        if (await confirmer({ titre: t('revisions.articleModifie', 'L’article a été modifié depuis cette proposition. L’accepter remplacera ces changements. Continuer ?'), variante: 'warning' })) {
           await decider(decision, true);
         }
         return;
@@ -158,6 +161,7 @@ const PropositionsArticle: React.FC<Props> = ({ idOeuvre, blocsActuels, titreAct
 
   return (
     <section className="mt-10 space-y-6" aria-label={t('revisions.section', 'Contributions à l’article')}>
+      {fenetreConfirmation}
       {peutDecider && enAttente.length > 0 && (
         <div className="rounded-xl border-2 border-amber-400/70 bg-amber-50 dark:bg-amber-950/30 p-5">
           <h2 className="font-semibold flex items-center gap-2 mb-3">

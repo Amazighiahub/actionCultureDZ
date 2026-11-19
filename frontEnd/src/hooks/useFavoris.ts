@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { PaginationParams } from '@/config/api';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 interface UseFavorisOptions {
   type?: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat' | 'service';
@@ -372,14 +373,21 @@ export function useFavoriCheck(
     }
   }, [entityType, entityId, isAuthenticated]);
 
+  // Visiteur non connecté : invité à se connecter (avant : ce test était recopié dans chaque page, 5 fois)
+  const inviterConnexion = useInviterConnexion();
+  const { t } = useTranslation();
   const toggle = useCallback(async () => {
+    if (!isAuthenticated) {
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
+      return;
+    }
     try {
       await toggleFavorite(entityType, entityId);
       setIsFavorite(!isFavorite);
     } catch {
       // Échec déjà signalé par le message d'erreur : le cœur garde son état
     }
-  }, [toggleFavorite, entityType, entityId, isFavorite]);
+  }, [toggleFavorite, entityType, entityId, isFavorite, isAuthenticated, inviterConnexion, t]);
 
   return {
     isFavorite,
@@ -388,4 +396,45 @@ export function useFavoriCheck(
     toggle,
     toggleFavorite: toggle
   };
+}
+/**
+ * Cœur d'une carte dans une liste (œuvres, artisanat) : état lu dans la liste des favoris de la personne
+ * (une requête pour toute la page), choix affiché aussitôt après un clic, invitation à se connecter, message.
+ * Lot 3 doublons (2026-11-19) : ce code était recopié à l'identique dans chaque carte.
+ */
+export function useFavoriCarte(type: 'oeuvre' | 'artisanat', id: number) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const inviterConnexion = useInviterConnexion();
+  const { isAuthenticated } = usePermissionsContext();
+  const idsFavoris = useFavorisIds(type);
+  const [choix, setChoix] = useState<boolean | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  const isFavorite = choix ?? Boolean(idsFavoris?.includes(id));
+
+  const basculer = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!isAuthenticated) {
+      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
+      return;
+    }
+    if (envoi) return;
+    setEnvoi(true);
+    try {
+      const result = await favoriService.toggle(type, id);
+      if (result.success) {
+        const ajoute = result.data?.added ?? !isFavorite;
+        setChoix(ajoute);
+        queryClient.invalidateQueries({ queryKey: ['favoris'] });
+        toast({ title: ajoute ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris') });
+      }
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  return { isFavorite, basculer, envoi };
 }

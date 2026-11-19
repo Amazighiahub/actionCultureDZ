@@ -10,6 +10,14 @@ import { Utensils, Hotel, Navigation, Car, Palette, MapPin, Star } from 'lucide-
 export const TYPES_SERVICE = ['restaurant', 'hotel', 'guide', 'transport', 'artisanat', 'location', 'autre'] as const;
 export type TypeService = typeof TYPES_SERVICE[number];
 
+/** Libellé du type dans le formulaire du professionnel (plus précis que dans l'annuaire) ; traduit par service.typesFormulaire.* */
+const LIBELLE_FORMULAIRE: Record<string, string> = {
+  restaurant: 'Restaurant / Café', hotel: 'Hébergement', guide: 'Guide touristique', transport: 'Transport',
+  artisanat: 'Artisanat / Boutique', location: 'Location (vélos, etc.)', autre: 'Autre service',
+};
+export const libelleTypeFormulaire = (t: TFunction, type: string): string =>
+  String(t(`service.typesFormulaire.${type}`, LIBELLE_FORMULAIRE[type] || type));
+
 // Teintes 700 (400 en mode sombre) : contraste d'au moins 4,5:1 sur les fonds clairs, y compris le titre
 // du type en petit texte (avant 600 : 3 à 3,5:1, audit V11 UX-24)
 export const STYLE_TYPE_SERVICE: Record<string, { icon: React.ElementType; color: string; bg: string }> = {

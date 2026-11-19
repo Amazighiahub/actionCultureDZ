@@ -9,6 +9,7 @@ const BaseService = require('./core/baseService');
 const AppError = require('../utils/appError');
 const { memeUtilisateur } = require('../utils/droits');
 const commentairePhotos = require('./commentairePhotos');
+const { erreurHttp } = require('../utils/erreurHttp');
 
 class CommentaireService extends BaseService {
   constructor(repository, options = {}) {
@@ -96,7 +97,7 @@ class CommentaireService extends BaseService {
     }
     // Photos vérifiées avant toute écriture : une photo refusée n'enregistre pas l'avis sans elle
     if (commentaire_parent_id && Array.isArray(photos) && photos.length) {
-      throw Object.assign(new Error('Une réponse ne peut pas porter de photos'), { statusCode: 400 });
+      throw erreurHttp('Une réponse ne peut pas porter de photos', 400);
     }
     const urlsPhotos = commentaire_parent_id ? [] : commentairePhotos.verifierPhotos(photos, accord_photos);
     if (commentaire_parent_id) {

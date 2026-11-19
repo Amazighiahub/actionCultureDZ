@@ -49,7 +49,7 @@ describe('photos de l’événement', () => {
 
   it('le retrait efface aussi le fichier ; photo absente : 404', async () => {
     await new PhotosEvenement(modeles()).retirer(4, 9, { id_user: 12 });
-    expect(cloudinary.supprimerParUrl).toHaveBeenCalledWith(image);
+    expect(cloudinary.supprimerParUrl).toHaveBeenCalledWith(image, {});
     await expect(new PhotosEvenement(modeles({ supprimes: 0 })).retirer(4, 9, { id_user: 12 })).rejects.toMatchObject({ statusCode: 404 });
   });
 

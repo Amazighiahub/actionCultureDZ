@@ -20,10 +20,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
+import { useConfirmation } from '@/hooks/useConfirmation';
 const ViewProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
 
   const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -115,7 +118,7 @@ const ViewProgrammePage: React.FC = () => {
   const handleDelete = async () => {
     if (!programmeId) return;
 
-    if (window.confirm(t('programmePages.view.confirmDelete'))) {
+    if (await confirmer({ titre: t('programmePages.view.confirmDelete'), variante: 'destructive' })) {
       try {
         const response = await programmeService.delete(parseInt(programmeId));
         
@@ -203,6 +206,7 @@ const ViewProgrammePage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {fenetreConfirmation}
       <SEOHead title={programmeTitle} noindex />
       {/* En-tête */}
       <div className="mb-8">

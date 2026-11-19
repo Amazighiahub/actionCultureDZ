@@ -57,6 +57,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { jourProgramme, heureProgramme, heurePourApi } from '@/utils/programmeHoraire';
 import { intervenantsPourFormulaire } from '@/utils/programmeIntervenants';
 import { messageErreurServeur } from '@/utils/erreurServeur';
+import { useConfirmation } from '@/hooks/useConfirmation';
 
 interface GestionEvenementProps {
   evenementId: number;
@@ -85,6 +86,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   onglet
 }) => {
   const { t, i18n } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const { td } = useTranslateData();
   const { toast } = useToast();
   // Message aux participants en cours quand la session a expiré : l'onglet Participants s'ouvre
@@ -364,7 +367,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   };
 
   const handleRemoveOeuvre = async (oeuvreId: number) => {
-    if (!confirm(t('oeuvres.confirmRemove', 'Voulez-vous vraiment retirer cette œuvre de l\'événement ?'))) return;
+    if (!(await confirmer({ titre: t('oeuvres.confirmRemove', 'Voulez-vous vraiment retirer cette œuvre de l\'événement ?'), variante: 'destructive' }))) return;
 
     try {
       const response = await evenementOeuvreService.removeOeuvre(evenementId, oeuvreId);
@@ -401,6 +404,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
 
   return (
     <div className="space-y-6 min-w-0">
+      {fenetreConfirmation}
       {/* Sur téléphone, les lignes passent à la ligne au lieu de déborder à droite (corbeille cachée) */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">

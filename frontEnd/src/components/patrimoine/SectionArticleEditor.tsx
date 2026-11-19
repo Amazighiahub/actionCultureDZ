@@ -62,6 +62,7 @@ import {
 } from '@/services/patrimoineArticles.service';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
+import { useConfirmation } from '@/hooks/useConfirmation';
 // ============================================================================
 // Props
 // ============================================================================
@@ -130,6 +131,8 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
   onRouvrir,
 }) => {
   const { t } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   // Suppression réservée à la modération (contrôlée aussi côté API)
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -284,7 +287,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
 
   // ---------------------------------------------------------------- suppression
   const handleDelete = async (block: PatrimoineBlock) => {
-    if (!window.confirm(t('patrimoine.editor.confirmDelete', 'Supprimer ce bloc ?') as string)) return;
+    if (!(await confirmer({ titre: t('patrimoine.editor.confirmDelete', 'Supprimer ce bloc ?'), variante: 'destructive' }))) return;
 
     setDeletingId(block.id_block);
     const res = await patrimoineArticlesService.deleteBlock(lieuId, block.id_block);
@@ -308,6 +311,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
   // ---------------------------------------------------------------- rendu
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && fermer()}>
+      {fenetreConfirmation}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

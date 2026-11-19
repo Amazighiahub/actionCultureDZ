@@ -117,22 +117,36 @@ async function oublierJournal(models, url) {
  * @returns {Promise<{deleted: number, skipped: number, failed: number}>}
  */
 async function deleteUserFiles(models, urls, deps = {}) {
-  const supprimerParUrl = deps.supprimerParUrl || require('../cloudinaryService').supprimerParUrl;
   const result = { deleted: 0, skipped: 0, failed: 0 };
   for (const url of [...new Set((urls || []).filter(Boolean))]) {
-    try {
-      if (await isReferencedElsewhere(models, url)) { result.skipped++; continue; }
-      const done = await supprimerParUrl(url);
-      if (done) {
-        result.deleted++;
-        await oublierJournal(models, url).catch(() => undefined);
-      } else result.skipped++;
-    } catch (err) {
-      result.failed++;
-      logger.warn(`Fichier non effacé de Cloudinary (${err.message})`);
-    }
+    result[await effacerSiInutilise(models, url, {}, deps)]++;
   }
   return result;
 }
 
-module.exports = { deleteUserFiles, isReferencedElsewhere, oublierJournal };
+/**
+ * Un fichier qui ne sert plus : effacé de Cloudinary s'il n'est utilisé nulle part ailleurs, puis ses lignes
+ * « journal » oubliées. Dans le doute (vérification en échec), le fichier est gardé ; un échec est journalisé
+ * et n'empêche jamais l'action qui a retiré le fichier. Lot 3 doublons (2026-11-19) : cette suite était
+ * recopiée dans les médias d'un événement, d'une œuvre et l'envoi de fichiers.
+ * @param {object} models
+ * @param {string} url
+ * @param {{ publicId?: string, resourceType?: string }} [options] - connus du média (prioritaires sur l'URL)
+ * @param {object} [deps] - injection pour les tests ({ supprimerParUrl })
+ * @returns {Promise<'deleted'|'skipped'|'failed'>}
+ */
+async function effacerSiInutilise(models, url, options = {}, deps = {}) {
+  if (!url) return 'skipped';
+  try {
+    if (await isReferencedElsewhere(models, url).catch(() => true)) return 'skipped';
+    const supprimerParUrl = deps.supprimerParUrl || require('../cloudinaryService').supprimerParUrl;
+    if (!(await supprimerParUrl(url, options))) return 'skipped';
+    await oublierJournal(models, url).catch(() => undefined);
+    return 'deleted';
+  } catch (err) {
+    logger.warn(`Fichier non effacé de Cloudinary (${err.message})`);
+    return 'failed';
+  }
+}
+
+module.exports = { deleteUserFiles, effacerSiInutilise, isReferencedElsewhere, oublierJournal };

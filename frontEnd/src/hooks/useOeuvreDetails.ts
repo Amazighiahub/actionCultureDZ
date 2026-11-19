@@ -150,18 +150,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
   // FAVORIS
   // ============================================
   
-  const { isFavorite, toggle: toggleFavoriBase } = useFavoriCheck(
-    'oeuvre',
-    oeuvreId
-  );
-
-  const toggleFavorite = async () => {
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    await toggleFavoriBase();
-  };
+  // Invitation à se connecter comprise (useFavoriCheck)
+  const { isFavorite, toggle: toggleFavorite } = useFavoriCheck('oeuvre', oeuvreId);
 
   // ============================================
   // MUTATIONS

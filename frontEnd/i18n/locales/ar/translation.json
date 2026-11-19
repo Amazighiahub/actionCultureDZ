@@ -5261,6 +5261,15 @@
       "depuisDebut": "منذ البداية: {{n}}",
       "vuesParJour": "المشاهدات في اليوم",
       "aide": "تُحسب المشاهدة أو النقرة مرة واحدة في اليوم لكل زائر. زياراتك لا تُحسب. لا تُحفظ أي بيانات شخصية."
+    },
+    "typesFormulaire": {
+      "restaurant": "مطعم / مقهى",
+      "hotel": "إقامة",
+      "guide": "مرشد سياحي",
+      "transport": "نقل",
+      "artisanat": "حرف يدوية / متجر",
+      "location": "تأجير",
+      "autre": "خدمة أخرى"
     }
   },
   "organisations": {
@@ -6143,7 +6152,14 @@
   },
   "media": {
     "videoNotSupported": "متصفحك لا يدعم تشغيل الفيديو.",
-    "audioNotSupported": "متصفحك لا يدعم تشغيل الصوت."
+    "audioNotSupported": "متصفحك لا يدعم تشغيل الصوت.",
+    "types": {
+      "image": "صورة",
+      "video": "فيديو",
+      "audio": "صوت",
+      "document": "وثيقة"
+    },
+    "media": "وسيط"
   },
   "personnalites": {
     "ajoutee": "تمت إضافة الشخصية",

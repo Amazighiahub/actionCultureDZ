@@ -6,23 +6,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
 import { useFavoriCheck } from '@/hooks/useFavoris';
-import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 
 const BoutonFavoriService: React.FC<{ serviceId: number }> = ({ serviceId }) => {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
-  const inviterConnexion = useInviterConnexion();
-  const { isFavorite, toggle } = useFavoriCheck('service', serviceId);
-
-  const basculer = async () => {
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    await toggle();
-  };
+  // Invitation à se connecter comprise (useFavoriCheck)
+  const { isFavorite, toggle: basculer } = useFavoriCheck('service', serviceId);
 
   return (
     <Button type="button" variant="favorite" data-active={isFavorite} onClick={basculer} aria-pressed={isFavorite} className="gap-2">

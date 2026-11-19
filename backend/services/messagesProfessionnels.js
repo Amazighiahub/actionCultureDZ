@@ -14,8 +14,8 @@ const TAILLE_LOT = 500;
 const DELAI_SECONDES = 24 * 3600;
 const { EVENEMENT_OUVERT: STATUTS_EVENEMENT_VISIBLE } = require('../constants/statuts');
 
-const erreur = (message, statusCode) => Object.assign(new Error(message), { statusCode });
 
+const { erreurHttp: erreur } = require('../utils/erreurHttp');
 /** Textes : p = « Bonjour Amina, », q = nom du professionnel, t = titre du contenu */
 const TEXTES = {
   fr: {

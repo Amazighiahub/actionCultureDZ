@@ -26,12 +26,6 @@ import {
   Loader2,
   AlertCircle,
   MapPin,
-  Building2,
-  Utensils,
-  Hotel,
-  Car,
-  Compass,
-  ShoppingBag,
   Phone,
   Mail,
   Globe,
@@ -48,22 +42,15 @@ import FormPageHeader from '@/components/shared/FormPageHeader';
 import ServiceMediasGestion from '@/components/services/ServiceMediasGestion';
 import ServiceStatistiques from '@/components/services/ServiceStatistiques';
 import ServiceDetailsChamps, { DETAILS_VIDES, type DetailsServiceForm } from '@/components/services/ServiceDetailsChamps';
-import { aDuTexte, getLocalizedText } from '@/utils/getLocalizedText';
+import { aDuTexte } from '@/utils/getLocalizedText';
+import { TYPES_SERVICE, styleTypeService, libelleTypeFormulaire } from '@/components/services/typesService';
 import { emailValide, lienWebValide, nombreHorsLimites } from '@/utils/validationChamps';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { lienGuidePour } from '@/utils/lienGuide';
 
 import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
-// Types de services pour les professionnels
-const TYPES_SERVICE = [
-  { value: 'restaurant', label: { fr: 'Restaurant / Café', ar: 'مطعم / مقهى', en: 'Restaurant / Cafe', 'tz-ltn': 'Asensu / Aqahwi', 'tz-tfng': 'ⴰⵙⵏⵙⵓ / ⴰⵇⴰⵀⵡⵉ' }, icon: Utensils },
-  { value: 'hotel', label: { fr: 'Hébergement', ar: 'إقامة', en: 'Accommodation', 'tz-ltn': 'Ansawen', 'tz-tfng': 'ⴰⵏⵙⴰⵡⵏ' }, icon: Hotel },
-  { value: 'guide', label: { fr: 'Guide touristique', ar: 'مرشد سياحي', en: 'Tour Guide', 'tz-ltn': 'Amessadaɣ n tmazirt', 'tz-tfng': 'ⴰⵎⵙⵙⴰⴷⴰⵖ ⵏ ⵜⵎⴰⵣⵉⵔⵜ' }, icon: Compass },
-  { value: 'transport', label: { fr: 'Transport', ar: 'نقل', en: 'Transport', 'tz-ltn': 'Anagi', 'tz-tfng': 'ⴰⵏⴰⴳⵉ' }, icon: Car },
-  { value: 'artisanat', label: { fr: 'Artisanat / Boutique', ar: 'حرف يدوية / متجر', en: 'Crafts / Shop', 'tz-ltn': 'Tawuri n ufus / Taḥanut', 'tz-tfng': 'ⵜⴰⵡⵓⵔⵉ ⵏ ⵓⴼⵓⵙ / ⵜⴰⵃⴰⵏⵓⵜ' }, icon: ShoppingBag },
-  { value: 'location', label: { fr: 'Location (vélos, etc.)', ar: 'تأجير', en: 'Rental', 'tz-ltn': 'Askari', 'tz-tfng': 'ⴰⵙⴽⴰⵔⵉ' }, icon: Car },
-  { value: 'autre', label: { fr: 'Autre service', ar: 'خدمة أخرى', en: 'Other service', 'tz-ltn': 'Tanbaḍt nniḍen', 'tz-tfng': 'ⵜⴰⵏⴱⴰⴹⵜ ⵏⵏⵉⴹⵏ' }, icon: Building2 },
-];
+// Types de services : liste commune (components/services/typesService.ts), libellés du formulaire traduits
+// (service.typesFormulaire.*). Avant : une 3e copie de la liste, libellés écrits ici en 5 langues.
 
 // Ce que le professionnel doit indiquer comme tarif, selon le type (même unité qu'à l'affichage)
 const AIDE_TARIF: Record<string, string> = {
@@ -518,7 +505,8 @@ const AjouterServicePro: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="radiogroup" aria-invalid={!!fieldErrors.type_service} aria-describedby={fieldErrors.type_service ? 'type_service-error' : undefined}>
-                  {TYPES_SERVICE.map((type) => {
+                  {TYPES_SERVICE.map((valeur) => {
+                    const type = { value: valeur, icon: styleTypeService(valeur).icon };
                     const Icon = type.icon;
                     const isSelected = formData.type_service === type.value;
                     return (
@@ -534,7 +522,7 @@ const AjouterServicePro: React.FC = () => {
                       >
                         <Icon className={`h-6 w-6 ${isSelected ? 'text-emerald-600' : 'text-muted-foreground'}`} />
                         <span className="text-sm font-medium text-center">
-                          {getLocalizedText(type.label, i18n.language)}
+                          {libelleTypeFormulaire(t, type.value)}
                         </span>
                       </button>
                     );

@@ -71,7 +71,7 @@ vi.mock('@/services/favori.service', () => ({
 }));
 
 // Cœurs des cartes : favoris de l'utilisateur (aucun ici) et cache relu après un clic
-vi.mock('@/hooks/useFavoris', () => ({ useFavorisIds: () => undefined }));
+vi.mock('@/hooks/useFavoris', () => ({ useFavoriCarte: () => ({ isFavorite: false, basculer: vi.fn(), envoi: false }) }));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
   // Recherche faite par le serveur : inactive tant qu'aucun mot n'est tapé

@@ -5055,6 +5055,15 @@
       "depuisDebut": "Since the start: {{n}}",
       "vuesParJour": "Views per day",
       "aide": "A view or click is counted once a day per visitor. Your own visits don’t count. No personal data is kept."
+    },
+    "typesFormulaire": {
+      "restaurant": "Restaurant / Cafe",
+      "hotel": "Accommodation",
+      "guide": "Tour Guide",
+      "transport": "Transport",
+      "artisanat": "Crafts / Shop",
+      "location": "Rental",
+      "autre": "Other service"
     }
   },
   "organisations": {
@@ -5929,7 +5938,14 @@
   },
   "media": {
     "videoNotSupported": "Your browser does not support video playback.",
-    "audioNotSupported": "Your browser does not support audio playback."
+    "audioNotSupported": "Your browser does not support audio playback.",
+    "types": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "document": "Document"
+    },
+    "media": "Media"
   },
   "personnalites": {
     "ajoutee": "Personality added",

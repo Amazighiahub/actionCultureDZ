@@ -181,34 +181,8 @@ class DashboardModerationService {
     });
   }
 
-  /**
-   * Valide un utilisateur
-   */
-  async validateUser(userId, data, moderatorId) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) {
-      throw erreurHttp('Utilisateur non trouvé', 404);
-    }
-
-    const { action, motif } = data;
-
-    if (action === 'approve') {
-      await user.update({
-        statut: 'actif',
-        date_validation: new Date(),
-        id_user_validate: moderatorId
-      });
-    } else if (action === 'reject') {
-      await user.update({
-        statut: 'rejete',
-        raison_rejet: motif,
-        date_validation: new Date(),
-        id_user_validate: moderatorId
-      });
-    }
-
-    return user;
-  }
+  // Valider ou suspendre un compte : userManagementService (version unique, 2026-11-19 ; les copies d'ici,
+  // sans contrôle ni notification, n'étaient appelées nulle part)
 
   /**
    * Valide ou rejette une œuvre (dashboard admin)
@@ -308,24 +282,6 @@ class DashboardModerationService {
     });
 
     return signalement;
-  }
-
-  /**
-   * Suspendre un utilisateur
-   */
-  async suspendUser(userId, data, moderatorId) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) {
-      throw erreurHttp('Utilisateur non trouvé', 404);
-    }
-
-    const { duree, motif } = data;
-
-    await user.update({
-      statut: 'suspendu'
-    });
-
-    return user;
   }
 }
 

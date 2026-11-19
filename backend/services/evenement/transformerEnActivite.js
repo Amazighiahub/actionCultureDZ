@@ -12,6 +12,7 @@
  */
 const { texteLisible } = require('../../helpers/i18n');
 const { EVENEMENT_PUBLIC } = require('../../constants/statuts');
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 
 const UNE_HEURE = 60 * 60 * 1000;
 const STATUTS_A_PREVENIR = ['inscrit', 'confirme', 'present'];
@@ -21,9 +22,6 @@ const CIBLES_POSSIBLES = EVENEMENT_PUBLIC.filter((st) => st !== 'annule');
 const FORCE = { present: 5, confirme: 4, inscrit: 3, absent: 2, invitation: 1, annule: 0 };
 const force = (l) => (FORCE[l.statut_participation] ?? 0) * 2 + (l.date_paiement ? 1 : 0);
 
-function erreur(message, statusCode, code) {
-  return Object.assign(new Error(message), { statusCode, code });
-}
 
 /** Jour et heure d'Algérie (UTC+1) d'une date d'événement ; heure nulle pour un jour « sans heure » */
 function jourEtHeure(valeur) {

@@ -5,6 +5,7 @@
  * navigateur qui ne compte qu'une fois par jour, le serveur limite seulement les abus.
  */
 const { peutGerer, estModeration } = require('../../utils/droits');
+const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 
 const ACTIONS = { vue: 'vues', whatsapp: 'whatsapp', reservation: 'reservation', appel: 'appel' };
 const COLONNES = Object.values(ACTIONS);
@@ -12,7 +13,6 @@ const COLONNES = Object.values(ACTIONS);
 /** Connexion à la base (models.sequelize, sinon celle du modèle) */
 const base = (models) => models.sequelize || models.Service.sequelize;
 
-const erreur = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 
 /** Jour en Algérie (AAAA-MM-JJ) */
 const jourAlgerie = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Algiers' }).format(d);

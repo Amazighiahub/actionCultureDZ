@@ -8,6 +8,7 @@ const { ressemble } = require('./nomsRessemblants');
 const catalogue = require('./importCatalogue');
 const { executer } = require('./executionCatalogue');
 const revendications = require('./revendications');
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 // Réseaux sociaux acceptés sur la page d'une organisation
 const RESEAUX = ['facebook', 'instagram', 'youtube', 'x', 'linkedin', 'tiktok'];
@@ -483,7 +484,7 @@ class OrganisationService extends BaseService {
     if (!deciderId || !this.repository.roleMembre) return;
     if (!(await this.repository.roleMembre(id, deciderId))) return;
     if (await require('../../utils/estAdministrateur').estAdministrateur(this.models, deciderId)) return;
-    throw Object.assign(new Error('Vous êtes membre de cette organisation : un autre membre de l’équipe doit vérifier sa page.'), { statusCode: 403, code: 'AUTO_VALIDATION' });
+    throw erreurHttp('Vous êtes membre de cette organisation : un autre membre de l’équipe doit vérifier sa page.', 403, 'AUTO_VALIDATION');
   }
 
   async valider(id, adminId) {

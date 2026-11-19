@@ -83,6 +83,7 @@ vi.mock('@/hooks/useAuth', () => ({
 vi.mock('@/hooks/useFavoris', () => ({
   useFavoriCheck: () => ({
     isFavorite: mockIsFavorite.value,
+    toggle: mockToggleFavori,
     toggleFavorite: mockToggleFavori,
   }),
 }));
@@ -470,7 +471,7 @@ describe('useEventDetails', () => {
       expect(result.current.isFavorite).toBe(true);
     });
 
-    it('toggleFavorite appelle le toggle si authentifié', async () => {
+    it('toggleFavorite appelle le toggle commun', async () => {
       const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
 
       await act(async () => {
@@ -479,20 +480,7 @@ describe('useEventDetails', () => {
 
       expect(mockToggleFavori).toHaveBeenCalled();
     });
-
-    it('toggleFavorite invite à se connecter (sans message d’erreur) si non authentifié', async () => {
-      mockIsAuthenticated.value = false;
-
-      const { result } = renderHook(() => useEventDetails(9), { wrapper: createWrapper() });
-
-      await act(async () => {
-        await result.current.toggleFavorite();
-      });
-
-      expect(mockToggleFavori).not.toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ action: expect.anything() }));
-      expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
-    });
+    // L'invitation à se connecter est faite par useFavoriCheck (hooks/__tests__/useFavoriCheck.test.tsx)
   });
 
   // ─── Error handling ──────────────────────────────────────────────────────

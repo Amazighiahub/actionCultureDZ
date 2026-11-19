@@ -2,6 +2,7 @@
 // Moderation and admin action methods for DashboardController
 
 const container = require('../../services/serviceContainer');
+const { erreurHttp } = require('../../utils/erreurHttp');
 
 const moderationMethods = {
 
@@ -130,7 +131,7 @@ const moderationMethods = {
   async bulkModerateAction(data, moderatorId) {
     const { signalements = [], action, notes } = data;
     if (!Array.isArray(signalements) || signalements.length > 100) {
-      throw Object.assign(new Error('100 signalements au plus par envoi'), { statusCode: 400 });
+      throw erreurHttp('100 signalements au plus par envoi', 400);
     }
     const results = [];
     for (const signalementId of signalements) {

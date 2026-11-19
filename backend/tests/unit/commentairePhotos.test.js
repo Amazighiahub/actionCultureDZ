@@ -43,7 +43,7 @@ describe('photos d’avis sur un service', () => {
     const m = (n = 1) => ({ CommentairePhoto: { findByPk: jest.fn().mockResolvedValue(photo), update: jest.fn().mockResolvedValue([n]) }, Commentaire: {} });
     await expect(decider(m(), { sendToUser }, 9, { id_user: 1 }, 'rejete', '')).rejects.toMatchObject({ statusCode: 400 });
     await decider(m(), { sendToUser }, 9, { id_user: 1 }, 'rejete', 'Personne reconnaissable');
-    expect(cloudinary.supprimerParUrl).toHaveBeenCalledWith(image(1));
+    expect(cloudinary.supprimerParUrl).toHaveBeenCalledWith(image(1), {});
     expect(sendToUser).toHaveBeenCalledWith(3, expect.objectContaining({ url_action: '/services/5' }));
     await expect(decider(m(0), { sendToUser }, 9, { id_user: 1 }, 'publie')).rejects.toMatchObject({ statusCode: 409 });
   });

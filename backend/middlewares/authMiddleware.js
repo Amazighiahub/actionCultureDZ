@@ -702,6 +702,13 @@ module.exports = (modelsOrUser) => {
 
   // ====================
   // EXPORT
+  /**
+   * Modération (administration, modérateurs) ou professionnel validé. Lot 3 doublons (2026-11-19) : était
+   * recopié dans les routes du patrimoine et des personnalités.
+   */
+  const requireModerationOuPro = (req, res, next) =>
+    (req.user?.isAdmin || req.user?.isModerateur) ? next() : requireValidatedProfessional(req, res, next);
+
   // ====================
 
   return {
@@ -719,6 +726,7 @@ module.exports = (modelsOrUser) => {
     requireAdmin,
     isAdmin,          // ✅ Alias pour app.js
     requireValidatedProfessional,
+    requireModerationOuPro,
     requireOwnerOrAdmin,
     requireOwnership,
 

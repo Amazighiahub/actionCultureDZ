@@ -47,7 +47,7 @@ import { slugify } from '@/utils/slug';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { LiensDuContenu } from '@/components/shared/LiensExternes';
 import { articleBlockService } from '@/services/articleBlock.service';
-import { favoriService } from '@/services/favori.service';
+import { useFavoriCheck } from '@/hooks/useFavoris';
 import { commentaireService } from '@/services/commentaire.service';
 import ActionsCommentaire from '@/components/shared/ActionsCommentaire';
 import { Pencil } from 'lucide-react';
@@ -77,7 +77,6 @@ import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'none';data: null;};
 import Header from '@/components/Header';
 import { useInviterConnexion } from '@/hooks/useInviterConnexion';
-import { rafraichirFavoris } from '@/lib/queryClient';
 import { idFromSlug, oeuvrePath } from '@/utils/slug';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 // Nom de chaque langue écrit dans cette langue (liste commune, audit V11 COD-6)
@@ -211,7 +210,6 @@ const ArticleViewPage: React.FC = () => {
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   // Image prête à publier sur Instagram / Facebook (comme pour les œuvres)
   const [imagesOpen, setImagesOpen] = useState(false);
   const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
@@ -233,6 +231,8 @@ const ArticleViewPage: React.FC = () => {
   const { formatDate: hookFormatDate } = useFormatDate();
 
   const articleId = idFromSlug(id) ?? 0;
+  // Favori : outil commun (vérification, ajout/retrait, message, invitation à se connecter)
+  const { isFavorite, toggle: handleToggleFavorite } = useFavoriCheck('oeuvre', articleId);
   // Commentaire : erreur dans la fenêtre (avant : bandeau de 5 s avec le texte brut, audit V11 FRM-14) et
   // texte conservé si la session expire pendant l'écriture, fenêtre rouverte au retour (FRM-23)
   const [erreurCommentaire, setErreurCommentaire] = useState<string | null>(null);
@@ -283,12 +283,6 @@ const ArticleViewPage: React.FC = () => {
     oeuvreService.getOeuvreById(articleId).then(res => { if (res.success && res.data) setOeuvre(res.data); });
   }, [articleId, i18n.language]);
 
-  // Vérifier le statut favori
-  useEffect(() => {
-    if (articleId && isAuthenticated) {
-      checkFavoriteStatus();
-    }
-  }, [articleId, isAuthenticated]);
 
   const loadArticle = async () => {
     try {
@@ -343,33 +337,6 @@ const ArticleViewPage: React.FC = () => {
     }
   };
 
-  const checkFavoriteStatus = async () => {
-    try {
-      const response = await favoriService.check('oeuvre', articleId);
-      if (response.success) {
-        setIsFavorite(response.isFavorite);
-      }
-    } catch (err) {
-      console.error('Erreur vérification favori:', err);
-    }
-  };
-
-  const handleToggleFavorite = async () => {
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-
-    try {
-      const response = await favoriService.toggle('oeuvre', articleId);
-      if (response.success && response.data) {
-        setIsFavorite(response.data.added);
-        rafraichirFavoris();
-      }
-    } catch (err) {
-      console.error('Erreur toggle favori:', err);
-    }
-  };
 
   const share = useShare();
   const handleShare = () => share({ title: oeuvre?.titre || 'Article' });

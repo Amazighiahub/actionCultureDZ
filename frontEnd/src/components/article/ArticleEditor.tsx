@@ -32,11 +32,14 @@ import { avancement, blocDansLaLangue } from '@/utils/traductionBlocs';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { SUPPORTED_LANGUAGES, infoLangue, nomLangue } from '@/types/common/multilingual.types';
 
+import { useConfirmation } from '@/hooks/useConfirmation';
 // Langues de l'article : liste et noms communs (audit V11 COD-6 ; avant « Tamazight (Latin) » ici seulement)
 const LANG_OPTIONS = SUPPORTED_LANGUAGES.map(infoLangue);
 
 const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave, titrePage, libelleEnregistrer, modePoeme = false }) => {
   const { t } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
 
   const editor = useArticleEditor({ articleId, initialData, onSave });
 
@@ -60,7 +63,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
 
       const article = lireArticleImporte(await fichier.text());
 
-      if (editor.blocks.length > 0 && !window.confirm(t('article_articleeditor.importRemplacer', 'Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?'))) return;
+      if (editor.blocks.length > 0 && !(await confirmer({ titre: t('article_articleeditor.importRemplacer', 'Le contenu actuel de l’article sera remplacé par celui du fichier. Continuer ?'), variante: 'warning' }))) return;
 
       editor.importerArticle(article);
 
@@ -144,6 +147,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
 
   return (
     <div className="min-h-screen bg-background pb-24 sm:pb-0">
+      {fenetreConfirmation}
       <style dangerouslySetInnerHTML={{ __html: PREVIEW_STYLES }} />
 
       <div className="container py-8">

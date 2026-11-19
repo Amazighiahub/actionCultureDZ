@@ -16,6 +16,7 @@ import type { ApiResponse } from '@/config/api';
 import type { CarteArticle } from '@/services/patrimoineArticles.service';
 import { oeuvrePath } from '@/utils/slug';
 
+import { useConfirmation } from '@/hooks/useConfirmation';
 interface Props {
   pages: CarteArticle[];
   /** Retire l'article de la page (lieu ou personnalité) ; bouton affiché si la carte le permet */
@@ -28,6 +29,8 @@ interface Props {
 
 const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChange, titre: titreBloc }) => {
   const { t, i18n } = useTranslation();
+  // Confirmation dans une fenêtre du site (avant : window.confirm du navigateur)
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const { toast } = useToast();
   const [retrait, setRetrait] = useState<number | null>(null);
 
@@ -35,7 +38,7 @@ const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChang
 
   const retirer = async (page: CarteArticle) => {
     if (!retirerPage) return;
-    if (!window.confirm(t('patrimoine.pages.confirmRetrait', 'Retirer cet article de la page du lieu ? L’article lui-même n’est pas supprimé.') as string)) return;
+    if (!(await confirmer({ titre: t('patrimoine.pages.confirmRetrait', 'Retirer cet article de la page du lieu ? L’article lui-même n’est pas supprimé.'), variante: 'destructive' }))) return;
     setRetrait(page.id_lien);
     try {
       const res = await retirerPage(page);
@@ -50,6 +53,7 @@ const PagesDetaillees: React.FC<Props> = ({ pages, retirer: retirerPage, onChang
 
   return (
     <div className="space-y-2">
+      {fenetreConfirmation}
       <h4 className="text-sm font-medium flex items-center gap-2 text-primary">
         <BookOpen className="h-4 w-4" aria-hidden="true" />
         {titreBloc || t('patrimoine.pages.enSavoirPlus', 'En savoir plus')}

@@ -8,6 +8,7 @@
  * - nombre_participants : personnes confirmées ou présentes
  */
 const { literal, Op } = require('sequelize');
+const { erreurHttp } = require('./erreurHttp');
 
 /** Statuts qui occupent une place (capacité de l'événement) */
 const STATUTS_PLACE_PRISE = ['inscrit', 'confirme', 'present', 'absent'];
@@ -55,7 +56,7 @@ async function verifierPlacePourRetablir(models, idEvenement, inscription) {
   });
   const personnes = Math.max(1, parseInt(inscription.reponses_inscription?.nombre_personnes, 10) || 1);
   if ((Number(ligne?.places) || 0) + personnes > evenement.capacite_max) {
-    throw Object.assign(new Error('Cet événement est complet : libérez des places avant de rétablir cette inscription'), { statusCode: 409 });
+    throw erreurHttp('Cet événement est complet : libérez des places avant de rétablir cette inscription', 409);
   }
 }
 

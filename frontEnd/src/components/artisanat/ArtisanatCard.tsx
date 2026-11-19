@@ -3,9 +3,8 @@
  * Partagée par la page Artisanat et la page d'accueil. Accepte la réponse brute de l'API
  * (titre et images dans Oeuvre) comme une forme déjà simplifiée.
  */
-import React, { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useFavorisIds } from '@/hooks/useFavoris';
+import React from 'react';
+import { useFavoriCarte } from '@/hooks/useFavoris';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,11 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, Heart, ArrowRight, Palette, Hammer, Star } from 'lucide-react';
 import { LazyImage } from '@/components/shared';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { favoriService } from '@/services/favori.service';
 import { getLocalizedText } from '@/utils/getLocalizedText';
-import { useInviterConnexion } from '@/hooks/useInviterConnexion';
 import { artisanatPath } from '@/utils/slug';
 
 
@@ -71,14 +66,6 @@ interface ArtisanatCardProps {
 const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) => {
   const { t } = useTranslation();
   const { formatPrice, formatPriceRange } = useLocalizedNumber();
-  const { toast } = useToast();
-  const inviterConnexion = useInviterConnexion();
-  const { isAuthenticated } = useAuth();
-  // Cœur plein pour un vrai favori ; après un clic, le choix de la personne s'affiche aussitôt
-  const idsFavoris = useFavorisIds('artisanat');
-  const queryClient = useQueryClient();
-  const [choixFavori, setIsFavorite] = useState<boolean | null>(null);
-  const [favLoading, setFavLoading] = useState(false);
 
   // Extraire les données de l'artisanat (peut venir de Oeuvre ou directement)
   const rawTitre = artisanat.Oeuvre?.titre || artisanat.nom || artisanat.titre || 'Sans titre';
@@ -93,33 +80,10 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   const technique = getLocalizedText(artisanat.Technique?.nom) || '';
   const prix = artisanat.prix || artisanat.prix_min;
   const id = artisanat.id_artisanat || artisanat.id;
-  const isFavorite = choixFavori ?? Boolean(idsFavoris?.includes(id as number));
+  // Cœur : outil commun des cartes (état, connexion, message)
+  const { isFavorite, basculer: handleFavoriteClick } = useFavoriCarte('artisanat', id as number);
   const artisanatUrl = artisanatPath(Number(id), rawTitre);
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      inviterConnexion(t('auth.loginToFavorite', 'Connectez-vous pour ajouter aux favoris'));
-      return;
-    }
-    if (favLoading) return;
-    setFavLoading(true);
-    try {
-      const result = await favoriService.toggle('artisanat', id as number);
-      if (result.success) {
-        const added = result.data?.added ?? !isFavorite;
-        setIsFavorite(added);
-        queryClient.invalidateQueries({ queryKey: ['favoris'] });
-        toast({
-          title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
-        });
-      }
-    } catch {
-      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
-    } finally {
-      setFavLoading(false);
-    }
-  };
 
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
