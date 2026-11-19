@@ -14,6 +14,7 @@ const { Op } = require('sequelize');
 const { sansAccent } = require('../../utils/texte');
 
 const FICHIER = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'lieux.json');
+const FICHIER_NOMS = path.join(__dirname, '..', '..', 'data', 'geoalgeria', 'noms.json');
 const MAX_IMPORT = 500;
 const TOLERANCE = 0.001; // ~100 m, comme la création d'un site
 // Points de visite : une partie d'un site déjà sur Tala DZ (forum, arc, thermes de Timgad…), demande du 2026-11-17
@@ -32,7 +33,18 @@ const km = (a, b, c, d) => {
 let donnees = null;
 /** Lieux préparés (lus une fois) */
 function lieuxPrepares() {
-  if (!donnees) donnees = JSON.parse(fs.readFileSync(FICHIER, 'utf8'));
+  if (donnees) return donnees;
+  donnees = JSON.parse(fs.readFileSync(FICHIER, 'utf8'));
+  // Noms complétés et corrigés (deuxième langue, majuscules, mots étrangers : data/geoalgeria/noms.json) ;
+  // un nom jugé douteux (code, nom incompréhensible) n'est plus pré-coché
+  let noms = {};
+  try { noms = JSON.parse(fs.readFileSync(FICHIER_NOMS, 'utf8')); } catch { noms = {}; }
+  for (const p of donnees.lieux) {
+    const n = noms[p.id];
+    if (!n) continue;
+    p.nom = { ...p.nom, ...(n.fr ? { fr: n.fr } : {}), ...(n.ar ? { ar: n.ar } : {}) };
+    if (n.douteux) p.preCoche = false;
+  }
   return donnees;
 }
 
@@ -54,12 +66,19 @@ function distanceEdition(a, b) {
 }
 
 let communesCache = null;
+/** Requête des communes avec le code de leur wilaya (aussi lue par la migration d'import en masse) */
+const SQL_COMMUNES = `SELECT c.id_commune, c.commune_name_ascii AS ascii, c.nom, w.codeW
+      FROM communes c JOIN dairas d ON d.id_daira = c.dairaId JOIN wilayas w ON w.id_wilaya = d.wilayaId`;
+
 /** Communes de Tala DZ, avec le code de leur wilaya, indexées par nom sans accents (découpage à 69 wilayas, migration 20261232) */
 async function communesDuSite(models) {
   if (communesCache) return communesCache;
-  const lignes = await models.sequelize.query(`SELECT c.id_commune, c.commune_name_ascii AS ascii, c.nom, w.codeW
-      FROM communes c JOIN dairas d ON d.id_daira = c.dairaId JOIN wilayas w ON w.id_wilaya = d.wilayaId`,
-  { type: models.sequelize.QueryTypes.SELECT });
+  communesCache = indexCommunes(await models.sequelize.query(SQL_COMMUNES, { type: models.sequelize.QueryTypes.SELECT }));
+  return communesCache;
+}
+
+/** Index des communes par nom sans accents (français et arabe), pour communeDuPoint */
+function indexCommunes(lignes) {
   const index = new Map();
   const ajouter = (k, c) => { if (k) index.set(k, [...(index.get(k) || []), c]); };
   for (const c of lignes) {
@@ -69,8 +88,7 @@ async function communesDuSite(models) {
     const ar = typeof c.nom === 'string' ? c.nom : (c.nom?.ar || '');
     ajouter(cle(ar), c);
   }
-  communesCache = { lignes, index };
-  return communesCache;
+  return { lignes, index };
 }
 
 /**
@@ -129,9 +147,9 @@ async function apercu(models, codeW) {
       const site = siteParent(voisins, p);
       const proche = dejaPresent(voisins, p, site);
       return {
-        id: p.id, categorie: p.categorie, type: p.type, nom: p.nom, lat: p.lat, lng: p.lng,
+        id: p.id, categorie: p.categorie, type: p.type, nom: nomAvecCommune(p.nom, c), lat: p.lat, lng: p.lng,
         precision: p.precision, source: p.source, typePatrimoine: p.typePatrimoine,
-        preCoche: p.preCoche && !proche,
+        preCoche: p.preCoche && !proche && !pasPatrimoine(p.nom),
         commune: { id_commune: c.id_commune, nom: c.ascii },
         site: site ? { id_lieu: site.id_lieu, nom: site.nom } : null,
         deja: proche ? { id_lieu: proche.id_lieu, nom: proche.nom, statut: proche.statut } : null
@@ -196,11 +214,40 @@ function siteParent(voisins, p) {
 function dejaPresent(voisins, p, site) {
   const lui = estUnSiteExistant(voisins, p);
   if (lui) return lui;
+  // Même endroit (30 m) que n'importe quel lieu, site ou point : déjà là (un import rejoué ne recrée rien)
+  const memeEndroit = voisins.find((l) => km(p.lat, p.lng, Number(l.latitude), Number(l.longitude)) <= TOLERANCE_POINT_KM);
+  if (memeEndroit) return memeEndroit;
   if (site) {
     return voisins.find((l) => l.id_lieu_parent === site.id_lieu
       && (memeNom(l.nom, p.nom) || km(p.lat, p.lng, Number(l.latitude), Number(l.longitude)) <= TOLERANCE_POINT_KM)) || null;
   }
   return voisins.find((l) => Math.abs(Number(l.latitude) - p.lat) <= TOLERANCE && Math.abs(Number(l.longitude) - p.lng) <= TOLERANCE) || null;
+}
+
+// Noms qui ne désignent pas un lieu précis (« Ksar », « Ruines », « Monument aux martyrs ») : on y ajoute la commune,
+// comme on le dit en Algérie (« Ksar de Tamentit », « قصر تمنطيط »). 2026-11-19 : 118 lieux importés portaient un tel nom.
+const GENERIQUES = /^(site archeologique( important| romain)?|site historique|ruines?( romaines)?|vestiges?|tombeau|tombe|mausolee|monument( aux morts| aux martyrs| historique| commemoratif)?|memorial|stele|qoubba|koubba|ksar|kasbah|casbah|fort|bordj|cimetiere( des martyrs)?|zaouia|mosquee|porte|temple|thermes|necropole|gravures rupestres|peintures rupestres|tour|puits)$/;
+const motsSimples = (t) => sansAccent(t).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** Pas du patrimoine malgré le classement d'OpenStreetMap : banques, cités d'habitation, ronds-points, écoles primaires */
+const PAS_PATRIMOINE = /^(banque|cite|rond point|ecole primaire)\b/;
+const pasPatrimoine = (nom) => PAS_PATRIMOINE.test(motsSimples(nom?.fr || ''));
+
+/** Nom complété par la commune quand il est générique ; sinon inchangé */
+function nomAvecCommune(nom, commune) {
+  const fr = nom?.fr || '';
+  if (!commune || !GENERIQUES.test(motsSimples(fr))) return nom;
+  const communeFr = commune.ascii || '';
+  const communeAr = typeof commune.nom === 'string' ? commune.nom : (commune.nom?.ar || '');
+  const base = fr.replace(/\s+important$/i, '');
+  const de = /^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛ]/.test(communeFr) ? 'd’' : 'de ';
+  const ar = (nom.ar || '').replace(/\s+(مهم|هام)$/, '');
+  return {
+    ...nom,
+    ...(communeFr ? { fr: `${base} ${de}${communeFr}` } : {}),
+    // Ksar, borj, zaouïa, casbah : annexion sans article (« القصر » → « قصر تمنطيط ») ; autres : « ب » (« نصب الشهداء بكيمل »)
+    ...(ar && communeAr ? { ar: /^(ال)?(قصر|برج|زاوية|قصبة)$/.test(ar.trim()) ? `${ar.trim().replace(/^ال/, '')} ${communeAr}` : `${ar.trim()} ب${communeAr}` } : {})
+  };
 }
 
 /** Source citée sur la fiche (obligation de la licence ODbL pour OpenStreetMap) */
@@ -233,7 +280,7 @@ async function importer(models, patrimoineService, ids, idAdmin, { commePoints =
     if ((parent || estUnSiteExistant(voisins, p)) && dejaPresent(voisins, p, parent)) { bilan.deja++; continue; }
     try {
       const site = await patrimoineService.create({
-        nom: p.nom, latitude: p.lat, longitude: p.lng, typePatrimoine: p.typePatrimoine,
+        nom: nomAvecCommune(p.nom, c), latitude: p.lat, longitude: p.lng, typePatrimoine: p.typePatrimoine,
         communeId: c.id_commune, id_createur: idAdmin, referencesHistoriques: mentionSource(p),
         ...(parent ? { id_lieu_parent: parent.id_lieu } : {})
       }, { isModerator: true, enAttente: true });
@@ -278,4 +325,4 @@ async function decider(models, ids, decision) {
 /** Pour les tests : relire le fichier et les communes */
 function _vider() { donnees = null; communesCache = null; }
 
-module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, siteParent, dejaPresent, _vider };
+module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, siteParent, dejaPresent, indexCommunes, SQL_COMMUNES, nomAvecCommune, pasPatrimoine, lieuxPrepares, _vider };

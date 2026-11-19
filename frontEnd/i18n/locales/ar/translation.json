@@ -4904,7 +4904,8 @@
       "dansLaZone": "{{n}} موقعًا في المنطقة",
       "zoomerPlus": "و{{n}} أخرى: قرّب أو اختر ولاية.",
       "source": "مواقع الأماكن: Tala DZ و© مساهمو OpenStreetMap.",
-      "voirPoints": "عرض نقاط الزيارة"
+      "voirPoints": "عرض نقاط الزيارة",
+      "aCompleter": "بطاقة غير مكتملة: هل لديك صورة أو معلومة؟"
     }
   },
   "toasts": {

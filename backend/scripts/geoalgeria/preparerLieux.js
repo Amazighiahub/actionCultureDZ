@@ -94,12 +94,69 @@ function communeProche(lat, lng, wilaya) {
   };
 }
 
+// Frontières : contours des 69 wilayas (paquet geoalgeria, data/geojson/wilaya-boundaries.geojson, ODbL).
+// 2026-11-19 : les tuiles Overpass sont des rectangles ; sans ce contrôle, 626 lieux d'Espagne, de Tunisie, de Libye,
+// du Maroc, du Mali et du Niger étaient rattachés à la commune algérienne la plus proche.
+const contours = JSON.parse(fs.readFileSync(path.join(dossierCommunes, 'data', 'geojson', 'wilaya-boundaries.geojson'), 'utf8'))
+  .features.map((f) => ({
+    wilaya: Number(f.properties.code ?? f.properties.wilaya_code ?? f.properties.id),
+    polygones: f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates
+  }));
+const dansAnneau = (lng, lat, anneau) => {
+  let dedans = false;
+  for (let i = 0, j = anneau.length - 1; i < anneau.length; j = i++) {
+    const [xi, yi] = anneau[i];
+    const [xj, yj] = anneau[j];
+    if (((yi > lat) !== (yj > lat)) && (lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi)) dedans = !dedans;
+  }
+  return dedans;
+};
+const dansPolygone = (lng, lat, poly) => dansAnneau(lng, lat, poly[0]) && !poly.slice(1).some((trou) => dansAnneau(lng, lat, trou));
+/** Distance (km) d'un point au bord d'un polygone, en approchant chaque segment */
+function distanceAuBord(lng, lat, poly) {
+  let d = Infinity;
+  for (const anneau of poly) {
+    for (let i = 0, j = anneau.length - 1; i < anneau.length; j = i++) {
+      const [x1, y1] = anneau[j];
+      const [x2, y2] = anneau[i];
+      const dx = x2 - x1; const dy = y2 - y1;
+      const t = dx || dy ? Math.max(0, Math.min(1, ((lng - x1) * dx + (lat - y1) * dy) / (dx * dx + dy * dy))) : 0;
+      d = Math.min(d, distance(lat, lng, y1 + t * dy, x1 + t * dx));
+    }
+  }
+  return d;
+}
+const LITTORAL_KM = 2;
+/**
+ * Wilaya (découpage à 69) qui contient le point ; sur la côte (au nord du 34e parallèle), un fort ou un îlot à
+ * moins de 2 km du rivage compte aussi. null : hors d'Algérie.
+ */
+function wilayaDuPoint(lat, lng) {
+  for (const c of contours) if (c.polygones.some((poly) => dansPolygone(lng, lat, poly))) return c.wilaya;
+  if (lat < 34) return null;
+  let proche = null;
+  let d = LITTORAL_KM;
+  for (const c of contours) {
+    for (const poly of c.polygones) {
+      const e = distanceAuBord(lng, lat, poly);
+      if (e < d) { d = e; proche = c.wilaya; }
+    }
+  }
+  return proche;
+}
+
 /** Pré-coché : un vrai lieu, au nom lisible */
 const preCocher = (categorie, type, texte) => !estUnCode(texte)
   && (categorie === 'parc' || (categorie === 'historique' && !HISTORIQUES_DECOCHES.has(type)) || (categorie === 'attraction' && ATTRACTIONS_COCHEES.has(type)));
 
 const lieux = [];
-const ajouter = (l) => lieux.push({ ...l, typePatrimoine: TYPE_PATRIMOINE[l.type] || 'monument', preCoche: preCocher(l.categorie, l.type, l.nom.fr || l.nom.ar || '') });
+let horsAlgerie = 0;
+/** Ajoute un lieu situé en Algérie, rattaché à la commune la plus proche DANS sa wilaya */
+const ajouter = (l) => {
+  const wilaya = wilayaDuPoint(l.lat, l.lng);
+  if (!wilaya) { horsAlgerie++; return; }
+  lieux.push({ ...l, commune: communeProche(l.lat, l.lng, wilaya), typePatrimoine: TYPE_PATRIMOINE[l.type] || 'monument', preCoche: preCocher(l.categorie, l.type, l.nom.fr || l.nom.ar || '') });
+};
 
 // Sans attractions (décision de la responsable, 2026-11-17 : manèges, quartiers, faux points)
 if (dossierOverpass) {
@@ -124,8 +181,7 @@ if (dossierOverpass) {
       if (!nom.fr && !nom.ar) continue;
       ajouter({
         id: `osm-${e.type}-${e.id}`, categorie, type, nom, lat, lng, precision: 'exact', source: 'osm',
-        refs: { osm: cleOsm, ...(t.wikidata ? { wikidata: t.wikidata } : {}) },
-        commune: communeProche(lat, lng, null)
+        refs: { osm: cleOsm, ...(t.wikidata ? { wikidata: t.wikidata } : {}) }
       });
     }
   }
@@ -133,13 +189,13 @@ if (dossierOverpass) {
   for (const e of lire(dossierTourisme, 'historic.json').filter((x) => x.source === 'wikidata')) {
     if (lieux.some((l) => distance(l.lat, l.lng, e.lat, e.lng) < 0.2)) continue;
     ajouter({ id: e.id, categorie: 'historique', type: e.type || '', nom: nomMultilingue(e), lat: e.lat, lng: e.lng,
-      precision: e.geo_precision, source: e.source, refs: e.refs || {}, commune: communeProche(e.lat, e.lng, e.wilaya_code) });
+      precision: e.geo_precision, source: e.source, refs: e.refs || {} });
   }
 } else {
   for (const [fichier, categorie] of [['historic.json', 'historique'], ['parks.json', 'parc']]) {
     for (const e of lire(dossierTourisme, fichier)) {
       ajouter({ id: e.id, categorie, type: e.type || e.category || '', nom: nomMultilingue(e), lat: e.lat, lng: e.lng,
-        precision: e.geo_precision, source: e.source, refs: e.refs || {}, commune: communeProche(e.lat, e.lng, e.wilaya_code) });
+        precision: e.geo_precision, source: e.source, refs: e.refs || {} });
     }
   }
 }
@@ -150,4 +206,4 @@ const version = JSON.parse(fs.readFileSync(path.join(dossierTourisme, 'package.j
 const source = dossierOverpass ? `OpenStreetMap (Overpass) + Wikidata via @geoalgeria/tourisme ${version}` : `@geoalgeria/tourisme ${version}`;
 fs.writeFileSync(sortie, JSON.stringify({ source, prepare_le: new Date().toISOString().slice(0, 10), lieux }));
 const n = (f) => lieux.filter(f).length;
-console.log(`${lieux.length} lieux, ${n((l) => l.preCoche)} pré-cochés, sans commune : ${n((l) => !l.commune)}, commune à plus de 30 km : ${n((l) => l.commune && l.commune.km > 30)}`);
+console.log(`${lieux.length} lieux en Algérie (${horsAlgerie} hors d'Algérie écartés), ${n((l) => l.preCoche)} pré-cochés, sans commune : ${n((l) => !l.commune)}, commune à plus de 30 km : ${n((l) => l.commune && l.commune.km > 30)}`);

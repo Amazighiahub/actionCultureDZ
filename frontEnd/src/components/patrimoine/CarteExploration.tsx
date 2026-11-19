@@ -211,7 +211,7 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className={`relative h-[60vh] min-h-[380px] overflow-hidden rounded-lg border ${vue === 'liste' ? 'hidden lg:block' : ''}`}>
-          <MapContainer bounds={ALGERIE} className="h-full w-full" zoomControl={false} zoomSnap={0.5} scrollWheelZoom>
+          <MapContainer bounds={ALGERIE} className="h-full w-full" zoomControl={false} zoomSnap={1} scrollWheelZoom>
             <FondDeCarte />
             <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
             <Couches sites={sites} points={points} onChoisir={setChoisi} cadrage={cadrage} centrage={centrage} onZone={(b, z) => setZone({ b, z })} />
@@ -230,6 +230,10 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
                 <p className="text-xs text-muted-foreground">{nomType(choisi.type)}</p>
                 {parent && <p className="text-xs">{t('patrimoine.carte.partieDe', { site: parent.nom, defaultValue: 'Partie de « {{site}} »' })}</p>}
                 {choisi.nbPoints > 0 && <Badge variant="secondary">{t('patrimoine.carte.nbPoints', { n: choisi.nbPoints, defaultValue: '{{n}} points de visite' })}</Badge>}
+                {/* Lieu importé sans photo : invitation à le compléter (la fiche propose « Proposer une information ») */}
+                {!choisi.image && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">{t('patrimoine.carte.aCompleter', 'Fiche à compléter : vous avez une photo ou une information ?')}</p>
+                )}
                 <div className="flex flex-wrap gap-2 pt-1">
                   {choisi.nbPoints > 0 && (
                     <Button size="sm" variant="secondary" onClick={() => centrer(choisi, ZOOM_POINTS + 1)}>{t('patrimoine.carte.voirPoints', 'Voir les points de visite')}</Button>

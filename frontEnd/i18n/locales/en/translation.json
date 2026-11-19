@@ -4698,7 +4698,8 @@
       "dansLaZone": "{{n}} sites in this area",
       "zoomerPlus": "And {{n}} more: zoom in or choose a wilaya.",
       "source": "Place positions: Tala DZ and © OpenStreetMap contributors.",
-      "voirPoints": "Show the visit points"
+      "voirPoints": "Show the visit points",
+      "aCompleter": "This page needs completing: do you have a photo or information?"
     }
   },
   "toasts": {

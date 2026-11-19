@@ -650,12 +650,15 @@ const PatrimoineDetail = () => {
             )}
 
             {/* Guide audio multilingue */}
-            {/* Membre (ni équipe ni professionnel) : il propose ses informations à l'équipe */}
-            {isAuthenticated && !peutEnrichir && (
+            {/* Membre (ni équipe ni professionnel) : il propose ses informations à l'équipe. Visiteur : même invitation
+                (formulaire de contact ouvert à tous ; 2026-11-19 : des centaines de fiches importées sont à compléter) */}
+            {!peutEnrichir && (
               <div className="rounded-lg border border-dashed p-4 text-sm flex flex-wrap items-center justify-between gap-3">
                 <span className="text-muted-foreground">{t('patrimoine.proposerInfo.texte', 'Vous connaissez l’histoire de ce lieu, une tradition, une photo ? Envoyez-la à l’équipe Tala DZ.')}</span>
                 <Button asChild variant="outline" size="sm">
-                  <Link to={lienPropositionLieu(getLocalizedText(site.nom, lang))}>{t('patrimoine.proposerInfo.bouton', 'Proposer une information')}</Link>
+                  <Link to={lienPropositionLieu(getLocalizedText(site.nom, lang))}>
+                    {t('patrimoine.proposerInfo.bouton', 'Proposer une information')}
+                  </Link>
                 </Button>
               </div>
             )}

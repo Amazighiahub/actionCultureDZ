@@ -89,3 +89,24 @@ describe('Import GeoAlgeria : points de visite d’un site existant (Timgad)', (
     expect(g.dejaPresent(voisins, point('Forum', 35.4849, 6.4660), timgad)).toBeNull();
   });
 });
+
+describe('Import GeoAlgeria : qualité des noms (2026-11-19)', () => {
+  test('nom générique complété par la commune, en français et en arabe', () => {
+    expect(g.nomAvecCommune({ fr: 'Ksar', ar: 'القصر' }, { ascii: 'Zaouiet Kounta', nom: 'زاوية كنتة' })).toEqual({ fr: 'Ksar de Zaouiet Kounta', ar: 'قصر زاوية كنتة' });
+    expect(g.nomAvecCommune({ fr: 'Monument aux martyrs', ar: 'نصب الشهداء' }, { ascii: 'Kimmel', nom: 'كيمل' })).toEqual({ fr: 'Monument aux martyrs de Kimmel', ar: 'نصب الشهداء بكيمل' });
+    expect(g.nomAvecCommune({ fr: 'Site archéologique important', ar: 'موقع أثري مهم' }, { ascii: 'Arris', nom: 'أريس' })).toEqual({ fr: 'Site archéologique d’Arris', ar: 'موقع أثري بأريس' });
+    // Un vrai nom ne change pas
+    expect(g.nomAvecCommune({ fr: 'Arc de Trajan', ar: 'قوس تراجان' }, { ascii: 'Timgad', nom: 'تيمقاد' })).toEqual({ fr: 'Arc de Trajan', ar: 'قوس تراجان' });
+  });
+
+  test('banques, cités, ronds-points, écoles primaires : pas du patrimoine', () => {
+    for (const n of ['Banque de développement local', 'Cité Khalla', 'Rond-point du 20 Avril', 'École primaire de Souk Ouadda']) expect(g.pasPatrimoine({ fr: n })).toBe(true);
+    for (const n of ['Villa des Fresques', 'Ancien bordj siège de la Jemâa', 'Siège de Laghouat']) expect(g.pasPatrimoine({ fr: n })).toBe(false);
+  });
+
+  test('un lieu au même endroit (30 m) qu’un lieu existant n’est jamais recréé, même comme point de visite', () => {
+    const site = { id_lieu: 24, nom: { fr: 'Timgad' }, latitude: '35.4836', longitude: '6.4668', typePatrimoine: 'site_archeologique', id_lieu_parent: null };
+    const ancienSite = { id_lieu: 900, nom: '{"fr":"Forum"}', latitude: '35.48491', longitude: '6.46601', id_lieu_parent: null };
+    expect(g.dejaPresent([site, ancienSite], { categorie: 'historique', type: 'archaeological_site', nom: { fr: 'Forum romain' }, lat: 35.4849, lng: 6.4660 }, site)?.id_lieu).toBe(900);
+  });
+});
