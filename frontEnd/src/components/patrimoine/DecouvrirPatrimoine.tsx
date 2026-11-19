@@ -6,7 +6,7 @@
  * Mêmes données que la carte (useLieuxCarte), aucune requête de plus.
  */
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Star, LocateFixed, Loader2, MapPin, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { useWilayas } from '@/hooks/useGeographie';
 import { useLieuxCarte, incontournables, presDe, sitesParWilaya } from '@/hooks/useLieuxCarte';
 import { couleurType } from '@/utils/couleursPatrimoine';
+import { economieDonneesActive } from '@/components/shared/CarteALaDemande';
 
 const Titre: React.FC<{ icone: React.ReactNode; children: React.ReactNode }> = ({ icone, children }) => (
   <h2 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold">{icone}{children}</h2>
@@ -23,7 +24,10 @@ const DecouvrirPatrimoine: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
-  const { lieux } = useLieuxCarte();
+  const [params] = useSearchParams();
+  // Économie de données : rien n'est téléchargé pour ces rubriques ; elles apparaissent si la carte est demandée
+  const [economie] = useState(economieDonneesActive);
+  const { lieux } = useLieuxCarte({ actif: !economie });
   const { wilayas } = useWilayas();
   const [proches, setProches] = useState<ReturnType<typeof presDe> | null>(null);
   const [recherche, setRecherche] = useState<'attente' | 'refus' | null>(null);
@@ -46,8 +50,12 @@ const DecouvrirPatrimoine: React.FC = () => {
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
     );
   };
+  // Les autres réglages de la page (type, recherche) sont gardés ; un nouveau clic sur la même wilaya
+  // recentre aussi la carte (nouvelle entrée d'historique, lue par la carte)
   const voirWilaya = (id: number) => {
-    navigate(`/patrimoine?wilaya=${id}`);
+    const suite = new URLSearchParams(params);
+    suite.set('wilaya', String(id));
+    navigate({ pathname: '/patrimoine', search: `?${suite.toString()}` });
     document.getElementById('carte-patrimoine')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -70,7 +78,7 @@ const DecouvrirPatrimoine: React.FC = () => {
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-2 font-semibold leading-tight" dir="auto">{s.nom}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[t(`patrimoine.types.${s.type}`, s.type), s.nbPoints ? t('patrimoine.carte.nbPoints', { n: s.nbPoints, defaultValue: '{{n}} points de visite' }) : ''].filter(Boolean).join(' · ')}
+                    {[t(`patrimoine.types.${s.type}`, s.type), s.nbPoints ? (s.nbPoints === 1 ? t('patrimoine.carte.nbPoint', '1 point de visite') : t('patrimoine.carte.nbPoints', { n: s.nbPoints, defaultValue: '{{n}} points de visite' })) : ''].filter(Boolean).join(' · ')}
                   </p>
                 </div>
               </Link>

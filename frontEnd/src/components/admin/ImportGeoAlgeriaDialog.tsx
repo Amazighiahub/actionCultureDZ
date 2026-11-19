@@ -5,8 +5,9 @@
  * sont grisés), importer → les lieux sont créés en brouillon, invisibles.
  * Onglet « À publier » : brouillons à relire, à publier ou à écarter.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, MapPin, Download, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,34 +48,52 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
 
+  // Erreurs de chargement montrées (avant : listes vides sans explication)
+  const signaler = useCallback((e: unknown) => setMessage({ ok: false, texte: messageErreurServeur(e, echec) }), [echec]);
+  // Lieux publiés ou créés : la carte et les rubriques de la page Patrimoine sont relues
+  const queryClient = useQueryClient();
+  const apresChangement = () => { onImported(); void queryClient.invalidateQueries({ queryKey: ['carte-exploration'] }); };
+
   const chargerBrouillons = useCallback(() => {
     httpClient.get<Brouillon[]>('/patrimoine/admin/brouillons')
-      .then((r) => { setBrouillons(r.success && Array.isArray(r.data) ? r.data : []); setChoixBrouillons(new Set()); })
-      .catch(() => setBrouillons([]));
-  }, []);
+      .then((r) => {
+        if (!r.success || !Array.isArray(r.data)) throw r;
+        setBrouillons(r.data); setChoixBrouillons(new Set());
+      })
+      .catch((e) => { setBrouillons([]); signaler(e); });
+  }, [signaler]);
 
   useEffect(() => {
     if (!open) return;
     setMessage(null);
     httpClient.get<WilayaPoints[]>('/patrimoine/import-geoalgeria/wilayas')
-      .then((r) => { if (r.success && r.data) setWilayas(r.data.filter((w) => w.points > 0)); })
-      .catch(() => {});
+      .then((r) => {
+        if (!r.success || !Array.isArray(r.data)) throw r;
+        setWilayas(r.data.filter((w) => w.points > 0));
+      })
+      .catch(signaler);
     chargerBrouillons();
-  }, [open, chargerBrouillons]);
+  }, [open, chargerBrouillons, signaler]);
 
-  // Points de la wilaya (rechargés après un import : les lieux créés passent « déjà sur Tala DZ »)
+  // Points de la wilaya (rechargés après un import : les lieux créés passent « déjà sur Tala DZ »).
+  // Seule la réponse de la dernière wilaya demandée compte (avant : une réponse lente d'une wilaya
+  // précédente remplaçait la liste, et l'import partait avec les mauvais lieux cochés).
+  const demande = useRef(0);
   const chargerPoints = useCallback((code: string) => {
+    const numero = ++demande.current;
     setPoints(null); setCoches(new Set());
     if (!code) return;
     httpClient.get<{ points: PointGeo[] }>('/patrimoine/import-geoalgeria', { wilaya: code })
       .then((r) => {
-        const liste = r.success && r.data ? r.data.points : [];
+        if (numero !== demande.current) return;
+        if (!r.success || !r.data) throw r;
+        const liste = r.data.points;
         setPoints(liste);
         setCoches(new Set(liste.filter((p) => p.preCoche && !p.deja).map((p) => p.id)));
         setEnPoints(new Set(liste.filter((p) => p.site).map((p) => p.id)));
       })
-      .catch((e) => { setPoints([]); setMessage({ ok: false, texte: messageErreurServeur(e, echec) }); });
-  }, [echec]);
+      .catch((e) => { if (numero !== demande.current) return; setPoints([]); signaler(e); });
+  }, [signaler]);
 
   useEffect(() => { setMessage(null); chargerPoints(wilaya); }, [wilaya, chargerPoints]);
 
@@ -97,7 +116,7 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
         crees: r.data.crees, deja: r.data.deja, points: r.data.points ?? 0,
         defaultValue: '{{crees}} lieu(x) créé(s) en brouillon, dont {{points}} point(s) de visite ; {{deja}} déjà présent(s), non recréé(s). Relisez-les dans l’onglet « À publier ».'
       }) });
-      onImported();
+      apresChangement();
       chargerBrouillons();
       chargerPoints(wilaya);
     } catch (e) {
@@ -115,7 +134,7 @@ const ImportGeoAlgeriaDialog: React.FC<{ open: boolean; onOpenChange: (o: boolea
       setMessage({ ok: true, texte: decision === 'publier'
         ? t('admin.patrimoine.geo.publies', { n: r.data.modifies, defaultValue: '{{n}} lieu(x) publié(s).' })
         : t('admin.patrimoine.geo.ecartes', { n: r.data.modifies, defaultValue: '{{n}} lieu(x) écarté(s).' }) });
-      onImported();
+      apresChangement();
       chargerBrouillons();
     } catch (e) {
       setMessage({ ok: false, texte: messageErreurServeur(e, echec) });

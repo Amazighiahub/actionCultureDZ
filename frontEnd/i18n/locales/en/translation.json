@@ -4699,7 +4699,10 @@
       "zoomerPlus": "And {{n}} more: zoom in or choose a wilaya.",
       "source": "Place positions: Tala DZ and © OpenStreetMap contributors.",
       "voirPoints": "Show the visit points",
-      "aCompleter": "This page needs completing: do you have a photo or information?"
+      "aCompleter": "This page needs completing: do you have a photo or information?",
+      "erreur": "The places could not be loaded. Check your connection.",
+      "aucunLieu": "No place in this area yet.",
+      "nbPoint": "1 visit point"
     },
     "decouvrir": {
       "incontournables": "Must-see",

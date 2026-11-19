@@ -438,7 +438,8 @@
     "Colonne « {t1} » introuvable dans la feuille « {t2} »": "Column “{t1}” not found in the sheet “{t2}”",
     "Vous ne pouvez pas valider {l1} vous-même : un autre membre de l’équipe doit le faire.": "You cannot approve {l1} yourself: another team member must do it.",
     "Vous avez atteint la limite de {n1} liens": "You have reached the limit of {n1} links",
-    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} photos at most per event: remove one first"
+    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} photos at most per event: remove one first",
+    "{n1} lieux au plus par import": "{n1} places at most per import"
   },
   "_libelles": {
     "Adresse": "Address",
@@ -517,5 +518,6 @@
   "Cette activité ne fait pas partie de cet événement": "This activity is not part of this event",
   "Wilaya invalide": "Invalid wilaya",
   "Choisissez au moins un lieu": "Choose at least one place",
-  "${MAX_IMPORT} lieux au plus par import": "${MAX_IMPORT} places at most per import"
+  "${MAX_IMPORT} lieux au plus par import": "${MAX_IMPORT} places at most per import",
+  "L’événement choisi n’est pas encore public : publiez-le d’abord": "The chosen event is not public yet: publish it first"
 }

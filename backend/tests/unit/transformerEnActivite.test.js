@@ -12,7 +12,10 @@ function modeles({ source = {}, cible = {}, activites = [], inscritsSource = [],
     date_debut: '2026-11-20T09:00:00.000Z', date_fin: '2026-11-20T11:30:00.000Z', id_lieu: 4, statut: 'publie', ...source });
   const dst = ligne({ id_evenement: 20, id_user: 37, nom_evenement: { fr: 'Festival' }, statut: 'publie', ...cible });
   const query = jest.fn().mockResolvedValue([]);
-  const lignesInscritsSource = inscritsSource.map((id_user) => ligne({ id_user }));
+  // Une inscription : un numéro de personne, ou { id_user, statut_participation, date_paiement }
+  const inscription = (i) => ligne(typeof i === 'object' ? { statut_participation: 'inscrit', ...i } : { id_user: i, statut_participation: 'inscrit' });
+  const lignesInscritsSource = inscritsSource.map(inscription);
+  const lignesInscritsCible = inscritsCible.map(inscription);
   const models = {
     Evenement: {
       findAll: jest.fn().mockResolvedValue([src, dst].sort((a, b) => a.id_evenement - b.id_evenement)),
@@ -28,8 +31,8 @@ function modeles({ source = {}, cible = {}, activites = [], inscritsSource = [],
     Media: { update: jest.fn().mockResolvedValue([1]), count: jest.fn().mockResolvedValue(2) },
     EvenementUser: {
       findAll: jest.fn(async ({ where, raw }) => {
-        if (where.id_evenement === 20) return inscritsCible.map((id_user) => ({ id_user }));
-        return raw ? inscritsSource.map((id_user) => ({ id_user, statut_participation: 'inscrit' })) : lignesInscritsSource;
+        const lignes = where.id_evenement === 20 ? lignesInscritsCible : lignesInscritsSource;
+        return raw ? lignes.map(({ id_user, statut_participation }) => ({ id_user, statut_participation })) : lignes;
       })
     },
     EvenementOeuvre: { findAll: jest.fn().mockResolvedValue([]) },
@@ -39,7 +42,7 @@ function modeles({ source = {}, cible = {}, activites = [], inscritsSource = [],
     },
     Vue: { getTableName: () => 'vue' }
   };
-  return { models, src, dst, query, lignesInscritsSource };
+  return { models, src, dst, query, lignesInscritsSource, lignesInscritsCible };
 }
 
 describe('Transformer un événement en activité', () => {
@@ -65,6 +68,28 @@ describe('Transformer un événement en activité', () => {
     await expect(apercu(modeles().models, 10, 10)).rejects.toMatchObject({ code: 'MEME_EVENEMENT' });
     await expect(apercu(modeles({ cible: { id_user: 8 } }).models, 10, 20)).rejects.toMatchObject({ code: 'ORGANISATEURS_DIFFERENTS' });
     await expect(transformer(modeles({ cible: { statut: 'annule' } }).models, 10, 20)).rejects.toMatchObject({ code: 'CIBLE_ANNULEE' });
+  });
+
+  test('anti-retour 2026-11-19 : destination en brouillon, en attente ou sans organisateur refusée', async () => {
+    for (const statut of ['brouillon', 'en_attente']) {
+      await expect(apercu(modeles({ cible: { statut } }).models, 10, 20)).rejects.toMatchObject({ code: 'CIBLE_NON_PUBLIQUE' });
+    }
+    await expect(apercu(modeles({ source: { id_user: null }, cible: { id_user: null } }).models, 10, 20)).rejects.toMatchObject({ code: 'ORGANISATEURS_DIFFERENTS' });
+    await expect(apercu(modeles({ cible: { statut: 'termine' } }).models, 10, 20)).resolves.toBeTruthy();
+  });
+
+  test('anti-retour 2026-11-19 : une personne inscrite aux deux garde l’inscription la plus forte (payée)', async () => {
+    const { models, lignesInscritsSource, lignesInscritsCible } = modeles({
+      inscritsSource: [{ id_user: 1, statut_participation: 'confirme', date_paiement: '2026-11-10' }, { id_user: 2, statut_participation: 'annule' }],
+      inscritsCible: [{ id_user: 1, statut_participation: 'annule' }, { id_user: 2, statut_participation: 'inscrit' }]
+    });
+    await transformer(models, 10, 20);
+    // Personne 1 : l'inscription payée de l'événement en double remplace l'annulation
+    expect(lignesInscritsCible[0].destroy).toHaveBeenCalled();
+    expect(lignesInscritsSource[0].update).toHaveBeenCalledWith({ id_evenement: 20 }, expect.anything());
+    // Personne 2 : son inscription à l'événement gardé reste, l'annulation part
+    expect(lignesInscritsSource[1].destroy).toHaveBeenCalled();
+    expect(lignesInscritsCible[1].destroy).not.toHaveBeenCalled();
   });
 
   test('aperçu : inscrits déplacés et déjà inscrits comptés à part', async () => {

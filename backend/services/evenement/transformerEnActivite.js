@@ -11,9 +11,15 @@
  * ses inscrits sont prévenus par l'appelant (décision de la responsable : toujours prévenir).
  */
 const { texteLisible } = require('../../helpers/i18n');
+const { EVENEMENT_PUBLIC } = require('../../constants/statuts');
 
 const UNE_HEURE = 60 * 60 * 1000;
 const STATUTS_A_PREVENIR = ['inscrit', 'confirme', 'present'];
+/** Événements qui peuvent recevoir l'activité : publics et non annulés (pas de brouillon ni d'attente) */
+const CIBLES_POSSIBLES = EVENEMENT_PUBLIC.filter((st) => st !== 'annule');
+/** Force d'une inscription : quand une personne est inscrite aux deux, la plus forte est gardée */
+const FORCE = { present: 5, confirme: 4, inscrit: 3, absent: 2, invitation: 1, annule: 0 };
+const force = (l) => (FORCE[l.statut_participation] ?? 0) * 2 + (l.date_paiement ? 1 : 0);
 
 function erreur(message, statusCode, code) {
   return Object.assign(new Error(message), { statusCode, code });
@@ -67,10 +73,13 @@ async function lirePaire(models, idSource, idCible, options = {}) {
   const src = lignes.find((e) => e.id_evenement === source);
   const dst = lignes.find((e) => e.id_evenement === cible);
   if (!src || !dst) throw erreur('Événement introuvable', 404, 'NOT_FOUND');
-  if (Number(src.id_user) !== Number(dst.id_user)) {
+  if (!src.id_user || Number(src.id_user) !== Number(dst.id_user)) {
     throw erreur('Les deux événements doivent avoir le même organisateur', 400, 'ORGANISATEURS_DIFFERENTS');
   }
   if (dst.statut === 'annule') throw erreur('L’événement choisi est annulé : choisissez-en un autre', 400, 'CIBLE_ANNULEE');
+  if (!CIBLES_POSSIBLES.includes(dst.statut)) {
+    throw erreur('L’événement choisi n’est pas encore public : publiez-le d’abord', 400, 'CIBLE_NON_PUBLIQUE');
+  }
   return { src, dst };
 }
 
@@ -78,9 +87,10 @@ async function lirePaire(models, idSource, idCible, options = {}) {
 async function cibles(models, idSource) {
   const src = await models.Evenement.findByPk(Number(idSource), { attributes: ['id_evenement', 'id_user'] });
   if (!src) throw erreur('Événement introuvable', 404, 'NOT_FOUND');
+  if (!src.id_user) return [];
   const { Op } = require('sequelize');
   return models.Evenement.findAll({
-    where: { id_user: src.id_user, id_evenement: { [Op.ne]: src.id_evenement }, statut: { [Op.ne]: 'annule' } },
+    where: { id_user: src.id_user, id_evenement: { [Op.ne]: src.id_evenement }, statut: CIBLES_POSSIBLES },
     attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut'],
     order: [['date_debut', 'DESC']], limit: 50, raw: true
   });
@@ -108,14 +118,18 @@ async function apercu(models, idSource, idCible) {
   };
 }
 
-/** Déplace une table de liaison à clé unique : une ligne déjà présente côté gardé l'emporte */
-async function deplacerSansDoublon(modele, idSource, idCible, cle, transaction) {
+/**
+ * Déplace une table de liaison à clé unique. Quand la ligne existe des deux côtés, `garderSource(src, dst)`
+ * décide laquelle reste (par défaut celle de l'événement gardé) ; l'autre est supprimée.
+ */
+async function deplacerSansDoublon(modele, idSource, idCible, cle, transaction, garderSource = () => false) {
   if (!modele) return;
-  const gardees = new Set((await modele.findAll({ where: { id_evenement: idCible }, attributes: [cle], raw: true, transaction }))
-    .map((l) => l[cle]));
+  const gardees = new Map((await modele.findAll({ where: { id_evenement: idCible }, transaction })).map((l) => [l[cle], l]));
   for (const ligne of await modele.findAll({ where: { id_evenement: idSource }, transaction })) {
-    if (gardees.has(ligne[cle])) await ligne.destroy({ transaction });
-    else await ligne.update({ id_evenement: idCible }, { transaction });
+    const deja = gardees.get(ligne[cle]);
+    if (deja && !garderSource(ligne, deja)) { await ligne.destroy({ transaction }); continue; }
+    if (deja) await deja.destroy({ transaction });
+    await ligne.update({ id_evenement: idCible }, { transaction });
   }
 }
 
@@ -148,11 +162,12 @@ async function transformer(models, idSource, idCible) {
       await deplacer(Media);
     }
 
-    // 3. Inscrits (une personne déjà inscrite à l'événement gardé garde son inscription) et œuvres
+    // 3. Inscrits : une personne inscrite aux deux garde l'inscription la plus forte (présente, confirmée,
+    //    inscrite… et, à force égale, celle qui est payée) ; puis les œuvres
     const aPrevenir = (await EvenementUser.findAll({
       where: { id_evenement: s, statut_participation: STATUTS_A_PREVENIR }, attributes: ['id_user'], raw: true, transaction
     })).map((l) => l.id_user);
-    await deplacerSansDoublon(EvenementUser, s, c, 'id_user', transaction);
+    await deplacerSansDoublon(EvenementUser, s, c, 'id_user', transaction, (a, b) => force(a) > force(b));
     // Articles et œuvres de l'événement en double : affichés sous l'activité qu'il devient
     if (nouvelle && EvenementOeuvre?.rawAttributes?.id_programme) {
       await EvenementOeuvre.update({ id_programme: nouvelle.id_programme }, { where: { id_evenement: s, id_programme: null }, transaction });
@@ -183,4 +198,4 @@ async function transformer(models, idSource, idCible) {
   });
 }
 
-module.exports = { cibles, apercu, transformer, jourEtHeure, activiteDepuis };
+module.exports = { cibles, apercu, transformer, jourEtHeure, activiteDepuis, force, CIBLES_POSSIBLES };

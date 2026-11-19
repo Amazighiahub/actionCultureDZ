@@ -1,5 +1,5 @@
-// Attention : la descente supprime les lieux créés par cet import (liste gardée dans import_lieux_osm), même s'ils
-// ont été complétés depuis (photos, textes).
+// Attention : la descente supprime les lieux créés par cet import (liste gardée dans import_lieux_osm), sauf ceux
+// déjà utilisés depuis (voir lieuxUtilises) ; un texte de fiche modifié ne suffit pas à garder un lieu.
 'use strict';
 
 /**
@@ -14,6 +14,8 @@
 const g = require('../services/patrimoine/importGeoAlgeria');
 
 const TYPES_POINT = new Set(['archaeological_site', 'ruins', 'temple', 'library', 'city_gate', 'citywalls', 'heritage', 'building', 'theatre']);
+const { lieuxUtilises } = require('../services/patrimoine/lieuxUtilises');
+
 /** Grands ensembles d'abord (Wikidata, zones dessinées), pour que leurs parties s'y rattachent */
 const rang = (p) => (p.refs?.wikidata ? 0 : 1) * 10 + (String(p.refs?.osm || '').startsWith('relation') ? 0 : String(p.refs?.osm || '').startsWith('way') ? 1 : 2);
 
@@ -73,6 +75,17 @@ module.exports = {
     const [table] = await qi.sequelize.query("SHOW TABLES LIKE 'import_lieux_osm'");
     if (!table.length) return;
     await qi.sequelize.transaction(async (transaction) => {
+      // Lieux déjà utilisés depuis l'import (services, photos, événements, parcours, favoris…) : jamais supprimés,
+      // la suppression en cascade aurait emporté ce qui a été ajouté dessus (2026-11-19)
+      // Jusqu'à stabilité : un point de visite gardé garde aussi son site importé
+      const tous = [];
+      const listes = async () => (await qi.sequelize.query('SELECT id_lieu FROM import_lieux_osm', { transaction }))[0].map((l) => l.id_lieu);
+      for (let gardes = await lieuxUtilises(qi.sequelize, await listes(), transaction); gardes.length;
+        gardes = await lieuxUtilises(qi.sequelize, await listes(), transaction)) {
+        await qi.sequelize.query('DELETE FROM import_lieux_osm WHERE id_lieu IN (:gardes)', { replacements: { gardes }, transaction });
+        tous.push(...gardes);
+      }
+      if (tous.length) console.log(`[20261233] ${tous.length} lieu(x) importé(s) déjà utilisé(s), gardé(s) : ${tous.join(', ')}`);
       // Points de visite d'abord, puis les sites ; leurs fiches (detail_lieux) avec eux
       for (const condition of ['l.id_lieu_parent IS NOT NULL', 'l.id_lieu_parent IS NULL']) {
         await qi.sequelize.query(`DELETE d FROM detail_lieux d JOIN import_lieux_osm i ON i.id_lieu = d.id_lieu JOIN lieu l ON l.id_lieu = i.id_lieu WHERE ${condition}`, { transaction });

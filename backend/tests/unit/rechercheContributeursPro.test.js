@@ -5,7 +5,8 @@
  */
 jest.mock('../../services/serviceContainer', () => ({
   intervenantService: { searchIntervenants: jest.fn() },
-  userService: { findValidatedProfessionals: jest.fn() }
+  userService: { findValidatedProfessionals: jest.fn() },
+  models: { TypeUser: { findAll: jest.fn().mockResolvedValue([{ id_type_user: 3, nom_type: { fr: 'Artiste', ar: 'فنان' } }]) } }
 }));
 const container = require('../../services/serviceContainer');
 const controller = require('../../controllers/intervenantController');
@@ -24,7 +25,7 @@ describe('Recherche de contributeurs : fiches d’auteurs et professionnels', ()
     ]);
     container.userService.findValidatedProfessionals.mockResolvedValue({ data: [
       { toJSON: () => ({ id_user: 37, nom: 'Benali', prenom: 'Karim' }) },
-      { toJSON: () => ({ id_user: 52, nom: 'Benaissa', prenom: 'Samia', entreprise: 'Atelier Samia', TypeUser: { nom_type: 'Artiste' } }) }
+      { toJSON: () => ({ id_user: 52, nom: 'Benaissa', prenom: 'Samia', entreprise: 'Atelier Samia', id_type_user: 3 }) }
     ] });
     const res = reponse();
     await controller.searchIntervenants({ query: { q: 'Ben' }, lang: 'fr' }, res);
@@ -32,7 +33,7 @@ describe('Recherche de contributeurs : fiches d’auteurs et professionnels', ()
     expect(data).toHaveLength(2);
     expect(data[0]).toMatchObject({ id: 4, source: 'intervenant' });
     expect(data[0]).not.toHaveProperty('id_user');
-    expect(data[1]).toMatchObject({ id: null, id_user: 52, source: 'professionnel', label: 'Samia Benaissa', organisation: 'Atelier Samia' });
+    expect(data[1]).toMatchObject({ id: null, id_user: 52, source: 'professionnel', label: 'Samia Benaissa', organisation: 'Atelier Samia', titre: 'Artiste' });
     expect(container.userService.findValidatedProfessionals).toHaveBeenCalledWith(expect.objectContaining({ q: 'Ben', page: 1 }));
   });
 

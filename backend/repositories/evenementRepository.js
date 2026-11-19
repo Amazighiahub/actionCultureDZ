@@ -797,7 +797,8 @@ class EvenementRepository extends BaseRepository {
   async getOeuvresOrdered(evenementId, userId) {
     return this.models.EvenementOeuvre.findAll({
       where: { id_evenement: evenementId, ...(userId == null ? {} : { id_presentateur: userId }) },
-      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }],
+      // Champs utiles seulement (avant : l'œuvre entière, raison de refus et modérateur compris)
+      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false, attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre', 'annee_creation', 'statut'] }],
       order: [['ordre_presentation', 'ASC']]
     });
   }

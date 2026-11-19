@@ -311,6 +311,16 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   /** Tous les blocs d'un coup (nettoyage de la mise en page, annulation) */
   const remplacerBlocs = (nouveaux: ArticleBlock[]) => setBlocks(nouveaux);
 
+  /**
+   * Modèle de départ (section « Poésie ») : posé seulement si l'éditeur est encore vide au moment où la
+   * mise à jour s'applique. Une rédaction restaurée (session expirée) passe avant et n'est jamais écrasée.
+   */
+  const commencerAvecModele = (modele: ArticleBlock[], motCle?: string) => {
+    setBlocks(prev => (prev.length ? prev : modele));
+    const tag = motCle?.trim().toLowerCase();
+    if (tag) setFormData(prev => (prev.tags.includes(tag) ? prev : { ...prev, tags: [...prev.tags, tag] }));
+  };
+
   /** Article importé d'un fichier : titre, chapeau, mots-clés et blocs, dans toutes ses langues */
   const importerArticle = (a: ArticleImporte) => {
     setTranslations(prev => {
@@ -499,7 +509,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     // Rédaction remise après une session expirée (avis à afficher), photos à rajouter
     saisieRestauree, fichiersARajouter,
     metadata, formData, setFormData,
-    blocks, editLang, setEditLang, langueTexte, setLangueTexte,
+    blocks, editLang, setEditLang, langueTexte, setLangueTexte, commencerAvecModele,
     translations, setTranslations,
     newTag, setNewTag, expandedSections,
     intervenantsExistants, nouveauxIntervenants,

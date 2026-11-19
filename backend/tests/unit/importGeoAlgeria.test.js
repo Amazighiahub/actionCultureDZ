@@ -55,7 +55,25 @@ describe('Import GeoAlgeria : import et décisions', () => {
     await expect(g.importer(models, { create }, Array.from({ length: 501 }, (_, i) => `x${i}`), 75)).rejects.toMatchObject({ statusCode: 400 });
   });
 
+  test('anti-retour 2026-11-19 : un lieu proposé par un membre n’est pas décidé ici ; plus de 500 : refus', async () => {
+    models.sequelize.query.mockResolvedValueOnce([{ id_lieu: 7 }]);
+    await g.decider(models, [5, 7], 'publier');
+    expect(models.Lieu.update).toHaveBeenLastCalledWith({ statut: 'publie' }, { where: { id_lieu: [5], statut: 'brouillon' } });
+    await expect(g.decider(models, Array.from({ length: 501 }, (_, i) => i + 1), 'publier')).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('anti-retour 2026-11-19 : un point dont le site reste en brouillon n’est publié qu’avec son site', async () => {
+    // Points 2863 et 2993 du site 153 (Lambèse, brouillon) ; seul 2993 est coché avec son site
+    models.sequelize.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id_lieu: 2863, id_lieu_parent: 153 }]);
+    await g.decider(models, [2863, 9], 'publier');
+    expect(models.Lieu.update).toHaveBeenLastCalledWith({ statut: 'publie' }, { where: { id_lieu: [9], statut: 'brouillon' } });
+    models.sequelize.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id_lieu: 2993, id_lieu_parent: 153 }]);
+    await g.decider(models, [153, 2993], 'publier');
+    expect(models.Lieu.update).toHaveBeenLastCalledWith({ statut: 'publie' }, { where: { id_lieu: [153, 2993], statut: 'brouillon' } });
+  });
+
   test('publier ou écarter : seulement des brouillons (sites et points de visite)', async () => {
+    models.sequelize.query.mockResolvedValue([]);
     await g.decider(models, [5, '6', 'x'], 'publier');
     expect(models.Lieu.update).toHaveBeenCalledWith({ statut: 'publie' }, { where: { id_lieu: [5, 6], statut: 'brouillon' } });
     await g.decider(models, [5], 'ecarter');

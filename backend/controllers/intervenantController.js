@@ -8,6 +8,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
+const logger = require('../utils/logger');
 const champsPublics = (fiche) => {
   const brut = fiche?.toJSON ? fiche.toJSON() : fiche;
   return Object.fromEntries(PUBLIC_INTERVENANT_ATTRIBUTES.filter(c => brut?.[c] !== undefined).map(c => [c, brut[c]]));
@@ -106,7 +107,15 @@ class IntervenantController extends BaseController {
       const dejaFiche = new Set(translated.map(i => i.id_user).filter(Boolean));
       const pros = await container.userService.findValidatedProfessionals({ q: String(q).slice(0, 100), page: 1, limit: 8 })
         .then(r => (r.data || []).map(u => (u.toJSON ? u.toJSON(lang) : u)))
-        .catch(() => []);
+        .catch((e) => { logger.warn('Contributeurs : recherche des professionnels impossible : %s', e.message); return []; });
+      // Métier du professionnel (artiste, écrivain…), lu en une requête dans la langue demandée
+      const metiers = new Map();
+      const idsTypes = [...new Set(pros.map(u => u.id_type_user).filter(Boolean))];
+      if (idsTypes.length && container.models.TypeUser) {
+        const types = await container.models.TypeUser.findAll({ where: { id_type_user: idsTypes }, attributes: ['id_type_user', 'nom_type'], raw: true })
+          .catch(() => []);
+        for (const ty of types) metiers.set(ty.id_type_user, translate(ty.nom_type, lang) || null);
+      }
 
       res.json({
         success: true,
@@ -128,7 +137,7 @@ class IntervenantController extends BaseController {
           value: null,
           prenom: u.prenom,
           nom: u.nom,
-          titre: u.TypeUser?.nom_type || null,
+          titre: metiers.get(u.id_type_user) || null,
           organisation: u.entreprise || null,
           specialites: Array.isArray(u.specialites) ? u.specialites : [],
           photo_url: u.photo_url,

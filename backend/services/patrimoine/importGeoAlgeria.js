@@ -226,14 +226,30 @@ function dejaPresent(voisins, p, site) {
 
 // Noms qui ne désignent pas un lieu précis (« Ksar », « Ruines », « Monument aux martyrs ») : on y ajoute la commune,
 // comme on le dit en Algérie (« Ksar de Tamentit », « قصر تمنطيط »). 2026-11-19 : 118 lieux importés portaient un tel nom.
-const GENERIQUES = /^(site archeologique( important| romain)?|site historique|ruines?( romaines)?|vestiges?|tombeau|tombe|mausolee|monument( aux morts| aux martyrs| historique| commemoratif)?|memorial|stele|qoubba|koubba|ksar|kasbah|casbah|fort|bordj|cimetiere( des martyrs)?|zaouia|mosquee|porte|temple|thermes|necropole|gravures rupestres|peintures rupestres|tour|puits)$/;
+// Élargi le 2026-11-19 (audit des lieux en ligne : 69 noms encore génériques, « Mémorial des martyrs » ×11,
+// « Tombe solaire » ×11, « Makam Echahid », « Château », « Dar »…) : toutes les formes « X des/du/aux martyr(s) ».
+const MARTYRS = '( (aux|des|du|de la|de l) (morts|martyrs?|martyres|chahid|chouhada))?';
+const GENERIQUES = new RegExp('^(site archeologique( important| romain)?|site historique|ruines?( romaines?)?|vestiges?( romains)?'
+  + '|tombeau|tombes?( solaires?)?|mausolee|martyrs?|(monument|memorial|stele|place|carre|cimetiere)' + MARTYRS
+  + '|monument( historique| commemoratif)|(makam|maqam|mqam) (echahid|chahid|el chahid)|qoubba|koubba|ksar|kasbah|casbah|fort|bordj'
+  + '|zaouia|mosquee|eldjama|djamaa|el jamaa|eglise|cathedrale|chapelle|basilique( chretienne)?|porte|temple|thermes( romains)?|theatre romain|amphitheatre romain|aqueduc( romain)?|necropole'
+  + '|gravures? rupestres?( neolithiques?)?|peintures rupestres|tour|puits|chateau|dar|mur( francais| d enceinte)?'
+  + '|muraille( byzantine)?|palais du bey|place du er novembre)$');
+/** Nom générique, même déjà complété par sa commune (« Monument des martyrs de Kimmel ») */
+const estGenerique = (fr, communeAscii) => {
+  const simple = motsSimples(fr);
+  const commune = motsSimples(communeAscii || '');
+  const base = commune && simple.endsWith(` ${commune}`) ? simple.slice(0, -commune.length - 1).replace(/ (de|d)$/, '') : simple;
+  return GENERIQUES.test(base);
+};
 const motsSimples = (t) => sansAccent(t).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 /**
  * Pas du patrimoine malgré le classement d'OpenStreetMap : banques, cités d'habitation, ronds-points, écoles
  * primaires, salles des fêtes (classées « château »), sièges d'APC, complexes (2026-11-19)
  */
-const PAS_PATRIMOINE = /^(banque|cite|rond point|ecole primaire|salle( des fetes)?|apc|complexe)\b/;
+// 2026-11-19 : aussi les rues (« Rue du martyr Chebati ») et les châteaux d'eau (réservoirs classés « château »)
+const PAS_PATRIMOINE = /^(banque|cite|rond point|ecole primaire|salle( des fetes)?|apc|complexe|rue|chateau d eau)\b/;
 const pasPatrimoine = (nom) => PAS_PATRIMOINE.test(motsSimples(nom?.fr || ''));
 
 /** Nom complété par la commune quand il est générique ; sinon inchangé */
@@ -245,11 +261,13 @@ function nomAvecCommune(nom, commune) {
   const base = fr.replace(/\s+important$/i, '');
   const de = /^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛ]/.test(communeFr) ? 'd’' : 'de ';
   const ar = (nom.ar || '').replace(/\s+(مهم|هام)$/, '');
+  // Nom arabe qui cite déjà la commune (« ساحة الشهداء رقان ») : gardé tel quel
+  const arAvecCommune = !!communeAr && ar.includes(communeAr.replace(/^ال/, ''));
   return {
     ...nom,
     ...(communeFr ? { fr: `${base} ${de}${communeFr}` } : {}),
     // Ksar, borj, zaouïa, casbah : annexion sans article (« القصر » → « قصر تمنطيط ») ; autres : « ب » (« نصب الشهداء بكيمل »)
-    ...(ar && communeAr ? { ar: /^(ال)?(قصر|برج|زاوية|قصبة)$/.test(ar.trim()) ? `${ar.trim().replace(/^ال/, '')} ${communeAr}` : `${ar.trim()} ب${communeAr}` } : {})
+    ...(ar && communeAr && !arAvecCommune ? { ar: /^(ال)?(قصر|برج|زاوية|قصبة)$/.test(ar.trim()) ? `${ar.trim().replace(/^ال/, '')} ${communeAr}` : `${ar.trim()} ب${communeAr}` } : {})
   };
 }
 
@@ -282,8 +300,12 @@ async function importer(models, patrimoineService, ids, idAdmin, { commePoints =
     const parent = enPoints.has(p.id) ? siteParent(voisins, p) : null;
     if ((parent || estUnSiteExistant(voisins, p)) && dejaPresent(voisins, p, parent)) { bilan.deja++; continue; }
     try {
+      // Nom et type nettoyés comme les lieux déjà en ligne (services/patrimoine/nettoyageLieux.js ; require ici :
+      // ce module dépend de celui-ci)
+      const { nomNettoye, typeCorrige } = require('./nettoyageLieux');
+      const nom = nomAvecCommune(nomNettoye(p.nom), c);
       const site = await patrimoineService.create({
-        nom: nomAvecCommune(p.nom, c), latitude: p.lat, longitude: p.lng, typePatrimoine: p.typePatrimoine,
+        nom, latitude: p.lat, longitude: p.lng, typePatrimoine: typeCorrige(nom, p.typePatrimoine),
         communeId: c.id_commune, id_createur: idAdmin, referencesHistoriques: mentionSource(p),
         ...(parent ? { id_lieu_parent: parent.id_lieu } : {})
       }, { isModerator: true, enAttente: true });
@@ -315,17 +337,34 @@ async function brouillons(models) {
       ORDER BY l.id_lieu DESC LIMIT 300`, { type: models.sequelize.QueryTypes.SELECT });
 }
 
-/** Publier ou écarter (archive) des brouillons relus */
+/**
+ * Publier ou écarter (archive) des brouillons relus. Mêmes lieux que la liste « À publier » : un lieu
+ * proposé par un membre (proposition en attente) passe par la modération des propositions, pas par ici.
+ */
 async function decider(models, ids, decision) {
   if (!Array.isArray(ids) || !ids.length) throw Object.assign(new Error('Choisissez au moins un lieu'), { statusCode: 400 });
   if (!['publier', 'ecarter'].includes(decision)) throw Object.assign(new Error('Décision invalide'), { statusCode: 400 });
-  const liste = [...new Set(ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, MAX_IMPORT);
+  // Au-delà de la limite : refus clair (avant : les lieux en trop étaient ignorés sans le dire)
+  if (ids.length > MAX_IMPORT) throw Object.assign(new Error(`${MAX_IMPORT} lieux au plus par import`), { statusCode: 400 });
+  const liste = [...new Set(ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  if (!liste.length) return { modifies: 0 };
+  const proposes = new Set((await models.sequelize.query(`SELECT l.id_lieu FROM lieu l
+      JOIN proposition_lieu p ON p.id_lieu IN (l.id_lieu, COALESCE(l.id_lieu_parent, 0)) AND p.statut = 'en_attente'
+      WHERE l.id_lieu IN (:liste)`, { replacements: { liste }, type: models.sequelize.QueryTypes.SELECT })).map((l) => Number(l.id_lieu)));
+  // Publier un point de visite dont le site reste en brouillon : non (2026-11-19, Lambèse en brouillon avec 3 points
+  // publiés). Le point part avec son site, cochés ensemble.
+  const sansSitePublic = decision !== 'publier' ? new Set() : new Set((await models.sequelize.query(`SELECT l.id_lieu, l.id_lieu_parent
+      FROM lieu l JOIN lieu parent ON parent.id_lieu = l.id_lieu_parent AND parent.statut <> 'publie'
+      WHERE l.id_lieu IN (:liste)`, { replacements: { liste }, type: models.sequelize.QueryTypes.SELECT }))
+    .filter((l) => !(liste.includes(Number(l.id_lieu_parent)) && !proposes.has(Number(l.id_lieu_parent)))).map((l) => Number(l.id_lieu)));
+  const aDecider = liste.filter((id) => !proposes.has(id) && !sansSitePublic.has(id));
+  if (!aDecider.length) return { modifies: 0 };
   const [n] = await models.Lieu.update({ statut: decision === 'publier' ? 'publie' : 'archive' },
-    { where: { id_lieu: liste, statut: 'brouillon' } });
+    { where: { id_lieu: aDecider, statut: 'brouillon' } });
   return { modifies: n };
 }
 
 /** Pour les tests : relire le fichier et les communes */
 function _vider() { donnees = null; communesCache = null; }
 
-module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, siteParent, dejaPresent, indexCommunes, SQL_COMMUNES, nomAvecCommune, pasPatrimoine, lieuxPrepares, _vider };
+module.exports = { wilayas, apercu, importer, brouillons, decider, communeDuPoint, distanceEdition, mentionSource, siteParent, dejaPresent, indexCommunes, SQL_COMMUNES, nomAvecCommune, pasPatrimoine, estGenerique, motsSimples, km, lieuxPrepares, _vider };

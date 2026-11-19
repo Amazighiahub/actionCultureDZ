@@ -3,7 +3,7 @@
  * activité d'un autre événement du même organisateur. 1. choisir l'événement gardé ; 2. lire le
  * résumé (activités, photos, inscrits déplacés) ; 3. confirmer. Les inscrits sont prévenus.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListPlus, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface EvenementCourt { id_evenement: number; nom_evenement: unknown; date_debut?: string | null; statut?: string }
 interface Apercu { activites: number; photos: number; inscrits: number; dejaInscrits: number }
+/** Résumé lu pour un événement précis : seul celui de l'événement coché est montré et confirmé */
+interface ApercuPour { pour: number; donnees: Apercu }
 
 const TransformerEnActiviteDialog: React.FC<{
   source: EvenementCourt | null;
@@ -27,7 +29,10 @@ const TransformerEnActiviteDialog: React.FC<{
   const { formatDate } = useFormatDate();
   const [cibles, setCibles] = useState<EvenementCourt[] | null>(null);
   const [cible, setCible] = useState<number | null>(null);
-  const [apercu, setApercu] = useState<Apercu | null>(null);
+  const [resume, setResume] = useState<ApercuPour | null>(null);
+  const choixActuel = useRef<{ source?: number; cible: number | null }>({ cible: null });
+  choixActuel.current = { source: source?.id_evenement, cible };
+  const apercu = resume && resume.pour === cible ? resume.donnees : null;
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const nom = (e: EvenementCourt) => getLocalizedText(e.nom_evenement, lang, t('common.unnamed', 'Sans nom'));
@@ -35,36 +40,45 @@ const TransformerEnActiviteDialog: React.FC<{
 
   // Autre événement à transformer : on repart de zéro
   useEffect(() => {
-    setCibles(null); setCible(null); setApercu(null); setErreur(null);
+    setCibles(null); setCible(null); setResume(null); setErreur(null);
     if (!source) return;
+    let actuel = true;
     httpClient.get<EvenementCourt[]>(`/evenements/${source.id_evenement}/transformer`)
       .then(res => {
         if (!res.success) throw res;
-        setCibles(res.data || []);
+        if (actuel) setCibles(res.data || []);
       })
-      .catch((e) => { setCibles([]); setErreur(messageErreurServeur(e, echec)); });
+      .catch((e) => { if (actuel) { setCibles([]); setErreur(messageErreurServeur(e, echec)); } });
+    return () => { actuel = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
 
   // Un autre choix efface le résumé : il faut le relire avant de confirmer
-  useEffect(() => { setApercu(null); setErreur(null); }, [cible]);
+  useEffect(() => { setResume(null); setErreur(null); }, [cible]);
+
+  // Une réponse arrivée après un autre choix (ou un autre événement) est ignorée
+  const encoreActuel = (idSource: number, idCible: number) =>
+    choixActuel.current.source === idSource && choixActuel.current.cible === idCible;
 
   const lireResume = async () => {
     if (!source || !cible) return;
+    const idSource = source.id_evenement;
+    const idCible = cible;
     try {
-      const res = await httpClient.get<Apercu>(`/evenements/${source.id_evenement}/transformer/apercu`, { cible });
+      const res = await httpClient.get<Apercu>(`/evenements/${idSource}/transformer/apercu`, { cible: idCible });
       if (!res.success || !res.data) throw res;
-      setApercu(res.data);
+      if (encoreActuel(idSource, idCible)) setResume({ pour: idCible, donnees: res.data });
     } catch (e) {
-      setErreur(messageErreurServeur(e, echec));
+      if (encoreActuel(idSource, idCible)) setErreur(messageErreurServeur(e, echec));
     }
   };
 
   const confirmer = async () => {
-    if (!source || !cible) return;
+    // Seul l'événement dont le résumé est affiché peut être confirmé
+    if (!source || !resume || resume.pour !== cible) return;
     setEnvoi(true);
     try {
-      const res = await httpClient.post<unknown>(`/evenements/${source.id_evenement}/transformer`, { cible });
+      const res = await httpClient.post<unknown>(`/evenements/${source.id_evenement}/transformer`, { cible: resume.pour });
       if (!res.success) throw res;
       onTransforme();
     } catch (e) {

@@ -16,17 +16,25 @@ const lire = (l: Ligne): LieuCarte => ({
   id: l[0], nom: l[1], lat: l[2], lng: l[3], type: l[4], parent: l[5], commune: l[6], daira: l[7], wilaya: l[8], nbPoints: l[9], image: l[10]
 });
 
-export function useLieuxCarte() {
+/**
+ * `actif: false` (économie de données) : rien n'est téléchargé, mais les lieux déjà chargés par la carte
+ * sont rendus. Une réponse en échec est une erreur (avant : carte vide, sans message ni « Réessayer »).
+ */
+export function useLieuxCarte({ actif = true }: { actif?: boolean } = {}) {
   const { i18n } = useTranslation();
-  const { data = [], isLoading } = useQuery({
+  const { data = [], isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['carte-exploration', i18n.language],
     queryFn: async () => {
       const r = await httpClient.get<Ligne[]>('/patrimoine/carte-exploration');
-      return (r.success && Array.isArray(r.data) ? r.data : []).map(lire);
+      if (!r.success || !Array.isArray(r.data)) throw new Error(r.error || 'carte-exploration');
+      return r.data.map(lire);
     },
-    staleTime: 5 * 60 * 1000
+    enabled: actif,
+    staleTime: 5 * 60 * 1000,
+    // Langue changée : les lieux restent affichés le temps de recevoir les noms traduits
+    placeholderData: (precedent) => precedent
   });
-  return { lieux: data, isLoading };
+  return { lieux: data, isLoading: isLoading && actif, isError, isFetching, reessayer: () => { void refetch(); } };
 }
 
 /** Distance à vol d'oiseau, en km */

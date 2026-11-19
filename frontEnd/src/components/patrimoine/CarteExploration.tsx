@@ -14,9 +14,9 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 // Ronds colorés des bulles (sans elle, les bulles n'étaient que des chiffres)
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Navigation, X, List, Map as IconeCarte, Landmark } from 'lucide-react';
+import { MapPin, Navigation, X, List, Map as IconeCarte, Landmark, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,17 +38,27 @@ export function filtrerLieux(lieux: LieuCarte[], f: { wilaya?: number | null; da
     && !(f.typesCaches?.has(l.type)) && (!f.type || l.type === f.type));
 }
 
-const icone = (type: string, petit = false) => L.divIcon({
-  className: 'carte-exploration-epingle',
-  html: `<span style="display:block;width:${petit ? 12 : 18}px;height:${petit ? 12 : 18}px;border-radius:9999px;background:${couleurType(type)};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)"></span>`,
-  iconSize: petit ? [12, 12] : [18, 18], iconAnchor: petit ? [6, 6] : [9, 9]
-});
+/** Une icône par type et par taille, créée une seule fois (plus de 1 000 épingles) */
+const icones = new Map<string, L.DivIcon>();
+const icone = (type: string, petit = false) => {
+  const cle = `${type}:${petit ? 1 : 0}`;
+  let i = icones.get(cle);
+  if (!i) {
+    i = L.divIcon({
+      className: 'carte-exploration-epingle',
+      html: `<span style="display:block;width:${petit ? 12 : 18}px;height:${petit ? 12 : 18}px;border-radius:9999px;background:${couleurType(type)};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)"></span>`,
+      iconSize: petit ? [12, 12] : [18, 18], iconAnchor: petit ? [6, 6] : [9, 9]
+    });
+    icones.set(cle, i);
+  }
+  return i;
+};
 
 /** Couche des sites principaux, regroupés en bulles ; et couche des points de visite au zoom */
 /** Demande de recentrage (toucher un site de la liste, « Voir les points de visite ») */
 interface Centrage { lat: number; lng: number; zoom: number; n: number }
 
-const Couches: React.FC<{ sites: LieuCarte[]; points: LieuCarte[]; onChoisir: (l: LieuCarte) => void; onZone: (b: L.LatLngBounds, z: number) => void; cadrage: LieuCarte[]; centrage: Centrage | null }> = ({ sites, points, onChoisir, onZone, cadrage, centrage }) => {
+const Couches: React.FC<{ sites: LieuCarte[]; points: LieuCarte[]; onChoisir: (l: LieuCarte) => void; onZone: (b: L.LatLngBounds, z: number) => void; cadrage: { cle: string; lieux: LieuCarte[] }; centrage: Centrage | null }> = ({ sites, points, onChoisir, onZone, cadrage, centrage }) => {
   const carte = useMap();
   const groupe = useRef<L.MarkerClusterGroup | null>(null);
   const couchePoints = useRef<L.LayerGroup | null>(null);
@@ -60,25 +70,27 @@ const Couches: React.FC<{ sites: LieuCarte[]; points: LieuCarte[]; onChoisir: (l
 
   useEffect(() => {
     const g = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, chunkedLoading: true });
-    for (const s of sites) {
-      const m = L.marker([s.lat, s.lng], { icon: icone(s.type), title: s.nom, keyboard: true });
+    // Ajout en une fois : les bulles sont calculées une seule fois, pas à chaque épingle
+    g.addLayers(sites.map((s) => {
+      const m = L.marker([s.lat, s.lng], { icon: icone(s.type), title: s.nom, alt: s.nom, keyboard: true });
       m.on('click', () => onChoisir(s));
-      g.addLayer(m);
-    }
+      return m;
+    }));
     carte.addLayer(g);
     groupe.current = g;
     return () => { carte.removeLayer(g); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sites, carte]);
 
+  // Points de visite : tous ceux des sites affichés dès le zoom ZOOM_POINTS (quelques centaines au plus).
+  // Avant, seuls ceux de la zone du moment étaient posés : en faisant glisser la carte, les autres manquaient.
+  const montrerPoints = zoom >= ZOOM_POINTS;
   useEffect(() => {
     couchePoints.current?.remove();
-    if (zoom < ZOOM_POINTS || !points.length) return;
-    const zone = carte.getBounds().pad(0.3);
+    if (!montrerPoints || !points.length) return;
     const c = L.layerGroup();
     for (const p of points) {
-      if (!zone.contains([p.lat, p.lng])) continue;
-      const m = L.marker([p.lat, p.lng], { icon: icone(p.type, true), title: p.nom, keyboard: true });
+      const m = L.marker([p.lat, p.lng], { icon: icone(p.type, true), title: p.nom, alt: p.nom, keyboard: true });
       m.on('click', () => onChoisir(p));
       c.addLayer(m);
     }
@@ -86,16 +98,24 @@ const Couches: React.FC<{ sites: LieuCarte[]; points: LieuCarte[]; onChoisir: (l
     couchePoints.current = c;
     return () => { c.remove(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, zoom, carte]);
+  }, [points, montrerPoints, carte]);
 
   useEffect(() => {
     if (centrage) carte.flyTo([centrage.lat, centrage.lng], Math.max(centrage.zoom, carte.getZoom()), { duration: 0.8 });
   }, [centrage, carte]);
 
   // Cadrage : sur les lieux filtrés (wilaya, daïra, commune choisie), sinon l'Algérie
+  // Seulement quand la zone choisie change (avant : aussi au changement de langue, qui renvoie de nouveaux
+  // lieux, et la vue sautait)
+  const dernierCadrage = useRef<string | null>(null);
   useEffect(() => {
-    if (cadrage.length) carte.fitBounds(L.latLngBounds(cadrage.map((l) => [l.lat, l.lng] as [number, number])), { padding: [24, 24], maxZoom: 14 });
-    else carte.fitBounds(ALGERIE);
+    const zoneChoisie = cadrage.cle !== '--';
+    if (zoneChoisie && !cadrage.lieux.length) return; // lieux pas encore reçus
+    if (dernierCadrage.current === cadrage.cle) return;
+    const premier = dernierCadrage.current === null;
+    dernierCadrage.current = cadrage.cle;
+    if (cadrage.lieux.length) carte.fitBounds(L.latLngBounds(cadrage.lieux.map((l) => [l.lat, l.lng] as [number, number])), { padding: [24, 24], maxZoom: 14 });
+    else if (!premier) carte.fitBounds(ALGERIE);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cadrage, carte]);
   return null;
@@ -112,14 +132,26 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
   const [centrage, setCentrage] = useState<Centrage | null>(null);
   const centrer = (l: LieuCarte, zoom: number) => setCentrage((c) => ({ lat: l.lat, lng: l.lng, zoom, n: (c?.n || 0) + 1 }));
 
-  const { lieux, isLoading } = useLieuxCarte();
-  // Lien « voir sur la carte » d'une wilaya (?wilaya=12) : la carte s'ouvre filtrée sur elle
+  const { lieux, isLoading, isError, isFetching, reessayer } = useLieuxCarte();
+  // Lien « voir sur la carte » d'une wilaya (?wilaya=12) : la carte s'ouvre filtrée sur elle. Chaque clic
+  // compte (nouvelle entrée d'historique), même sur la wilaya déjà demandée après un autre choix dans la liste.
   const [params] = useSearchParams();
+  const { key: cleNavigation } = useLocation();
   const wilayaDemandee = Number(params.get('wilaya')) || null;
   useEffect(() => {
     if (wilayaDemandee && wilayaDemandee !== geo.selectedWilaya) geo.setSelectedWilaya(wilayaDemandee);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wilayaDemandee]);
+  }, [wilayaDemandee, cleNavigation]);
+
+  // Échap ferme la fiche courte ; la fiche reçoit le focus à l'ouverture (clavier, lecteur d'écran)
+  const fiche = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!choisi) return;
+    fiche.current?.focus();
+    const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') setChoisi(null); };
+    window.addEventListener('keydown', echap);
+    return () => window.removeEventListener('keydown', echap);
+  }, [choisi]);
 
   const filtres = { wilaya: geo.selectedWilaya, daira: geo.selectedDaira, commune: geo.selectedCommune, typesCaches, type };
   const visibles = useMemo(() => filtrerLieux(lieux, filtres),
@@ -133,7 +165,10 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
     return lieux.filter((l) => l.parent && ids.has(l.parent));
   }, [lieux, sites]);
   // Cadrage seulement quand la zone géographique change (pas au moindre filtre de type)
-  const cadrage = useMemo(() => (geo.selectedWilaya ? filtrerLieux(lieux, { wilaya: geo.selectedWilaya, daira: geo.selectedDaira, commune: geo.selectedCommune }).filter((l) => !l.parent) : []),
+  const cadrage = useMemo(() => ({
+    cle: `${geo.selectedWilaya ?? ''}-${geo.selectedDaira ?? ''}-${geo.selectedCommune ?? ''}`,
+    lieux: geo.selectedWilaya ? filtrerLieux(lieux, { wilaya: geo.selectedWilaya, daira: geo.selectedDaira, commune: geo.selectedCommune }).filter((l) => !l.parent) : []
+  }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
     [lieux, geo.selectedWilaya, geo.selectedDaira, geo.selectedCommune]);
 
@@ -207,20 +242,35 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
             <ZoomControl zoomInTitle={t('carte.zoomAvant', 'Zoomer')} zoomOutTitle={t('carte.zoomArriere', 'Dézoomer')} />
             <Couches sites={sites} points={points} onChoisir={setChoisi} cadrage={cadrage} centrage={centrage} onZone={(b, z) => setZone({ b, z })} />
           </MapContainer>
-          {isLoading && <div className="absolute inset-0 grid place-items-center bg-background/60 text-sm">{t('common.loading', 'Chargement…')}</div>}
-          {zone && zone.z >= 12 && zone.z < ZOOM_POINTS && points.some((p) => zone.b.contains([p.lat, p.lng])) && (
-            <p className="absolute top-2 start-2 z-[500] rounded bg-background/90 px-2 py-1 text-xs shadow">{t('patrimoine.carte.zoomerPoints', 'Zoomez pour voir les points de visite')}</p>
+          {isLoading && <div className="absolute inset-0 z-[1001] grid place-items-center bg-background/60 text-sm">{t('common.loading', 'Chargement…')}</div>}
+          {/* Serveur injoignable : un message et « Réessayer » (avant : carte vide, sans explication) */}
+          {isError && !lieux.length && (
+            <div role="alert" className="absolute inset-0 z-[1001] flex flex-col items-center justify-center gap-3 bg-background/80 p-4 text-center text-sm">
+              <p>{t('patrimoine.carte.erreur', 'Les lieux n’ont pas pu être chargés. Vérifiez votre connexion.')}</p>
+              <Button size="sm" variant="outline" onClick={reessayer} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 me-2 ${isFetching ? 'animate-spin' : ''}`} />{t('common.retry', 'Réessayer')}
+              </Button>
+            </div>
           )}
-          {/* Fiche courte du lieu touché */}
+          {!isLoading && !isError && lieux.length > 0 && !sites.length && (
+            <p role="status" className="absolute left-1/2 top-2 z-[1001] -translate-x-1/2 rounded bg-background/90 px-3 py-1.5 text-sm shadow">
+              {t('patrimoine.carte.aucunLieu', 'Aucun lieu dans cette zone pour le moment.')}
+            </p>
+          )}
+          {/* Au centre en haut : les boutons de zoom occupent le coin */}
+          {zone && zone.z >= 12 && zone.z < ZOOM_POINTS && points.some((p) => zone.b.contains([p.lat, p.lng])) && (
+            <p className="absolute left-1/2 top-2 z-[1001] -translate-x-1/2 whitespace-nowrap rounded bg-background/90 px-2 py-1 text-xs shadow">{t('patrimoine.carte.zoomerPoints', 'Zoomez pour voir les points de visite')}</p>
+          )}
+          {/* Fiche courte du lieu touché : au-dessus des contrôles de la carte (mention OpenStreetMap comprise) */}
           {choisi && (
-            <div className="absolute inset-x-2 bottom-2 z-[600] flex gap-3 rounded-lg border bg-background p-3 shadow-lg sm:inset-x-auto sm:end-2 sm:w-80" role="dialog" aria-label={choisi.nom}>
+            <div ref={fiche} tabIndex={-1} className="absolute inset-x-2 bottom-2 z-[1001] flex gap-3 rounded-lg border bg-background p-3 shadow-lg outline-none sm:inset-x-auto sm:end-2 sm:w-80" role="dialog" aria-label={choisi.nom}>
               {choisi.image ? <img src={getAssetUrl(choisi.image, { width: 160 })} alt="" className="h-20 w-20 shrink-0 rounded object-cover" />
                 : <span className="grid h-20 w-20 shrink-0 place-items-center rounded" style={{ background: `${couleurType(choisi.type)}22` }}><Landmark className="h-8 w-8" style={{ color: couleurType(choisi.type) }} aria-hidden="true" /></span>}
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="font-semibold leading-tight" dir="auto">{choisi.nom}</p>
                 <p className="text-xs text-muted-foreground">{nomType(choisi.type)}</p>
                 {parent && <p className="text-xs">{t('patrimoine.carte.partieDe', { site: parent.nom, defaultValue: 'Partie de « {{site}} »' })}</p>}
-                {choisi.nbPoints > 0 && <Badge variant="secondary">{t('patrimoine.carte.nbPoints', { n: choisi.nbPoints, defaultValue: '{{n}} points de visite' })}</Badge>}
+                {choisi.nbPoints > 0 && <Badge variant="secondary">{(choisi.nbPoints === 1 ? t('patrimoine.carte.nbPoint', '1 point de visite') : t('patrimoine.carte.nbPoints', { n: choisi.nbPoints, defaultValue: '{{n}} points de visite' }))}</Badge>}
                 {/* Lieu importé sans photo : invitation à le compléter (la fiche propose « Proposer une information ») */}
                 {!choisi.image && (
                   <p className="text-xs text-amber-700 dark:text-amber-400">{t('patrimoine.carte.aCompleter', 'Fiche à compléter : vous avez une photo ou une information ?')}</p>
@@ -253,7 +303,7 @@ const CarteExploration: React.FC<{ type?: string | null }> = ({ type = null }) =
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium" dir="auto">{s.nom}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {[nomType(s.type), s.nbPoints ? t('patrimoine.carte.nbPoints', { n: s.nbPoints, defaultValue: '{{n}} points de visite' }) : ''].filter(Boolean).join(' · ')}
+                      {[nomType(s.type), s.nbPoints ? (s.nbPoints === 1 ? t('patrimoine.carte.nbPoint', '1 point de visite') : t('patrimoine.carte.nbPoints', { n: s.nbPoints, defaultValue: '{{n}} points de visite' })) : ''].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />

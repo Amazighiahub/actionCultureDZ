@@ -903,8 +903,14 @@ class OeuvreService extends BaseService {
 
       const missingUserIds = allUserIds.filter(uid => !intervenantByUserId.has(uid));
       if (missingUserIds.length > 0) {
+        // Fiche d'auteur créée seulement pour un professionnel de l'annuaire public (mêmes règles que la
+        // recherche de contributeurs) : jamais une fiche publique pour un compte privé ou un simple visiteur
+        const { PROFESSIONAL_TYPE_IDS } = require('../../constants/publicAttributes');
         const users = await this.models.User.findAll({
-          where: { id_user: { [Op.in]: missingUserIds } },
+          where: {
+            id_user: { [Op.in]: missingUserIds },
+            id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }, statut: 'actif', profil_public: true
+          },
           transaction
         });
         if (users.length > 0) {

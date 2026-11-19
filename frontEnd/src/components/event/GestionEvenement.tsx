@@ -139,7 +139,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [oeuvreDescription, setOeuvreDescription] = useState('');
   // Activité du programme concernée (compte rendu d'un atelier…) ; « aucune » = tout l'événement (2026-11-17)
   const [oeuvreActivite, setOeuvreActivite] = useState('aucune');
-  const nomActivite = (p: Programme) => [p.date_programme ? formatDate(String(p.date_programme)) : '', td(p.titre) || t('programme.sansTitre', 'Activité')]
+  // Jour, heure et titre : deux ateliers du même nom le même jour restent distincts dans la liste
+  const nomActivite = (p: Programme) => [p.date_programme ? formatDate(String(p.date_programme)) : '',
+    p.heure_debut ? String(p.heure_debut).slice(0, 5) : '', td(p.titre) || t('programme.sansTitre', 'Activité')]
     .filter(Boolean).join(' · ');
   const changerActivite = async (oeuvreId: number, valeur: string) => {
     const reponse = await evenementOeuvreService.lierActivite(evenementId, oeuvreId, valeur === 'aucune' ? null : Number(valeur)).catch((e) => e);

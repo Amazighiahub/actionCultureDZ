@@ -4704,7 +4704,10 @@
       "zoomerPlus": "Et {{n}} autres : zoomez ou choisissez une wilaya.",
       "source": "Positions des lieux : Tala DZ et © contributeurs OpenStreetMap.",
       "voirPoints": "Voir les points de visite",
-      "aCompleter": "Fiche à compléter : vous avez une photo ou une information ?"
+      "aCompleter": "Fiche à compléter : vous avez une photo ou une information ?",
+      "erreur": "Les lieux n’ont pas pu être chargés. Vérifiez votre connexion.",
+      "aucunLieu": "Aucun lieu dans cette zone pour le moment.",
+      "nbPoint": "1 point de visite"
     },
     "decouvrir": {
       "incontournables": "Incontournables",

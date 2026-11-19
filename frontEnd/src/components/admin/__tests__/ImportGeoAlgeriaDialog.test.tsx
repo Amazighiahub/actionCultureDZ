@@ -28,7 +28,10 @@ vi.mock('@/components/ui/select', () => ({
   SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>
 }));
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ImportGeoAlgeriaDialog from '../ImportGeoAlgeriaDialog';
+
+const rendre = (ui: React.ReactElement) => render(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
 
 const point = (id: string, nom: string, preCoche: boolean, deja = false, site: { id_lieu: number; nom: unknown } | null = null) => ({
   id, categorie: 'historique', type: 'castle', typePatrimoine: 'palais_forteresse', nom: { fr: nom }, lat: 31.9, lng: 5.3,
@@ -47,7 +50,7 @@ describe('Importer des lieux GeoAlgeria', () => {
 
   it('pré-coche les vrais lieux, grise ceux déjà présents, n’envoie que les cochés et garde le bilan', async () => {
     post.mockResolvedValue({ success: true, data: { crees: 2, points: 1, deja: 0, ignores: 0 } });
-    render(<ImportGeoAlgeriaDialog open onOpenChange={() => {}} onImported={() => {}} />);
+    rendre(<ImportGeoAlgeriaDialog open onOpenChange={() => {}} onImported={() => {}} />);
     await waitFor(() => expect(screen.getByRole('option', { name: /30 · Ouargla \(3\)/ })).toBeTruthy());
     fireEvent.change(screen.getByLabelText('wilaya'), { target: { value: '30' } });
     await screen.findByText('Bordj Chandez');
@@ -59,5 +62,35 @@ describe('Importer des lieux GeoAlgeria', () => {
     fireEvent.click(screen.getByRole('button', { name: /Importer en brouillon/ }));
     await waitFor(() => expect(post).toHaveBeenCalledWith('/patrimoine/import-geoalgeria', { ids: ['h1', 'h4'], commePoints: ['h4'] }));
     expect(await screen.findByText(/2 lieu\(x\) créé\(s\) en brouillon, dont 1 point\(s\) de visite/)).toBeTruthy();
+  });
+
+  it('anti-retour 2026-11-19 : la réponse lente d’une wilaya quittée ne remplace pas la liste', async () => {
+    let lente: (v: unknown) => void = () => {};
+    get.mockImplementation(async (url: string, params?: { wilaya: string }) => {
+      if (url.endsWith('/wilayas')) return { success: true, data: [
+        { id_wilaya: 30, codeW: 30, nom: 'ورقلة', wilaya_name_ascii: 'Ouargla', points: 1 },
+        { id_wilaya: 5, codeW: 5, nom: 'باتنة', wilaya_name_ascii: 'Batna', points: 1 }] };
+      if (url.endsWith('/brouillons')) return { success: true, data: [] };
+      if (params?.wilaya === '30') return new Promise((ok) => { lente = ok; });
+      return { success: true, data: { points: [point('b1', 'Timgad', true)] } };
+    });
+    rendre(<ImportGeoAlgeriaDialog open onOpenChange={() => {}} onImported={() => {}} />);
+    await waitFor(() => expect(screen.getByRole('option', { name: /05 · Batna|5 · Batna/ })).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('wilaya'), { target: { value: '30' } });
+    fireEvent.change(screen.getByLabelText('wilaya'), { target: { value: '5' } });
+    await screen.findByText('Timgad');
+    lente({ success: true, data: { points: [point('o1', 'Bordj Chandez', true)] } });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText('Bordj Chandez')).toBeNull();
+    expect(screen.getByText('Timgad')).toBeTruthy();
+  });
+
+  it('anti-retour 2026-11-19 : une erreur de chargement est affichée', async () => {
+    get.mockImplementation(async (url: string) => {
+      if (url.endsWith('/wilayas')) return { success: false, error: 'Service indisponible' };
+      return { success: true, data: [] };
+    });
+    rendre(<ImportGeoAlgeriaDialog open onOpenChange={() => {}} onImported={() => {}} />);
+    expect(await screen.findByText('Service indisponible')).toBeTruthy();
   });
 });

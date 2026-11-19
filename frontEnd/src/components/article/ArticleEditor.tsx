@@ -5,7 +5,7 @@ import { SaisieConserveeAvis } from '@/hooks/useSaisieConservee';
 import { directionTexte } from '@/utils/directionTexte';
 import { lireArticleImporte } from '@/utils/importArticle';
 import { nettoyerBlocs } from '@/utils/nettoyageTexte';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,12 +117,17 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
     editor.setEditLang('ar');
   };
 
-  // Section « Poésie » : un nouvel article commence par le modèle Poème, avec le mot-clé « poésie »
-  const pretAuPoeme = modePoeme && !articleId && !editor.loading && editor.blocks.length === 0;
+  // Section « Poésie » : un nouvel article commence par le modèle Poème, avec le mot-clé « poésie ».
+  // Une seule fois (vider l'éditeur ensuite ne le remet pas), et jamais par-dessus un poème restauré.
+  const modelePose = useRef(false);
+  const pretAuPoeme = modePoeme && !articleId && !editor.loading;
   useEffect(() => {
-    if (!pretAuPoeme) return;
-    editor.remplacerBlocs(blocsDuModele('poeme', (cle, defaut) => t(cle, defaut)).map(b => ({ ...b, _uid: generateBlockUid() } as typeof b)));
-    editor.handleAddTag(t('poesie.motCle', 'poésie'));
+    if (!pretAuPoeme || modelePose.current) return;
+    modelePose.current = true;
+    editor.commencerAvecModele(
+      blocsDuModele('poeme', (cle, defaut) => t(cle, defaut)).map(b => ({ ...b, _uid: generateBlockUid() } as (typeof editor.blocks)[number])),
+      t('poesie.motCle', 'poésie')
+    );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pretAuPoeme]);
 

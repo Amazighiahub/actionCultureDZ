@@ -438,7 +438,8 @@
     "Colonne « {t1} » introuvable dans la feuille « {t2} »": "العمود « {t1} » غير موجود في الورقة « {t2} »",
     "Vous ne pouvez pas valider {l1} vous-même : un autre membre de l’équipe doit le faire.": "لا يمكنك المصادقة على {l1} بنفسك: يجب أن يقوم بذلك عضو آخر من الفريق.",
     "Vous avez atteint la limite de {n1} liens": "بلغت الحد الأقصى: {n1} روابط",
-    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} صورة على الأكثر لكل فعالية: احذف واحدة أولًا"
+    "{n1} photos au plus par événement : retirez-en une d'abord": "{n1} صورة على الأكثر لكل فعالية: احذف واحدة أولًا",
+    "{n1} lieux au plus par import": "{n1} مكان على الأكثر في كل استيراد"
   },
   "_libelles": {
     "Adresse": "العنوان",
@@ -517,5 +518,6 @@
   "Cette activité ne fait pas partie de cet événement": "هذا النشاط ليس جزءًا من هذه الفعالية",
   "Wilaya invalide": "ولاية غير صالحة",
   "Choisissez au moins un lieu": "اختر مكانًا واحدًا على الأقل",
-  "${MAX_IMPORT} lieux au plus par import": "${MAX_IMPORT} مكانًا على الأكثر في كل استيراد"
+  "${MAX_IMPORT} lieux au plus par import": "${MAX_IMPORT} مكانًا على الأكثر في كل استيراد",
+  "L’événement choisi n’est pas encore public : publiez-le d’abord": "الفعالية المختارة ليست منشورة بعد: انشرها أولاً"
 }

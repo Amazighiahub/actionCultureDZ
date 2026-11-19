@@ -9,6 +9,7 @@
  *   - Envoi réussi : brouillon oublié
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { useEffect } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 const { emplacement, utilisateur, mockGetForEdit, mockGetBlocks, mockToast } = vi.hoisted(() => ({
@@ -120,5 +121,38 @@ describe('useArticleEditor — session expirée pendant la rédaction', () => {
     await act(async () => { await vue.result.current.handleSave(); });
     expect(onSave).toHaveBeenCalled();
     expect(sessionStorage.getItem('saisie:7:article:42:modification')).toBeNull();
+  });
+});
+
+describe('useArticleEditor — modèle de départ de la section Poésie (anti-retour 2026-11-19)', () => {
+  const modele = [{ type_block: 'heading', contenu: 'Titre du poème', ordre: 0, visible: true }] as never[];
+  /** Comme ArticleEditor : le modèle est demandé à l'ouverture, après la restauration éventuelle */
+  const ouvrirPoeme = () => renderHook(() => {
+    const e = useArticleEditor({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { e.commencerAvecModele(modele, 'Poésie'); }, []);
+    return e;
+  });
+
+  test('éditeur vide : le modèle et le mot-clé sont posés, une seule fois', async () => {
+    emplacement.pathname = '/ajouter-oeuvre';
+    const vue = ouvrirPoeme();
+    await waitFor(() => expect(vue.result.current.blocks[0]?.contenu).toBe('Titre du poème'));
+    expect(vue.result.current.formData.tags).toEqual(['poésie']);
+  });
+
+  test('poème restauré après une session expirée : jamais écrasé par le modèle', async () => {
+    emplacement.pathname = '/ajouter-oeuvre';
+    const premier = ouvrirPoeme();
+    await waitFor(() => expect(premier.result.current.blocks).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 350));
+    act(() => { premier.result.current.updateBlock(0, { contenu: 'Mon vers à moi' }); });
+    expirer();
+    premier.unmount();
+
+    const retour = ouvrirPoeme();
+    await waitFor(() => expect(retour.result.current.saisieRestauree).toBe(true));
+    expect(retour.result.current.blocks.map((b) => b.contenu)).toEqual(['Mon vers à moi']);
+    expect(retour.result.current.formData.tags).toEqual(['poésie']);
   });
 });
