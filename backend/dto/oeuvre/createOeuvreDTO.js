@@ -41,6 +41,9 @@ class CreateOeuvreDTO extends BaseDTO {
     this.coverUrl = BaseDTO.cleanString(data.cover_url || data.coverUrl);
 
     // Relations
+    // Section Tamazight : variante, texte écrit par une personne, accord de partage ouvert
+    this.tamazight = require('../../constants/tamazight').champsTamazight(data);
+
     this.categories = BaseDTO.toArray(data.categories);
     this.tags = BaseDTO.toArray(data.tags);
   }
@@ -169,6 +172,7 @@ class CreateOeuvreDTO extends BaseDTO {
     if (this.anneeCreation) entity.annee_creation = this.anneeCreation;
     if (this.prix !== null) entity.prix = this.prix;
     if (this.idOeuvreOriginale) entity.id_oeuvre_originale = this.idOeuvreOriginale;
+    Object.assign(entity, require('../../constants/tamazight').valeursTamazight(this.tamazight || {}));
 
     return entity;
   }

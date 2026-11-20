@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag, PlusCircle, Map as MapIcon, Search } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass, Utensils, Store, Library, Users, ShoppingBag, PlusCircle, Map as MapIcon, Search, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -157,6 +157,8 @@ const Header = () => {
       { to: '/oeuvres?type=6', label: t('header.nav.art', 'Œuvres d\'art'), icon: Palette },
       // Annuaire des organisations, filtré sur les maisons d'édition
       { to: '/organisations?categorie=edition', label: t('organisations.menu.edition', 'Maisons d\'édition'), icon: Library },
+      // Section Tamazight : textes et voix en tamazight (2026-11-20)
+      { to: '/tamazight', label: t('tamazight.menu', 'Tamazight'), icon: Languages },
     ],
     // Libellés au pluriel propres à la bande : les clés events.types.* servent aussi
     // aux badges de type (au singulier), on ne les touche pas (audit V11 UX-31).

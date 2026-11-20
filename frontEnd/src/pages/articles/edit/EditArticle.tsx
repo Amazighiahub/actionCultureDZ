@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { useNavigationDifferee } from '@/hooks/useNavigationDifferee';
+import { champsTamazightEnvoi } from '@/utils/tamazight';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -143,6 +144,7 @@ const EditArticle: React.FC = () => {
         tags: formData.tags,
         details_specifiques: detailsArticle(formData, { modification: true }),
         ...liensArticle(contributeurs, editeurs),
+        ...champsTamazightEnvoi(formData),
       } as any);
       if (!miseAJour.success) {
         throw new Error(messageErreurServeur(miseAJour, t('toasts.updateError', 'Erreur lors de la mise à jour')));

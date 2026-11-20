@@ -101,6 +101,9 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/professionnels', 'weekly', '0.8');
       urls += urlBlock('/patrimoine/services', 'weekly', '0.7');
       urls += urlBlock('/artisanat/gastronomie', 'weekly', '0.7');
+      // Section Tamazight et données ouvertes (2026-11-20)
+      urls += urlBlock('/tamazight', 'weekly', '0.8');
+      urls += urlBlock('/donnees-ouvertes', 'monthly', '0.6');
       // Pages de wilaya : seulement celles qui ont au moins un site publié (pas de pages vides)
       if (models.Lieu) {
         const wilayasAvecSites = await safeQuery('wilayas', () => models.Lieu.sequelize.query(

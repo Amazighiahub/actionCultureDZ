@@ -97,6 +97,10 @@ class UpdateOeuvreDTO extends BaseDTO {
       this._fields.add('est_mis_en_avant');
     }
 
+    // Section Tamazight (constants/tamazight.js) : appliqué par l'œuvre enregistrée (valeursTamazight)
+    this.tamazight = require('../../constants/tamazight').champsTamazight(data);
+    for (const champ of Object.keys(this.tamazight)) this._fields.add(champ);
+
     // Relations
     if (data.categories !== undefined) {
       this.categories = BaseDTO.toArray(data.categories);
@@ -218,6 +222,7 @@ class UpdateOeuvreDTO extends BaseDTO {
     if (this.hasField('prix')) entity.prix = this.prix;
     if (this.hasField('statut')) entity.statut = this.statut;
     if (this.hasField('est_mis_en_avant')) entity.est_mis_en_avant = this.estMisEnAvant;
+    Object.assign(entity, this.tamazight || {});
 
     // Ajouter la date de modification
     entity.date_modification = new Date();

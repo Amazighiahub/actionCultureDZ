@@ -103,7 +103,16 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false
-    }
+    },
+    // Section Tamazight (migration 20261236, règles : constants/tamazight.js)
+    variante_amazighe: { type: DataTypes.STRING(20), allowNull: true, comment: 'kabyle, chaoui, mozabite…' },
+    ecrit_par_humain: { type: DataTypes.BOOLEAN, allowNull: true, comment: 'Texte écrit par une personne (pas une traduction automatique)' },
+    partage_ouvert: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, comment: 'Accord de l’auteur pour le partage sous licence ouverte' },
+    partage_ouvert_le: { type: DataTypes.DATE, allowNull: true },
+    licence: { type: DataTypes.STRING(20), allowNull: true, comment: 'cc_by_sa quand le partage ouvert est accepté' },
+    donnees_ouvertes_valide: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, comment: 'Relu par un modérateur pour la page Données ouvertes' },
+    donnees_ouvertes_par: { type: DataTypes.INTEGER, allowNull: true },
+    donnees_ouvertes_le: { type: DataTypes.DATE, allowNull: true }
   }, {
     tableName: 'oeuvre',
     timestamps: true,

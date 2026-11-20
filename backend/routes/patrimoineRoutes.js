@@ -147,7 +147,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       body('langue').optional({ values: 'falsy' }).isIn(LANGUES_AUDIO).withMessage(msg('validation.langueInvalide')),
       body('parler').optional().isString().isLength({ max: 100 }).withMessage(msg('validation.parlerTropLong')),
       body('credit').optional().isString().isLength({ max: 150 }).withMessage(msg('validation.nomVoixTropLong')),
-      body('accord').custom(v => v === 'true' || v === '1' || v === true).withMessage(msg('validation.accordVoix'))
+      body('accord').custom(v => v === 'true' || v === '1' || v === true).withMessage(msg('validation.accordVoix')),
+      body('partage_ouvert').optional().isIn(['true', 'false', '1', '0'])
     ],
     handleValidationErrors,
     (req, res, next) => { req.voixEnregistree = true; next(); },

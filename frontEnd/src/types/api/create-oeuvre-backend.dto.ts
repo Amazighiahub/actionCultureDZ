@@ -7,6 +7,7 @@ import {
   ContributeurOeuvre
 } from './oeuvre-creation.types';
 import type { TranslatableValue } from '@/types/common/multilingual.types';
+import { champsTamazightEnvoi } from '@/utils/tamazight';
 
 /**
  * Type DTO pour la création d'œuvre qui correspond exactement
@@ -78,6 +79,8 @@ export function mapToBackendDTO(
     je_suis_auteur: formData.je_suis_auteur,
     categories: formData.categories,
     tags: formData.tags,
+    // Section Tamazight : seulement pour une œuvre en tamazight
+    ...((formData.id_langue === 1 || formData.id_langue === 2) ? champsTamazightEnvoi(formData) : {}),
     
     // Mapper les contributeurs utilisateurs
     utilisateurs_inscrits: contributeurs

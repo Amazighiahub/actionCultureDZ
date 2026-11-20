@@ -32,6 +32,8 @@ import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lienGuidePour } from '@/utils/lienGuide';
 
 import BoutonRetirerApercu from '@/components/shared/BoutonRetirerApercu';
+import ChampsTamazight from '@/components/tamazight/ChampsTamazight';
+import { estTamazight } from '@/utils/tamazight';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const getTypeIcon = (typeId: number): React.ReactNode => {
@@ -347,6 +349,15 @@ const AjouterOeuvre: React.FC = () => {
                           </select>
                           {fieldErrors.id_langue && <p id="id_langue-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_langue}</p>}
                         </div>
+                        {/* Œuvre en tamazight : variante, écrit par une personne, partage ouvert (section Tamazight) */}
+                        {estTamazight(formData.id_langue) && (
+                          <div className="mt-4">
+                            <ChampsTamazight
+                              valeurs={{ variante_amazighe: formData.variante_amazighe, ecrit_par_humain: formData.ecrit_par_humain, partage_ouvert: formData.partage_ouvert }}
+                              onChange={(v) => { handleInputChange('variante_amazighe', v.variante_amazighe); handleInputChange('ecrit_par_humain', v.ecrit_par_humain); handleInputChange('partage_ouvert', v.partage_ouvert); }}
+                            />
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 

@@ -32,6 +32,7 @@ import { generateBlockUid } from './articleEditor.constants';
 import { estBlocVide } from './ModelesEtAide';
 import { LANGUES_ARTICLE, langueOrigine } from '@/utils/traductionBlocs';
 import { nomDuTag } from '@/utils/donneesArticle';
+import { lireChampsTamazight } from '@/utils/tamazight';
 
 // Template scientifique pour les nouveaux articles scientifiques
 const SCIENTIFIC_TEMPLATE: ArticleBlock[] = [
@@ -86,7 +87,9 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   const [formData, setFormData] = useState<ArticleFormData>({
     titre: '',
     description: '',
-    id_langue: 1,
+    // Aucune langue par défaut : avant, 1 (= tamazight) était gardé quand la liste des langues manquait, et des
+    // articles en français ou en arabe se retrouvaient classés en tamazight (2026-11-20)
+    id_langue: 0,
     categories: [],
     tags: [],
     type: 'article',
@@ -255,6 +258,8 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
           categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
           tags: (oeuvre.Tags || []).map(nomDuTag).filter(Boolean),
           type: articleType,
+          // Section Tamazight : variante, écrit par une personne, accord de partage
+          ...lireChampsTamazight(oeuvre),
           ...articleData,
           // Article scientifique : le lien source est enregistré dans url_hal
           url_source: articleData?.url_source ?? articleData?.url_hal ?? undefined

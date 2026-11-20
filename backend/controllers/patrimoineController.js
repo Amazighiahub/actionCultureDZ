@@ -704,7 +704,8 @@ class PatrimoineController extends BaseController {
       credit: req.body?.credit,
       licence: req.body?.licence,
       // Route des voix seulement (case d'accord obligatoire, vérifiée par la route)
-      ...(req.voixEnregistree ? { parler: req.body?.parler, accordVoix: true } : {})
+      // Voix : partage ouvert (licence CC BY-SA 4.0, données ouvertes tamazight) seulement si la personne l'accepte
+      ...(req.voixEnregistree ? { parler: req.body?.parler, accordVoix: true, partageOuvert: ['true', '1'].includes(String(req.body?.partage_ouvert)) } : {})
     });
     if (medias?.length) await this._signalerContribution(req, 'a ajouté des photos ou des enregistrements à');
     res.json({ success: true, data: medias });

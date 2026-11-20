@@ -1105,7 +1105,7 @@ class PatrimoineService extends BaseService {
    * @param {boolean} [options.accordVoix] - voix : le contributeur a l'accord de la personne enregistrée
    * (credit, pour une voix : nom de la personne enregistrée, facultatif)
    */
-  async uploadMedias(siteId, files, { langue, credit, licence, parler, accordVoix } = {}) {
+  async uploadMedias(siteId, files, { langue, credit, licence, parler, accordVoix, partageOuvert = false } = {}) {
     const { Lieu, LieuMedia } = this.models || {};
     if (!Lieu || !LieuMedia) throw this._validationError('Modèles non disponibles');
 
@@ -1143,7 +1143,9 @@ class PatrimoineService extends BaseService {
         ...(type === 'audio' && accordVoix ? {
           parler: texteSimple(parler, 100) ?? null,
           credit: lireCredit(credit) ?? null,
-          accord_voix_le: new Date()
+          accord_voix_le: new Date(),
+          // Accord de partage ouvert : la voix entre dans les données ouvertes (CC BY-SA 4.0)
+          licence: partageOuvert ? require('../../constants/tamazight').LICENCE_OUVERTE : null
         } : {})
       });
     }));

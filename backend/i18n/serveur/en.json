@@ -523,7 +523,8 @@
     "une modification des textes de": "a change to the texts of",
     "une personnalité pour": "a notable person for",
     "un ajout à": "an addition to",
-    "une modification de": "a change to"
+    "une modification de": "a change to",
+    "votre propre texte": "your own text"
   },
   "Liste des organisations partenaires invalide": "Invalid list of partner organisations",
   "Dix organisations partenaires au plus": "Ten partner organisations at most",
@@ -641,5 +642,9 @@
   "Utilisateur validé": "User approved",
   "Utilisateur rejeté": "User rejected",
   "Nouveau message de l’organisateur. Ouvrez Tala DZ pour le lire.": "New message from the organiser. Open Tala DZ to read it.",
-  "Message pour votre événement": "Message about your event"
+  "Message pour votre événement": "Message about your event",
+  "Œuvre introuvable": "Work not found",
+  "Ce texte n’est pas écrit en tamazight": "This text is not written in Tamazight",
+  "Ce texte n’est pas publié": "This text is not published",
+  "L’auteur n’a pas accepté le partage ouvert": "The author has not agreed to open sharing"
 }

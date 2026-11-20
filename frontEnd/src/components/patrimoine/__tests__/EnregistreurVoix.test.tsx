@@ -47,7 +47,10 @@ describe('enregistrer une voix depuis le téléphone', () => {
     const envoyer = await screen.findByRole('button', { name: /Envoyer la voix/ });
     expect((envoyer as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Variante parlée (facultatif)'), { target: { value: 'chaoui de Ghoufi' } });
-    fireEvent.click(screen.getByRole('checkbox'));
+    // Le partage ouvert (données ouvertes) est un accord à part, impossible sans l'accord de publication
+    const partage = screen.getByRole('checkbox', { name: /partagée librement/ });
+    expect((partage as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('checkbox', { name: /d’accord pour que sa voix soit publiée/ }));
     expect((envoyer as HTMLButtonElement).disabled).toBe(false);
     await act(async () => { fireEvent.click(envoyer); });
 
@@ -55,7 +58,8 @@ describe('enregistrer une voix depuis le téléphone', () => {
     const [lieu, fichier, voix] = uploadVoix.mock.calls[0];
     expect(lieu).toBe(4);
     expect((fichier as File).type).toBe('audio/webm');
-    expect(voix).toMatchObject({ langue: 'tz-ltn', parler: 'chaoui de Ghoufi' });
+    // Jamais partagée librement d'office (anti-retour 2026-11-20)
+    expect(voix).toMatchObject({ langue: 'tz-ltn', parler: 'chaoui de Ghoufi', partageOuvert: false });
     expect(onEnvoye).toHaveBeenCalledWith([expect.objectContaining({ id: 9 })]);
   });
 

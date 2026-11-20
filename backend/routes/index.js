@@ -509,6 +509,8 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
     { path: '/stats', init: initStatsRoutes, args: [models, authMiddleware] },
+    // Section Tamazight : page publique, données ouvertes, relecture (2026-11-20)
+    { path: '/tamazight', init: require('./tamazightRoutes'), args: [models, authMiddleware] },
     { path: '/contact', init: require('./contactRoutes'), args: [] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT

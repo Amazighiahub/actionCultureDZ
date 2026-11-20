@@ -82,6 +82,7 @@ import { messageErreurServeur } from '@/utils/erreurServeur';
 // Nom de chaque langue écrit dans cette langue (liste commune, audit V11 COD-6)
 import { nomLangue } from '@/types/common/multilingual.types';
 
+import LectureAudio from '@/components/article/LectureAudio';
 function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
     return { type: 'article_scientifique', data: oeuvre.ArticleScientifique };
@@ -850,6 +851,11 @@ const ArticleViewPage: React.FC = () => {
           </Card>
         }
       </header>
+
+      {/* Écouter le texte (lecture à voix haute) ; l'auteur peut l'ajouter (section Tamazight, 2026-11-20) */}
+      <LectureAudio idOeuvre={Number(oeuvre.id_oeuvre)} medias={(oeuvre.Media || []) as Array<{ id_media?: number; url?: string; type_media?: string }>}
+        peutModifier={peutModifier}
+        onAjoute={() => { oeuvreService.getOeuvreById(articleId).then(res => { if (res.success && res.data) setOeuvre(res.data); }); }} />
 
       {/* Contenu de l'article */}
       <article className="mag-corps" dir={sensContenu} lang={langueContenu}>

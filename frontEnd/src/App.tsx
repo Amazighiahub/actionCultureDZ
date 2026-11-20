@@ -40,6 +40,9 @@ const Oeuvres = React.lazy(() => import('./pages/Oeuvres'));
 const OeuvreDetail = React.lazy(() => import('./pages/oeuvreDetail/OeuvreDetailPage'));
 const Artisanat = React.lazy(() => import('./pages/Artisanat'));
 const Gastronomie = React.lazy(() => import('./pages/Gastronomie'));
+// Section Tamazight et données ouvertes (2026-11-20)
+const Tamazight = React.lazy(() => import('./pages/Tamazight'));
+const DonneesOuvertes = React.lazy(() => import('./pages/DonneesOuvertes'));
 const ServicesVisiteurs = React.lazy(() => import('./pages/ServicesVisiteurs'));
 const ServiceDetail = React.lazy(() => import('./pages/ServiceDetail'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
@@ -223,6 +226,8 @@ const App = () => (
             <Route path="/wilayas/:id" element={<ErrorBoundary><WilayaVitrine /></ErrorBoundary>} />
             <Route path="/organisations/:id" element={<ErrorBoundary><OrganisationVitrine /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
+            <Route path="/tamazight" element={<ErrorBoundary><Tamazight /></ErrorBoundary>} />
+            <Route path="/donnees-ouvertes" element={<ErrorBoundary><DonneesOuvertes /></ErrorBoundary>} />
             <Route path="/auth" element={<Auth />} />
             {/* Redirects SEO : anciennes URLs PascalCase → lowercase */}
             <Route path="/Patrimoine" element={<Navigate to="/patrimoine" replace />} />

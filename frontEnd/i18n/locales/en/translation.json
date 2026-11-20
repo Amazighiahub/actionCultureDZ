@@ -4679,7 +4679,8 @@
       "accord": "The recorded person agrees to their voice being published on Tala DZ.",
       "envoyer": "Send the voice",
       "envoyee": "Voice added to the audio guide. Thank you!",
-      "de": "Voice: {{nom}}"
+      "de": "Voice: {{nom}}",
+      "partage": "They also agree that their voice may be shared freely for research on the language (CC BY-SA 4.0 licence, their name credited)."
     },
     "carte": {
       "wilaya": "Wilaya",
@@ -5549,7 +5550,13 @@
     "lireEn": "Read in",
     "removeImage": "Remove image",
     "imageTropGrande": "The image is too large (25 MB maximum).",
-    "formatImage": "Format not accepted: choose a JPEG, PNG, GIF or WebP photo."
+    "formatImage": "Format not accepted: choose a JPEG, PNG, GIF or WebP photo.",
+    "audio": {
+      "titre": "Listen to the text",
+      "ajouter": "Add the read-aloud recording",
+      "aide": "Read your text and upload the recording (MP3, M4A, WAV or OGG). If you agreed to open sharing, it will accompany the text in the open data.",
+      "echec": "The recording could not be added."
+    }
   },
   "passwordStrength": {
     "minLength": "12+ characters",
@@ -6738,5 +6745,81 @@
     "imageDessus": "Above the poem",
     "sansImage": "No image",
     "contenu": "The poem"
+  },
+  "tamazight": {
+    "menu": "Tamazight",
+    "form": {
+      "titre": "Text in Tamazight",
+      "variante": "Variety (dialect)",
+      "choisirVariante": "— Choose the variety —",
+      "humain": "This text and its translations were written by people, not by a machine translator.",
+      "partage": "I agree that this text and its recordings may be shared freely for research on Tamazight (translation, speech recognition), under the CC BY-SA 4.0 licence: my name and Tala DZ will be credited.",
+      "licence": "Read the licence",
+      "relecture": "A moderator reviews the text before it appears in the open data. You can withdraw your consent at any time."
+    },
+    "variantes": {
+      "kabyle": "Kabyle (taqbaylit)",
+      "chaoui": "Chaoui (tacawit)",
+      "mozabite": "Mozabite (tumẓabt)",
+      "chenoui": "Chenoui (tacenwit)",
+      "touareg": "Tuareg (tamahaq)",
+      "zenete": "Zenati of Gourara (taznatit)",
+      "ouargli": "Ouargli (tagergrent)",
+      "autre": "Other variety"
+    },
+    "ecriture": {
+      "tifinagh": "Tifinagh",
+      "latin": "Latin script"
+    },
+    "page": {
+      "titre": "Tamazight: texts and voices",
+      "description": "Tales, poems, proverbs and songs in Tamazight, as text and audio, by variety: Kabyle, Chaoui, Mozabite, Chenoui, Tuareg… Shared freely to keep the language alive.",
+      "intro": "Write, record and share in Tamazight. Every tale, poem or song published here makes the language better known; shared freely, it also helps researchers build translation and speech recognition tools.",
+      "ecrire": "Publish a text in Tamazight",
+      "donnees": "Open data",
+      "aide": "In the editor, choose “The article’s text is written in: Tamazight”, then set the variety.",
+      "filtres": "Filter",
+      "toutesVariantes": "All varieties",
+      "tout": "All",
+      "types": {
+        "textes": "Articles and poems",
+        "livres": "Books",
+        "musique": "Music"
+      },
+      "vide": "No texts yet: be the first to publish in Tamazight.",
+      "audio": "Audio",
+      "ouvert": "Open data",
+      "voix": "Listen to heritage in Tamazight"
+    },
+    "admin": {
+      "titre": "Tamazight: {{n}} text(s) to review for the open data",
+      "aide": "Check that the text is really in Tamazight, written by a person, and that the variety is right. Once approved, it joins the open data (CC BY-SA 4.0 licence).",
+      "valider": "Add to the open data"
+    }
+  },
+  "donneesOuvertes": {
+    "menu": "Open data",
+    "titre": "Open data: texts and voices in Tamazight",
+    "description": "Texts, translations and recordings in Tamazight shared freely under the CC BY-SA 4.0 licence, for research on translation and speech recognition.",
+    "intro": "Authors and speakers freely share their texts and voices in Tamazight, so that researchers and universities can build tools that keep the language alive. Every text is written by a person and reviewed by a moderator before it is included.",
+    "usages": {
+      "traduction": "Translation",
+      "traductionTexte": "Texts in Tamazight with their translation into Arabic or French, written by people.",
+      "parole": "Speech recognition",
+      "paroleTexte": "A text and its recording read aloud, with the speaker’s consent.",
+      "langue": "Study of the varieties",
+      "langueTexte": "Variety (Kabyle, Chaoui, Mozabite…) and script (Tifinagh or Latin) given for each text."
+    },
+    "telecharger": "Download",
+    "compte": "{{textes}} text(s) and {{voix}} place recording(s), updated automatically.",
+    "contenu": "For each text, the JSON holds: title, full text, translations, variety, script, author, links to the audio recordings and the source page.",
+    "licenceTitre": "Licence and citation",
+    "licence": "Creative Commons CC BY-SA 4.0 licence: you may copy, adapt and reuse these data, including to train tools, provided you credit the authors and Tala DZ and share your derived data under the same licence.",
+    "citation": "Tala DZ (taladz.com) and the credited authors, “Texts and voices in Tamazight”, CC BY-SA 4.0 licence.",
+    "lireLicence": "Read the CC BY-SA 4.0 licence",
+    "contribuer": "Contribute",
+    "contribuerTexte": "Do you write or speak Tamazight? Publish your texts with open sharing ticked, or record your voice on a place’s page. Universities and associations: write to us to become partners.",
+    "voirSection": "See the Tamazight section",
+    "ecrire": "Write to us"
   }
 }

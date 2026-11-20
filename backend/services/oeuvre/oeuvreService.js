@@ -358,6 +358,12 @@ class OeuvreService extends BaseService {
     await this.withTransaction(async (transaction) => {
       // Mettre à jour l'œuvre
       const entityData = updateDTO.toEntity();
+      // Section Tamazight : partage ouvert seulement pour un texte écrit par une personne, accord daté ; un texte
+      // modifié par son auteur repasse en relecture avant la page « Données ouvertes »
+      Object.assign(entityData, require('../../constants/tamazight').valeursTamazight(updateDTO.tamazight || {}, existingOeuvre));
+      if (!isAdmin && existingOeuvre.donnees_ouvertes_valide) {
+        Object.assign(entityData, { donnees_ouvertes_valide: false, donnees_ouvertes_par: null, donnees_ouvertes_le: null });
+      }
       await this.repository.update(id, entityData, { transaction });
 
       // Mettre à jour les catégories si fournies

@@ -34,6 +34,7 @@ export default function EnregistreurVoix({ lieuId, langue, onEnvoye }: Props) {
   const [parler, setParler] = useState('');
   const [nom, setNom] = useState('');
   const [accord, setAccord] = useState(false);
+  const [partage, setPartage] = useState(false);
   const [envoi, setEnvoi] = useState(false);
 
   if (!enregistrementPossible()) return null;
@@ -42,12 +43,12 @@ export default function EnregistreurVoix({ lieuId, langue, onEnvoye }: Props) {
     if (!fichier || !accord) return;
     setEnvoi(true);
     try {
-      const res = await patrimoineService.uploadVoix(lieuId, fichier, { langue, parler, nom });
+      const res = await patrimoineService.uploadVoix(lieuId, fichier, { langue, parler, nom, partageOuvert: accord && partage });
       if (!res.success || !res.data) throw new Error(res.error);
       onEnvoye((res.data as unknown as MediaAudio[]).filter((m) => m.type === 'audio'));
       toast({ title: t('patrimoine.voix.envoyee', 'Voix ajoutée au guide audio. Merci !') });
       recommencer();
-      setParler(''); setNom(''); setAccord(false);
+      setParler(''); setNom(''); setAccord(false); setPartage(false);
     } catch (err) {
       toast({
         title: t('common.error', 'Erreur'),
@@ -114,6 +115,13 @@ export default function EnregistreurVoix({ lieuId, langue, onEnvoye }: Props) {
             <Checkbox id={`${id}-accord`} checked={accord} onCheckedChange={(v) => setAccord(v === true)} className="mt-0.5" />
             <Label htmlFor={`${id}-accord`} className="text-sm font-normal leading-snug">
               {t('patrimoine.voix.accord', 'La personne enregistrée est d’accord pour que sa voix soit publiée sur Tala DZ.')}
+            </Label>
+          </div>
+          {/* Données ouvertes (section Tamazight) : un accord à part, jamais coché d'office */}
+          <div className="flex items-start gap-2">
+            <Checkbox id={`${id}-partage`} checked={partage} disabled={!accord} onCheckedChange={(v) => setPartage(v === true)} className="mt-0.5" />
+            <Label htmlFor={`${id}-partage`} className="text-sm font-normal leading-snug">
+              {t('patrimoine.voix.partage', 'Elle accepte aussi que sa voix soit partagée librement pour la recherche sur la langue (licence CC BY-SA 4.0, son nom cité).')}
             </Label>
           </div>
           <Button type="button" size="sm" onClick={envoyer} disabled={!accord || envoi}>

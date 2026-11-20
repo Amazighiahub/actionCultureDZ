@@ -229,12 +229,14 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
    * Voix enregistrée depuis le téléphone : variante parlée, nom de la personne (facultatif) et
    * accord de la personne enregistrée (obligatoire, vérifié par le serveur)
    */
-  async uploadVoix(siteId: number, fichier: File, voix: { langue: string; parler?: string; nom?: string }): Promise<ApiResponse<MediaSite[]>> {
+  async uploadVoix(siteId: number, fichier: File, voix: { langue: string; parler?: string; nom?: string; partageOuvert?: boolean }): Promise<ApiResponse<MediaSite[]>> {
     const formData = new FormData();
     formData.append('langue', voix.langue);
     if (voix.parler?.trim()) formData.append('parler', voix.parler.trim());
     if (voix.nom?.trim()) formData.append('credit', voix.nom.trim());
     formData.append('accord', 'true');
+    // Partage ouvert (CC BY-SA 4.0, données ouvertes du tamazight) : seulement si la personne l'accepte
+    if (voix.partageOuvert) formData.append('partage_ouvert', 'true');
     formData.append('medias', fichier);
     return httpClient.upload<MediaSite[]>(API_ENDPOINTS.patrimoine.uploadVoix(siteId), formData);
   }

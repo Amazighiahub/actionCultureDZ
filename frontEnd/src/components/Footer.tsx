@@ -21,6 +21,8 @@ const Footer = () => {
         { label: t('professionnels.menu', 'Professionnels'), href: '/professionnels' },
         { label: t('organisations.menu.toutes', 'Organisations'), href: '/organisations' },
         { label: t('wilaya.toutes', 'Les wilayas'), href: '/wilayas' },
+        { label: t('tamazight.menu', 'Tamazight'), href: '/tamazight' },
+        { label: t('donneesOuvertes.menu', 'Données ouvertes'), href: '/donnees-ouvertes' },
       ]
     },
     {

@@ -4684,7 +4684,8 @@
       "accord": "La personne enregistrée est d’accord pour que sa voix soit publiée sur Tala DZ.",
       "envoyer": "Envoyer la voix",
       "envoyee": "Voix ajoutée au guide audio. Merci !",
-      "de": "Voix : {{nom}}"
+      "de": "Voix : {{nom}}",
+      "partage": "Elle accepte aussi que sa voix soit partagée librement pour la recherche sur la langue (licence CC BY-SA 4.0, son nom cité)."
     },
     "carte": {
       "wilaya": "Wilaya",
@@ -5549,7 +5550,13 @@
     "lireEn": "Lire en",
     "removeImage": "Retirer l’image",
     "imageTropGrande": "L’image est trop volumineuse (25 Mo au plus).",
-    "formatImage": "Format non accepté : choisissez une photo JPEG, PNG, GIF ou WebP."
+    "formatImage": "Format non accepté : choisissez une photo JPEG, PNG, GIF ou WebP.",
+    "audio": {
+      "titre": "Écouter le texte",
+      "ajouter": "Ajouter la lecture à voix haute",
+      "aide": "Lisez votre texte et envoyez l’enregistrement (MP3, M4A, WAV ou OGG). Si vous avez accepté le partage ouvert, il accompagnera le texte dans les données ouvertes.",
+      "echec": "L’enregistrement n’a pas pu être ajouté."
+    }
   },
   "passwordStrength": {
     "minLength": "12 caractères minimum",
@@ -6738,5 +6745,81 @@
     "imageDessus": "Au-dessus du poème",
     "sansImage": "Sans image",
     "contenu": "Le poème"
+  },
+  "tamazight": {
+    "menu": "Tamazight",
+    "form": {
+      "titre": "Texte en tamazight",
+      "variante": "Variante (parler)",
+      "choisirVariante": "— Choisir la variante —",
+      "humain": "Ce texte et ses traductions ont été écrits par des personnes, pas par un traducteur automatique.",
+      "partage": "J’accepte que ce texte et ses enregistrements soient partagés librement pour la recherche sur le tamazight (traduction, reconnaissance de la parole), sous licence CC BY-SA 4.0 : mon nom et Tala DZ seront cités.",
+      "licence": "Lire la licence",
+      "relecture": "Un modérateur relit le texte avant qu’il apparaisse dans les données ouvertes. Vous pouvez retirer votre accord à tout moment."
+    },
+    "variantes": {
+      "kabyle": "Kabyle (taqbaylit)",
+      "chaoui": "Chaoui (tacawit)",
+      "mozabite": "Mozabite (tumẓabt)",
+      "chenoui": "Chenoui (tacenwit)",
+      "touareg": "Touareg (tamahaq)",
+      "zenete": "Zénète du Gourara (taznatit)",
+      "ouargli": "Ouargli (tagergrent)",
+      "autre": "Autre parler"
+    },
+    "ecriture": {
+      "tifinagh": "Tifinagh",
+      "latin": "Lettres latines"
+    },
+    "page": {
+      "titre": "Tamazight : textes et voix",
+      "description": "Contes, poèmes, proverbes et chansons en tamazight, en texte et en audio, par variante : kabyle, chaoui, mozabite, chenoui, touareg… Partagés librement pour faire vivre la langue.",
+      "intro": "Écrivez, enregistrez et partagez en tamazight. Chaque conte, poème ou chanson publié ici fait connaître la langue ; partagé librement, il aide aussi les chercheurs à créer des outils de traduction et de reconnaissance de la parole.",
+      "ecrire": "Publier un texte en tamazight",
+      "donnees": "Données ouvertes",
+      "aide": "Dans l’éditeur, choisissez « Le texte de l’article est écrit en : tamazight » puis indiquez la variante.",
+      "filtres": "Filtrer",
+      "toutesVariantes": "Toutes les variantes",
+      "tout": "Tout",
+      "types": {
+        "textes": "Articles et poèmes",
+        "livres": "Livres",
+        "musique": "Musique"
+      },
+      "vide": "Aucun texte pour l’instant : soyez le premier à publier en tamazight.",
+      "audio": "Audio",
+      "ouvert": "Données ouvertes",
+      "voix": "Écouter le patrimoine en tamazight"
+    },
+    "admin": {
+      "titre": "Tamazight : {{n}} texte(s) à relire pour les données ouvertes",
+      "aide": "Vérifiez que le texte est bien en tamazight, écrit par une personne, et que la variante est juste. Validé, il entre dans les données ouvertes (licence CC BY-SA 4.0).",
+      "valider": "Ajouter aux données ouvertes"
+    }
+  },
+  "donneesOuvertes": {
+    "menu": "Données ouvertes",
+    "titre": "Données ouvertes : textes et voix en tamazight",
+    "description": "Textes, traductions et enregistrements en tamazight partagés librement sous licence CC BY-SA 4.0, pour la recherche sur la traduction et la reconnaissance de la parole.",
+    "intro": "Des auteurs et des locuteurs partagent librement leurs textes et leurs voix en tamazight, pour que chercheurs et universités puissent créer des outils qui font vivre la langue. Chaque texte est écrit par une personne et relu par un modérateur avant d’entrer ici.",
+    "usages": {
+      "traduction": "Traduction",
+      "traductionTexte": "Textes en tamazight avec leur traduction en arabe ou en français, écrite par des personnes.",
+      "parole": "Reconnaissance de la parole",
+      "paroleTexte": "Un texte et son enregistrement lu à voix haute, avec l’accord de la personne.",
+      "langue": "Étude des parlers",
+      "langueTexte": "Variante (kabyle, chaoui, mozabite…) et écriture (tifinagh ou latine) indiquées pour chaque texte."
+    },
+    "telecharger": "Télécharger",
+    "compte": "{{textes}} texte(s) et {{voix}} enregistrement(s) de lieux, mis à jour automatiquement.",
+    "contenu": "Le JSON contient, pour chaque texte : titre, texte complet, traductions, variante, écriture, auteur, liens des enregistrements audio et page d’origine.",
+    "licenceTitre": "Licence et citation",
+    "licence": "Licence Creative Commons CC BY-SA 4.0 : vous pouvez copier, modifier et réutiliser ces données, y compris pour entraîner des outils, à condition de citer les auteurs et Tala DZ, et de partager vos données dérivées sous la même licence.",
+    "citation": "Tala DZ (taladz.com) et les auteurs cités, « Textes et voix en tamazight », licence CC BY-SA 4.0.",
+    "lireLicence": "Lire la licence CC BY-SA 4.0",
+    "contribuer": "Contribuer",
+    "contribuerTexte": "Vous écrivez ou parlez tamazight ? Publiez vos textes en cochant le partage ouvert, ou enregistrez votre voix sur la page d’un lieu. Universités et associations : écrivez-nous pour devenir partenaires.",
+    "voirSection": "Voir la section Tamazight",
+    "ecrire": "Nous écrire"
   }
 }

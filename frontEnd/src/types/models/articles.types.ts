@@ -78,6 +78,11 @@ export interface ArticleBlock {
     peer_reviewed?: boolean;
     issn?: string;
     impact_factor?: number;
+
+    // Section Tamazight (texte écrit en tamazight)
+    variante_amazighe?: import('@/utils/tamazight').ChampsTamazight['variante_amazighe'];
+    ecrit_par_humain?: boolean | null;
+    partage_ouvert?: boolean;
   }
   
   // ============================================================================

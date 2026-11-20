@@ -41,6 +41,7 @@ import { INITIAL_FORM_DATA } from './types';
 import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
+import { champsTamazightEnvoi, lireChampsTamazight } from '@/utils/tamazight';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -239,7 +240,9 @@ export function useAjouterOeuvre() {
           titre: typeof titre === 'object' && titre !== null ? titre : { fr: typeof titre === 'string' ? titre : '', ar: '', en: '' },
           description: typeof description === 'object' && description !== null ? description : { fr: typeof description === 'string' ? description : '', ar: '', en: '' },
           id_type_oeuvre: oeuvre.id_type_oeuvre || 0,
-          id_langue: oeuvre.id_langue || 1,
+          // Pas de tamazight par défaut (1) : une œuvre sans langue la fait choisir (2026-11-20)
+          id_langue: oeuvre.id_langue || 0,
+          ...lireChampsTamazight(oeuvre as Record<string, unknown>),
           categories: rawCategories.map((c) => typeof c === 'object' && c !== null ? c.id_categorie : c) || [],
           tags: rawTags.map(nomDuTag).filter(Boolean),
           annee_creation: oeuvre.annee_creation,
@@ -546,6 +549,7 @@ export function useAjouterOeuvre() {
         tags: articleFormData.tags || [],
         details_specifiques,
         ...liensArticle(contribs, eds),
+        ...champsTamazightEnvoi(articleFormData),
       } as CreateOeuvreBackendDTO;
 
       // Nouvel essai après un échec du contenu : l'article existe déjà, on le met à jour
@@ -555,6 +559,7 @@ export function useAjouterOeuvre() {
         const maj = await oeuvreService.updateOeuvre(dejaCree.oeuvreId, {
           titre: oeuvreData.titre, description: oeuvreData.description, categories: oeuvreData.categories,
           tags: oeuvreData.tags, details_specifiques: oeuvreData.details_specifiques,
+          ...champsTamazightEnvoi(articleFormData),
         } as Partial<CreateOeuvreBackendDTO>);
         if (!maj.success) throw new Error(messageErreurServeur(maj, t('toasts.updateError')));
         oeuvreResponse = { success: true, data: { oeuvre: { id_oeuvre: dejaCree.oeuvreId } } } as typeof oeuvreResponse;

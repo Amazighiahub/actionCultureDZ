@@ -51,6 +51,11 @@ export interface FormData {
   categories: number[];
   tags: string[];
 
+  // Section Tamazight (œuvre en tamazight) : variante, écrit par une personne, accord de partage ouvert
+  variante_amazighe?: import('@/utils/tamazight').ChampsTamazight['variante_amazighe'];
+  ecrit_par_humain?: boolean | null;
+  partage_ouvert?: boolean;
+
   // Auteur
   je_suis_auteur?: boolean;
 

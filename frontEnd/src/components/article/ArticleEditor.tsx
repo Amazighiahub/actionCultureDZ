@@ -33,6 +33,8 @@ import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { SUPPORTED_LANGUAGES, infoLangue, nomLangue } from '@/types/common/multilingual.types';
 
 import { useConfirmation } from '@/hooks/useConfirmation';
+import ChampsTamazight from '@/components/tamazight/ChampsTamazight';
+import { texteEnTamazight } from '@/utils/tamazight';
 // Langues de l'article : liste et noms communs (audit V11 COD-6 ; avant « Tamazight (Latin) » ici seulement)
 const LANG_OPTIONS = SUPPORTED_LANGUAGES.map(infoLangue);
 
@@ -300,6 +302,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                       {LANG_OPTIONS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                     </select>
                   </div>
+
+                  {/* Texte en tamazight : variante, écrit par une personne, accord de partage ouvert (section Tamazight) */}
+                  {texteEnTamazight(editor.langueTexte) && (
+                    <ChampsTamazight
+                      valeurs={{ variante_amazighe: editor.formData.variante_amazighe, ecrit_par_humain: editor.formData.ecrit_par_humain, partage_ouvert: editor.formData.partage_ouvert }}
+                      onChange={(v) => editor.setFormData(prev => ({ ...prev, ...v }))}
+                    />
+                  )}
 
                   {arabeMalRegle && (
                     <Alert role="status">

@@ -523,7 +523,8 @@
     "une modification des textes de": "تعديلًا على نصوص",
     "une personnalité pour": "شخصية لـ",
     "un ajout à": "إضافة إلى",
-    "une modification de": "تعديلًا على"
+    "une modification de": "تعديلًا على",
+    "votre propre texte": "نصك الخاص"
   },
   "Liste des organisations partenaires invalide": "قائمة المنظمات الشريكة غير صالحة",
   "Dix organisations partenaires au plus": "عشر منظمات شريكة على الأكثر",
@@ -641,5 +642,9 @@
   "Utilisateur validé": "تم قبول الحساب",
   "Utilisateur rejeté": "تم رفض الحساب",
   "Nouveau message de l’organisateur. Ouvrez Tala DZ pour le lire.": "رسالة جديدة من المنظم. افتح ثالا دي زد لقراءتها.",
-  "Message pour votre événement": "رسالة بخصوص فعاليتك"
+  "Message pour votre événement": "رسالة بخصوص فعاليتك",
+  "Œuvre introuvable": "العمل غير موجود",
+  "Ce texte n’est pas écrit en tamazight": "هذا النص ليس مكتوبًا بالأمازيغية",
+  "Ce texte n’est pas publié": "هذا النص غير منشور",
+  "L’auteur n’a pas accepté le partage ouvert": "لم يوافق المؤلف على المشاركة المفتوحة"
 }

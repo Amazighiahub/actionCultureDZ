@@ -5,6 +5,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  */
 import React, { useState } from 'react';
 import MotifRefusDialog from '@/components/admin/MotifRefusDialog';
+import RelectureTamazight from '@/components/admin/RelectureTamazight';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getDateLocale } from '@/hooks/useFormatDate';
@@ -87,6 +88,8 @@ const AdminOeuvresTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Textes en tamazight à relire pour les données ouvertes (2026-11-20) */}
+      <RelectureTamazight />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
