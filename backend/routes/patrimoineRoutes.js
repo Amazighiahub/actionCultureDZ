@@ -4,7 +4,18 @@
  */
 
 const express = require('express');
-const { publicHttpCache } = require('../middlewares/cacheMiddleware');
+const { publicHttpCache, conditionalCache, invalidateCache } = require('../middlewares/cacheMiddleware');
+
+/**
+ * Écritures qui changent la carte d'exploration (nom, position, type, site parent, photo d'un lieu) : création,
+ * modification, suppression, publication, imports, propositions acceptées, photos, version restaurée. La carte en
+ * cache est effacée avant la réponse. Les écritures fréquentes sans effet sur la carte (scan d'un QR code, note,
+ * favori, textes de la fiche) ne l'effacent pas.
+ */
+const ECRITURES_CARTE = /^\/(propositions\/|import-|admin\/brouillons|$)|^\/\d+(\/medias|\/historique\/|\/?$)/;
+const viderCarte = invalidateCache(['/patrimoine/carte-exploration']);
+const CARTE_A_JOUR = (req, res, next) => (req.method !== 'GET' && req.method !== 'HEAD' && ECRITURES_CARTE.test(req.path)
+  ? viderCarte(req, res, next) : next());
 const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { uploadClasseurXlsx } = require('../middlewares/uploadClasseur');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE, VOIX_MIMES, MAX_VOIX_SIZE } = require('../constants/uploadMimes');
@@ -20,6 +31,8 @@ const limiteEnvois = [mediasLimiter];
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
+  // Toute écriture réussie (création, modification, publication, import, suppression) vide la carte d'exploration
+  router.use(CARTE_A_JOUR);
   const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail, requireModerationOuPro } = authMiddleware;
   // Actions destructives sur un site (partagé) : réservées à la modération
   const requireModeration = requireRole('Administrateur', 'Moderateur');
@@ -87,7 +100,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   // « À lire » de la page d'accueil : derniers articles publiés
   router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
-  router.get('/carte-exploration', cachePublic, patrimoineController.wrap('getCarteExploration'));
+  // Carte d'exploration : ~1 000 lieux, une requête lourde ; gardée 5 min sur le serveur (Redis), effacée à chaque
+  // modification d'un lieu (CARTE_A_JOUR, en tête du routeur)
+  router.get('/carte-exploration', cachePublic, conditionalCache(300, { sansParametres: true }), patrimoineController.wrap('getCarteExploration'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
   // optionalAuth : le créateur d'un site non publié peut voir sa propre fiche
@@ -294,3 +309,4 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 };
 
 module.exports = initPatrimoineRoutes;
+module.exports.ECRITURES_CARTE = ECRITURES_CARTE;

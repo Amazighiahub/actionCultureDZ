@@ -1,5 +1,6 @@
 // routes/lieuRoutes.js - VERSION i18n
 const express = require('express');
+const { invalidateCache } = require('../middlewares/cacheMiddleware');
 const router = express.Router();
 const LieuController = require('../controllers/lieuController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
@@ -12,6 +13,11 @@ const { ROLES, aUnDesRoles } = require('../constants/roles');
 
 const initLieuRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
+  // Création, modification, traduction ou suppression d'un lieu : la carte d'exploration en cache est effacée
+  // (même règle que routes/patrimoineRoutes.js)
+  const viderCarte = invalidateCache(['/patrimoine/carte-exploration']);
+  router.use((req, res, next) => (/^\/(\d+(\/translation\/[^/]+)?\/?)?$/.test(req.path) && !['GET', 'HEAD'].includes(req.method)
+    ? viderCarte(req, res, next) : next()));
   const lieuController = LieuController;
 
   // ⚡ Validation acceptant string OU JSON pour les champs multilingues
