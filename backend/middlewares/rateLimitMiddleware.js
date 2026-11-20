@@ -326,64 +326,7 @@ const viewLimiter = rateLimit(withStore('views', {
   handler: (req, res) => res.json({ success: true, data: { compte: false } })
 }));
 
-// 5. Rate limiter dynamique basé sur le rôle
-const dynamicLimiter = (options = {}) => {
-  return rateLimit({
-    windowMs: options.windowMs || 15 * 60 * 1000,
-    max: (req) => {
-      // Limites différentes selon le rôle
-      if (req.user?.role === 'admin') return 1000;
-      if (req.user?.role === 'premium') return 500;
-      if (req.user) return 200;
-      return options.max || 50; // Non authentifié
-    },
-    keyGenerator: (req) => {
-      // Utiliser l'ID utilisateur si authentifié, sinon l'IP
-      return req.user?.id_user || req.ip;
-    },
-    ...options
-  });
-};
-
-// 6. Rate limiter avec slowdown progressif
-const speedLimiter = require('express-slow-down');
-
-const progressiveLimiter = speedLimiter({
-  windowMs: 15 * 60 * 1000,
-  delayAfter: 50,
-  delayMs: (hits) => hits * 100,
-  maxDelayMs: 5000,
-  store: makeStore('slow'),
-});
-
-// 7. Configuration avancée avec gestion des IPs trustées
-const advancedLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  skip: (req) => {
-    // Liste blanche d'IPs
-    const trustedIPs = ['127.0.0.1', '::1', ...process.env.TRUSTED_IPS?.split(',') || []];
-    return trustedIPs.includes(req.ip);
-  },
-  keyGenerator: (req) => {
-    // Utiliser req.ip qui respecte la configuration trust proxy d'Express
-    return req.ip;
-  },
-  handler: async (req, res) => {
-    // Log des tentatives excessives
-    logger.warn(`Rate limit atteint pour ${req.ip} sur ${req.path}`);
-    
-    // Optionnel : Enregistrer dans la base de données
-    if (req.user) {
-      await logRateLimitViolation(req.user.id_user, req.path, req.ip);
-    }
-    
-    res.status(429).json({
-      success: false,
-      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
-    });
-  }
-});
+// 5 à 7 (limiteurs « dynamique », « progressif », « avancé ») retirés le 2026-11-19 : jamais utilisés (lot 4 code mort)
 
 // 8. Rate limiter par endpoint avec configuration
 // Handler commun pour les réponses 429 (JSON propre + i18n)
@@ -660,11 +603,6 @@ const accountRateLimiter = new AccountRateLimiter({
   redis: redisClient
 });
 
-// Fonction helper pour logger les violations
-async function logRateLimitViolation(userId, endpoint, ip) {
-  logger.warn(`Rate limit violation: User ${userId} on ${endpoint} from ${ip}`);
-}
-
 module.exports = {
   AccountRateLimiter,
   appareilConnu,
@@ -688,9 +626,6 @@ module.exports = {
   commandeLimiter,
   commandeEtapeLimiter,
   viewLimiter,
-  dynamicLimiter,
-  progressiveLimiter,
-  advancedLimiter,
   endpointLimiters,
   accountRateLimiter, // Rate limiting par compte email
 

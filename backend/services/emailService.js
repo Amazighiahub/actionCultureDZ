@@ -259,30 +259,6 @@ class EmailService {
   }
 
   /**
-   * Envoie l'email de confirmation de changement de mot de passe.
-   * @param {object} user - L'objet utilisateur (doit contenir prenom, email).
-   */
-  async sendPasswordChangeEmail(user) {
-    try {
-      const template = await this.getTemplate('password-change');
-      const html = template({
-        prenom: this._prenom(user),
-        email: user.email,
-      });
-
-      return await this.sendEmail(user.email, 'Confirmation de changement de mot de passe', html, null, null, { type: 'securite' });
-    } catch (error) {
-      logger.error("Erreur dans sendPasswordChangeEmail:", error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Envoie l'email de réinitialisation de mot de passe.
-   * @param {object} user - L'objet utilisateur
-   * @param {string} token - Le jeton de réinitialisation
-   */
-  /**
    * Invitation d'une personne inscrite par un organisateur (liste importée) : sa demande est
    * reçue, son espace est prêt, elle choisit son mot de passe (lien valable 8 jours).
    */
@@ -668,54 +644,6 @@ class EmailService {
       );
     } catch (error) {
       logger.error("Erreur dans sendEventRegistrationConfirmation:", error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Envoie une notification de validation/refus de soumission
-   * @param {Object} params
-   * @param {string} params.email - Email du destinataire
-   * @param {string} params.prenom - Prénom du participant
-   * @param {string} params.nomEvenement - Nom de l'événement
-   * @param {string} params.statut - 'accepte' | 'refuse'
-   * @param {string} [params.message] - Message personnalisé de l'organisateur
-   * @param {string} params.eventUrl - URL de la page événement
-   */
-  async sendSubmissionValidationEmail(params) {
-    try {
-      const { email, prenom, nomEvenement, statut, message, eventUrl } = params;
-
-      const statutText = statut === 'accepte' ? 'acceptée' : 'refusée';
-      const statusColor = statut === 'accepte' ? '#27ae60' : '#e74c3c';
-
-      const esc = this._escapeHtml.bind(this);
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: ${statusColor};">Votre soumission a été ${statutText}</h2>
-          <p>Bonjour ${esc(prenom)},</p>
-          <p>L'organisateur de l'événement <strong>${esc(nomEvenement)}</strong> a examiné votre soumission.</p>
-          <p style="font-size: 18px; color: ${statusColor}; font-weight: bold;">
-            Statut : ${statutText.charAt(0).toUpperCase() + statutText.slice(1)}
-          </p>
-          ${message ? `
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Message de l'organisateur :</strong></p>
-              <p style="font-style: italic;">${esc(message)}</p>
-            </div>
-          ` : ''}
-          <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
-          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
-        </div>
-      `;
-
-      return await this.sendEmail(
-        email,
-        `Soumission ${this._sanitizeSubject(statutText)} : ${this._sanitizeSubject(nomEvenement)}`,
-        html
-      );
-    } catch (error) {
-      logger.error("Erreur dans sendSubmissionValidationEmail:", error);
       return { success: false, error: error.message };
     }
   }

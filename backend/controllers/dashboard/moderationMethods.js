@@ -67,7 +67,7 @@ const moderationMethods = {
           return res.status(400).json({ success: false, error: req.t ? req.t('validation.invalidAction') : 'Action invalide' });
       }
 
-      this.clearCache(entityType);
+      await this.clearCache(entityType);
       res.json({ success: true, message: result.message || req.t('admin.actionSuccess', { action }), data: result.data || result });
     } catch (error) {
       // Erreurs attendues (refus sans motif, œuvre déjà traitée…) : leur code et leur message ;
@@ -78,8 +78,8 @@ const moderationMethods = {
 
   async validateUserAction(userId, data, req) {
     const result = await container.userManagementService.validateUserAction(userId, data);
-    this.clearCache('user');
-    this.clearCache('overview');
+    await this.clearCache('user');
+    await this.clearCache('overview');
     if (req) {
       const valide = data.valide !== undefined ? data.valide : data.validated;
       result.message = valide ? req.t('admin.userValidated') : req.t('admin.userRejected');

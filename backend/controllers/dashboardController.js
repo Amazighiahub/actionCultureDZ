@@ -7,7 +7,6 @@ const usersMethods = require('./dashboard/usersMethods');
 const monitoringMethods = require('./dashboard/monitoringMethods');
 const BaseController = require('./baseController');
 const { DASHBOARD_PERMISSIONS } = require('../constants/dashboardPermissions');
-const LRUCache = require('../utils/LRUCache');
 
 // ============================================================
 // DashboardController — constructor + shared infrastructure
@@ -15,7 +14,6 @@ const LRUCache = require('../utils/LRUCache');
 class DashboardController extends BaseController {
   constructor() {
     super();
-    this.cache = new LRUCache(200);
     this.adminPermissions = DASHBOARD_PERMISSIONS;
   }
 
@@ -23,27 +21,14 @@ class DashboardController extends BaseController {
   // SHARED INFRASTRUCTURE
   // ========================================
 
-  async getCachedData(key, generator, ttl = 300) {
-    try {
-      const cached = this.cache.get(key);
-      if (cached !== undefined) return cached;
-      const data = await generator();
-      this.cache.set(key, data, ttl * 1000);
-      return data;
-    } catch (error) {
-      console.error('Erreur cache:', error.message);
-      return await generator();
-    }
+  // Cache des statistiques : celui du service (Redis partagé, mémoire en secours). Lot 3 doublons (2026-11-19) :
+  // une 2e version, mémoire seule, était écrite ici.
+  getCachedData(key, generator, ttl = 300) {
+    return require('../services/serviceContainer').statsService.getCached(key, generator, ttl);
   }
 
   clearCache(pattern = null) {
-    if (pattern) {
-      for (const key of this.cache.keys()) {
-        if (key.includes(pattern)) this.cache.delete(key);
-      }
-    } else {
-      this.cache.clear();
-    }
+    return require('../services/serviceContainer').statsService.clearCache(pattern);
   }
 }
 

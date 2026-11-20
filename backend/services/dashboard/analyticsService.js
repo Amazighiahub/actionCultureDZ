@@ -59,34 +59,6 @@ class DashboardAnalyticsService {
   }
 
   /**
-   * Analytics géographiques
-   */
-  async getGeographicAnalytics() {
-    const stats = { byWilaya: [], byCommune: [] };
-
-    if (this.models.User) {
-      try {
-        const byWilaya = await this.models.User.findAll({
-          attributes: [
-            'wilaya',
-            [fn('COUNT', col('id_user')), 'count']
-          ],
-          where: { wilaya: { [Op.not]: null } },
-          group: ['wilaya'],
-          order: [[literal('count'), 'DESC']],
-          limit: 10,
-          raw: true
-        });
-        stats.byWilaya = byWilaya;
-      } catch (error) {
-        // Champ wilaya peut ne pas exister
-      }
-    }
-
-    return stats;
-  }
-
-  /**
    * Logs d'audit paginés
    */
   async getAuditLogs({ page: pageDemandee, limit: limiteDemandee, userId, action, startDate, endDate } = {}) {
@@ -160,65 +132,6 @@ class DashboardAnalyticsService {
     return { favoris, participations, vues };
   }
 
-  /**
-   * Alertes système
-   */
-  async getSystemAlerts() {
-    const alerts = [];
-
-    // Utilisateurs en attente depuis longtemps
-    const pendingUsersCount = await this.models.User.count({
-      where: {
-        statut: 'en_attente_validation',
-        date_creation: {
-          [Op.lt]: subDays(new Date(), 7)
-        }
-      }
-    });
-
-    if (pendingUsersCount > 0) {
-      alerts.push({
-        type: 'warning',
-        category: 'users',
-        message: `${pendingUsersCount} utilisateurs en attente depuis plus de 7 jours`,
-        count: pendingUsersCount
-      });
-    }
-
-    // Œuvres en attente
-    if (this.models.Oeuvre) {
-      const pendingOeuvres = await this.models.Oeuvre.count({
-        where: { statut: 'en_attente' }
-      });
-
-      if (pendingOeuvres > 10) {
-        alerts.push({
-          type: 'info',
-          category: 'content',
-          message: `${pendingOeuvres} œuvres en attente de validation`,
-          count: pendingOeuvres
-        });
-      }
-    }
-
-    // Signalements non traités
-    if (this.models.Signalement) {
-      const pendingSignalements = await this.models.Signalement.count({
-        where: { statut: 'en_attente' }
-      });
-
-      if (pendingSignalements > 0) {
-        alerts.push({
-          type: 'error',
-          category: 'moderation',
-          message: `${pendingSignalements} signalements non traités`,
-          count: pendingSignalements
-        });
-      }
-    }
-
-    return alerts;
-  }
 }
 
 module.exports = DashboardAnalyticsService;

@@ -105,25 +105,4 @@ describe('DashboardModerationService', () => {
     });
   });
 
-  // =========================================================================
-  // moderateSignalement
-  // =========================================================================
-  describe('moderateSignalement', () => {
-    it('should throw if signalement not found', async () => {
-      mockModels.Signalement.findByPk.mockResolvedValue(null);
-      await expect(service.moderateSignalement(99, { action: 'approve' }, 1))
-        .rejects.toThrow('Signalement non trouvé');
-    });
-
-    it('should mark signalement as traite on approve', async () => {
-      const mockSignalement = { update: jest.fn().mockResolvedValue(true) };
-      mockModels.Signalement.findByPk.mockResolvedValue(mockSignalement);
-
-      await service.moderateSignalement(1, { action: 'approve', motif: 'OK' }, 10);
-
-      expect(mockSignalement.update).toHaveBeenCalledWith(expect.objectContaining({
-        statut: 'traite', traite_par: 10
-      }));
-    });
-  });
 });

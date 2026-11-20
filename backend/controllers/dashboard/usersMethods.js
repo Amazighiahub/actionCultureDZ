@@ -67,8 +67,8 @@ const usersMethods = {
       const { id } = req.params;
       const result = await container.userManagementService.deleteUser(id, req.user.id_user, { hardDelete: true });
 
-      this.clearCache(`user:${id}`);
-      this.clearCache('users');
+      await this.clearCache(`user:${id}`);
+      await this.clearCache('users');
 
       res.json({ success: true, message: req.t('admin.userDeleted'), data: result });
     } catch (error) {

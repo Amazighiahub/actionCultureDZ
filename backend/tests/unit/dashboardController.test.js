@@ -4,7 +4,16 @@
  * and container.analyticsService directly.
  */
 
+// Cache commun du service (le contrôleur n'a plus le sien, 2026-11-19)
+const mockCache = new Map();
 const mockStatsService = {
+  getCached: jest.fn(async (key, generator) => {
+    if (mockCache.has(key)) return mockCache.get(key);
+    const data = await generator();
+    mockCache.set(key, data);
+    return data;
+  }),
+  clearCache: jest.fn(async () => { mockCache.clear(); }),
   generateOverviewStats: jest.fn(),
   generateDetailedStats: jest.fn(),
   generatePatrimoineStats: jest.fn(),

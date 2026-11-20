@@ -60,16 +60,12 @@ class DashboardStatsService {
       this.cache.clear();
     }
 
-    // Redis (non-bloquant)
+    // Redis : la promesse est rendue, pour qu'une action de modération puisse attendre l'effacement avant de
+    // relire la liste (sinon l'ancienne liste pouvait revenir) ; un échec est sans conséquence
     const redis = getRedisClient();
-    if (redis) {
-      const redisPattern = pattern ? `${STATS_CACHE_PREFIX}*${pattern}*` : `${STATS_CACHE_PREFIX}*`;
-      (async () => {
-        try {
-          await parcourirCles(redis, redisPattern, (keys) => redis.del(keys));
-        } catch (_) { /* best-effort */ }
-      })();
-    }
+    if (!redis) return Promise.resolve();
+    const redisPattern = pattern ? `${STATS_CACHE_PREFIX}*${pattern}*` : `${STATS_CACHE_PREFIX}*`;
+    return parcourirCles(redis, redisPattern, (keys) => redis.del(keys)).catch(() => undefined);
   }
 
   /**
@@ -139,47 +135,6 @@ class DashboardStatsService {
       moderation: { signalementsEnAttente },
       patrimoine: { sites: sitesPatrimoniaux },
       engagement: { vuesAujourdhui }
-    };
-  }
-
-  /**
-   * Compte les validations en attente
-   */
-  async getPendingValidationsCount() {
-    const [pendingUsers, pendingOeuvres] = await Promise.all([
-      this.models.User.count({
-        where: { statut: 'en_attente_validation' }
-      }),
-      this.models.Oeuvre?.count({
-        where: { statut: 'en_attente' }
-      }) || 0
-    ]);
-
-    return {
-      users: pendingUsers,
-      oeuvres: pendingOeuvres,
-      total: pendingUsers + pendingOeuvres
-    };
-  }
-
-  /**
-   * Statistiques d'activité récente
-   */
-  async getRecentActivityStats() {
-    const last24h = subHours(new Date(), 24);
-    const last7days = subDays(new Date(), 7);
-
-    const [newUsers24h, newUsers7d] = await Promise.all([
-      this.models.User.count({
-        where: { date_creation: { [Op.gte]: last24h } }
-      }),
-      this.models.User.count({
-        where: { date_creation: { [Op.gte]: last7days } }
-      })
-    ]);
-
-    return {
-      newUsers: { last24h: newUsers24h, last7days: newUsers7d }
     };
   }
 
@@ -280,36 +235,6 @@ class DashboardStatsService {
       this.getTopContributors()
     ]);
     return { period, dateLimit, userGrowth, contentByType, recentActivity, topContributors };
-  }
-
-  /**
-   * Analytics utilisateurs
-   */
-  async getUserAnalytics(startDate) {
-    const [newUsers, activeUsers] = await Promise.all([
-      this.models.User.count({
-        where: { date_creation: { [Op.gte]: startDate } }
-      }),
-      this.models.User.count({
-        where: { derniere_connexion: { [Op.gte]: startDate } }
-      })
-    ]);
-
-    return { newUsers, activeUsers };
-  }
-
-  /**
-   * Analytics contenu
-   */
-  async getContentAnalytics(startDate) {
-    const dateWhere = { date_creation: { [Op.gte]: startDate } };
-
-    const [newOeuvres, newEvenements] = await Promise.all([
-      this.models.Oeuvre ? this.models.Oeuvre.count({ where: dateWhere }) : 0,
-      this.models.Evenement ? this.models.Evenement.count({ where: dateWhere }) : 0
-    ]);
-
-    return { newOeuvres, newEvenements };
   }
 
   // ---- Patrimoine stats ----

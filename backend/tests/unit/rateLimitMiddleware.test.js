@@ -20,10 +20,6 @@ jest.mock('ioredis', () => {
   }));
 });
 
-jest.mock('express-slow-down', () => {
-  return jest.fn(() => jest.fn((req, res, next) => next()));
-});
-
 describe('AccountRateLimiter', () => {
   let AccountRateLimiter;
   let limiter;

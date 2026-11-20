@@ -259,30 +259,6 @@ class DashboardModerationService {
     return { message: valide ? 'Œuvre validée' : 'Œuvre rejetée', data: oeuvre };
   }
 
-  /**
-   * Modère un signalement
-   */
-  async moderateSignalement(signalementId, data, moderatorId) {
-    if (!this.models.Signalement) {
-      throw new Error('Modèle Signalement non disponible');
-    }
-
-    const signalement = await this.models.Signalement.findByPk(signalementId);
-    if (!signalement) {
-      throw erreurHttp('Signalement non trouvé', 404);
-    }
-
-    const { action, motif } = data;
-
-    await signalement.update({
-      statut: action === 'approve' ? 'traite' : 'rejete',
-      decision: motif,
-      traite_par: moderatorId,
-      date_traitement: new Date()
-    });
-
-    return signalement;
-  }
 }
 
 module.exports = DashboardModerationService;

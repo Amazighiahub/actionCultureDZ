@@ -115,22 +115,6 @@ describe('DashboardStatsService', () => {
   });
 
   // =========================================================================
-  // getPendingValidationsCount
-  // =========================================================================
-  describe('getPendingValidationsCount', () => {
-    it('should return pending users and oeuvres counts', async () => {
-      mockModels.User.count.mockResolvedValue(7);
-      mockModels.Oeuvre.count.mockResolvedValue(3);
-
-      const result = await service.getPendingValidationsCount();
-
-      expect(result.users).toBe(7);
-      expect(result.oeuvres).toBe(3);
-      expect(result.total).toBe(10);
-    });
-  });
-
-  // =========================================================================
   // getDateLimit
   // =========================================================================
   describe('getDateLimit', () => {
