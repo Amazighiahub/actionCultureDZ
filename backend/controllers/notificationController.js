@@ -10,6 +10,17 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
 
+const { traduireTexteServeur } = require('../utils/traductionServeur');
+
+/**
+ * Titre et texte d'une notification dans la langue de la personne (2026-11-20). Les notifications sont
+ * enregistrées en français ; elles sont traduites à la lecture par le dictionnaire du serveur
+ * (i18n/serveur, phrases à variables comprises), ce qui couvre aussi celles déjà envoyées.
+ */
+const traduireNotifications = (liste, lang) => (Array.isArray(liste) ? liste.map((n) => (n && typeof n === 'object'
+  ? { ...n, titre: traduireTexteServeur(n.titre, lang), message: traduireTexteServeur(n.message, lang) }
+  : n)) : liste);
+
 class NotificationController extends BaseController {
   get notificationService() {
     return container.notificationService;
@@ -35,7 +46,7 @@ class NotificationController extends BaseController {
       res.json({
         success: true,
         data: {
-          notifications: translateDeep(result.data, lang),
+          notifications: traduireNotifications(translateDeep(result.data, lang), lang),
           pagination: result.pagination,
           stats: {
             nonLues: nonLuesCount,
@@ -59,7 +70,7 @@ class NotificationController extends BaseController {
         data: {
           ...summary,
           // translateDeep : translate() sur la liste entière renvoyait une chaîne vide (aucune « dernière »)
-          dernieres: translateDeep(summary.dernieres, lang)
+          dernieres: traduireNotifications(translateDeep(summary.dernieres, lang), lang)
         },
         lang
       });

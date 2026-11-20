@@ -58,3 +58,17 @@ describe('ProgrammeForm — date d’une activité existante', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ date_programme: '2026-10-29' })));
   });
 });
+
+describe('ProgrammeForm — niveau requis (anti-retour 2026-11-20)', () => {
+  test('le niveau d’une activité existante est gardé à l’enregistrement, et le champ est proposé', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const initial = { date_programme: '2026-10-30', description: { fr: 'Atelier de calligraphie', ar: '', en: '' }, niveau_requis: 'avance' as const };
+    const { container } = render(<ProgrammeForm eventId={1} onSubmit={onSubmit} onCancel={vi.fn()} mode="edit" initialData={initial} />);
+    // Onglet des options : le champ « Niveau » y figure (il manquait)
+    const onglets = screen.getAllByRole('tab');
+    for (const o of onglets) { fireEvent.mouseDown(o); fireEvent.click(o); if (screen.queryByLabelText('Niveau')) break; }
+    expect(screen.getByLabelText('Niveau')).toBeTruthy();
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ niveau_requis: 'avance' })));
+  });
+});

@@ -14,6 +14,9 @@ const { estPublic } = require('../constants/statuts');
 
 const CHAMPS_INTERVENANT_CONSERVES = ['heure_debut_intervention', 'heure_fin_intervention', 'honoraires', 'frais_deplacement', 'logement_requis', 'materiel_technique', 'date_confirmation', 'notes_organisateur'];
 
+/** Niveaux d'une activité (ENUM programme.niveau_requis) */
+const NIVEAUX_REQUIS = ['debutant', 'intermediaire', 'avance', 'expert'];
+
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
     super(repository, options);
@@ -195,7 +198,12 @@ class ProgrammeService extends BaseService {
     ['langue_principale', 'traduction_disponible', 'enregistrement_autorise', 'diffusion_live', 'support_numerique']
       .forEach(f => { if (donnees[f] !== undefined) options[f] = donnees[f]; });
     if (donnees.niveau_requis !== undefined) {
-      options.niveau_requis = donnees.niveau_requis === 'tous_niveaux' ? null : donnees.niveau_requis;
+      const niveau = donnees.niveau_requis === 'tous_niveaux' || donnees.niveau_requis === '' ? null : donnees.niveau_requis;
+      // Valeur hors de la liste : refus clair (avant : erreur de la base, réponse 500)
+      if (niveau !== null && !NIVEAUX_REQUIS.includes(niveau)) {
+        throw require('../utils/erreurHttp').erreurHttp('Niveau requis invalide', 400);
+      }
+      options.niveau_requis = niveau;
     }
     return options;
   }

@@ -2366,7 +2366,8 @@
     "rappelWilaya": "حدّد ولايتك لتظهر في صفحتها مع أعمالك.",
     "rappelWilayaLien": "إكمال ملفي",
     "rappelMetiers": "اذكروا مهنكم (مثلًا: فنانة تشكيلية، شاعرة، حكواتية): تظهر في ملفكم وتساعد على العثور عليكم.",
-    "rappelMetiersLien": "إضافة مهني"
+    "rappelMetiersLien": "إضافة مهني",
+    "statsEchec": "تعذّر تحميل أرقامك."
   },
   "dashboardadmin": {
     "label_validation": "التحقق",

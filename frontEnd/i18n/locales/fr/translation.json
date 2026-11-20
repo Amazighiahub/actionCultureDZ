@@ -1718,7 +1718,8 @@
     "rappelWilaya": "Indiquez votre wilaya pour apparaître sur sa page, avec vos œuvres.",
     "rappelWilayaLien": "Compléter mon profil",
     "rappelMetiers": "Indiquez vos métiers (par exemple : artiste peintre, poétesse, conteuse) : ils s’affichent sur votre portfolio et aident à vous trouver.",
-    "rappelMetiersLien": "Ajouter mes métiers"
+    "rappelMetiersLien": "Ajouter mes métiers",
+    "statsEchec": "Vos chiffres n’ont pas pu être chargés."
   },
   "dashboardadmin": {
     "label_validation": "Validation",

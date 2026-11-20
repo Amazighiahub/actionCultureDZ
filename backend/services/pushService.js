@@ -6,6 +6,7 @@
 const webpush = require('web-push');
 const logger = require('../utils/logger');
 
+const { traduireTexteServeur } = require('../utils/traductionServeur');
 const MAX_APPAREILS = 5;
 const TAILLE_LOT = 10;
 const DELAI_ENVOI_MS = 10000;
@@ -80,13 +81,16 @@ async function desabonner(models, idUser, endpoint) {
 
 // Un message d'organisateur peut contenir un point de rencontre ou un lien privé : l'écran verrouillé
 // d'un téléphone est lisible par tout le monde, le détail reste sur le site
-const texteVisible = (n) => (n.type_notification === 'message_evenement'
-  ? 'Nouveau message de l’organisateur. Ouvrez Tala DZ pour le lire.'
-  : String(n.message || '').slice(0, 240));
+const texteVisible = (n, langue) => (n.type_notification === 'message_evenement'
+  ? traduireTexteServeur('Nouveau message de l’organisateur. Ouvrez Tala DZ pour le lire.', langue)
+  : String(traduireTexteServeur(n.message || '', langue)).slice(0, 240));
 
-const chargeUtile = (n) => JSON.stringify({
-  titre: n.type_notification === 'message_evenement' ? 'Message pour votre événement' : String(n.titre || 'Tala DZ').slice(0, 120),
-  message: texteVisible(n),
+/** Contenu envoyé au téléphone, dans la langue choisie par la personne (2026-11-20 ; avant : toujours en français) */
+const chargeUtile = (n, langue = 'fr') => JSON.stringify({
+  titre: n.type_notification === 'message_evenement'
+    ? traduireTexteServeur('Message pour votre événement', langue)
+    : String(traduireTexteServeur(n.titre || 'Tala DZ', langue)).slice(0, 120),
+  message: texteVisible(n, langue),
   // Chemin interne seulement, comme les notifications du site
   url: typeof n.url_action === 'string' && /^\/(?![/\\])/.test(n.url_action) ? n.url_action : '/notifications',
   tag: n.id_notification ? `notification-${n.id_notification}` : undefined,
@@ -122,8 +126,9 @@ async function traiter(models, notifications) {
   let envoyes = 0;
   const ids = [...new Set(notifications.map(n => n.id_user).filter(Boolean))];
   const choix = await models.User.findAll({
-    where: { id_user: ids }, attributes: ['id_user', 'notifications_push', 'notifications_evenements'], raw: true
+    where: { id_user: ids }, attributes: ['id_user', 'notifications_push', 'notifications_evenements', 'langue_preferee'], raw: true
   });
+  const langues = new Map(choix.map(u => [u.id_user, u.langue_preferee || 'fr']));
   const refusTout = new Set(choix.filter(u => u.notifications_push === false || u.notifications_push === 0).map(u => u.id_user));
   // Une annonce suit le même choix que l'e-mail « Ne plus recevoir ces annonces »
   const refusAnnonces = new Set(choix.filter(u => u.notifications_evenements === false || u.notifications_evenements === 0).map(u => u.id_user));
@@ -135,7 +140,7 @@ async function traiter(models, notifications) {
 
   const envois = notifications.flatMap((n) => {
     if (n.type_notification === 'message_admin' && refusAnnonces.has(n.id_user)) return [];
-    const charge = chargeUtile(n);
+    const charge = chargeUtile(n, langues.get(n.id_user));
     const ttl = n.type_notification === 'rappel_evenement' ? DUREE_VIE_RAPPEL_SECONDES : DUREE_VIE_SECONDES;
     return (parPersonne.get(n.id_user) || []).map(a => [a, charge, ttl]);
   });

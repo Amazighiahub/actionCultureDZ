@@ -1669,7 +1669,8 @@
     "rappelWilaya": "Add your wilaya to appear on its page, with your works.",
     "rappelWilayaLien": "Complete my profile",
     "rappelMetiers": "Give your professions (for example: painter, poet, storyteller): they appear on your portfolio and help people find you.",
-    "rappelMetiersLien": "Add my professions"
+    "rappelMetiersLien": "Add my professions",
+    "statsEchec": "Your figures could not be loaded."
   },
   "dashboardadmin": {
     "label_validation": "Validation",

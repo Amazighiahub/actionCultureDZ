@@ -52,6 +52,13 @@ describe('envoi', () => {
     expect(charge).toMatchObject({ titre: 'Inscription validée', url: '/evenements/2' });
   });
 
+  it('anti-retour 2026-11-20 : dans la langue choisie par la personne', async () => {
+    const m = modeles({ abonnes: [abonnement(1, 7)] });
+    m.User.findAll = jest.fn(async () => [{ id_user: 7, notifications_push: true, langue_preferee: 'ar' }]);
+    await push.pourNotifications(m, [{ ...notification, titre: 'Événement annulé', message: "L'événement « Festival » a été annulé" }]);
+    expect(JSON.parse(mockEnvoi.mock.calls[0][1])).toMatchObject({ titre: 'أُلغيت الفعالية', message: 'أُلغيت الفعالية «Festival»' });
+  });
+
   it('refuse un lien externe', async () => {
     const m = modeles({ abonnes: [abonnement(1, 7)] });
     await push.pourNotifications(m, [{ ...notification, url_action: 'https://evil.tld' }]);

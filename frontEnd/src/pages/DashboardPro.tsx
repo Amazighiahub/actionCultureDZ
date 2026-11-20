@@ -146,6 +146,7 @@ const DashboardPro = () => {
     loadingArtisanats,
     loadingServices,
     loadingPatrimoines,
+    error: errorStats,
     errorOeuvres,
     errorEvenements,
     errorArtisanats,
@@ -662,6 +663,17 @@ const DashboardPro = () => {
                   </CardContent>
                 </Card>
               </> :
+            errorStats ?
+            // Chiffres non chargés : on le dit, avec « Réessayer » (avant : rien ne s'affichait)
+            <div role="alert" className="col-span-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 p-4 md:col-span-4">
+                <p className="flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t('dashboardpro.statsEchec', 'Vos chiffres n’ont pas pu être chargés.')}
+                </p>
+                <Button onClick={refreshAll} variant="outline" size="sm">
+                  <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
+                </Button>
+              </div> :
             null}
           </div>
         </div>

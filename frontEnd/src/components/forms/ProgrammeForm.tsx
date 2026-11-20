@@ -30,6 +30,9 @@ import { nombreHorsLimites } from '@/utils/validationChamps';
 import { useParams } from 'react-router-dom';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
+/** Niveaux d'une activité (ENUM niveau_requis du serveur ; « tous niveaux » = aucun niveau enregistré) */
+const NIVEAUX = ['tous_niveaux', 'debutant', 'intermediaire', 'avance', 'expert'] as const;
+
 export interface ProgrammeFormData {
   // Informations de base
   titre: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
@@ -52,7 +55,7 @@ export interface ProgrammeFormData {
   
   // Participants
   nb_participants_max?: number;
-  niveau_requis?: 'debutant' | 'intermediaire' | 'avance' | 'tous_niveaux';
+  niveau_requis?: 'debutant' | 'intermediaire' | 'avance' | 'expert' | 'tous_niveaux';
   
   // Matériel et options
   materiel_requis: string[];
@@ -773,6 +776,25 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       <SelectItem key={langCode} value={langCode}>
                         {t(`programme.form.languages.${langCode}`)}
                       </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+
+              {/* Niveau requis (atelier, formation) : enregistré par le serveur et affiché dans le programme, mais
+                  jamais demandé dans le formulaire avant le 2026-11-20 */}
+              <FormField label={t('programme.level', 'Niveau')}>
+                <Select
+                  value={formData.niveau_requis || 'tous_niveaux'}
+                  onValueChange={(value) => handleChange('niveau_requis', value)}
+                  disabled={isReadOnly}
+                >
+                  <SelectTrigger aria-label={t('programme.level', 'Niveau')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NIVEAUX.map((niveau) => (
+                      <SelectItem key={niveau} value={niveau}>{t(`programme.form.levels.${niveau}`, niveau)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
