@@ -168,25 +168,14 @@ export default function GestionLiens() {
               value={form.url} onChange={(e) => { setForm((f) => ({ ...f, url: e.target.value })); setErreur(''); }} />
             {type && <p className="text-sm text-muted-foreground mt-1">{t('liens.reconnu', 'Reconnu :')} {t(`liens.types.${type}`, NOMS_LIEN[type])}</p>}
           </div>
-          <div>
-            <Label htmlFor="lien-titre">{t('liens.titreLien', 'Titre (facultatif)')}</Label>
-            <Input id="lien-titre" dir="auto" maxLength={200} value={form.titre} onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} />
-          </div>
-          <div>
-            <Label htmlFor="lien-source">{t('liens.source', 'Journal ou média (facultatif)')}</Label>
-            <Input id="lien-source" dir="auto" maxLength={100} placeholder={t('liens.sourceAide', 'Ex. : El Watan, APS, Radio Algérie')}
-              value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} />
-          </div>
-          <div>
-            <Label htmlFor="lien-date">{t('liens.date', 'Date (facultatif)')}</Label>
-            <Input id="lien-date" type="date" value={form.date_publication} onChange={(e) => setForm((f) => ({ ...f, date_publication: e.target.value }))} />
-          </div>
-          <div>
-            <Label htmlFor="lien-rattachement">{t('liens.rattacher', 'Rattacher à')}</Label>
+          {/* Juste après le lien : de quoi parle cet article ? (avant : « Rattacher à », en dernier, peu vu) */}
+          <div className="md:col-span-2 rounded-md bg-primary/5 p-3">
+            <Label htmlFor="lien-rattachement" className="font-semibold">{t('liens.deQuoi', 'De quoi parle cet article ?')}</Label>
+            <p className="text-xs text-muted-foreground mb-2">{t('liens.deQuoiAide', 'Choisissez l’œuvre ou l’événement concerné : l’article s’affichera aussi sur sa page. Il apparaît toujours sur votre portfolio.')}</p>
             <Select value={form.rattachement} onValueChange={(rattachement) => setForm((f) => ({ ...f, rattachement }))}>
               <SelectTrigger id="lien-rattachement"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="portfolio">{t('liens.portfolioSeul', 'Seulement mon portfolio')}</SelectItem>
+                <SelectItem value="portfolio">{t('liens.portfolioGeneral', 'De moi en général (seulement mon portfolio)')}</SelectItem>
                 {!!contenus?.oeuvres.length && (
                   <SelectGroup>
                     <SelectLabel>{t('liens.mesOeuvres', 'Mes œuvres, articles et artisanat')}</SelectLabel>
@@ -201,6 +190,19 @@ export default function GestionLiens() {
                 )}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label htmlFor="lien-titre">{t('liens.titreLien', 'Titre (facultatif)')}</Label>
+            <Input id="lien-titre" dir="auto" maxLength={200} value={form.titre} onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} />
+          </div>
+          <div>
+            <Label htmlFor="lien-source">{t('liens.source', 'Journal ou média (facultatif)')}</Label>
+            <Input id="lien-source" dir="auto" maxLength={100} placeholder={t('liens.sourceAide', 'Ex. : El Watan, APS, Radio Algérie')}
+              value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} />
+          </div>
+          <div>
+            <Label htmlFor="lien-date">{t('liens.date', 'Date (facultatif)')}</Label>
+            <Input id="lien-date" type="date" value={form.date_publication} onChange={(e) => setForm((f) => ({ ...f, date_publication: e.target.value }))} />
           </div>
           {erreur && <p id="lien-erreur" role="alert" className="md:col-span-2 text-sm text-destructive">{erreur}</p>}
           <div className="md:col-span-2 flex justify-end gap-2">

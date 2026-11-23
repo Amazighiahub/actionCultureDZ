@@ -144,7 +144,10 @@
       "refusTitre": "Press articles not added",
       "refus": "{{count}} article(s) could not be linked. Add them from the work's page or “My portfolio”."
     },
-    "dejaAjoute": "This article is already in the list."
+    "dejaAjoute": "This article is already in the list.",
+    "deQuoi": "What is this article about?",
+    "deQuoiAide": "Choose the work or event concerned: the article will also appear on its page. It always appears on your portfolio.",
+    "portfolioGeneral": "About me in general (my portfolio only)"
   },
   "auth": {
     "reprise": {

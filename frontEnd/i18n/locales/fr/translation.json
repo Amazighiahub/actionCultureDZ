@@ -144,7 +144,10 @@
       "refusTitre": "Articles de presse non ajoutés",
       "refus": "{{count}} article(s) n’ont pas pu être rattachés. Ajoutez-les depuis la page de l’œuvre ou « Mon portfolio »."
     },
-    "dejaAjoute": "Cet article est déjà dans la liste."
+    "dejaAjoute": "Cet article est déjà dans la liste.",
+    "deQuoi": "De quoi parle cet article ?",
+    "deQuoiAide": "Choisissez l’œuvre ou l’événement concerné : l’article s’affichera aussi sur sa page. Il apparaît toujours sur votre portfolio.",
+    "portfolioGeneral": "De moi en général (seulement mon portfolio)"
   },
   "auth": {
     "reprise": {
