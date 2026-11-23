@@ -685,7 +685,7 @@ const DashboardPro = () => {
         <VisibiliteFiche />
         <p className="mb-6 rounded-lg border bg-card p-4 text-sm">
           {t('liens.incitation', 'Complétez votre page : ajoutez vos articles de presse et vos liens YouTube, Instagram, TikTok ou Facebook.')}{' '}
-          <Link to="/dashboard-user?onglet=profil" className="font-medium text-primary underline">{t('liens.ajouter', 'Ajouter un lien')}</Link>
+          <Link to="/dashboard-user?onglet=portfolio" className="font-medium text-primary underline">{t('liens.ajouter', 'Ajouter un lien')}</Link>
         </p>
 
         {/* Paiement direct (événements et ventes) : Tala DZ n'encaisse rien */}

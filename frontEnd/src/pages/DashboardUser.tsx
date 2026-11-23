@@ -27,6 +27,7 @@ import {
   AlertCircle,
   Pencil,
   Hammer,
+  Briefcase,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,9 +39,7 @@ import PremiersPas from '@/components/user/PremiersPas';
 import { lienGuidePour } from '@/utils/lienGuide';
 import SecuriteCompteCard from '@/components/user/SecuriteCompteCard';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
-import PagePubliqueCard from '@/components/user/PagePubliqueCard';
-import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
-import GestionLiens from '@/components/pro/GestionLiens';
+import OngletPortfolio from '@/components/pro/OngletPortfolio';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -57,7 +56,6 @@ import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { wilayaVitrineService } from '@/services/wilayaVitrine.service';
 import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { lireSpecialites } from '@/utils/specialites';
-import { lienWebValide } from '@/utils/validationChamps';
 
 /**
  * Champs lus sur l'élément d'un favori. Le serveur traduit les textes, mais un champ
@@ -340,7 +338,7 @@ const DashboardUser = () => {
 
         {/* Contenu principal avec onglets */}
         <Tabs value={onglet} onValueChange={(v) => setSearchParams({ onglet: v }, { replace: true })} className="space-y-6">
-          <TabsList className="flex flex-wrap h-auto gap-1 w-full sm:grid sm:grid-cols-3">
+          <TabsList className={`flex flex-wrap h-auto gap-1 w-full sm:grid ${isProfessional ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
             <TabsTrigger value="favoris" className="flex items-center gap-2">
               <Heart className="h-4 w-4" />
               <span>{t("dashboarduser.mes_favoris")}</span>
@@ -353,6 +351,13 @@ const DashboardUser = () => {
               <Settings className="h-4 w-4" />
               <span>{t("dashboarduser.mon_profil")}</span>
             </TabsTrigger>
+            {/* Profil et portfolio séparés (conseil d'une écrivaine, 2026-11-23) */}
+            {isProfessional && (
+              <TabsTrigger value="portfolio" className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                <span>{t('portfolio.onglet.titre', 'Mon portfolio')}</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Onglet Favoris */}
@@ -656,6 +661,13 @@ const DashboardUser = () => {
             <ApplicationMobileCard />
             <MesDonneesCard />
           </TabsContent>
+
+          {/* Onglet Portfolio (professionnels) : page publique, œuvres, réseaux, presse */}
+          {isProfessional && user?.id_user && (
+            <TabsContent value="portfolio" className="space-y-6">
+              <OngletPortfolio user={user} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
@@ -704,12 +716,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     sexe: '',
     date_naissance: '',
     biographie: '',
-    site_web: '',
-    reseaux_sociaux: {} as Record<string, string>,
     specialites: [] as string[],
   });
-  // Erreurs de saisie des liens (site web / réseaux), par champ
-  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
   // Refus du serveur à l'enregistrement : encadré près du bouton, qui reste affiché (avant : bandeau de 5 s)
   const [erreurEnregistrement, setErreurEnregistrement] = useState<string | null>(null);
   const refErreurEnregistrement = useDefilerVersErreur(erreurEnregistrement);
@@ -731,11 +739,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       sexe: user?.sexe || '',
       date_naissance: user?.date_naissance ? String(user.date_naissance).slice(0, 10) : '',
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
-      site_web: user?.site_web || '',
-      reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
       specialites: lireSpecialites((user as { specialites?: unknown } | null)?.specialites),
     });
-    setLinkErrors({});
     setErreurEnregistrement(null);
     setEditing(true);
   }, [user]);
@@ -752,23 +757,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     requestAnimationFrame(() => document.getElementById('profil-informations')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }, [ouvrirEnModification, user, startEditing, searchParams, setSearchParams]);
 
-  // Liens des professionnels : vérifiés avant l'envoi (le serveur refait la même vérification)
-  const validateLinks = (): boolean => {
-    const errors: Record<string, string> = {};
-    if (form.site_web.trim() && !lienWebValide(form.site_web)) {
-      errors.site_web = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
-    }
-    for (const network of SOCIAL_NETWORKS) {
-      if (!isValidSocialUrl(network.key, form.reseaux_sociaux[network.key] || '')) {
-        errors[network.key] = t('profile.socialInvalid', 'Lien {{network}} invalide (ex. : {{example}})', { network: network.label, example: network.placeholder });
-      }
-    }
-    setLinkErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSave = async () => {
-    if (isProfessional && !validateLinks()) return;
     setErreurEnregistrement(null);
     setSaving(true);
     try {
@@ -781,11 +770,8 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         sexe: form.sexe,
         date_naissance: form.date_naissance,
         biographie: form.biographie,
-        ...(isProfessional ? {
-          site_web: form.site_web.trim(),
-          reseaux_sociaux: form.reseaux_sociaux,
-          specialites: form.specialites,
-        } : {}),
+        // Site web et réseaux : onglet « Mon portfolio » (non envoyés ici, le serveur les garde)
+        ...(isProfessional ? { specialites: form.specialites } : {}),
       });
       if (response.success) {
         toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
@@ -1006,63 +992,13 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         </div>
       </div>
 
-      {/* Portfolio public et visibilité (professionnels) */}
-      {isProfessional && user?.id_user && <PagePubliqueCard user={user} />}
-
-      {/* Site web et réseaux sociaux : affichés sur la fiche publique des professionnels */}
+      {/* Page publique, site web, réseaux et presse : onglet « Mon portfolio » */}
       {isProfessional && (
-        <section className="mt-8 pt-6 border-t" aria-labelledby="profil-liens-titre">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 id="profil-liens-titre" className="text-lg font-semibold">{t('profile.socialTitle', 'Site web et réseaux sociaux')}</h3>
-            {/* Le bouton « Modifier le profil » est tout en bas de la page : il passait inaperçu */}
-            {!editing && (
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                <Pencil className="h-4 w-4 me-2" aria-hidden="true" />
-                {t('profile.modifierLiens', 'Modifier mes liens')}
-              </Button>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">{t('profile.socialHint', 'Ces liens apparaissent sur votre fiche publique (événements que vous organisez, profil).')}</p>
-          {editing ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              {[{ key: 'site_web', label: t('common.website', 'Site web'), placeholder: 'https://…' }, ...SOCIAL_NETWORKS].map((field) => {
-                const value = field.key === 'site_web' ? form.site_web : form.reseaux_sociaux[field.key] || '';
-                const error = linkErrors[field.key];
-                return (
-                  <div key={field.key}>
-                    <label htmlFor={`profil-lien-${field.key}`} className="block text-sm font-medium mb-2">{field.label}</label>
-                    <input
-                      id={`profil-lien-${field.key}`}
-                      type="url"
-                      inputMode="url"
-                      autoComplete="url"
-                      className="w-full p-3 border rounded-lg"
-                      placeholder={field.placeholder}
-                      value={value}
-                      aria-invalid={!!error}
-                      aria-describedby={error ? `profil-lien-${field.key}-erreur` : undefined}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setForm((f) => field.key === 'site_web'
-                          ? { ...f, site_web: v }
-                          : { ...f, reseaux_sociaux: { ...f.reseaux_sociaux, [field.key]: v } });
-                      }}
-                    />
-                    {error && <p id={`profil-lien-${field.key}-erreur`} role="alert" className="text-sm text-destructive mt-1">{error}</p>}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            user?.site_web || Object.keys(parseSocialLinks(user?.reseaux_sociaux)).length > 0
-              ? <SocialLinks links={user?.reseaux_sociaux} website={user?.site_web} />
-              : <p className="text-sm text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</p>
-          )}
-        </section>
+        <p className="mt-8 pt-6 border-t text-sm text-muted-foreground">
+          {t('portfolio.onglet.renvoi', 'Votre page publique, votre site web, vos réseaux sociaux et vos articles de presse sont dans l’onglet « Mon portfolio ».')}{' '}
+          <Link to="/dashboard-user?onglet=portfolio" className="font-medium text-primary underline">{t('portfolio.onglet.titre', 'Mon portfolio')}</Link>
+        </p>
       )}
-
-      {/* Articles de presse et liens : sur le portfolio, et sur l'œuvre ou l'événement choisi */}
-      {isProfessional && <GestionLiens />}
 
       {editing && <div className="mt-8"><SaisieConserveeAvis visible={profilRestaure} /></div>}
       {erreurEnregistrement && editing && (

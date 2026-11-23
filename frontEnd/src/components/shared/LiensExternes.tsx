@@ -5,7 +5,9 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, Facebook, Instagram, Music2, Newspaper, Youtube, type LucideIcon } from 'lucide-react';
+import { ExternalLink, Facebook, Instagram, Music2, Newspaper, Plus, Youtube, type LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -100,9 +102,17 @@ export function ListeLiens({ liens, avecCible = false }: { liens: LienExterne[];
   );
 }
 
-/** Partie d'une fiche publique : n'apparaît que si des liens y sont rattachés */
+/** Ses œuvres et événements (mêmes règles que le serveur : saisis par lui ou dont il est contributeur) */
+interface MesContenusLiens { oeuvres: Array<{ id_oeuvre: number }>; evenements: Array<{ id_evenement: number }> }
+
+/**
+ * Partie d'une fiche publique : les articles de presse et liens rattachés à l'œuvre ou à l'événement.
+ * Son auteur (professionnel) voit en plus « Ajouter un article de presse » (2026-11-23, conseil d'une
+ * écrivaine : lier la presse aux œuvres), même tant qu'aucun lien n'y est rattaché.
+ */
 export function LiensDuContenu({ type, id, className }: { type: 'oeuvre' | 'evenement'; id: number; className?: string }) {
   const { t, i18n } = useTranslation();
+  const { isProfessional } = useAuth();
   const { data } = useQuery({
     queryKey: ['liens', type, id, i18n.language],
     queryFn: async () => {
@@ -112,11 +122,34 @@ export function LiensDuContenu({ type, id, className }: { type: 'oeuvre' | 'even
     staleTime: 60 * 1000,
     retry: false,
   });
-  if (!data?.length) return null;
+  // Même clé que GestionLiens : une seule lecture
+  const { data: contenus } = useQuery({
+    queryKey: ['mes-contenus-liens', i18n.language],
+    enabled: !!isProfessional,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    queryFn: async () => (await httpClient.get<MesContenusLiens>('/liens/mes-contenus')).data || { oeuvres: [], evenements: [] },
+  });
+  const estAuteur = type === 'oeuvre'
+    ? !!contenus?.oeuvres?.some((o) => Number(o.id_oeuvre) === Number(id))
+    : !!contenus?.evenements?.some((e) => Number(e.id_evenement) === Number(id));
+  if (!data?.length && !estAuteur) return null;
   return (
     <section className={className} aria-labelledby={`liens-${type}-${id}`}>
-      <h2 id={`liens-${type}-${id}`} className="text-2xl font-bold mb-4">{t('liens.titre', 'Dans la presse et en ligne')}</h2>
-      <ListeLiens liens={data} />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 id={`liens-${type}-${id}`} className="text-2xl font-bold">{t('liens.titre', 'Dans la presse et en ligne')}</h2>
+        {estAuteur && (
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/dashboard-user?onglet=portfolio&lier=${type}:${id}`}>
+              <Plus className="h-4 w-4 me-2" aria-hidden="true" />
+              {type === 'oeuvre' ? t('liens.ajouterSurOeuvre', 'Ajouter un article de presse sur cette œuvre') : t('liens.ajouterSurEvenement', 'Ajouter un article de presse sur cet événement')}
+            </Link>
+          </Button>
+        )}
+      </div>
+      {data?.length
+        ? <ListeLiens liens={data} />
+        : <p className="text-sm text-muted-foreground">{t('liens.aucunSurContenu', 'Aucun article pour l’instant. Ajoutez ce que la presse ou les réseaux disent de votre travail : les visiteurs le trouveront ici.')}</p>}
     </section>
   );
 }

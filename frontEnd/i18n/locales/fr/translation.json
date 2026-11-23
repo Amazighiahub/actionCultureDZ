@@ -132,7 +132,10 @@
     },
     "collerDabord": "Collez d’abord le lien de l’article (il commence par https://).",
     "nonEnregistre": "Le lien n’a pas été enregistré. Réessayez.",
-    "nonRetire": "Le lien n’a pas été retiré. Réessayez."
+    "nonRetire": "Le lien n’a pas été retiré. Réessayez.",
+    "ajouterSurOeuvre": "Ajouter un article de presse sur cette œuvre",
+    "ajouterSurEvenement": "Ajouter un article de presse sur cet événement",
+    "aucunSurContenu": "Aucun article pour l’instant. Ajoutez ce que la presse ou les réseaux disent de votre travail : les visiteurs le trouveront ici."
   },
   "auth": {
     "reprise": {
@@ -5933,6 +5936,15 @@
       "envoyeDesc": "{{nom}} le reçoit par e-mail et pourra vous répondre à votre adresse.",
       "echec": "Le message n’est pas parti. Réessayez.",
       "tropCourt": "Écrivez au moins 10 caractères."
+    },
+    "onglet": {
+      "titre": "Mon portfolio",
+      "intro": "Ce que le public voit de votre travail : vos œuvres, vos réseaux et ce que la presse dit de vous. Vos informations personnelles et votre biographie sont dans « Mon profil ».",
+      "oeuvres": "Mes œuvres",
+      "oeuvresAide": "Vos œuvres, articles, artisanat et événements publiés apparaissent sur votre portfolio. Vous les ajoutez et les modifiez depuis votre espace professionnel.",
+      "gerer": "Gérer mes œuvres",
+      "voir": "Voir mon portfolio public",
+      "renvoi": "Votre page publique, votre site web, vos réseaux sociaux et vos articles de presse sont dans l’onglet « Mon portfolio »."
     }
   },
   "publicPage": {

@@ -35,13 +35,13 @@ const VisibiliteFiche: React.FC = () => {
   if (!donnees) return null;
 
   const TEXTES: Record<string, { fait: string; afaire: string; lien?: string }> = {
-    public: { fait: t('seo.visibilite.public', 'Votre profil est public'), afaire: t('seo.visibilite.publicAfaire', 'Votre profil est privé : les moteurs de recherche ne le voient pas'), lien: '/dashboard-user?onglet=profil' },
+    public: { fait: t('seo.visibilite.public', 'Votre profil est public'), afaire: t('seo.visibilite.publicAfaire', 'Votre profil est privé : les moteurs de recherche ne le voient pas'), lien: '/dashboard-user?onglet=portfolio' },
     photo: { fait: t('seo.visibilite.photo', 'Photo de profil'), afaire: t('seo.visibilite.photoAfaire', 'Ajoutez une photo de vous, nette et de face'), lien: '/dashboard-user?onglet=profil' },
     biographie: { fait: t('seo.visibilite.bio', 'Biographie complète'), afaire: t('seo.visibilite.bioAfaire', 'Biographie d’au moins {{min}} caractères (vous en avez {{n}}) : métier, ville, œuvres principales', { min: 300, n: donnees.points.find((p) => p.cle === 'biographie')?.valeur ?? 0 }), lien: '/dashboard-user?onglet=profil' },
     wilaya: { fait: t('seo.visibilite.wilaya', 'Wilaya indiquée'), afaire: t('seo.visibilite.wilayaAfaire', 'Indiquez votre wilaya : on vous trouve aussi par ville'), lien: '/dashboard-user?onglet=profil' },
     metiers: { fait: t('seo.visibilite.metiers', 'Métiers et compétences indiqués'), afaire: t('seo.visibilite.metiersAfaire', 'Indiquez vos métiers et compétences (artiste, poétesse…) : on vous trouve aussi par eux'), lien: '/dashboard-user?onglet=profil' },
     contenu: { fait: t('seo.visibilite.contenu', 'Au moins une œuvre ou un événement en ligne'), afaire: t('seo.visibilite.contenuAfaire', 'Publiez une première œuvre, un article ou un événement'), lien: '/ajouter-oeuvre' },
-    liens: { fait: t('seo.visibilite.liens', 'Presse et réseaux ajoutés'), afaire: t('seo.visibilite.liensAfaire', 'Ajoutez un article de presse ou vos réseaux (YouTube, Instagram…)'), lien: '/dashboard-user?onglet=profil' },
+    liens: { fait: t('seo.visibilite.liens', 'Presse et réseaux ajoutés'), afaire: t('seo.visibilite.liensAfaire', 'Ajoutez un article de presse ou vos réseaux (YouTube, Instagram…)'), lien: '/dashboard-user?onglet=portfolio' },
     photos: { fait: t('seo.visibilite.photos', 'Toutes vos œuvres ont une photo'), afaire: t('seo.visibilite.photosAfaire', '{{n}} œuvre(s) sans photo', { n: donnees.points.find((p) => p.cle === 'photos')?.nombre ?? 0 }) },
     descriptions: { fait: t('seo.visibilite.descriptions', 'Toutes vos œuvres sont bien décrites'), afaire: t('seo.visibilite.descriptionsAfaire', '{{n}} œuvre(s) avec un résumé trop court (moins de {{min}} caractères)', { n: donnees.points.find((p) => p.cle === 'descriptions')?.nombre ?? 0, min: 150 }) },
   };

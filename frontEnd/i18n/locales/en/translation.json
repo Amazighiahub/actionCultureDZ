@@ -132,7 +132,10 @@
     },
     "collerDabord": "First paste the article link (it starts with https://).",
     "nonEnregistre": "The link was not saved. Try again.",
-    "nonRetire": "The link was not removed. Try again."
+    "nonRetire": "The link was not removed. Try again.",
+    "ajouterSurOeuvre": "Add a press article about this work",
+    "ajouterSurEvenement": "Add a press article about this event",
+    "aucunSurContenu": "No articles yet. Add what the press or social networks say about your work: visitors will find it here."
   },
   "auth": {
     "reprise": {
@@ -5933,6 +5936,15 @@
       "envoyeDesc": "{{nom}} receives it by e-mail and can reply to your address.",
       "echec": "The message was not sent. Try again.",
       "tropCourt": "Write at least 10 characters."
+    },
+    "onglet": {
+      "titre": "My portfolio",
+      "intro": "What the public sees of your work: your works, your social networks and what the press says about you. Your personal information and biography are in “My profile”.",
+      "oeuvres": "My works",
+      "oeuvresAide": "Your published works, articles, crafts and events appear on your portfolio. You add and edit them from your professional space.",
+      "gerer": "Manage my works",
+      "voir": "View my public portfolio",
+      "renvoi": "Your public page, website, social networks and press articles are in the “My portfolio” tab."
     }
   },
   "publicPage": {

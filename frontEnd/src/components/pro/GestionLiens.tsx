@@ -1,8 +1,10 @@
 /**
  * Le professionnel ajoute ses liens (article de presse, YouTube, Instagram, TikTok, Facebook)
  * et choisit où ils apparaissent : sur son portfolio seul, ou aussi sur une de ses œuvres ou un de ses événements.
+ * ?lier=oeuvre:12 (ou evenement:5) : arrivée depuis la page de l'œuvre, le formulaire s'ouvre avec l'œuvre choisie.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -37,6 +39,26 @@ export default function GestionLiens() {
   const [idModifie, setIdModifie] = useState<number | null>(null);
   const [form, setForm] = useState(VIDE);
   const [erreur, setErreur] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lier = searchParams.get('lier');
+
+  // Depuis la page d'une œuvre ou d'un événement : « Ajouter un article de presse sur cette œuvre »
+  useEffect(() => {
+    if (!lier) return;
+    if (/^(oeuvre|evenement):\d+$/.test(lier)) {
+      setIdModifie(null);
+      setForm({ ...VIDE, rattachement: lier });
+      setErreur('');
+      setOuvert(true);
+      requestAnimationFrame(() => {
+        document.getElementById('profil-liens-titre')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('lien-url')?.focus({ preventScroll: true });
+      });
+    }
+    const suite = new URLSearchParams(searchParams);
+    suite.delete('lier');
+    setSearchParams(suite, { replace: true });
+  }, [lier, searchParams, setSearchParams]);
 
   const { data: liens = [] } = useQuery({
     queryKey: cle,
