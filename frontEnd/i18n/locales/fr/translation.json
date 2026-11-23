@@ -135,7 +135,16 @@
     "nonRetire": "Le lien n’a pas été retiré. Réessayez.",
     "ajouterSurOeuvre": "Ajouter un article de presse sur cette œuvre",
     "ajouterSurEvenement": "Ajouter un article de presse sur cet événement",
-    "aucunSurContenu": "Aucun article pour l’instant. Ajoutez ce que la presse ou les réseaux disent de votre travail : les visiteurs le trouveront ici."
+    "aucunSurContenu": "Aucun article pour l’instant. Ajoutez ce que la presse ou les réseaux disent de votre travail : les visiteurs le trouveront ici.",
+    "presseOeuvre": {
+      "titre": "Articles de presse sur cette œuvre",
+      "aide": "Un journal, une radio ou un site a parlé de cette œuvre ? Collez le lien de l’article ou de la vidéo : les visiteurs le trouveront sur la page de l’œuvre et sur votre portfolio.",
+      "ajouter": "Ajouter cet article",
+      "enAttente": "Ces articles seront rattachés à l’œuvre dès son enregistrement.",
+      "refusTitre": "Articles de presse non ajoutés",
+      "refus": "{{count}} article(s) n’ont pas pu être rattachés. Ajoutez-les depuis la page de l’œuvre ou « Mon portfolio »."
+    },
+    "dejaAjoute": "Cet article est déjà dans la liste."
   },
   "auth": {
     "reprise": {

@@ -1,6 +1,7 @@
 import { useDefilerVersErreur } from '@/utils/erreurServeur';
 import MediasEnregistres from './MediasEnregistres';
 import ExtraitFichiersLivre from './ExtraitFichiersLivre';
+import PresseOeuvre from './PresseOeuvre';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -77,6 +78,7 @@ const AjouterOeuvre: React.FC = () => {
     isEditMode,
     editId, mediasEnregistres, retirerMediaEnregistre,
     extraitsEnregistres, extraitsChoisis, choisirExtrait, retirerExtrait,
+    articlesPresse, setArticlesPresse,
   } = hook;
 
   // Résumé des champs à corriger, dans l'ordre de la page
@@ -622,6 +624,9 @@ const AjouterOeuvre: React.FC = () => {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Articles de presse sur l'œuvre : rattachés dès l'ajout (2026-11-23) */}
+                    <PresseOeuvre idOeuvre={isEditMode && editId ? Number(editId) : null} enAttente={articlesPresse} onEnAttenteChange={setArticlesPresse} />
 
                     {/* Actions */}
                     <div className="space-y-4">

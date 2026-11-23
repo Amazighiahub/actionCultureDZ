@@ -42,6 +42,7 @@ import { getLocalizedText, aDuTexte } from '@/utils/getLocalizedText';
 import { nombreHorsLimites } from '@/utils/validationChamps';
 import { rafraichirTableauDeBord } from '@/lib/queryClient';
 import { champsTamazightEnvoi, lireChampsTamazight } from '@/utils/tamazight';
+import { corpsLien, type ArticlePresse } from './PresseOeuvre';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -131,6 +132,8 @@ export function useAjouterOeuvre() {
   const [extraitsEnregistres, setExtraitsEnregistres] = useState<Partial<Record<GenreExtrait, MediaEnregistre | null>>>({});
   const [extraitsChoisis, setExtraitsChoisis] = useState<Partial<Record<GenreExtrait, File | null>>>({});
   const [isDragging, setIsDragging] = useState(false);
+  // Articles de presse saisis à l'ajout : rattachés à l'œuvre dès sa création (2026-11-23)
+  const [articlesPresse, setArticlesPresse] = useState<ArticlePresse[]>([]);
 
   // État pour les métadonnées
   const [metadata, setMetadata] = useState<ExtendedMetadata>({
@@ -162,7 +165,7 @@ export function useAjouterOeuvre() {
   const articleCreeRef = useRef<{ oeuvreId: number; articleRecordId?: number } | null>(null);
 
   // Track unsaved changes
-  const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
+  const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0 || articlesPresse.length > 0;
   useUnsavedChanges(isDirty);
 
   // Saisie gardée quand la session expire (httpClient émet « auth:expired » puis renvoie vers la
@@ -172,12 +175,13 @@ export function useAjouterOeuvre() {
   const [oeuvreEditionChargee, setOeuvreEditionChargee] = useState(false);
   const { oublier: oublierBrouillonOeuvre } = useSaisieConservee({
     cle: isEditMode ? (oeuvreEditionChargee && editId ? `oeuvre:${editId}` : null) : 'oeuvre:nouvelle',
-    valeur: { formData, contributeurs, editeurs, nouveauxIntervenants },
+    valeur: { formData, contributeurs, editeurs, nouveauxIntervenants, articlesPresse },
     restaurer: (brouillon) => {
       if (brouillon.formData) setFormData(brouillon.formData);
       if (Array.isArray(brouillon.contributeurs)) setContributeurs(brouillon.contributeurs);
       if (Array.isArray(brouillon.editeurs)) setEditeurs(brouillon.editeurs);
       if (Array.isArray(brouillon.nouveauxIntervenants)) setNouveauxIntervenants(brouillon.nouveauxIntervenants);
+      if (Array.isArray(brouillon.articlesPresse)) setArticlesPresse(brouillon.articlesPresse);
       toast({
         title: t('ajouteroeuvre.brouillonRestaure', 'Votre saisie a été restaurée'),
         description: t('ajouteroeuvre.brouillonFichiers', 'Votre session avait expiré. Ajoutez à nouveau les fichiers (images, sons) avant d’envoyer.')
@@ -854,6 +858,26 @@ export function useAjouterOeuvre() {
 
       setUploadProgress(isEditMode ? t('ajouteroeuvre.updatingOeuvre', 'Mise à jour de l\'oeuvre...') : t('ajouteroeuvre.creatingOeuvre', 'Création de l\'oeuvre...'));
 
+      // Articles de presse saisis à l'ajout : rattachés à l'œuvre créée ; les refus sont signalés
+      const rattacherPresse = async (oeuvreId: number) => {
+        let refuses = 0;
+        for (const article of articlesPresse) {
+          try {
+            const res = await httpClient.post('/liens', corpsLien(article, oeuvreId));
+            if (!res?.success) refuses++;
+          } catch {
+            refuses++;
+          }
+        }
+        if (refuses > 0) {
+          toast({
+            title: t('liens.presseOeuvre.refusTitre', 'Articles de presse non ajoutés'),
+            description: t('liens.presseOeuvre.refus', '{{count}} article(s) n’ont pas pu être rattachés. Ajoutez-les depuis la page de l’œuvre ou « Mon portfolio ».', { count: refuses }),
+            variant: 'destructive',
+          });
+        }
+      };
+
       try {
         let oeuvreResponse;
         // Identifiant de l'œuvre créée (création seulement : la réponse d'une mise à jour n'a pas de « oeuvre »)
@@ -919,6 +943,7 @@ export function useAjouterOeuvre() {
           }
           if (oeuvreResponse.success && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
             await uploadExtraits(oeuvreResponse.data.oeuvre.id_oeuvre);
+            await rattacherPresse(oeuvreResponse.data.oeuvre.id_oeuvre);
           }
         }
 
@@ -989,6 +1014,7 @@ export function useAjouterOeuvre() {
                 await mediaService.uploadOeuvreMedia(media.file, oeuvreId, { is_principal: media.isPrincipal, ordre: i });
               }
             }
+            await rattacherPresse(checkResult.data.id_oeuvre);
             // « Publier » demandé : envoi à la validation, comme sans délai dépassé (avant : restait en brouillon)
             if (!isDraft) {
               try {
@@ -1014,7 +1040,7 @@ export function useAjouterOeuvre() {
       setUploadProgress('');
       submittingRef.current = false;
     }
-  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, extraitsChoisis, prepareDetailsSpecifiques, toast, t]);
+  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, extraitsChoisis, articlesPresse, prepareDetailsSpecifiques, toast, t]);
 
   return {
     // State
@@ -1043,6 +1069,7 @@ export function useAjouterOeuvre() {
     mediasEnregistres,
     retirerMediaEnregistre: (idMedia: number) => setMediasEnregistres(prev => prev.filter(m => m.id_media !== idMedia)),
     extraitsEnregistres, extraitsChoisis,
+    articlesPresse, setArticlesPresse,
     choisirExtrait: (genre: GenreExtrait, fichier: File | null) => setExtraitsChoisis(prev => ({ ...prev, [genre]: fichier })),
     retirerExtrait: (genre: GenreExtrait) => setExtraitsEnregistres(prev => ({ ...prev, [genre]: null })),
   };

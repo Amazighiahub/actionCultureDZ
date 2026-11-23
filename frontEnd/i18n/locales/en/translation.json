@@ -135,7 +135,16 @@
     "nonRetire": "The link was not removed. Try again.",
     "ajouterSurOeuvre": "Add a press article about this work",
     "ajouterSurEvenement": "Add a press article about this event",
-    "aucunSurContenu": "No articles yet. Add what the press or social networks say about your work: visitors will find it here."
+    "aucunSurContenu": "No articles yet. Add what the press or social networks say about your work: visitors will find it here.",
+    "presseOeuvre": {
+      "titre": "Press articles about this work",
+      "aide": "Has a newspaper, radio or website talked about this work? Paste the link to the article or video: visitors will find it on the work's page and on your portfolio.",
+      "ajouter": "Add this article",
+      "enAttente": "These articles will be linked to the work as soon as it is saved.",
+      "refusTitre": "Press articles not added",
+      "refus": "{{count}} article(s) could not be linked. Add them from the work's page or “My portfolio”."
+    },
+    "dejaAjoute": "This article is already in the list."
   },
   "auth": {
     "reprise": {

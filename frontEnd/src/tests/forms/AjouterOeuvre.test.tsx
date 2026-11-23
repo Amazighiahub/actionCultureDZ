@@ -10,7 +10,8 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render as rendreBrut, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -301,6 +302,9 @@ vi.mock('@/components/ui/checkbox', () => ({
 // Import APRES les mocks
 // ---------------------------------------------------------------------------
 import AjouterOeuvre from '@/pages/ajouterOeuvre';
+
+// Comme dans le site : un QueryClient (rubrique « Articles de presse sur cette œuvre »)
+const render = (ui: React.ReactElement) => rendreBrut(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>);
 
 // ---------------------------------------------------------------------------
 // Helpers
