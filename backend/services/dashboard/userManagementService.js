@@ -156,13 +156,24 @@ class DashboardUserManagementService {
     }
     updateData.date_modification = new Date();
 
+    const emailChange = avant?.email && updateData.email
+      && String(updateData.email).trim().toLowerCase() !== String(avant.email).toLowerCase();
+    if (emailChange) {
+      updateData.email = String(updateData.email).trim().toLowerCase();
+      const autre = await this.models.User.findOne({ where: { email: updateData.email, id_user: { [Op.ne]: userId } } });
+      if (autre) throw erreurHttp('Cette adresse e-mail est déjà utilisée par un autre compte', 409);
+    }
+
     const user = await this.userRepo.update(userId, updateData);
     if (!user) {
       throw erreurHttp('Utilisateur non trouvé', 404);
     }
     await this._invalidateUserCache(userId);
     // E-mail changé par l'administration : l'ancienne adresse est prévenue
-    if (avant?.email && updateData.email && String(updateData.email).toLowerCase() !== String(avant.email).toLowerCase()) {
+    if (emailChange) {
+      // Liens envoyés à l'ancienne adresse (mot de passe, invitation) annulés : une adresse mal tapée
+      // appartient peut-être à quelqu'un d'autre
+      await this.models.EmailVerification?.invalidateUserTokens?.(userId);
       const emailService = require('../emailService');
       Promise.resolve(emailService.sendEmail(avant.email, 'L’adresse e-mail de votre compte Tala DZ a été changée',
         '<p>Bonjour,</p><p>L’administration de Tala DZ a changé l’adresse e-mail de votre compte. Si vous n’en êtes pas à l’origine, écrivez tout de suite à contact@taladz.com.</p>',

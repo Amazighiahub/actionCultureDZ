@@ -344,3 +344,34 @@ describe('protections entre comptes d’administration', () => {
     expect(r.errors.map((e) => e.id)).toEqual([1, 2]);
   });
 });
+
+describe('UserManagementService.updateUser — e-mail changé par l’administration', () => {
+  const service = (autre = null) => {
+    const s = Object.create(DashboardUserManagementService.prototype);
+    s.models = {
+      User: { findOne: jest.fn().mockResolvedValue(autre), findAll: jest.fn().mockResolvedValue([]) },
+      EmailVerification: { invalidateUserTokens: jest.fn() }
+    };
+    s.userRepo = { findById: jest.fn().mockResolvedValue({ id_user: 5, email: 'ancien.fictif@exemple.dz', id_type_user: 1 }), update: jest.fn(async (id, d) => ({ id_user: id, ...d })) };
+    s._refuserSiAdministration = jest.fn();
+    s._invalidateUserCache = jest.fn();
+    return s;
+  };
+
+  it('adresse prise par un autre compte : refusée (409), rien écrit', async () => {
+    const s = service({ id_user: 9 });
+    await expect(s.updateUser(5, { email: 'pris.fictif@exemple.dz' }, 1)).rejects.toMatchObject({ statusCode: 409 });
+    expect(s.userRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('adresse libre : enregistrée en minuscules, liens envoyés à l’ancienne adresse annulés', async () => {
+    const emailService = require('../../services/emailService');
+    const envoi = jest.spyOn(emailService, 'sendEmail').mockResolvedValue({ success: true });
+    const s = service();
+    await s.updateUser(5, { email: ' Nouveau.Fictif@Exemple.dz ' }, 1);
+    expect(envoi).toHaveBeenCalledWith('ancien.fictif@exemple.dz', expect.any(String), expect.any(String), null, null, { type: 'securite' });
+    envoi.mockRestore();
+    expect(s.userRepo.update).toHaveBeenCalledWith(5, expect.objectContaining({ email: 'nouveau.fictif@exemple.dz' }));
+    expect(s.models.EmailVerification.invalidateUserTokens).toHaveBeenCalledWith(5);
+  });
+});

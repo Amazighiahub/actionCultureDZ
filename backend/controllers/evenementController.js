@@ -625,6 +625,16 @@ class EvenementController extends BaseController {
     }
   }
 
+  /** E-mail mal tapé d'un participant importé (compte jamais activé) : corrigé, invitation renvoyée */
+  async corrigerEmailParticipant(req, res) {
+    try {
+      const data = await container.importInscriptionsService.corrigerEmail(parseInt(req.params.id), parseInt(req.params.userId), req.body?.email, req.user);
+      res.json({ success: true, data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   /** Relance groupée des participants qui n'ont pas fini */
   async renvoyerInvitations(req, res) {
     try {

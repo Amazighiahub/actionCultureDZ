@@ -9,7 +9,7 @@ const { ImportInscriptions } = require('../../services/evenement/importInscripti
 
 const inscription = (id, verifie, statut = 'inscrit') => ({
   statut_participation: statut,
-  User: { id_user: id, email: `personne${id}@example.com`, email_verifie: verifie },
+  User: { id_user: id, email: `personne${id}@example.com`, email_verifie: verifie, accepte_conditions: verifie },
 });
 
 const contexte = (inscriptions, statutEvenement = 'publie') => {

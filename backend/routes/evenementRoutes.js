@@ -171,6 +171,10 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.post('/:id/participants/:userId/invitation', authenticate, requireVerifiedEmail, invitationsLimiter, validateId(), validateId('userId'),
     asyncHandler((req, res) => evenementController.renvoyerInvitation(req, res)));
 
+  // E-mail mal tapé d'un participant importé, compte jamais activé : corrigé, invitation renvoyée
+  router.put('/:id/participants/:userId/email', authenticate, requireVerifiedEmail, invitationsLimiter, validateId(), validateId('userId'),
+    asyncHandler((req, res) => evenementController.corrigerEmailParticipant(req, res)));
+
   // Participants validation (owner ou admin)
   router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'),
     invalidateCache([req => `/evenements/${req.params.id}/participants`]), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));

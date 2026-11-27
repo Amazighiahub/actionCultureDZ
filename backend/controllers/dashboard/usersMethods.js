@@ -55,7 +55,7 @@ const usersMethods = {
       if (error.message === 'Utilisateur non trouvé') {
         return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
-      if (error.statusCode === 400 || error.statusCode === 403) {
+      if (error.statusCode === 400 || error.statusCode === 403 || error.statusCode === 409) {
         return res.status(error.statusCode).json({ success: false, error: error.message });
       }
       this._handleError(res, error);

@@ -136,7 +136,7 @@ describe('Import', () => {
   });
 
   it("compte existant : pas d'inscription d'office, une demande de confirmation lui est envoyée", async () => {
-    const m = modeles({ existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz', email_verifie: true }] });
+    const m = modeles({ existants: [{ id_user: 9, email: 'lydia.amrani@exemple.dz', email_verifie: true, accepte_conditions: true }] });
     const emailService = {
       sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }),
       sendDemandeConfirmationInscription: jest.fn().mockResolvedValue({ success: true })
@@ -178,12 +178,89 @@ describe('Renvoi de l’invitation', () => {
 
   it('mot de passe déjà choisi, personne non inscrite ou autre organisateur : refusé, rien envoyé', async () => {
     const mail = emailService();
-    await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: true }), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR))
+    await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: true, accepte_conditions: true }), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR))
       .rejects.toMatchObject({ statusCode: 400 });
     await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: false }, false), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR))
       .rejects.toMatchObject({ statusCode: 404 });
     await expect(new ImportInscriptions(avec({ id_user: 101, email_verifie: false }), { emailService: mail }).renvoyerInvitation(2, 101, { id_user: 12, isAdmin: false }))
       .rejects.toMatchObject({ statusCode: 403 });
     expect(mail.sendInvitationInscription).not.toHaveBeenCalled();
+  });
+});
+
+describe('Correction de l’e-mail d’un participant importé (adresse mal tapée)', () => {
+  const avec = (user, { autres = [] } = {}) => {
+    const m = modeles({ existants: autres });
+    m.EvenementUser.findOne = jest.fn().mockResolvedValue({ id_user: user.id_user });
+    m.User.findByPk = jest.fn().mockResolvedValue(user);
+    m.EmailVerification.invalidateUserTokens = jest.fn().mockResolvedValue([1]);
+    return m;
+  };
+  const compte = (extra = {}) => ({
+    id_user: 101, email: 'bahaa.fictif@gmial.com', email_verifie: false, accepte_conditions: false,
+    update: jest.fn(async function (d) { Object.assign(this, d); return this; }), ...extra
+  });
+  const emailService = () => ({ sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }) });
+
+  it('compte jamais activé : adresse corrigée, anciens liens annulés, invitation envoyée à la nouvelle', async () => {
+    const user = compte();
+    const m = avec(user);
+    const mail = emailService();
+    await expect(new ImportInscriptions(m, { emailService: mail }).corrigerEmail(2, 101, ' Bahaa.Fictif@Gmail.com ', ORGANISATEUR))
+      .resolves.toEqual({ email: 'bahaa.fictif@gmail.com', ancien: 'bahaa.fictif@gmial.com' });
+    expect(user.update).toHaveBeenCalledWith({ email: 'bahaa.fictif@gmail.com', email_verifie: false });
+    expect(m.EmailVerification.invalidateUserTokens).toHaveBeenCalledWith(101);
+    // Nouveau lien (pas la reprise de l'ancien, parti à la mauvaise adresse)
+    expect(m.EmailVerification.lienActif).not.toHaveBeenCalled();
+    expect(mail.sendInvitationInscription).toHaveBeenCalledWith(expect.objectContaining({ email: 'bahaa.fictif@gmail.com' }), 'jeton', expect.anything());
+  });
+
+  it('compte activé, adresse invalide, identique, prise par un autre compte ou autre organisateur : refusé, rien changé', async () => {
+    const mail = emailService();
+    const cas = [
+      [compte({ email_verifie: true, accepte_conditions: true }), 'nouveau.fictif@exemple.dz', {}, ORGANISATEUR, 400],
+      [compte({ derniere_connexion: new Date() }), 'nouveau.fictif@exemple.dz', {}, ORGANISATEUR, 400],
+      [compte({ accepte_conditions: true }), 'nouveau.fictif@exemple.dz', {}, ORGANISATEUR, 400],
+      [compte(), 'pas-un-email', {}, ORGANISATEUR, 400],
+      [compte(), 'BAHAA.fictif@gmial.com', {}, ORGANISATEUR, 400],
+      [compte(), 'pris.fictif@exemple.dz', { autres: [{ id_user: 7, email: 'pris.fictif@exemple.dz' }] }, ORGANISATEUR, 409],
+      [compte(), 'nouveau.fictif@exemple.dz', {}, { id_user: 12, isAdmin: false }, 403]
+    ];
+    for (const [user, email, opts, qui, code] of cas) {
+      await expect(new ImportInscriptions(avec(user, opts), { emailService: mail }).corrigerEmail(2, 101, email, qui))
+        .rejects.toMatchObject({ statusCode: code });
+      expect(user.update).not.toHaveBeenCalled();
+    }
+    expect(mail.sendInvitationInscription).not.toHaveBeenCalled();
+  });
+});
+
+describe('Compte importé « vérifié » à la main par l’administration, sans mot de passe choisi', () => {
+  const avec = (user) => {
+    const m = modeles();
+    m.EvenementUser.findOne = jest.fn().mockResolvedValue({ id_user: user.id_user, statut_participation: 'invitation' });
+    m.User.findByPk = jest.fn().mockResolvedValue(user);
+    m.EmailVerification.invalidateUserTokens = jest.fn();
+    return m;
+  };
+  const compte = () => ({ id_user: 101, email: 'bahaa.fictif@gmial.com', email_verifie: true, accepte_conditions: false, derniere_connexion: null, update: jest.fn() });
+  const emailService = () => ({
+    sendInvitationInscription: jest.fn().mockResolvedValue({ success: true }),
+    sendDemandeConfirmationInscription: jest.fn().mockResolvedValue({ success: true })
+  });
+
+  it('son e-mail peut être corrigé (et redevient à confirmer)', async () => {
+    const user = compte();
+    const mail = emailService();
+    await new ImportInscriptions(avec(user), { emailService: mail }).corrigerEmail(2, 101, 'bahaa.fictif@gmail.com', ORGANISATEUR);
+    expect(user.update).toHaveBeenCalledWith({ email: 'bahaa.fictif@gmail.com', email_verifie: false });
+    expect(mail.sendInvitationInscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('« Renvoyer l’email » lui envoie le choix du mot de passe, pas une simple confirmation', async () => {
+    const mail = emailService();
+    await new ImportInscriptions(avec(compte()), { emailService: mail }).renvoyerInvitation(2, 101, ORGANISATEUR);
+    expect(mail.sendInvitationInscription).toHaveBeenCalledTimes(1);
+    expect(mail.sendDemandeConfirmationInscription).not.toHaveBeenCalled();
   });
 });

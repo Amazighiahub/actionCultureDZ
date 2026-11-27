@@ -657,5 +657,11 @@
   "Ce texte n’est pas publié": "This text is not published",
   "L’auteur n’a pas accepté le partage ouvert": "The author has not agreed to open sharing",
   "Cet événement n'existe pas ou n'est pas public": "This event does not exist or is not public",
-  "Trop d'étapes (100 au plus)": "Too many stops (100 at most)"
+  "Trop d'étapes (100 au plus)": "Too many stops (100 at most)",
+  "Cette personne a déjà activé son compte : elle change son adresse elle-même, depuis son profil": "This person has already activated their account: they can change their address themselves, from their profile",
+  "Adresse e-mail invalide": "Invalid e-mail address",
+  "C'est déjà son adresse : utilisez « Renvoyer l'email »": "This is already their address: use “Resend the e-mail”",
+  "Cette adresse a déjà un compte sur Tala DZ : la personne peut s'inscrire elle-même avec ce compte": "This address already has a Tala DZ account: the person can register themselves with that account",
+  "Adresse corrigée, mais l'email n'a pas pu être envoyé : réessayez avec « Renvoyer l'email »": "Address corrected, but the e-mail could not be sent: try again with “Resend the e-mail”",
+  "Cette adresse e-mail est déjà utilisée par un autre compte": "This e-mail address is already used by another account"
 }

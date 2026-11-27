@@ -4161,7 +4161,16 @@
       },
       "filtreStatut": "Statut",
       "filtreRole": "Rôle",
-      "imageOeuvre": "Image {{n}} de l’œuvre, en grand"
+      "imageOeuvre": "Image {{n}} de l’œuvre, en grand",
+      "correctionEmail": {
+        "bouton": "Corriger l’e-mail",
+        "titre": "Corriger l’adresse e-mail",
+        "explication": "La personne n’a pas encore activé son compte. L’invitation repart à la nouvelle adresse et le lien envoyé à l’ancienne ne marche plus.",
+        "ancienne": "Adresse actuelle :",
+        "nouvelle": "Bonne adresse e-mail",
+        "envoyer": "Corriger et renvoyer l’invitation",
+        "faite": "Adresse corrigée"
+      }
     }
   },
   "programmePages": {

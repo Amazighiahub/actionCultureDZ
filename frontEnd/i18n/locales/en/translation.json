@@ -4156,7 +4156,16 @@
       },
       "filtreStatut": "Status",
       "filtreRole": "Role",
-      "imageOeuvre": "Image {{n}} of the work, full size"
+      "imageOeuvre": "Image {{n}} of the work, full size",
+      "correctionEmail": {
+        "bouton": "Correct the e-mail",
+        "titre": "Correct the e-mail address",
+        "explication": "This person has not activated their account yet. The invitation is sent again to the new address, and the link sent to the old one stops working.",
+        "ancienne": "Current address:",
+        "nouvelle": "Correct e-mail address",
+        "envoyer": "Correct and resend the invitation",
+        "faite": "Address corrected"
+      }
     }
   },
   "programmePages": {

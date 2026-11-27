@@ -30,6 +30,13 @@ const LIGNES_MAX = 500;
 const PLAFOND_INVITATIONS_JOUR = 1000;
 const STATUTS_SANS_IMPORT = ['brouillon', 'en_attente', 'annule', 'termine'];
 const INVITATION_HEURES = 8 * 24;
+
+/**
+ * Compte créé par l'import que la personne n'a jamais pris en main : pas de mot de passe choisi
+ * (les conditions s'acceptent avec lui) et aucune connexion. « E-mail vérifié » ne suffit pas à le
+ * dire : l'administration peut le cocher à la main, sans que la personne ait de mot de passe.
+ */
+const jamaisActive = (user) => !user.accepte_conditions && !user.derniere_connexion;
 // Par clic : l'envoi se fait pendant la requête, qui doit répondre avant le délai de nginx (60 s)
 const RELANCE_MAX_PAR_ENVOI = 40;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
@@ -340,7 +347,7 @@ class ImportInscriptions {
           budget -= 1;
           // Compte importé jamais activé (par un autre organisateur, par exemple) : il faut encore choisir
           // un mot de passe. « Confirmez » seul mènerait à une connexion impossible.
-          const aActiver = nouveau || (!user.email_verifie && !user.accepte_conditions);
+          const aActiver = nouveau || jamaisActive(user);
           const envoye = aActiver ? await this._inviter(user, evenement, { reprendre: !nouveau }) : await this._demanderConfirmation(user, evenement);
           if (envoye) bilan.invitations += 1;
           else bilan.erreurs.push(`${l.email} : invitation non envoyée`);
@@ -410,7 +417,7 @@ class ImportInscriptions {
       where: { id_evenement: evenement.id_evenement, statut_participation: { [Op.ne]: 'annule' } },
       include: [{ model: this.models.User, as: 'User', required: true }]
     });
-    const concernes = inscriptions.filter(i => !i.User.email_verifie || i.statut_participation === 'invitation');
+    const concernes = inscriptions.filter(i => !i.User.email_verifie || jamaisActive(i.User) || i.statut_participation === 'invitation');
     // Part du quota du jour qui ne sert pas aux e-mails importants
     const limite = Math.min(RELANCE_MAX_PAR_ENVOI, await budgetEnvoiGroupe());
     const lot = concernes.slice(0, limite);
@@ -418,7 +425,7 @@ class ImportInscriptions {
     let echecs = 0;
     for (const { User: user } of lot) {
       try {
-        const ok = user.email_verifie
+        const ok = user.email_verifie && !jamaisActive(user)
           ? await this._demanderConfirmation(user, evenement)
           : await this._inviter(user, evenement, { reprendre: true });
         if (ok) envoyes++; else echecs++;
@@ -442,7 +449,7 @@ class ImportInscriptions {
     if (!inscription) throw erreurHttp('Cette personne n\'est pas inscrite à l\'événement', 404);
     const user = await this.models.User.findByPk(idUser);
     if (!user) throw erreurHttp('Compte introuvable', 404);
-    if (user.email_verifie) {
+    if (user.email_verifie && !jamaisActive(user)) {
       // Compte actif dont l'invitation attend sa réponse : nouvelle demande de confirmation
       if (inscription.statut_participation === 'invitation') {
         if (!this.emailService || !(await this._demanderConfirmation(user, evenement))) {
@@ -456,6 +463,45 @@ class ImportInscriptions {
       throw new AppError('L\'email n\'a pas pu être envoyé, réessayez plus tard', 502, 'EMAIL_NON_ENVOYE');
     }
     return { email: user.email };
+  }
+
+  /**
+   * Corrige l'e-mail d'un participant dont le compte, créé par l'import, n'a jamais été activé
+   * (adresse mal tapée dans le formulaire en ligne), puis lui envoie l'invitation à la bonne adresse.
+   * Le lien parti à la mauvaise adresse cesse de marcher : son destinataire ne peut plus prendre le compte.
+   * Compte activé : la personne change son adresse elle-même (ou l'administration).
+   */
+  async corrigerEmail(idEvenement, idUser, brut, utilisateur) {
+    const { evenement } = await this._evenement(idEvenement, utilisateur);
+    if (STATUTS_SANS_IMPORT.includes(evenement.statut)) {
+      throw erreurHttp('Cet événement n\'est pas ouvert : l\'invitation mènerait à une impasse', 400);
+    }
+    const inscription = await this.models.EvenementUser.findOne({ where: { id_evenement: evenement.id_evenement, id_user: idUser } });
+    if (!inscription) throw erreurHttp('Cette personne n\'est pas inscrite à l\'événement', 404);
+    const user = await this.models.User.findByPk(idUser);
+    if (!user) throw erreurHttp('Compte introuvable', 404);
+    if (!jamaisActive(user)) {
+      throw erreurHttp('Cette personne a déjà activé son compte : elle change son adresse elle-même, depuis son profil', 400);
+    }
+    const { email, valide } = lireEmail(brut);
+    if (!valide) throw erreurHttp('Adresse e-mail invalide', 400);
+    if (email === String(user.email || '').toLowerCase()) {
+      throw erreurHttp('C\'est déjà son adresse : utilisez « Renvoyer l\'email »', 400);
+    }
+    const autre = await this.models.User.findOne({ where: { email } });
+    if (autre) {
+      throw erreurHttp('Cette adresse a déjà un compte sur Tala DZ : la personne peut s\'inscrire elle-même avec ce compte', 409);
+    }
+    const ancien = user.email;
+    // Nouvelle adresse pas encore confirmée : elle le sera quand la personne choisira son mot de passe
+    await user.update({ email, email_verifie: false });
+    // Tous les liens envoyés à l'ancienne adresse sont annulés (choix du mot de passe, confirmation)
+    await this.models.EmailVerification.invalidateUserTokens(user.id_user);
+    this.logger.info?.(`Import inscriptions : e-mail corrigé pour le compte ${user.id_user} (événement ${evenement.id_evenement}) par ${utilisateur.id_user}`);
+    if (!this.emailService || !(await this._inviter(user, evenement))) {
+      throw new AppError('Adresse corrigée, mais l\'email n\'a pas pu être envoyé : réessayez avec « Renvoyer l\'email »', 502, 'EMAIL_NON_ENVOYE');
+    }
+    return { email, ancien };
   }
 }
 

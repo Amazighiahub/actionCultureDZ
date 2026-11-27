@@ -20,7 +20,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -49,7 +52,8 @@ import {
   UserX,
   Download,
   FileSpreadsheet,
-  Send
+  Send,
+  Pencil
 } from 'lucide-react';
 import ImportInscriptionsDialog from './ImportInscriptionsDialog';
 import MessageParticipantsDialog, { cleMessageParticipants } from './MessageParticipantsDialog';
@@ -121,6 +125,8 @@ interface Participant {
     email: string;
     /** Faux tant qu'un compte créé par import n'a pas choisi son mot de passe */
     email_verifie?: boolean;
+    /** Faux aussi : compte importé jamais activé, son e-mail (mal tapé) peut être corrigé */
+    accepte_conditions?: boolean;
     bio?: string;
     photo_profil?: string;
     site_web?: string;
@@ -220,6 +226,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const [profils, setProfils] = useState<{ valeur: string; label?: string | Record<string, string> }[]>([]);
   const [profilEnCours, setProfilEnCours] = useState<number | null>(null);
   const [renvoiEnCours, setRenvoiEnCours] = useState<number | null>(null);
+  // E-mail mal tapé dans le formulaire en ligne : corrigé ici, l'invitation repart à la bonne adresse
+  const [emailACorriger, setEmailACorriger] = useState<{ id_user: number; email: string } | null>(null);
+  const [nouvelEmail, setNouvelEmail] = useState('');
+  const [correctionEnCours, setCorrectionEnCours] = useState(false);
   const [relanceOuverte, setRelanceOuverte] = useState(false);
   const [relanceEnCours, setRelanceEnCours] = useState(false);
 
@@ -250,6 +260,26 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
     } finally {
       setRenvoiEnCours(null);
+    }
+  };
+
+  const corrigerEmail = async () => {
+    if (!emailACorriger || correctionEnCours) return;
+    setCorrectionEnCours(true);
+    try {
+      const res = await httpClient.put<{ email: string }>(`/evenements/${evenementId}/participants/${emailACorriger.id_user}/email`, { email: nouvelEmail.trim() });
+      if (res.success) {
+        const email = res.data?.email || nouvelEmail.trim();
+        setParticipants(prev => prev.map(p => p.id_user === emailACorriger.id_user ? { ...p, User: { ...p.User, email } } : p));
+        setEmailACorriger(null);
+        toast({ title: t('pro.participants.correctionEmail.faite', 'Adresse corrigée'), description: t('pro.participants.invitation.envoyeeDesc', 'Un nouveau lien pour choisir son mot de passe, valable 8 jours, a été envoyé à {{email}}.', { email }) });
+      } else {
+        toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(res, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: t('common.error', 'Erreur'), description: messageErreurServeur(err, t('pro.participants.actions.error', 'Une erreur est survenue')), variant: 'destructive' });
+    } finally {
+      setCorrectionEnCours(false);
     }
   };
 
@@ -623,7 +653,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         // Invitation pas encore confirmée : l'email (demande de confirmation) peut être renvoyé
                         // Trois cas : pas de mot de passe ; mot de passe choisi mais participation pas confirmée
                         // (le bouton renvoie alors la demande de confirmation) ; tout est fait (bouton grisé)
-                        const motDePasseChoisi = participant.User.email_verifie !== false;
+                        // accepte_conditions faux : compte importé sans mot de passe, même si l'e-mail a été
+                        // « vérifié » à la main par l'administration
+                        const motDePasseChoisi = participant.User.email_verifie !== false && participant.User.accepte_conditions !== false;
                         const aSonMotDePasse = motDePasseChoisi && participant.statut_participation !== 'invitation';
                         const aConfirmer = motDePasseChoisi && participant.statut_participation === 'invitation';
                         return (
@@ -648,6 +680,15 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                                 ? t('pro.participants.invitation.rappelerConfirmation', 'Lui rappeler de confirmer')
                                 : t('pro.participants.invitation.renvoyer', 'Renvoyer l’email')}
                             </Button>
+                            {participant.User.accepte_conditions === false && (
+                              <Button
+                                variant="outline" size="sm" className="h-7"
+                                onClick={() => { setEmailACorriger({ id_user: participant.id_user, email: participant.User.email }); setNouvelEmail(participant.User.email); }}
+                              >
+                                <Pencil className="h-3 w-3 me-1" aria-hidden="true" />
+                                {t('pro.participants.correctionEmail.bouton', 'Corriger l’e-mail')}
+                              </Button>
+                            )}
                           </div>
                         );
                       })()}
@@ -1190,6 +1231,38 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!emailACorriger} onOpenChange={(o) => { if (!o && !correctionEnCours) setEmailACorriger(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={(e) => { e.preventDefault(); corrigerEmail(); }}>
+            <DialogHeader>
+              <DialogTitle>{t('pro.participants.correctionEmail.titre', 'Corriger l’adresse e-mail')}</DialogTitle>
+              <DialogDescription>
+                {t('pro.participants.correctionEmail.explication', 'La personne n’a pas encore activé son compte. L’invitation repart à la nouvelle adresse et le lien envoyé à l’ancienne ne marche plus.')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-4">
+              <p className="text-sm text-muted-foreground">
+                {t('pro.participants.correctionEmail.ancienne', 'Adresse actuelle :')} <span dir="ltr">{emailACorriger?.email}</span>
+              </p>
+              <Label htmlFor="nouvel-email-participant">{t('pro.participants.correctionEmail.nouvelle', 'Bonne adresse e-mail')}</Label>
+              <Input
+                id="nouvel-email-participant" type="email" dir="ltr" required autoComplete="off"
+                value={nouvelEmail} onChange={(e) => setNouvelEmail(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEmailACorriger(null)} disabled={correctionEnCours}>
+                {t('common.cancel', 'Annuler')}
+              </Button>
+              <Button type="submit" disabled={correctionEnCours || !nouvelEmail.trim() || nouvelEmail.trim().toLowerCase() === emailACorriger?.email.toLowerCase()}>
+                {correctionEnCours && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
+                {t('pro.participants.correctionEmail.envoyer', 'Corriger et renvoyer l’invitation')}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Card>

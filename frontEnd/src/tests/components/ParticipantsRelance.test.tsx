@@ -6,14 +6,15 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const { mockGet, mockPost, mockToast } = vi.hoisted(() => ({
+const { mockGet, mockPost, mockPut, mockToast } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
+  mockPut: vi.fn(),
   mockToast: vi.fn(),
 }));
 
 vi.mock('@/services/httpClient', () => ({
-  httpClient: { get: mockGet, post: mockPost, put: vi.fn() },
+  httpClient: { get: mockGet, post: mockPost, put: mockPut },
 }));
 vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
 vi.mock('react-i18next', async (original) => ({
@@ -150,4 +151,36 @@ describe('refus du serveur (audit V11 FRM-18)', () => {
     await user.click(await screen.findByRole('button', { name: /Renvoyer l’email/ }));
     await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ description: 'Une erreur est survenue' })));
   });
+});
+
+describe('e-mail mal tapé d’un participant importé', () => {
+  test('bouton seulement pour un compte jamais activé ; la correction met à jour la liste', async () => {
+    const user = userEvent.setup();
+    const importe = participant(1, false, 'invitation');
+    importe.User = { ...importe.User, email: 'bahaa@gmial.com', accepte_conditions: false } as typeof importe.User;
+    const actif = participant(2, true);
+    mockPut.mockResolvedValue({ success: true, data: { email: 'bahaa@gmail.com' } });
+    afficher([importe, actif]);
+
+    const boutons = await screen.findAllByRole('button', { name: 'Corriger l’e-mail' });
+    expect(boutons).toHaveLength(1);
+    await user.click(boutons[0]);
+    const champ = screen.getByLabelText('Bonne adresse e-mail');
+    await user.clear(champ);
+    await user.type(champ, 'bahaa@gmail.com');
+    await user.click(screen.getByRole('button', { name: 'Corriger et renvoyer l’invitation' }));
+
+    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/evenements/2/participants/1/email', { email: 'bahaa@gmail.com' }));
+    expect(await screen.findByText('bahaa@gmail.com')).toBeInTheDocument();
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Adresse corrigée' }));
+  });
+});
+
+test('compte importé « vérifié » à la main, sans mot de passe : bouton de correction et bon e-mail proposé', async () => {
+  const p = participant(5, true, 'invitation');
+  p.User = { ...p.User, accepte_conditions: false } as typeof p.User;
+  afficher([p]);
+  expect(await screen.findByRole('button', { name: 'Corriger l’e-mail' })).toBeInTheDocument();
+  expect(screen.getByText('Compte pas encore activé : e-mail non confirmé')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Renvoyer l’email' })).toBeEnabled();
 });
