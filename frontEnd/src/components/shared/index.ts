@@ -1,7 +1,7 @@
 /**
  * Composants partagés - Export centralisé
  */
-export { default as LazyImage, SimpleImage, useImagePreload } from './LazyImage';
+export { default as LazyImage } from './LazyImage';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as Pagination } from './Pagination';
 export { default as ConfirmDialog } from './ConfirmDialog';

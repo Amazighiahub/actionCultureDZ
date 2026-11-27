@@ -157,10 +157,21 @@ describe('messages du serveur traduits à l’envoi', () => {
     expect(traduireTexteServeur('Téléphone invalide', 'ar')).toBe(ar['Téléphone invalide']);
   });
 
+  it('dates : rappel « C’est demain » et changement d’événement entièrement traduits, date comprise (2026-11-24)', () => {
+    const rappel = '« Fête de la poterie » a lieu demain, samedi 22 novembre à 18:00 — Maison de la culture.';
+    expect(traduireTexteServeur(rappel, 'en')).toBe('“Fête de la poterie” takes place tomorrow, Saturday 22 November at 18:00 — Maison de la culture.');
+    expect(traduireTexteServeur(rappel, 'ar')).toBe('«Fête de la poterie» غدًا، السبت 22 نوفمبر على الساعة 18:00 — Maison de la culture.');
+    expect(traduireTexteServeur('« Fête » a lieu demain, dimanche 1er mars.', 'en')).toBe('“Fête” takes place tomorrow, Sunday 1 March.');
+    expect(traduireTexteServeur('« Fête » a changé. Nouvelle date : samedi 22 novembre 2026 à 18:00. Nouveau lieu : Batna. Le lien de réunion a changé', 'en'))
+      .toBe('“Fête” has changed. New date: Saturday 22 November 2026 at 18:00. New venue: Batna. The meeting link has changed');
+    // Aucun mot français ne reste dans la date
+    expect(traduireTexteServeur(rappel, 'ar')).not.toMatch(/samedi|novembre/);
+  });
+
   it('mêmes modèles et libellés en arabe et en anglais, mêmes repères que le français', () => {
     expect(Object.keys(ar._modeles).sort()).toEqual(Object.keys(en._modeles).sort());
     expect(Object.keys(ar._libelles).sort()).toEqual(Object.keys(en._libelles).sort());
-    const reperes = (s) => (s.match(/\{[ntl]\d\}/g) || []).sort();
+    const reperes = (s) => (s.match(/\{[ntlds]\d\}/g) || []).sort();
     for (const [cle, texte] of Object.entries(ar._modeles)) {
       expect([cle, reperes(texte)]).toEqual([cle, reperes(cle)]);
       expect([cle, reperes(en._modeles[cle])]).toEqual([cle, reperes(cle)]);

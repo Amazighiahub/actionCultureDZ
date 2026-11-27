@@ -51,7 +51,11 @@ export interface ElementPro {
   en_stock?: number;
   sur_commande?: boolean;
   prix_min?: number | string | null;
+  /** Artisanat : prix (le minimum si prix_max est renseigné) */
+  prix?: number | string | null;
   prix_max?: number | string | null;
+  /** Artisanat : le titre est porté par son œuvre */
+  Oeuvre?: { titre?: TexteMultilingue; description?: TexteMultilingue };
   Materiau?: { nom?: TexteMultilingue };
   Technique?: { nom?: TexteMultilingue };
   materiau?: TexteMultilingue;

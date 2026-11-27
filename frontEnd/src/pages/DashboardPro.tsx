@@ -233,6 +233,9 @@ const DashboardPro = () => {
 
       const searchFields = [
         getValue(item.titre),
+        // Artisanat : titre et description dans son œuvre (avant : la recherche ne le trouvait jamais)
+        getValue(item.Oeuvre?.titre),
+        getValue(item.Oeuvre?.description),
         getValue(item.nom),
         getValue(item.nom_evenement),
         getValue(item.description),
@@ -981,13 +984,14 @@ const DashboardPro = () => {
                   <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-border last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-base font-medium mb-1">{td(item.nom) || td(item.titre)}</h3>
+                        <h3 className="text-base font-medium mb-1">{td(item.Oeuvre?.titre) || td(item.nom) || td(item.titre)}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{td(item.Materiau?.nom) || td(item.materiau) || t("dashboardpro.non_defini", "Non défini")}</span>
                           <span>{td(item.Technique?.nom) || td(item.technique) || ""}</span>
-                          {(item.prix_min != null || item.prix_max != null) && (
+                          {/* Prix : « prix » (le minimum si prix_max est renseigné) ; avant, prix_min, jamais envoyé */}
+                          {(item.prix != null || item.prix_max != null) && (
                             <span className="font-medium text-primary">
-                              {formatPriceRange(item.prix_min ?? null, item.prix_max ?? null)}
+                              {formatPriceRange(item.prix ?? item.prix_min ?? null, item.prix_max ?? null)}
                             </span>
                           )}
                           <Badge variant={typeof item.en_stock === 'number' && item.en_stock > 0 ? 'default' : item.sur_commande ? 'secondary' : 'outline'}>

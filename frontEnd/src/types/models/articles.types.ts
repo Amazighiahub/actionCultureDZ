@@ -234,14 +234,6 @@ export interface ArticleBlock {
   // TYPE GUARDS
   // ============================================================================
   
-  export function isTextBlock(block: ArticleBlock): block is ArticleBlock & { contenu: string } {
-    return ['text', 'heading', 'citation', 'code'].includes(block.type_block);
-  }
-  
-  export function isMediaBlock(block: ArticleBlock): block is ArticleBlock & { media: MediaInfo } {
-    return ['image', 'video'].includes(block.type_block) && !!block.media;
-  }
-  
   export function isListBlock(block: ArticleBlock): block is ArticleBlock & { contenu_json: string[] } {
     return block.type_block === 'list' && Array.isArray(block.contenu_json);
   }

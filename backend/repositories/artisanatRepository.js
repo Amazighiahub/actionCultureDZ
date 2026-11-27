@@ -4,7 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { conditionAuteurOeuvre, colonnesNom } = require('./rechercheNom');
 const { aColonne } = require('../utils/colonnesCalculees');
 const { SUPPORTED_LANGUAGES, cheminJson } = require('../constants/langues');
@@ -92,6 +92,14 @@ class ArtisanatRepository extends BaseRepository {
     switch (sort) {
       case 'prix_asc': order = [['prix', 'ASC']]; break;
       case 'prix_desc': order = [['prix', 'DESC']]; break;
+      // Les plus visités d'abord (table vues, index type_entite + id_entite), puis les plus récents.
+      // Avant : « populaire » inconnu, retombait sur « récent » (2026-11-24)
+      case 'populaire':
+        order = [
+          [literal("(SELECT COUNT(*) FROM vues v WHERE v.type_entite = 'artisanat' AND v.id_entite = `Artisanat`.`id_artisanat`)"), 'DESC'],
+          ...(this.models.Oeuvre ? [[this.models.Oeuvre, 'date_creation', 'DESC']] : []),
+        ];
+        break;
       case 'recent':
       default:
         order = this.models.Oeuvre

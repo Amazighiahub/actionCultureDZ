@@ -141,6 +141,13 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     return httpClient.getPaginated<Artisanat>(API_ENDPOINTS.artisanat.search, params);
   }
 
+  /** Visite d'un produit (tri « Populaires ») ; une panne n'empêche jamais l'affichage */
+  async enregistrerVue(id: number): Promise<void> {
+    try {
+      await httpClient.post(`/tracking/artisanat/${id}/view`);
+    } catch { /* sans effet pour le visiteur */ }
+  }
+
   // Détails
   async getDetail(id: number): Promise<ApiResponse<Artisanat>> {
     return httpClient.get<Artisanat>(API_ENDPOINTS.artisanat.detail(id));

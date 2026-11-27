@@ -52,8 +52,3 @@ export function rafraichirEvenement(idEvenement: number | string) {
   });
 }
 
-/** Listes de favoris (espace personnel, compteurs) relues après un ajout ou un retrait */
-export function rafraichirFavoris() {
-  queryClient.invalidateQueries({ queryKey: ['favoris'] });
-  return queryClient.invalidateQueries({ queryKey: ['favoris-stats'] });
-}

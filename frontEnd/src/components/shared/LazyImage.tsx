@@ -204,39 +204,4 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   );
 };
 
-// Version simplifiée pour les cas simples
-export const SimpleImage: React.FC<{
-  src: string;
-  alt: string;
-  className?: string;
-}> = ({ src, alt, className }) => (
-  <img
-    src={src}
-    alt={alt}
-    loading="lazy"
-    decoding="async"
-    className={className}
-    onError={(e) => {
-      e.currentTarget.src = '/images/placeholder.svg';
-    }}
-  />
-);
-
-// Hook pour précharger des images
-export const useImagePreload = (srcs: string[]) => {
-  useEffect(() => {
-    const images = srcs.map(src => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-
-    return () => {
-      images.forEach(img => {
-        img.src = '';
-      });
-    };
-  }, [srcs]);
-};
-
 export default LazyImage;

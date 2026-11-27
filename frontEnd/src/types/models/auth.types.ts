@@ -112,21 +112,6 @@ export const SECTEUR_OPTIONS = [
   { value: 'autre', label: 'Autre' }
 ];
 
-// Messages d'erreur d'authentification
-export const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  'invalid_credentials': 'Email ou mot de passe incorrect',
-  'email_exists': 'Un utilisateur avec cet email existe déjà',
-  'email_not_verified': 'Veuillez vérifier votre email avant de vous connecter',
-  'account_suspended': 'Votre compte a été suspendu',
-  'account_banned': 'Votre compte a été banni',
-  'validation_pending': 'Votre compte est en attente de validation',
-  'validation_rejected': 'Votre demande de validation a été rejetée',
-  'server_error': 'Une erreur serveur est survenue. Veuillez réessayer.',
-  'network_error': 'Erreur de connexion. Vérifiez votre connexion internet.',
-  'token_expired': 'Votre session a expiré. Veuillez vous reconnecter.',
-  'token_invalid': 'Session invalide. Veuillez vous reconnecter.'
-};
-
 // Types de statuts utilisateur
 export type UserStatus = 
   | 'actif' 

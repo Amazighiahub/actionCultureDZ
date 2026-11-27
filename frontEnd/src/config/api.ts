@@ -23,51 +23,6 @@ export const AUTH_CONFIG = {
   useHttpOnlyCookies: true, // ✅ Nouveaux tokens via cookies
 } as const;
 
-// Limites de taux
-export const RATE_LIMITS = {
-  general: 100, // requêtes par minute
-  creation: 20, // requêtes par minute
-  sensitiveActions: 5, // requêtes par minute
-  auth: 10, // tentatives par heure
-} as const;
-
-// Configuration de la pagination
-export const PAGINATION_CONFIG = {
-  defaultLimit: 10,
-  maxLimit: 100,
-  defaultPage: 1,
-} as const;
-
-// Codes d'erreur HTTP
-export const HTTP_STATUS = {
-  OK: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  UNPROCESSABLE_ENTITY: 422,
-  TOO_MANY_REQUESTS: 429,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-  SERVICE_UNAVAILABLE: 503,
-} as const;
-
-// Messages d'erreur par code
-export const ERROR_MESSAGES: Record<number, string> = {
-  400: 'Requête invalide',
-  401: 'Authentification requise',
-  403: 'Permissions insuffisantes',
-  404: 'Ressource non trouvée',
-  409: 'Conflit avec l\'état actuel',
-  422: 'Erreur de validation',
-  429: 'Limite de taux dépassée',
-  500: 'Erreur serveur',
-  501: 'Fonctionnalité non implémentée',
-  503: 'Service temporairement indisponible',
-};
 // Dans config/api.ts ou un fichier de types
 
 // ================================================
@@ -218,85 +173,6 @@ export const buildUrl = (endpoint: string, params?: Record<string, QueryParamVal
   
   const queryString = queryParams.toString();
   return queryString ? `${endpoint}?${queryString}` : endpoint;
-};
-
-// Types pour les fonctions d'endpoint
-type EndpointFunction1 = (id: number) => string;
-type EndpointFunction2 = (id1: number, id2: number) => string;
-type EndpointFunction = EndpointFunction1 | EndpointFunction2;
-
-// Helper pour créer l'URL complète
-export const getApiUrl = (
-  endpoint: string | EndpointFunction, 
-  ...ids: number[]
-): string => {
-  let path: string;
-  
-  if (typeof endpoint === 'function') {
-    if (ids.length === 1) {
-      path = (endpoint as EndpointFunction1)(ids[0]);
-    } else if (ids.length === 2) {
-      path = (endpoint as EndpointFunction2)(ids[0], ids[1]);
-    } else {
-      throw new Error('Nombre d\'arguments incorrect pour la fonction d\'endpoint');
-    }
-  } else {
-    path = endpoint;
-  }
-  
-  return `${API_BASE_URL}${path}`;
-};
-
-// Helper pour obtenir la langue courante
-const getCurrentLanguage = (): string => {
-  return localStorage.getItem('i18nextLng') || 'fr';
-};
-
-// Helper pour les headers d'authentification + langue
-export const getAuthHeaders = (token?: string): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'X-Language': getCurrentLanguage(),  // ⚡ AJOUT CRITIQUE
-  };
-  
-  if (token) {
-    headers[AUTH_CONFIG.header] = `${AUTH_CONFIG.headerPrefix} ${token}`;
-  }
-  
-  return headers;
-};
-// Helper pour parser les dates de l'API
-export const parseDateFromApi = (dateStr: string | null | undefined): Date | null => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  return isNaN(date.getTime()) ? null : date;
-};
-
-// Helper pour formater une date pour l'API (format ISO YYYY-MM-DD)
-export const formatDateForApi = (date: Date | string | null | undefined): string | null => {
-  if (!date) return null;
-  
-  let dateObj: Date;
-  
-  if (typeof date === 'string') {
-    // Si c'est déjà une string au format ISO, la retourner directement
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return date;
-    }
-    // Si c'est une string ISO complète, extraire la date
-    if (date.match(/^\d{4}-\d{2}-\d{2}T/)) {
-      return date.split('T')[0];
-    }
-    dateObj = new Date(date);
-  } else {
-    dateObj = date;
-  }
-  
-  if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
-    return dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
-  }
-  
-  return null;
 };
 
 // ================================================
@@ -575,27 +451,3 @@ export const API_ENDPOINTS = { // Documentation complète de l'API
     },
   },
 } as const;
-
-// ================================================
-// CONFIGURATION EXPORTÉE
-// ================================================
-
-export const API_CONFIG = {
-  baseUrl: API_BASE_URL,
-  endpoints: API_ENDPOINTS,
-  auth: AUTH_CONFIG,
-  rateLimits: RATE_LIMITS,
-  pagination: PAGINATION_CONFIG,
-  httpStatus: HTTP_STATUS,
-  errorMessages: ERROR_MESSAGES,
-  helpers: {
-    buildUrl,
-    getApiUrl,
-    getAuthHeaders,
-    formatDateForApi,
-    parseDateFromApi,
-  },
-} as const;
-
-// Export par défaut
-export default API_CONFIG;

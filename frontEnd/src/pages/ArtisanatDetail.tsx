@@ -134,6 +134,11 @@ const ArtisanatDetail: React.FC = () => {
     }
   }, [id]);
   useChangementLangue(() => { if (id) loadArtisanat(idFromSlug(id) ?? 0); });
+  // Visite comptée une fois par produit (2026-11-24 : rien n'était compté ; sert au tri « Populaires »)
+  const idVu = artisanat?.id_artisanat;
+  useEffect(() => {
+    if (idVu) artisanatService.enregistrerVue(idVu);
+  }, [idVu]);
   // Adresse lisible et partageable : /artisanat/12 -> /artisanat/12-tapis-de-ghardaia
   useEffect(() => {
     if (!artisanat?.id_artisanat) return;

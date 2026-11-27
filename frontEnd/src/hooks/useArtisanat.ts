@@ -259,18 +259,19 @@ export function useArtisanat(): UseArtisanatReturn {
 
     // Tri
     switch (sortBy) {
-      case 'recent':
-        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      case 'recent': {
+        // Date de l'œuvre (created_at n'est jamais envoyé : le tri ne faisait rien pendant une recherche)
+        const date = (a: Artisanat) => new Date((a.Oeuvre as { date_creation?: string } | undefined)?.date_creation || a.created_at || 0).getTime();
+        filtered.sort((a, b) => date(b) - date(a));
         break;
+      }
       case 'prix_asc':
         filtered.sort((a, b) => ((a as ArtisanatWithPrix).prix || a.prix_min || 0) - ((b as ArtisanatWithPrix).prix || b.prix_min || 0));
         break;
       case 'prix_desc':
         filtered.sort((a, b) => ((b as ArtisanatWithPrix).prix || b.prix_max || 0) - ((a as ArtisanatWithPrix).prix || a.prix_max || 0));
         break;
-      case 'populaire':
-        filtered.sort((a, b) => (b.note_moyenne || 0) - (a.note_moyenne || 0));
-        break;
+      // « populaire » : ordre du serveur (nombre de visites), gardé tel quel
     }
 
     return filtered;

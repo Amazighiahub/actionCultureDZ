@@ -47,20 +47,4 @@ export const FieldError: React.FC<FieldErrorProps> = ({ error, id }) => {
   );
 };
 
-interface CharCountProps {
-  current: number;
-  min?: number;
-  max: number;
-}
-
-export const CharCount: React.FC<CharCountProps> = ({ current, min, max }) => (
-  <p className={cn(
-    'text-xs mt-1',
-    current < (min || 0) ? 'text-destructive' : current > max * 0.9 ? 'text-amber-500' : 'text-muted-foreground'
-  )}>
-    {current}/{max}
-    {min && current < min && ` (min ${min})`}
-  </p>
-);
-
 export default RequiredLabel;
