@@ -478,10 +478,10 @@ class PatrimoineService extends BaseService {
     if (!nom) throw this._validationError('Le nom de la personnalité est requis');
 
     // Même prénom et même nom (accents et majuscules ignorés) : la rattacher, pas la recréer
-    const { sequelize } = Intervenant;
+    const { where: egalA, col } = require('sequelize');
     const memes = await Intervenant.findAll({
       // Colonne nom_tri indexée (accents et majuscules ignorés) au lieu de JSON_EXTRACT (analyse V12 P13)
-      where: sequelize.where(sequelize.col('nom_tri'), nom.slice(0, 191)),
+      where: egalA(col('nom_tri'), nom.slice(0, 191)),
       attributes: ['id_intervenant', 'prenom'], limit: 20
     });
     const egal = (a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }) === 0;
