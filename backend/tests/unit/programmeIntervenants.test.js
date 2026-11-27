@@ -55,8 +55,11 @@ describe('ProgrammeService — intervenants', () => {
     expect(models.Intervenant.create).not.toHaveBeenCalled();
     expect(models.ProgrammeIntervenant.create).toHaveBeenCalledWith(expect.objectContaining({ id_intervenant: 13, role_intervenant: 'animateur' }), expect.anything());
     // Le chemin JSON doit être écrit tel quel dans la requête : passé en paramètre, MySQL le refuse (« Invalid JSON path »)
-    const appel = models.Intervenant.findAll.mock.calls[0][0].where.a;
-    expect(JSON.stringify(appel)).toContain('{"literal":"\'$.fr\'"}');
+    // Mise à jour 2026-11-27 : colonne indexée nom_tri (accents et majuscules ignorés), et non
+    // JSON_EXTRACT qui parcourait toute la table dans la transaction (analyse V12 P13)
+    const appel = models.Intervenant.findAll.mock.calls[0][0].where;
+    expect(JSON.stringify(appel)).toContain('nom_tri');
+    expect(JSON.stringify(appel)).not.toContain('JSON_EXTRACT');
   });
 
   it('nouvel intervenant sans compte : fiche créée avec son nom', async () => {

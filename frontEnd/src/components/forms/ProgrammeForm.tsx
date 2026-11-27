@@ -3,6 +3,7 @@
  * Gère les événements sur plusieurs jours avec horaires, intervenants et options
  */
 import React, { useState, useEffect, useRef } from 'react';
+import { LieuSelector } from '@/components/LieuSelector';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -639,22 +640,13 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
               {/* Lieu */}
               <FormField label={t('programme.form.schedule.place')} error={errors.id_lieu}>
-                <Select
-                  value={formData.id_lieu?.toString()}
-                  onValueChange={(value) => handleChange('id_lieu', value ? parseInt(value) : undefined)}
-                  disabled={isReadOnly}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('programme.form.schedule.selectPlace')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lieux.map((lieu) => (
-                      <SelectItem key={lieu.id_lieu} value={lieu.id_lieu.toString()}>
-                        {lieu.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Recherche parmi tous les lieux (avant : liste des 100 premiers par ordre alphabétique, sur plus
+                    de 1 000 : les autres ne pouvaient pas être choisis ; analyse V12 P9) */}
+                {isReadOnly ? (
+                  <p className="text-sm">{lieux.find((l) => l.id_lieu === formData.id_lieu)?.nom || '—'}</p>
+                ) : (
+                  <LieuSelector value={formData.id_lieu} onChange={(id) => handleChange('id_lieu', id)} />
+                )}
               </FormField>
             </CardContent>
           </Card>

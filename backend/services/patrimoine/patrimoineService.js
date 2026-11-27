@@ -480,7 +480,8 @@ class PatrimoineService extends BaseService {
     // Même prénom et même nom (accents et majuscules ignorés) : la rattacher, pas la recréer
     const { sequelize } = Intervenant;
     const memes = await Intervenant.findAll({
-      where: sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(\`nom\`, '$.fr')) COLLATE utf8mb4_0900_ai_ci = ${sequelize.escape(nom)}`),
+      // Colonne nom_tri indexée (accents et majuscules ignorés) au lieu de JSON_EXTRACT (analyse V12 P13)
+      where: sequelize.where(sequelize.col('nom_tri'), nom.slice(0, 191)),
       attributes: ['id_intervenant', 'prenom'], limit: 20
     });
     const egal = (a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }) === 0;

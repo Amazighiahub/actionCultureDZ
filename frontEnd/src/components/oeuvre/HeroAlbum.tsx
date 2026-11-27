@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
@@ -210,7 +211,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                   <div className="flex flex-col items-center">
                     <div className="w-48 h-48 rounded-lg overflow-hidden mb-6 shadow-xl">
                       {mainImage ? (
-                        <img src={mainImage} alt={titre} className="w-full h-full object-cover" />
+                        <img src={optimizeImageUrl(mainImage, 400)} alt={titre} loading="lazy" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex items-center justify-center">
                           <Music className="h-16 w-16 text-emerald-400/50" />

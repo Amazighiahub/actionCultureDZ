@@ -566,7 +566,10 @@ class EvenementRepository extends BaseRepository {
           where: { profil_public: true, accepte_conditions: true },
           required: true
         }],
-        order: [['date_inscription', 'ASC']]
+        order: [['date_inscription', 'ASC']],
+        // 60 noms au plus sur la fiche : une liste importée de centaines de personnes était envoyée
+        // en entier à chaque visite (analyse V12 P8) ; le total reste exact
+        limit: 60
       }),
       // En personnes : une inscription « 4 personnes » en compte 4
       this.models.EvenementUser.findAll({

@@ -28,6 +28,8 @@ const initStatsRoutes = (models, authMiddleware) => {
   // La langue est dans l'adresse (?lang=) : un cache public par langue, 10 minutes.
   router.get('/a-la-une',
     require('../middlewares/cacheMiddleware').publicHttpCache(600),
+    // Gardé 5 min sur le serveur, par langue : la page la plus vue relisait la base à chaque visiteur (analyse V12 P1)
+    require('../middlewares/cacheMiddleware').conditionalCache(300),
     async (req, res) => {
       try {
         const { aLaUne } = require('../services/aLaUne');

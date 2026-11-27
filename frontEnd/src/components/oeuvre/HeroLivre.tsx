@@ -155,7 +155,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
                     <div className={cn("relative w-full h-full overflow-hidden shadow-2xl", medias[1] ? '' : "bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:via-amber-950 dark:to-black", direction === 'rtl' ? 'rounded-r-lg border-l-4' : 'rounded-l-lg border-r-4', "border-amber-600/30")}>
                       {medias[1] ? (
-                        <img src={medias[1].url} alt={t('oeuvre.backCover', 'Dos de couverture')} className="w-full h-full object-cover" />
+                        <img src={optimizeImageUrl(medias[1].url, 900)} alt={t('oeuvre.backCover', 'Dos de couverture')} loading="lazy" className="w-full h-full object-cover" />
                       ) : (
                         <div className="h-full">
                           <div className="absolute inset-0 opacity-5">

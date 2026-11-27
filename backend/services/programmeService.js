@@ -638,11 +638,12 @@ class ProgrammeService extends BaseService {
     if (!nom && !prenom) {
       throw this._validationError('Chaque intervenant doit avoir un nom (ou être choisi parmi les intervenants existants)');
     }
+    // Colonne nom_tri indexée, comparée sans accents ni majuscules (avant : JSON_EXTRACT, toute la table
+    // parcourue dans la transaction ; analyse V12 P13)
     const memes = await this.models.Intervenant.findAll({
-      where: this.sequelize.where(
-        this.sequelize.fn('LOWER', this.sequelize.fn('JSON_UNQUOTE', this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal("'$.fr'")))),
-        nom.toLowerCase()
-      ),
+      where: this.sequelize.where(this.sequelize.col('nom_tri'), nom.slice(0, 191)),
+      attributes: ['id_intervenant', 'prenom'],
+      limit: 20,
       transaction
     });
     const meme = memes.find(i => texte(i.prenom).toLowerCase() === prenom.toLowerCase());

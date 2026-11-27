@@ -90,15 +90,16 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/', cachePublic, patrimoineController.wrap('list'));
   // Sites et points créés par le compte connecté (tableau de bord professionnel), tous statuts
   router.get('/mes-sites', authenticate, requireModerationOuPro, patrimoineController.wrap('mesSites'));
-  router.get('/popular', cachePublic, patrimoineController.wrap('popular'));
+  // Accueil : gardés 5 min sur le serveur, par langue et par adresse (analyse V12 P1)
+  router.get('/popular', cachePublic, conditionalCache(300), patrimoineController.wrap('popular'));
   router.get('/search', cachePublic, patrimoineController.wrap('search'));
   // Vérifier les doublons avant création (nom + commune)
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
   router.get('/types', cachePublic, patrimoineController.wrap('getTypes'));
   // Plats de la page Gastronomie (articles des sections Gastronomie des lieux)
-  router.get('/gastronomie', cachePublic, patrimoineController.wrap('plats'));
+  router.get('/gastronomie', cachePublic, conditionalCache(300), patrimoineController.wrap('plats'));
   // « À lire » de la page d'accueil : derniers articles publiés
-  router.get('/a-lire', cachePublic, patrimoineController.wrap('aLire'));
+  router.get('/a-lire', cachePublic, conditionalCache(300), patrimoineController.wrap('aLire'));
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
   // Carte d'exploration : ~1 000 lieux, une requête lourde ; gardée 5 min sur le serveur (Redis), effacée à chaque
   // modification d'un lieu (CARTE_A_JOUR, en tête du routeur)

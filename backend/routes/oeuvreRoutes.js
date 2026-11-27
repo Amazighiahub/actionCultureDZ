@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const { publicHttpCache, invalidateCache } = require('../middlewares/cacheMiddleware');
+const { publicHttpCache, invalidateCache, conditionalCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload, avantEnvoi } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE, AUDIO_MIMES, MAX_EXTRAIT_PDF_SIZE, MAX_EXTRAIT_PDF_ENVOI, MAX_EXTRAIT_AUDIO_SIZE, MAX_EXTRAIT_PDF_PAGES } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
@@ -73,7 +73,8 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     [body('decision').isIn(['accepter', 'refuser']).withMessage(msg('validation.decisionInvalide'))],
     handleValidationErrors,
     articleRevisionController.wrap('decider'));
-  router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
+  // Œuvres similaires : gardées 5 min (analyse V12 P12)
+  router.get('/:id/similar', validateId(), conditionalCache(300), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
   router.get('/:id/medias', optionalAuth, validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
   router.post('/', authenticate, requireVerifiedEmail,

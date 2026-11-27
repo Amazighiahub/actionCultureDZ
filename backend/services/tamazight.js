@@ -74,7 +74,8 @@ async function liste(models, { variante, type, page = 1, limit = 24 } = {}) {
 }
 
 /** Voix enregistrées en tamazight sur les lieux du patrimoine publiés (guides, contes, prononciation) */
-async function voixDesLieux(models, { limit = 24 } = {}) {
+/** maximum : plafond (page publique 48 ; jeu de données ouvertes : 2 000, avant borné à 48 sans le dire) */
+async function voixDesLieux(models, { limit = 24, maximum = MAX_PAGE } = {}) {
   const { LieuMedia, Lieu } = models;
   if (!LieuMedia || !Lieu) return [];
   const lignes = await LieuMedia.findAll({
@@ -82,7 +83,7 @@ async function voixDesLieux(models, { limit = 24 } = {}) {
     attributes: ['id', 'url', 'langue', 'parler', 'credit', 'licence', 'id_lieu'],
     include: [{ model: Lieu, attributes: ['id_lieu', 'nom'], where: { statut: 'publie' }, required: true }],
     order: [['id', 'DESC']],
-    limit: Math.min(Number(limit) || 24, MAX_PAGE),
+    limit: Math.min(Number(limit) || 24, maximum),
   });
   return lignes.map((m) => {
     const d = m.get({ plain: true });
@@ -198,7 +199,7 @@ async function donneesOuvertes(models) {
       relu_le: d.donnees_ouvertes_le,
     });
   }
-  const voix = (await voixDesLieux(models, { limit: MAX_PAGE * 20 }))
+  const voix = (await voixDesLieux(models, { limit: 2000, maximum: 2000 }))
     .filter((v) => v.licence === LICENCE_OUVERTE)
     .map((v) => ({
       id: `voix-${v.id}`, url: absolue(v.url), ecriture: v.ecriture, parler: v.parler || null, credit: v.credit || null,
