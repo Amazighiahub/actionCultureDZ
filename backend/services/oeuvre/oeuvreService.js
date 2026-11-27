@@ -15,6 +15,11 @@ const { memeUtilisateur } = require('../../utils/droits');
 const { subtypeRegistry, initSubtypeServices } = require('./subtypes');
 
 class OeuvreService extends BaseService {
+  /** Auteur affiché de chaque œuvre (services/oeuvre/auteursOeuvres) */
+  auteursDesOeuvres(ids) {
+    return require('./auteursOeuvres').auteursDesOeuvres(this.models, ids);
+  }
+
   constructor(oeuvreRepository, options = {}) {
     super(oeuvreRepository, options);
     this.notificationService = options.notificationService;

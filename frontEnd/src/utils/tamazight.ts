@@ -14,6 +14,9 @@ export const LIBELLE_VARIANTE: Record<Variante, string> = {
 };
 
 export const LICENCE_URL = 'https://creativecommons.org/licenses/by-sa/4.0/deed.fr';
+/** Page de la licence dans la langue du site (2026-11-27 : toujours en français) */
+export const licenceUrl = (langue?: string) =>
+  `https://creativecommons.org/licenses/by-sa/4.0/deed.${String(langue || '').startsWith('ar') ? 'ar' : String(langue || '').startsWith('en') ? 'en' : 'fr'}`;
 
 export interface ChampsTamazight {
   variante_amazighe?: Variante | '' | null;

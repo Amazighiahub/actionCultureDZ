@@ -6,6 +6,7 @@ import { directionTexte, paragrapheNettoye } from '@/utils/directionTexte';
 import { classesBlocTexte, formeDuBloc, ressembleAPoeme } from '@/utils/poeme';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useRetour } from '@/hooks/useRetour';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -203,6 +204,8 @@ const ReadingProgress: React.FC = () => {
 const ArticleViewPage: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
+  // Retour sûr : rubrique « /oeuvres » si la personne est arrivée directement sur cette page
+  const retour = useRetour('/oeuvres');
   const inviterConnexion = useInviterConnexion();
 
   // États
@@ -678,7 +681,7 @@ const ArticleViewPage: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => retour()}
               className="gap-2">
               
               <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />{t("articles_articleviewpage.retour")}

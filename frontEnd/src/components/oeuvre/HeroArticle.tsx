@@ -1,8 +1,9 @@
 // components/oeuvre/HeroArticle.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRetour } from '@/hooks/useRetour';
 import { useTranslation } from 'react-i18next';
+import { libelleRole } from '@/utils/rolesOeuvre';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +48,8 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
   onToggleFavorite,
   shareButton,
 }) => {
-  const navigate = useNavigate();
+  // Retour sûr : rubrique « /oeuvres » si la personne est arrivée directement sur cette page
+  const retour = useRetour('/oeuvres');
   const { t } = useTranslation();
   const { formatNumber } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
@@ -71,7 +73,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
           variant="ghost"
           size="icon"
           className="mb-6 hover:bg-slate-100 dark:hover:bg-slate-800"
-          onClick={() => navigate(-1)}
+          onClick={() => retour()}
           aria-label={t('common.back', 'Retour')}
         >
           <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
@@ -133,8 +135,8 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
                   <span className="font-medium text-foreground">
                     {gt(contributeur.prenom)} {gt(contributeur.nom)}
                   </span>
-                  {contributeur.role && contributeur.role !== 'Contributeur' && (
-                    <span className="text-sm text-muted-foreground ms-1">({contributeur.role})</span>
+                  {contributeur.role && !['contributeur', 'autre'].includes(String(contributeur.role).toLowerCase()) && (
+                    <span className="text-sm text-muted-foreground ms-1">({libelleRole(t, String(contributeur.role))})</span>
                   )}
                   {index < mainContributors.length - 1 && <span className="mx-1">,</span>}
                 </span>

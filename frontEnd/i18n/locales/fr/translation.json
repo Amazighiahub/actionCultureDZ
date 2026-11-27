@@ -6255,7 +6255,9 @@
     "arrangeur": "Arrangeur",
     "parolier": "Parolier",
     "redacteur": "Rédacteur",
-    "designer": "Designer"
+    "designer": "Designer",
+    "contributeur": "Contributeur",
+    "autre": "Autres contributions"
   },
   "musique": {
     "format": "Format",

@@ -199,7 +199,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
         prenom?: string;
         photo_url?: string;
         TypeUser?: { id_type_user: number; nom_type: string };
-        OeuvreUser?: { role_dans_oeuvre?: string; personnage?: string; role_principal?: boolean; description_role?: string };
+        OeuvreUser?: { role_dans_oeuvre?: string; personnage?: string; role_principal?: boolean; description_role?: string; TypeUser?: { id_type_user: number; nom_type: string } };
       };
       (oeuvre.Users as UserWithJunction[]).forEach((user) => {
         result.push({
@@ -208,8 +208,10 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
           prenom: user.prenom,
           photo_url: user.photo_url,
           role: user.OeuvreUser?.role_dans_oeuvre,
-          type_user: user.TypeUser?.nom_type,
-          TypeUser: user.TypeUser,
+          // Métier dans l'œuvre : porté par la jointure (OeuvreUser.TypeUser), pas par le compte (2026-11-27 :
+          // la fiche affichait « Contributeur » en français pour tous les membres inscrits)
+          type_user: user.OeuvreUser?.TypeUser?.nom_type || user.TypeUser?.nom_type,
+          TypeUser: user.OeuvreUser?.TypeUser || user.TypeUser,
           personnage: user.OeuvreUser?.personnage,
           role_principal: user.OeuvreUser?.role_principal,
           description_role: user.OeuvreUser?.description_role,

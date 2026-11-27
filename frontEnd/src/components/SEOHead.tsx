@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { evenementPath } from '@/utils/slug';
+import { evenementPath, oeuvrePath, lieuPath, artisanatPath, servicePath } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
 const SITE_NAME = 'Tala DZ';
@@ -159,23 +159,37 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 // JSON-LD BUILDERS
 // ============================================
 
+/**
+ * Auteur crédité d'une œuvre, même règle que la fiche et le serveur (services/oeuvre/auteursOeuvres) :
+ * contributeur au rôle principal (membre puis intervenant), sinon le premier. 2026-11-27 : Google
+ * voyait les livres sans auteur (Users vide), datés de leur saisie et toujours « en français ».
+ */
+function auteurCredite(oeuvre: any): { prenom?: unknown; nom?: unknown } | undefined {
+  const membres = (oeuvre.Users || []) as any[];
+  const intervenants = ((oeuvre.OeuvreIntervenants || []) as any[]).filter((i) => i?.Intervenant);
+  const choix = membres.find((u) => u?.OeuvreUser?.role_principal) || intervenants.find((i) => i.role_principal)
+    || membres[0] || intervenants[0];
+  return choix?.Intervenant || choix;
+}
+
 export function buildOeuvreJsonLd(oeuvre: any): Record<string, any> {
+  const auteur = auteurCredite(oeuvre);
+  const nomAuteur = auteur ? `${text(auteur.prenom)} ${text(auteur.nom)}`.trim() : '';
   return {
     '@context': 'https://schema.org',
     '@type': oeuvre.Livre ? 'Book' : 'CreativeWork',
     name: text(oeuvre.titre),
     description: text(oeuvre.description).substring(0, 300),
-    author: oeuvre.Users?.[0]
-      ? { '@type': 'Person', name: `${text(oeuvre.Users[0].prenom)} ${text(oeuvre.Users[0].nom)}`.trim() }
-      : undefined,
-    datePublished: oeuvre.date_publication || oeuvre.date_creation,
+    author: nomAuteur ? { '@type': 'Person', name: nomAuteur } : undefined,
+    // Année de l'œuvre (et non la date de sa saisie sur Tala DZ)
+    datePublished: oeuvre.annee_creation ? String(oeuvre.annee_creation) : undefined,
     genre: text(oeuvre.Genre?.nom) || text(oeuvre.TypeOeuvre?.nom_type),
-    inLanguage: oeuvre.langue || 'fr',
+    inLanguage: oeuvre.Langue?.code || undefined,
     image: absoluteImage(oeuvre.image_url || oeuvre.couverture_url),
-    url: `${SITE_URL}/oeuvres/${oeuvre.id_oeuvre}`,
+    url: `${SITE_URL}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, oeuvre.id_type_oeuvre)}`,
     ...(oeuvre.Livre ? {
       isbn: oeuvre.Livre.isbn || undefined,
-      numberOfPages: oeuvre.Livre.nombre_pages || undefined,
+      numberOfPages: oeuvre.Livre.nb_pages || undefined,
     } : {}),
   };
 }
@@ -241,15 +255,16 @@ export function buildPatrimoineJsonLd(site: any, { description }: { description?
       addressRegion: wilaya,
       addressCountry: 'DZ',
     },
-    containedInPlace: parent ? { '@type': 'TouristAttraction', name: text(parent.nom), url: `${SITE_URL}/patrimoine/${parent.id_lieu}` } : undefined,
-    containsPlace: (site.SousLieux || []).slice(0, 50).map((p: any) => ({ '@type': 'TouristAttraction', name: text(p.nom), url: `${SITE_URL}/patrimoine/${p.id_lieu}` })),
+    containedInPlace: parent ? { '@type': 'TouristAttraction', name: text(parent.nom), url: `${SITE_URL}${lieuPath(parent.id_lieu, parent.nom)}` } : undefined,
+    containsPlace: (site.SousLieux || []).slice(0, 50).map((p: any) => ({ '@type': 'TouristAttraction', name: text(p.nom), url: `${SITE_URL}${lieuPath(p.id_lieu, p.nom)}` })),
     geo: site.latitude && site.longitude ? {
       '@type': 'GeoCoordinates',
       latitude: site.latitude,
       longitude: site.longitude,
     } : undefined,
     image: absoluteImage(image),
-    url: `${SITE_URL}/patrimoine/${site.id_lieu}`,
+    // Même adresse que le canonical (avec le nom)
+    url: `${SITE_URL}${lieuPath(site.id_lieu, site.nom)}`,
   };
 }
 
@@ -261,7 +276,7 @@ export function buildArtisanatJsonLd(artisanat: any): Record<string, any> {
     description: text(artisanat.description).substring(0, 300),
     category: text(artisanat.type_artisanat) || text(artisanat.categorie),
     image: absoluteImage(artisanat.images?.[0] || artisanat.image_url),
-    url: `${SITE_URL}/artisanat/${artisanat.id_artisanat}`,
+    url: `${SITE_URL}${artisanatPath(artisanat.id_artisanat, artisanat.nom || artisanat.titre || artisanat.Oeuvre?.titre)}`,
     manufacturer: artisanat.artisan ? {
       '@type': 'Person',
       name: `${text(artisanat.artisan.prenom)} ${text(artisanat.artisan.nom)}`.trim(),
@@ -287,7 +302,7 @@ export function buildArticleJsonLd(oeuvre: any): Record<string, any> {
     datePublished: oeuvre.date_publication || oeuvre.date_creation,
     dateModified: oeuvre.date_modification || oeuvre.date_publication || oeuvre.date_creation,
     image: absoluteImage(oeuvre.image_url || oeuvre.couverture_url),
-    url: `${SITE_URL}/articles/${oeuvre.id_oeuvre}`,
+    url: `${SITE_URL}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4)}`,
     publisher: {
       '@type': 'Organization',
       name: SITE_NAME,
@@ -296,7 +311,7 @@ export function buildArticleJsonLd(oeuvre: any): Record<string, any> {
     inLanguage: oeuvre.langue || 'fr',
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${SITE_URL}/articles/${oeuvre.id_oeuvre}`,
+      '@id': `${SITE_URL}${oeuvrePath(oeuvre.id_oeuvre, oeuvre.titre, 4)}`,
     },
   };
 }
@@ -328,7 +343,7 @@ export function buildServiceJsonLd(service: {
     name: service.nom,
     description: service.description ? service.description.substring(0, 300) : undefined,
     image: images.length ? images.slice(0, 5) : undefined,
-    url: `${SITE_URL}/services/${service.id}`,
+    url: `${SITE_URL}${servicePath(service.id, service.nom)}`,
     telephone: service.telephone || undefined,
     sameAs: service.site_web || undefined,
     address: service.adresse || service.ville ? {

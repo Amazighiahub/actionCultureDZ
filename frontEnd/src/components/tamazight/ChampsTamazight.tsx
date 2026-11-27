@@ -8,7 +8,7 @@ import React, { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { VARIANTES, LIBELLE_VARIANTE, LICENCE_URL, type ChampsTamazight as Champs } from '@/utils/tamazight';
+import { VARIANTES, LIBELLE_VARIANTE, licenceUrl, type ChampsTamazight as Champs } from '@/utils/tamazight';
 
 interface Props {
   valeurs: Champs;
@@ -16,7 +16,7 @@ interface Props {
 }
 
 const ChampsTamazight: React.FC<Props> = ({ valeurs, onChange }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const id = useId();
   const changer = (c: Partial<Champs>) => {
     const suite = { ...valeurs, ...c };
@@ -47,7 +47,7 @@ const ChampsTamazight: React.FC<Props> = ({ valeurs, onChange }) => {
           onCheckedChange={(v) => changer({ partage_ouvert: v === true })} className="mt-0.5" />
         <Label htmlFor={`${id}-partage`} className="text-sm font-normal leading-snug">
           {t('tamazight.form.partage', 'J’accepte que ce texte et ses enregistrements soient partagés librement pour la recherche sur le tamazight (traduction, reconnaissance de la parole), sous licence CC BY-SA 4.0 : mon nom et Tala DZ seront cités.')}{' '}
-          <a href={LICENCE_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline">{t('tamazight.form.licence', 'Lire la licence')}</a>
+          <a href={licenceUrl(i18n.language)} target="_blank" rel="noopener noreferrer" className="text-primary underline">{t('tamazight.form.licence', 'Lire la licence')}</a>
         </Label>
       </div>
       {valeurs.partage_ouvert && (

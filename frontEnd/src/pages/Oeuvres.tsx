@@ -151,12 +151,13 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
           </Link>
         </h3>
 
-        {/* Saiseur (le champ « auteur » au premier niveau n'est jamais envoyé par le serveur) */}
-        {oeuvre.Saiseur && (
-          <p className="text-sm text-muted-foreground mb-2">
-            {`${getLocalizedText(oeuvre.Saiseur.prenom)} ${getLocalizedText(oeuvre.Saiseur.nom)}`}
-          </p>
-        )}
+        {/* Auteur crédité (contributeur principal), sinon la personne qui a saisi la fiche (2026-11-27 :
+            la carte montrait toujours la personne qui avait saisi l'œuvre, pas son auteur) */}
+        {(() => {
+          const personne = (oeuvre as { auteur?: { prenom?: unknown; nom?: unknown } }).auteur || oeuvre.Saiseur;
+          const nom = personne ? [getLocalizedText(personne.prenom as never), getLocalizedText(personne.nom as never)].filter(Boolean).join(' ') : '';
+          return nom ? <p className="text-sm text-muted-foreground mb-2" dir="auto">{nom}</p> : null;
+        })()}
 
         {/* Tags */}
         <div className="flex items-center gap-2 flex-wrap">

@@ -4,6 +4,7 @@
  */
 import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useRetour } from '@/hooks/useRetour';
 import { evenementPath, idFromSlug } from '@/utils/slug';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useTranslation } from 'react-i18next';
@@ -53,6 +54,8 @@ const SectionFallback: React.FC = () => (
 const EventDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // Retour sûr : rubrique « /evenements » si la personne est arrivée directement sur cette page
+  const retour = useRetour('/evenements');
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('info');
 
@@ -175,7 +178,7 @@ const EventDetailsPage: React.FC = () => {
       <main>
         {/* Bouton retour */}
         <div className="container pt-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+          <Button variant="ghost" onClick={() => retour()} className="mb-4">
             <ChevronLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>

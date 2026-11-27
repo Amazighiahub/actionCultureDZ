@@ -28,11 +28,13 @@ import { httpClient } from '@/services/httpClient';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { idFromSlug, professionnelPath, evenementPath, oeuvrePath, artisanatPath } from '@/utils/slug';
+import { idFromSlug, professionnelPath, evenementPath, oeuvrePath, artisanatPath, servicePath } from '@/utils/slug';
 import { ListeLiens, type LienExterne } from '@/components/shared/LiensExternes';
 import { ItemCard, ItemGrid as Grid, firstImage, type MediaItem } from '@/components/shared/ItemCard';
 
 import { initiales } from '@/utils/getLocalizedText';
+import { libelleRole } from '@/utils/rolesOeuvre';
+import { nomWilaya } from '@/components/gastronomie/PlatCard';
 // Types d'œuvres « articles » (page /articles/:id)
 const ARTICLE_TYPES = [4, 5];
 
@@ -58,7 +60,7 @@ interface Portfolio {
     email?: string | null;
     telephone?: string | null;
     TypeUser?: { nom_type: string };
-    Commune?: { nom: string; Daira?: { nom: string; Wilaya?: { nom: string } } } | null;
+    Commune?: { nom: string; commune_name_ascii?: string; Daira?: { nom: string; Wilaya?: { id_wilaya: number; nom: string; wilaya_name_ascii?: string } } } | null;
   };
   oeuvres: PortfolioOeuvre[];
   artisanats: Array<{ id_artisanat: number; prix?: number | null; Oeuvre: { titre: string; Media?: MediaItem[] } }>;
@@ -113,10 +115,12 @@ const ProfessionnelPortfolio: React.FC = () => {
 
   const works = (data?.oeuvres || []).filter((o) => !ARTICLE_TYPES.includes(o.id_type_oeuvre));
   const articles = (data?.oeuvres || []).filter((o) => ARTICLE_TYPES.includes(o.id_type_oeuvre));
-  const location = [profil?.Commune?.nom, profil?.Commune?.Daira?.Wilaya?.nom].filter(Boolean).join(', ');
-  const typeLabel = profil?.TypeUser?.nom_type
-    ? t(`auth.sectors.${profil.TypeUser.nom_type}`, profil.TypeUser.nom_type)
-    : '';
+  // Commune et wilaya dans l'écriture de la page (avant : toujours en arabe)
+  const enArabe = i18n.language.startsWith('ar');
+  const commune = profil?.Commune ? ((enArabe && profil.Commune.nom) || profil.Commune.commune_name_ascii || profil.Commune.nom) : '';
+  const location = [commune, nomWilaya(profil?.Commune?.Daira?.Wilaya, i18n.language)].filter(Boolean).join(', ');
+  // Métier traduit (avant : code brut « auteur », « prefacier » hors des métiers d'inscription)
+  const typeLabel = profil?.TypeUser?.nom_type ? libelleRole(t, profil.TypeUser.nom_type) : '';
 
   if (id == null || isError) {
     return (
@@ -185,7 +189,7 @@ const ProfessionnelPortfolio: React.FC = () => {
       />
       <Header />
 
-      <main id="main" className="container pt-24 pb-16 space-y-10">
+      <main id="main" className="container py-8 space-y-10">
         {/* En-tête du profil */}
         <section className="flex flex-col gap-6 md:flex-row md:items-start">
           <Avatar className="h-28 w-28 shrink-0 text-2xl">
@@ -313,13 +317,16 @@ const ProfessionnelPortfolio: React.FC = () => {
               <TabsContent value="services" className="mt-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   {data.services.map((s) => (
-                    <Card key={s.id}>
+                    // Fiche du service cliquable, comme les œuvres et les événements (2026-11-27)
+                    <Link key={s.id} to={servicePath(s.id, s.nom)} className="block rounded-lg transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Card className="h-full">
                       <CardContent className="p-4 space-y-1">
                         <h3 className="font-semibold">{s.nom}</h3>
                         {s.type_service && <Badge variant="secondary" className="text-xs">{t(`service.types.${s.type_service}`, s.type_service)}</Badge>}
                         {s.description && <p className="text-sm text-muted-foreground line-clamp-3">{s.description}</p>}
                       </CardContent>
                     </Card>
+                    </Link>
                   ))}
                 </div>
               </TabsContent>

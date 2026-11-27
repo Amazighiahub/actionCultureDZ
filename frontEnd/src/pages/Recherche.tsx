@@ -23,6 +23,7 @@ import { useWilayas } from '@/hooks/useGeographie';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 import { nomWilaya } from '@/components/gastronomie/PlatCard';
 import { evenementPath, lieuPath, oeuvrePath, organisationPath, professionnelPath, sansAccent, wilayaPath } from '@/utils/slug';
+import { localeDeLangue } from '@/utils/localeLangue';
 
 const PAR_GROUPE = 6;
 
@@ -121,7 +122,8 @@ export default function Recherche() {
       resultats: liste(evenements.data).map((e) => ({
         cle: `e${e.id_evenement}`, titre: getLocalizedText(e.nom_evenement, lang), lien: evenementPath(Number(e.id_evenement), e.nom_evenement),
         image: (e.image_url as string) || null,
-        detail: e.date_debut ? new Date(String(e.date_debut)).toLocaleDateString(lang, { dateStyle: 'medium' }) : undefined,
+        // Chiffres latins et heure d'Algérie, comme partout ailleurs (avant : « ٢٧ » en arabe)
+        detail: e.date_debut ? new Date(String(e.date_debut)).toLocaleDateString(localeDeLangue(lang), { dateStyle: 'medium', timeZone: 'Africa/Algiers' }) : undefined,
       })),
     },
     {

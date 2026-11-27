@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import CommanderOeuvre from '@/components/commande/CommanderOeuvre';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useRetour } from '@/hooks/useRetour';
 import { useTranslation } from 'react-i18next';
 import { useShare } from '@/hooks/useShare';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -115,6 +116,8 @@ const ArtisanatDetail: React.FC = () => {
   const { formatPrice, formatPriceRange, formatNumber } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // Retour sûr : rubrique « /artisanat » si la personne est arrivée directement sur cette page
+  const retour = useRetour('/artisanat');
   const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
 
@@ -259,7 +262,7 @@ const ArtisanatDetail: React.FC = () => {
           {/* Retour */}
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={() => retour()}
             className="mb-6"
           >
             <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />

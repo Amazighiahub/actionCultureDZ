@@ -5,6 +5,7 @@
 import React, { Suspense, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { libelleRole } from '@/utils/rolesOeuvre';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -250,7 +251,8 @@ const OeuvreDetailPage: React.FC = () => {
           prenom: auteur.prenom || '',
           photo_url: auteur.photo_url,
           type: auteur.id_user ? 'user' : 'intervenant',
-          role: auteur.type_user || auteur.TypeUser?.nom_type || auteur.role || 'Contributeur',
+          // Rôle traduit dans la langue de la page (avant : code brut « redacteur » ou « Contributeur » en dur)
+          role: libelleRole(t, String(auteur.type_user || auteur.TypeUser?.nom_type || auteur.role || 'contributeur')),
           TypeUser: auteur.TypeUser,
           role_principal: auteur.role_principal,
           personnage: auteur.personnage,

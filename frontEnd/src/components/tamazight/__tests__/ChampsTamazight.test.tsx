@@ -8,7 +8,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import ChampsTamazight from '../ChampsTamazight';
 import { champsTamazightEnvoi, type ChampsTamazight as Champs } from '@/utils/tamazight';
 
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k }) }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k, i18n: { language: 'fr' } }) }));
 
 function Essai({ suivi }: { suivi: (v: Champs) => void }) {
   const [v, setV] = useState<Champs>({});

@@ -190,7 +190,7 @@ const OeuvreContributeurs: React.FC<OeuvreContributeursProps> = ({ contributeurs
 
   // Grouper par type de rôle
   const groupedByRole = contributeurs.reduce((acc, c) => {
-    const role = getLocalizedText(c.TypeUser?.nom_type) || getLocalizedText(c.type_user) || c.role || 'Autre';
+    const role = libelleRole(t, String(getLocalizedText(c.TypeUser?.nom_type) || getLocalizedText(c.type_user) || c.role || 'autre'));
     if (!acc[role]) {
       acc[role] = [];
     }

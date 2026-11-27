@@ -14,12 +14,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { httpClient } from '@/services/httpClient';
 import { API_BASE_URL } from '@/config/env';
-import { LICENCE_URL } from '@/utils/tamazight';
+import { licenceUrl } from '@/utils/tamazight';
 
 interface Jeu { textes: unknown[]; voix: unknown[]; genere_le: string }
 
 const DonneesOuvertes: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [jeu, setJeu] = useState<Jeu | null>(null);
   const base = String(API_BASE_URL).replace(/\/$/, '');
 
@@ -79,7 +79,7 @@ const DonneesOuvertes: React.FC = () => {
             <h2 className="flex items-center gap-2 text-xl font-semibold"><Scale className="h-5 w-5 text-primary" aria-hidden="true" />{t('donneesOuvertes.licenceTitre', 'Licence et citation')}</h2>
             <p className="text-sm">{t('donneesOuvertes.licence', 'Licence Creative Commons CC BY-SA 4.0 : vous pouvez copier, modifier et réutiliser ces données, y compris pour entraîner des outils, à condition de citer les auteurs et Tala DZ, et de partager vos données dérivées sous la même licence.')}</p>
             <p className="rounded-md bg-muted p-3 font-mono text-sm">{t('donneesOuvertes.citation', 'Tala DZ (taladz.com) et les auteurs cités, « Textes et voix en tamazight », licence CC BY-SA 4.0.')}</p>
-            <a href={LICENCE_URL} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">{t('donneesOuvertes.lireLicence', 'Lire la licence CC BY-SA 4.0')}</a>
+            <a href={licenceUrl(i18n.language)} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">{t('donneesOuvertes.lireLicence', 'Lire la licence CC BY-SA 4.0')}</a>
           </CardContent>
         </Card>
 

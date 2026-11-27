@@ -58,6 +58,23 @@ describe('GET /api/og/:type/:id', () => {
     expect(res.text).toContain('noindex');
   });
 
+  // Anti-retour 2026-11-27 : l'auteur est la personne créditée, pas celle qui a saisi la fiche ;
+  // une œuvre au titre arabe est déclarée en arabe (lang, dir, inLanguage)
+  it('œuvre : auteur crédité (intervenant principal) et langue arabe', async () => {
+    const m = models({
+      Oeuvre: { findByPk: jest.fn(async () => ({ id_oeuvre: 4, statut: 'publie', id_type_oeuvre: 6, titre: 'فوق ظل الدنيا', description: 'نص', saisi_par: 75, Media: [] })) },
+      OeuvreUser: { findAll: jest.fn(async () => []) },
+      OeuvreIntervenant: { findAll: jest.fn(async () => [{ id_oeuvre: 4, role_principal: true, Intervenant: { id_intervenant: 9, nom: 'Yacine', prenom: 'Kateb' } }]) },
+      Intervenant: {}, User: { findOne: jest.fn(async () => ({ id_user: 75, nom: 'Saisie', prenom: 'Personne', profil_public: true })) },
+    });
+    const res = await request(app(m)).get('/api/og/oeuvres/4');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('"author":{"@type":"Person","name":"Kateb Yacine"}');
+    expect(res.text).not.toContain('Personne Saisie');
+    expect(res.text).toContain('<html lang="ar" dir="rtl">');
+    expect(res.text).toContain('"inLanguage":"ar"');
+  });
+
   it('refuse un type inconnu', async () => {
     const res = await request(app(models())).get('/api/og/utilisateurs/1');
     expect(res.status).toBe(404);

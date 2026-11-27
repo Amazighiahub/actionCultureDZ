@@ -7,6 +7,7 @@ const { Op } = require('sequelize');
 const { texteLisible } = require('../helpers/i18n');
 const { oeuvrePath, lieuPath } = require('../utils/slug');
 const { nomComplet } = require('../utils/texte');
+const { auteursDesOeuvres } = require('./oeuvre/auteursOeuvres');
 const { erreurHttp } = require('../utils/erreurHttp');
 const {
   LANGUES_TAMAZIGHT, ECRITURE_PAR_LANGUE, VARIANTES, LICENCE_OUVERTE, LICENCE_LIBELLE, LICENCE_URL
@@ -51,16 +52,19 @@ async function liste(models, { variante, type, page = 1, limit = 24 } = {}) {
     order: [['date_creation', 'DESC']],
     limit: lim, offset: (pg - 1) * lim, distinct: true,
   });
+  // Auteur crédité (contributeur principal), pas la personne qui a saisi la fiche (2026-11-27)
+  const auteurs = await auteursDesOeuvres(models, rows.map((o) => o.id_oeuvre)).catch(() => new Map());
   return {
     oeuvres: rows.map((o) => {
       const d = o.get({ plain: true });
+      const credite = auteurs.get(Number(d.id_oeuvre));
       const medias = d.Media || d.Medias || [];
       const images = medias.filter((m) => m.type_media === 'image' && m.url)
         .sort((a, b) => Number(!!b.is_Principale) - Number(!!a.is_Principale) || (a.ordre ?? 99) - (b.ordre ?? 99));
       return {
         id_oeuvre: d.id_oeuvre, titre: d.titre, description: d.description, id_type_oeuvre: d.id_type_oeuvre,
         type: d.TypeOeuvre?.nom_type || null, ecriture: ECRITURE_PAR_LANGUE[d.id_langue], variante: d.variante_amazighe,
-        image_url: images[0]?.url || null, auteur: d.Saiseur ? { id_user: d.Saiseur.id_user, nom: d.Saiseur.nom, prenom: d.Saiseur.prenom } : null,
+        image_url: images[0]?.url || null, auteur: credite || (d.Saiseur ? { id_user: d.Saiseur.id_user, nom: d.Saiseur.nom, prenom: d.Saiseur.prenom } : null),
         audio: medias.some((m) => m.type_media === 'audio'), donnees_ouvertes: !!(d.partage_ouvert && d.donnees_ouvertes_valide),
         date_creation: d.date_creation,
       };
@@ -171,8 +175,10 @@ async function donneesOuvertes(models) {
     order: [['id_oeuvre', 'ASC']],
   });
   const textes = [];
+  const auteurs = await auteursDesOeuvres(models, oeuvres.map((o) => o.id_oeuvre)).catch(() => new Map());
   for (const o of oeuvres) {
     const d = o.get({ plain: true });
+    const credite = auteurs.get(Number(d.id_oeuvre));
     const { texte, traductions } = await texteArticle(models, d.id_oeuvre);
     const titre = objet(d.titre);
     textes.push({
@@ -183,7 +189,8 @@ async function donneesOuvertes(models) {
       traductions,
       ecriture: ECRITURE_PAR_LANGUE[d.id_langue],
       variante: d.variante_amazighe || null,
-      auteur: d.Saiseur ? nomComplet(d.Saiseur) : null,
+      // Licence CC BY-SA : citer l'auteur crédité, pas la personne qui a saisi la fiche
+      auteur: credite ? nomComplet(credite) : (d.Saiseur ? nomComplet(d.Saiseur) : null),
       ecrit_par_humain: true,
       audios: (d.Media || d.Medias || []).map((m) => ({ url: absolue(m.url), duree: m.duree || null, credit: m.credit || null })),
       licence: LICENCE_LIBELLE,

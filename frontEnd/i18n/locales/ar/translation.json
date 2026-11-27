@@ -6533,7 +6533,9 @@
     "arrangeur": "موزّع موسيقي",
     "parolier": "كاتب الكلمات",
     "redacteur": "محرّر",
-    "designer": "مصمّم"
+    "designer": "مصمّم",
+    "contributeur": "مساهم",
+    "autre": "مساهمات أخرى"
   },
   "musique": {
     "format": "الصيغة",

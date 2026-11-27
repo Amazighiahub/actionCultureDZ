@@ -6,6 +6,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useRetour } from '@/hooks/useRetour';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText, Landmark, Loader2, Pencil, User } from 'lucide-react';
 import Header from '@/components/Header';
@@ -31,6 +32,8 @@ const PagePersonnalite: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const idIntervenant = idFromSlug(id) ?? NaN;
   const navigate = useNavigate();
+  // Retour sûr : rubrique « /patrimoine » si la personne est arrivée directement sur cette page
+  const retour = useRetour('/patrimoine');
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { formatDate } = useFormatDate();
@@ -120,7 +123,7 @@ const PagePersonnalite: React.FC = () => {
         {/* Portrait */}
         <section className="border-b bg-gradient-to-b from-primary/5 to-background">
           <div className="container max-w-5xl px-4 py-10 md:py-14">
-            <Button variant="ghost" size="sm" className="mb-6 -ms-2" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="sm" className="mb-6 -ms-2" onClick={() => retour()}>
               <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" aria-hidden="true" />{t('common.back', 'Retour')}
             </Button>
             <div className="grid gap-8 md:grid-cols-[220px_1fr] items-center">

@@ -170,7 +170,7 @@ const Professionnels: React.FC = () => {
       />
       <Header />
 
-      <main id="main" className="container pt-24 pb-16">
+      <main id="main" className="container py-8">
         <h1 className="text-3xl font-bold tracking-tight font-serif mb-6 text-center">{t('professionnels.titre', 'Professionnels de la culture')}</h1>
 
         <Card className="mb-8">

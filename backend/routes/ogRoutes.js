@@ -15,6 +15,7 @@ const { escapeHtml } = require('../utils/sanitize');
 const { professionnelPath, evenementPath, organisationPath, oeuvrePath, artisanatPath, lieuPath, personnalitePath, servicePath, wilayaPath } = require('../utils/slug');
 const { descriptionAutoLieu, TYPE_PHRASE_FR, de: descriptionDe } = require('../services/patrimoine/descriptionLieu');
 const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
+const { auteursDesOeuvres } = require('../services/oeuvre/auteursOeuvres');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
 const SITE_NAME = 'Tala DZ';
@@ -88,15 +89,22 @@ const sectionFaits = (faits) => {
   return lignes.length ? `<ul>\n${lignes.map(([k, v]) => `<li>${escapeHtml(k)} : ${escapeHtml(v)}</li>`).join('\n')}\n</ul>` : '';
 };
 
+/**
+ * Langue d'un texte pour les robots : arabe s'il contient des lettres arabes, sinon français
+ * (2026-11-27 : toutes les pages étaient déclarées en français, même « آفاق الواحة »)
+ */
+const langueDuTexte = (texte) => (/[؀-ۿ]/.test(String(texte || '')) ? 'ar' : 'fr');
+
 /** Page HTML lue par les robots qui n'exécutent pas le JavaScript */
 function buildOgHtml({ title, description, image, affiche = false, path, type = 'article', notFound = false, corps = '', jsonLd = null }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+  const langue = langueDuTexte(title);
   const desc = description || DEFAULT_DESCRIPTION;
   const url = `${SITE_URL}${path}`;
   const img = socialImage(image, { affiche });
   const e = escapeHtml;
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${langue}"${langue === 'ar' ? ' dir="rtl"' : ''}>
 <head>
 <meta charset="utf-8">
 <title>${e(fullTitle)}</title>
@@ -110,7 +118,7 @@ ${notFound ? '<meta name="robots" content="noindex">' : `<link rel="canonical" h
 <meta property="og:image" content="${e(img)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:locale" content="fr_DZ">
+<meta property="og:locale" content="${langue}_DZ">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${e(fullTitle)}">
 <meta name="twitter:description" content="${e(desc)}">
@@ -212,16 +220,24 @@ const initOgRoutes = (models) => {
         include: [{ model: models.Media, attributes: ['url', 'type_media', 'is_Principale', 'ordre'], required: false }],
       });
       if (!o || o.statut !== 'publie') return null;
-      const auteur = await auteurPublic(o.saisi_par);
+      // Auteur crédité (contributeur principal), pas la personne qui a saisi la fiche (2026-11-27 :
+      // Nedjma était attribué à la personne qui l'avait saisi, et non à Kateb Yacine)
+      const credite = (await sansEchec(() => auteursDesOeuvres(models, [o.id_oeuvre]), new Map())).get(Number(o.id_oeuvre));
+      const auteur = credite?.id_user ? await auteurPublic(credite.id_user) : credite ? null : await auteurPublic(o.saisi_par);
+      const nomAuteur = auteur ? nomComplet(auteur) : credite ? nomComplet(credite) : '';
       const livre = o.id_type_oeuvre === 1 && models.Livre?.findOne
         ? await sansEchec(() => models.Livre.findOne({ where: { id_oeuvre: o.id_oeuvre }, attributes: ['isbn', 'nb_pages', 'extrait'] }), null) : null;
       const image = firstImage(o.Media);
       const urlAuteur = auteur ? `${SITE_URL}${professionnelPath(auteur.id_user, auteur.prenom, auteur.nom)}` : undefined;
+      const langueOeuvre = langueDuTexte(text(o.titre));
       const corps = [
         sectionFaits([['Année', o.annee_creation ? String(o.annee_creation) : ''], ['ISBN', livre?.isbn], ['Pages', livre?.nb_pages ? String(livre.nb_pages) : '']]),
         paragraphes(o.description),
         livre?.extrait ? `<section>\n<h2>Extrait</h2>\n${paragraphes(summary(livre.extrait, 1500))}\n</section>` : '',
-        auteur ? sectionLiens('Auteur', [{ url: urlAuteur, texte: nomComplet(auteur) }]) : '',
+        nomAuteur ? (urlAuteur ? sectionLiens('Auteur', [{ url: urlAuteur, texte: nomAuteur }]) : `<section>
+<h2>Auteur</h2>
+<p>${escapeHtml(nomAuteur)}</p>
+</section>`) : '',
       ].join('\n');
       const article = [4, 5].includes(o.id_type_oeuvre);
       return {
@@ -241,8 +257,8 @@ const initOgRoutes = (models) => {
           dateCreated: o.annee_creation ? String(o.annee_creation) : undefined,
           isbn: livre?.isbn || undefined,
           numberOfPages: livre?.nb_pages || undefined,
-          author: auteur ? { '@type': 'Person', name: nomComplet(auteur), url: urlAuteur } : undefined,
-          inLanguage: 'fr',
+          author: nomAuteur ? { '@type': 'Person', name: nomAuteur, url: urlAuteur } : undefined,
+          inLanguage: langueOeuvre,
         },
       };
     },

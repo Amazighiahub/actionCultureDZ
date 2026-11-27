@@ -44,7 +44,7 @@ class OeuvreController extends BaseController {
       res.json({
         success: true,
         data: {
-          oeuvres: this._translateOeuvres(result.data, req.lang),
+          oeuvres: await this._avecAuteurs(this._translateOeuvres(result.data, req.lang), req.lang),
           pagination: result.pagination
         }
       });
@@ -96,7 +96,7 @@ class OeuvreController extends BaseController {
       res.json({
         success: true,
         data: {
-          oeuvres: this._translateOeuvres(result.data, req.lang),
+          oeuvres: await this._avecAuteurs(this._translateOeuvres(result.data, req.lang), req.lang),
           pagination: result.pagination
         }
       });
@@ -118,7 +118,7 @@ class OeuvreController extends BaseController {
       res.json({
         success: true,
         data: {
-          oeuvres: this._translateOeuvres(oeuvres, req.lang)
+          oeuvres: await this._avecAuteurs(this._translateOeuvres(oeuvres, req.lang), req.lang)
         }
       });
 
@@ -139,7 +139,7 @@ class OeuvreController extends BaseController {
       res.json({
         success: true,
         data: {
-          oeuvres: this._translateOeuvres(oeuvres, req.lang)
+          oeuvres: await this._avecAuteurs(this._translateOeuvres(oeuvres, req.lang), req.lang)
         }
       });
 
@@ -279,7 +279,7 @@ class OeuvreController extends BaseController {
       res.json({
         success: true,
         data: {
-          oeuvres: this._translateOeuvres(result.data, req.lang),
+          oeuvres: await this._avecAuteurs(this._translateOeuvres(result.data, req.lang), req.lang),
           pagination: result.pagination
         }
       });
@@ -642,6 +642,23 @@ class OeuvreController extends BaseController {
    * Traduit un tableau d'œuvres
    * @private
    */
+  /**
+   * Auteur affiché de chaque carte (contributeur principal, pas la personne qui a saisi la fiche).
+   * Une panne laisse les cartes telles quelles (le site retombe alors sur Saiseur).
+   * @private
+   */
+  async _avecAuteurs(oeuvres, lang = 'fr') {
+    if (!Array.isArray(oeuvres) || !oeuvres.length) return oeuvres;
+    try {
+      const { translateDeep } = require('../helpers/i18n');
+      const auteurs = await this.oeuvreService.auteursDesOeuvres(oeuvres.map((o) => o?.id_oeuvre));
+      if (!(auteurs instanceof Map)) return oeuvres;
+      return oeuvres.map((o) => (auteurs.has(Number(o?.id_oeuvre)) ? { ...o, auteur: translateDeep(auteurs.get(Number(o.id_oeuvre)), lang) } : o));
+    } catch {
+      return oeuvres;
+    }
+  }
+
   _translateOeuvres(oeuvreDTOs, lang = 'fr', format = 'card') {
     if (!Array.isArray(oeuvreDTOs)) return [];
     return oeuvreDTOs.map(dto => this._translateOeuvre(dto, lang, format));

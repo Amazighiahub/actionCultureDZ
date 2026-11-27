@@ -187,12 +187,13 @@ class UserRepository extends BaseRepository {
         ...(Commune ? [{
           model: Commune,
           as: 'Commune',
-          attributes: ['id_commune', 'nom'],
+          // Noms latins aussi : en français et en anglais, la commune s'affichait en arabe (2026-11-27)
+          attributes: ['id_commune', 'nom', 'commune_name_ascii'],
           required: false,
           include: Daira ? [{
             model: Daira,
             attributes: ['id_daira', 'nom'],
-            include: Wilaya ? [{ model: Wilaya, attributes: ['id_wilaya', 'nom'] }] : []
+            include: Wilaya ? [{ model: Wilaya, attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'] }] : []
           }] : []
         }] : [])
       ]
