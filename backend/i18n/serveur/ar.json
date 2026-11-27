@@ -655,5 +655,7 @@
   "Œuvre introuvable": "العمل غير موجود",
   "Ce texte n’est pas écrit en tamazight": "هذا النص ليس مكتوبًا بالأمازيغية",
   "Ce texte n’est pas publié": "هذا النص غير منشور",
-  "L’auteur n’a pas accepté le partage ouvert": "لم يوافق المؤلف على المشاركة المفتوحة"
+  "L’auteur n’a pas accepté le partage ouvert": "لم يوافق المؤلف على المشاركة المفتوحة",
+  "Cet événement n'existe pas ou n'est pas public": "هذه الفعالية غير موجودة أو غير منشورة",
+  "Trop d'étapes (100 au plus)": "عدد المراحل كبير (100 على الأكثر)"
 }

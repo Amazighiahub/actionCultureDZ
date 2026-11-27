@@ -52,7 +52,9 @@ class IntervenantRepository extends BaseRepository {
       // Nom : colonne nom_tri indexée en français ; sinon texte dans la langue, sans accents ni
       // majuscules (avant : JSON brut, ordre binaire faux) (audit V11 BDD-15)
       orderClause = (await triParNom(this.model, { lang, champ: order, colonne: order === 'nom' ? 'nom_tri' : null, direction: safeDirection })).order;
-    } else if (order && (!this.model.rawAttributes || this.model.rawAttributes[order])) {
+    } else if (['id_intervenant', 'date_creation', 'date_modification', 'organisation', 'pays_origine'].includes(order)) {
+      // Colonnes publiques seulement : trier par e-mail, téléphone ou date de naissance (cachés)
+      // permettait d'en deviner l'ordre (sécurité, analyse V12 S9)
       orderClause = [[order, safeDirection]];
     } else {
       // Colonne inconnue (avant : erreur 500) : tri par nom

@@ -3074,7 +3074,8 @@
           "nom": "Name",
           "type": "Type"
         },
-        "creation": "New place suggested by a member (open it to check)"
+        "creation": "New place suggested by a member (open it to check)",
+        "bloc": "New paragraph for the site's page"
       },
       "geo": {
         "titre": "Import places (GeoAlgeria)",

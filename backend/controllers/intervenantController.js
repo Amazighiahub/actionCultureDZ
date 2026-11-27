@@ -34,8 +34,9 @@ class IntervenantController extends BaseController {
       const { page, limit } = this._paginate(req);
       const { search, organisation, pays_origine, actif, verifie, order, direction } = req.query;
 
+      // Fiches désactivées : réservées à l'administration (liste publique : actives seulement)
       const result = await this.intervenantService.getIntervenants({
-        page, limit, search, organisation, pays_origine, actif, verifie, order, direction, lang
+        page, limit, search, organisation, pays_origine, actif: req.user?.isAdmin ? actif : undefined, verifie, order, direction, lang
       });
 
       res.json({

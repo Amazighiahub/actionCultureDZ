@@ -655,5 +655,7 @@
   "Œuvre introuvable": "Work not found",
   "Ce texte n’est pas écrit en tamazight": "This text is not written in Tamazight",
   "Ce texte n’est pas publié": "This text is not published",
-  "L’auteur n’a pas accepté le partage ouvert": "The author has not agreed to open sharing"
+  "L’auteur n’a pas accepté le partage ouvert": "The author has not agreed to open sharing",
+  "Cet événement n'existe pas ou n'est pas public": "This event does not exist or is not public",
+  "Trop d'étapes (100 au plus)": "Too many stops (100 at most)"
 }

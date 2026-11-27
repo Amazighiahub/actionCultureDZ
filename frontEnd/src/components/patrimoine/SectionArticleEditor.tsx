@@ -63,6 +63,7 @@ import {
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 
 import { useConfirmation } from '@/hooks/useConfirmation';
+import { estProposition, toastProposition } from '@/utils/propositionPatrimoine';
 // ============================================================================
 // Props
 // ============================================================================
@@ -267,6 +268,13 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
     const res = await patrimoineArticlesService.createBlock(lieuId, payload);
     setSaving(false);
 
+    // Paragraphe proposé sur le site d'un autre : relu par l'équipe avant publication (analyse V12 S2)
+    if (res.success && estProposition(res)) {
+      resetForm();
+      oublier();
+      toast(toastProposition(t));
+      return;
+    }
     if (res.success && res.data) {
       setBlocks((prev) => [...prev, res.data as PatrimoineBlock]);
       resetForm();

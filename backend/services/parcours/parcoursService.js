@@ -8,6 +8,7 @@ const ParcoursDTO = require('../../dto/parcours/parcoursDTO');
 const { translate, lireMultiLang } = require('../../helpers/i18n');
 const { haversineKm, boundingBox, rayonParTransport, vitesseParTransport } = require('../utils/geoUtils');
 const { memeUtilisateur } = require('../../utils/droits');
+const { EVENEMENT_PUBLIC } = require('../../constants/statuts');
 
 class ParcoursService extends BaseService {
   constructor(parcoursRepository, options = {}) {
@@ -128,6 +129,10 @@ class ParcoursService extends BaseService {
       id_createur: userId
     };
 
+    // Étapes publiques seulement : un parcours public dévoilait sinon des lieux et des événements non publiés
+    // (brouillons, en attente) en donnant leur numéro (sécurité, analyse V12 S1, 2026-11-27)
+    if (Array.isArray(data.etapes)) await this._verifierEtapes(data.etapes);
+
     const parcours = await this.repository.withTransaction(async (transaction) => {
       const created = await this.repository.create(entityData, { transaction });
 
@@ -200,6 +205,27 @@ class ParcoursService extends BaseService {
   // ============================================================================
 
   /**
+   * Chaque étape : un lieu publié, et un événement public s'il y en a un. Refus sinon, sans dire si
+   * le contenu existe (même message pour un brouillon et un numéro inconnu). Analyse V12 S1, 2026-11-27.
+   */
+  async _verifierEtapes(etapes) {
+    const { Lieu, Evenement } = this.repository.models || {};
+    if (etapes.length > 100) throw this._validationError('Trop d\'étapes (100 au plus)');
+    for (const etape of etapes) {
+      const idLieu = etape?.id_lieu || etape?.lieuId;
+      if (Lieu && idLieu) {
+        const lieu = await Lieu.findByPk(idLieu, { attributes: ['id_lieu', 'statut'] });
+        if (!lieu || lieu.statut !== 'publie') throw this._validationError('Ce lieu n\'existe pas ou n\'est pas publié');
+      }
+      const idEvenement = etape?.id_evenement || etape?.evenementId;
+      if (Evenement && idEvenement) {
+        const evenement = await Evenement.findByPk(idEvenement, { attributes: ['id_evenement', 'statut'] });
+        if (!evenement || !EVENEMENT_PUBLIC.includes(evenement.statut)) throw this._validationError('Cet événement n\'existe pas ou n\'est pas public');
+      }
+    }
+  }
+
+  /**
    * Ajouter une étape
    */
   async addEtape(parcoursId, etapeData, userId) {
@@ -213,12 +239,8 @@ class ParcoursService extends BaseService {
     if (!etapeData.id_lieu && !etapeData.lieuId) {
       throw this._validationError('L\'ID du lieu est requis');
     }
-    // Lieu publié seulement (avant : un id inexistant finissait en erreur 500 de la base)
-    const Lieu = this.repository.models?.Lieu;
-    if (Lieu) {
-      const lieu = await Lieu.findByPk(etapeData.id_lieu || etapeData.lieuId, { attributes: ['id_lieu', 'statut'] });
-      if (!lieu || lieu.statut !== 'publie') throw this._validationError('Ce lieu n\'existe pas ou n\'est pas publié');
-    }
+    // Lieu publié et événement public seulement (avant : l'événement n'était pas contrôlé)
+    await this._verifierEtapes([etapeData]);
 
     await this.repository.addEtape(parcoursId, etapeData);
     const updated = await this.repository.findWithFullDetails(parcoursId);

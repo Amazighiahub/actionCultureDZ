@@ -6,6 +6,7 @@
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
 const { whereServicesVisibles } = require('../utils/servicesVisibles');
+const { EVENEMENT_PUBLIC } = require('../constants/statuts');
 
 class ParcoursRepository extends BaseRepository {
   constructor(models) {
@@ -49,6 +50,8 @@ class ParcoursRepository extends BaseRepository {
         const lieuInc = {
           model: this.models.Lieu,
           attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typePatrimoine'],
+          // Seulement publiés : une étape vers un lieu non publié ne dévoile rien (analyse V12 S1)
+          where: { statut: 'publie' },
           required: false
         };
         if (this.models.LieuMedia) {
@@ -62,6 +65,7 @@ class ParcoursRepository extends BaseRepository {
         etapeInclude.include.push({
           model: this.models.Evenement,
           attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin'],
+          where: { statut: EVENEMENT_PUBLIC },
           required: false
         });
       }

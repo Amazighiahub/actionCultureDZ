@@ -487,6 +487,14 @@ class NotificationService {
         return { success: true, notified: 0 };
       }
 
+      // Un avis par événement et par genre de changement toutes les 3 heures : modifier le programme en boucle
+      // renvoyait e-mails et WhatsApp à chaque fois, épuisait le quota d'envoi commun et harcelait les inscrits
+      // (sécurité, analyse V12 S3, 2026-11-27). Le programme à jour reste visible sur la page de l'événement.
+      if (!(await premiereFoisPendant(`programme:${programme.id_evenement}:${typeModification}`, 3 * 3600))) {
+        logger.info(`📧 Avis de programme regroupé (déjà envoyé il y a moins de 3 h) : événement ${programme.id_evenement}`);
+        return { success: true, notified: 0, regroupe: true };
+      }
+
       // Envoyer les emails
       const results = await this.emailService.notifierModificationProgramme(
         participants,

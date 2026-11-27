@@ -519,6 +519,12 @@ class ProgrammeService extends BaseService {
         return { error: 'forbidden' };
       }
     }
+    // Fiche liée à un compte : seule cette personne (ou l'équipe) la dit « confirmée » ; un organisateur
+    // pouvait afficher une vraie personne comme intervenante confirmée sans son accord (analyse V12 S4).
+    // Fiche sans compte : l'organisateur confirme (accord reçu par téléphone, par e-mail…).
+    if (statut === 'confirme' && intervenant?.id_user != null && !isIntervenant && isAdmin !== true) {
+      return { error: 'forbidden' };
+    }
 
     const pi = await this.models.ProgrammeIntervenant.findOne({
       where: { id_programme: programmeId, id_intervenant: targetUserId }
@@ -593,9 +599,20 @@ class ProgrammeService extends BaseService {
         ordre_intervention: interv.ordre_intervention || interv.ordre || index + 1,
         duree_intervention: interv.duree_intervention || interv.duree || null,
         biographie_courte: interv.biographie_courte || ancien.biographie_courte || null,
-        statut_confirmation: interv.statut_confirmation || ancien.statut_confirmation || 'en_attente'
+        // « Confirmé » d'office seulement pour une fiche sans compte ; sinon la personne confirme elle-même
+        statut_confirmation: await this._statutInitialIntervenant(intervenantId, interv.statut_confirmation, ancien.statut_confirmation, transaction)
       }, { transaction });
     }
+  }
+
+  /** Statut d'un intervenant relié par l'organisateur (analyse V12 S4) */
+  async _statutInitialIntervenant(intervenantId, demande, ancien, transaction) {
+    if (ancien) return ancien;
+    if (demande !== 'confirme') return ['en_attente', 'decline', 'annule'].includes(demande) ? demande : 'en_attente';
+    const fiche = this.models.Intervenant
+      ? await this.models.Intervenant.findByPk(intervenantId, { attributes: ['id_user'], transaction })
+      : null;
+    return fiche?.id_user != null ? 'en_attente' : 'confirme';
   }
 
   async _resolveIntervenant(interv, transaction) {

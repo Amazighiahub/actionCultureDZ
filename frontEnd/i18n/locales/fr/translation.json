@@ -3306,7 +3306,8 @@
           "nom": "Nom",
           "type": "Type"
         },
-        "creation": "Nouveau lieu proposé par un membre (ouvrez-le pour le vérifier)"
+        "creation": "Nouveau lieu proposé par un membre (ouvrez-le pour le vérifier)",
+        "bloc": "Nouveau paragraphe pour la fiche du site"
       },
       "geo": {
         "titre": "Importer des lieux (GeoAlgeria)",

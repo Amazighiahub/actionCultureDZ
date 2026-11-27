@@ -20,7 +20,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface Proposition {
-  id: number; id_lieu: number; lieu_nom: unknown; action: 'detail' | 'personnalite' | 'element_ajout' | 'element_modif' | 'creation';
+  id: number; id_lieu: number; lieu_nom: unknown; action: 'detail' | 'personnalite' | 'element_ajout' | 'element_modif' | 'creation' | 'bloc';
   donnees: { corps?: Record<string, unknown>; genre?: 'monument' | 'vestige'; idElement?: number; intervenant?: string | null };
   date_creation: string; id_user: number; prenom: unknown; nom: unknown; email: string;
 }
@@ -67,6 +67,7 @@ const PropositionsPatrimoine: React.FC = () => {
       case 'detail': return t('admin.patrimoine.propositions.detail', 'Textes du site');
       case 'personnalite': return t('admin.patrimoine.propositions.personnalite', 'Personnalité à rattacher');
       case 'element_ajout': return t('admin.patrimoine.propositions.ajout', 'Nouveau {{genre}}', { genre });
+      case 'bloc': return t('admin.patrimoine.propositions.bloc', 'Nouveau paragraphe pour la fiche du site');
       default: return t('admin.patrimoine.propositions.modif', 'Modification d’un {{genre}}', { genre });
     }
   };
@@ -76,6 +77,10 @@ const PropositionsPatrimoine: React.FC = () => {
     const corps = p.donnees.corps || {};
     if (p.action === 'personnalite') {
       return [p.donnees.intervenant, corps.role_sur_site, corps.periode, corps.contexte].filter(Boolean).map(String);
+    }
+    // Paragraphe : rubrique puis texte, sans les balises
+    if (p.action === 'bloc') {
+      return [corps.section_patrimoine, String(corps.contenu || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()].filter(Boolean).map(String);
     }
     return Object.entries(corps)
       .filter(([cle]) => cle !== 'id_intervenant')

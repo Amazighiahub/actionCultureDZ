@@ -325,6 +325,9 @@ class PatrimoineController extends BaseController {
   }
 
   async ajouterBloc(req, res) {
+    // Même relecture que les autres enrichissements : un professionnel qui n'est pas le créateur du site
+    // propose son paragraphe (avant : publié directement sur n'importe quel site ; analyse V12 S2)
+    if (await this._proposer(req, res, 'bloc')) return;
     const bloc = await elements.ajouterBloc(this._models, parseInt(req.params.id, 10), req.body, req.user?.id_user);
     await this._signalerContribution(req, 'a ajouté un paragraphe à');
     res.status(201).json({ success: true, data: bloc });

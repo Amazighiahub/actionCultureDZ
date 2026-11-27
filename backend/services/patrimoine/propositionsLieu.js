@@ -16,13 +16,14 @@ const logger = require('../../utils/logger');
 const elements = require('./elementsLieu');
 const { erreurHttp: erreur } = require('../../utils/erreurHttp');
 
-const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif', 'creation'];
+const ACTIONS = ['detail', 'personnalite', 'element_ajout', 'element_modif', 'creation', 'bloc'];
 const LIBELLES = {
   creation: 'un nouveau lieu :',
   detail: 'une modification des textes de',
   personnalite: 'une personnalité pour',
   element_ajout: 'un ajout à',
-  element_modif: 'une modification de'
+  element_modif: 'une modification de',
+  bloc: 'un paragraphe pour'
 };
 
 const lireJson = (v) => {
@@ -130,6 +131,9 @@ async function appliquer(models, notificationService, p) {
       return;
     case 'element_modif':
       await elements.modifierElement(models, genre, p.id_lieu, Number(idElement), corps);
+      return;
+    case 'bloc':
+      await elements.ajouterBloc(models, p.id_lieu, corps, p.id_user);
       return;
     case 'creation':
       // Lieu ajouté par un membre : publié, avec les points de visite préparés en même temps que lui
