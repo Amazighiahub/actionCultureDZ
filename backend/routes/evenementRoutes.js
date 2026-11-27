@@ -86,9 +86,10 @@ const initEvenementRoutes = (models, authMiddleware) => {
     [
       body('nom_evenement').optional().isLength({ min: 2, max: 1500 }).withMessage(msg('validation.nomEvenementInvalide')),
       body('nom').optional().isLength({ min: 2, max: 500 }).withMessage(msg('validation.invalidName')),
-      body('date_debut').optional().isISO8601().withMessage(msg('validation.invalidStartDate')),
-      body('date_fin').optional().isISO8601().withMessage(msg('validation.invalidEndDate')),
-      body('capacite_max').optional().isInt({ min: 1 }).withMessage(msg('validation.capaciteInvalide')),
+      // Champ laissé vide (brouillon) : accepté ; avant, '' était refusé comme « date invalide » (2026-11-27)
+      body('date_debut').optional({ values: 'falsy' }).isISO8601().withMessage(msg('validation.invalidStartDate')),
+      body('date_fin').optional({ values: 'falsy' }).isISO8601().withMessage(msg('validation.invalidEndDate')),
+      body('capacite_max').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage(msg('validation.capaciteInvalide')),
       body('tarif').optional().isFloat({ min: 0 }).withMessage(msg('validation.tarifPositif')),
     ],
     handleValidationErrors,

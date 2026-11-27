@@ -1,7 +1,8 @@
 import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { avecEffacements } from '@/utils/effacementLangues';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -69,6 +70,7 @@ const INITIAL_FORM: FormData = {
 
 const AjouterArtisanat: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const textesCharges = useRef<Record<string, unknown>>({});
   const navigate = useNavigate();
   const naviguerPlusTard = useNavigationDifferee();
   const { toast } = useToast();
@@ -148,7 +150,7 @@ const AjouterArtisanat: React.FC = () => {
           return undefined;
         };
         const oeuvre = response.data.Oeuvre;
-        setFormData({
+        const charge = {
           // Nom et description sont portés par l'œuvre parente
           nom: toObj(art.nom ?? oeuvre?.titre),
           description: toObj(art.description ?? oeuvre?.description),
@@ -163,7 +165,10 @@ const AjouterArtisanat: React.FC = () => {
             if (typeof t === 'object' && t !== null && 'nom' in t) return (t as { nom: string }).nom;
             return typeof t === 'string' ? t : '';
           }).filter(Boolean),
-        });
+        };
+        setFormData(charge);
+        // Textes chargés : une langue vidée ensuite est effacée à l’enregistrement (2026-11-27)
+        textesCharges.current = charge;
         setArtisanatCharge(true);
         // Artisanat loaded for editing
       } else {
@@ -293,15 +298,16 @@ const AjouterArtisanat: React.FC = () => {
       setLoading(true);
 
       const createData: CreateArtisanatData = {
-        nom: JSON.stringify(formData.nom),
-        description: JSON.stringify(formData.description),
+        nom: JSON.stringify(isEditMode ? avecEffacements(formData.nom, textesCharges.current.nom) : formData.nom),
+        description: JSON.stringify(isEditMode ? avecEffacements(formData.description, textesCharges.current.description) : formData.description),
         id_materiau: formData.id_materiau,
         id_technique: formData.id_technique,
-        prix_min: formData.prix_min,
-        prix_max: formData.prix_max,
-        delai_fabrication: formData.delai_fabrication,
+        // Vidé : null efface la valeur en modification (avant : champ omis, l'ancienne valeur restait)
+        prix_min: formData.prix_min ?? null,
+        prix_max: formData.prix_max ?? null,
+        delai_fabrication: formData.delai_fabrication ?? null,
         sur_commande: formData.sur_commande,
-        en_stock: formData.en_stock,
+        en_stock: formData.en_stock ?? null,
         tags: formData.tags
       };
 

@@ -13,11 +13,12 @@ const ROLES_PARTENAIRES = ['co_organisateur', 'partenaire', 'sponsor', 'media_pa
 type RolePartenaire = typeof ROLES_PARTENAIRES[number];
 type Partenaire = { id_organisation: number; role: RolePartenaire; nom?: unknown };
 const PARTENAIRES_MAX = 10;
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
+import { avecEffacements } from '@/utils/effacementLangues';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,6 +92,7 @@ const AjouterEvenement = () => {
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
   const { t, i18n } = useTranslation();
+  const textesCharges = useRef<Record<string, unknown>>({});
   const { rtlClasses, direction } = useRTL();
   const { toast } = useToast();
   // Administration : peut rattacher un événement à n'importe quelle organisation (le serveur l'autorise déjà)
@@ -221,7 +223,7 @@ const AjouterEvenement = () => {
       const response = await evenementService.getForEdit(editId);
       if (response.success && response.data) {
         const evt: EvenementEdition = response.data;
-        setFormData({
+        const charge = {
           nom: textesFormulaire(evt.nom_evenement),
           description: textesFormulaire(evt.description),
           idTypeEvenement: evt.id_type_evenement?.toString() || '',
@@ -239,7 +241,10 @@ const AjouterEvenement = () => {
           tags: (Array.isArray(evt.Tags) ? evt.Tags as Array<{ nom?: Record<string, string> | string }> : [])
             .map(tg => (typeof tg.nom === 'string' ? tg.nom : (tg.nom?.[i18n.language] || tg.nom?.fr || Object.values(tg.nom || {}).find(Boolean) || '')))
             .filter(Boolean),
-        });
+        };
+        setFormData(charge);
+        // Textes chargés : une langue vidée ensuite est effacée à l’enregistrement (2026-11-27)
+        textesCharges.current = charge;
         if (evt.image_url) setAffichePreview(evt.image_url);
         // Image de partage : montrée même sans affiche
         if (typeof evt.image_partage_url === 'string' && evt.image_partage_url) setImagePartagePreview(evt.image_partage_url);
@@ -565,8 +570,8 @@ const AjouterEvenement = () => {
 
     setIsSubmitting(true);
     const fd = new FormData();
-    fd.append('nom_evenement', JSON.stringify(formData.nom));
-    fd.append('description', JSON.stringify(formData.description));
+    fd.append('nom_evenement', JSON.stringify(isEditMode ? avecEffacements(formData.nom, textesCharges.current.nom) : formData.nom));
+    fd.append('description', JSON.stringify(isEditMode ? avecEffacements(formData.description, textesCharges.current.description) : formData.description));
     fd.append('id_type_evenement', formData.idTypeEvenement);
     fd.append('date_debut', formData.dateDebut);
     if (formData.dateFin || isEditMode) fd.append('date_fin', formData.dateFin || '');

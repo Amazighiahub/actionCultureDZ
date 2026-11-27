@@ -1003,8 +1003,7 @@ export function useAjouterOeuvre() {
           setSubmitError(t('ajouteroeuvre.verifyUpdate', 'Le serveur a tardé à répondre : la modification a peut-être été enregistrée. Ouvrez votre tableau de bord pour vérifier avant de recommencer.'));
         } else if (delaiDepasse) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
-          const titreStr = formData.titre.fr || '';
-          const checkResult = await oeuvreService.checkRecentOeuvre(titreStr);
+          const checkResult = await oeuvreService.checkRecentOeuvre(formData.titre);
           if (checkResult.success && checkResult.data) {
             if (medias.length > 0) {
               setUploadProgress(t('ajouteroeuvre.uploadingMedia', 'Upload des médias...'));

@@ -147,7 +147,9 @@
     "dejaAjoute": "Cet article est déjà dans la liste.",
     "deQuoi": "De quoi parle cet article ?",
     "deQuoiAide": "Choisissez l’œuvre ou l’événement concerné : l’article s’affichera aussi sur sa page. Il apparaît toujours sur votre portfolio.",
-    "portfolioGeneral": "De moi en général (seulement mon portfolio)"
+    "portfolioGeneral": "De moi en général (seulement mon portfolio)",
+    "confirmerRetrait": "Retirer ce lien ?",
+    "confirmerRetraitAide": "Il disparaîtra de votre portfolio et de la page concernée."
   },
   "auth": {
     "reprise": {
@@ -5019,7 +5021,8 @@
         "endTime": "Heure de fin",
         "selectTime": "Sélectionner l'heure",
         "place": "Lieu",
-        "selectPlace": "Sélectionner un lieu"
+        "selectPlace": "Sélectionner un lieu",
+        "sansHeure": "Sans heure"
       },
       "participants": {
         "title": "Intervenants",

@@ -114,7 +114,7 @@ class OeuvreService {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Titre multilingue : on cherche son texte (avant, l'objet partait tel quel dans la recherche)
-        const checkResult = await this.checkRecentOeuvre(getLocalizedText(data.titre));
+        const checkResult = await this.checkRecentOeuvre(data.titre);
         if (checkResult.success && checkResult.data) {
           return {
             success: true,
@@ -193,29 +193,29 @@ class OeuvreService {
   /**
    * Vérifier si une œuvre récente existe
    */
-  async checkRecentOeuvre(titre: string): Promise<ApiResponse<Oeuvre>> {
+  /**
+   * Œuvre créée à l'instant malgré un délai dépassé : cherchée parmi SES œuvres (brouillons et en attente
+   * compris), par son titre dans n'importe quelle langue. Avant : la liste publique, qui ne contient
+   * jamais une œuvre qui vient d'être créée, et le titre français seul (2026-11-27).
+   */
+  async checkRecentOeuvre(titre: unknown): Promise<ApiResponse<Oeuvre>> {
     try {
-      const response = await httpClient.get<OeuvreListResponse>('/oeuvres', {
-        search: titre,
-        sort: 'recent',
-        limit: 1
-      });
-
-      const oeuvre = response.success ? response.data?.oeuvres?.[0] : undefined;
-      if (oeuvre) {
-
-        const createdAt = new Date(oeuvre.date_creation);
-        const now = new Date();
-        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-        if (diffMinutes <= 5) {
-          return {
-            success: true,
-            data: oeuvre
-          };
-        }
-      }
-
+      const titres = new Set(
+        (typeof titre === 'object' && titre ? Object.values(titre as Record<string, unknown>) : [titre])
+          .filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+          .map((v) => v.trim().toLowerCase())
+      );
+      // _r : passe le cache de la liste (3 minutes), qui ne contiendrait pas encore l'œuvre
+      const response = await httpClient.get<{ oeuvres?: Oeuvre[] }>('/professionnel/oeuvres', { limit: 5, _r: Date.now() });
+      const oeuvres = response.success ? response.data?.oeuvres || [] : [];
+      const memeTitre = (o: Oeuvre) => {
+        const t = (o as { titre?: unknown }).titre;
+        const valeurs = typeof t === 'object' && t ? Object.values(t as Record<string, unknown>) : [t];
+        return valeurs.some((v) => typeof v === 'string' && titres.has(v.trim().toLowerCase()));
+      };
+      const oeuvre = oeuvres.find((o) => memeTitre(o)
+        && (Date.now() - new Date((o as { date_creation?: string }).date_creation || 0).getTime()) <= 5 * 60 * 1000);
+      if (oeuvre) return { success: true, data: oeuvre };
       return {
         success: false,
         error: i18next.t('oeuvreService.erreurs.aucuneRecente', 'Aucune œuvre récente trouvée')

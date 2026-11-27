@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import ArticleEditor from '@/components/article/ArticleEditor';
 import { oeuvreService } from '@/services/oeuvre.service';
+import { avecEffacements } from '@/utils/effacementLangues';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
 import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
@@ -138,8 +139,11 @@ const EditArticle: React.FC = () => {
 
       // 2. Titre, description, catégories, mots-clés, champs de l'article, intervenants ajoutés
       const miseAJour = await oeuvreService.updateOeuvre(oeuvreId, {
-        titre: formData.titre,
-        description: formData.description,
+        // Langue vidée par l'auteur : effacée (avant : gardée, l'ancien texte revenait)
+        titre: avecEffacements(formData.titre, initialData?.titre),
+        description: avecEffacements(formData.description, initialData?.description),
+        // Langue choisie dans « Le texte de l'article est écrit en » (avant : jamais enregistrée en modification)
+        id_langue: formData.id_langue,
         categories: formData.categories,
         tags: formData.tags,
         details_specifiques: detailsArticle(formData, { modification: true }),

@@ -3,9 +3,10 @@
  * Permet d'ajouter un service commercial autour d'un lieu patrimonial
  */
 import { messageErreurServeur, useDefilerVersErreur } from '@/utils/erreurServeur';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { avecEffacements } from '@/utils/effacementLangues';
 import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@/services/httpClient';
 import { uploadService } from '@/services/upload.service';
@@ -126,6 +127,7 @@ const INITIAL_FORM: ServiceFormData = {
 
 const AjouterServicePro: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const textesCharges = useRef<Record<string, unknown>>({});
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -168,7 +170,7 @@ const AjouterServicePro: React.FC = () => {
       const result = await httpClient.get<Record<string, unknown>>(`/services/${editId}`, { i18n: 'all' });
       if (result.success && result.data) {
         const svc = result.data;
-        setFormData({
+        const charge = {
           nom: toML(svc.nom),
           description: toML(svc.description),
           type_service: texteRecu(svc.type_service),
@@ -188,7 +190,10 @@ const AjouterServicePro: React.FC = () => {
           capacite: svc.capacite ? String(svc.capacite) : '',
           lien_reservation: typeof svc.lien_reservation === 'string' ? svc.lien_reservation : '',
           whatsapp: typeof svc.whatsapp === 'string' ? svc.whatsapp : '',
-        });
+        };
+        setFormData(charge);
+        // Textes chargés : une langue vidée ensuite est effacée à l’enregistrement (2026-11-27)
+        textesCharges.current = charge;
         if (typeof svc.photo_url === 'string' && svc.photo_url) setPhotoPreview(svc.photo_url);
         setServiceCharge(true);
         // Service loaded for editing
@@ -372,13 +377,13 @@ const AjouterServicePro: React.FC = () => {
 
       // Préparer les données du service
       const serviceData = {
-        nom: formData.nom,
-        description: formData.description,
+        nom: editId ? avecEffacements(formData.nom, textesCharges.current.nom) : formData.nom,
+        description: editId ? avecEffacements(formData.description, textesCharges.current.description) : formData.description,
         type_service: formData.type_service,
         id_lieu: formData.id_lieu,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        adresse: formData.adresse,
+        adresse: editId ? avecEffacements(formData.adresse, textesCharges.current.adresse) : formData.adresse,
         telephone: formData.telephone,
         email: formData.email,
         site_web: formData.site_web,

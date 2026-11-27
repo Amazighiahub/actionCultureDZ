@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { ListeLiens, NOMS_LIEN, typeDepuisUrl, type LienExterne } from '@/components/shared/LiensExternes';
+import { useConfirmation } from '@/hooks/useConfirmation';
 
 interface MesContenus {
   oeuvres: Array<{ id_oeuvre: number; titre: string }>;
@@ -39,6 +40,7 @@ export default function GestionLiens() {
   const [idModifie, setIdModifie] = useState<number | null>(null);
   const [form, setForm] = useState(VIDE);
   const [erreur, setErreur] = useState('');
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const [searchParams, setSearchParams] = useSearchParams();
   const lier = searchParams.get('lier');
 
@@ -135,6 +137,8 @@ export default function GestionLiens() {
   };
 
   const retirer = async (l: LienExterne) => {
+    // Confirmation : un clic retirait le lien aussitôt, sans retour possible (2026-11-27)
+    if (!(await confirmer({ titre: t('liens.confirmerRetrait', 'Retirer ce lien ?'), description: t('liens.confirmerRetraitAide', 'Il disparaîtra de votre portfolio et de la page concernée.'), libelleConfirmer: t('liens.retirer', 'Retirer'), variante: 'destructive' }))) return;
     try {
       const res = await httpClient.delete(`/liens/${l.id_lien}`);
       if (!res.success) throw res;
@@ -234,6 +238,7 @@ export default function GestionLiens() {
           ))}
         </ul>
       )}
+      {fenetreConfirmation}
     </section>
   );
 }

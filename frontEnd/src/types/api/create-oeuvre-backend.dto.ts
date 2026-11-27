@@ -19,8 +19,8 @@ export interface CreateOeuvreBackendDTO {
   description: string | TranslatableValue;
   id_type_oeuvre: number;
   id_langue: number;
-  annee_creation?: number;
-  prix?: number;
+  annee_creation?: number | null;
+  prix?: number | null;
   id_oeuvre_originale?: number;
   je_suis_auteur?: boolean;
   categories: number[];
@@ -73,8 +73,9 @@ export function mapToBackendDTO(
     description: formData.description,
     id_type_oeuvre: formData.id_type_oeuvre,
     id_langue: formData.id_langue,
-    annee_creation: formData.annee_creation,
-    prix: formData.prix,
+    // Vidé : null efface la valeur en modification (avant : champ omis, l'ancienne valeur revenait)
+    annee_creation: formData.annee_creation ?? null,
+    prix: formData.prix ?? null,
     id_oeuvre_originale: formData.id_oeuvre_originale || undefined,
     je_suis_auteur: formData.je_suis_auteur,
     categories: formData.categories,

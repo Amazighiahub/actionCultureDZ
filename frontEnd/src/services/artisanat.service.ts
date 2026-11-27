@@ -77,11 +77,12 @@ interface CreateArtisanatData {
   description: string;
   id_materiau: number;
   id_technique: number;
-  prix_min?: number;
-  prix_max?: number;
-  delai_fabrication?: number;
+  /** null : valeur vidée, effacée en modification */
+  prix_min?: number | null;
+  prix_max?: number | null;
+  delai_fabrication?: number | null;
   sur_commande?: boolean;
-  en_stock?: number;
+  en_stock?: number | null;
   tags?: string[];
 }
 

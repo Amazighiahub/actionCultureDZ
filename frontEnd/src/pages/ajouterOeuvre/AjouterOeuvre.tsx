@@ -323,7 +323,7 @@ const AjouterOeuvre: React.FC = () => {
                           {![4, 5].includes(Number(formData.id_type_oeuvre)) && <div className="space-y-2">
                             <Label htmlFor="prix" className="text-base">{t("ajouteroeuvre.prix")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                             <Input id="prix" type="number" min="0" step="0.01" placeholder={t("ajouteroeuvre.placeholder_1200")}
-                              value={formData.prix || ''} aria-invalid={!!fieldErrors.prix || undefined}
+                              value={formData.prix ?? ''} aria-invalid={!!fieldErrors.prix || undefined}
                               aria-describedby={fieldErrors.prix ? 'prix-error' : undefined}
                               onChange={(e) => {
                                 const val = e.target.value;

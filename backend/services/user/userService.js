@@ -22,7 +22,7 @@ const { invalidateUserSession } = require('../../utils/sessionCache');
 const { deleteUserFiles } = require('./userFileCleanup');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { evenementsAVenir, annulerEvenementsAVenir } = require('./evenementsAVenir');
-const { texteLisible } = require('../../helpers/i18n');
+const { texteLisible, mergeTranslations, lireMultiLang } = require('../../helpers/i18n');
 const { ROLES, estRole, aRoleAdministration, aRoleEquipe } = require('../../constants/roles');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 90;
@@ -448,6 +448,7 @@ class UserService extends BaseService {
     // 6. Préparer les données
     const entityData = updateDTO.toEntity();
     await this._resolveCommune(entityData, existingUser);
+    this._fusionnerTraductions(entityData, existingUser);
 
     // 7. Mettre à jour
     const updatedUser = await this.repository.update(id, entityData);
@@ -455,6 +456,26 @@ class UserService extends BaseService {
     this.logger.info(`Utilisateur mis à jour: ${id}`);
 
     return UserDTO.fromEntity(updatedUser);
+  }
+
+  /**
+   * Nom, prénom et biographie multilingues : la langue envoyée remplace la sienne, les autres traductions
+   * sont gardées (2026-11-27 : « Mon profil » n'envoie qu'un texte, rangé en français, et effaçait les
+   * traductions arabe et anglaise à chaque enregistrement, même pour changer le téléphone).
+   * Biographie entièrement vidée : effacée (sinon impossible de la retirer).
+   */
+  _fusionnerTraductions(entityData, existingUser) {
+    for (const champ of ['nom', 'prenom', 'biographie']) {
+      const nouveau = entityData[champ];
+      if (nouveau === undefined || nouveau === null || typeof nouveau !== 'object') continue;
+      const vide = Object.values(nouveau).every((v) => v === undefined || v === null || String(v).trim() === '');
+      if (vide) {
+        if (champ === 'biographie') entityData[champ] = null;
+        continue;
+      }
+      const actuel = lireMultiLang(existingUser?.[champ]);
+      if (actuel && (typeof actuel === 'object' || String(actuel).trim())) entityData[champ] = mergeTranslations(actuel, nouveau);
+    }
   }
 
   /**

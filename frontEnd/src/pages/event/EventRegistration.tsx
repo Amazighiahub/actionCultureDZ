@@ -716,6 +716,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     placeholder={t('event.registration.commentPlaceholder', 'Besoins particuliers, questions...')}
                     value={commentaire}
                     onChange={(e) => setCommentaire(e.target.value)}
+                    // Même limite que le serveur (avant : coupé sans prévenir au-delà)
+                    maxLength={2000}
                   />
                 </div>
                 </>)}

@@ -106,6 +106,9 @@ const typesActivite = [
 ];
 
 // Plages horaires prédéfinies
+/** Choix « Sans heure » (Radix refuse une valeur vide) */
+const AUCUNE_HEURE = '__sans_heure';
+
 const plagesHoraires = [
   { value: '08:00', label: '08:00' },
   { value: '08:30', label: '08:30' },
@@ -387,17 +390,25 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     return !hasErrors;
   };
 
+  // Verrou : deux appuis rapides créaient deux activités identiques (2026-11-27)
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const verrouEnvoi = useRef(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (verrouEnvoi.current) return;
     if (!validateForm()) {
       return;
     }
 
+    verrouEnvoi.current = true;
+    setEnvoiEnCours(true);
     try {
       await onSubmit(formData);
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
+    } finally {
+      verrouEnvoi.current = false;
+      setEnvoiEnCours(false);
     }
   };
 
@@ -587,14 +598,15 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label={t('programme.form.schedule.startTime')} error={errors.heure_debut}>
                   <Select
-                    value={formData.heure_debut}
-                    onValueChange={(value) => value && handleChange('heure_debut', value)}
+                    value={formData.heure_debut || AUCUNE_HEURE}
+                    onValueChange={(value) => value && handleChange('heure_debut', value === AUCUNE_HEURE ? '' : value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t('programme.form.schedule.selectTime')} />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={AUCUNE_HEURE}>{t('programme.form.schedule.sansHeure', 'Sans heure')}</SelectItem>
                       {plagesHoraires.map((plage) => (
                         <SelectItem key={plage.value} value={plage.value}>
                           {plage.label}
@@ -606,14 +618,15 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
                 <FormField label={t('programme.form.schedule.endTime')} error={errors.heure_fin}>
                   <Select
-                    value={formData.heure_fin}
-                    onValueChange={(value) => value && handleChange('heure_fin', value)}
+                    value={formData.heure_fin || AUCUNE_HEURE}
+                    onValueChange={(value) => value && handleChange('heure_fin', value === AUCUNE_HEURE ? '' : value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t('programme.form.schedule.selectTime')} />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={AUCUNE_HEURE}>{t('programme.form.schedule.sansHeure', 'Sans heure')}</SelectItem>
                       {plagesHoraires.map((plage) => (
                         <SelectItem key={plage.value} value={plage.value}>
                           {plage.label}
@@ -885,6 +898,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   onChange={(e) => handleChange('notes_organisateur', e.target.value)}
                   disabled={isReadOnly}
                   rows={4}
+                  maxLength={2000}
                   placeholder={t('programme.form.options.organizerNotesPlaceholder')}
                 />
               </FormField>
@@ -902,8 +916,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
           </Button>
         )}
         {!isReadOnly && (
-          <Button type="submit" disabled={loading || success}>
-            {loading ? (
+          <Button type="submit" disabled={loading || success || envoiEnCours}>
+            {loading || envoiEnCours ? (
               <>
                 <Loader2 className="h-4 w-4 me-2 animate-spin" />
                 {t('programme.form.actions.saving')}

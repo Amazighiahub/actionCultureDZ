@@ -114,7 +114,8 @@ class ProgrammeService extends BaseService {
         id_evenement: evenementId,
         id_lieu,
         ordre: rest.ordre || await this.repository.getNextOrdre(evenementId, { transaction }),
-        statut: 'planifie',
+        // Statut choisi dans le formulaire (avant : toujours « planifié », le choix était ignoré)
+        statut: ['planifie', 'en_cours', 'termine', 'annule', 'reporte'].includes(rest.statut) ? rest.statut : 'planifie',
         ...this._optionsActivite(rest),
         ...this._pickFields(rest, ['date_programme', 'heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
       };

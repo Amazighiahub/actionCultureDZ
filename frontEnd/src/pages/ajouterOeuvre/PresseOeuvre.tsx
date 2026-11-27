@@ -5,7 +5,7 @@
  * - Ajout : les articles sont gardés dans le formulaire, puis enregistrés dès que l'œuvre est créée.
  * - Modification (idOeuvre) : chaque article est enregistré ou retiré aussitôt.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Newspaper, Plus, Trash2 } from 'lucide-react';
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { httpClient } from '@/services/httpClient';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { ListeLiens, typeDepuisUrl, type LienExterne } from '@/components/shared/LiensExternes';
+import { useConfirmation } from '@/hooks/useConfirmation';
 
 /** Article saisi avant la création de l'œuvre */
 export interface ArticlePresse { url: string; titre: string; source: string; date_publication: string }
@@ -41,6 +42,9 @@ export default function PresseOeuvre({ idOeuvre, enAttente, onEnAttenteChange }:
   const [form, setForm] = useState<ArticlePresse>(VIDE);
   const [erreur, setErreur] = useState('');
   const [envoi, setEnvoi] = useState(false);
+  // Verrou immédiat : deux Entrée rapides créaient deux fois le même article (2026-11-27)
+  const verrou = useRef(false);
+  const { confirmer, fenetreConfirmation } = useConfirmation();
 
   const { data: enregistres = [] } = useQuery({
     queryKey: ['mes-liens', i18n.language],
@@ -57,6 +61,7 @@ export default function PresseOeuvre({ idOeuvre, enAttente, onEnAttenteChange }:
   };
 
   const ajouter = async () => {
+    if (verrou.current) return;
     if (!form.url.trim()) { setErreur(t('liens.collerDabord', 'Collez d’abord le lien de l’article (il commence par https://).')); return; }
     if (!typeDepuisUrl(form.url)) { setErreur(t('liens.lienInvalide', 'Lien invalide : il doit commencer par https://')); return; }
     setErreur('');
@@ -66,6 +71,7 @@ export default function PresseOeuvre({ idOeuvre, enAttente, onEnAttenteChange }:
       setForm(VIDE);
       return;
     }
+    verrou.current = true;
     setEnvoi(true);
     try {
       const res = await httpClient.post('/liens', corpsLien(form, idOeuvre));
@@ -75,11 +81,13 @@ export default function PresseOeuvre({ idOeuvre, enAttente, onEnAttenteChange }:
     } catch (e) {
       setErreur(messageErreurServeur(e, t('liens.nonEnregistre', 'Le lien n’a pas été enregistré. Réessayez.')));
     } finally {
+      verrou.current = false;
       setEnvoi(false);
     }
   };
 
   const retirerEnregistre = async (l: LienExterne) => {
+    if (!(await confirmer({ titre: t('liens.confirmerRetrait', 'Retirer ce lien ?'), description: t('liens.confirmerRetraitAide', 'Il disparaîtra de votre portfolio et de la page concernée.'), libelleConfirmer: t('liens.retirer', 'Retirer'), variante: 'destructive' }))) return;
     try {
       const res = await httpClient.delete(`/liens/${l.id_lien}`);
       if (!res.success) throw res;
@@ -157,6 +165,7 @@ export default function PresseOeuvre({ idOeuvre, enAttente, onEnAttenteChange }:
           <p className="text-xs text-muted-foreground">{t('liens.presseOeuvre.enAttente', 'Ces articles seront rattachés à l’œuvre dès son enregistrement.')}</p>
         )}
       </CardContent>
+      {fenetreConfirmation}
     </Card>
   );
 }

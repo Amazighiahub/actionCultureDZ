@@ -39,9 +39,9 @@ const initProgrammeRoutes = (models) => {
     // Champs vides envoyés à null par le formulaire (pas de lieu, pas de limite de places…)
     body('id_lieu').optional({ values: 'null' }).isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
     body('lieu_specifique').optional({ values: 'null' }).isLength({ max: 255 }),
-    body('heure_debut').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+    body('heure_debut').optional({ values: 'null' }).isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
     body('heure_fin')
-      .optional()
+      .optional({ values: 'null' })
       .isISO8601()
       .withMessage((value, { req }) => req.t('validation.invalidEndDate'))
       .custom((value, { req }) => {
@@ -52,12 +52,14 @@ const initProgrammeRoutes = (models) => {
       }),
     body('type_activite')
       .optional()
-      .isIn(['conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'presentation', 'pause', 'autre']),
-    body('statut').optional().isIn(['planifie', 'en_cours', 'termine', 'annule', 'reporte']),
-    body('duree_estimee').optional({ values: 'falsy' }).isInt({ min: 1 }),
-    body('nb_participants_max').optional({ values: 'falsy' }).isInt({ min: 1 }),
-    body('materiel_requis').optional().isLength({ max: 1000 }),
-    body('notes_organisateur').optional().isLength({ max: 2000 }),
+      .isIn(['conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'presentation', 'pause', 'autre'])
+      .withMessage((value, { req }) => req.t('validation.invalidType')),
+    // Messages traduits (avant : « Invalid value », en anglais pour tout le monde ; 2026-11-27)
+    body('statut').optional().isIn(['planifie', 'en_cours', 'termine', 'annule', 'reporte']).withMessage((value, { req }) => req.t('validation.invalidStatus')),
+    body('duree_estimee').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidDuration')),
+    body('nb_participants_max').optional({ values: 'falsy' }).isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.capaciteInvalide')),
+    body('materiel_requis').optional().isLength({ max: 1000 }).withMessage((value, { req }) => req.t('validation.contenuTropLong')),
+    body('notes_organisateur').optional().isLength({ max: 2000 }).withMessage((value, { req }) => req.t('validation.contenuTropLong')),
     body('intervenants').optional().isArray()
   ];
 

@@ -147,7 +147,9 @@
     "dejaAjoute": "This article is already in the list.",
     "deQuoi": "What is this article about?",
     "deQuoiAide": "Choose the work or event concerned: the article will also appear on its page. It always appears on your portfolio.",
-    "portfolioGeneral": "About me in general (my portfolio only)"
+    "portfolioGeneral": "About me in general (my portfolio only)",
+    "confirmerRetrait": "Remove this link?",
+    "confirmerRetraitAide": "It will disappear from your portfolio and from the page concerned."
   },
   "auth": {
     "reprise": {
@@ -5335,7 +5337,8 @@
         "endTime": "End Time",
         "selectTime": "Select time",
         "place": "Venue",
-        "selectPlace": "Select a venue"
+        "selectPlace": "Select a venue",
+        "sansHeure": "No time"
       },
       "participants": {
         "title": "Speakers",

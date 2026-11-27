@@ -255,10 +255,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
         description: data.description,
         type_activite: data.type_activite, // Conforme
         // Nouvelle activité : le serveur la place à la fin (le formulaire envoyait toujours 1)
-        ...(editingProgramme ? { statut: data.statut, ordre: data.ordre } : {}),
+        statut: data.statut,
+        ...(editingProgramme ? { ordre: data.ordre } : {}),
         date_programme: data.date_programme, // jour de l'activité (événement sur plusieurs jours)
-        heure_debut: heurePourApi(data.date_programme, data.heure_debut), // Format ISO pour la base
-        heure_fin: heurePourApi(data.date_programme, data.heure_fin), // Format ISO pour la base
+        // « Sans heure » choisi en modification : null efface l'heure (avant : impossible de la retirer)
+        heure_debut: heurePourApi(data.date_programme, data.heure_debut) ?? (editingProgramme ? null : undefined),
+        heure_fin: heurePourApi(data.date_programme, data.heure_fin) ?? (editingProgramme ? null : undefined),
         id_lieu: data.id_lieu, // Conforme
         lieu_specifique: data.lieu_specifique?.fr, // Base attend: string?, on prend le français
         nb_participants_max: data.nb_participants_max, // Conforme
@@ -499,6 +501,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     heure_debut: heureProgramme(editingProgramme.heure_debut),
                     heure_fin: heureProgramme(editingProgramme.heure_fin),
                     type_activite: editingProgramme.type_activite as any,
+                    // Lieu de l'activité (avant : non rechargé, il paraissait vide en modification)
+                    id_lieu: (editingProgramme as { id_lieu?: number | null }).id_lieu ?? undefined,
                     statut: (editingProgramme.statut || 'planifie') as ProgrammeFormData['statut'],
                     // Position actuelle (avant : 1, l'activité modifiée remontait en tête du programme)
                     ordre: editingProgramme.ordre ?? 1,

@@ -161,16 +161,22 @@ const mergeTranslations = (existing, updates) => {
 
   // Filtrer les clés dangereuses (prototype pollution)
   const safeUpdates = {};
+  // null : langue vidée exprès par la personne (le site n'envoie null que pour un texte qu'elle a effacé),
+  // retirée ; vide ou absente : la traduction existante est gardée (2026-11-27)
+  const effacees = [];
   for (const key of Object.keys(updatesObj)) {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
     // Une langue laissée vide ne remplace pas la traduction existante (un formulaire qui
     // n'envoie que la langue saisie effaçait sinon les autres)
     const value = updatesObj[key];
-    if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) continue;
+    if (value === null) { effacees.push(key); continue; }
+    if (value === undefined || (typeof value === 'string' && value.trim() === '')) continue;
     safeUpdates[key] = value;
   }
 
-  return { ...existingObj, ...safeUpdates };
+  const resultat = { ...existingObj, ...safeUpdates };
+  for (const key of effacees) delete resultat[key];
+  return resultat;
 };
 
 /**

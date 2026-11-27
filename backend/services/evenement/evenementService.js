@@ -212,8 +212,9 @@ class EvenementService extends BaseService {
       nom_evenement: data.nom_evenement || data.nom,
       description: data.description || {},
       // Le formulaire envoie le jour et l'heure séparément : les deux sont gardés
-      date_debut: this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut),
-      date_fin: this._avecHeure(data.date_fin || data.dateFin, data.heure_fin || data.heureFin),
+      // Brouillon sans date : null (avant : chaîne vide)
+      date_debut: this._avecHeure(data.date_debut || data.dateDebut, data.heure_debut || data.heureDebut) || null,
+      date_fin: this._fin(data.date_fin || data.dateFin, data.heure_fin || data.heureFin, data.date_debut || data.dateDebut),
       id_lieu: data.id_lieu || data.lieuId,
       id_type_evenement: data.id_type_evenement || data.typeEvenementId,
       // « Publier » : un professionnel envoie l'événement à la validation ; l'administration publie
@@ -390,6 +391,20 @@ class EvenementService extends BaseService {
     return String(valeur ?? '').trim().slice(0, 30) || null;
   }
 
+  /**
+   * Fin d'un événement : une heure de fin sans date de fin vaut pour le jour du début (concert le 5,
+   * de 18 h à 22 h). Avant, l'heure de fin était perdue sans message (2026-11-27).
+   */
+  _fin(dateFin, heureFin, jourDebut) {
+    const jour = dateFin || (heureFin && jourDebut ? String(jourDebut).slice(0, 10) : null);
+    return jour ? this._avecHeure(jour, heureFin) : null;
+  }
+
+  /** Jour (AAAA-MM-JJ) d'une date, en heure d'Algérie */
+  _jourAlger(date) {
+    return new Date(new Date(date).getTime() + 3600 * 1000).toISOString().slice(0, 10);
+  }
+
   _avecHeure(date, heure) {
     if (!date || !heure) return date;
     const jour = String(date);
@@ -477,7 +492,11 @@ class EvenementService extends BaseService {
       }
       // Vidé dans le formulaire : la valeur est effacée (avant, le message annonçait un succès sans rien changer)
       const finRecue = data.date_fin ?? data.dateFin;
-      if (finRecue !== undefined) updateData.date_fin = finRecue ? this._avecHeure(finRecue, data.heure_fin || data.heureFin) : null;
+      const heureFin = data.heure_fin || data.heureFin;
+      if (finRecue !== undefined || heureFin) {
+        const jourDebut = data.date_debut || data.dateDebut || (existing.date_debut ? this._jourAlger(existing.date_debut) : null);
+        updateData.date_fin = this._fin(finRecue, heureFin, jourDebut);
+      }
       if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
       if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
       // Statut : un brouillon peut être envoyé à la validation (ou publié par l'administration) ;

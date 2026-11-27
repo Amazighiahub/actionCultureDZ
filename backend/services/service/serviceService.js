@@ -259,8 +259,10 @@ class ServiceService extends BaseService {
     if (data.email !== undefined) updateData.email = videEnNull(data.email);
     if (data.site_web !== undefined || data.siteWeb !== undefined) updateData.site_web = videEnNull(data.site_web || data.siteWeb || null);
     if (data.horaires) updateData.horaires = data.horaires;
-    if (data.tarif_min !== undefined || data.tarifMin !== undefined) updateData.tarif_min = data.tarif_min || data.tarifMin;
-    if (data.tarif_max !== undefined || data.tarifMax !== undefined) updateData.tarif_max = data.tarif_max || data.tarifMax;
+    // Tarif vidé (null) ou gratuit (0) : enregistré tel quel (avant : « || » les changeait en undefined, rien n'était écrit)
+    const tarif = (a, b) => { const v = a !== undefined ? a : b; return v === '' ? null : v; };
+    if (data.tarif_min !== undefined || data.tarifMin !== undefined) updateData.tarif_min = tarif(data.tarif_min, data.tarifMin);
+    if (data.tarif_max !== undefined || data.tarifMax !== undefined) updateData.tarif_max = tarif(data.tarif_max, data.tarifMax);
     if (data.photo_url || data.photoUrl) updateData.photo_url = data.photo_url || data.photoUrl;
     Object.assign(updateData, require('./detailsService').detailsService(data));
 

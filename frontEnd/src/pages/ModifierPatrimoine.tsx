@@ -37,6 +37,7 @@ import ConseilReferencement from '@/components/pro/ConseilReferencement';
 import { messageErreurServeur } from '@/utils/erreurServeur';
 import { SaisieConserveeAvis, useSaisieConservee } from '@/hooks/useSaisieConservee';
 import { lienGuidePour } from '@/utils/lienGuide';
+import { avecEffacements } from '@/utils/effacementLangues';
 
 const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 
@@ -169,12 +170,14 @@ const ModifierPatrimoine: React.FC = () => {
     }
     setEnregistrement(true);
     try {
+      // Une langue vidée (horaires périmés, mauvaise traduction) est effacée ; avant, l'ancien texte restait
+      const avant = (formCharge ? JSON.parse(formCharge) : {}) as Partial<typeof form>;
       const res = await httpClient.put(`/patrimoine/${siteId}`, {
-        nom: form.nom, adresse: form.adresse, typePatrimoine: form.typePatrimoine,
+        nom: avecEffacements(form.nom, avant.nom), adresse: avecEffacements(form.adresse, avant.adresse), typePatrimoine: form.typePatrimoine,
         latitude: form.latitude, longitude: form.longitude,
-        description: form.description, histoire: form.histoire,
-        horaires: form.horaires, referencesHistoriques: form.referencesHistoriques,
-        ...(site?.id_lieu_parent ? { repere: form.repere } : {}),
+        description: avecEffacements(form.description, avant.description), histoire: avecEffacements(form.histoire, avant.histoire),
+        horaires: avecEffacements(form.horaires, avant.horaires), referencesHistoriques: avecEffacements(form.referencesHistoriques, avant.referencesHistoriques),
+        ...(site?.id_lieu_parent ? { repere: avecEffacements(form.repere, avant.repere) } : {}),
         // Rattachement changé (modération seulement : le serveur l'ignore pour un créateur)
         ...(estModeration && (parentChoisi?.id ?? null) !== (site?.id_lieu_parent ?? null)
           ? { id_lieu_parent: parentChoisi?.id ?? null } : {})

@@ -56,8 +56,8 @@ const initArtisanatRoutes = (models, authMiddleware) => {
       body('nom').notEmpty().withMessage(msg('validation.nomRequis')),
       body('id_materiau').isInt({ min: 1 }).withMessage(msg('validation.materiauRequis')),
       body('id_technique').isInt({ min: 1 }).withMessage(msg('validation.techniqueRequise')),
-      body('prix_min').optional().isFloat({ min: 0 }).withMessage(msg('validation.prixMinPositif')),
-      body('prix_max').optional().isFloat({ min: 0 }).withMessage(msg('validation.prixMaxPositif'))
+      body('prix_min').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage(msg('validation.prixMinPositif')),
+      body('prix_max').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage(msg('validation.prixMaxPositif'))
         .custom((val, { req }) => {
           if (req.body.prix_min && parseFloat(val) < parseFloat(req.body.prix_min)) {
             throw new Error('Le prix maximum doit être supérieur au prix minimum');

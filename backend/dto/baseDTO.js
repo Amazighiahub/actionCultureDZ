@@ -223,7 +223,9 @@ class BaseDTO {
     const result = { ...this.createMultilang(target) };
     if (source && typeof source === 'object') {
       for (const [lang, value] of Object.entries(source)) {
-        if (value) result[lang] = value;
+        // null : langue vidée exprès par la personne, effacée ; vide ou absente : gardée (2026-11-27)
+        if (value === null) result[lang] = '';
+        else if (value) result[lang] = value;
       }
     }
     return result;
